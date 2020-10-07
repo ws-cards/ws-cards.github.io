@@ -6,6 +6,8 @@
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <body>
+<div id="container" >
+	<div id="displayCardPhoto"><img id="cardImg"  style="width:20%;"></div>
 	<div style="width:60%;">
 		<canvas id="myChart"></canvas>
 	</div>
@@ -16,6 +18,7 @@
 	<select name="cardNumber" id="cardNumber" onchange="changeNumber();" display="tru"> 
 		<option value="000/000-000">--選擇卡號--</option> 
 	</select> 
+</div>
 </body>
 
 
@@ -25,7 +28,7 @@
 			}
 
 			var requestURLCardPrice = 'https://ws-cards.cloud/cardData.json';
-			var requestURLCardTitle = 'https://ws-cards.cloud//cardTitle.json';
+			var requestURLCardTitle = 'https://ws-cards.cloud/cardTitle.json';
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 
@@ -122,7 +125,7 @@
 			
 			/*繪圖區*/
 			function getCardData(jsonObj,cardNum) {
-			
+			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
 				var cardNumber=cardNum;
@@ -192,8 +195,20 @@
 			}
 
 			
-			
-			
+			/*加上圖片*/
+			function addPhoto(cardNum){
+				var card_first=cardNum.substr(0,1);
+				var card_second=cardNum.substr(0,cardNum.indexOf('-'));
+					card_second=card_second.replace('/','_')
+				var card_third=cardNum.replace('/','_');
+					card_third=card_third.replace('-','_');	
+				const cardImg = document.getElementById('cardImg');
+				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				console.log(urlCard);
+				cardImg.setAttribute("src",urlCard);
+		
+
+			}
 			
 		/*	
 		Sort Option			
