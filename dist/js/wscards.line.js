@@ -126,10 +126,6 @@
 					},
 					// Configuration options go here
 					options: {
-						title:{
-							display:true,
-							text:'YuYuTei價格變化'
-						},
 					tooltips: {
 						mode: 'index',
 						intersect: false,
