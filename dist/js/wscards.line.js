@@ -41,7 +41,7 @@
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
-				  getCardData(cards,'5HY/W83-001');			  
+				  getCardData(cards,'BD/W54-070SSP');			  
 			  }
 
 			}
