@@ -71,7 +71,11 @@
 					if(key.indexOf(cardTitle)>= 0){
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
-						option.appendChild(document.createTextNode(key)); 
+						if(key.indexOf("@S")>= 0){
+							option.appendChild(document.createTextNode(key.replace('@S',''))); 									
+						}else{
+							option.appendChild(document.createTextNode(key)); 							
+						}
 						selectPrice.appendChild(option);
 					}					
 				  }			
@@ -168,10 +172,11 @@
 			
 			/*加上圖片*/
 			function addPhoto(cardNum){
-				var card_first=cardNum.substr(0,1);
-				var card_second=cardNum.substr(0,cardNum.indexOf('-'));
+				var card_Num=cardNum.replace('@S','');
+				var card_first=card_Num.substr(0,1);
+				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 					card_second=card_second.replace('/','_')
-				var card_third=cardNum.replace('/','_');
+				var card_third=card_Num.replace('/','_');
 					card_third=card_third.replace('-','_');	
 				const cardImg = document.getElementById('cardImg');
 				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
