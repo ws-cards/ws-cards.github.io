@@ -181,7 +181,8 @@
 				var card_third=card_Num.replace('/','_');
 					card_third=card_third.replace('-','_');	
 				const cardImg = document.getElementById('cardImg');
-				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				//var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				var urlCard="https://i.imgur.com/DKvx5hw.png";
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
 			}
