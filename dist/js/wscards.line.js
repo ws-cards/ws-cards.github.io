@@ -172,7 +172,12 @@
 			
 			/*加上圖片*/
 			function addPhoto(cardNum){
-				var card_Num=cardNum.replace('@S','');
+				var card_Num;
+				if(cardNum.indexOf("@S")>= 0){
+					card_Num=cardNum.substr(0,cardNum.indexOf('@S'));
+				}else{
+					card_Num=cardNum;
+				}	
 				var card_first=card_Num.substr(0,1);
 				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 					card_second=card_second.replace('/','_')
