@@ -169,7 +169,12 @@
 			/*加上圖片*/
 			function addPhoto(cardNum){
 				var card_Num;
-					card_Num=cardNum;
+				if(card_Num.indexOf(' ')>=0){
+					card_Num=cardNum.substr(0,card_Num.indexOf(' ');
+				}else{
+					card_Num=cardNum;				
+				}
+
 				var card_first=card_Num.substr(0,1);
 				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 					card_second=card_second.replace('/','_')
@@ -179,8 +184,6 @@
 				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
-		
-
 			}
 			
 		/*	
