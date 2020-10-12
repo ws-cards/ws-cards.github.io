@@ -71,11 +71,7 @@
 					if(key.indexOf(cardTitle)>= 0){
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
-						if(key.indexOf("@S")>= 0){
-							option.appendChild(document.createTextNode(key.replace('@S',''))); 									
-						}else{
-							option.appendChild(document.createTextNode(key)); 							
-						}
+						option.appendChild(document.createTextNode(key)); 							
 						selectPrice.appendChild(option);
 					}					
 				  }			
@@ -173,11 +169,7 @@
 			/*加上圖片*/
 			function addPhoto(cardNum){
 				var card_Num;
-				if(cardNum.indexOf("@S")>= 0){
-					card_Num=cardNum.substr(0,cardNum.indexOf('@S'));
-				}else{
 					card_Num=cardNum;
-				}	
 				var card_first=card_Num.substr(0,1);
 				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 					card_second=card_second.replace('/','_')
