@@ -170,7 +170,7 @@
 			function addPhoto(cardNum){
 				var card_Num;
 				if(card_Num.indexOf(' ')>=0){
-					card_Num=cardNum.substr(0,card_Num.indexOf(' ');
+					card_Num=cardNum.substr(0,card_Num.indexOf(' '));
 				}else{
 					card_Num=cardNum;				
 				}
