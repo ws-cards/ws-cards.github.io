@@ -152,12 +152,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</tr>
 						</thead>
 						<tbody id="upTable">
-							<tr>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td></td>									
-							</tr>						
+					
 						</tbody>
 					</table>
               </div>
@@ -184,12 +179,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</tr>
 						</thead>
 						<tbody id="downTable">
-							<tr>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td></td>									
-							</tr>
 						</tbody>
 					</table>
               </div>
@@ -262,26 +251,26 @@ scratch. This page gets rid of all links and provides the needed markup only.
 			
 			  requestPrice.onload = function(){
 				var cardsPrice = requestPrice.response;
-				var upArray=[{price:1,cardNo:"A"},
-							{price:2,cardNo:"B"},
-							{price:3,cardNo:"C"},
-							{price:4,cardNo:"D"},
-							{price:5,cardNo:"E"},
-							{price:6,cardNo:"F"},
-							{price:7,cardNo:"G"},
-							{price:8,cardNo:"H"},
-							{price:9,cardNo:"I"},
-							{price:10,cardNo:"J"}];
-				var downArray=[{price:1,cardNo:"A"},
-							{price:1,cardNo:"B"},
-							{price:1,cardNo:"C"},
-							{price:1,cardNo:"D"},
-							{price:1,cardNo:"E"},
-							{price:1,cardNo:"F"},
-							{price:1,cardNo:"G"},
-							{price:1,cardNo:"H"},
-							{price:1,cardNo:"I"},
-							{price:1,cardNo:"J"}];							
+				var upArray=[{price:1,cardNo:"A",cardSpread:1},
+							{price:2,cardNo:"B",cardSpread:1},
+							{price:3,cardNo:"C",cardSpread:1},
+							{price:4,cardNo:"D",cardSpread:1},
+							{price:5,cardNo:"E",cardSpread:1},
+							{price:6,cardNo:"F",cardSpread:1},
+							{price:7,cardNo:"G",cardSpread:1},
+							{price:8,cardNo:"H",cardSpread:1},
+							{price:9,cardNo:"I",cardSpread:1},
+							{price:10,cardNo:"J",cardSpread:1}];
+				var downArray=[{price:1,cardNo:"A",cardSpread:1},
+							{price:1,cardNo:"B",cardSpread:1},
+							{price:1,cardNo:"C",cardSpread:1},
+							{price:1,cardNo:"D",cardSpread:1},
+							{price:1,cardNo:"E",cardSpread:1},
+							{price:1,cardNo:"F",cardSpread:1},
+							{price:1,cardNo:"G",cardSpread:1},
+							{price:1,cardNo:"H",cardSpread:1},
+							{price:1,cardNo:"I",cardSpread:1},
+							{price:1,cardNo:"J",cardSpread:1}];							
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
 					var cardPrice = cardPriceInfo ['cardPrice'];
@@ -299,14 +288,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;
 					console.log("價差:"+spread);
 					if(spread>0){
-						upArray.push({price:spread,cardNo:key});
+						upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						upArray.sort(function(a, b) {
 							return a.price < b.price ? 1: -1;
 						});
 						upArray.pop();
 						console.log(upArray);						
 					}else{
-						downArray.push({price:spread,cardNo:key});
+						downArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						downArray.sort(function(a, b) {
 							return a.price > b.price ? 1: -1;
 						});
@@ -316,7 +305,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 				}
 				settingUpTable(upArray);
-				settingUpTable(downArray);				
+				settingDownTable(downArray);				
 			  }
 
 			}
@@ -341,10 +330,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						upTable.appendChild(tr);	
 				}					
 			}
-			function settingDownTable(upArray){
-				for(var key in upArray ){
-					var cardNo=upArray[key].cardNo;
-					var spread=upArray[key].price;
+			function settingDownTable(downArray){
+				for(var key in downArray ){
+					var cardNo=downArray[key].cardNo;
+					var spread=downArray[key].price;
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
