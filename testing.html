@@ -152,12 +152,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</tr>
 						</thead>
 						<tbody id="upTable">
-							<tr>
-								<td>KC/S67-001</td>
-								<td>R</td>
-								<td>200</td>
-								<td><small class="text-success mr-1" style="font-family: 'Noto Sans TC', sans-serif;font-size:10px;"><i class="fas fa-arrow-up" ></i>3%</small></td>
-							</tr>
 						</tbody>
 					</table>
               </div>
@@ -184,12 +178,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</tr>
 						</thead>
 						<tbody id="downTable">
-							<tr>
-								<td>KC/S67-101</td>
-								<td>R</td>
-								<td>300</td>
-								<td><small class="text-warning mr-1" style="font-family: 'Noto Sans TC', sans-serif;font-size:10px;"><i class="fas fa-arrow-down" ></i>1.3%</small></td>
-							</tr>
 						</tbody>
 					</table>
               </div>
@@ -272,6 +260,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							{price:8,cardNo:"H"},
 							{price:9,cardNo:"I"},
 							{price:10,cardNo:"J"}];
+				var downArray=[{price:1,cardNo:"A"},
+							{price:1,cardNo:"B"},
+							{price:1,cardNo:"C"},
+							{price:1,cardNo:"D"},
+							{price:1,cardNo:"E"},
+							{price:1,cardNo:"F"},
+							{price:1,cardNo:"G"},
+							{price:1,cardNo:"H"},
+							{price:1,cardNo:"I"},
+							{price:1,cardNo:"J"}];							
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
 					var cardPrice = cardPriceInfo ['cardPrice'];
@@ -286,23 +284,31 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						firstDatePrice = cardPrice [0];//七天第一天
 						lastDatePrice = cardPrice[cardPrice.length-1];							
 					}
-					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*10000)/10000;
+					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;
 					console.log("價差:"+spread);
-					
-					upArray.push({price:spread,cardNo:key});
-					upArray.sort(function(a, b) {
-						return a.price < b.price ? 1: -1;
-					});
-					upArray.pop();
-					console.log(upArray);
+					if(spread>0){
+						upArray.push({price:spread,cardNo:key});
+						upArray.sort(function(a, b) {
+							return a.price < b.price ? 1: -1;
+						});
+						upArray.pop();
+						console.log(upArray);						
+					}else{
+						downArray.push({price:spread,cardNo:key});
+						downArray.sort(function(a, b) {
+							return a.price > b.price ? 1: -1;
+						});
+						downArray.pop();
+						console.log(downArray);							
+					}
+
 				}
-				
-				settingTable(upArray);
-				
+				settingUpTable(upArray);
+				settingUpTable(downArray);				
 			  }
 
 			}
-			function settingTable(upArray){
+			function settingUpTable(upArray){
 				for(var key in upArray ){
 					var cardNo=upArray[key].cardNo;
 					var spread=upArray[key].price;
@@ -323,6 +329,27 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						upTable.appendChild(tr);	
 				}					
 			}
+			function settingDownTable(upArray){
+				for(var key in upArray ){
+					var cardNo=upArray[key].cardNo;
+					var spread=upArray[key].price;
+						var tr = document.createElement("tr");
+						//卡號稀有度價錢幅度
+						var tdCardNo = document.createElement("td");
+						var tdRare = document.createElement("td");
+						var tdPrice = document.createElement("td");
+						var tdRange = document.createElement("td");
+						tdCardNo.innerHTML = cardNo;
+						tdRare.innerHTML = "X";
+						tdPrice.innerHTML = spread;
+						tdRange.innerHTML = "<small class="text-warning mr-1" style="font-family: 'Noto Sans TC', sans-serif;font-size:10px;"><i class="fas fa-arrow-down" ></i>"+spread+"%</small>";
+						tr.appendChild(tdCardNo); 
+						tr.appendChild(tdRare); 
+						tr.appendChild(tdPrice); 
+						tr.appendChild(tdRange); 
+						upTable.appendChild(tr);	
+				}					
+			}			
 </script>
 <script>
 	$('.nav-link').PushMenu('collapse');	
