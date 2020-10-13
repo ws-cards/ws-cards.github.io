@@ -313,6 +313,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				settingDownTable(downArray);				
 			  }
 
+			  var cardTitleListener = document.getElementById("cardTitle");	
+				cardTitleListener.addEventListener("change", function(){
+					chart.destroy();
+			  });		
+			  
 			}
 			function settingUpTable(upArray){
 				for(var key in upArray ){
@@ -325,7 +330,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						var tdRare = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
-						tdCardNo.innerHTML = "<div id='"+cardNo+"' onmouseover='displayImg("+cardNo+")' onmouseout='vanishImg()' onmousemove='displayImg()'>"+cardNo+"</div>";
+						var preName="'displayImg('"+cardNo+"')'";
+						tdCardNo.innerHTML = "<div id='"+cardNo+"' onmouseover="+preName+" onmouseout='vanishImg()' onmousemove='displayImg()'>"+cardNo+"</div>";
 						tdRare.innerHTML = "X";
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
@@ -360,7 +366,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 			}			
 			
 			//顯示圖片
-			function displayImg(cardNo) {
+			function displayImg() {
 				var img = document.getElementById("image");
 				
 				var card_Num;
