@@ -286,7 +286,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						firstDatePrice = cardPrice [0];//七天第一天
 						lastDatePrice = cardPrice[cardPrice.length-1];							
 					}
-					spread=lastDatePrice-firstDatePrice;
+					spread=(lastDatePrice-firstDatePrice)/firstDatePrice;
 					console.log("價差:"+spread);
 					
 					upArray.push({price:spread,cardNo:key});
@@ -296,25 +296,32 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					upArray.pop();
 					console.log(upArray);
 				}
+				
+				settingTable(upArray);
+				
 			  }
 
 			}
-			function settingTable(cards){
-					var tr = document.createElement("tr");
-					//卡號稀有度價錢幅度
-					var tdCardNo = document.createElement("td");
-					var tdRare = document.createElement("td");
-					var tdPrice = document.createElement("td");
-					var tdRange = document.createElement("td");
-					tdCardNo.innerHTML = "SB/S06-008";
-					tdRare.innerHTML = "U";
-					tdPrice.innerHTML = "20";
-					tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>3%</small>";
-					tr.appendChild(tdCardNo); 
-					tr.appendChild(tdRare); 
-					tr.appendChild(tdPrice); 
-					tr.appendChild(tdRange); 
-					upTable.appendChild(tr);			
+			function settingTable(upArray){
+				for(var key in upArray ){
+					var cardNo=upArray[key].cardNo;
+					var spread=upArray[key].price;
+						var tr = document.createElement("tr");
+						//卡號稀有度價錢幅度
+						var tdCardNo = document.createElement("td");
+						var tdRare = document.createElement("td");
+						var tdPrice = document.createElement("td");
+						var tdRange = document.createElement("td");
+						tdCardNo.innerHTML = cardNo;
+						tdRare.innerHTML = "X";
+						tdPrice.innerHTML = spread;
+						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
+						tr.appendChild(tdCardNo); 
+						tr.appendChild(tdRare); 
+						tr.appendChild(tdPrice); 
+						tr.appendChild(tdRange); 
+						upTable.appendChild(tr);	
+				}					
 			}
 </script>
 <script>
