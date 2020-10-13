@@ -17,6 +17,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <!-- Theme style -->
   <link rel="stylesheet" href="dist/css/adminlte.min.css">
   <link rel="stylesheet" href="dist/css/wscards.line.css">
+  <style>
+  		#image{
+			position: absolute;
+			display: none;
+		}
+  </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -152,7 +158,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</tr>
 						</thead>
 						<tbody id="upTable">
-					
+							<div id="image">
+							</div>					
 						</tbody>
 					</table>
               </div>
@@ -318,7 +325,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						var tdRare = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
-						tdCardNo.innerHTML = "<p id='"+cardNo+"'>"+cardNo+"</p>";
+						tdCardNo.innerHTML = "<div id='"+cardNo+"' onmouseover='displayImg('"+cardNo+"')' onmouseout='vanishImg()' onmousemove='displayImg()'>"+cardNo+"</div>";
 						tdRare.innerHTML = "X";
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
@@ -351,6 +358,42 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						downTable.appendChild(tr);	
 				}					
 			}			
+			
+			//顯示圖片
+			function displayImg(cardNo) {
+				var img = document.getElementById("image");
+				
+				var card_Num;
+				if(cardNo.indexOf(' ')>=0){
+					card_Num=cardNo.substr(0,cardNo.indexOf(' '));
+				}else{
+					card_Num=cardNo;				
+				}
+
+				var card_first=card_Num.substr(0,1);
+				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+					card_second=card_second.replace('/','_')
+				var card_third=card_Num.replace('/','_');
+					card_third=card_third.replace('-','_');				
+				
+				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				img.setAttribute("src",urlCard);
+				
+				
+				var x = event.clientX + document.body.scrollLeft + 20;
+				var y = event.clientY + document.body.scrollTop - 5; 
+
+				img.style.left = x + "px";
+				img.style.top = y + "px";
+				img.style.display = "block";
+			}
+
+			//圖片消失
+			function vanishImg(){
+				var img = document.getElementById("image");
+				img.style.display = "none";
+			}
+			
 </script>
 <script>
 	$('.nav-link').PushMenu('collapse');	
