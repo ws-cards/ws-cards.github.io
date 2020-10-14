@@ -2,8 +2,8 @@
 			  setFun();  
 			}
 
-			var requestURLCardPrice = 'https://ws-cards.cloud/cardData.json';
-			var requestURLCardTitle = 'https://ws-cards.cloud/cardTitle.json';
+			var requestURLCardPrice = 'https://storage.cloud.google.com/ws-cards.cloud/json/cardData.json';
+			var requestURLCardTitle = 'https://storage.cloud.google.com/ws-cards.cloud/json/cardTitle.json';
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 
