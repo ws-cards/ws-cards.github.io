@@ -3,7 +3,7 @@
 			}
 
 			var requestURLCardPrice = 'https://ws-cards.cloud/cardData.json';
-			var requestURLCardTitle = 'https://ws-cards.cloud/cardTitle.json';
+			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 
@@ -26,6 +26,7 @@
 			
 			  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
+			  requestTitle.setRequestHeader('Access-Control-Allow-Origin', '*');				
 			  requestTitle.send();
 			
 			  requestTitle.onload = function(){
