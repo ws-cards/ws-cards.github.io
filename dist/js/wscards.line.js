@@ -2,7 +2,7 @@
 			  setFun();  
 			}
 
-			var requestURLCardPrice = 'https://ws-cards.cloud/cardData.json';
+			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
