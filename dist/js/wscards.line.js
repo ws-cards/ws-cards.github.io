@@ -26,7 +26,6 @@
 			
 			  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
-			  requestTitle.setRequestHeader('Access-Control-Allow-Origin', '*');
 			  requestTitle.send();
 			
 			  requestTitle.onload = function(){
