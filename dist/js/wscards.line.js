@@ -93,7 +93,8 @@
 				var cardsTitle = requestTitle.response;
 				for(var key in cardsTitle){	 
 					console.log(key);
-				    if(!cardStandard.indexOf(key)>0){
+					var keyStr=key.substr(0,key.indexOf('/'));
+				    if(!cardStandard.indexOf(keyStr)>0){
 						continue;
 					}
 					var option = document.createElement("option");
