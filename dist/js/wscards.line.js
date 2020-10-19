@@ -29,11 +29,11 @@
 			  
 			  //request 設定
 			  requestStandardW.open('GET', standardWURL);
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();				  
+			  requestStandardW.responseType = 'json';
+			  requestStandardW.send();				  
 			  requestStandardS.open('GET', standardSURL);
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();	
+			  requestStandardS.responseType = 'json';
+			  requestStandardS.send();	
 			  
 			  requestStandardW.onload = function(){
 					var optgroupW = document.getElementById("Weiss");
