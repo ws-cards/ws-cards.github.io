@@ -84,7 +84,16 @@
 			
 			function changeStandard(){
 			  var cardStandard=document.getElementById('cardStandard').value;
+			  var cardStandardEle=document.getElementById('cardStandard');
 			  var selectTitle = document.getElementById("cardTitle"); 
+			  selectTitle.innerHTML="";
+			  
+			  cardStandardEle.length = 1;
+			  cardStandardEle.options[0].selected = true;	
+			  cardStandardEle.options[0].setAttribute("id","oldID");
+			  cardStandardEle.removeChild(document.getElementById('oldID'));
+
+			  
 			  
     		  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
