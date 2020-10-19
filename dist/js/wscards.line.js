@@ -73,7 +73,7 @@
 			//		selectTitle.appendChild(option);				
 			//	}
 			
-			  }
+			//  }
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
