@@ -161,7 +161,7 @@
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
 				  var cardNumber = document.getElementById('cardNumber').value;
-				  aconsole.log("160");
+				  console.log("160");
 				  getCardData(cards,cardNumber);
 				  console.log("162");
 				}
