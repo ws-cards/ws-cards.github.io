@@ -91,12 +91,13 @@
 			  requestTitle.send();					
 			  requestTitle.onload = function(){
 				var cardsTitle = requestTitle.response;
+				
 				for(var key in cardsTitle){	 
 
 					var keyStr=key.substr(0,key.indexOf('/'));
-					console.log("keyStr:"+keyStr);
-					console.log("cardStandard"+cardStandard);
-				    if(!cardStandard.indexOf(keyStr)>0){
+					console.log("前置碼:"+keyStr);
+					console.log("必須值:"+cardStandard);
+				    if(!(cardStandard.indexOf(keyStr)>0)){
 						console.log("Ok:"+keyStr)
 						continue;
 					}
