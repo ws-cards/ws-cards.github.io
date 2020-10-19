@@ -158,7 +158,7 @@
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
 				  var cardNumber = document.getElementById('cardNumber').value;console.log("160");
-				  getCardData(cards,cardNumber)console.log("161");
+				  getCardData(cards,cardNumber);console.log("161");
 				}
 			}
 			
