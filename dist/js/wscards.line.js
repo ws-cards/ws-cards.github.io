@@ -94,10 +94,13 @@
 				for(var key in cardsTitle){	 
 
 					var keyStr=key.substr(0,key.indexOf('/'));
-					console.log(keyStr);
+					console.log("keyStr:"+keyStr);
+					console.log("cardStandard"+cardStandard);
 				    if(!cardStandard.indexOf(keyStr)>0){
+						console.log("Ok:"+keyStr)
 						continue;
 					}
+					console.log("right in:"+key);
 					var option = document.createElement("option");
 					option.setAttribute("value",key);
 					option.appendChild(document.createTextNode(cardsTitle[key])); 
