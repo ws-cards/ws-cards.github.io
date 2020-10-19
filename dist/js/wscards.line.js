@@ -134,8 +134,8 @@
 			  			  console.log(cardTitle);
 				var cards = requestPrice.response;
 				  for(var key in cards){
-				  console.log();
-					if(key.indexOf(cardTitle)>= 0){
+				  console.log("key- testing");
+					if(key.indexOf(cardTitle)>= 0){console.log("138");
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
 						option.appendChild(document.createTextNode(key)); 							
@@ -144,8 +144,8 @@
 				  }			
 				 //重新排列option
 				 sortOption();
-				 selectPrice.options[0].selected=true;
-				 changeNumber();
+				 selectPrice.options[0].selected=true;console.log("148");
+				 changeNumber();console.log("149");
 			  }
 			  
 			}
@@ -157,8 +157,8 @@
 				requestPrice.send();
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
-				  var cardNumber = document.getElementById('cardNumber').value;
-				  getCardData(cards,cardNumber)
+				  var cardNumber = document.getElementById('cardNumber').value;console.log("160");
+				  getCardData(cards,cardNumber)console.log("161");
 				}
 			}
 			
