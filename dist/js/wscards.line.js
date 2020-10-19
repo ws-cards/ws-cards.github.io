@@ -92,8 +92,9 @@
 			  requestTitle.onload = function(){
 				var cardsTitle = requestTitle.response;
 				for(var key in cardsTitle){	 
-					console.log(key);
+
 					var keyStr=key.substr(0,key.indexOf('/'));
+					console.log(keyStr);
 				    if(!cardStandard.indexOf(keyStr)>0){
 						continue;
 					}
