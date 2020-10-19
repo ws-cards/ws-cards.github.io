@@ -60,20 +60,20 @@
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
 			
-			//  requestTitle.open('GET', requestURLCardTitle);
-			//  requestTitle.responseType = 'json';
-			//  requestTitle.send();
+			  requestTitle.open('GET', requestURLCardTitle);
+			  requestTitle.responseType = 'json';
+			  requestTitle.send();
 			
-			//  requestTitle.onload = function(){
-			//	var cardsTitle = requestTitle.response;
-			//	for(var key in cardsTitle){	 
-			//		var option = document.createElement("option");
-			//		option.setAttribute("value",key);
-			//		option.appendChild(document.createTextNode(cardsTitle[key])); 
-			//		selectTitle.appendChild(option);				
-			//	}
+			  requestTitle.onload = function(){
+				var cardsTitle = requestTitle.response;
+				for(var key in cardsTitle){	 
+					var option = document.createElement("option");
+					option.setAttribute("value",key);
+					option.appendChild(document.createTextNode(cardsTitle[key])); 
+					selectTitle.appendChild(option);				
+				}
 			
-			//  }
+			  }
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
