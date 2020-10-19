@@ -84,7 +84,8 @@
 			
 			function changeStandard(){
 			  var cardStandard=document.getElementById('cardStandard').value;
-			
+			  var selectTitle = document.getElementById("cardTitle"); 
+			  
     		  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
 			  requestTitle.send();					
