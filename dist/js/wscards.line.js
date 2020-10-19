@@ -82,6 +82,24 @@
 
 			}
 			
+			function changeStandard(){
+			  var cardStandard=document.getElementById('cardStandard').value;
+				
+			  requestTitle.onload = function(){
+				var cardsTitle = requestTitle.response;
+				for(var key in cardsTitle){	 
+				    if(!cardStandard.indexOf(key)>0){
+						continue;
+					}
+					var option = document.createElement("option");
+					option.setAttribute("value",key);
+					option.appendChild(document.createTextNode(cardsTitle[key])); 
+					selectTitle.appendChild(option);				
+				}
+			  }				
+			}
+			
+			
 			function changeTitle(){
 			  sortOption();
 			  //select 設定
