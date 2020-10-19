@@ -102,7 +102,7 @@
 					console.log("前置碼:"+keyStr);
 					console.log("必須值:"+cardStandard);
 				    if(!(cardStandard.indexOf(keyStr)>=0)){
-						console.log("Ok:"+keyStr)
+						console.log("Ok:"+keyStr);
 						continue;
 					}
 					console.log("right in:"+key);
