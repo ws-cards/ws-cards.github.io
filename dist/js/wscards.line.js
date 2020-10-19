@@ -24,8 +24,8 @@
 			  selectPrice.style.visibility = 'hidden';
 
 			  var selectTitle = document.getElementById("cardTitle"); 
-			  selectPrice.length = 1;
-			  selectPrice.options[0].selected = true;	
+			  selectTitle.length = 1;
+			  selectTitle.options[0].selected = true;	
 			  
 			  //request 設定
 			  requestStandardW.open('GET', standardWURL);
@@ -47,7 +47,7 @@
 			  }
 			  requestStandardS.onload = function(){
 					var optgroupS = document.getElementById("Schwarz");				  
-			  		var cardsS = requestStandardW.response;		
+			  		var cardsS = requestStandardS.response;		
 					for(var key in cardsS){	 
 						var option = document.createElement("option");
 						option.setAttribute("value",cardsS[key]);
