@@ -60,18 +60,18 @@
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
 			
-			  requestTitle.open('GET', requestURLCardTitle);
-			  requestTitle.responseType = 'json';
-			  requestTitle.send();
+			//  requestTitle.open('GET', requestURLCardTitle);
+			//  requestTitle.responseType = 'json';
+			//  requestTitle.send();
 			
-			  requestTitle.onload = function(){
-				var cardsTitle = requestTitle.response;
-				for(var key in cardsTitle){	 
-					var option = document.createElement("option");
-					option.setAttribute("value",key);
-					option.appendChild(document.createTextNode(cardsTitle[key])); 
-					selectTitle.appendChild(option);				
-				}
+			//  requestTitle.onload = function(){
+			//	var cardsTitle = requestTitle.response;
+			//	for(var key in cardsTitle){	 
+			//		var option = document.createElement("option");
+			//		option.setAttribute("value",key);
+			//		option.appendChild(document.createTextNode(cardsTitle[key])); 
+			//		selectTitle.appendChild(option);				
+			//	}
 			
 			  }
 			  
@@ -97,7 +97,7 @@
 					var keyStr=key.substr(0,key.indexOf('/'));
 					console.log("前置碼:"+keyStr);
 					console.log("必須值:"+cardStandard);
-				    if(!(cardStandard.indexOf(keyStr)>0)){
+				    if(!(cardStandard.indexOf(keyStr)>=0)){
 						console.log("Ok:"+keyStr)
 						continue;
 					}
