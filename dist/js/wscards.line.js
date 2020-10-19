@@ -4,12 +4,20 @@
 
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
+			var standardWURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_S.json';
+			var standardSURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_W.json';
+			var requestStandardW = new XMLHttpRequest();
+			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 
 			
 			function setFun(){
 			  //select 設定
+			  var selectStandard = document.getElementById("cardStandard");
+			  selectStandard.length = 1;
+			  selectStandard.options[0].selected = true;	
+			  
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.length = 1;
 			  selectPrice.options[0].selected = true;	
@@ -20,6 +28,34 @@
 			  selectPrice.options[0].selected = true;	
 			  
 			  //request 設定
+			  requestStandardW.open('GET', standardWURL);
+			  requestPrice.responseType = 'json';
+			  requestPrice.send();				  
+			  requestStandardS.open('GET', standardSURL);
+			  requestPrice.responseType = 'json';
+			  requestPrice.send();	
+			  
+			  requestStandardW.onload = function(){
+					var optgroupW = document.getElementById("Weiss");
+			  		var cardsW = requestStandardW.response;
+					for(var key in cardsW){	 
+						var option = document.createElement("option");
+						option.setAttribute("value",cardsW[key]);
+						option.appendChild(document.createTextNode(key)); 
+						optgroupW.appendChild(option);				
+					}					
+			  }
+			  requestStandardS.onload = function(){
+					var optgroupS = document.getElementById("Schwarz");				  
+			  		var cardsS = requestStandardW.response;		
+					for(var key in cardsS){	 
+						var option = document.createElement("option");
+						option.setAttribute("value",cardsS[key]);
+						option.appendChild(document.createTextNode(key)); 
+						optgroupS.appendChild(option);				
+					}					
+			  }
+			  
 			  requestPrice.open('GET', requestURLCardPrice);
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
