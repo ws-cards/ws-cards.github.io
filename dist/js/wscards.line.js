@@ -114,6 +114,7 @@
 			
 			
 			function changeTitle(){
+	document.getElementById('overlay-1').style.display='display';							
 			  sortOption();
 			  //select 設定
 			  var selectPrice = document.getElementById("cardNumber"); 
