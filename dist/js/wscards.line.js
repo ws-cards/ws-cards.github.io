@@ -4,58 +4,22 @@
 
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
-			var standardWURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_S.json';
-			var standardSURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_W.json';
-			var requestStandardW = new XMLHttpRequest();
-			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 
 			
 			function setFun(){
 			  //select 設定
-			  var selectStandard = document.getElementById("cardStandard");
-			  selectStandard.length = 1;
-			  selectStandard.options[0].selected = true;	
-			  
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.length = 1;
 			  selectPrice.options[0].selected = true;	
 			  selectPrice.style.visibility = 'hidden';
 
 			  var selectTitle = document.getElementById("cardTitle"); 
-			  selectTitle.length = 1;
-			  selectTitle.options[0].selected = true;	
+			  selectPrice.length = 1;
+			  selectPrice.options[0].selected = true;	
 			  
 			  //request 設定
-			  requestStandardW.open('GET', standardWURL);
-			  requestStandardW.responseType = 'json';
-			  requestStandardW.send();				  
-			  requestStandardS.open('GET', standardSURL);
-			  requestStandardS.responseType = 'json';
-			  requestStandardS.send();	
-			  
-			  requestStandardW.onload = function(){
-					var optgroupW = document.getElementById("Weiss");
-			  		var cardsW = requestStandardW.response;
-					for(var key in cardsW){	 
-						var option = document.createElement("option");
-						option.setAttribute("value",cardsW[key]);
-						option.appendChild(document.createTextNode(key)); 
-						optgroupW.appendChild(option);				
-					}					
-			  }
-			  requestStandardS.onload = function(){
-					var optgroupS = document.getElementById("Schwarz");				  
-			  		var cardsS = requestStandardS.response;		
-					for(var key in cardsS){	 
-						var option = document.createElement("option");
-						option.setAttribute("value",cardsS[key]);
-						option.appendChild(document.createTextNode(key)); 
-						optgroupS.appendChild(option);				
-					}					
-			  }
-			  
 			  requestPrice.open('GET', requestURLCardPrice);
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
@@ -82,40 +46,7 @@
 
 			}
 			
-			function changeStandard(){
-			  var cardStandard=document.getElementById('cardStandard').value;
-			  var cardStandardEle=document.getElementById('cardStandard');
-			  var selectTitle = document.getElementById("cardTitle"); 
-			  while (selectTitle.firstChild) {
-				selectTitle.removeChild(selectTitle.firstChild);
-			  }
-			  
-    		  requestTitle.open('GET', requestURLCardTitle);
-			  requestTitle.responseType = 'json';
-			  requestTitle.send();					
-			  requestTitle.onload = function(){
-				var cardsTitle = requestTitle.response;
-				
-				for(var key in cardsTitle){	 
-
-					var keyStr=key.substr(0,key.indexOf('/'));//2~3
-					var keyStrLength=keyStr.length;
-				    if(!(cardStandard === keyStr)){
-						continue;
-					}
-					console.log("選擇:"+cardStandard);
-					console.log("right in:"+key);
-					var option = document.createElement("option");
-					option.setAttribute("value",key);
-					option.appendChild(document.createTextNode(cardsTitle[key])); 
-					selectTitle.appendChild(option);				
-				}
-				changeTitle();
-			  }				
-			}
-			
-			
-			function changeTitle(){						
+			function changeTitle(){
 			  sortOption();
 			  //select 設定
 			  var selectPrice = document.getElementById("cardNumber"); 
@@ -136,9 +67,8 @@
 			  			  console.log(cardTitle);
 				var cards = requestPrice.response;
 				  for(var key in cards){
-				  console.log("key- testing");
+				  console.log();
 					if(key.indexOf(cardTitle)>= 0){
-						console.log("138");
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
 						option.appendChild(document.createTextNode(key)); 							
@@ -148,32 +78,21 @@
 				 //重新排列option
 				 sortOption();
 				 selectPrice.options[0].selected=true;
-				 console.log("148");
 				 changeNumber();
-				 console.log("149");
 			  }
 			  
 			}
 					
 			
-			function changeNumber(){					
+			function changeNumber(){
 				requestPrice.open('GET', requestURLCardPrice);
 				requestPrice.responseType = 'json';
 				requestPrice.send();
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
 				  var cardNumber = document.getElementById('cardNumber').value;
-				  console.log("160");
-				  getCardData(cards,cardNumber);
-				  console.log("162");
+				  getCardData(cards,cardNumber)
 				}
-	var timer = setInterval(function(){
-		if (document.getElementById('cardImg').complete){
-		clearInterval(timer);
-		console.log(document.getElementById('cardImg').complete)
-		document.getElementById('overlay-1').style.display='none';	
-		}
-	}, 10);			
 			}
 			
 
@@ -321,4 +240,4 @@
                 sOrder    = true; 
             } 
             sortlist("cardNumber",sOrder); 
-        } 	
+        } 
