@@ -7,6 +7,7 @@ function myFunction(x) {
 	var leftbar = document.getElementById("leftbar");
 	$("rightSideBar").removeClass("control-sidebar");
 	$("mainSideBar").removeClass("main-sidebar");
+	rightSideBar.setAttribute("class","main-sidebar sidebar-dark-primary elevation-4");
 	mainSideBar.setAttribute("class","control-sidebar control-sidebar-dark");
 	leftbar.removeAttribute("data-widget");
 	leftbar.setAttribute("onclick","document.location.href='./index.html';");
@@ -17,7 +18,7 @@ function myFunction(x) {
 	$("rightBarIcon").removeClass("fas fa-bullhorn");
 	rightBarIcon.setAttribute("class","fas fa-bars");	
 	
-	if(document.getElementById('rightSideBar').style.display=="none"){document.getElementById('rightSideBar').style.display="none";}	
+	if(document.getElementById('rightSideBar').style.display=="none"){document.getElementById('rightSideBar').style.display="block";}	
 	
   } else {	
   	var rightSideBar = document.getElementById("rightSideBar");
