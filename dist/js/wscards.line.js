@@ -100,7 +100,7 @@
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
-				    if(!(cardStandard === keyStr){
+				    if(!(cardStandard === keyStr)){
 						continue;
 					}
 					console.log("選擇:"+cardStandard);
