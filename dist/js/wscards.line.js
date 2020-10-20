@@ -98,8 +98,9 @@
 				
 				for(var key in cardsTitle){	 
 
-					var keyStr=key.substr(0,key.indexOf('/'));
-				    if(!(cardStandard.indexOf(keyStr)>=0)){
+					var keyStr=key.substr(0,key.indexOf('/'));//2~3
+
+				    if(!(cardStandard==keyStr)){
 						continue;
 					}
 					console.log("選擇:"+cardStandard);
