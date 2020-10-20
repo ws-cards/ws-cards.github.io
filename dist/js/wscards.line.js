@@ -155,6 +155,7 @@
 					
 			
 			function changeNumber(){
+	document.getElementById('overlay-1').style.display='display';					
 				requestPrice.open('GET', requestURLCardPrice);
 				requestPrice.responseType = 'json';
 				requestPrice.send();
@@ -165,6 +166,13 @@
 				  getCardData(cards,cardNumber);
 				  console.log("162");
 				}
+	var timer = setInterval(function(){
+		if (document.getElementById('cardImg').complete){
+		clearInterval(timer);
+		console.log(document.getElementById('cardImg').complete)
+		document.getElementById('overlay-1').style.display='none';	
+		}
+	}, 10);			
 			}
 			
 
