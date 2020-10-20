@@ -81,7 +81,7 @@
 			  }
 
 			}
-			/*
+			
 			function changeStandard(){
 			  var cardStandard=document.getElementById('cardStandard').value;
 			  var cardStandardEle=document.getElementById('cardStandard');
@@ -100,8 +100,6 @@
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
-					console.log("選擇:"+cardStandard);
-					console.log("keyStr:"+keyStr);					
 				    if(!(cardStandard === keyStr)){
 						continue;
 					}
@@ -114,7 +112,7 @@
 				}
 				changeTitle();
 			  }				
-			}*/
+			}
 			
 			
 			function changeTitle(){						
