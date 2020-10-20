@@ -102,7 +102,12 @@
 					var keyStrLength=keyStr.length;
 					console.log("選擇:"+cardStandardArray);
 					console.log("keyStr:"+keyStr);	
-				    if(!(cardStandardArray.includes(keyStr))){
+					var filtered = cardStandardArray.filter(function(value) {
+						  return value === keyStr;
+					});						
+				    if(filtered==0){
+						//double check
+					
 						continue;
 					}
 					console.log("選擇:"+cardStandard);
