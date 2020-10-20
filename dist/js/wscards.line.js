@@ -100,6 +100,8 @@
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
+					console.log("選擇:"+cardStandard);
+					console.log("keyStr:"+keyStr);					
 				    if(!(cardStandard === keyStr)){
 						continue;
 					}
@@ -110,9 +112,9 @@
 					option.appendChild(document.createTextNode(cardsTitle[key])); 
 					selectTitle.appendChild(option);				
 				}
-				changeTitle();
 			  }				
 			}
+						
 			
 			
 			function changeTitle(){						
