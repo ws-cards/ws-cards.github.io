@@ -4,18 +4,20 @@ function myFunction(x) {
 	var mainSideBar= document.getElementById("mainSideBar");
 	var mainBarIcon= document.getElementById("mainBarIcon");
 	var rightBarIcon = document.getElementById("rightBarIcon");
-	
+	var leftbar = document.getElementById("leftbar");
 	$("rightSideBar").removeClass("control-sidebar");
-	rightSideBar.setAttribute("class","main-sidebar sidebar-dark-primary elevation-4");
 	$("mainSideBar").removeClass("main-sidebar");
 	mainSideBar.setAttribute("class","control-sidebar control-sidebar-dark");
-	
+	leftbar.removeAttribute("data-widget");
+	leftbar.setAttribute("onclick","document.location.href='./index.html';");
+	document.getElementById('rightSideBar').style.display="none";
+
 	$("mainBarIcon").removeClass("fas fa-bars");
-	mainBarIcon.setAttribute("class","fas fa-bullhorn");
+	mainBarIcon.setAttribute("class","fas fa-home");
 	$("rightBarIcon").removeClass("fas fa-bullhorn");
 	rightBarIcon.setAttribute("class","fas fa-bars");	
 	
-	if(document.getElementById('rightSideBar').style.display=="none"){document.getElementById('rightSideBar').style.display="block";}	
+	if(document.getElementById('rightSideBar').style.display=="none"){document.getElementById('rightSideBar').style.display="none";}	
 	
   } else {	
   	var rightSideBar = document.getElementById("rightSideBar");
