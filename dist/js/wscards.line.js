@@ -95,14 +95,14 @@
 			  requestTitle.send();					
 			  requestTitle.onload = function(){
 				var cardsTitle = requestTitle.response;
-				
+				var cardStandardArray = cardStandard.split(",");
 				for(var key in cardsTitle){	 
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
-					console.log("選擇:"+cardStandard);
-					console.log("keyStr:"+keyStr);					
-				    if(!(cardStandard === keyStr)){
+					console.log("選擇:"+cardStandardArray);
+					console.log("keyStr:"+keyStr);	
+				    if(!(cardStandardArray.includes(keyStr))){
 						continue;
 					}
 					console.log("選擇:"+cardStandard);
