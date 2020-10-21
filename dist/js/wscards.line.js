@@ -43,7 +43,9 @@
 						option.setAttribute("value",cardsW[key]);
 						option.appendChild(document.createTextNode(key)); 
 						optgroupW.appendChild(option);				
-					}					
+					}	
+					var not_use = document.getElementById("not_use");
+					optgroupW.removeChild(not_use);
 			  }
 			  requestStandardS.onload = function(){
 					var optgroupS = document.getElementById("Schwarz");				  
@@ -92,10 +94,7 @@
 			  var cardStandard=document.getElementById('cardStandard').value;
 			  var cardStandardEle=document.getElementById('cardStandard');
 			  var selectTitle = document.getElementById("cardTitle"); 
-			  var Weiss = document.getElementById("Weiss");
-			  while (Weiss.firstChild) {
-				Weiss.removeChild(Weiss.firstChild);
-			  }
+			  
 			  
     		  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
