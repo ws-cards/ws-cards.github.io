@@ -107,7 +107,6 @@
 					});						
 				    if(filtered==0){
 						//double check
-					
 						continue;
 					}
 					console.log("選擇:"+cardStandard);
@@ -117,10 +116,42 @@
 					option.appendChild(document.createTextNode(cardsTitle[key])); 
 					selectTitle.appendChild(option);				
 				}
-			  }				
+			  }		
+				changeStandardAfterChangeNumber();			  
 			}
 						
-			
+			function changeStandardAfterChangeNumber(){
+			  var selectPrice = document.getElementById("cardNumber"); 
+			  selectPrice.style.visibility = 'visible';
+			  
+			  selectPrice.length = 1;
+			  selectPrice.options[0].selected = true;	
+			  selectPrice.options[0].setAttribute("id","oldID");
+			  selectPrice.removeChild(document.getElementById('oldID'));
+			  
+			  
+			  var cardTitle = document.getElementById('cardTitle').value;
+			  
+			  requestPrice.open('GET', requestURLCardPrice);
+			  requestPrice.responseType = 'json';
+			  requestPrice.send();				  
+			  requestPrice.onload = function() {
+			  			  console.log(cardTitle);
+				var cards = requestPrice.response;
+				  for(var key in cards){
+					if(key.indexOf(cardTitle)>= 0){
+						var option = document.createElement("option"); 
+						option.setAttribute("value",key);
+						option.appendChild(document.createTextNode(key)); 							
+						selectPrice.appendChild(option);
+					}					
+				  }			
+				 //重新排列option
+				 sortOption();
+				 selectPrice.options[0].selected=true;
+				 changeNumber();
+			  }				
+			)
 			
 			function changeTitle(){						
 			  sortOption();
@@ -143,9 +174,7 @@
 			  			  console.log(cardTitle);
 				var cards = requestPrice.response;
 				  for(var key in cards){
-				  console.log("key- testing");
 					if(key.indexOf(cardTitle)>= 0){
-						console.log("138");
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
 						option.appendChild(document.createTextNode(key)); 							
@@ -170,13 +199,13 @@
 				  var cardNumber = document.getElementById('cardNumber').value;
 				  getCardData(cards,cardNumber);
 				}
-	var timer = setInterval(function(){
-		if (document.getElementById('cardImg').complete){
-		clearInterval(timer);
-		console.log(document.getElementById('cardImg').complete)
-		document.getElementById('overlay-1').style.display='none';	
-		}
-	}, 10);			
+				var timer = setInterval(function(){
+					if (document.getElementById('cardImg').complete){
+					clearInterval(timer);
+					console.log(document.getElementById('cardImg').complete)
+					document.getElementById('overlay-1').style.display='none';	
+					}
+				}, 10);			
 			}
 			
 
@@ -184,6 +213,8 @@
 			
 			/*繪圖區*/
 			function getCardData(jsonObj,cardNum) {
+			  document.getElementById('overlay-1').style.display='display';					
+			  document.getElementById('overlay-2').style.display='display';				
 			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
@@ -247,7 +278,7 @@
 				cardTitleListener.addEventListener("change", function(){
 					chart.destroy();
 				});		
-		document.getElementById('overlay-2').style.display='none';					
+				document.getElementById('overlay-2').style.display='none';					
 			}
 
 			
