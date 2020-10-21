@@ -4,8 +4,8 @@
 
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
-			var standardWURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_S.json';
-			var standardSURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_W.json';
+			var standardWURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_W.json';
+			var standardSURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_S.json';
 			var requestStandardW = new XMLHttpRequest();
 			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
@@ -127,6 +127,11 @@
 			}
 						
 			function changeStandardAfterChangeNumber(){
+			  var Weiss = document.getElementById("Weiss"); 			  
+			  while (Weiss.firstChild) {
+				Weiss.removeChild(Weiss.firstChild);
+			  }
+			  
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.style.visibility = 'visible';			  			  
 			  var cardTitle = document.getElementById('cardTitle').value;
@@ -146,8 +151,6 @@
 			  
 			  selectPrice.length = 1;
 			  selectPrice.options[0].selected = true;	
-			 // selectPrice.options[0].setAttribute("id","oldID");
-			  //selectPrice.removeChild(document.getElementById('oldID'));
 			  while (selectPrice.firstChild) {
 				selectPrice.removeChild(selectPrice.firstChild);
 			  }					  
