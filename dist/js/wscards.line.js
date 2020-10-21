@@ -172,8 +172,8 @@
 					
 			
 			function changeNumber(){	
-			  document.getElementById('overlay-1').style.display='display';					
-			  document.getElementById('overlay-2').style.display='display';				
+			  document.getElementById('overlay-1').style.display='block';					
+			  document.getElementById('overlay-2').style.display='block';				
 				requestPrice.open('GET', requestURLCardPrice);
 				requestPrice.responseType = 'json';
 				requestPrice.send();
