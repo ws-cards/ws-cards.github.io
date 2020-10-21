@@ -92,8 +92,9 @@
 			  var cardStandard=document.getElementById('cardStandard').value;
 			  var cardStandardEle=document.getElementById('cardStandard');
 			  var selectTitle = document.getElementById("cardTitle"); 
-			  while (selectTitle.firstChild) {
-				selectTitle.removeChild(selectTitle.firstChild);
+			  var Weiss = document.getElementById("Weiss");
+			  while (Weiss.firstChild) {
+				Weiss.removeChild(Weiss.firstChild);
 			  }
 			  
     		  requestTitle.open('GET', requestURLCardTitle);
