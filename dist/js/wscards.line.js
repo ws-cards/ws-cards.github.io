@@ -124,13 +124,17 @@
 				changeStandardAfterChangeNumber();			  
 			}
 						
-			function removeTitle(){				
-					document.getElementById('notuse').style.display='none'
+			function removeTitle(){
+					var optgroupW = document.getElementById("Weiss");				
+					optgroupW.remove(0);
 			}				
 			
 			function changeStandardAfterChangeNumber(){
 			  var selectPrice = document.getElementById("cardNumber"); 
-			  selectPrice.style.visibility = 'visible';			  			  
+			  selectPrice.style.visibility = 'visible';		
+			  while (selectPrice.firstChild) {
+				selectPrice.removeChild(selectPrice.firstChild);
+			  }				
 			  var cardTitle = document.getElementById('cardTitle').value;
 			  var selectTitle = document.getElementById("cardTitle"); 			  
 			  var option = document.createElement("option"); 
