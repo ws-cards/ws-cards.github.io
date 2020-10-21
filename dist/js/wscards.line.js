@@ -44,8 +44,7 @@
 						option.appendChild(document.createTextNode(key)); 
 						optgroupW.appendChild(option);				
 					}	
-					var not_use = document.getElementById("not_use");
-					optgroupW.removeChild(not_use);
+					optgroupW.remove(0);
 			  }
 			  requestStandardS.onload = function(){
 					var optgroupS = document.getElementById("Schwarz");				  
