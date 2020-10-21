@@ -122,10 +122,13 @@
 						
 			function changeStandardAfterChangeNumber(){
 			  var selectPrice = document.getElementById("cardNumber"); 
-			  selectPrice.style.visibility = 'visible';
-			  			  
+			  selectPrice.style.visibility = 'visible';			  			  
 			  var cardTitle = document.getElementById('cardTitle').value;
-			  		
+			  var option = document.createElement("option"); 
+				  option.setAttribute("value",0);
+				  option.appendChild(document.createTextNode("--選擇主題--")); 				  
+
+				  cardTitle.insertBefore(option,cardTitle.childNodes[0]);			 
 			}
 			
 			function changeTitle(){						
