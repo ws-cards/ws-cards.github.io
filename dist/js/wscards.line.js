@@ -171,7 +171,9 @@
 			}
 					
 			
-			function changeNumber(){					
+			function changeNumber(){	
+			  document.getElementById('overlay-1').style.display='display';					
+			  document.getElementById('overlay-2').style.display='display';				
 				requestPrice.open('GET', requestURLCardPrice);
 				requestPrice.responseType = 'json';
 				requestPrice.send();
@@ -194,8 +196,6 @@
 			
 			/*繪圖區*/
 			function getCardData(jsonObj,cardNum) {
-			  document.getElementById('overlay-1').style.display='display';					
-			  document.getElementById('overlay-2').style.display='display';				
 			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
