@@ -25,7 +25,8 @@ function myFunction(x) {
 	var mainSideBar= document.getElementById("mainSideBar");
 	var mainBarIcon= document.getElementById("mainBarIcon");
 	var rightBarIcon = document.getElementById("rightBarIcon");
-	
+	var leftbar = document.getElementById("leftbar");
+	leftbar.removeAttribute("onclick");	
 	$("rightSideBar").removeClass("main-sidebar");
 	rightSideBar.setAttribute("class","control-sidebar control-sidebar-dark");	
 	$("mainSideBar").removeClass("control-sidebar");
