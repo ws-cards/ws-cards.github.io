@@ -79,7 +79,13 @@
 				  var cards = requestPrice.response;
 				  getCardData(cards,'BD/W54-070SSP');			  
 			  }
-
+				var timer = setInterval(function(){
+					if (document.getElementById('cardImg').complete){
+					clearInterval(timer);
+					console.log(document.getElementById('cardImg').complete)
+					document.getElementById('overlay-1').style.display='none';	
+					}
+				}, 10);	
 			}
 			
 			function changeStandard(){
