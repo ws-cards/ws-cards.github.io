@@ -124,9 +124,8 @@
 				changeStandardAfterChangeNumber();			  
 			}
 						
-			function removeTitle(){
-					var optgroupW = document.getElementById("Weiss");				
-					optgroupW.remove(0);
+			function removeTitle(){				
+					document.getElementById('notuse').style.display='none'
 			}				
 			
 			function changeStandardAfterChangeNumber(){
