@@ -1,4 +1,4 @@
-		window.onload=function(){
+	window.onload=function(){
 			  setFun();  
 			}
 
@@ -155,9 +155,7 @@
 				 //重新排列option
 				 sortOption();
 				 selectPrice.options[0].selected=true;
-				 console.log("148");
 				 changeNumber();
-				 console.log("149");
 			  }
 			  
 			}
@@ -170,9 +168,7 @@
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
 				  var cardNumber = document.getElementById('cardNumber').value;
-				  console.log("160");
 				  getCardData(cards,cardNumber);
-				  console.log("162");
 				}
 	var timer = setInterval(function(){
 		if (document.getElementById('cardImg').complete){
@@ -251,6 +247,7 @@
 				cardTitleListener.addEventListener("change", function(){
 					chart.destroy();
 				});		
+		document.getElementById('overlay-2').style.display='none';					
 			}
 
 			
