@@ -123,34 +123,9 @@
 			function changeStandardAfterChangeNumber(){
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.style.visibility = 'visible';
-			  
-			  selectPrice.length = 1;
-			  selectPrice.options[0].selected = true;	
-			  selectPrice.options[0].setAttribute("id","oldID");
-			  selectPrice.removeChild(document.getElementById('oldID'));
-			  
-			  
+			  			  
 			  var cardTitle = document.getElementById('cardTitle').value;
-			  
-			  requestPrice.open('GET', requestURLCardPrice);
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();				  
-			  requestPrice.onload = function() {
-			  			  console.log(cardTitle);
-				var cards = requestPrice.response;
-				  for(var key in cards){
-					if(key.indexOf(cardTitle)>= 0){
-						var option = document.createElement("option"); 
-						option.setAttribute("value",key);
-						option.appendChild(document.createTextNode(key)); 							
-						selectPrice.appendChild(option);
-					}					
-				  }			
-				 //重新排列option
-				 sortOption();
-				 selectPrice.options[0].selected=true;
-				 changeNumber();
-			  }				
+			  		
 			}
 			
 			function changeTitle(){						
@@ -161,9 +136,11 @@
 			  
 			  selectPrice.length = 1;
 			  selectPrice.options[0].selected = true;	
-			  selectPrice.options[0].setAttribute("id","oldID");
-			  selectPrice.removeChild(document.getElementById('oldID'));
-			  
+			 // selectPrice.options[0].setAttribute("id","oldID");
+			  //selectPrice.removeChild(document.getElementById('oldID'));
+			  while (selectPrice.firstChild) {
+				selectPrice.removeChild(selectPrice.firstChild);
+			  }					  
 			  
 			  var cardTitle = document.getElementById('cardTitle').value;
 			  
