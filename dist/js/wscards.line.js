@@ -106,8 +106,7 @@
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
-					console.log("選擇:"+cardStandardArray);
-					console.log("keyStr:"+keyStr);	
+
 					var filtered = cardStandardArray.filter(function(value) {
 						  return value === keyStr;
 					});						
@@ -115,8 +114,7 @@
 						//double check
 						continue;
 					}
-					console.log("選擇:"+cardStandard);
-					console.log("right in:"+key);
+
 					var option = document.createElement("option");
 					option.setAttribute("value",key);
 					option.appendChild(document.createTextNode(cardsTitle[key])); 
@@ -126,9 +124,8 @@
 				changeStandardAfterChangeNumber();			  
 			}
 						
-			function removeTitle(){
-					var optgroupW = document.getElementById("Weiss");				
-					optgroupW.remove(0);
+			function removeTitle(){			
+					document.getElementById('notuse').style.display='none';
 			}				
 			
 			function changeStandardAfterChangeNumber(){
