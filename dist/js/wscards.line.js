@@ -124,11 +124,12 @@
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.style.visibility = 'visible';			  			  
 			  var cardTitle = document.getElementById('cardTitle').value;
+			  var selectTitle = document.getElementById("cardTitle"); 			  
 			  var option = document.createElement("option"); 
 				  option.setAttribute("value",0);
 				  option.appendChild(document.createTextNode("--選擇主題--")); 				  
-
-				  cardTitle.insertBefore(option,cardTitle.childNodes[0]);			 
+				  selectTitle.appendChild(option);	
+				  selectTitle.insertBefore(option,selectTitle.childNodes[0]);			 
 			}
 			
 			function changeTitle(){						
