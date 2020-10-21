@@ -44,7 +44,6 @@
 						option.appendChild(document.createTextNode(key)); 
 						optgroupW.appendChild(option);				
 					}	
-					optgroupW.remove(0);
 			  }
 			  requestStandardS.onload = function(){
 					var optgroupS = document.getElementById("Schwarz");				  
@@ -125,12 +124,12 @@
 				changeStandardAfterChangeNumber();			  
 			}
 						
+			function removeTitle(){
+					var optgroupW = document.getElementById("Weiss");				
+					optgroupW.remove(0);
+			}				
+			
 			function changeStandardAfterChangeNumber(){
-			  var Weiss = document.getElementById("Weiss"); 			  
-			  while (Weiss.firstChild) {
-				Weiss.removeChild(Weiss.firstChild);
-			  }
-			  
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.style.visibility = 'visible';			  			  
 			  var cardTitle = document.getElementById('cardTitle').value;
