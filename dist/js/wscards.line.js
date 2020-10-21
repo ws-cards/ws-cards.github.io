@@ -92,7 +92,9 @@
 			  var cardStandard=document.getElementById('cardStandard').value;
 			  var cardStandardEle=document.getElementById('cardStandard');
 			  var selectTitle = document.getElementById("cardTitle"); 
-			  
+			  while (selectTitle.firstChild) {
+				selectTitle.removeChild(selectTitle.firstChild);
+			  }			  
 			  
     		  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
