@@ -252,26 +252,29 @@
 			
 			  requestPrice.onload = function(){
 				var cardsPrice = requestPrice.response;
-				var upArray=[{price:1,cardNo:"A",cardSpread:1},
-							{price:2,cardNo:"B",cardSpread:1},
-							{price:3,cardNo:"C",cardSpread:1},
-							{price:4,cardNo:"D",cardSpread:1},
-							{price:5,cardNo:"E",cardSpread:1},
-							{price:6,cardNo:"F",cardSpread:1},
-							{price:7,cardNo:"G",cardSpread:1},
-							{price:8,cardNo:"H",cardSpread:1},
-							{price:9,cardNo:"I",cardSpread:1},
-							{price:10,cardNo:"J",cardSpread:1}];
-				var downArray=[{price:1,cardNo:"A",cardSpread:0},
-							{price:1,cardNo:"B",cardSpread:0},
-							{price:1,cardNo:"C",cardSpread:0},
-							{price:1,cardNo:"D",cardSpread:0},
-							{price:1,cardNo:"E",cardSpread:0},
-							{price:1,cardNo:"F",cardSpread:0},
-							{price:1,cardNo:"G",cardSpread:0},
-							{price:1,cardNo:"H",cardSpread:0},
-							{price:1,cardNo:"I",cardSpread:0},
-							{price:1,cardNo:"J",cardSpread:0}];							
+				var upArray=new Array();
+				var downArray=new Array();
+				var arraySetLength=15;
+				//var upArray=[{price:1,cardNo:"A",cardSpread:1},
+				//			{price:2,cardNo:"B",cardSpread:1},
+				//			{price:3,cardNo:"C",cardSpread:1},
+				//			{price:4,cardNo:"D",cardSpread:1},
+				//			{price:5,cardNo:"E",cardSpread:1},
+				//			{price:6,cardNo:"F",cardSpread:1},
+				//			{price:7,cardNo:"G",cardSpread:1},
+				//			{price:8,cardNo:"H",cardSpread:1},
+				//			{price:9,cardNo:"I",cardSpread:1},
+				//			{price:10,cardNo:"J",cardSpread:1}];
+				//var downArray=[{price:1,cardNo:"A",cardSpread:0},
+				//			{price:1,cardNo:"B",cardSpread:0},
+				//			{price:1,cardNo:"C",cardSpread:0},
+				//			{price:1,cardNo:"D",cardSpread:0},
+				//			{price:1,cardNo:"E",cardSpread:0},
+				//			{price:1,cardNo:"F",cardSpread:0},
+				//			{price:1,cardNo:"G",cardSpread:0},
+				//			{price:1,cardNo:"H",cardSpread:0},
+				//			{price:1,cardNo:"I",cardSpread:0},
+				//			{price:1,cardNo:"J",cardSpread:0}];							
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
 					var cardPrice = cardPriceInfo ['cardPrice'];
@@ -279,6 +282,7 @@
 					var firstDatePrice;
 					var lastDatePrice;
 					var spread;
+
 					if(cardPrice.length>7){
 						firstDatePrice = cardPrice [cardPrice.length-7];//七天第一天
 						lastDatePrice = cardPrice[cardPrice.length-1];					
@@ -286,21 +290,26 @@
 						firstDatePrice = cardPrice [0];//七天第一天
 						lastDatePrice = cardPrice[cardPrice.length-1];							
 					}
-					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;
-					if(spread>0){
+					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
+					
+					if(upArray.length<=arraySetLength&&downArray.length<=arraySetLength){				
 						upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						upArray.sort(function(a, b) {
-							return a.cardSpread < b.cardSpread ? 1: -1;
-						});
-						upArray.pop();					
-					}else{
 						downArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						downArray.sort(function(a, b) {
-							return a.cardSpread > b.cardSpread ? 1: -1;
-						});
-						downArray.pop();						
+					}else{
+						if(spread>0){
+							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
+							upArray.sort(function(a, b) {
+								return a.cardSpread < b.cardSpread ? 1: -1;
+							});
+							upArray.pop();					
+						}else{
+							downArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
+							downArray.sort(function(a, b) {
+								return a.cardSpread > b.cardSpread ? 1: -1;
+							});
+							downArray.pop();						
+						}
 					}
-
 				}
 				settingUpTable(upArray);
 				settingDownTable(downArray);
