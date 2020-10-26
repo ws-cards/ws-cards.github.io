@@ -266,6 +266,7 @@
 					}	
 				}else{
 					var totalPrice = calculateDeckPrice(deckCardList);
+					console.log("total"+totalPrice);
 				}
 			  }
 			 } 
@@ -283,21 +284,29 @@
 			  requestPrice.onload = function(){
 			  var cardsPrice=requestPrice.response;
 			  var totalPrice;
-				for(var key in cardsPrice){					
-					var cardPriceInfo = cardsPrice[key];
-					var cardPrice = cardPriceInfo ['cardPrice'];	
-					var lastDatePrice = cardPrice[cardPrice.length-1];
+
 					
 					for(var cardkey in deckCardList){
 						var cardList=deckCardList[cardkey];
 						var cardNumber=cardList['cardNumber'];
-						var cardTimes=cardList['cardTime']
-						console.log("超多資料的那個key:"+key);
+						var cardTimes=cardList['cardTime'];
 
+						for(var key in cardsPrice){
+							if(cardNumber===key){
+							
+							var cardPriceInfo = cardsPrice[key];
+							var cardPrice = cardPriceInfo ['cardPrice'];	
+							var lastDatePrice = cardPrice[cardPrice.length-1];
+							console.log("No:"+cardNumber);
+							console.log("Price:"+lastDatePrice);
+							totalPrice=totalPrice+lastDatePrice;
+							break;
+							}
+						}					
 					}
 				}					
 			  }	
-				return 1000;
+				return totalPrice;
 			}
 			
 </script>
