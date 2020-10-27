@@ -148,7 +148,7 @@
             <div class="card p-3 mb-3">
 			  <div class="row">
 				<div class="col-lg-12">
-					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-text">牌組名稱:本日爆裂魔法</h5>
+					<h5 id="deckName" style="font-family: 'Noto Sans TC', sans-serif;" class="card-text">牌組名稱:</h5>
 					<div class="card-tools">
 					  <!-- Collapse Button -->
 					</div>		
@@ -157,13 +157,12 @@
 
 			  <div class="row">
 				<div class="col-sm-3">
-					<p id="deckName" style="font-family: 'Noto Sans TC', sans-serif;" class="card-text d-inline">
-						主題名稱:この素晴らしい世界に祝福を！
+					<p id="deckTitleName" style="font-family: 'Noto Sans TC', sans-serif;" class="card-text d-inline">
 					</p>
 				</div>
 				<div class="col-sm-3">
 					<p id="deckCodeDisplay" style="font-family: 'Noto Sans TC', sans-serif;" class="card-text d-inline">
-						デッキコード: GR62</p>
+					</p>
 					
 				</div>
 				<div class="col-sm-3">
@@ -186,19 +185,7 @@
 									<th>總價</th>								
 								</tr>
 							</thead>
-							<tbody id="deckCardInfoList">
-								<tr>
-									<td>OO/WOO-OO1</td>
-									<td>10</td>
-									<td>4</td>
-									<td>40</td>
-								</tr>
-								<tr>
-									<td>OO/WOO-OO2</td>
-									<td>10</td>
-									<td>4</td>
-									<td>40</td>
-								</tr>							
+							<tbody id="deckCardInfoList">						
 							</tbody>
 						</table>	
 				  </div>
@@ -208,8 +195,8 @@
 							<table class="table">
 							 <tr>
 								<th>總額:</th>
-								<td><p class="card-text float-right" style="font-family: 'Noto Sans TC', sans-serif;font-size:20px;">
-								13333</p></td>
+								<td><p id="deckTotalPrice" class="card-text float-right" style="font-family: 'Noto Sans TC', sans-serif;font-size:20px;">
+								</p></td>
 								
 							  </tr>
 							</table>
@@ -299,7 +286,7 @@
 	
 				var deckLockInfo = requestDeckLog.response;
 				console.log(deckLockInfo);
-				if('NODATA'.indexOf(deckLockInfo)>=0){
+				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
 					alert("沒資料");
 				}else if('Exception'.indexOf(deckLockInfo)>=0){
 					alert("網站發生不明錯誤");
@@ -320,6 +307,9 @@
 								alert('不是WS的');
 						}	
 					}else{
+						document.getElementById('deckCodeDisplay').innerHTML='デッキコード: '+deckId;
+						//document.getElementById('deckTitleName').innerHTML=;
+						document.getElementById('deckName').innerHTML='牌組名稱:'+deckName;					
 						calculateDeckPrice(deckCardList);
 					}
 				
@@ -363,7 +353,7 @@
 						}		
 					}
 				console.log("total:"+totalPrice);	
-				alert("牌組總價:"+totalPrice);
+				document.getElementById('deckTotalPrice').innerHTML=totalPrice;
 				document.getElementById('overlay-1').style.display='none';
 				document.getElementById('overlay-2').style.display='none';
 				}					
@@ -374,13 +364,16 @@
 				var tr = document.createElement("tr");							
 				var tdCardNo = document.createElement("td");
 				var tdPrice = document.createElement("td");
+				var tdTotalPrice = document.createElement("td");				
 				var tdNum = document.createElement("td");							
 				tdCardNo.innerHTML=cardNumber;	
 				tdPrice.innerHTML=cardPrice;	
+				tdTotalPrice.innerHTML=cardPrice*cardTimes;
 				tdNum.innerHTML=cardTimes;	
 				tr.appendChild(tdCardNo); 
 				tr.appendChild(tdPrice); 
 				tr.appendChild(tdNum); 
+				tr.appendChild(tdTotalPrice);
 				deckTable.appendChild(tr);				
 			}	
 
