@@ -263,13 +263,13 @@
 			var requestPrice = new XMLHttpRequest();			
 			
 			window.onload=function(){
-				document.getElementById('second-content').style='none';
+				document.getElementById('second-content').style.display='none';
 			  //setFun();  
 			}
 			
 			function deckCal(){
 				document.getElementById('overlay-1').style='display';
-				document.getElementById('overlay-2').style='display';				
+				document.getElementById('overlay-2').style='display';					
 				var oform = document.forms["calForm"];
 				var deckCode = oform.elements["deckCode"].value;
 				setDeckPrice(deckCode);
@@ -288,9 +288,11 @@
 				console.log(deckLockInfo);
 				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
 					alert("沒資料");
+					document.getElementById('overlay-1').style.display='none';				
 				}else if('Exception'.indexOf(deckLockInfo)>=0){
 					alert("網站發生不明錯誤");
-				}else{
+					document.getElementById('overlay-1').style.display='none';					
+				}else{					
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
 					var deckName = deckLockInfo['deckName'];
 					var deckId = deckLockInfo['deckId'];
@@ -299,14 +301,18 @@
 						switch(deckGameTitle){
 							case '5':
 								alert('你輸入的是Reバース的牌組!');
+								document.getElementById('overlay-1').style.display='none';										
 								break;
 							case '1':
 								alert('你輸入的是VG的牌組!');
+								document.getElementById('overlay-1').style.display='none';	
 								break;
 							default:
 								alert('不是WS的');
+								document.getElementById('overlay-1').style.display='none';	
 						}	
 					}else{
+						document.getElementById('second-content').style='display';						
 						document.getElementById('deckCodeDisplay').innerHTML='デッキコード: '+deckId;
 						//document.getElementById('deckTitleName').innerHTML=;
 						document.getElementById('deckName').innerHTML='牌組名稱:'+deckName;					
@@ -382,7 +388,7 @@
 				var deckCode=document.getElementById('deckCode').value;
 				var moveOthereWeb=confirm("將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?");
 				if(moveOthereWeb){
-					window.location.replace("https://decklog.bushiroad.com/view/"+deckCode);
+					window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
 				}
 			});	
 			
