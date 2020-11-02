@@ -266,7 +266,7 @@
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
 			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
-			var requestURLCardPrice = 'https://ws-cards.cloud/cardData.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';		
 			var requestDeckLog = new XMLHttpRequest();	
 			var requestPrice = new XMLHttpRequest();			
 			
@@ -382,16 +382,38 @@
 				var tdCardNo = document.createElement("td");
 				tdCardNo.setAttribute("class","tdClass");
 				tdCardNo.setAttribute("id",cardNumber);
-				tdCardNo.addEventListener("click", function(){
+				tdCardNo.addEventListener("mouseover", function(){
+							document.getElementById(tdCardNo.getAttribute('id')).style="display";
 							console.log('cardID:'+tdCardNo.getAttribute('id'));
-					});				
+				});				
 				var tdPrice = document.createElement("td");
 				var tdTotalPrice = document.createElement("td");				
-				var tdNum = document.createElement("td");							
+				var tdNum = document.createElement("td");		
 				tdCardNo.innerHTML=cardNumber;	
 				tdPrice.innerHTML=cardPrice;	
 				tdTotalPrice.innerHTML=cardPrice*cardTimes;
 				tdNum.innerHTML=cardTimes;	
+				
+				//catch num
+				var card_Num=cardNumber;
+				if(cardNum.indexOf(' ')>=0){
+					card_Num=cardNum.substr(0,cardNum.indexOf(' '));
+				}else{
+					card_Num=cardNum;				
+				}
+
+				var card_first=card_Num.substr(0,1);
+				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+					card_second=card_second.replace('/','_')
+				var card_third=card_Num.replace('/','_');
+					card_third=card_third.replace('-','_');	
+				const cardImg = document.getElementById('cardImg');
+				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+								
+				var imgNum = document.createElement("img");		
+				imgNum.setAttribute("id",cardNumber);
+				imgNum.setAttribute("src",urlCard);
+				imgNum.setAttribute("style","display:none");
 				tr.appendChild(tdCardNo); 
 				tr.appendChild(tdPrice); 
 				tr.appendChild(tdNum); 
