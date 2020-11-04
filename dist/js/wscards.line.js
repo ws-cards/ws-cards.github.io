@@ -5,7 +5,7 @@
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
 			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
-			var standardSURL = 'https://storage.googleapis.com/ws-cards.cloud/json/cardStandard_S.json';
+			var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
 			var requestStandardW = new XMLHttpRequest();
 			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
