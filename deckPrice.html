@@ -252,8 +252,41 @@
 </div>
 <!-- ./wrapper -->
 
-<!-- REQUIRED SCRIPTS -->
 
+
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
+  Launch demo modal
+</button>
+
+<!-- Modal -->
+<div class="modal " id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+		<img id="cardImg">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<!-- REQUIRED SCRIPTS -->
 <!--chart.js-->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 <!-- jQuery -->
@@ -383,9 +416,25 @@
 				tdCardNo.setAttribute("class","tdClass");
 				tdCardNo.setAttribute("id",cardNumber);
 				tdCardNo.addEventListener("click", function(){
-							var cardid=tdCardNo.getAttribute('id');
-							document.getElementById(cardid+'_img').style='display';
-							console.log('cardID:'+cardid);
+							console.log('cardNumber:'+cardNumber);
+							
+							//catch num
+							var card_Num=cardNumber;
+							if(card_Num.indexOf(' ')>=0){
+								card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+							}else{
+								card_Num=card_Num;				
+							}
+
+							var card_first=card_Num.substr(0,1);
+							var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+								card_second=card_second.replace('/','_')
+							var card_third=card_Num.replace('/','_');
+								card_third=card_third.replace('-','_');								
+							var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+							var cardImg=document.getElementById('cardImg');
+							cardImg.setAttribute("src",urlCard);
+							$('#exampleModalCenter').modal('toggle');		
 				});				
 				var tdPrice = document.createElement("td");
 				var tdTotalPrice = document.createElement("td");				
@@ -394,32 +443,12 @@
 				tdPrice.innerHTML=cardPrice;	
 				tdTotalPrice.innerHTML=cardPrice*cardTimes;
 				tdNum.innerHTML=cardTimes;	
-				
-				//catch num
-				var card_Num=cardNumber;
-				if(card_Num.indexOf(' ')>=0){
-					card_Num=card_Num.substr(0,card_Num.indexOf(' '));
-				}else{
-					card_Num=card_Num;				
-				}
 
-				var card_first=card_Num.substr(0,1);
-				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
-					card_second=card_second.replace('/','_')
-				var card_third=card_Num.replace('/','_');
-					card_third=card_third.replace('-','_');	
-				const cardImg = document.getElementById('cardImg');
-				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
-								
-				var imgNum = document.createElement("img");		
-				imgNum.setAttribute("id",cardNumber+"_img");
-				imgNum.setAttribute("src",urlCard);
-				imgNum.setAttribute("style","display:none");
 				tr.appendChild(tdCardNo); 
 				tr.appendChild(tdPrice); 
 				tr.appendChild(tdNum); 
 				tr.appendChild(tdTotalPrice);
-				tr.appendChild(imgNum);
+
 				deckTable.appendChild(tr);				
 			}	
 
