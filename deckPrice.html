@@ -397,6 +397,8 @@
 				var thead_tr_th_cardprice = document.createElement("th");
 				var thead_tr_th_cardnum = document.createElement("th");
 				var thead_tr_th_cardtotal = document.createElement("th");
+				var tbody = document.createElement("tbody");
+				
 				thead_tr_th_cardno.innerHTML="卡號";
 				thead_tr_th_cardprice.innerHTML="單價";
 				thead_tr_th_cardnum.innerHTML="數量";
@@ -406,8 +408,10 @@
 				thead_tr.appendChild(thead_tr_th_cardnum);
 				thead_tr.appendChild(thead_tr_th_cardtotal);
 				thead.appendChild(thead_tr);	
-				deckTableHead.appendChild(thead);
+				tbody.setAttribute("id","tableCardBody");
 				
+				deckTableHead.appendChild(thead);
+				deckTableHead.appendChild(tbody);
 			  requestPrice.open('GET', requestURLCardPrice);
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
@@ -446,6 +450,7 @@
 			}
 			var deckTable=document.getElementById('deckTable');				
 			function createTableTree(cardNumber,cardPrice,cardTimes){
+			var deckTablebody=document.getElementById('tableCardBody');		
 				var tr = document.createElement("tr");							
 				var tdCardNo = document.createElement("td");
 				tdCardNo.setAttribute("class","tdClass");
@@ -472,7 +477,7 @@
 							$('#exampleModalCenter').modal('show');		
 				});				
 
-				var tbody = document.createElement("tbody");
+				
 				var tdPrice = document.createElement("td");
 				var tdTotalPrice = document.createElement("td");				
 				var tdNum = document.createElement("td");		
@@ -485,8 +490,7 @@
 				tr.appendChild(tdPrice); 
 				tr.appendChild(tdNum); 
 				tr.appendChild(tdTotalPrice);
-				tbody.appendChild(tr);
-				deckTable.appendChild(tbody);		
+				deckTablebody.appendChild(tr);		
 				$('#deckTable').DataTable();					
 			}	
 
