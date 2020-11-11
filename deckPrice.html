@@ -316,7 +316,8 @@
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
 			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
-			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
+			var requestURLCardPriceByPreCode = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData/';
 			var requestDeckLog = new XMLHttpRequest();	
 			var requestPrice = new XMLHttpRequest();			
 			
@@ -425,7 +426,15 @@
 				
 				deckTableHead.appendChild(thead);
 				deckTableHead.appendChild(tbody);
-			  requestPrice.open('GET', requestURLCardPrice);
+				
+				
+			var getCardListFirstContent = deckCardList[0];
+			var getFirstCardPrice = cardPriceInfo ['cardPrice'];	
+			var preCode=getFirstCardPrice.substr(0,getFirstCardPrice.indexOf('-'));
+			var preCode_clean=preCode.replace('/','_')			
+			
+			
+			  requestPrice.open('GET', requestURLCardPrice+preCode_clean+".json");
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
 			  var totalPrice=0;
@@ -436,9 +445,10 @@
 						var cardList=deckCardList[cardkey];
 						var cardNumber=cardList['cardNumber'];
 						var cardTimes=cardList['cardTime'];
-
+						var internalCardNumber=cardList['internalCardNumber'];
+						
 						for(var key in cardsPrice){
-							if(cardNumber===key){
+							if(internalCardNumber===key){
 							
 							var cardPriceInfo = cardsPrice[key];
 							var cardPrice = cardPriceInfo ['cardPrice'];	
