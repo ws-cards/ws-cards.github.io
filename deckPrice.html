@@ -181,7 +181,9 @@
 					</p>	
 					</button>
 				</div>
-				<div class="col-sm-3"><small class="float-right" id="searchDate">日期:2020/11/09</small></div>
+				<div class="col-sm-3"><small class="float-right" id="searchDate">日期:2020/11/09</small></br>
+									  <small class="float-right" id="updatePriceDate">日期:2020/11/09</small>
+				</div>		
 			  </div>
 			  <div class="row">
 				  <div class="card-body  table-responsive p-0">
@@ -317,7 +319,7 @@
 <script>
 			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
-			var requestURLCardPriceByPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+			var requestURLCardPriceByPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDataAllDataAtLasted.json';
 			var requestDeckLog = new XMLHttpRequest();	
 			var requestPrice = new XMLHttpRequest();			
 			
@@ -366,6 +368,9 @@
 					var deckId = deckLockInfo['deckId'];
 					var deckWSTitle = deckLockInfo['deckWSTitle'];
 					var deckCardList = deckLockInfo['cardList'];
+					var deckPriceDateList = deckCardList[0];
+					var deckUpdatePriceDate = deckPriceDateList['uppdate'];
+					console.log(deckUpdatePriceDate);
 					if(!(deckGameTitle==='2')){
 						switch(deckGameTitle){
 							case '5':
@@ -389,7 +394,8 @@
 						var month = today.getMonth()+1;
 						var date = today.getDate();
 						var year = today.getFullYear();
-						document.getElementById('searchDate').innerHTML="日期:"+year+"/"+month+"/"+date;
+						document.getElementById('searchDate').innerHTML="製表日期:"+year+"/"+month+"/"+date;
+						document.getElementById('updatePriceDate').innerHTML="價格更新日期:";
 						calculateDeckPrice(deckCardList);
 					}
 				
@@ -404,20 +410,23 @@
 			
 			function calculateDeckPrice(deckCardList){
 			
-			var deckTableHead=document.getElementById('deckTable');
+				var deckTableHead=document.getElementById('deckTable');
 				var thead = document.createElement("thead");
 				var thead_tr = document.createElement("tr");
 				var thead_tr_th_cardno = document.createElement("th");
+				var thead_tr_th_cardrare = document.createElement("th");
 				var thead_tr_th_cardprice = document.createElement("th");
 				var thead_tr_th_cardnum = document.createElement("th");
 				var thead_tr_th_cardtotal = document.createElement("th");
 				var tbody = document.createElement("tbody");
 				
 				thead_tr_th_cardno.innerHTML="卡號";
+				thead_tr_th_cardrare.innerHTML="稀有度";
 				thead_tr_th_cardprice.innerHTML="單價";
 				thead_tr_th_cardnum.innerHTML="數量";
 				thead_tr_th_cardtotal.innerHTML="總和";
 				thead_tr.appendChild(thead_tr_th_cardno);
+				thead_tr.appendChild(thead_tr_th_cardrare);
 				thead_tr.appendChild(thead_tr_th_cardprice);
 				thead_tr.appendChild(thead_tr_th_cardnum);
 				thead_tr.appendChild(thead_tr_th_cardtotal);
@@ -428,55 +437,42 @@
 				deckTableHead.appendChild(tbody);
 				
 				
-			var getCardListFirstContent = deckCardList[0];
-			var getFirstCardNumber = getCardListFirstContent ['cardNumber'];	
-			var preCode=getFirstCardNumber.substr(0,getFirstCardNumber.indexOf('-'));
-			var preCode_clean=preCode.replace('/','_')			
-			
-			
-			  requestPrice.open('GET', requestURLCardPrice);
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();	
-			  var totalPrice=0;
-			  requestPrice.onload = function(){
-			  var cardsPrice=requestPrice.response;
+				var getCardListFirstContent = deckCardList[0];
+				var getFirstCardNumber = getCardListFirstContent ['cardNumber'];	
+				var preCode=getFirstCardNumber.substr(0,getFirstCardNumber.indexOf('-'));
+				var preCode_clean=preCode.replace('/','_')			
+				var totalPrice=0;
 
 					for(var cardkey in deckCardList){
 						var cardList=deckCardList[cardkey];
 						var cardNumber=cardList['cardNumber'];
 						var cardTimes=cardList['cardTime'];
-						//var internalCardNumber=cardList['internalCardNumber'];
+						var internalCardNumber=cardList['internalCardNumber'];
+						var cardName=cardList['cardName'];
+						var uppdate=cardList['uppdate'];
+						var cardPrice=cardList['cardPrice'];
+						var cardRare=cardList['cardRare'];
 						
-						for(var key in cardsPrice){
-							if(cardNumber===key){
-							
-							var cardPriceInfo = cardsPrice[key];
-							var cardPrice = cardPriceInfo ['cardPrice'];	
-							var lastDatePrice = cardPrice[cardPrice.length-1];
 							console.log("卡號:"+cardNumber);
-							console.log("單價:"+lastDatePrice);
+							console.log("單價:"+cardPrice);
 							console.log("數量:"+cardTimes);
-							if(cardNumber.indexOf("S00")>0){
-								alert("處理中");
-							}
-							createTableTree(cardNumber,lastDatePrice,cardTimes);
+							console.log("更新時間:"+uppdate);
+
+							createTableTree(cardNumber,cardPrice,cardTimes,cardRare);
 							
-							totalPrice=totalPrice+(lastDatePrice*cardTimes);
+							totalPrice=totalPrice+(cardPrice*cardTimes);
 							console.log("途中 total:"+totalPrice);	
-							break;
-							}
-						}		
+								
 					}
 				console.log("total:"+totalPrice);	
 				document.getElementById('deckTotalPrice').innerHTML=totalPrice;
 				document.getElementById('overlay-1').style.display='none';
-				document.getElementById('overlay-2').style.display='none';
-				}					
+				document.getElementById('overlay-2').style.display='none';							
 			}
 			
 			var deckTable=document.getElementById('deckTable');		
 			
-			function createTableTree(cardNumber,cardPrice,cardTimes){
+			function createTableTree(cardNumber,cardPrice,cardTimes,cardRare){
 			var deckTablebody=document.getElementById('tableCardBody');		
 				var tr = document.createElement("tr");							
 				var tdCardNo = document.createElement("td");
@@ -507,13 +503,16 @@
 				
 				var tdPrice = document.createElement("td");
 				var tdTotalPrice = document.createElement("td");				
-				var tdNum = document.createElement("td");		
+				var tdNum = document.createElement("td");
+				var tdRare = document.createElement("td");
 				tdCardNo.innerHTML=cardNumber;	
 				tdPrice.innerHTML=cardPrice;	
 				tdTotalPrice.innerHTML=cardPrice*cardTimes;
 				tdNum.innerHTML=cardTimes;	
+				tdRare.innerHTML=cardRare;
 
 				tr.appendChild(tdCardNo); 
+				tr.appendChild(tdRare); 				
 				tr.appendChild(tdPrice); 
 				tr.appendChild(tdNum); 
 				tr.appendChild(tdTotalPrice);
