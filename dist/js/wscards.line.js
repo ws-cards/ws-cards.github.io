@@ -190,14 +190,14 @@
 										selectPrice.appendChild(option);	
 										break;
 									}	
-								}
-							}						
+								}					
 						}else{
 							var option = document.createElement("option"); 
 							option.setAttribute("value",key);
 							option.appendChild(document.createTextNode(key)); 							
 							selectPrice.appendChild(option);
-						}								
+						}
+					  }						
 					 //重新排列option
 					 sortOption();
 					 selectPrice.options[0].selected=true;
