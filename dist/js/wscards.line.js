@@ -166,22 +166,22 @@
 			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
-			  
+			  console.log("debug:3");
 			  requestMapping.open('GET',requestMappingURL);
 			  requestMapping.responseType = 'json';
 			  requestMapping.send();						  
-			  
+			  console.log("debug:4");
 			  requestPrice.onload = function() {
-				requestMapping.onload = function() {
+				requestMapping.onload = function() {console.log("debug:5");
 				var cards = requestPrice.response;
-				  for(var key in cards){
+				  for(var key in cards){console.log("debug:6");
 						if(key.indexOf('/')<0&&key.indexOf('S')==0){
 									var mappingRep = requestMapping.response;
 											var option = document.createElement("option"); 
 											option.setAttribute("value",key);
 											option.appendChild(document.createTextNode(mappingRep[key])); 							
 											selectPrice.appendChild(option);	
-														
+									console.log("debug:7");					
 							}else{
 								var option = document.createElement("option"); 
 								option.setAttribute("value",key);
@@ -190,10 +190,10 @@
 							}					
 					  }			
 					 //重新排列option
-					 console.log("debug:3");
+
 					 sortOption();
-					 //selectPrice.options[0].selected=true;console.log("debug:4");
-					 changeNumber();console.log("debug:5");
+					 selectPrice.options[0].selected=true;
+					 changeNumber();
 				}
 			  } 
 			}
