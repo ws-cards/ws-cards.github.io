@@ -211,7 +211,7 @@
 			/*繪圖區*/
 			function getCardData(jsonObj,cardNum) {
 				console.log("進入繪圖區:"+cardNum);
-			  addPhoto(cardNum);
+			  //addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
 				var cardNumber;
