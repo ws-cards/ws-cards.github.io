@@ -3,6 +3,7 @@
 			}
 
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
+			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
 			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
 			var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
@@ -11,6 +12,7 @@
 			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
+			var requestMapping = new XMLHttpRequest();
 
 			
 			function setFun(){
@@ -167,7 +169,23 @@
 		  
 				var cards = requestPrice.response;
 				  for(var key in cards){
-					if(key.indexOf(cardTitle)>= 0){
+					  
+					if(key.indexOf('/')<0&&key.indexOf('S')==0){
+						requestMapping.open('GET',requestMappingURL);
+						requestMapping.responseType = 'json';
+						requestMapping.send();				  
+						requestMapping.onload = function() {
+							var mappingRep = requestMapping.response;
+							for(var arg in mappingRep){
+								if(key.indexOf(arg)>=0){
+									var option = document.createElement("option"); 
+									option.setAttribute("value",mappingRep[arg]);
+									option.appendChild(document.createTextNode(mappingRep[arg])); 							
+									selectPrice.appendChild(option);									
+								}	
+							}
+						}						
+					}else{
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
 						option.appendChild(document.createTextNode(key)); 							
@@ -211,7 +229,7 @@
 			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
-				var cardNumber=cardNum;
+				var cardNumber=cardNum.substr(0,card_Num.indexOf(' '));
 				var cardPriceUpDate=cardInfo['upddate'];
 				var cardData=cardInfo['cardPrice'];
 				 console.log("cardData:"+cardData); 
