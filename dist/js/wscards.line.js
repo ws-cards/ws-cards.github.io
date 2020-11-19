@@ -80,7 +80,7 @@
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
-				  getCardData(cards,'BD/W54-070SSP');			  
+				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
 			  }
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
@@ -174,12 +174,8 @@
 				requestMapping.onload = function() {
 				var cards = requestPrice.response;
 				  for(var key in cards){
-					  
 						if(key.indexOf('/')<0&&key.indexOf('S')==0){
-							console.log('key:'+key);
 									var mappingRep = requestMapping.response;
-
-											console.log("寫入值:"+mappingRep[key]);
 											var option = document.createElement("option"); 
 											option.setAttribute("value",key);
 											option.appendChild(document.createTextNode(mappingRep[key])); 							
