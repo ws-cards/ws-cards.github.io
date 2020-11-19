@@ -216,7 +216,7 @@
 				  var selectedIndex=cardNumberSelect.selectedIndex;
 				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
 				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
-				  getCardData(cards,cardNumberDisplay);
+				  getCardData(cards,internalCardNumber,cardNumberDisplay);
 				}
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
@@ -231,17 +231,17 @@
 			
 			
 			/*繪圖區*/
-			function getCardData(jsonObj,cardNum) {
+			function getCardData(jsonObj,internalCardNumber,cardNum) {
 				console.log("進入繪圖區:"+cardNum);
 			  addPhoto(cardNum);
-			  var cardInfo = jsonObj[cardNum];
-						
+			  var cardInfo = jsonObj[internalCardNumber];
+				/*		
 				var cardNumber;
-				if(cardNum.indexOf(' ')>=0){
-					cardNumber=cardNum.substr(0,card_Num.indexOf(' '));
+				if(internalCardNumber.indexOf(' ')>=0){
+					cardNumber=internalCardNumber.substr(0,card_Num.indexOf(' '));
 				}else{
-					cardNumber=cardNum;
-				}
+					cardNumber=internalCardNumber;
+				}*/
 				var cardPriceUpDate=cardInfo['upddate'];
 				var cardData=cardInfo['cardPrice'];
 				 console.log("cardData:"+cardData); 
@@ -256,7 +256,7 @@
 					data: {
 						labels: cardPriceUpDate,
 						datasets: [{
-							label: cardNumber,
+							label: cardNum,
 							//fill:false,
 							borderColor: 'rgb(255, 99, 132)',
 							data: cardData
