@@ -179,7 +179,7 @@
 							for(var arg in mappingRep){
 								if(key.indexOf(arg)>=0){
 									var option = document.createElement("option"); 
-									option.setAttribute("value",mappingRep[arg]);
+									option.setAttribute("value",arg);
 									option.appendChild(document.createTextNode(mappingRep[arg])); 							
 									selectPrice.appendChild(option);									
 								}	
@@ -226,6 +226,7 @@
 			
 			/*繪圖區*/
 			function getCardData(jsonObj,cardNum) {
+				console.log("進入繪圖區:"+cardNum);
 			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
