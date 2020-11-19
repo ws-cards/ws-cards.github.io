@@ -2,8 +2,9 @@
 			  setFun();  
 			}
 
-			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
-			var requestURLCardTitle = 'https://storage.googleapis.com/ws-cards.cloud/json/cardTitle.json';
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData.json';
+			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+			var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
 			var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
 			var requestStandardW = new XMLHttpRequest();
@@ -156,12 +157,14 @@
 			  }					  
 			  
 			  var cardTitle = document.getElementById('cardTitle').value;
-			  
-			  requestPrice.open('GET', requestURLCardPrice);
+			  			  
+			  var cardTilteReplaceSpare = cardTitle.replace('/','_');
+			  console.log(cardTitle+'->'+cardTilteReplaceSpare);
+			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
 			  requestPrice.onload = function() {
-			  			  console.log(cardTitle);
+		  
 				var cards = requestPrice.response;
 				  for(var key in cards){
 					if(key.indexOf(cardTitle)>= 0){
@@ -174,16 +177,16 @@
 				 //重新排列option
 				 sortOption();
 				 selectPrice.options[0].selected=true;
-				 changeNumber();
+				 changeNumber(cardTilteReplaceSpare);
 			  }
 			  
 			}
 					
 			
-			function changeNumber(){	
+			function changeNumber(cardTilteReplaceSpare){	
 			  document.getElementById('overlay-1').style.display='block';					
 			  document.getElementById('overlay-2').style.display='block';				
-				requestPrice.open('GET', requestURLCardPrice);
+				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 				requestPrice.responseType = 'json';
 				requestPrice.send();
 				requestPrice.onload = function() {
