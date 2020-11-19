@@ -165,7 +165,7 @@
 			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
-			  requestPrice.onload = function(cardTilteReplaceSpare) {
+			  requestPrice.onload = function() {
 		  
 				var cards = requestPrice.response;
 				  for(var key in cards){
@@ -198,14 +198,16 @@
 				 //重新排列option
 				 sortOption();
 				 selectPrice.options[0].selected=true;
-				 changeNumber(cardTilteReplaceSpare);
+				 changeNumber();
 			  }
 			  
 			}
 					
 			
-			function changeNumber(cardTilteReplaceSpare){	
-			console.log("cardTilteReplaceSpare:"+cardTilteReplaceSpare);
+			function changeNumber(){	
+				 var cardTitle = document.getElementById('cardTitle').value;
+				 var cardTilteReplaceSpare = cardTitle.replace('/','_');
+				console.log(cardTitle+'->'+cardTilteReplaceSpare);			 
 			  document.getElementById('overlay-1').style.display='block';					
 			  document.getElementById('overlay-2').style.display='block';				
 				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
