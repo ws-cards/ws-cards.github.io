@@ -146,8 +146,9 @@
 				  selectTitle.insertBefore(option,selectTitle.childNodes[0]);			 
 			}
 			
-			function changeTitle(){						
-			  sortOption();
+			function changeTitle(){	
+			console.log("debug:1");
+			  sortOption();console.log("debug:2");
 			  //select 設定
 			  var selectPrice = document.getElementById("cardNumber"); 
 			  selectPrice.style.visibility = 'visible';
@@ -189,9 +190,10 @@
 							}					
 					  }			
 					 //重新排列option
+					 console.log("debug:3");
 					 sortOption();
-					 selectPrice.options[0].selected=true;
-					 changeNumber();
+					 selectPrice.options[0].selected=true;console.log("debug:4");
+					 changeNumber();console.log("debug:5");
 				}
 			  } 
 			}
