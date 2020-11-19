@@ -192,7 +192,7 @@
 					 //重新排列option
 					 console.log("debug:3");
 					 sortOption();
-					 selectPrice.options[0].selected=true;console.log("debug:4");
+					 //selectPrice.options[0].selected=true;console.log("debug:4");
 					 changeNumber();console.log("debug:5");
 				}
 			  } 
