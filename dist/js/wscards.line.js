@@ -212,8 +212,11 @@
 				requestPrice.send();
 				requestPrice.onload = function() {
 				  var cards = requestPrice.response;
-				  var cardNumber = document.getElementById('cardNumber').value;
-				  getCardData(cards,cardNumber);
+				  var cardNumberSelect=document.getElementById('cardNumber');
+				  var selectedIndex=cardNumberSelect.selectedIndex;
+				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+				  getCardData(cards,cardNumberDisplay);
 				}
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
