@@ -165,7 +165,7 @@
 			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
-			  requestPrice.onload = function() {
+			  requestPrice.onload = function(cardTilteReplaceSpare) {
 		  
 				var cards = requestPrice.response;
 				  for(var key in cards){
