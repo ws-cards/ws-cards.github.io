@@ -306,12 +306,12 @@
 
 			
 			/*加上圖片*/
-			function addPhoto(cardNum){
+			function addPhoto(cardNumberDisplay){
 				var card_Num;
-				if(cardNum.indexOf(' ')>=0){
-					card_Num=cardNum.substr(0,cardNum.indexOf(' '));
+				if(cardNumberDisplay.indexOf(' ')>=0){
+					card_Num=cardNumberDisplay.substr(0,cardNumberDisplay.indexOf(' '));
 				}else{
-					card_Num=cardNum;				
+					card_Num=cardNumberDisplay;				
 				}
 
 				var card_first=card_Num.substr(0,1);
