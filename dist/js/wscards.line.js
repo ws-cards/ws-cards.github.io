@@ -178,11 +178,11 @@
 						if(key.indexOf('/')<0&&key.indexOf('S')==0){
 							console.log('key:'+key);
 									var mappingRep = requestMapping.response;
-										console.log("arg:"+arg);
-											console.log("寫入值:"+mappingRep[arg]);
+
+											console.log("寫入值:"+mappingRep[key]);
 											var option = document.createElement("option"); 
-											option.setAttribute("value",arg);
-											option.appendChild(document.createTextNode(mappingRep[arg])); 							
+											option.setAttribute("value",key);
+											option.appendChild(document.createTextNode(mappingRep[key])); 							
 											selectPrice.appendChild(option);	
 														
 							}else{
