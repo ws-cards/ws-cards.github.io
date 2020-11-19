@@ -179,6 +179,7 @@
 							var mappingRep = requestMapping.response;
 							for(var arg in mappingRep){
 								if(key.indexOf(arg)>=0){
+									console.log("寫入值:"+mappingRep[arg]);
 									var option = document.createElement("option"); 
 									option.setAttribute("value",arg);
 									option.appendChild(document.createTextNode(mappingRep[arg])); 							
