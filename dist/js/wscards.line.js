@@ -170,30 +170,11 @@
 				var cards = requestPrice.response;
 				  for(var key in cards){
 					  
-					if(key.indexOf('/')<0&&key.indexOf('S')==0){
-						requestMapping.open('GET',requestMappingURL);
-						requestMapping.responseType = 'json';
-						requestMapping.send();				  
-						requestMapping.onload = function() {
-							var mappingRep = requestMapping.response;
-							for(var arg in mappingRep){
-								console.log("驗證一:"+key);
-								console.log("對照一:"+arg);
-								if(key.indexOf(arg)>=0){
-									var option = document.createElement("option"); 
-									option.setAttribute("value",arg);
-									option.appendChild(document.createTextNode(mappingRep[arg])); 							
-									selectPrice.appendChild(option);	
-									break;
-								}	
-							}
-						}						
-					}else{
 						var option = document.createElement("option"); 
 						option.setAttribute("value",key);
 						option.appendChild(document.createTextNode(key)); 							
 						selectPrice.appendChild(option);
-					}					
+					
 				  }			
 				 //重新排列option
 				 sortOption();
