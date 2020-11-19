@@ -177,11 +177,14 @@
 						requestMapping.onload = function() {
 							var mappingRep = requestMapping.response;
 							for(var arg in mappingRep){
+								console.log("驗證一:"+key);
+								console.log("對照一:"+arg);
 								if(key.indexOf(arg)>=0){
 									var option = document.createElement("option"); 
 									option.setAttribute("value",arg);
 									option.appendChild(document.createTextNode(mappingRep[arg])); 							
-									selectPrice.appendChild(option);									
+									selectPrice.appendChild(option);	
+									break;
 								}	
 							}
 						}						
