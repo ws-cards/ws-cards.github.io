@@ -229,7 +229,12 @@
 			  addPhoto(cardNum);
 			  var cardInfo = jsonObj[cardNum];
 						
-				var cardNumber=cardNum.substr(0,card_Num.indexOf(' '));
+				var cardNumber;
+				if(cardNum.indexOf(' ')>=0){
+					cardNumber=cardNum.substr(0,card_Num.indexOf(' '));
+				}else{
+					cardNumber=cardNum;
+				}
 				var cardPriceUpDate=cardInfo['upddate'];
 				var cardData=cardInfo['cardPrice'];
 				 console.log("cardData:"+cardData); 
