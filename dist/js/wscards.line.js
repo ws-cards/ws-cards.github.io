@@ -188,12 +188,13 @@
 								selectPrice.appendChild(option);
 							}					
 					  }			
-					 //重新排列option
+
+				}
+			  } 
+			  		//重新排列option
 					 sortOption();
 					 selectPrice.options[0].selected=true;
 					 changeNumber();
-				}
-			  } 
 			}
 					
 			
