@@ -171,38 +171,38 @@
 			  requestMapping.send();						  
 			  
 			  requestPrice.onload = function() {
-		  
-				var cards = requestPrice.response;
-				  for(var key in cards){
-					  
-					if(key.indexOf('/')<0&&key.indexOf('S')==0){
-						console.log('key:'+key);
-						
-						requestMapping.onload = function() {
-							var mappingRep = requestMapping.response;
-							for(var arg in mappingRep){
-								console.log("arg:"+arg);
-								if(key.indexOf(arg)>=0){
-									console.log("寫入值:"+mappingRep[arg]);
-									var option = document.createElement("option"); 
-									option.setAttribute("value",arg);
-									option.appendChild(document.createTextNode(mappingRep[arg])); 							
-									selectPrice.appendChild(option);	
-									break;
-								}	
-							}
-						}						
-					}else{
-						var option = document.createElement("option"); 
-						option.setAttribute("value",key);
-						option.appendChild(document.createTextNode(key)); 							
-						selectPrice.appendChild(option);
-					}					
-				  }			
-				 //重新排列option
-				 sortOption();
-				 selectPrice.options[0].selected=true;
-				 changeNumber();
+				requestMapping.onload = function() {
+					var cards = requestPrice.response;
+					  for(var key in cards){
+						  
+						if(key.indexOf('/')<0&&key.indexOf('S')==0){
+							console.log('key:'+key);
+							
+							
+								var mappingRep = requestMapping.response;
+								for(var arg in mappingRep){
+									console.log("arg:"+arg);
+									if(key.indexOf(arg)>=0){
+										console.log("寫入值:"+mappingRep[arg]);
+										var option = document.createElement("option"); 
+										option.setAttribute("value",arg);
+										option.appendChild(document.createTextNode(mappingRep[arg])); 							
+										selectPrice.appendChild(option);	
+										break;
+									}	
+								}
+							}						
+						}else{
+							var option = document.createElement("option"); 
+							option.setAttribute("value",key);
+							option.appendChild(document.createTextNode(key)); 							
+							selectPrice.appendChild(option);
+						}								
+					 //重新排列option
+					 sortOption();
+					 selectPrice.options[0].selected=true;
+					 changeNumber();
+				}
 			  }
 			  
 			}
