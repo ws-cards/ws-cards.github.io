@@ -165,6 +165,11 @@
 			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
+			  
+			  requestMapping.open('GET',requestMappingURL);
+			  requestMapping.responseType = 'json';
+			  requestMapping.send();						  
+			  
 			  requestPrice.onload = function() {
 		  
 				var cards = requestPrice.response;
@@ -172,9 +177,7 @@
 					  
 					if(key.indexOf('/')<0&&key.indexOf('S')==0){
 						console.log('key:'+key);
-						requestMapping.open('GET',requestMappingURL);
-						requestMapping.responseType = 'json';
-						requestMapping.send();				  
+						
 						requestMapping.onload = function() {
 							var mappingRep = requestMapping.response;
 							for(var arg in mappingRep){
