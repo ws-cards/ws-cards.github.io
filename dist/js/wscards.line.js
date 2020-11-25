@@ -200,7 +200,6 @@
 					 selectPrice.options[0].selected=true;
 					 changeNumber();
 			}
-			  } 
 			}
 					
 			
