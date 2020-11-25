@@ -1,6 +1,6 @@
 	window.onload=function(){
 			  setFun();  
-			}
+	}
 
 			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
@@ -13,7 +13,14 @@
 			var requestPrice = new XMLHttpRequest();	
 			var requestTitle = new XMLHttpRequest();	
 			var requestMapping = new XMLHttpRequest();
-
+			var mappingRep;
+			  requestMapping.open('GET',requestMappingURL);
+			  requestMapping.responseType = 'json';
+			  requestMapping.send();	
+			  requestMapping.onload = function() {console.log("debug:5");
+			  mappingRep = requestMapping.response;
+			  
+			  }			  
 			
 			function setFun(){
 			  //select 設定
@@ -167,16 +174,14 @@
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();				  
 			  console.log("debug:3");
-			  requestMapping.open('GET',requestMappingURL);
-			  requestMapping.responseType = 'json';
-			  requestMapping.send();						  
+					  
 			  console.log("debug:4");
 			  requestPrice.onload = function() {
-				requestMapping.onload = function() {console.log("debug:5");
+
 				var cards = requestPrice.response;
 				  for(var key in cards){console.log("debug:6");
 						if(key.indexOf('/')<0&&key.indexOf('S')==0){
-									var mappingRep = requestMapping.response;
+									
 											var option = document.createElement("option"); 
 											option.setAttribute("value",key);
 											option.appendChild(document.createTextNode(mappingRep[key])); 							
@@ -194,7 +199,7 @@
 					 sortOption();
 					 selectPrice.options[0].selected=true;
 					 changeNumber();
-				}
+			}
 			  } 
 			}
 					
@@ -318,7 +323,7 @@
 				var card_third=card_Num.replace('/','_');
 					card_third=card_third.replace('-','_');	
 				const cardImg = document.getElementById('cardImg');
-				var urlCard="https://s3-ap-northeast-1.amazonaws.com/static.ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
 				//var urlCard="https://i.imgur.com/DKvx5hw.png";
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
