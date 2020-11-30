@@ -141,7 +141,7 @@
 					  <div class="input-group">
 						<input type="text" name="message" id="deckCode" placeholder="請輸入デッキコード(Deck Code)" class="form-control" />
 						<span class="input-group-append">
-						  <button type="button" class="btn btn-block btn-outline-info" onclick="deckCal()">計算!</button>
+						  <button id ="buttonSearch" type="button" class="btn btn-block btn-outline-info" onclick="deckCal()">計算!</button>
 						</span>
 					  </div>
 					</form>		
@@ -235,6 +235,7 @@
   <h3>注意事項:</h3>
   <p>此查詢系統之價格僅供作為參考使用，實際上請依店家價格為主。</p>
   <p>此查詢系統中的幣別均為日幣。</p>
+  <p>系統固定維護時間為(UTC +8) 11:00 至 (UTC +8) 11:40 </p>
   <p>價格固定更新時間為(UTC +8) 11:00。</p>  
 </article>			
 
@@ -325,6 +326,16 @@
 			
 			window.onload=function(){
 				document.getElementById('second-content').style.display='none';
+				var today = new Date();
+				var hours = today.getHours();
+				var mins = today.getMinutes();
+				if(hours === 11 && (mins < 40 && mins> 0)){
+					alert("每日 11:00-11:40 為 系統維護時間!!");
+					document.getElementById('deckCode').disabled = true;
+					document.getElementById('buttonSearch').disabled = true;
+					
+					console.log("11:00-11:40為系統維護時間");
+				}
 			  //setFun();  
 			}
 			
