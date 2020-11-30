@@ -453,6 +453,7 @@
 				var preCode=getFirstCardNumber.substr(0,getFirstCardNumber.indexOf('-'));
 				var preCode_clean=preCode.replace('/','_')			
 				var totalPrice=0;
+				var totalNum=0;
 
 					for(var cardkey in deckCardList){
 						var cardList=deckCardList[cardkey];
@@ -470,15 +471,17 @@
 							console.log("更新時間:"+uppdate);
 
 							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName);
-							
+							totalNum=totalNum+cardTimes;
 							totalPrice=totalPrice+(cardPrice*cardTimes);
 							console.log("途中 total:"+totalPrice);	
 								
 					}
-				console.log("total:"+totalPrice);	
+				console.log("total:"+totalPrice);
+				console.log("卡片總數:"+totalNum);
 				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
 				document.getElementById('overlay-1').style.display='none';
-				document.getElementById('overlay-2').style.display='none';							
+				document.getElementById('overlay-2').style.display='none';	
+				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
 			}
 			
 			var deckTable=document.getElementById('deckTable');		
