@@ -17,7 +17,7 @@ function myFunction(x) {//
 	mainBarIcon.setAttribute("class","fas fa-home");
 	$("rightBarIcon").removeClass("fas fa-bullhorn");
 	rightBarIcon.setAttribute("class","fas fa-bars");	
-	
+	document.body.classList.remove("layout-fixed");
 	if(document.getElementById('rightSideBar').style.display=="none"){document.getElementById('rightSideBar').style.display="block";}	
 	
   } else {	
@@ -36,7 +36,7 @@ function myFunction(x) {//
 	mainBarIcon.setAttribute("class","fas fa-bars");
 	$("rightBarIcon").removeClass("fas fa-bars");
 	rightBarIcon.setAttribute("class","fas fa-bullhorn");		
-	document.body.classList.remove("layout-fixed");
+
 	if(document.getElementById('mainSideBar').style.display=="none"){document.getElementById('mainSideBar').style.display="block";}
   }
 }
