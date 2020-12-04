@@ -1,4 +1,4 @@
-function myFunction(x) {
+function myFunction(x) {//
   if (x.matches) { // If media query matches
 	var rightSideBar = document.getElementById("rightSideBar");
 	var mainSideBar= document.getElementById("mainSideBar");
@@ -36,7 +36,7 @@ function myFunction(x) {
 	mainBarIcon.setAttribute("class","fas fa-bars");
 	$("rightBarIcon").removeClass("fas fa-bars");
 	rightBarIcon.setAttribute("class","fas fa-bullhorn");		
-	
+	document.body.classList.remove("layout-fixed");
 	if(document.getElementById('mainSideBar').style.display=="none"){document.getElementById('mainSideBar').style.display="block";}
   }
 }
