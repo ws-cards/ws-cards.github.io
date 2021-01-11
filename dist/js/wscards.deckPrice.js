@@ -43,7 +43,7 @@
 			  requestDeckLog.onload = function(){	
 	
 				var deckLockInfo = requestDeckLog.response;
-				//console.log(deckLockInfo);
+				console.log(deckLockInfo);
 				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
 					alert("沒資料");
 					document.getElementById('overlay-1').style.display='none';				
