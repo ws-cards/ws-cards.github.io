@@ -12,6 +12,10 @@
 					document.getElementById('buttonSearch').disabled = true;
 					
 					console.log("10:00-10:50為系統維護時間");
+				}else{
+			alert('系統維護中');
+								document.getElementById('deckCode').disabled = true;
+					document.getElementById('buttonSearch').disabled = true;		
 				}
 			  //setFun();  
 			}
