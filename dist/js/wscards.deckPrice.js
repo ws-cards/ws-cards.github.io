@@ -6,12 +6,12 @@
 				var today = new Date();
 				var hours = today.getHours();
 				var mins = today.getMinutes();
-				if(hours === 10 && (mins < 40 && mins> 0)){
-					alert("每日 10:00-10:40 為 系統維護時間!!");
+				if(hours === 10 && (mins < 50 && mins> 0)){
+					alert("每日 10:00-10:50 為 系統維護時間!!");
 					document.getElementById('deckCode').disabled = true;
 					document.getElementById('buttonSearch').disabled = true;
 					
-					console.log("10:00-10:40為系統維護時間");
+					console.log("10:00-10:50為系統維護時間");
 				}
 			  //setFun();  
 			}
