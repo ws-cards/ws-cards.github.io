@@ -43,7 +43,7 @@
 			  requestDeckLog.onload = function(){	
 	
 				var deckLockInfo = requestDeckLog.response;
-				console.log(deckLockInfo);
+				//console.log(deckLockInfo);
 				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
 					alert("沒資料");
 					document.getElementById('overlay-1').style.display='none';				
@@ -142,23 +142,23 @@
 						var cardPrice=cardList['cardPrice'];
 						var cardRare=cardList['cardRare'];
 						var cardName=cardList['cardName'];
-							console.log("卡號:"+cardNumber);
-							console.log("單價:"+cardPrice);
-							console.log("數量:"+cardTimes);
-							console.log("更新時間:"+uppdate);
+							//console.log("卡號:"+cardNumber);
+							//console.log("單價:"+cardPrice);
+							//console.log("數量:"+cardTimes);
+							//console.log("更新時間:"+uppdate);
 
 							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName);
 							totalNum=totalNum+parseInt(cardTimes,10);
 							totalPrice=totalPrice+(cardPrice*cardTimes);
-							console.log("途中 total:"+totalPrice);	
+							//console.log("途中 total:"+totalPrice);	
 								
 					}
-				console.log("total:"+totalPrice);
+				//console.log("total:"+totalPrice);
 				console.log("卡片總數:"+totalNum);
 				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
 				document.getElementById('overlay-1').style.display='none';
 				document.getElementById('overlay-2').style.display='none';	
-				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
+				//if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
 			}
 			
 			var deckTable=document.getElementById('deckTable');		
