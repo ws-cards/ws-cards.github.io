@@ -7,11 +7,11 @@
 				var hours = today.getHours();
 				var mins = today.getMinutes();
 				if(hours === 10 && (mins < 50 && mins> 0)){
-					alert("每日 10:00-10:50 為 系統維護時間!!");
+					alert("每日 10:00-11:00 為 系統維護時間!!");
 					document.getElementById('deckCode').disabled = true;
 					document.getElementById('buttonSearch').disabled = true;
 					
-					console.log("10:00-10:50為系統維護時間");
+					console.log("10:00-11:00為系統維護時間");
 				}
 			  //setFun();  
 			}
@@ -69,6 +69,10 @@
 								alert('你輸入的是VG的牌組!');
 								document.getElementById('overlay-1').style.display='none';	
 								break;
+							case '9999':
+								alert('每日 10:00-11:00 為 系統維護時間!!!');
+								document.getElementById('overlay-1').style.display='none';	
+								break;								
 							default:
 								alert('不是WS的');
 								document.getElementById('overlay-1').style.display='none';	
