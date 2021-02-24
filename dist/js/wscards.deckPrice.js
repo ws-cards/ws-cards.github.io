@@ -59,7 +59,7 @@
 					var deckPriceDateList = deckCardList[0];
 					var deckUpdatePriceDate = deckPriceDateList['uppdate'];
 					console.log(deckUpdatePriceDate);
-					if(!(deckGameTitle==='2')){
+					if(!(deckGameTitle==='2'||deckGameTitle==='5')){
 						switch(deckGameTitle){
 							case '5':
 								alert('你輸入的是Reバース的牌組!');
