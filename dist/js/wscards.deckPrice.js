@@ -191,6 +191,7 @@
 							var card_third=card_Num.replace('/','_');
 								card_third=card_third.replace('-','_');								
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+							console.log('dec:'+deckGameTitle);
 							if(deckGameTitle==='5'){
 								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+imgPath;
 							}
