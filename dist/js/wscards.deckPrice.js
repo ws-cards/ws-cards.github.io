@@ -88,7 +88,7 @@
 						var year = today.getFullYear();
 						document.getElementById('searchDate').innerHTML="製表日期:"+year+"/"+month+"/"+date;
 						document.getElementById('updatePriceDate').innerHTML="價格更新日期:"+deckUpdatePriceDate;
-						calculateDeckPrice(deckCardList);
+						calculateDeckPrice(deckCardList,deckGameTitle);
 					}
 				
 				}
@@ -100,7 +100,7 @@
 			 }		 
 			}
 			
-			function calculateDeckPrice(deckCardList){
+			function calculateDeckPrice(deckCardList,deckGameTitle){
 			
 				var deckTableHead=document.getElementById('deckTable');
 				var thead = document.createElement("thead");
@@ -146,12 +146,13 @@
 						var cardPrice=cardList['cardPrice'];
 						var cardRare=cardList['cardRare'];
 						var cardName=cardList['cardName'];
+						var imgPath=cardList['imgPath'];
 							console.log("卡號:"+cardNumber);
 							console.log("單價:"+cardPrice);
 							console.log("數量:"+cardTimes);
 							console.log("更新時間:"+uppdate);
 
-							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName);
+							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName,deckGameTitle,imgPath);
 							totalNum=totalNum+parseInt(cardTimes,10);
 							totalPrice=totalPrice+(cardPrice*cardTimes);
 							console.log("途中 total:"+totalPrice);	
@@ -167,7 +168,7 @@
 			
 			var deckTable=document.getElementById('deckTable');		
 			
-			function createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName){
+			function createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName,deckGameTitle,imgPath){
 			var deckTablebody=document.getElementById('tableCardBody');		
 				var tr = document.createElement("tr");							
 				var tdCardNo = document.createElement("td");
@@ -190,6 +191,10 @@
 							var card_third=card_Num.replace('/','_');
 								card_third=card_third.replace('-','_');								
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+							if(deckGameTitle==='5'){
+								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+imgPath;
+							}
+							
 							var cardImg=document.getElementById('cardImg');
 							cardImg.setAttribute("src",urlCard);
 							var cardShowName=document.getElementById('cardName');
