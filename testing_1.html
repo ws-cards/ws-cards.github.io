@@ -195,24 +195,26 @@
       <div class="container-fluid">
         <div class="row">
 		  <div class="col-lg-12">
-            <div class="card   card-outline" >		
-				<div class="card-body">
-					<form action="" name="calForm" method="post">
-					  <div class="input-group">
+            <div class="card   card-outline" >	
+				
+				<div class="card-header">	
+					<div class="card-tools">
+					  <!-- Collapse Button -->
+					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+					</div>		
+				    <div class="card card-outline">
 						<select id="xxxx">
-							<option>アイドルマスター シャイニーカラーズ</option>
-						</select>					  
-					  </div>
-					</form>		
-                    <div class="overlay-wrapper" id="overlay-1" style="display:none;">
-                      <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
-                    </div>						
-				</div>				
-			</div>		  
-            <div class="card   card-outline" >		
+							<option value="アイドルマスター シャイニーカラーズ">アイドルマスター シャイニーカラーズ</option>
+							<option value="ダ・カーポ＆Dal Segno">ダ・カーポ＆Dal Segno</option>
+						</select>	
+					</div>	
+						<span class="input-group-append">
+						  <button id ="buttonSearch" type="button" class="btn btn-block btn-outline-info" onclick="search()">查詢!</button>
+						</span>					
+				</div>			
 				<div class="card-body">
-					<form action="" name="calForm" method="post">
 					  <div class="input-group">
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">使用cx:</h5>
 						<select id="xxxx">
 							<option>開</option>
 							<option>風</option>
@@ -236,14 +238,13 @@
 							<option>寶袋</option>
 							<option>金磚</option>
 							<option>雙箭頭</option>
-						</select>
-					  </div>
-					</form>		
+						</select>						
+					  </div>	
                     <div class="overlay-wrapper" id="overlay-1" style="display:none;">
                       <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
                     </div>						
-				</div>				
-			</div>			
+				</div>			
+			</div>		  		
 			<div class="card   card-outline">
 				<div class="card-header">
 					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">核心牌</h5>				
@@ -364,61 +365,63 @@
 <!-- 實際開發位置 -->
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
-var requestURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/deckList/deck.json';
-var requestMapping = new XMLHttpRequest();			
-			  requestMapping.open('GET',requestURL);
-			  requestMapping.responseType = 'json';
-			  requestMapping.send();	
-			  requestMapping.onload = function() {
-				console.log("debug:5");
-				var deckList = requestMapping.response;
-				
-				deckListInfo(deckList,'WS00001');
-			
-			  }	
-
-function deckListInfo(deckList,deckTitle){
-		var deckTableHead=document.getElementById('deckTable');
-		var gameList=deckList[deckTitle];
-		var gameName=gameList['name'];
-		var gameDeckList=gameList['deckList'];
-		console.log("gamename:"+gameName);
-					for(var key in gameDeckList){	 
-						console.log("testing:");
-						console.log(gameDeckList[key]);	
-						var gameDeckListObj=gameDeckList[key];
-						var gameDeckName=gameDeckListObj['name'];
-						var gameDeckType=gameDeckListObj['gametype'];
-						var gameDeckDate=gameDeckListObj['date'];
-						var gameDeckCore=gameDeckListObj['deckCore'];
-						var gameDeckInfo=gameDeckListObj['deckInfo'];
-						console.log("軸心:"+gameDeckCore);
-						
-					}	
-}			
-
-$(function(){
-
-  var $show = $('#show');
+function search(){
   var a = {
       sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
       sheetTag : '工作表1',
       row: 1, //起始位置
       col: 1,
-      endRow : 8, //切段資料
-      endCol : 9//切段資料
+      endRow : 9, //切段資料
+      endCol : 10//9欄
   };
-  $.get('https://script.google.com/macros/s/AKfycbzA6sKh3jqxyMXHR7L6Krf8JwiFpayc-W-iBI8hkhp2f6SkWo0EQM9xf-2v9gW6qZ_Aow/exec',a, function(data){ //專案連結，檔案-->共用
+  $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
     var d = data.split(',');
     console.log('ori data:'+d);
 	var arr = [];
+////////
+//data attri
+////////	
+    var title=document.getElementById('xxxx').value;
     for(var i=1; i<(a.endRow-a.row+1); i++){
       arr[i] = d.splice(0, (a.endCol-a.col));
+	  if(arr[i].length===0){break;}
+	  if(i===1){continue;}
 	  console.log(arr[i]);
+	  var gameTitle=arr[i][1];
+	  if(title === gameTitle){
+		appendEle(arr[i]);
+	  }
     }
-
   });
-});  
+}
+
+function appendEle(arr){
+		var deckTableHead=document.getElementById('deckTable');
+		var thead = document.createElement("thead");
+		var thead_tr = document.createElement("tr");
+		var thead_tr_th_cardno = document.createElement("th");
+		var thead_tr_th_cardrare = document.createElement("th");
+		var thead_tr_th_cardprice = document.createElement("th");
+		var thead_tr_th_cardnum = document.createElement("th");
+		var thead_tr_th_cardtotal = document.createElement("th");
+		var tbody = document.createElement("tbody");
+				
+		thead_tr_th_cardno.innerHTML="卡號";
+		thead_tr_th_cardrare.innerHTML="稀有度";
+		thead_tr_th_cardprice.innerHTML="單價";
+		thead_tr_th_cardnum.innerHTML="數量";
+		thead_tr_th_cardtotal.innerHTML="總和";
+		thead_tr.appendChild(thead_tr_th_cardno);
+		thead_tr.appendChild(thead_tr_th_cardrare);
+		thead_tr.appendChild(thead_tr_th_cardprice);
+		thead_tr.appendChild(thead_tr_th_cardnum);
+		thead_tr.appendChild(thead_tr_th_cardtotal);
+		thead.appendChild(thead_tr);	
+		tbody.setAttribute("id","tableCardBody");
+				
+		deckTableHead.appendChild(thead);
+		deckTableHead.appendChild(tbody);
+}
 </script>
 
 <script>
