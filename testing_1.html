@@ -253,7 +253,7 @@
 					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
 					</div>		
 				</div>
-				<div class="card-body">
+				<div class="card-body" id="coreFlameList">
 					<div class="card-text" id="coreCardImgList">
 						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_001.png" >
 						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_002.png" >
@@ -366,13 +366,14 @@
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
 function search(){
+actionKeyImage();
 	removeTable();
   var a = {
       sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
       sheetTag : '牌組清單',
       row: 1, //起始位置
       col: 1,
-      endRow : 9, //切段資料
+      endRow : 400, //切段資料
       endCol : 10//9欄
   };
   $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
@@ -387,7 +388,6 @@ function search(){
       arr[i] = d.splice(0, (a.endCol-a.col));
 	  if(arr[i].length===0){break;}
 	  if(i===1){continue;}
-	  console.log(arr[i]);
 	  var gameTitle=arr[i][1];
 	  if(title === gameTitle){
 		appendEle(arr[i]);
@@ -397,7 +397,6 @@ function search(){
 }
 
 function appendEle(arr){
-		console.log(arr);
 		var deckName = arr[0];
 		var deckGame = arr[1];
 		var deckGameType = arr[2];
@@ -458,12 +457,71 @@ function appendEle(arr){
 			tr.appendChild(tdDeckInfo); 
 			deckTablebody.appendChild(tr);			
 }
-			function removeTable(){
-				var tabletree = document.getElementById('tableCardBody');
-				if(tabletree !=null){
-					tabletree.innerHTML="";
-				}
-			}
+
+function removeTable(){
+	var tabletree = document.getElementById('tableCardBody');
+	if(tabletree !=null){
+		tabletree.innerHTML="";
+	}
+}
+
+function actionKeyImage(){
+ // var cardImgre=document.getElementById('cardImg');
+  //cardImgre.remove();
+
+
+
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '核心卡片清單',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 200, //切段資料
+      endCol : 3//2欄
+  };
+  $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+    console.log('ori data:'+d);
+	var arr = [];
+	
+    var title=document.getElementById('xxxx').value;
+    for(var i=1; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+	  if(arr[i].length===0){break;}
+	  console.log(arr[i]);
+	  var gameTitle=arr[i][0];
+	  if(title === gameTitle){
+		addImage(arr[i][1]);
+	  }
+    }
+  });
+}
+
+
+
+
+function addImage(cardNumber){
+		var card_Num=cardNumber;
+		if(card_Num.indexOf(' ')>=0){
+			card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+		}else{
+			card_Num=card_Num;				
+		}
+
+		var card_first=card_Num.substr(0,1);
+		var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+			card_second=card_second.replace('/','_')
+		var card_third=card_Num.replace('/','_');
+			card_third=card_third.replace('-','_');								
+		var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+							
+		var cardImg=document.getElementById('cardImg');
+		cardImg.setAttribute("src",urlCard);
+}
+
+
+
+
 </script>
 
 <script>
