@@ -272,10 +272,10 @@
 						<table class="table table-striped " id="deckTable">
 							<thead>
 								<tr>
-									<th>軸．核心</th>
-									<th>主題</th>
+									<th>軸</th>
 									<th>比賽日期</th>
-									<th>Deck Code</th>								
+									<th>Deck Code</th>		
+									<th>Info</th>
 								</tr>
 							</thead>
 							<tbody id="deckCardInfoList">						
@@ -366,9 +366,10 @@
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
 function search(){
+	removeTable();
   var a = {
       sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
-      sheetTag : '工作表1',
+      sheetTag : '牌組清單',
       row: 1, //起始位置
       col: 1,
       endRow : 9, //切段資料
@@ -396,32 +397,72 @@ function search(){
 }
 
 function appendEle(arr){
+		console.log(arr);
+		var deckName = arr[0];
+		var deckGame = arr[1];
+		var deckGameType = arr[2];
+		var deckArea = arr[3];
+		var deckDate = arr[4];
+		var deckCore = arr[5];
+		var deckKeyCard = arr[6];
+		var deckDeckCode = arr[7];
+		var deckInfo = arr[8];
+
 		var deckTableHead=document.getElementById('deckTable');
 		var thead = document.createElement("thead");
-		var thead_tr = document.createElement("tr");
-		var thead_tr_th_cardno = document.createElement("th");
-		var thead_tr_th_cardrare = document.createElement("th");
-		var thead_tr_th_cardprice = document.createElement("th");
-		var thead_tr_th_cardnum = document.createElement("th");
-		var thead_tr_th_cardtotal = document.createElement("th");
+	//	var thead_tr = document.createElement("tr");
+	//	var thead_tr_th_cardno = document.createElement("th");
+	//	var thead_tr_th_cardrare = document.createElement("th");
+	//	var thead_tr_th_cardprice = document.createElement("th");
+	//	var thead_tr_th_cardnum = document.createElement("th");
+	//	var thead_tr_th_cardtotal = document.createElement("th");
 		var tbody = document.createElement("tbody");
 				
-		thead_tr_th_cardno.innerHTML="卡號";
-		thead_tr_th_cardrare.innerHTML="稀有度";
-		thead_tr_th_cardprice.innerHTML="單價";
-		thead_tr_th_cardnum.innerHTML="數量";
-		thead_tr_th_cardtotal.innerHTML="總和";
-		thead_tr.appendChild(thead_tr_th_cardno);
-		thead_tr.appendChild(thead_tr_th_cardrare);
-		thead_tr.appendChild(thead_tr_th_cardprice);
-		thead_tr.appendChild(thead_tr_th_cardnum);
-		thead_tr.appendChild(thead_tr_th_cardtotal);
-		thead.appendChild(thead_tr);	
+	//	thead_tr_th_cardno.innerHTML="卡號";
+	//	thead_tr_th_cardrare.innerHTML="稀有度";
+	//	thead_tr_th_cardprice.innerHTML="單價";
+	//	thead_tr_th_cardnum.innerHTML="數量";
+	//	thead_tr_th_cardtotal.innerHTML="總和";
+	//	thead_tr.appendChild(thead_tr_th_cardno);
+	//	thead_tr.appendChild(thead_tr_th_cardrare);
+	//	thead_tr.appendChild(thead_tr_th_cardprice);
+	//	thead_tr.appendChild(thead_tr_th_cardnum);
+	//	thead_tr.appendChild(thead_tr_th_cardtotal);
+	//	thead.appendChild(thead_tr);	
 		tbody.setAttribute("id","tableCardBody");
 				
-		deckTableHead.appendChild(thead);
+	//	deckTableHead.appendChild(thead);
 		deckTableHead.appendChild(tbody);
+		
+		if(deckDeckCode!=''){
+			deckDeckCode='https://decklog.bushiroad.com/view/'+deckDeckCode
+		}
+		
+		var deckTablebody=document.getElementById('tableCardBody');		
+		var tr = document.createElement("tr");							
+		var tdCore = document.createElement("td");
+		tdCore.setAttribute("class","tdClass");
+			
+		var tdDate = document.createElement("td");
+		var tdDeckCode = document.createElement("td");				
+		var tdDeckInfo = document.createElement("td");
+			tdCore.innerHTML=deckCore;	
+			tdDate.innerHTML=deckDate;	
+			tdDeckCode.innerHTML="<a href="+deckDeckCode+">click</a>";
+			tdDeckInfo.innerHTML=deckInfo;	
+
+			tr.appendChild(tdCore); 
+			tr.appendChild(tdDate); 				
+			tr.appendChild(tdDeckCode); 
+			tr.appendChild(tdDeckInfo); 
+			deckTablebody.appendChild(tr);			
 }
+			function removeTable(){
+				var tabletree = document.getElementById('tableCardBody');
+				if(tabletree !=null){
+					tabletree.innerHTML="";
+				}
+			}
 </script>
 
 <script>
