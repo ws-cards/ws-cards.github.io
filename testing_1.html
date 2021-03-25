@@ -200,6 +200,20 @@
 					<form action="" name="calForm" method="post">
 					  <div class="input-group">
 						<select id="xxxx">
+							<option>アイドルマスター シャイニーカラーズ</option>
+						</select>					  
+					  </div>
+					</form>		
+                    <div class="overlay-wrapper" id="overlay-1" style="display:none;">
+                      <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                    </div>						
+				</div>				
+			</div>		  
+            <div class="card   card-outline" >		
+				<div class="card-body">
+					<form action="" name="calForm" method="post">
+					  <div class="input-group">
+						<select id="xxxx">
 							<option>開</option>
 							<option>風</option>
 							<option>書</option>
@@ -381,7 +395,29 @@ function deckListInfo(deckList,deckTitle){
 						console.log("軸心:"+gameDeckCore);
 						
 					}	
-}			  
+}			
+
+$(function(){
+
+  var $show = $('#show');
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '工作表1',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 3, //結束位置
+      endCol : 2
+  };
+  $.get('https://script.google.com/macros/s/AKfycbxrUQVnq3IzWQdjhzyXbRdAkTaPFhK714WC4x8rTGuNVuZnH_nHNqqkNhqDa8Y3rUETdQ/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+    var arr = [];
+    for(var i=0; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+      $show.append(arr[i]+'<br/>');
+    }
+
+  });
+});  
 </script>
 
 <script>
