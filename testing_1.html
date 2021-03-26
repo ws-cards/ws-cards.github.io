@@ -214,7 +214,16 @@
 				</div>			
 				<div class="card-body">
 					  <div class="input-group">
-					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">使用cx:</h5>
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">篩選:</h5>
+						<select>
+							<option>2021年3月</option>
+							<option>2021年4月</option>
+						</select>
+						<select>
+							<option>所有地區</option>
+							<option>台灣</option>
+							<option>日本</option>
+						</select>					
 						<select id="xxxx">
 							<option>開</option>
 							<option>風</option>
@@ -238,7 +247,8 @@
 							<option>寶袋</option>
 							<option>金磚</option>
 							<option>雙箭頭</option>
-						</select>						
+						</select>	
+
 					  </div>	
                     <div class="overlay-wrapper" id="overlay-1" style="display:none;">
                       <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
@@ -409,28 +419,9 @@ function appendEle(arr){
 
 		var deckTableHead=document.getElementById('deckTable');
 		var thead = document.createElement("thead");
-	//	var thead_tr = document.createElement("tr");
-	//	var thead_tr_th_cardno = document.createElement("th");
-	//	var thead_tr_th_cardrare = document.createElement("th");
-	//	var thead_tr_th_cardprice = document.createElement("th");
-	//	var thead_tr_th_cardnum = document.createElement("th");
-	//	var thead_tr_th_cardtotal = document.createElement("th");
-		var tbody = document.createElement("tbody");
-				
-	//	thead_tr_th_cardno.innerHTML="卡號";
-	//	thead_tr_th_cardrare.innerHTML="稀有度";
-	//	thead_tr_th_cardprice.innerHTML="單價";
-	//	thead_tr_th_cardnum.innerHTML="數量";
-	//	thead_tr_th_cardtotal.innerHTML="總和";
-	//	thead_tr.appendChild(thead_tr_th_cardno);
-	//	thead_tr.appendChild(thead_tr_th_cardrare);
-	//	thead_tr.appendChild(thead_tr_th_cardprice);
-	//	thead_tr.appendChild(thead_tr_th_cardnum);
-	//	thead_tr.appendChild(thead_tr_th_cardtotal);
-	//	thead.appendChild(thead_tr);	
+		var tbody = document.createElement("tbody");	
 		tbody.setAttribute("id","tableCardBody");
 				
-	//	deckTableHead.appendChild(thead);
 		deckTableHead.appendChild(tbody);
 		
 		if(deckDeckCode!=''){
@@ -466,8 +457,8 @@ function removeTable(){
 }
 
 function actionKeyImage(){
- // var cardImgre=document.getElementById('cardImg');
-  //cardImgre.remove();
+  var coreCardImgListEle=document.getElementById('coreCardImgList');
+  coreCardImgListEle.innerHTML="";
 
 
 
@@ -501,24 +492,35 @@ function actionKeyImage(){
 
 
 function addImage(cardNumber){
-		var card_Num=cardNumber;
-		if(card_Num.indexOf(' ')>=0){
-			card_Num=card_Num.substr(0,card_Num.indexOf(' '));
-		}else{
-			card_Num=card_Num;				
-		}
+		var cardcorelist=cardNumber.split("|");
+		for(var imgInit=0;imgInit<cardcorelist.length;imgInit++){
+			var card_Num=cardcorelist[imgInit];
+				
+			if(card_Num.indexOf(' ')>=0){
+				card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+			}else{
+				card_Num=card_Num;				
+			}
 
-		var card_first=card_Num.substr(0,1);
-		var card_second=card_Num.substr(0,card_Num.indexOf('-'));
-			card_second=card_second.replace('/','_')
-		var card_third=card_Num.replace('/','_');
-			card_third=card_third.replace('-','_');								
-		var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
-							
-		var cardImg=document.getElementById('cardImg');
-		cardImg.setAttribute("src",urlCard);
+			var card_first=card_Num.substr(0,1);
+			var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+				card_second=card_second.replace('/','_')
+			var card_third=card_Num.replace('/','_');
+				card_third=card_third.replace('-','_');								
+			var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+			var coreCardImgListEle=document.getElementById('coreCardImgList');	
+			var img=document.createElement("img");	
+			img.setAttribute("id","cardImg");		
+			img.setAttribute("name","cardName_"+card_Num);
+			img.setAttribute("src",urlCard);
+			img.setAttribute("onclick","click_image('"+card_Num+"')");
+			coreCardImgListEle.appendChild(img);				
+		}
 }
 
+function click_image(e){
+	alert(e);
+}
 
 
 
