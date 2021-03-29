@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WS卡片雲|WS-Cards(β)</title>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"> 
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.line.css">
+  <!-- Slick -->
+  <link rel="stylesheet" href="dist/css/mfpup/magnific-popup.css">
+  <style type="text/css">
+
+  .slider {
+        width: 95%;
+        margin: 10px auto;
+    }
+
+    .slick-slide {
+      margin: 0px 10px;
+    }
+
+    .slick-slide img {
+      width: 100%;
+    }
+
+    .slick-prev:before,
+    .slick-next:before {
+      color: black;
+    }
+
+
+    .slick-slide {
+      transition: all ease-in-out .3s;
+      opacity: .2;
+    }
+    
+    .slick-active {
+      opacity: 1;
+    }
+
+    .slick-current {
+      opacity: 1;
+    }	
+	@media screen and (min-width: 992px) {
+		#cardImg{
+			max-width: 19%;
+			padding-left:2%;
+			padding-right:2%;
+			height: auto;
+		}
+	}
+	@media screen and (min-width:721px) and (max-width:991px){
+		#cardImg{
+			max-width: 26%;
+			padding-left:2%;
+			padding-right:2%;
+			height: auto;
+		}
+		#coreCardImgList{
+			overflow-x: auto;
+			white-space: nowrap;		
+		}		
+	}
+	@media screen and (min-width:471px) and (max-width:720px){
+		#cardImg{
+			max-width: 35%;
+			padding-left:2%;
+			padding-right:2%;
+			height: auto;
+		}
+		#coreCardImgList{
+			overflow-x: auto;
+			white-space: nowrap;		
+		}		
+	}
+	@media screen and (max-width:470px){
+		#cardImg{
+			max-width: 40%;
+			height: auto;
+		}	
+		#coreCardImgList{
+			overflow-x: auto;
+			white-space: nowrap;		
+		}
+	}	
+	</style>
+</head>
+<body class="hold-transition sidebar-mini  layout-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"  id="leftbar"><i class="fas fa-bars"  id="mainBarIcon"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="./index" class="nav-link">Home</a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button"><i class="fas fa-bullhorn"  id="rightBarIcon"></i></a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4"  id="mainSideBar">
+    <!-- Brand Logo -->
+    <a href="./" class="brand-link">
+      <img src="dist/img/logo.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">WS-Cards</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item menu-open">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                遊遊亭價格查詢
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="line" class="nav-link">
+                  <i class="fas fa-chart-line nav-icon"></i>
+                  <p>各卡號漲幅趨勢</p>
+                </a>
+              </li>
+            </ul>				
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="deckPrice" class="nav-link">
+                  <i class="fas fa-search-dollar nav-icon"></i>
+                  <p>牌組總額查詢計算機</p>
+                </a>
+              </li>
+            </ul>					
+          </li>
+		  <li  class="nav-item menu-open">
+            <a href="map" class="nav-link active">
+              <i class="nav-icon fas fa-map-marked-alt"></i>
+              <p>
+                WS店家地圖
+              </p>
+            </a>		  
+		  </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1  style="font-family: 'Noto Sans TC', sans-serif;" class="m-0">牌組查詢器</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->	  
+	  
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+		  <div class="col-lg-12">
+            <div class="card   card-outline" >	
+				
+				<div class="card-header">	
+					<div class="card-tools">
+					  <!-- Collapse Button -->
+					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+					</div>		
+				    <div class="card card-outline">
+						<select id="xxxx">
+							<option value="アイドルマスター シャイニーカラーズ">アイドルマスター シャイニーカラーズ</option>
+							<option value="ダ・カーポ＆Dal Segno">ダ・カーポ＆Dal Segno</option>
+						</select>	
+					</div>	
+						<span class="input-group-append">
+						  <button id ="buttonSearch" type="button" class="btn btn-block btn-outline-info" onclick="search()">查詢!</button>
+						</span>					
+				</div>			
+				<div class="card-body">
+					  <div class="input-group">
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">篩選:</h5>
+						<select>
+							<option>2021年3月</option>
+							<option>2021年4月</option>
+						</select>
+						<select>
+							<option>所有地區</option>
+							<option>台灣</option>
+							<option>日本</option>
+						</select>					
+						<select id="xxxx">
+							<option>開</option>
+							<option>風</option>
+							<option>書</option>
+							<option>燒</option>
+							<option>二爆</option>							
+							<option>木門</option>
+							<option>城門</option>
+							<option>寶袋</option>
+							<option>金磚</option>
+							<option>雙箭頭</option>
+						</select>					  
+						<select id="yyyy">
+							<option>開</option>
+							<option>風</option>
+							<option>書</option>
+							<option>燒</option>
+							<option>二爆</option>							
+							<option>木門</option>
+							<option>城門</option>
+							<option>寶袋</option>
+							<option>金磚</option>
+							<option>雙箭頭</option>
+						</select>	
+
+					  </div>	
+                    <div class="overlay-wrapper" id="overlay-1" style="display:none;">
+                      <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                    </div>						
+				</div>			
+			</div>		  		
+			<div class="card   card-outline">
+				<div class="card-header">
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">核心牌</h5>				
+					<div class="card-tools">
+					  <!-- Collapse Button -->
+					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+					</div>		
+				</div>
+				<div class="card-body" id="coreFlameList">
+					<div class="card-text" id="coreCardImgList">
+						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_001.png" >
+						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_002.png" >
+						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_003.png" >
+						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_004.png" >
+						<img id="cardImg" class="img-fluid" src="https://ws-tcg.com/wordpress/wp-content/cardimages/t/tl_w42/tl_w42_005.png" >
+					</div>
+				
+				</div>
+			</div>
+		  </div> <!-- /.col-md-12 -->			
+          <div class="col-lg-12" id="deckListCard">
+			<div class="card card-outline collapsed-card">
+				<div class="card-header">	
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">八寶袋 2020/03 </h5>				
+					<div class="card-tools">
+					  <!-- Collapse Button -->
+					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-plus"></i></button>
+					</div>						
+				</div>	
+				<div class="card-body">		
+				 <div class="col-6">
+					<div class="card card-outline collapsed-card">
+						<div class="card-header">
+						<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">牌組資訊 </h5>
+								<div class="card-tools">
+								  <!-- Collapse Button -->
+								  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-caret-down"></i></button>
+								</div>					
+						</div>
+						<div class="card-body">
+							<table>
+									<tr>
+										<td>牌組名稱:</td>
+									</tr>
+									<tr>
+										<td><b>使用系列:</b></td><td>アイドルマスター シャイニーカラーズ</td>
+									</tr>
+									<tr>
+										<td>比賽類型:</td><td>ヴァイスシュヴァルツショップ大会</td>		
+									</tr>
+									<tr>	
+										<td>比賽地點:</td><td>日本</td>
+									</tr>
+									<tr>	
+										<td>比賽日期</td><td>:2020/03/20</td>
+									</tr>
+							</table>
+						</div>							
+					</div>	
+				</div>
+					<div class="col-6">	
+						<div class="card">
+							<blockquote class="twitter-tweet" data-lang="ja" data-theme="light"><p lang="ja" dir="ltr">【大会結果】<br>14日17時より開催の<br>五つ子カップ Spring Challenge 2021<br>【五月カップ】<br><br>計12名の激戦の末、優勝者は<br>【パープル式部さん】です！<br>🎊おめでとうございます！🎊<br><br>⬇️デッキレシピを頂きましたので掲載します⬇️<a href="https://twitter.com/hashtag/WS?src=hash&amp;ref_src=twsrc%5Etfw">#WS</a> <a href="https://twitter.com/hashtag/ws2tcg?src=hash&amp;ref_src=twsrc%5Etfw">#ws2tcg</a> <a href="https://twitter.com/hashtag/%E3%83%87%E3%83%83%E3%82%AD%E3%83%AC%E3%82%B7%E3%83%94?src=hash&amp;ref_src=twsrc%5Etfw">#デッキレシピ</a> <a href="https://twitter.com/hashtag/%E3%83%B4%E3%82%A1%E3%82%A4%E3%82%B9?src=hash&amp;ref_src=twsrc%5Etfw">#ヴァイス</a> <a href="https://t.co/hEAq5UNpsu">pic.twitter.com/hEAq5UNpsu</a></p>&mdash; 竜星の嵐🌪小倉駅前店🌪駅から1分のビル (@ryuseikokura) <a href="https://twitter.com/ryuseikokura/status/1371067449236357120?ref_src=twsrc%5Etfw">2021年3月14日</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+						</div>
+					</div>	
+				</div>
+			</div>
+			<div class="card card-outline collapsed-card">
+				<div class="card-header">
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">八寶袋</h5>					
+					<div class="card-tools">
+					  <!-- Collapse Button -->
+					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-plus"></i></button>
+					</div>						
+				</div>	
+				<div class="card-body" >				
+<iframe src="https://www.facebook.com/plugins/post.php?href=https://www.facebook.com/CatFootPrintTaoyuan.tw/posts/4010944298970191&width=500&show_text=true&height=694&appId" width="500" height="694" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+				</div>
+			</div>			
+			<!-- /.card -->
+          </div>
+          </div>
+        <!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+   <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-dark" id="rightSideBar">
+    <!-- Control sidebar content goes here -->
+    <div class="p-3">
+      <h5><p>服務條款及免責聲明</p></h5>
+		<br>
+        <p>在使用本網站(ws-cards.cloud)前，請先閱讀利用規約及免責聲明</p></br>
+		<button id="annButton"><p>規約及免責聲明</p></button>
+    </div>
+  </aside>
+  <!-- /.control-sidebar -->
+
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <!-- To the right -->
+	<div class="float-right d-none d-sm-inline">
+		<a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc"><i class="fas fa-envelope"></i></a>
+	</div>	
+    <!-- Default to the left -->
+    <strong>Copyright &copy; 2020 <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc">WS-Cards</a> </strong> All rights reserved.
+	<strong><a onclick="$('#announceexampleModalCenter').modal('show');	" >利用規約</a></strong>
+  </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- Announce Modal -->
+<div id="card-modal-announce">
+	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
+			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+		  </div>
+		  <div class="modal-body">
+			<div id="announce-card-popup-modal">
+				<div class="row">
+					<div class="col text">
+					<ul>
+		<li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
+		<li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
+		<li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
+		<li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
+		<li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
+		<br>
+		<p>最終更新日期 2020年12月11日<p>		
+					</ul>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>			  
+					</div>				
+				</div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+</div>
+
+<!-- REQUIRED SCRIPTS -->
+<!--twitter widgets.js-->
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<!--chart.js-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- 實際開發位置 -->
+<script src="dist/js/mobile-sidebar-control.js"></script>
+<script>
+function search(){
+actionKeyImage();
+	removeTable();
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '牌組清單',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 400, //切段資料
+      endCol : 10//9欄
+  };
+  $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+    console.log('ori data:'+d);
+	var arr = [];
+////////
+//data attri
+////////	
+    var title=document.getElementById('xxxx').value;
+    for(var i=1; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+	  if(arr[i].length===0){break;}
+	  if(i===1){continue;}
+	  var gameTitle=arr[i][1];
+	  if(title === gameTitle){
+		appendEle(arr[i]);
+	  }
+    }
+	//重新load twitter widgets
+	twttr.widgets.load();
+  });
+}
+
+function appendEle(arr){
+		var deckName = arr[0];
+		var deckGame = arr[1];
+		var deckGameType = arr[2];
+		var deckArea = arr[3];
+		var deckDate = arr[4];
+		var deckCore = arr[5];
+		var deckKeyCard = arr[6];
+		var deckDeckCode = arr[7];
+		var deckInfo = arr[8];
+
+		var deckListCard=document.getElementById('deckListCard');
+		var div_1 = document.createElement("div");
+		
+		div_1.setAttribute("class","card card-outline collapsed-card");
+		
+
+		var div_header = document.createElement("div");
+		div_header.setAttribute("class","card-header");
+			var titleH5 = document.createElement("h5");
+			titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
+			titleH5.setAttribute("class","card-title");
+			titleH5.innerHTML=deckCore;
+			
+			var div_header_tool = document.createElement("div");
+			div_header_tool.setAttribute("class","card-tools");
+				var tool_button = document.createElement("button");
+				tool_button.setAttribute("type","button");
+				tool_button.setAttribute("class","btn btn-tool");
+				tool_button.setAttribute("data-card-widget","collapse");
+				tool_button.setAttribute("data-animation-speed","500");
+					var tool_button_i = document.createElement("i");
+					tool_button_i.setAttribute("class","fas fa-plus");
+					tool_button.appendChild(tool_button_i);
+					div_header_tool.appendChild(tool_button);
+		var div_body = document.createElement("div");
+		div_body.setAttribute("class","card-body"); 		
+		
+		if(deckDeckCode!=''){
+			deckDeckCode='https://decklog.bushiroad.com/view/'+deckDeckCode;
+			deckDeckCode="<a href="+deckDeckCode+">click</a>";
+		}
+		var deckInfoEmbed;
+		if(deckInfo.indexOf('twitter')!==-1){
+			deckInfoEmbed = document.createElement("blockquote");
+			deckInfoEmbed.setAttribute("class","twitter-tweet");
+			deckInfoEmbed.setAttribute("data-lang","ja");
+			deckInfoEmbed.setAttribute("data-theme","light");
+			var hrefForEmbed = document.createElement("a");
+			hrefForEmbed.setAttribute("href",deckInfo);
+				deckInfoEmbed.appendChild(hrefForEmbed);
+		}
+		div_body.appendChild(deckInfoEmbed);
+		div_header.appendChild(titleH5);		
+		div_header.appendChild(div_header_tool);
+		div_1.appendChild(div_header);
+		div_1.appendChild(div_body);
+		deckListCard.appendChild(div_1);	
+}
+
+function removeTable(){
+	var tabletree = document.getElementById('tableCardBody');
+	if(tabletree !=null){
+		tabletree.innerHTML="";
+	}
+}
+
+function actionKeyImage(){
+  var coreCardImgListEle=document.getElementById('coreCardImgList');
+  coreCardImgListEle.innerHTML="";
+
+
+
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '核心卡片清單',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 200, //切段資料
+      endCol : 3//2欄
+  };
+  $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+    console.log('ori data:'+d);
+	var arr = [];
+	
+    var title=document.getElementById('xxxx').value;
+    for(var i=1; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+	  if(arr[i].length===0){break;}
+	  console.log(arr[i]);
+	  var gameTitle=arr[i][0];
+	  if(title === gameTitle){
+		addImage(arr[i][1]);
+	  }
+    }
+  });
+}
+
+
+
+
+function addImage(cardNumber){
+		var cardcorelist=cardNumber.split("|");
+		for(var imgInit=0;imgInit<cardcorelist.length;imgInit++){
+			var card_Num=cardcorelist[imgInit];
+				
+			if(card_Num.indexOf(' ')>=0){
+				card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+			}else{
+				card_Num=card_Num;				
+			}
+
+			var card_first=card_Num.substr(0,1);
+			var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+				card_second=card_second.replace('/','_')
+			var card_third=card_Num.replace('/','_');
+				card_third=card_third.replace('-','_');								
+			var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+			var coreCardImgListEle=document.getElementById('coreCardImgList');	
+			var img=document.createElement("img");	
+			img.setAttribute("id","cardImg");		
+			img.setAttribute("name","cardName_"+card_Num);
+			img.setAttribute("src",urlCard);
+			img.setAttribute("onclick","click_image('"+card_Num+"')");
+			coreCardImgListEle.appendChild(img);				
+		}
+}
+
+function click_image(e){
+	alert(e);
+}
+
+
+
+</script>
+
+<script>
+	$('.nav-link').PushMenu('collapse');	
+			var annButton=document.getElementById('annButton');	
+			annButton.addEventListener("click", function(){
+				$('#announceexampleModalCenter').modal('show');	
+			});	
+</script>
+<style>
+</style>
+</body>
+</html>
