@@ -88,7 +88,11 @@
 			overflow-x: auto;
 			white-space: nowrap;		
 		}
-	}	
+	}
+	.pointer {
+		cursor: pointer;
+	}
+
 	</style>
 </head>
 <body class="hold-transition sidebar-mini  layout-fixed">
@@ -275,6 +279,9 @@
 					</div>
 				
 				</div>
+                    <div class="overlay-wrapper" id="overlay-2" style="display:none;">
+                      <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                    </div>					
 			</div>
 		  </div> <!-- /.col-md-12 -->			
           <div class="col-lg-12" id="deckListCard">
@@ -359,7 +366,7 @@
 <iframe src="https://www.facebook.com/plugins/post.php?href=https://www.facebook.com/CatFootPrintTaoyuan.tw/posts/4010944298970191&width=500&show_text=true&height=694&appId" width="500" height="694" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
 				</div>
 			</div>			
-			<!-- /.card -->
+			<!-- /.card -->			
           </div>
           </div>
         <!-- /.row -->
@@ -443,6 +450,8 @@
 <script src="dist/js/mobile-sidebar-control.js"></script>
 <script>
 function search(){
+				document.getElementById('overlay-1').style='display';
+				document.getElementById('overlay-2').style='display';	
 actionKeyImage();
 	removeTable();
   var a = {
@@ -451,11 +460,11 @@ actionKeyImage();
       row: 1, //起始位置
       col: 1,
       endRow : 400, //切段資料
-      endCol : 10//9欄
+      endCol : 10,//9欄
+	  par : 'ALL'
   };
-  $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
+  $.get('https://script.google.com/macros/s/AKfycbyQKi7f0sOpZQCaGWYq1ZrFDUz-1oW0EHlc7347L15n9GPYvmnE9UZnhkDTnTHic4hhLw/exec',a, function(data){ //專案連結，檔案-->共用
     var d = data.split(',');
-    console.log('ori data:'+d);
 	var arr = [];
 ////////
 //data attri
@@ -472,7 +481,7 @@ actionKeyImage();
     }
   });
 	//重新load twitter widgets
-	//twttr.widgets.load();
+	//twttr.widgets.load();	
 }
 
 function appendEle(arr){
@@ -604,11 +613,11 @@ function actionKeyImage(){
       row: 1, //起始位置
       col: 1,
       endRow : 200, //切段資料
-      endCol : 3//2欄
+      endCol : 3,//2欄
+	  par : 'ALL'
   };
   $.get('https://script.google.com/macros/s/AKfycbxflFAcrI_Ktn5QjSwpXG4LWyNfV5v7XqEWNThi28Zz8wwouiYijrv7nHBTVcx-J6OwbA/exec',a, function(data){ //專案連結，檔案-->共用
     var d = data.split(',');
-    console.log('ori data:'+d);
 	var arr = [];
 	
     var title=document.getElementById('xxxx').value;
@@ -621,6 +630,8 @@ function actionKeyImage(){
 		addImage(arr[i][1]);
 	  }
     }
+	document.getElementById('overlay-1').style.display='none';	
+	document.getElementById('overlay-2').style.display='none';	
   });
 }
 
@@ -650,6 +661,8 @@ function addImage(cardNumber){
 			img.setAttribute("name","cardName_"+card_Num);
 			img.setAttribute("src",urlCard);
 			img.setAttribute("onclick","click_image('"+card_Num+"')");
+			img.setAttribute("onmouseover","mouse_over('"+card_Num+"')");
+			img.setAttribute("class","pointer");
 			coreCardImgListEle.appendChild(img);				
 		}
 }
@@ -657,7 +670,8 @@ function addImage(cardNumber){
 function click_image(e){
 	alert(e);
 }
-
+function mouse_over(e){
+}
 
 
 </script>
