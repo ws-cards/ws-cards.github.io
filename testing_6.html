@@ -92,6 +92,9 @@
 	.pointer {
 		cursor: pointer;
 	}
+	#likebox-wrapper * {
+	   width: 100% !important;
+	}
 
 	</style>
 </head>
@@ -334,7 +337,7 @@
 						</div>	
 					</div>
 						<div class="col-6">	
-							<div class="card">
+							<div class="card" id="twitter-likebox-wrapper">
 								<blockquote class="twitter-tweet" data-lang="ja" data-theme="light"><p lang="ja" dir="ltr">【大会結果】<br>14日17時より開催の<br>五つ子カップ Spring Challenge 2021<br>【五月カップ】<br><br>計12名の激戦の末、優勝者は<br>【パープル式部さん】です！<br>🎊おめでとうございます！🎊<br><br>⬇️デッキレシピを頂きましたので掲載します⬇️<a href="https://twitter.com/hashtag/WS?src=hash&amp;ref_src=twsrc%5Etfw">#WS</a> <a href="https://twitter.com/hashtag/ws2tcg?src=hash&amp;ref_src=twsrc%5Etfw">#ws2tcg</a> <a href="https://twitter.com/hashtag/%E3%83%87%E3%83%83%E3%82%AD%E3%83%AC%E3%82%B7%E3%83%94?src=hash&amp;ref_src=twsrc%5Etfw">#デッキレシピ</a> <a href="https://twitter.com/hashtag/%E3%83%B4%E3%82%A1%E3%82%A4%E3%82%B9?src=hash&amp;ref_src=twsrc%5Etfw">#ヴァイス</a> <a href="https://t.co/hEAq5UNpsu">pic.twitter.com/hEAq5UNpsu</a></p>&mdash; 竜星の嵐🌪小倉駅前店🌪駅から1分のビル (@ryuseikokura) <a href="https://twitter.com/ryuseikokura/status/1371067449236357120?ref_src=twsrc%5Etfw">2021年3月14日</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
 							</div>
 						</div>	
@@ -371,8 +374,10 @@
 						  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-plus"></i></button>
 						</div>						
 					</div>	
-					<div class="card-body" >				
-	<iframe src="https://www.facebook.com/plugins/post.php?href=https://www.facebook.com/CatFootPrintTaoyuan.tw/posts/4010944298970191&width=500&show_text=true&height=694&appId" width="500" height="694" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+					<div class="card-body" >	
+<div id="likebox-wrapper">			
+	<iframe src="https://www.facebook.com/plugins/post.php?href=https://www.facebook.com/CatFootPrintTaoyuan.tw/posts/4010944298970191&width=500&show_text=true&height=694&appId"  height="694" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+</div>					
 					</div>
 				</div>			
 			   </div>
@@ -606,13 +611,44 @@ function appendEle(arr){
 		}
 		var deckInfoEmbed;
 		if(deckInfo.indexOf('twitter')!==-1){
-			deckInfoEmbed = document.createElement("blockquote");
-			deckInfoEmbed.setAttribute("class","twitter-tweet");
-			deckInfoEmbed.setAttribute("data-lang","ja");
-			deckInfoEmbed.setAttribute("data-theme","light");
+			deckInfoEmbed = document.createElement("div");
+			deckInfoEmbed.setAttribute("id","likebox-wrapper");
+			
+			var deckInfoEmbediframe = document.createElement("blockquote");
+			//deckInfoEmbediframe.setAttribute("id","likebox-wrapper");
+			deckInfoEmbediframe.setAttribute("class","twitter-tweet");
+			deckInfoEmbediframe.setAttribute("data-lang","ja");
+			deckInfoEmbediframe.setAttribute("data-theme","light");
 			var hrefForEmbed = document.createElement("a");
 			hrefForEmbed.setAttribute("href",deckInfo);
-				deckInfoEmbed.appendChild(hrefForEmbed);
+				deckInfoEmbediframe.appendChild(hrefForEmbed);
+				deckInfoEmbed.appendChild(deckInfoEmbediframe);
+		}else if(deckInfo.indexOf('facebook')!==-1){
+			deckInfoEmbed = document.createElement("div");
+			deckInfoEmbed.setAttribute("id","likebox-wrapper");
+			var deckInfoEmbediframe = document.createElement("iframe");
+			var url = "https://www.facebook.com/plugins/post.php?href="+deckInfo+"&width=450&show_text=true&height=694&appId";
+			deckInfoEmbediframe.setAttribute("src",url);
+			deckInfoEmbediframe.setAttribute("height","694");
+			deckInfoEmbediframe.setAttribute("style","border:none;overflow:hidden");
+			deckInfoEmbediframe.setAttribute("scrolling","no");
+			deckInfoEmbediframe.setAttribute("frameborder","0");
+			deckInfoEmbediframe.setAttribute("allowfullscreen","true");
+			deckInfoEmbediframe.setAttribute("allow","autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share");
+			
+			deckInfoEmbed.appendChild(deckInfoEmbediframe);
+			//<div id="likebox-wrapper">	
+			//<iframe src="https://www.facebook.com/plugins/post.php?href=
+			//https://www.facebook.com/CatFootPrintTaoyuan.tw/posts/4010944298970191
+			//&width=500&show_text=true&height=694&appId" 
+			//width="500" 
+			//height="694" 
+			//style="border:none;overflow:hidden" 
+			//scrolling="no" 
+			//frameborder="0" 
+			//allowfullscreen="true" 
+			//allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+
 		}
 
 		
