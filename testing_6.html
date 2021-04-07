@@ -266,7 +266,7 @@
 			</div>		  		
 			<div class="card   card-outline">
 				<div class="card-header">
-					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">核心牌(未來用來做篩選)</h5>				
+					<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">主力殺招(未來用來做篩選)</h5>				
 					<div class="card-tools">
 					  <!-- Collapse Button -->
 					  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
@@ -298,11 +298,11 @@
 			   </div>	 
 			   <div class="card-body"  id="deckListCard">
 				<div class="card card-outline collapsed-card">
-					<div class="card-header">	
+					<div class="card-header btn" data-card-widget="collapse" data-animation-speed="650">	
 						<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">八寶袋 2020/03 (向下展開測試)</h5>				
 						<div class="card-tools">
 						  <!-- Collapse Button -->
-						  <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-plus"></i></button>
+						  <button type="button" class="btn btn-tool"></button>
 						</div>						
 					</div>	
 					<div class="card-body">		
@@ -507,9 +507,9 @@ function search(e){
       col: 1,
       endRow : 400, //切段資料
       endCol : 10,//9欄
-	  par : param
+	  par : 'ALL'
   };
-  $.get('https://script.google.com/macros/s/AKfycbyQKi7f0sOpZQCaGWYq1ZrFDUz-1oW0EHlc7347L15n9GPYvmnE9UZnhkDTnTHic4hhLw/exec',a, function(data){ //專案連結，檔案-->共用
+  $.get('https://script.google.com/macros/s/AKfycbysbH490ub0vjxdYXwQVprAn9MKUDATD-OQ6ISw9Ny_QHWLelrp_DRiJihuQ7L8hQe8AQ/exec',a, function(data){ //專案連結，檔案-->共用
     var d = data.split(',');
 	var arr = [];
 ////////
@@ -521,8 +521,17 @@ function search(e){
 	  if(arr[i].length===0){break;}
 	  if(i===1){continue;}
 	  var gameTitle=arr[i][1];
+	   var coreCard=arr[i][6];
+	  
 	  if(title === gameTitle){
-		appendEle(arr[i]);
+		if(param!=='ALL'){
+			if(coreCard.indexOf(param)>=0){
+			console.log("coreCard:"+coreCard);
+			  appendEle(arr[i]);
+			}
+		}else{
+			appendEle(arr[i]);
+		}
 	  }
     }
 		document.getElementById('overlay-3').style='display:none';	
@@ -551,22 +560,30 @@ function appendEle(arr){
 			 div_top.setAttribute("class","card card-outline collapsed-card");
 			 div_top.setAttribute("id",deckCore);
 				var div0_header = document.createElement("div");
-				div0_header.setAttribute("class","card-header");
+				div0_header.setAttribute("class","card-header btn");
+				div0_header.setAttribute("data-card-widget","collapse");
+				div0_header.setAttribute("data-animation-speed","550");
 					div0_titleH5 = document.createElement("h5");
 					div0_titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
 					div0_titleH5.setAttribute("class","card-title");
 					div0_titleH5.innerHTML=deckCore;
-					
+				//	<div class="card-header btn" data-card-widget="collapse" data-animation-speed="650">	
+				//		<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">八寶袋 2020/03 (向下展開測試)</h5>				
+				//		<div class="card-tools">
+				//		  <!-- Collapse Button -->
+				//		  <button type="button" class="btn btn-tool"></button>
+				//		</div>						
+				//	</div>						
 					var div0_header_tool = document.createElement("div");
 					div0_header_tool.setAttribute("class","card-tools");
 						var div0_tool_button = document.createElement("button");
 						div0_tool_button.setAttribute("type","button");
 						div0_tool_button.setAttribute("class","btn btn-tool");
-						div0_tool_button.setAttribute("data-card-widget","collapse");
-						div0_tool_button.setAttribute("data-animation-speed","500");
-							var div0_tool_button_i = document.createElement("i");
-							div0_tool_button_i.setAttribute("class","fas fa-plus");
-							div0_tool_button.appendChild(div0_tool_button_i);
+						//div0_tool_button.setAttribute("data-card-widget","collapse");
+						//div0_tool_button.setAttribute("data-animation-speed","500");
+							//var div0_tool_button_i = document.createElement("i");
+							//div0_tool_button_i.setAttribute("class","fas fa-plus");
+							//div0_tool_button.appendChild(div0_tool_button_i);
 							div0_header_tool.appendChild(div0_tool_button);
 					var div0_body = document.createElement("div");
 					div0_body.setAttribute("class","card-body");
