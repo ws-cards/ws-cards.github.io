@@ -117,7 +117,7 @@
 
 	</style>
 </head>
-<body class="hold-transition sidebar-mini  layout-fixed">
+<body class="hold-transition sidebar-mini layout-navbar-fixed layout-footer-fixed layout-fixed">
 <div class="wrapper">
 
   <!-- Navbar -->
@@ -360,6 +360,35 @@
 	</div>
 </div>
 
+<!-- Modal -->
+<div id="card-modal">
+	<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<h5 class="modal-title" id="exampleModalLongTitle"></h5>
+			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+		  </div>
+		  <div class="modal-body">
+			<div id="card-popup-modal">
+				
+				<div class="row">
+					<div class="col text-center">
+						<div id="snsContent"></id>					
+								  
+					</div>		
+				<div class="col text-center" id="modal-body-bottom">
+				</div>					
+				</div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+</div>
+
 <!-- REQUIRED SCRIPTS -->
 <!--twitter widgets.js-->
 <script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
@@ -444,13 +473,13 @@ function setFunOnload(){
 				
 				cardNumberListener.addEventListener("change", function(){
 					if (xxxx.value!=''){
-						search(xxxx.value,'decktime');
+						//search(xxxx.value,'decktime');
 					}
 				});		
 				var cardTitleListener = document.getElementById("select_area");	
 				cardTitleListener.addEventListener("change", function(){
 					if (xxxx.value!=''){
-						search(xxxx.value,'deckarea');
+						//search(xxxx.value,'deckarea');
 					}
 				});	
 }
@@ -745,65 +774,11 @@ function appendEle(arr){
 			 div_top = document.getElementById(deckCore);
 		}
 	
-		var div_1 = document.createElement("div");
-		div_1.setAttribute("class","card card-outline collapsed-card");
-		div_1.setAttribute("onclick","$('#div_modal_"+deckID_internal_clean+"_id').modal('show')");
-
-		var div_header = document.createElement("div");
-		div_header.setAttribute("class","card-header");
-			var titleH5 = document.createElement("h5");
-			titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
-			titleH5.setAttribute("class","card-title");
-			titleH5.innerHTML=deckDate+" "+deckArea+" "+deckGameType;
-		/*lv1*/	
-		var div_modal_1 = document.createElement("div");
-		div_modal_1.setAttribute("class","modal fade"); 	
-		div_modal_1.setAttribute("id","div_modal_"+deckID_internal_clean+"_id");
-		div_modal_1.setAttribute("tabindex","-1");
-		div_modal_1.setAttribute("role","dialog");
-		div_modal_1.setAttribute("aria-labelledby","announceexampleModalCenterTitle");
-		div_modal_1.setAttribute("aria-hidden","true");
-		/*lv2*/
-		var div_modal_2 = document.createElement("div");
-		div_modal_2.setAttribute("class","modal-dialog modal-dialog-centered");
-		div_modal_2.setAttribute("role","document");
-		/*lv3*/
-		var div_modal_3 = document.createElement("div");
-		div_modal_3.setAttribute("class","modal-content");
-		/*lv4_header*/
-		var div_modal_4_header = document.createElement("div");
-		div_modal_4_header.setAttribute("class","modal-header");
-			/*lv4_header_title*/
-			var div_modal_4_header_h5 = document.createElement("h5");
-			div_modal_4_header_h5.setAttribute("class","modal-title");
-			div_modal_4_header_h5.setAttribute("id","announceexampleModalLongTitle");
-			var div_modal_4_header_h5_title = document.createElement("p");
-			div_modal_4_header_h5_title.innerHTML=deckCore;
-			/*lv4_header_button*/
-			var div_modal_4_header_button = document.createElement("button");
-			div_modal_4_header_button.setAttribute("type","button");
-			div_modal_4_header_button.setAttribute("class","close");
-			div_modal_4_header_button.setAttribute("aria-label","Close");
-			div_modal_4_header_button.setAttribute("data-dismiss","modal");
-				/*lv4_header_span*/
-				var div_modal_4_span = document.createElement("span");
-				div_modal_4_span.setAttribute("aria-hidden","true");
-				div_modal_4_span.innerHTML='&times;';
-		
-		div_modal_4_header_button.appendChild(div_modal_4_span);
-		div_modal_4_header.appendChild(div_modal_4_header_button);
-		div_modal_4_header.appendChild(div_modal_4_header_h5_title);
-		div_modal_4_header.appendChild(div_modal_4_header_h5);	
-
-
-		
-		/*lv4_body*/
-		var div_modal_4_body = document.createElement("div");
-		if(deckDeckCode!=''){
-			deckDeckCode='https://decklog.bushiroad.com/view/'+deckDeckCode;
-			deckDeckCode="<a href="+deckDeckCode+">click</a>";
-		}
-			/*lv4_body_deckurl*/
+			if(deckDeckCode!=''){
+				deckDeckCode='https://decklog.bushiroad.com/view/'+deckDeckCode;
+				deckDeckCode="<a href="+deckDeckCode+">click</a>";
+			}
+			/*SNS Content*/
 			var deckInfoEmbed;
 			if(deckInfo.indexOf('twitter')!==-1){
 				deckInfoEmbed = document.createElement("div");
@@ -834,27 +809,42 @@ function appendEle(arr){
 				deckInfoEmbed.appendChild(deckInfoEmbediframe);
 			}
 			
-			/*lv4_body_row*/
-			var div_modal_4_raw = document.createElement("div");
-			div_modal_4_raw.setAttribute("class","row");
-			 /*lv4_body_row_div*/
-			 var div_modal_4_raw_div = document.createElement("div");
-			 div_modal_4_raw_div.setAttribute("class","col text-center");
-				/*lv4_body_row_div_button*/
-				var div_modal_4_raw_button = document.createElement("button");
-				div_modal_4_raw_button.setAttribute("type","button");
-				div_modal_4_raw_button.setAttribute("class","btn btn-secondary");
-				div_modal_4_raw_button.setAttribute("data-dismiss","modal");
-				div_modal_4_raw_button.innerHTML="Close";
+		var div_1 = document.createElement("div");
+		div_1.setAttribute("class","card card-outline collapsed-card");
+		div_1.addEventListener("click", function(){
+							var snsContent=document.getElementById('snsContent');
+							var modalbodybottom=document.getElementById("modal-body-bottom");
+							snsContent.innerHTML="";
+							modalbodybottom.innerHTML="";
+							
+							twttr.widgets.load();	
+							var snsContent=document.getElementById('snsContent');
+							snsContent.appendChild(deckInfoEmbed);	
+														
+							$('#exampleModalCenter').modal('show');							
+							
+							var snsdownbutton=document.createElement('button');
+							snsdownbutton.setAttribute("type","button");
+							snsdownbutton.setAttribute("class","btn btn-secondary");
+							snsdownbutton.setAttribute("data-dismiss","modal");
+							snsdownbutton.innerHTML="Close";
+							
+							var modalbodybottom=document.getElementById("modal-body-bottom");
+							modalbodybottom.appendChild(snsdownbutton);
+		});	
 		
-		div_modal_4_raw_div.appendChild(div_modal_4_raw_button);		
-		div_modal_4_raw.appendChild(div_modal_4_raw_div);	
-		div_modal_4_body.appendChild(deckInfoEmbed);
-		div_modal_4_body.appendChild(div_modal_4_raw);
-		div_modal_3.appendChild(div_modal_4_header);
-		div_modal_3.appendChild(div_modal_4_body);
-		div_modal_2.appendChild(div_modal_3);
-		div_modal_1.appendChild(div_modal_2);
+		var div_header = document.createElement("div");
+		div_header.setAttribute("class","card-header");
+			var titleH5 = document.createElement("h5");
+			titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
+			titleH5.setAttribute("class","card-title");
+			titleH5.innerHTML=deckDate+" "+deckArea+" "+deckGameType;
+
+		
+
+
+			
+
 		
 		div_header.appendChild(titleH5);		
 		//div_header.appendChild(div_header_tool);
@@ -871,7 +861,7 @@ function appendEle(arr){
 		}
 		
 		deckListCard.appendChild(div_top);
-		deckListCard.appendChild(div_modal_1);
+
 //重新load twitter widgets		
 twttr.widgets.load();		
 }
