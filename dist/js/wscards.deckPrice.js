@@ -2,6 +2,9 @@
 			var requestDeckLog = new XMLHttpRequest();				
 			
 			window.onload=function(){
+				setTimeout(function(){
+					window.scrollTo(0, 1);
+				}, 100);				
 				document.getElementById('second-content').style.display='none';
 				var today = new Date();
 				var hours = today.getHours();
