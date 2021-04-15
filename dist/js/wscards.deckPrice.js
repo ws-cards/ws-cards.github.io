@@ -234,7 +234,6 @@
 			btncopyListener.addEventListener("click", function(){
 				var deckCode=document.getElementById('deckCode').value;
 				var deckSource=document.getElementById('deckSource').innerHTML;
-				alert(deckSource);
 				if(deckSource === 'bottleneko'){
 					var moveOthereWeb=confirm("將會直接在此頁面切換至貓罐子網站，請問要繼續嗎?");
 					if(moveOthereWeb){
