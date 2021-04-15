@@ -55,6 +55,7 @@
 					document.getElementById('overlay-1').style.display='none';					
 				}else{					
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
+					var deckSource = deckLockInfo['deckSource'];
 					var deckName = deckLockInfo['deckName'];
 					var deckId = deckLockInfo['deckId'];
 					var deckWSTitle = deckLockInfo['deckWSTitle'];
@@ -85,6 +86,8 @@
 						document.getElementById('deckCodeDisplay').innerHTML='デッキコード: '+deckId;
 						document.getElementById('deckTitleName').innerHTML='主題名稱:'+deckWSTitle;
 						document.getElementById('deckName').innerHTML='牌組名稱:'+deckName;	
+						document.getElementById('deckSource').innerHTML=deckSource;
+						document.getElementById('deckSource').style.display='none';
 						var today = new Date();
 						var month = today.getMonth()+1;
 						var date = today.getDate();
@@ -230,9 +233,18 @@
 			var btncopyListener = document.getElementById("btn-copy");
 			btncopyListener.addEventListener("click", function(){
 				var deckCode=document.getElementById('deckCode').value;
-				var moveOthereWeb=confirm("將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?");
-				if(moveOthereWeb){
-					window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
+				var deckSource=document.getElementById('deckSource').innerHTML;
+				alert(deckSource);
+				if(deckSource === 'bottleneko'){
+					var moveOthereWeb=confirm("將會直接在此頁面切換至貓罐子網站，請問要繼續嗎?");
+					if(moveOthereWeb){
+						window.location.replace("https://bottle-neko.web.app/deck/"+deckCode);
+					}
+				}else if(deckSource === 'decklog'){
+					var moveOthereWeb=confirm("將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?");
+					if(moveOthereWeb){
+						window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
+					}
 				}
 			});	
 					
