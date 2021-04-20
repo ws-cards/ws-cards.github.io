@@ -45,7 +45,8 @@
 			
 			  requestDeckLog.onload = function(){	
 	
-				var deckLockInfo = requestDeckLog.response;				
+				var deckLockInfo = requestDeckLog.response;
+					alert(deckLockInfo);
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
 					alert(deckGameTitle);
 					var deckSource = deckLockInfo['deckSource'];
