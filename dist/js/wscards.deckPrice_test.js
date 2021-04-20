@@ -40,7 +40,7 @@
 			 try{
 			  //request 設定
 			  requestDeckLog.open('POST', requestURLDeckLogDeck);
-			  requestDeckLog.responseType = 'json';
+
 			  requestDeckLog.send();
 			
 			  requestDeckLog.onload = function(){	
