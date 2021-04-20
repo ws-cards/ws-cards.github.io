@@ -45,16 +45,9 @@
 			
 			  requestDeckLog.onload = function(){	
 	
-				var deckLockInfo = requestDeckLog.response;
-				alert(deckLockInfo);
-				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
-					alert("沒資料");
-					document.getElementById('overlay-1').style.display='none';				
-				}else if('Exception'.indexOf(deckLockInfo)>=0){
-					alert("網站發生不明錯誤");
-					document.getElementById('overlay-1').style.display='none';					
-				}else{					
+				var deckLockInfo = requestDeckLog.response;				
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
+					alert(deckGameTitle);
 					var deckSource = deckLockInfo['deckSource'];
 					var deckName = deckLockInfo['deckName'];
 					var deckId = deckLockInfo['deckId'];
@@ -97,7 +90,7 @@
 						calculateDeckPrice(deckCardList,deckGameTitle);
 					}
 				
-				}
+				
 			  }
 			 } 
 			 catch(e){
