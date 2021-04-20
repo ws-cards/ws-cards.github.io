@@ -1,4 +1,4 @@
-			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
+			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp';	
 			var requestDeckLog = new XMLHttpRequest();				
 			
 			window.onload=function(){
@@ -39,9 +39,11 @@
 			function setDeckPrice(deckCode){
 			 try{
 			  //request 設定
-			  requestDeckLog.open('POST', requestURLDeckLogDeck+deckCode);
+			  requestDeckLog.open('POST', requestURLDeckLogDeck);
 			  requestDeckLog.responseType = 'json';
-			  requestDeckLog.send();
+			  requestDeckLog.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+			  var params = 'deckcode='+deckCode;
+			  requestDeckLog.send(params);
 			
 			  requestDeckLog.onload = function(){	
 	
