@@ -456,6 +456,9 @@
             var itemTagName = $(this.options.item || this.theme.item).prop('tagName');
             if ('ontouchstart' in document.documentElement && 'onmousemove' in document.documentElement) {
 		        this.$menu
+					//https://github.com/bassjobsen/Bootstrap-3-Typeahead/issues/120
+					//Possible to have result listing with scrollbar support?
+					//This does not work for touch devices. You need to remove those two lines (commented)
 		            //.on('touchstart', itemTagName, $.proxy(this.touchstart, this))
 		            //.on('touchend', itemTagName, $.proxy(this.click, this))
 		            .on('click', $.proxy(this.click, this))
