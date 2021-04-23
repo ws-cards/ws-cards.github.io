@@ -630,7 +630,7 @@
                 if (this.selectOnBlur) {
                     this.select();
                 }
-                this.hide();
+                //this.hide();
                 this.focused = false;
                 this.keyPressed = false;
             } else if (this.mouseddown) {
