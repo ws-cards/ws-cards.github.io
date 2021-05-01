@@ -1,1 +1,263 @@
-var _0x436a=['replace','1600533GkLNxz','43FzpzPU','154988kitStg','4039AEHuZO','\x5cw+','split','1212348CShEOG','3c\x203h=[\x223j\x22,\x223v\x22,\x223w\x22,\x223x\x22,\x223y\x22,\x223z\x22,\x223A\x22,\x223B\x22,\x223C\x22,\x223k\x22,\x223D\x22,\x223E\x22,\x22||||3F||3G|3H|3c|3I||||||||||3J|||||||3K||||||3L|3M||3N|3d|||3O||3P|3Q|3R||3S|3T||3U|3k|3V|3W|3i|3X|3Y||3Z|40|41|42|43|44|||45|46|47|48|3l|49|4a|4b|4c|4d|4e|4f|4g|4h|4i|4j|4k|4l|4m|4n|4o|4p|4q|4r|4s|4t|50|4u|4v|4w|4x|4y|4z|4A|4B|4C|4D|4E|4F|4G|4H|4I|4J|4K|4L|4M|4N|4O|4P|4Q|4R|4S|3m|4T|4U|4V|4W|4X|4Y|4Z|51|52|53|54|55|56|57|58|5a|5b|5c|5d|5e|5f|5g|5h|5i|5j|5k|3n|5l|5m|3g|5n|5o|5p|5q|5r|5s|3b|5t|3j|5u|5v|5w|5x|5y|59|5z|5A|5B|5C|5D|5E|5F|5G|5H|5I|5J|5K|5L|5M|5N|5O|5P|5Q|5R|5S|5T|5U|5V|5W|5X|3e|5Y|5Z|60|61|63|64|65|66|67\x22,\x22\x5c\x5cw+\x22,\x2268\x22,\x2269\x22],3o=3f;3d\x203f(e,t){3c\x20r;3e\x203h[e-=3p]}(3d(e,t){3g(3c\x20r=3f;)3m{3c\x20a;3i(3q===-3b(r(6a))+-3b(r(6b))*-3b(r(6c))+-3b(r(6d))*3b(r(6e))+3b(r(6f))+-3b(r(6g))*3b(r(6h))+3b(r(6i))*3b(r(6j))+3b(r(6k))*3b(r(3p)))3l;e.3r(e.3s())}3n(t){e.3r(e.3s())}})(3h,3q),6l(3d(e,t,r,a,n,o){3c\x20c=3f;3i(n=3d(e){3c\x20t=3f;3e(e<62?\x22\x22:n(3b(e/62)))+((e%=62)>35?3t.6m(e+29):e[t(6n)](36))},!\x22\x22[c(3u)](/^/,3t)){3g(;r--;)o[n(r)]=a[r]||n(r);a=[3d(e){3e\x20o[e]}],n=3d(){3c\x20e;3e\x20c(6o)},r=1}3g(;r--;)a[r]&&(e=e[c(3u)](6p(\x22\x5c\x5cb\x22+n(r)+\x22\x5c\x5cb\x22,\x22g\x22),a[r]));3e\x20e}(\x278\x201d=\x22O://1E-1F-1G.1H.r.1I.P/1J/1K.1L?1M=\x22,H=13\x201N;A\x201O(){4.6(\x22D-1\x22).x=\x22z\x22,4.6(\x22D-2\x22).x=\x22z\x22;8\x20e,t=4.1P.1Q.1R.14.1e;1f(),1g(t)}A\x201g(e){1S{H.1T(\x221U\x22,1d+e),H.1V=\x221W\x22,H.1X(),H.1h=A(){8\x20e=H.1Y;Q(9.j(e),\x221Z\x22.J(e)>=0||20==e)G(\x22沒資料，請確認構築ルール是否選擇「ネオスタンダード」或是「タイトル限定」\x22),4.6(\x22D-1\x22).x.z=\x22F\x22;U\x20Q(\x2221\x22.J(e)>=0)G(\x22網站發生不明錯誤\x22),4.6(\x22D-1\x22).x.z=\x22F\x22;U{8\x20t=e.22,n=e.V,o=e.1i,d=e.23,l=e.24,c=e.25,a,r=c[0].1j;Q(9.j(r),\x222\x22!==t&&\x225\x22!==t)26(t){15\x225\x22:G(\x22你輸入的是27バース的牌組!\x22),4.6(\x22D-1\x22).x.z=\x22F\x22;16;15\x221\x22:G(\x22你輸入的是28的牌組!\x22),4.6(\x22D-1\x22).x.z=\x22F\x22;16;15\x2229\x22:G(\x22每日\x2010:K-11:K\x20為\x20系統維護時間!!!\x22),4.6(\x22D-1\x22).x.z=\x22F\x22;16;2a:G(\x22不是2b的\x22),4.6(\x22D-1\x22).x.z=\x22F\x22}U{4.6(\x221k-W\x22).x=\x22z\x22,4.6(\x222c\x22).7=\x22デッキコード:\x20\x22+d,4.6(\x222d\x22).7=\x22主題名稱:\x22+l,4.6(\x221i\x22).7=\x22牌組名稱:\x22+o,4.6(\x22V\x22).7=n,4.6(\x22V\x22).x.z=\x22F\x22;8\x20m=13\x201l,s=m.2e()+1,i=m.2f(),u=m.2g();4.6(\x222h\x22).7=\x22製表日期:\x22+u+\x22/\x22+s+\x22/\x22+i,4.6(\x222i\x22).7=\x22價格更新日期:\x22+r,1m(c,t)}}}}2j(e){9.j(\x22有誤\x22),9.j(e)}}A\x201m(e,t){8\x20n=4.6(\x22X\x22),o=4.q(\x222k\x22),d=4.q(\x221n\x22),l=4.q(\x22R\x22),c=4.q(\x22R\x22),a=4.q(\x22R\x22),r=4.q(\x22R\x22),m=4.q(\x22R\x22),s=4.q(\x222l\x22);l.7=\x22卡號\x22,c.7=\x22稀有度\x22,a.7=\x22單價\x22,r.7=\x22數量\x22,m.7=\x22總和\x22,d.w(l),d.w(c),d.w(a),d.w(r),d.w(m),o.w(d),s.Y(\x221o\x22,\x221p\x22),n.w(o),n.w(s);8\x20i,u=e[0].17,p,y=u.M(0,u.J(\x22-\x22)).N(\x22/\x22,\x22Z\x22),g=0,E=0;2m(8\x20k\x202n\x20e){8\x20L=e[k],T=L.17,h=L.2o,b=L.2p,v=L.18,I=L.1j,B=L.2q,f=L.2r,v=L.18,C=L.2s;9.j(\x22卡號:\x22+T),9.j(\x22單價:\x22+B),9.j(\x22數量:\x22+h),9.j(\x22更新時間:\x22+I),1q(T,B,h,f,v,t,C),E+=2t(h,10),9.j(\x22途中\x201r:\x22+(g+=B*h))}9.j(\x221r:\x22+g),9.j(\x22卡片總數:\x22+E),4.6(\x222u\x22).7=\x22¥\x20\x22+19(g.2v()),4.6(\x22D-1\x22).x.z=\x22F\x22,4.6(\x22D-2\x22).x.z=\x22F\x22,1s===!E&&G(\x22不足1s張，有可能是資料抓取問題\x22)}12.1h=A(){2w(A(){12.2x(0,1)},2y),4.6(\x221k-W\x22).x.z=\x22F\x22;8\x20e=13\x201l,t=e.2z(),n=e.2A();10===t&&n<2B&&n>0&&(G(\x22每日\x2010:K-11:K\x20為\x20系統維護時間!!\x22),4.6(\x2214\x22).1t=!0,4.6(\x222C\x22).1t=!0,9.j(\x2210:K-11:K為系統維護時間\x22))},$(\x22#1a\x22).2D(\x222E.2F.1u\x22,A(e){$(\x22#1a\x22).2G()});8\x20X=4.6(\x22X\x22);A\x201q(e,t,n,o,d,l,c){8\x20a=4.6(\x221p\x22),r=4.q(\x221n\x22),m=4.q(\x22S\x22);m.Y(\x222H\x22,\x222I\x22),m.Y(\x221o\x22,e),m.1v(\x221w\x22,A(){9.j(\x2217:\x22+e);8\x20t=e,n=(t=t.J(\x22\x20\x22)>=0?t.M(0,t.J(\x22\x20\x22)):t).M(0,1),o=t.M(0,t.J(\x22-\x22));o=o.N(\x22/\x22,\x22Z\x22);8\x20a=t.N(\x22/\x22,\x22Z\x22);a=a.N(\x22-\x22,\x22Z\x22);8\x20r=\x22O://2J-2K.P/1x/1y-W/2L/\x22+n.1b()+\x22/\x22+o.1b()+\x22/\x22+a.1b()+\x22.2M\x22,m,s,i;9.j(\x222N:\x22+l),\x225\x22===l&&(r=\x22O://2O-2P-2Q-1.2R.P/2S-2T.P/1x/1y-W/2U/2V/\x22+c),4.6(\x222W\x22).Y(\x222X\x22,r),4.6(\x2218\x22).7=d,4.6(\x222Y\x22).7=t,$(\x22#1a\x22).1u(\x222Z\x22)});8\x20s=4.q(\x22S\x22),i=4.q(\x22S\x22),u=4.q(\x22S\x22),p=4.q(\x22S\x22);m.7=e,s.7=t,i.7=t*n,u.7=n,p.7=o,r.w(m),r.w(p),r.w(s),r.w(u),r.w(i),a.w(r)}8\x201z=4.6(\x2230-1A\x22);A\x201f(){8\x20e;4.6(\x22X\x22).7=\x22\x22}A\x2019(e){31\x20e.1c<=3?e:19(e.M(0,e.1c-3))+\x22,\x22+e.M(e.1c-3)}1z.1v(\x221w\x22,A(){8\x20e=4.6(\x2214\x22).1e,t=4.6(\x22V\x22).7,n;Q(\x2232\x22===t)(n=1B(\x22將會直接在此頁面切換至貓罐子網站，請問要繼續嗎?\x22))&&12.1C.N(\x22O://33-34.35.36/37/\x22+e);U\x20Q(\x221D\x22===t){8\x20n;(n=1B(\x22將會直接在此頁面切換至38\x2039網站，請問要繼續嗎?\x22))&&12.1C.N(\x22O://1D.3a.P/1A/\x22+e)}});\x27,62,6q,3o(6r).6s(\x22|\x22),0,{}));','|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||parseInt|var|function|return|_0x24ee|for|_0x53c2|if|toString|replace|break|try|catch|_0xe1b133|122|820009|push|shift|String|132|355599HFzHMv|758679oklwTq|808015wnuOlS|1INfUMb|609820VjyZXd|1cPuXlW|309206ILeDxw|1oKFzqS|1SidQBG|1511470yllITo|document|getElementById|innerHTML|console|log|createElement|appendChild|style|display|overlay|none|alert|requestDeckLog|indexOf|00|substr|https|com|th|td|else|deckSource|content|deckTable|setAttribute|_|window|new|deckCode|case|cardNumber|cardName|moneyFormat|exampleModalCenter|toLowerCase|length|requestURLDeckLogDeck|value|removeTable|setDeckPrice|onload|deckName|uppdate|second|Date|calculateDeckPrice|tr|id|tableCardBody|createTableTree|total|disabled|modal|addEventListener|click|wordpress|wp|btncopyListener|copy|confirm|location|decklog|divine|vehicle|292507|dt|appspot|api|deckLogInfo|jsp|deckcode|XMLHttpRequest|deckCal|forms|calForm|elements|open|POST|responseType|json|send|response|NODATA||null|Exception|deckGameTitle|deckId|deckWSTitle|cardList|switch|Re||VG|9999|default|WS|deckCodeDisplay|deckTitleName|getMonth|getDate|getFullYear|searchDate|updatePriceDate|thead|tbody|in|cardTime|internalCardNumber|cardPrice|cardRare|imgPath|deckTotalPrice|setTimeout|scrollTo|100|getHours|getMinutes|buttonSearch|on|hidden|bs|hide|class|tdClass|ws|tcg|cardimages|png|dec|s3|ap|northeast|amazonaws|rebirth|fy|images|cardlist|cardImg|src|exampleModalLongTitle|show|btn|bottleneko|bottle|neko|web||app|deck|Deck|Log|bushiroad|12jjWusN|218629nFzbRX|134|133|130|125|129|128|131|126|127|124|137|eval|fromCharCode|123|136|RegExp|197|135|split','179597rWwKhs','17441YAnljd','655366rhniMr'];function _0x3cf4(_0x4365eb,_0x16ff8e){_0x4365eb=_0x4365eb-0x167;var _0x436a39=_0x436a[_0x4365eb];return _0x436a39;}var _0x1de81a=_0x3cf4;(function(_0x17d14e,_0x14a02d){var _0x2135d9=_0x3cf4;while(!![]){try{var _0x3cc1fb=-parseInt(_0x2135d9(0x16a))+-parseInt(_0x2135d9(0x167))+parseInt(_0x2135d9(0x16f))+parseInt(_0x2135d9(0x16d))+parseInt(_0x2135d9(0x173))+parseInt(_0x2135d9(0x16e))*-parseInt(_0x2135d9(0x172))+parseInt(_0x2135d9(0x171));if(_0x3cc1fb===_0x14a02d)break;else _0x17d14e['push'](_0x17d14e['shift']());}catch(_0x290b2f){_0x17d14e['push'](_0x17d14e['shift']());}}}(_0x436a,0x98606),eval(function(_0x40072f,_0x38c30b,_0x30c1ad,_0x547020,_0x394175,_0xf89c28){var _0x174ad7=_0x3cf4;_0x394175=function(_0x44b653){return(_0x44b653<_0x38c30b?'':_0x394175(parseInt(_0x44b653/_0x38c30b)))+((_0x44b653=_0x44b653%_0x38c30b)>0x23?String['fromCharCode'](_0x44b653+0x1d):_0x44b653['toString'](0x24));};if(!''[_0x174ad7(0x170)](/^/,String)){while(_0x30c1ad--)_0xf89c28[_0x394175(_0x30c1ad)]=_0x547020[_0x30c1ad]||_0x394175(_0x30c1ad);_0x547020=[function(_0x5454b6){return _0xf89c28[_0x5454b6];}],_0x394175=function(){var _0x1aabbe=_0x174ad7;return _0x1aabbe(0x168);},_0x30c1ad=0x1;};while(_0x30c1ad--)if(_0x547020[_0x30c1ad])_0x40072f=_0x40072f[_0x174ad7(0x170)](new RegExp('\x5cb'+_0x394175(_0x30c1ad)+'\x5cb','g'),_0x547020[_0x30c1ad]);return _0x40072f;}(_0x1de81a(0x16b),0x3e,0x191,_0x1de81a(0x16c)[_0x1de81a(0x169)]('|'),0x0,{})));
+			var requestURLDeckLogDeck = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
+			var requestDeckLog = new XMLHttpRequest();				
+			
+			window.onload=function(){
+				setTimeout(function(){
+					window.scrollTo(0, 1);
+				}, 100);				
+				document.getElementById('second-content').style.display='none';
+				var today = new Date();
+				var hours = today.getHours();
+				var mins = today.getMinutes();
+				if(hours === 10 && (mins < 59 && mins> 0)){
+					alert("每日 10:00-11:00 為 系統維護時間!!");
+					document.getElementById('deckCode').disabled = true;
+					document.getElementById('buttonSearch').disabled = true;
+					
+					console.log("10:00-11:00為系統維護時間");
+				}
+			  //setFun();  
+			}
+			
+			
+			$('#exampleModalCenter').on('hidden.bs.modal', function (e) {
+			 // $('#exampleModalCenter').modal('dispose');
+				$('#exampleModalCenter').hide();
+			})
+			
+			
+			function deckCal(){
+				document.getElementById('overlay-1').style='display';
+				document.getElementById('overlay-2').style='display';					
+				var oform = document.forms["calForm"];
+				var deckCode = oform.elements["deckCode"].value;
+				
+				removeTable();
+				setDeckPrice(deckCode);
+			}
+			
+			function setDeckPrice(deckCode){
+			 try{
+			  //request 設定
+			  requestDeckLog.open('POST', requestURLDeckLogDeck+deckCode);
+			  requestDeckLog.responseType = 'json';
+			  requestDeckLog.send();
+			
+			  requestDeckLog.onload = function(){	
+	
+				var deckLockInfo = requestDeckLog.response;
+				console.log(deckLockInfo);
+				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
+					alert("沒資料");
+					document.getElementById('overlay-1').style.display='none';				
+				}else if('Exception'.indexOf(deckLockInfo)>=0){
+					alert("網站發生不明錯誤");
+					document.getElementById('overlay-1').style.display='none';					
+				}else{					
+					var deckGameTitle = deckLockInfo['deckGameTitle'];
+					var deckSource = deckLockInfo['deckSource'];
+					var deckName = deckLockInfo['deckName'];
+					var deckId = deckLockInfo['deckId'];
+					var deckWSTitle = deckLockInfo['deckWSTitle'];
+					var deckCardList = deckLockInfo['cardList'];
+					var deckPriceDateList = deckCardList[0];
+					var deckUpdatePriceDate = deckPriceDateList['uppdate'];
+					console.log(deckUpdatePriceDate);
+					if(!(deckGameTitle==='2'||deckGameTitle==='5')){
+						switch(deckGameTitle){
+							case '5':
+								alert('你輸入的是Reバース的牌組!');
+								document.getElementById('overlay-1').style.display='none';										
+								break;
+							case '1':
+								alert('你輸入的是VG的牌組!');
+								document.getElementById('overlay-1').style.display='none';	
+								break;
+							case '9999':
+								alert('每日 10:00-11:00 為 系統維護時間!!!');
+								document.getElementById('overlay-1').style.display='none';	
+								break;								
+							default:
+								alert('不是WS的');
+								document.getElementById('overlay-1').style.display='none';	
+						}	
+					}else{
+						document.getElementById('second-content').style='display';						
+						document.getElementById('deckCodeDisplay').innerHTML='デッキコード: '+deckId;
+						document.getElementById('deckTitleName').innerHTML='主題名稱:'+deckWSTitle;
+						document.getElementById('deckName').innerHTML='牌組名稱:'+deckName;	
+						document.getElementById('deckSource').innerHTML=deckSource;
+						document.getElementById('deckSource').style.display='none';
+						var today = new Date();
+						var month = today.getMonth()+1;
+						var date = today.getDate();
+						var year = today.getFullYear();
+						document.getElementById('searchDate').innerHTML="製表日期:"+year+"/"+month+"/"+date;
+						document.getElementById('updatePriceDate').innerHTML="價格更新日期:"+deckUpdatePriceDate;
+						calculateDeckPrice(deckCardList,deckGameTitle);
+					}
+				
+				}
+			  }
+			 } 
+			 catch(e){
+				console.log("有誤");
+				console.log(e);
+			 }		 
+			}
+			
+			function calculateDeckPrice(deckCardList,deckGameTitle){
+			
+				var deckTableHead=document.getElementById('deckTable');
+				var thead = document.createElement("thead");
+				var thead_tr = document.createElement("tr");
+				var thead_tr_th_cardno = document.createElement("th");
+				var thead_tr_th_cardrare = document.createElement("th");
+				var thead_tr_th_cardprice = document.createElement("th");
+				var thead_tr_th_cardnum = document.createElement("th");
+				var thead_tr_th_cardtotal = document.createElement("th");
+				var tbody = document.createElement("tbody");
+				
+				thead_tr_th_cardno.innerHTML="卡號";
+				thead_tr_th_cardrare.innerHTML="稀有度";
+				thead_tr_th_cardprice.innerHTML="單價";
+				thead_tr_th_cardnum.innerHTML="數量";
+				thead_tr_th_cardtotal.innerHTML="總和";
+				thead_tr.appendChild(thead_tr_th_cardno);
+				thead_tr.appendChild(thead_tr_th_cardrare);
+				thead_tr.appendChild(thead_tr_th_cardprice);
+				thead_tr.appendChild(thead_tr_th_cardnum);
+				thead_tr.appendChild(thead_tr_th_cardtotal);
+				thead.appendChild(thead_tr);	
+				tbody.setAttribute("id","tableCardBody");
+				
+				deckTableHead.appendChild(thead);
+				deckTableHead.appendChild(tbody);
+				
+				
+				var getCardListFirstContent = deckCardList[0];
+				var getFirstCardNumber = getCardListFirstContent ['cardNumber'];	
+				var preCode=getFirstCardNumber.substr(0,getFirstCardNumber.indexOf('-'));
+				var preCode_clean=preCode.replace('/','_')			
+				var totalPrice=0;
+				var totalNum=0;
+
+					for(var cardkey in deckCardList){
+						var cardList=deckCardList[cardkey];
+						var cardNumber=cardList['cardNumber'];
+						var cardTimes=cardList['cardTime'];
+						var internalCardNumber=cardList['internalCardNumber'];
+						var cardName=cardList['cardName'];
+						var uppdate=cardList['uppdate'];
+						var cardPrice=cardList['cardPrice'];
+						var cardRare=cardList['cardRare'];
+						var cardName=cardList['cardName'];
+						var imgPath=cardList['imgPath'];
+							console.log("卡號:"+cardNumber);
+							console.log("單價:"+cardPrice);
+							console.log("數量:"+cardTimes);
+							console.log("更新時間:"+uppdate);
+
+							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName,deckGameTitle,imgPath);
+							totalNum=totalNum+parseInt(cardTimes,10);
+							totalPrice=totalPrice+(cardPrice*cardTimes);
+							console.log("途中 total:"+totalPrice);	
+								
+					}
+				console.log("total:"+totalPrice);
+				console.log("卡片總數:"+totalNum);
+				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
+				document.getElementById('overlay-1').style.display='none';
+				document.getElementById('overlay-2').style.display='none';	
+				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
+			}
+			
+			var deckTable=document.getElementById('deckTable');		
+			
+			function createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName,deckGameTitle,imgPath){
+			var deckTablebody=document.getElementById('tableCardBody');		
+				var tr = document.createElement("tr");							
+				var tdCardNo = document.createElement("td");
+				tdCardNo.setAttribute("class","tdClass");
+				tdCardNo.setAttribute("id",cardNumber);
+				tdCardNo.addEventListener("click", function(){
+							console.log('cardNumber:'+cardNumber);
+							
+							//catch num
+							var card_Num=cardNumber;
+							if(card_Num.indexOf(' ')>=0){
+								card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+							}else{
+								card_Num=card_Num;				
+							}
+
+							var card_first=card_Num.substr(0,1);
+							var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+								card_second=card_second.replace('/','_')
+							var card_third=card_Num.replace('/','_');
+								card_third=card_third.replace('-','_');								
+							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+							console.log('dec:'+deckGameTitle);
+							if(deckGameTitle==='5'){
+								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+imgPath;
+							}
+							
+							var cardImg=document.getElementById('cardImg');
+							cardImg.setAttribute("src",urlCard);
+							var cardShowName=document.getElementById('cardName');
+							cardShowName.innerHTML=cardName;
+							var cardShowNumber=document.getElementById('exampleModalLongTitle');
+							cardShowNumber.innerHTML=card_Num;
+							$('#exampleModalCenter').modal('show');		
+				});				
+
+				
+				var tdPrice = document.createElement("td");
+				var tdTotalPrice = document.createElement("td");				
+				var tdNum = document.createElement("td");
+				var tdRare = document.createElement("td");
+				tdCardNo.innerHTML=cardNumber;	
+				tdPrice.innerHTML=cardPrice;	
+				tdTotalPrice.innerHTML=cardPrice*cardTimes;
+				tdNum.innerHTML=cardTimes;	
+				tdRare.innerHTML=cardRare;
+
+				tr.appendChild(tdCardNo); 
+				tr.appendChild(tdRare); 				
+				tr.appendChild(tdPrice); 
+				tr.appendChild(tdNum); 
+				tr.appendChild(tdTotalPrice);
+				deckTablebody.appendChild(tr);						
+			}	
+
+			var btncopyListener = document.getElementById("btn-copy");
+			btncopyListener.addEventListener("click", function(){
+				var deckCode=document.getElementById('deckCode').value;
+				var deckSource=document.getElementById('deckSource').innerHTML;
+				if(deckSource === 'bottleneko'){
+					var moveOthereWeb=confirm("將會直接在此頁面切換至貓罐子網站，請問要繼續嗎?");
+					if(moveOthereWeb){
+						window.location.replace("https://bottle-neko.web.app/deck/"+deckCode);
+					}
+				}else if(deckSource === 'decklog'){
+					var moveOthereWeb=confirm("將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?");
+					if(moveOthereWeb){
+						window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
+					}
+				}
+			});	
+					
+			function removeTable(){
+				var tabletree = document.getElementById('deckTable');
+				tabletree.innerHTML="";
+			}
+			
+		   function moneyFormat(str) {
+				if (str.length <= 3) {
+					return str;
+				}
+				else {
+					return moneyFormat(str.substr(0, str.length - 3)) + "," + (str.substr(str.length - 3));
+				}
+			} 
+			
