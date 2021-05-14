@@ -48,10 +48,10 @@
 				var deckLockInfo = requestDeckLog.response;
 				console.log(deckLockInfo);
 				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
-					alert("沒資料");
+					alert("找不到資料，有可能是輸入錯誤，可利用聯繫右下方Messenger回報!");
 					document.getElementById('overlay-1').style.display='none';				
 				}else if('Exception'.indexOf(deckLockInfo)>=0){
-					alert("網站發生不明錯誤");
+					alert("網站發生不明錯誤，請利用右下角Messenger回報");
 					document.getElementById('overlay-1').style.display='none';					
 				}else{					
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
