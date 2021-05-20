@@ -10,7 +10,11 @@
 				var hours = today.getHours();
 				var mins = today.getMinutes();
 				if(hours === 10 && (mins < 59 && mins> 0)){
-					alert("每日 10:00-11:00 為 系統維護時間!!");
+					Swal.fire({
+					  icon: 'error',
+					  title: '喔不...',
+					  text: '現在為每日10:00-11:00為系統維護時間!',
+					})					
 					document.getElementById('deckCode').disabled = true;
 					document.getElementById('buttonSearch').disabled = true;
 					
@@ -48,10 +52,18 @@
 				var deckLockInfo = requestDeckLog.response;
 				console.log(deckLockInfo);
 				if('NODATA'.indexOf(deckLockInfo)>=0||deckLockInfo==null){
-					alert("找不到資料，有可能是輸入錯誤，可利用聯繫右下方Messenger回報!");
+								Swal.fire({
+								  icon: 'error',
+								  title: '喔不...',
+								  text: '找不到資料，有可能是輸入錯誤，可利用聯繫右下方Messenger回報!'
+								})							
 					document.getElementById('overlay-1').style.display='none';				
 				}else if('Exception'.indexOf(deckLockInfo)>=0){
-					alert("網站發生不明錯誤，請利用右下角Messenger回報");
+								Swal.fire({
+								  icon: 'error',
+								  title: '喔不...',
+								  text: '網站發生不明錯誤，請利用右下角Messenger回報'
+								})							
 					document.getElementById('overlay-1').style.display='none';					
 				}else{					
 					var deckGameTitle = deckLockInfo['deckGameTitle'];
@@ -70,15 +82,27 @@
 								document.getElementById('overlay-1').style.display='none';										
 								break;
 							case '1':
-								alert('你輸入的是VG的牌組!');
+								Swal.fire({
+								  icon: 'error',
+								  title: '喔不...',
+								  text: '現在還不支援VG的牌組喔!'
+								})							
 								document.getElementById('overlay-1').style.display='none';	
 								break;
 							case '9999':
-								alert('每日 10:00-11:00 為 系統維護時間!!!');
+								Swal.fire({
+								  icon: 'error',
+								  title: '喔不...',
+								  text: '現在是每日 10:00-11:00 為 系統維護時間!'
+								})									
 								document.getElementById('overlay-1').style.display='none';	
 								break;								
 							default:
-								alert('不是WS的');
+								Swal.fire({
+								  icon: 'error',
+								  title: '喔喔...',
+								  text: '不是WS或是rebirth的牌組喔!'
+								})		
 								document.getElementById('overlay-1').style.display='none';	
 						}	
 					}else{
