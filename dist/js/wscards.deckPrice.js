@@ -168,7 +168,24 @@
 				console.log("卡片總數:"+totalNum);
 				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
 				var deckTotalPrice=document.getElementById('deckTotalPrice');
-				deckTotalPrice.addEventListener("click",checkCount());						
+				deckTotalPrice.addEventListener("click",function(){
+					var tableCardBody = document.getElementById("tableCardBody");
+					var count = 0;
+					if (tableCardBody.hasChildNodes()) {
+						// 取得 foo 元素的所有子元素集合
+						var children = tableCardBody.childNodes;
+
+						// 可以用 for 迴圈來遍歷每一個子元素
+						for (var i=0; i<children.length; ++i) {
+							count=count+parseInt(children[i].childNodes[3].textContent);
+						}
+					}	
+					Swal.fire(
+					  '牌組資訊：',
+					  '你的牌組有 '+count+' 張',
+					  'question'
+					)						
+				});							
 				document.getElementById('overlay-1').style.display='none';
 				document.getElementById('overlay-2').style.display='none';	
 				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
