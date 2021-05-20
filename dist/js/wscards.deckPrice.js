@@ -185,7 +185,7 @@
 					  '你的牌組有 '+count+' 張',
 					  'question'
 					)						
-				});							
+				});						
 				document.getElementById('overlay-1').style.display='none';
 				document.getElementById('overlay-2').style.display='none';	
 				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
@@ -259,10 +259,18 @@
 						window.location.replace("https://bottle-neko.web.app/deck/"+deckCode);
 					}
 				}else if(deckSource === 'decklog'){
-					var moveOthereWeb=confirm("將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?");
-					if(moveOthereWeb){
-						window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
-					}
+						Swal.fire({
+						  title: '將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?',
+						  icon: 'warning',
+						  showCancelButton: true,
+						  confirmButtonColor: '#3085d6',
+						  cancelButtonColor: '#d33',
+						  confirmButtonText: '是的!'
+						}).then((result) => {
+						  if (result.isConfirmed) {
+							window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
+						  }
+						})					
 				}
 			});	
 					
