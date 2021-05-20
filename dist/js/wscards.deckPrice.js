@@ -167,6 +167,8 @@
 				console.log("total:"+totalPrice);
 				console.log("卡片總數:"+totalNum);
 				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
+				var deckTotalPrice=document.getElementById('deckTotalPrice');
+				deckTotalPrice.addEventListener("click",checkCount());						
 				document.getElementById('overlay-1').style.display='none';
 				document.getElementById('overlay-2').style.display='none';	
 				if((!totalNum===50)){alert('不足50張，有可能是資料抓取問題');}
