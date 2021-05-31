@@ -87,6 +87,7 @@ $input.typeahead({
 {id:"WS00003", name:"Angel Beats!／クドわふたー",cname:"Angel Beats! | 天使的脈動／庫特wafter"},
 {id:"WS00004", name:"角川スニーカー文庫",cname:"角川Sneaker文庫"},
 {id:"WS00005", name:"彼女、お借りします",cname:"出租女友"},
+{id:"WS00111", name:"神様になった日",cname:"成神之日"},
 {id:"WS00006", name:"カードキャプターさくら",cname:"庫洛魔法使"},
 {id:"WS00007", name:"カードゲームしよ子",cname:"卡片遊戲SHIYO子"},
 {id:"WS00008", name:"ガールフレンド(仮)",cname:"女友伴身邊"},
@@ -191,8 +192,7 @@ $input.typeahead({
 {id:"WS00107", name:"〈物語〉シリーズ",cname:"《物語》系列"},
 {id:"WS00108", name:"Re:ゼロから始める異世界生活",cname:"Re: 從零開始的異世界生活"},
 {id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線"},
-{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"},
-{id:"WS00111", name:"神様になった日",cname:"成神之日"}	  
+{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"}  
   ],
   minLength:1,
   showHintOnFocus:true,
