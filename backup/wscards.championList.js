@@ -191,7 +191,8 @@ $input.typeahead({
 {id:"WS00107", name:"〈物語〉シリーズ",cname:"《物語》系列"},
 {id:"WS00108", name:"Re:ゼロから始める異世界生活",cname:"Re: 從零開始的異世界生活"},
 {id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線"},
-{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"}
+{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"},
+{id:"WS00111", name:"神様になった日",cname:"成神之日"}	  
   ],
   minLength:1,
   showHintOnFocus:true,
