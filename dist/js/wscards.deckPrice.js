@@ -184,7 +184,7 @@
 
 							createTableTree(cardNumber,cardPrice,cardTimes,cardRare,cardName,deckGameTitle,imgPath);
 							totalNum=totalNum+parseInt(cardTimes,10);
-							totalPrice=totalPrice+(cardPrice*cardTimes);
+							totalPrice=totalPrice+(math.evaluate(cardPrice*cardTimes));
 							console.log("途中 total:"+totalPrice);	
 								
 					}
@@ -261,7 +261,7 @@
 				var tdRare = document.createElement("td");
 				tdCardNo.innerHTML=cardNumber;	
 				tdPrice.innerHTML=cardPrice;	
-				tdTotalPrice.innerHTML=cardPrice*cardTimes;
+				tdTotalPrice.innerHTML=math.evaluate(cardPrice*cardTimes);
 				tdNum.innerHTML=cardTimes;	
 				tdRare.innerHTML=cardRare;
 
