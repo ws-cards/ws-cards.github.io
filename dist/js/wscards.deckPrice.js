@@ -300,7 +300,20 @@
 						  confirmButtonText: '是的'
 						}).then((result) => {
 						  if (result.isConfirmed) {
-							window.location.replace("https://decklog.bushiroad.com/copy/"+deckCode);
+							window.location.replace("https://decklog.bushiroad.com/view/"+deckCode);
+						  }
+						})					
+				}else if(deckSource === 'encoredecks'){
+						Swal.fire({
+						  title: '將會直接在此頁面切換至EncoreDecks網站，請問要繼續嗎?',
+						  icon: 'warning',
+						  showCancelButton: true,
+						  confirmButtonColor: '#3085d6',
+						  cancelButtonColor: '#d33',
+						  confirmButtonText: '是的'
+						}).then((result) => {
+						  if (result.isConfirmed) {
+							window.location.replace("https://www.encoredecks.com/deck/"+deckCode);
 						  }
 						})					
 				}
