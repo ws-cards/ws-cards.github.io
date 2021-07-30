@@ -287,7 +287,7 @@
 						  confirmButtonText: '是的'
 						}).then((result) => {
 						  if (result.isConfirmed) {
-							window.location.replace("https://bottle-neko.web.app/deck/"+deckCode);
+							window.open("https://bottle-neko.web.app/deck/"+deckCode);
 						  }
 						})						
 				}else if(deckSource === 'decklog'){
@@ -300,7 +300,7 @@
 						  confirmButtonText: '是的'
 						}).then((result) => {
 						  if (result.isConfirmed) {
-							window.location.replace("https://decklog.bushiroad.com/view/"+deckCode);
+							window.open("https://decklog.bushiroad.com/view/"+deckCode);
 						  }
 						})					
 				}else if(deckSource === 'encoredecks'){
@@ -313,7 +313,7 @@
 						  confirmButtonText: '是的'
 						}).then((result) => {
 						  if (result.isConfirmed) {
-							window.location.replace("https://www.encoredecks.com/deck/"+deckCode);
+							window.open("https://www.encoredecks.com/deck/"+deckCode);
 						  }
 						})					
 				}
