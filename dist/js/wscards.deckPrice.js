@@ -279,7 +279,7 @@
 				var deckSource=document.getElementById('deckSource').innerHTML;
 				if(deckSource === 'bottleneko'){
 						Swal.fire({
-						  title: '將會直接在此頁面切換至貓罐子網站，請問要繼續嗎?',
+						  title: '將前往貓罐子網站，請問要繼續嗎?',
 						  icon: 'warning',
 						  showCancelButton: true,
 						  confirmButtonColor: '#3085d6',
@@ -292,7 +292,7 @@
 						})						
 				}else if(deckSource === 'decklog'){
 						Swal.fire({
-						  title: '將會直接在此頁面切換至Deck Log網站，請問要繼續嗎?',
+						  title: '將前往Deck Log網站，請問要繼續嗎?',
 						  icon: 'warning',
 						  showCancelButton: true,
 						  confirmButtonColor: '#3085d6',
@@ -305,7 +305,7 @@
 						})					
 				}else if(deckSource === 'encoredecks'){
 						Swal.fire({
-						  title: '將會直接在此頁面切換至EncoreDecks網站，請問要繼續嗎?',
+						  title: '將前往EncoreDecks網站，請問要繼續嗎?',
 						  icon: 'warning',
 						  showCancelButton: true,
 						  confirmButtonColor: '#3085d6',
