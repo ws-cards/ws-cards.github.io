@@ -75,7 +75,7 @@
 					var deckPriceDateList = deckCardList[0];
 					var deckUpdatePriceDate = deckPriceDateList['uppdate'];
 					console.log(deckUpdatePriceDate);
-					if(!(deckGameTitle==='2'||deckGameTitle==='5')){
+					if(!(deckGameTitle==='2'||deckGameTitle==='5'||deckGameTitle==='12')){
 						switch(deckGameTitle){
 							case '5':
 								alert('你輸入的是Reバース的牌組!');
@@ -192,7 +192,11 @@
 					}
 				console.log("total:"+totalPrice);
 				console.log("卡片總數:"+totalNum);
-				document.getElementById('deckTotalPrice').innerHTML='¥ '+moneyFormat(totalPrice.toString());
+				var dollarSign="¥";
+				if(deckGameTitle === '12'){
+					dollarSign="C$";
+				}
+				document.getElementById('deckTotalPrice').innerHTML=dollarSign+' '+moneyFormat(totalPrice.toString());
 				var deckTotalPrice=document.getElementById('deckTotalPrice');
 				deckTotalPrice.addEventListener("click",function(){
 					var tableCardBody = document.getElementById("tableCardBody");
@@ -244,8 +248,11 @@
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
 							console.log('dec:'+deckGameTitle);
 							if(deckGameTitle==='5'){
-								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+imgPath;
+								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+card_third.toLowerCase()+".png";
+							}else if(deckGameTitle==='12'){
+								urlCard="https://en.ws-tcg.com/wp/wp-content/images/cardimages/"+card_third.toLowerCase()+".png";
 							}
+								
 							
 							var cardImg=document.getElementById('cardImg');
 							cardImg.setAttribute("src",urlCard);
