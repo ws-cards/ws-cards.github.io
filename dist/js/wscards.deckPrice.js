@@ -186,7 +186,7 @@
 							totalNum=totalNum+parseInt(cardTimes,10);
 							var tempEvaluate = math.evaluate(cardPrice*cardTimes);
 							var tempTotalPrice = math.format(tempEvaluate, {precision: 14});
-							totalPrice=totalPrice+(Number(tempTotalPrice));
+							totalPrice=Number(totalPrice)+(Number(tempTotalPrice));
 							console.log("途中 total:"+totalPrice);	
 								
 					}
