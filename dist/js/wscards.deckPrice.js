@@ -195,6 +195,8 @@
 				var dollarSign="¥";
 				if(deckGameTitle === '12'){
 					dollarSign="C$";
+				}else{
+					dollarSign="¥";
 				}
 				document.getElementById('deckTotalPrice').innerHTML=dollarSign+' '+moneyFormat(totalPrice.toString());
 				var deckTotalPrice=document.getElementById('deckTotalPrice');
