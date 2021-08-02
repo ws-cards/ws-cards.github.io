@@ -249,7 +249,7 @@
 								card_third=card_third.replace('-','_');								
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
 							console.log('dec:'+deckGameTitle);
-							if(deckGameTitle==='5'){
+							if(deckGameTitle==='5'||deckGameTitle==='122'){
 								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+card_third.toLowerCase()+".png";
 							}else if(deckGameTitle==='12'){
 								urlCard="https://en.ws-tcg.com/wp/wp-content/images/cardimages/"+card_third.toUpperCase()+".png";
