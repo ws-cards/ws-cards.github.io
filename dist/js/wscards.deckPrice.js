@@ -329,7 +329,7 @@
 			}
 			
 		   function moneyFormat(str) {
-				if (str.length <= 3) {
+				if (str.length <= 3 || str.indexOf(".") >= 0) {
 					return str;
 				}
 				else {
