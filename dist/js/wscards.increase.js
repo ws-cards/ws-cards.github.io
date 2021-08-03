@@ -1,4 +1,4 @@
-			var requestURLCardPrice = 'https://storage.googleapis.com/ws-cards.cloud/json/cardData.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/AB_W11.json';		
 			var requestPrice = new XMLHttpRequest();	
 
 			function setFun(times){
