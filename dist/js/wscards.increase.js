@@ -1,4 +1,4 @@
-			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/AB_W11.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/AB_W31.json';		
 			var requestPrice = new XMLHttpRequest();	
 
 			function setFun(times){
@@ -24,8 +24,8 @@
 					var lastDatePrice;
 					var spread;
 
-					if(cardPrice.length>7){
-						firstDatePrice = cardPrice [cardPrice.length-7];//七天第一天
+					if(cardPrice.length>60){
+						firstDatePrice = cardPrice [cardPrice.length-60];//七天第一天
 						lastDatePrice = cardPrice[cardPrice.length-1];					
 					}else{
 						firstDatePrice = cardPrice [0];//七天第一天
