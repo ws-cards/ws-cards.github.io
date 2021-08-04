@@ -25,13 +25,10 @@
 					var lastDatePrice;
 					var spread;
 
-					if(cardPrice.length>60){
-						firstDatePrice = cardPriceMax;
-						lastDatePrice = cardPriceMin;
-					}else{
+
 						firstDatePrice = cardPriceMax;
 						lastDatePrice = cardPriceMin;					
-					}
+
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
 					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){				
