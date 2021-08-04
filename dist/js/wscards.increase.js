@@ -18,9 +18,9 @@
 				var arraySetLength=times					
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
-					var cardPriceMax = cardPriceInfo ['max'];
-					var cardPriceMin = cardPriceInfo ['min'];
-					var statute = cardPriceInfo ['statute'];
+					var cardPriceMax = cardPriceInfo [key+'_max'];
+					var cardPriceMin = cardPriceInfo [key+'_min'];
+					var statute = cardPriceInfo [key+'_statute'];
 					
 					var firstDatePrice;
 					var lastDatePrice;
