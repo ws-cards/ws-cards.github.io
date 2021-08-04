@@ -1,4 +1,4 @@
-			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/AB_W31.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/yuyuPriceIncreaseReport.json';		
 			var requestPrice = new XMLHttpRequest();	
 
 			function setFun(times){
@@ -18,18 +18,19 @@
 				var arraySetLength=times					
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
-					var cardPrice = cardPriceInfo ['cardPrice'];
+					var cardPriceMax = cardPriceInfo ['max'];
+					var cardPriceMin = cardPriceInfo ['min'];
 					
 					var firstDatePrice;
 					var lastDatePrice;
 					var spread;
 
 					if(cardPrice.length>60){
-						firstDatePrice = cardPrice [cardPrice.length-60];//七天第一天
-						lastDatePrice = cardPrice[cardPrice.length-1];					
+						firstDatePrice = cardPriceMax;
+						lastDatePrice = cardPriceMin;
 					}else{
-						firstDatePrice = cardPrice [0];//七天第一天
-						lastDatePrice = cardPrice[cardPrice.length-1];							
+						firstDatePrice = cardPriceMax;
+						lastDatePrice = cardPriceMin;					
 					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
