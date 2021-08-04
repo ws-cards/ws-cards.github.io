@@ -20,7 +20,7 @@
 					var cardPriceInfo = cardsPrice[key];
 					var cardPriceMax = cardPriceInfo ['max'];
 					var cardPriceMin = cardPriceInfo ['min'];
-					var statute = cardPriceInfo ['statute]'];
+					var statute = cardPriceInfo ['statute'];
 					
 					var firstDatePrice;
 					var lastDatePrice;
