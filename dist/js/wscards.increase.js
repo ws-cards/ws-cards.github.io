@@ -20,15 +20,19 @@
 					var cardPriceInfo = cardsPrice[key];
 					var cardPriceMax = cardPriceInfo ['max'];
 					var cardPriceMin = cardPriceInfo ['min'];
+					var statute = cardPriceInfo ['statute]'];
 					
 					var firstDatePrice;
 					var lastDatePrice;
 					var spread;
 
-
+					if("upper" === statute){
+						firstDatePrice =cardPriceMin;
+						lastDatePrice = cardPriceMax;					
+					}else{
 						firstDatePrice = cardPriceMax;
-						lastDatePrice = cardPriceMin;					
-
+						lastDatePrice = cardPriceMin ;	
+					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
 					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){				
