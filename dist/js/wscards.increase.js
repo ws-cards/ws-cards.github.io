@@ -25,7 +25,7 @@
 					var firstDatePrice;
 					var lastDatePrice;
 					var spread;
-
+                                        //沒有特別意義的交換，但是後面的變數要改
 					if("upper" === statute){
 						firstDatePrice =cardPriceMin;
 						lastDatePrice = cardPriceMax;					
@@ -37,7 +37,7 @@
 					
 					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){				
 						upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						downArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
+						downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 					}else{
 						if("upper" === statute){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
