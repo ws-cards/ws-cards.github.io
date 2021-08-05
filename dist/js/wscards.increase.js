@@ -82,12 +82,13 @@
 						var tdCardNo = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
+						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
+							cardNo = mappingRep[cardNo];
+						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
-						if(tdCardNo.indexOf('/')<0&&tdCardNo.indexOf('S')==0){
-							tdCardNo = mappingRep[tdCardNo];
-						}
+
 						tr.appendChild(tdCardNo);  
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
@@ -104,8 +105,8 @@
 						var tdCardNo = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
-						if(tdCardNo.indexOf('/')<0&&tdCardNo.indexOf('S')==0){
-							tdCardNo = mappingRep[tdCardNo];
+						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
+							cardNo = mappingRep[cardNo];
 						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
