@@ -1,6 +1,16 @@
 			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/yuyuPriceIncreaseReport.json';		
 			var requestPrice = new XMLHttpRequest();	
-
+			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json';
+			var requestMapping = new XMLHttpRequest();			
+			var mappingRep;
+			requestMapping.open('GET',requestMappingURL);
+			requestMapping.responseType = 'json';
+			requestMapping.send();	
+			requestMapping.onload = function() {
+			   console.log("debug:5");
+			   mappingRep = requestMapping.response;
+			}				
+				
 			function setFun(times){
 			  //select 設定
 			  var upTable = document.getElementById("upTable"); 
@@ -75,6 +85,9 @@
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
+						if(tdCardNo.indexOf('/')<0&&tdCardNo.indexOf('S')==0){
+							tdCardNo = mappingRep[tdCardNo];
+						}
 						tr.appendChild(tdCardNo);  
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
@@ -91,6 +104,9 @@
 						var tdCardNo = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
+						if(tdCardNo.indexOf('/')<0&&tdCardNo.indexOf('S')==0){
+							tdCardNo = mappingRep[tdCardNo];
+						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-warning mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-down' ></i>"+spread+"%</small>";
