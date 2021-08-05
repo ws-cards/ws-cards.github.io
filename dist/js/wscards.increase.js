@@ -39,7 +39,7 @@
 						upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						downArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 					}else{
-						if(spread>0){
+						if("upper" === statute){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 							upArray.sort(function(a, b) {
 								return a.cardSpread < b.cardSpread ? 1: -1;
