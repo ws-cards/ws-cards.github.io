@@ -70,15 +70,12 @@
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
-						var tdRare = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
 						tdCardNo.innerHTML = cardNo;
-						tdRare.innerHTML = "X";
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
-						tr.appendChild(tdCardNo); 
-						tr.appendChild(tdRare); 
+						tr.appendChild(tdCardNo);  
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
 						upTable.appendChild(tr);	
@@ -92,15 +89,12 @@
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
-						var tdRare = document.createElement("td");
 						var tdPrice = document.createElement("td");
 						var tdRange = document.createElement("td");
 						tdCardNo.innerHTML = cardNo;
-						tdRare.innerHTML = "X";
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-warning mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-down' ></i>"+spread+"%</small>";
 						tr.appendChild(tdCardNo); 
-						tr.appendChild(tdRare); 
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
 						downTable.appendChild(tr);	
