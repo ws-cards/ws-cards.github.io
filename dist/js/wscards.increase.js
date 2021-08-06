@@ -65,7 +65,7 @@
 						}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 							downArray.sort(function(a, b) {
-								return a.cardSpread > b.cardSpread ? 1: -1;
+								return a.cardSpread < b.cardSpread ? 1: -1;
 							});
 							downArray.pop();						
 						}
