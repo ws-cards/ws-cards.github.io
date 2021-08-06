@@ -45,7 +45,7 @@
 					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
-					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){
+					if(upArray.length<arraySetLength||downArray.length<arraySetLength){
 						console.log("漲價牌組:"+upArray.length);
 						console.log("跌價牌組:"+downArray.length);
 						console.log("限制長度:"+arraySetLength);
