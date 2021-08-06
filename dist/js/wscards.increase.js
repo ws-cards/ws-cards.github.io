@@ -50,7 +50,7 @@
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						}else if("downer" === statute){
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
-							console.log("第一次:"+key+":"+firstDatePrice+":"+spread);
+							//console.log("第一次:"+key+":"+firstDatePrice+":"+spread);
 						}	
 					}else{
 						if("upper" === statute){
@@ -59,7 +59,7 @@
 								return a.cardSpread < b.cardSpread ? 1: -1;
 							});
 							upArray.pop();					
-						}else if("downer" === statute){console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
+						}else if("downer" === statute){console.log(//"連續進入:"+key+":"+firstDatePrice+":"+spread);
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 							downArray.sort(function(a, b) {
 								return a.cardSpread > b.cardSpread ? 1: -1;
@@ -88,7 +88,7 @@
 						var tdRange = document.createElement("td");
 						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
 							cardNo = mappingRep[cardNo];
-						}
+						}console.log("漲價-"+cardNo+" : "+tdPrice+" : "+tdRange);
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
@@ -111,7 +111,7 @@
 						var tdRange = document.createElement("td");
 						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
 							cardNo = mappingRep[cardNo];
-						}
+						}console.log("跌價-"+cardNo+" : "+tdPrice+" : "+tdRange);
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-warning mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-down' ></i>"+spread+"%</small>";
