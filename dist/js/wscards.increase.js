@@ -50,6 +50,7 @@
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						}else if("downer" === statute){
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
+							console.log(key+":"+firstDatePrice+":"+spread);
 						}	
 					}else{
 						if("upper" === statute){
@@ -58,7 +59,7 @@
 								return a.cardSpread < b.cardSpread ? 1: -1;
 							});
 							upArray.pop();					
-						}else if("downer" === statute){
+						}else if("downer" === statute){console.log(key+":"+firstDatePrice+":"+spread);
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 							downArray.sort(function(a, b) {
 								return a.cardSpread > b.cardSpread ? 1: -1;
