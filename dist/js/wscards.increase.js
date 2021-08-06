@@ -49,9 +49,9 @@
 						console.log("漲價牌組:"+upArray.length);
 						console.log("跌價牌組:"+downArray.length);
 						console.log("限制長度:"+arraySetLength);
-						if("upper" === statute){
+						if("upper" === statute && upArray.length<arraySetLength){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						}else if("downer" === statute){
+						}else if("downer" === statute && downArray.length<arraySetLength){
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 							//console.log("第一次:"+key+":"+firstDatePrice+":"+spread);
 						}	
