@@ -46,6 +46,9 @@
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
 					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){
+						console.log("漲價牌組:"+upArray.length);
+						console.log("跌價牌組:"+downArray.length);
+						console.log("限制長度:"+arraySetLength);
 						if("upper" === statute){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						}else if("downer" === statute){
@@ -88,7 +91,7 @@
 						var tdRange = document.createElement("td");
 						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
 							cardNo = mappingRep[cardNo];
-						}console.log("漲價-"+cardNo+" : "+tdPrice+" : "+tdRange);
+						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
@@ -111,7 +114,7 @@
 						var tdRange = document.createElement("td");
 						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
 							cardNo = mappingRep[cardNo];
-						}console.log("跌價-"+cardNo+" : "+tdPrice+" : "+tdRange);
+						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
 						tdRange.innerHTML = "<small class='text-warning mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-down' ></i>"+spread+"%</small>";
