@@ -58,7 +58,7 @@
 								return a.cardSpread < b.cardSpread ? 1: -1;
 							});
 							upArray.pop();					
-						}else{
+						}else if("downer" === statute){
 							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
 							downArray.sort(function(a, b) {
 								return a.cardSpread < b.cardSpread ? 1: -1;
