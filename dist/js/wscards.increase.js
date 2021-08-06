@@ -45,7 +45,7 @@
 					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
-					if(upArray.length<arraySetLength||downArray.length<arraySetLength){
+					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){
 						if("upper" === statute){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
 						}else if("downer" === statute){
