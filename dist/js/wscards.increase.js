@@ -45,9 +45,12 @@
 					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
-					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){				
-						upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
+					if(upArray.length<arraySetLength&&downArray.length<arraySetLength){
+						if("upper" === statute){
+							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
+						}else if("downer" === statute){
+							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
+						}	
 					}else{
 						if("upper" === statute){
 							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
