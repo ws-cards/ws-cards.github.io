@@ -46,13 +46,16 @@
 						}).then((result) => {
 						  if (result.isConfirmed) {
 							//日文
+							removeTable();
+							setDeckPrice(deckCode);		  
 						  } else if (result.isDenied) {
 							deckCode = "en_"+deckCode;
+							removeTable();
+							setDeckPrice(deckCode);								  
 						  }
 						})					
 				}				
-				removeTable();
-				setDeckPrice(deckCode);
+
 			}
 			
 			function setDeckPrice(deckCode){
@@ -330,7 +333,21 @@
 						  if (result.isConfirmed) {
 							window.open("https://decklog.bushiroad.com/view/"+deckCode);
 						  }
+						})
+				}else if(deckSource === 'decklog-en'){
+						Swal.fire({
+						  title: '將前往Deck Log網站，請問要繼續嗎?',
+						  icon: 'warning',
+						  showCancelButton: true,
+						  confirmButtonColor: '#3085d6',
+						  cancelButtonColor: '#d33',
+						  confirmButtonText: '是的'
+						}).then((result) => {
+						  if (result.isConfirmed) {
+							window.open("https://decklog-en.bushiroad.com/view/"+deckCode);
+						  }
 						})					
+									
 				}else if(deckSource === 'encoredecks'){
 						Swal.fire({
 						  title: '將前往EncoreDecks網站，請問要繼續嗎?',
