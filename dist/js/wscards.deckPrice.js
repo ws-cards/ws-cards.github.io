@@ -56,6 +56,9 @@
 							setDeckPrice(deckCode);								  
 						  }
 						})					
+				}else{
+							removeTable();
+							setDeckPrice(deckCode);					
 				}				
 
 			}
