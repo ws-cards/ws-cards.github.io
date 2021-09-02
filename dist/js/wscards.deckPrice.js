@@ -46,10 +46,12 @@
 						}).then((result) => {
 						  if (result.isConfirmed) {
 							//日文
+							 console.log(deckCode); 
 							removeTable();
 							setDeckPrice(deckCode);		  
 						  } else if (result.isDenied) {
 							deckCode = "en_"+deckCode;
+							 console.log(deckCode);
 							removeTable();
 							setDeckPrice(deckCode);								  
 						  }
@@ -323,7 +325,7 @@
 						})						
 				}else if(deckSource === 'decklog'){
 						Swal.fire({
-						  title: '將前往Deck Log網站，請問要繼續嗎?',
+						  title: '將前往DeckLog網站，請問要繼續嗎?',
 						  icon: 'warning',
 						  showCancelButton: true,
 						  confirmButtonColor: '#3085d6',
@@ -336,7 +338,7 @@
 						})
 				}else if(deckSource === 'decklog-en'){
 						Swal.fire({
-						  title: '將前往Deck Log網站，請問要繼續嗎?',
+						  title: '將前往DeckLog-EN網站，請問要繼續嗎?',
 						  icon: 'warning',
 						  showCancelButton: true,
 						  confirmButtonColor: '#3085d6',
