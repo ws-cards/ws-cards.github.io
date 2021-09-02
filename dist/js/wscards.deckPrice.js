@@ -35,7 +35,22 @@
 				document.getElementById('overlay-2').style='display';					
 				var oform = document.forms["calForm"];
 				var deckCode = oform.elements["deckCode"].value;
-				
+				var deckCodeLength=deckCode.length;
+				if(deckCodeLength===4){
+						Swal.fire({
+						  title: '要查詢DeckLog的日文版還是英文版?',
+						  icon: 'warning',
+						  showDenyButton: true,
+						  confirmButtonText: '日文',
+						  denyButtonText: '英文',
+						}).then((result) => {
+						  if (result.isConfirmed) {
+							//日文
+						  } else if (result.isDenied) {
+							deckCode = "en_"+deckCode;
+						  }
+						})					
+				}				
 				removeTable();
 				setDeckPrice(deckCode);
 			}
@@ -331,7 +346,7 @@
 						})					
 				}
 			});	
-					
+				
 			function removeTable(){
 				var tabletree = document.getElementById('deckTable');
 				tabletree.innerHTML="";
