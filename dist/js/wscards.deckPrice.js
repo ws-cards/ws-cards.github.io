@@ -34,7 +34,7 @@
 				document.getElementById('overlay-1').style='display';
 				document.getElementById('overlay-2').style='display';					
 				var oform = document.forms["calForm"];
-				var deckCode = oform.elements["deckCode"].value;
+				var deckCode = oform.elements["deckCode"].value.trim();
 				var deckCodeLength=deckCode.length;
 				if(deckCodeLength===4){
 						Swal.fire({
