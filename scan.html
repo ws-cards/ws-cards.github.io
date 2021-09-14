@@ -164,15 +164,30 @@
           <div class="col-lg-12">
             <div class="card  card-outline">
 			  <div class="card-header">
-				<h5  style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">WS </h5>
+						
+			  			<div class="input-group">
+							<input type="file" name="query_img" id="imgInp"><br>
+							<span class="input-group-append">
+							<button id ="buttonSearch" type="button" class="btn btn-block btn-outline-info" onclick="sendImg()">計算!</button>
+						</div>
+						
 				<div class="card-tools">
 				  <!-- Collapse Button -->
 				</div>				
 			  </div>
-	<img id="src-image" src="">
+				
             </div>
 			<!-- /.card -->
           </div>
+          <div class="col-lg-12">
+            <div class="card  card-outline">
+			  <div class="card-body">
+					<img id="src-image" src="">	  
+			  </div>
+				<img id="src-image" src="">
+            </div>
+			<!-- /.card -->
+          </div>		  
         </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
@@ -266,12 +281,12 @@
 	}
 	
 	window.onOpenCvReady = function () { 
-		swal("載入成功！", "可以開始使用!","success")
-		rundo();
+		//swal("載入成功！", "可以開始使用!","success")
+		//rundo();
 	}
 
 	function rundo(){
-		var src = cv.imread('src-image');
+		//var src = cv.imread('src-image');
 	}
 	
 	$('.nav-link').PushMenu('collapse');	
@@ -279,6 +294,36 @@
 			annButton.addEventListener("click", function(){
 				$('#announceexampleModalCenter').modal('show');	
 	});	
+	var requestURL = 'https://divine-vehicle-292507.dt.r.appspot.com/api/deckLogInfo.jsp?deckcode=';	
+	var requestDeckLog = new XMLHttpRequest();	
+	function sendImg(){
+        var fd = new FormData();
+		var files = $('#imgInp')[0].files;//image
+        if(files.length > 0 ){
+           fd.append('file',files[0]);
+           $.ajax({
+              url: requestURL,
+              type: 'get',
+              data: fd,
+              contentType: false,
+              processData: false,
+              success: function(response){
+			  console.log(response);
+                 if(response != 0){
+                    $("#img").attr("src",response); 
+                    $(".preview img").show(); // Display image element
+                 }else{
+                    alert('file not uploaded');
+                 }
+              },
+           });
+        }else{
+           alert("Please select a file.");
+        }		
+
+	}
+
+	
 </script>
 </style>
 </body>
