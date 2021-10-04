@@ -284,7 +284,7 @@ function search(e,attri){
 	  par : param,
 	  attri: attri
   };
-	  $.get('https://script.google.com/macros/s/AKfycbzetGxMZIVJFkDFBCrHGMlq9g2RVyBCBsO4v_bnbMQDy0y8TmwpAv0omcvAE2zHlu3-/exec',a, function(data){ //專案連結，檔案-->共用
+	  $.get('https://script.google.com/macros/s/AKfycbxETxBnCxjVD7XKEcsKYCmNc41DRpr1Rr_FXhnzpjIuVwVWl8qGChLgkulCmDOyP4KPYg/exec',a, function(data){ //專案連結，檔案-->共用
 		var d = data.split(',');
 		var arr = [];
 	////////
@@ -495,7 +495,7 @@ function actionKeyImage(){
 	  par : 'ALL',
 	  attri: 'ALL'
   };
-  $.get('https://script.google.com/macros/s/AKfycbzetGxMZIVJFkDFBCrHGMlq9g2RVyBCBsO4v_bnbMQDy0y8TmwpAv0omcvAE2zHlu3-/exec',a, function(data){ //專案連結，檔案-->共用
+  $.get('https://script.google.com/macros/s/AKfycbxETxBnCxjVD7XKEcsKYCmNc41DRpr1Rr_FXhnzpjIuVwVWl8qGChLgkulCmDOyP4KPYg/exec',a, function(data){ //專案連結，檔案-->共用
     var d = data.split(',');
 	var arr = [];
 	
