@@ -487,7 +487,7 @@ function actionKeyImage(){
 
   var a = {
       sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
-      sheetTag : '核心卡片清單',
+      sheetTag : '效果',
       row: 1, //起始位置
       col: 1,
       endRow : 200, //切段資料
