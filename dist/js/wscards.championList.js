@@ -1,1 +1,590 @@
-function _0x59a6(_0x2c15a9,_0x218971){var _0x47cb17=_0x47cb();return _0x59a6=function(_0x59a686,_0xca4332){_0x59a686=_0x59a686-0x1b1;var _0x1ff2e0=_0x47cb17[_0x59a686];return _0x1ff2e0;},_0x59a6(_0x2c15a9,_0x218971);}function _0x47cb(){var _0x104fc3=['1108416HSatXy','16xJUBWw','40995RJypFy','H\x201L(){z\x20e=x.B(\x2218\x22),t=x.B(\x221M\x22);t.1N(\x221O\x22,H(){Y(\x22\x22!=e.U){z\x20a=t.U,n;\x22所有地區\x22===a&&(a=\x22V\x22),19(e.U+\x22||\x22+a,\x223d\x22)}})}1P.3e=H(){3f(H(){1P.3g(0,1)},3h)},1L();z\x20$14=$(\x22.1m\x22),$1Q=$(\x22.1Q-3i\x22);H\x201R(){z\x20e=x.B(\x22Z\x22),t=x.D(\x22M\x22),a=x.D(\x22M\x22),n=x.D(\x22i\x22),m=x.D(\x22M\x22);t.q(\x22J\x22,\x22R-1n\x22),t.q(\x229\x22,\x22R-3\x22),a.q(\x22J\x22,\x22R\x22),n.q(\x22J\x22,\x223j\x201o-3x\x201o-3k-3l\x201o-3m\x22),m.q(\x22J\x22,\x223n-3o\x203p-2\x22),m.N=\x223q...\x22,a.G(n),a.G(m),t.G(a),e.G(t)}H\x2019(e,t){z\x20a=e;3r\x200===e&&(a=\x22V\x22,t=\x22V\x22),x.B(\x22R-1\x22).O=\x2211\x22,x.B(\x22R-2\x22).O=\x2211\x22,1S(),1T(),1R();z\x20n={1U:\x22P://1V.1a.Q/1W/d/1X/1Y?1Z=21\x22,22:\x22牌組清單\x22,1b:1,1c:1,1d:3s,1e:10,23:a,24:t};$.25(\x22P://26.1a.Q/27/s/28-29-2a-2b/2c\x22,n,H(e){15(z\x20t=e.1p(\x22,\x22),m=[],d=x.B(\x2218\x22).U,i=!0,c=1;c<n.1d-n.1b+1&&(m[c]=t.2d(0,n.1e-n.1c),0!==m[c].1q);c++){z\x20r=m[c][1],o=m[c][6],s=m[c][8];d===r&&(i&&(i=!1),\x22V\x22!=a?(3t.3u(\x223v:\x22+s+\x22\x20+\x20\x22+o),1r(m[c])):1r(m[c]))}i&&1s(\x22Z\x22),x.B(\x22R-3\x22).O=\x2211:1f\x22})}H\x201r(e){z\x20t=e[0],a=e[1],n=e[2],m=e[3],d=e[4],i=e[5],c=e[6],r=e[7],o=e[8],s=x.B(\x22Z\x22),l,u,S;Y(1t==x.B(i)){(l=x.D(\x22M\x22)).q(\x22J\x22,\x22K\x20K-2e\x202f-K\x22),l.q(\x229\x22,i);z\x20p=x.D(\x22M\x22);p.q(\x22J\x22,\x22K-2g\x2016\x22),p.q(\x22X-K-2h\x22,\x222i\x22),p.q(\x22X-2j-2k\x22,\x223w\x22),(u=x.D(\x222l\x22)).q(\x22O\x22,\x222m-2n:\x20\x272o\x202p\x202q\x27,\x202r-2s;\x22),u.q(\x22J\x22,\x22K-2t\x22),u.N=i;z\x20A=x.D(\x22M\x22);A.q(\x22J\x22,\x22K-2u\x22);z\x20W=x.D(\x2212\x22);W.q(\x222v\x22,\x2212\x22),W.q(\x22J\x22,\x2216\x2016-2w\x22),A.G(W);z\x20g=x.D(\x22M\x22);g.q(\x22J\x22,\x22K-1u\x22),g.q(\x229\x22,i+\x222x\x22),p.G(u),l.G(p),l.G(g)}1v\x20l=x.B(i);Y(\x22\x22!=r&&(r=\x22<a\x201w=\x22+(r=\x22P://3y.3z.Q/3A/\x22+r)+\x22>2y</a>\x22),-1!==o.T(\x222z\x22)){z\x20h;(S=x.D(\x22M\x22)).q(\x229\x22,\x222A-1n\x22),(h=x.D(\x223B\x22)).q(\x22J\x22,\x222z-3C\x22),h.q(\x22X-3D\x22,\x223E\x22),h.q(\x22X-3F\x22,\x223G\x22);z\x20v=x.D(\x22a\x22);v.q(\x221w\x22,o),h.G(v),S.G(h)}1v\x20Y(-1!==o.T(\x222B\x22)){(S=x.D(\x22M\x22)).q(\x229\x22,\x222A-1n\x22);z\x20h,b=\x22P://3H.2B.Q/3I/3J.3K?1w=\x22+o+\x22&3L=3M&3N=2C&2D=2E&3O\x22;(h=x.D(\x223P\x22)).q(\x221g\x22,b),h.q(\x222D\x22,\x222E\x22),h.q(\x22O\x22,\x223Q:1f;3R:3S\x22),h.q(\x223T\x22,\x223U\x22),h.q(\x223V\x22,\x220\x22),h.q(\x223W\x22,\x222C\x22),h.q(\x223X\x22,\x223Y;\x203Z-40;\x2041-42;\x202F-2G-2F;\x2043-44\x22),S.G(h)}z\x20y=x.D(\x22M\x22);y.q(\x22J\x22,\x22K\x20K-2e\x202f-K\x22),y.1N(\x222y\x22,H(){z\x20e=x.B(\x2245\x22),t=x.B(\x221x-1u-46\x22),a=x.B(\x2247\x22);e.N=\x22\x22,t.N=\x22\x22,a.N=\x22\x22,1y.1z.1A(),e.G(S),$(\x22#48\x22).1x(\x2249\x22);z\x20m=x.D(\x2212\x22);m.q(\x222v\x22,\x2212\x22),m.q(\x22J\x22,\x2216\x2016-4a\x22),m.q(\x22X-4b\x22,\x221x\x22),m.N=\x224c\x22,t.G(m),a.N=n});z\x20L=x.D(\x22M\x22);L.q(\x22J\x22,\x22K-2g\x22);z\x20E=x.D(\x222l\x22);E.q(\x22O\x22,\x222m-2n:\x20\x272o\x202p\x202q\x27,\x202r-2s;\x22),E.q(\x22J\x22,\x22K-2t\x22),E.N=t+\x22\x20♕\x20\x22+d+\x22\x20\x22+m+\x22\x20\x22+n;z\x20f=x.D(\x22M\x22);f.q(\x22J\x22,\x22K-2u\x22);z\x20C=x.D(\x2212\x22);C.q(\x22X-K-2h\x22,\x222i\x22),C.q(\x22X-2j-2k\x22,\x224d\x22),f.G(C);z\x20I=x.D(\x22M\x22),w;(I.q(\x22J\x22,\x22K-1u\x22),L.G(E),y.G(L),y.G(I),1t!=x.B(i))?x.B(i+\x222x\x22).G(y):g.G(y);s.G(l),1y.1z.1A()}H\x201T(){z\x20e=x.B(\x22Z\x22);1t!=e&&(e.N=\x22\x22)}H\x201S(){z\x20e;x.B(\x2217\x22).N=\x22\x22;z\x20t={1U:\x22P://1V.1a.Q/1W/d/1X/1Y?1Z=21\x22,22:\x22核心卡片清單\x22,1b:1,1c:1,1d:4e,1e:3,23:\x22V\x22,24:\x22V\x22};$.25(\x22P://26.1a.Q/27/s/28-29-2a-2b/2c\x22,t,H(e){15(z\x20a=e.1p(\x22,\x22),n=[],m=x.B(\x2218\x22).U,d=!0,i=1;i<t.1d-t.1b+1&&(n[i]=a.2d(0,t.1e-t.1c),0!==n[i].1q);i++){z\x20c;m===n[i][0]&&\x22\x22!=n[i][1]&&(d=!1,2H(n[i][1]))}d&&1s(\x2217\x22),x.B(\x22R-1\x22).O.11=\x221f\x22,x.B(\x22R-2\x22).O.11=\x221f\x22})}H\x204f(){1y.1z.1A()}H\x201s(e){Y(\x2217\x22===e){z\x20t=x.B(\x2217\x22),a=x.D(\x221B\x22);a.q(\x229\x22,\x221C\x22),a.q(\x22j\x22,\x224g\x22),a.q(\x221g\x22,\x22P://1.2I.2J.Q/-2K/2L/2M/2N/2O/2P.1D\x22),t.G(a)}1v\x20Y(\x22Z\x22===e){z\x20n=x.B(\x22Z\x22),m=x.D(\x221B\x22);m.q(\x229\x22,\x221C\x22),m.q(\x22j\x22,\x224h\x22),m.q(\x221g\x22,\x22P://1.2I.2J.Q/-2K/2L/2M/2N/2O/2P.1D\x22),n.G(m)}}H\x202H(e){15(z\x20t=e.1p(\x22|\x22),a=0;a<t.1q;a++){z\x20n=t[a],m=(n=n.T(\x22\x20\x22)>=0?n.1E(0,n.T(\x22\x20\x22)):n).1E(0,1),d=n.1E(0,n.T(\x22-\x22));d=d.1F(\x22/\x22,\x221G\x22);z\x20i=n.1F(\x22/\x22,\x221G\x22);i=i.1F(\x22-\x22,\x221G\x22);z\x20c=\x22P://4i-4j.Q/4k/4l-4m/4n/\x22+m.13()+\x22/\x22+d.13()+\x22/\x22+i.13()+\x22.1D\x22,r=x.B(\x2217\x22),o=x.D(\x221B\x22);o.q(\x229\x22,\x221C\x22),o.q(\x22j\x22,\x224o\x22+n),o.q(\x221g\x22,c),o.q(\x224p\x22,\x222Q(\x27\x22+n+\x22\x27)\x22),o.q(\x224q\x22,\x222R(\x27\x22+n+\x22\x27)\x22),o.q(\x22J\x22,\x224r\x22),r.G(o)}}H\x202Q(e){z\x20t=x.B(\x2218\x22),a,n=x.B(\x221M\x22).U,m;\x22所有地區\x22===n&&(n=\x22V\x22),19(t.U+\x22||\x22+n+\x22|\x22+e,\x224s\x22)}H\x202R(e){}$14.1m({4t:[{9:\x224u\x22,j:\x22アイドルマスター\x20シンデレラガールズ\x22,k:\x22偶像大師\x20灰姑娘女孩\x22},{9:\x224v\x22,j:\x22アニメ\x20プリンセスコネクト！1h:2S\x22,k:\x22超異域公主連結☆1h:2S\x22},{9:\x224w\x22,j:\x222T\x202U!／クドわふたー\x22,k:\x222T\x202U!\x20|\x20天使的脈動／庫特4x\x22},{9:\x224y\x22,j:\x22角川スニーカー文庫\x22,k:\x22角川4z文庫\x22},{9:\x224A\x22,j:\x22彼女、お借りします\x22,k:\x22出租女友\x22},{9:\x222V\x22,j:\x22神様になった日\x22,k:\x22成神之日\x22},{9:\x224B\x22,j:\x22カードキャプターさくら\x22,k:\x22庫洛魔法使\x22},{9:\x224C\x22,j:\x22カードゲームしよ子\x22,k:\x22卡片遊戲2W子\x22},{9:\x224D\x22,j:\x22ガールフレンド(仮)\x22,k:\x22女友伴身邊\x22},{9:\x224E\x22,j:\x222X\x204F\x204G\x22,k:\x222X社20周年\x22},{9:\x224H\x22,j:\x222Y\x22,k:\x222Y/小鎮家族\x22},{9:\x224I\x22,j:\x22けものフレンズ\x22,k:\x22動物朋友\x22},{9:\x224J\x22,j:\x22幻影ヲ駆ケル太陽\x22,k:\x22穿透幻影的太陽\x22},{9:\x224K\x22,j:\x22この素晴らしい世界に祝福を！\x22,k:\x22為美好的世界獻上祝福！\x22},{9:\x224L\x22,j:\x22ご注文はうさぎですか？？\x22,k:\x22請問您今天要來點兔子嗎？\x22},{9:\x224M\x22,j:\x22五等分の花嫁\x22,k:\x22五等分的新娘\x22},{9:\x224N\x22,j:\x22冴えない彼女の育てかた\x22,k:\x22不起眼女主角培育法\x22},{9:\x224O\x22,j:\x224P\x204Q\x22,k:\x22夏日口袋\x22},{9:\x224R\x22,j:\x22灼眼のシャナ\x22,k:\x22灼眼的夏娜\x22},{9:\x224S\x22,j:\x224T\x22,k:\x22夏洛特\x22},{9:\x224U\x22,j:\x22涼宮ハルヒの憂鬱\x22,k:\x22涼宮春日的憂鬱\x22},{9:\x224V\x22,j:\x22青春ブタ野郎シリーズ\x22,k:\x22青春豬頭少年\x22},{9:\x224W\x22,j:\x22戦姫絶唱シンフォギア\x22,k:\x22戰姬絕唱\x22},{9:\x224X\x22,j:\x22ゼロの使い魔\x22,k:\x22零之使魔\x22},{9:\x224Y\x22,j:\x22宇宙をかける少女／舞-1i＆舞-乙1i\x22,k:\x22穿越宇宙的少女／舞-1i＆舞-乙1i\x22},{9:\x224Z\x22,j:\x22ダ・カーポ＆50\x2051\x22,k:\x2252\x20|\x2053\x20|\x20初音島\x22},{9:\x2254\x22,j:\x22デート・ア・ライブ\x22,k:\x22約會大作戰\x22},{9:\x2255\x22,j:\x22とある魔術の禁書目録／とある科学の超電磁砲\x22,k:\x22魔法禁書目錄／科學超電磁砲\x22},{9:\x2256\x22,j:\x2257\x2058る\x22,k:\x22出包王女\x22},{9:\x2259\x22,j:\x222Z\x2030\x22,k:\x222Z\x2030\x22},{9:\x225a\x22,j:\x22ニセコイ\x22,k:\x22偽戀\x22},{9:\x225b\x22,j:\x22日常\x22,k:\x22日常\x22},{9:\x225c\x22,j:\x2231\x2032!\x22,k:\x2231\x2032!\x20少女樂團派對\x22},{9:\x225d\x22,j:\x22ひなろじ\x20～33\x2034\x20＆\x2035～\x22,k:\x22雛邏輯～33\x2034\x20&\x2035～\x22},{9:\x225e\x22,j:\x22ビジュアルアーツ\x22,k:\x225f\x205g\x27s\x22},{9:\x225h\x22,j:\x22ビビッドレッド・オペレーション\x22,k:\x225i\x205j\x20|\x20緋色戰姬\x22},{9:\x225k\x22,j:\x2236\x2037!\x22,k:\x2236\x2037!\x22},{9:\x225l\x22,j:\x221j\x20-38\x2015\x201H\x201j-\x22,k:\x221j\x20-38\x2015\x201H\x201j-\x22},{9:\x225m\x22,j:\x22富士見ファンタジア文庫\x22,k:\x22富士見5n文庫\x22},{9:\x225o\x22,j:\x22ホロライブプロダクション\x22,k:\x225p\x20|\x205q\x20|\x205r\x22},{9:\x225s\x22,j:\x22魔法少女まどか☆マギカ\x22,k:\x22魔法少女小圓\x22},{9:\x225t\x22,j:\x22魔法少女リリカルなのは\x22,k:\x22魔法少女奈葉\x22},{9:\x225u\x22,j:\x22ゆらぎ荘の幽奈さん\x22,k:\x22搖曳莊的幽奈小姐\x22},{9:\x225v\x22,j:\x22らき☆すた\x22,k:\x22幸運☆星\x22},{9:\x225w\x22,j:\x22ラブライブ！\x22,k:\x221I\x201J!\x22},{9:\x225x\x22,j:\x22ラブライブ！サンシャイン!!\x22,k:\x221I\x201J!\x205y!!\x20|\x20水團\x22},{9:\x225z\x22,j:\x22ラブライブ！虹ヶ咲学園スクールアイドル同好会\x22,k:\x221I\x201J!\x20虹咲學園學園偶像同好會\x20|\x20虹團\x22},{9:\x225A\x22,j:\x22リトルバスターズ！\x22,k:\x225B\x205C!\x20|\x20校園剋星\x22},{9:\x225D\x22,j:\x2239\x22,k:\x2239\x22},{9:\x225E\x22,j:\x22ロボティクス・ノーツ\x22,k:\x225F;5G\x20|\x20機械學報告\x22},{9:\x225H\x22,j:\x22アイドルマスター\x22,k:\x22偶像大師\x22},{9:\x225I\x22,j:\x22アイドルマスター\x20シャイニーカラーズ\x22,k:\x22偶像大師\x20閃耀色彩\x22},{9:\x225J\x22,j:\x22アイドルマスター\x20ミリオンライブ！\x22,k:\x22偶像大師\x20百萬人演唱會！\x22},{9:\x225K\x22,j:\x22アクセル・ワールド\x22,k:\x22加速世界\x22},{9:\x225L\x22,j:\x22アサルトリリィ\x22,k:\x22突擊莉莉\x22},{9:\x225M\x22,j:\x22アニメーション映画『5N』\x22,k:\x22哥吉拉\x22},{9:\x225O\x22,j:\x22痛いのは嫌なので防御力に極振りしたいと思います。\x22,k:\x22怕痛的我，把防禦力點滿就對了\x22},{9:\x225P\x22,j:\x22うーさーのその日暮らし\x22,k:\x22兔寶的悲慘日常\x22},{9:\x225Q\x22,j:\x22ヱヴァンゲリヲン新劇場版\x22,k:\x22新·福音戰士劇場版\x22},{9:\x225R\x22,j:\x22おそ松さん\x22,k:\x22阿松\x22},{9:\x225S\x22,j:\x22オーバーロード\x22,k:\x225T\x22},{9:\x225U\x22,j:\x22かぐや様は告らせたい～天才たちの恋愛頭脳戦～\x22,k:\x22輝夜姬想讓人告白~天才們的戀愛頭腦戰~\x22},{9:\x225V\x22,j:\x22刀語\x22,k:\x22刀語\x22},{9:\x225W\x22,j:\x223a\x22,k:\x223a\x22},{9:\x225X\x22,j:\x22艦隊これくしょん\x20-艦これ-\x22,k:\x22艦隊收藏／艦娘\x22},{9:\x225Y\x22,j:\x22カードゲームしよ子\x22,k:\x22卡片遊戲2W子\x22},{9:\x225Z\x22,j:\x22キズナイーバー\x22,k:\x22制約之絆\x22},{9:\x2260\x22,j:\x22境界の61\x22,k:\x22境界的輪迴\x22},{9:\x2262\x22,j:\x22キルラキル\x22,k:\x223b\x2063\x203b\x22},{9:\x2264\x22,j:\x2265\x2066\x2067\x2068\x22,k:\x22格鬥天王\x22},{9:\x2269\x22,j:\x22ギルティクラウン\x22,k:\x22罪惡王冠\x22},{9:\x226a\x22,j:\x22クレヨンしんちゃん\x22,k:\x22蠟筆小新\x22},{9:\x226b\x22,j:\x22グリザイアの果実\x22,k:\x22灰色的果實\x22},{9:\x226c\x22,j:\x22劇場版マクロスF\x22,k:\x22劇場版\x206d\x20F\x20虛空歌姬\x22},{9:\x226e\x22,j:\x22ゴブリンスレイヤー\x22,k:\x22哥布林殺手\x22},{9:\x226f\x22,j:\x226g-6h\x20サイコパス\x22,k:\x22心靈判官\x22},{9:\x226i\x22,j:\x22シャイニングシリーズ\x22,k:\x22光明與黑暗系列\x22},{9:\x226j\x22,j:\x226k;6l\x22,k:\x22命運石之門\x22},{9:\x226m\x22,j:\x22少女☆歌劇\x20レヴュースタァライト\x22,k:\x22少女☆歌劇\x206n\x206o\x22},{9:\x226p\x22,j:\x22進撃の巨人\x22,k:\x22進撃的巨人\x22},{9:\x226q\x22,j:\x22新サクラ大戦\x22,k:\x22新櫻花大戰\x22},{9:\x226r\x22,j:\x22ジョジョの奇妙な冒険\x22,k:\x226s的奇妙冒險\x22},{9:\x226t\x22,j:\x22翠星のガルガンティア\x22,k:\x22翠星上的加爾岡緹亞\x22},{9:\x226u\x22,j:\x22スクールガールストライカーズ\x22,k:\x22學園少女突襲者\x20|\x206v\x206w\x22},{9:\x226x\x22,j:\x226y\x206z\x22,k:\x22星際大戰\x22},{9:\x226A\x22,j:\x22戦国3c\x22,k:\x22戰國3c\x22},{9:\x226B\x22,j:\x22ソードアート・オンライン\x22,k:\x22刀劍神域\x20|\x206C\x22},{9:\x226D\x22,j:\x22ソードアート・オンライン\x20オルタナティブ\x20ガンゲイル・オンライン\x22,k:\x22刀劍神域外傳\x206E\x206F\x206G\x20|\x206H\x22},{9:\x226I\x22,j:\x22探偵オペラ\x20ミルキィホームズ\x22,k:\x22偵探歌劇\x20少女福爾摩斯\x22},{9:\x226J\x22,j:\x22ダーリン・イン・ザ・フランキス\x22,k:\x226K\x202G\x201H\x206L\x22},{9:\x226M\x22,j:\x22チェインクロニクル\x20～ヘクセイタスの閃～\x22,k:\x22鎖鏈戰記\x20~赫克瑟塔斯之光~\x22},{9:\x226N\x22,j:\x22超爆裂異次元メンコバトル\x20ギガントシューター\x20つかさ\x22,k:\x22超爆裂異次元6O\x206P\x206Q\x206R\x206S\x22},{9:\x226T\x22,j:\x22テラフォーマーズ\x22,k:\x226U\x206V\x20~火星任務~\x22},{9:\x226W\x22,j:\x226Xアニメ「デビルサバイバー2」\x22,k:\x22惡魔倖存者2\x22},{9:\x226Y\x22,j:\x22天元突破グレンラガン\x22,k:\x22天元突破\x20紅蓮螺巖\x22},{9:\x226Z\x22,j:\x22転生したらスライムだった件\x22,k:\x22關於我轉生變成史萊姆這檔事\x22},{9:\x2270\x22,j:\x22ノーゲーム・ノーライフ\x22,k:\x22遊戲人生\x22},{9:\x2271\x22,j:\x22初音ミク\x20-72\x2073-\x22,k:\x22初音未來\x20-名伶計畫-\x22},{9:\x2274\x22,j:\x2275\x2076\x22,k:\x22魔導少年\x20|\x20妖精尾巴\x22},{9:\x2277\x22,j:\x221k\x22,k:\x22命運停駐之夜\x22},{9:\x2278\x22,j:\x221k/79\x22,k:\x22命運/外傳\x22},{9:\x227a\x22,j:\x221k/7b\x207c（アニメ）\x22,k:\x22命運/冠位指定\x22},{9:\x227d\x22,j:\x22ブラック★ロックシューター\x22,k:\x227e★7f\x207g\x22},{9:\x227h\x22,j:\x22ぷよぷよ\x22,k:\x22魔法氣泡\x22},{9:\x227i\x22,j:\x22プリズマ☆イリヤ\x22,k:\x221k/7j\x207k\x20魔法少女☆伊莉雅\x22},{9:\x227l\x22,j:\x22ペルソナ\x22,k:\x22女神異聞錄7m\x22},{9:\x227n\x22,j:\x22魔界戦記ディスガイア\x22,k:\x22魔界戰記\x22},{9:\x222V\x22,j:\x22無職転生\x20～異世界行ったら本気だす～\x22,k:\x22無職轉生～到了異世界就拿出真本事～\x22},{9:\x227o\x22,j:\x227p\x207q／空の境界\x22,k:\x22逝血之戰／空之境界\x22},{9:\x227r\x22,j:\x22〈物語〉シリーズ\x22,k:\x22《物語》系列\x22},{9:\x227s\x22,j:\x221h:ゼロから始める異世界生活\x22,k:\x221h:\x20從零開始的異世界生活\x22},{9:\x227t\x22,j:\x22ログ・ホライズン\x22,k:\x22記錄的地平線\x22},{9:\x227u\x22,j:\x22ロストディケイド\x22,k:\x227v\x207w\x22}],7x:1,7y:!0,7z:0,7A:\x227B\x22,7C:H(e){z\x20t=1l.7D(e),a=e.k+\x22\x22;7E\x20a.T(1l.1K)>=0?e.j:a.13().T(1l.1K)>=0?e.j:~t.13().T(1l.1K.13())},7F:!0,7G:!1}),$14.1O(H(){z\x20e=$14.1m(\x227H\x22),t;e&&(e.j==$14.7I()&&(19(),x.B(\x2212-2w\x22).O=\x2211\x22,x.B(\x227J\x22).7K=!0))});','11NEUOoQ','4203668HMfuAR','932664iImTRU','\x5cw+','676113BtUebN','replace','fromCharCode','6231564yhzYFi','toString','42525170qkIpRL','2UhlofE','248oLEsQv','split'];_0x47cb=function(){return _0x104fc3;};return _0x47cb();}var _0x44f8fd=_0x59a6;(function(_0x5842fb,_0x391423){var _0x102bd0=_0x59a6,_0x2a5d6f=_0x5842fb();while(!![]){try{var _0x3fe7d2=parseInt(_0x102bd0(0x1b6))/0x1*(-parseInt(_0x102bd0(0x1bc))/0x2)+-parseInt(_0x102bd0(0x1bf))/0x3+-parseInt(_0x102bd0(0x1bd))/0x4*(parseInt(_0x102bd0(0x1c1))/0x5)+-parseInt(_0x102bd0(0x1b4))/0x6+-parseInt(_0x102bd0(0x1b3))/0x7*(parseInt(_0x102bd0(0x1c0))/0x8)+-parseInt(_0x102bd0(0x1b9))/0x9+parseInt(_0x102bd0(0x1bb))/0xa*(parseInt(_0x102bd0(0x1b2))/0xb);if(_0x3fe7d2===_0x391423)break;else _0x2a5d6f['push'](_0x2a5d6f['shift']());}catch(_0x28a047){_0x2a5d6f['push'](_0x2a5d6f['shift']());}}}(_0x47cb,0x9e9ea),eval(function(_0x239a4a,_0x508830,_0x54a779,_0x3afc29,_0x8c3b2b,_0x4ef2ee){var _0x280617=_0x59a6;_0x8c3b2b=function(_0x266340){var _0x24dec9=_0x59a6;return(_0x266340<_0x508830?'':_0x8c3b2b(parseInt(_0x266340/_0x508830)))+((_0x266340=_0x266340%_0x508830)>0x23?String[_0x24dec9(0x1b8)](_0x266340+0x1d):_0x266340[_0x24dec9(0x1ba)](0x24));};if(!''[_0x280617(0x1b7)](/^/,String)){while(_0x54a779--)_0x4ef2ee[_0x8c3b2b(_0x54a779)]=_0x3afc29[_0x54a779]||_0x8c3b2b(_0x54a779);_0x3afc29=[function(_0x3f562e){return _0x4ef2ee[_0x3f562e];}],_0x8c3b2b=function(){var _0x1681b8=_0x280617;return _0x1681b8(0x1b5);},_0x54a779=0x1;};while(_0x54a779--)if(_0x3afc29[_0x54a779])_0x239a4a=_0x239a4a[_0x280617(0x1b7)](new RegExp('\x5cb'+_0x8c3b2b(_0x54a779)+'\x5cb','g'),_0x3afc29[_0x54a779]);return _0x239a4a;}(_0x44f8fd(0x1b1),0x3e,0x1e1,'|||||||||id||||||||||name|cname||||||setAttribute|||||||document||var||getElementById||createElement|||appendChild|function||class|card||div|innerHTML|style|https|com|overlay||indexOf|value|ALL||data|if|deckListCard||display|button|toLowerCase|input|for|btn|coreCardImgList|xxxx|search|google|row|col|endRow|endCol|none|src|Re|HiME|Phantom|Fate|this|typeahead|wrapper|fa|split|length|appendEle|addEmptyImageState|null|body|else|href|modal|twttr|widgets|load|img|cardImg|png|substr|replace|_|the|Love|Live|query|setFunOnload|select_area|addEventListener|change|window|dropdown|appendTreeArea|actionKeyImage|removeTable|sheetUrl|docs|spreadsheets|1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk|edit|usp||sharing|sheetTag|par|attri|get|script|macros|AKfycbykGryZ2iZA3yh22CV|UspO5yMqz6EF5LVHz|XvtT22sVXvwokJ50CVsNlOqm|Ocvq4hg|exec|splice|outline|collapsed|header|widget|collapse|animation|speed|h5|font|family|Noto|Sans|TC|sans|serif|title|tools|type|tool|_body|click|twitter|likebox|facebook|true|height|694|picture|in|addImage|bp|blogspot|0LJSR56tXL8|VVGVS2PQRsI|AAAAAAAAtkA|9EI2ZHrT5w8|s550|text_sankasya_bosyu|click_image|mouse_over|Dive|Angel|Beats|WS00111|SHIYO|Key|CLANNAD|DOG|DAYS|BanG|Dream|from|Luck|Logic|ViVid|Strike|Requiem|Rewrite|CANAAN|KILL|BASARA|deckarea|onload|setTimeout|scrollTo|100|menu|fas|sync|alt|spin|text|bold|pt|Loading|void|2e3|console|log|coreCard|550||decklog|bushiroad|view|blockquote|tweet|lang|ja|theme|light|www|plugins|post|php|width|450|show_text|appId|iframe|border|overflow|hidden|scrolling|no|frameborder|allowfullscreen|allow|autoplay|clipboard|write|encrypted|media|web|share|snsContent|bottom|exampleModalLongTitle|exampleModalCenter|show|secondary|dismiss|Close|500|200|reflashTwttr|cardName_nonename|imgDivcardName_nonename|ws|tcg|wordpress|wp|content|cardimages|cardName_|onclick|onmouseover|pointer|corenumber|source|WS00001|WS00002|WS00003|wafter|WS00004|Sneaker|WS00005|WS00006|WS00007|WS00008|WS00009|20th|Anniversary|WS00010|WS00011|WS00012|WS00013|WS00014|WS00015|WS00016|WS00017|Summer|Pockets|WS00018|WS00019|Charlotte|WS00020|WS00021|WS00022|WS00023|WS00024|WS00025|Dal|Segno|DC|DS|WS00026|WS00027|WS00028|To|LOVE|WS00029|WS00030|WS00031|WS00032|WS00033|WS00034|Visual|Art|WS00035|Vividred|Operatio|WS00036|WS00037|WS00038|Fantasia|WS00112|hololive|HOLOLIVE|Hololive|WS00039|WS00040|WS00041|WS00042|WS00043|WS00044|Sunshine|WS00045|WS00046|Little|Busters|WS00047|WS00048|ROBOTICS|NOTES|WS00049|WS00050|WS00051|WS00052|WS00053|WS00054|GODZILLA|WS00055|WS00056|WS00057|WS00058|WS00059|OVERLORD|WS00060|WS00061|WS00062|WS00063|WS00064|WS00065|WS00066|RINNE|WS00067|la|WS00068|THE|KING|OF|FIGHTERS|WS00069|WS00070|WS00071|WS00072|Macross|WS00073|WS00074|PSYCHO|PASS|WS00075|WS00076|STEINS|GATE|WS00077|Revue|Starlight|WS00078|WS00079|WS00080|JoJo|WS00081|WS00082|Schoolgirl|Strikers|WS00083|STAR|WARS|WS00084|WS00085|SAO|WS00086|Gun|Gale|Online|GGO|WS00087|WS00088|DARLING|FRANXX|WS00089|WS00090|Menko|Battle|Gigant|Shooter|Tsukasa|WS00091|Terra|Formars|WS00092|TV|WS00093|WS00094|WS00095|WS00096|Project|DIVA|WS00097|FAIRY|TAIL|WS00098|WS00099|Apocrypha|WS00100|Grand|Order|WS00101|BLACK|ROCK|SHOOTER|WS00102|WS00103|kaleid|liner|WS00104|Persona|WS00105|WS00106|MELTY|BLOOD|WS00107|WS00108|WS00109|WS00110|Lost|Decade|minLength|showHintOnFocus|scrollHeight|items|all|matcher|displayText|return|fitToElement|selectOnBlur|getActive|val|defaultArea|selected'[_0x44f8fd(0x1be)]('|'),0x0,{})));
+
+window.onload=function(){
+    setTimeout(function(){
+        window.scrollTo(0, 1);
+    }, 100);
+}
+setFunOnload();  
+/*自動化
+var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '中日對照',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 200, //切段資料
+      endCol : 3,//2欄
+	  par : 'ALL',
+	  attri: 'ALL'
+  };
+  $.get('https://script.google.com/macros/s/AKfycbzrq2i1PslWdneSEqB3CLtGm8yA1DRzb9vIcdxLgVuYuVbvbECxVRByU6F35Zu329Ov5Q/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+	var arr = [];
+	var jsonstr='[';
+    for(var i=1; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+	  var cname=arr[i][0];
+	  var jname=arr[i][1];
+	  if (cname==undefined||jname==undefined){continue;}
+		jsonstr=jsonstr+'{"name":"'+jname+'","cname":"'+cname+'"},';
+    }
+	
+	jsonstr=jsonstr.substring(0,jsonstr.length-1);
+	jsonstr=jsonstr+"]";
+	console.log(jsonstr);
+	var jsonO=JSON.parse(jsonstr);
+	 $(".typeahead").typeahead({ 
+	 source:jsonO ,
+  minLength:1,
+  showHintOnFocus:true,
+  scrollHeight:0,
+  items:'all',
+        matcher: function (item) {
+            var it = this.displayText(item);
+			var cname=item.cname+"";
+			if(cname.indexOf(this.query)>=0){
+				return item.name;
+			}
+            return ~it.toLowerCase().indexOf(this.query.toLowerCase());
+        },
+//  displayText: function(item) {
+//	return item.name
+//  },
+  fitToElement:true,
+  selectOnBlur:false
+	 
+	 });
+  });		
+*/	
+function setFunOnload(){
+				//處理中
+				/*listener*/				
+				//var cardNumberListener = document.getElementById("select_time");
+				var xxxx = document.getElementById("xxxx");
+				//
+				//cardNumberListener.addEventListener("change", function(){
+				//	if (xxxx.value!=''){
+				//		search(xxxx.value,'decktime');
+				//	}
+				//});		
+				var cardTitleListener = document.getElementById("select_area");	
+				cardTitleListener.addEventListener("change", function(){
+					if (xxxx.value!=''){
+						var cardAreaValue = cardTitleListener.value;
+						var cardTitle = xxxx.value;
+						if(cardAreaValue==='所有地區'){
+							cardAreaValue='ALL';
+						}
+						search(cardTitle+"|"+"|"+cardAreaValue,'deckarea');
+					}
+				});	
+}
+var $input = $(".typeahead");
+var $dropdown = $(".dropdown-menu");
+$input.typeahead({
+  source: [
+{id:"WS00001", name:"アイドルマスター シンデレラガールズ",cname:"偶像大師 灰姑娘女孩"},
+{id:"WS00002", name:"アニメ プリンセスコネクト！Re:Dive",cname:"超異域公主連結☆Re:Dive"},
+{id:"WS00003", name:"Angel Beats!／クドわふたー",cname:"Angel Beats! | 天使的脈動／庫特wafter"},
+{id:"WS00004", name:"角川スニーカー文庫",cname:"角川Sneaker文庫"},
+{id:"WS00005", name:"彼女、お借りします",cname:"出租女友"},
+{id:"WS00111", name:"神様になった日",cname:"成神之日"},
+{id:"WS00006", name:"カードキャプターさくら",cname:"庫洛魔法使"},
+{id:"WS00007", name:"カードゲームしよ子",cname:"卡片遊戲SHIYO子"},
+{id:"WS00008", name:"ガールフレンド(仮)",cname:"女友伴身邊"},
+{id:"WS00009", name:"Key 20th Anniversary",cname:"Key社20周年"},
+{id:"WS00010", name:"CLANNAD",cname:"CLANNAD/小鎮家族"},
+{id:"WS00011", name:"けものフレンズ",cname:"動物朋友"},
+{id:"WS00012", name:"幻影ヲ駆ケル太陽",cname:"穿透幻影的太陽"},
+{id:"WS00013", name:"この素晴らしい世界に祝福を！",cname:"為美好的世界獻上祝福！"},
+{id:"WS00014", name:"ご注文はうさぎですか？？",cname:"請問您今天要來點兔子嗎？"},
+{id:"WS00015", name:"五等分の花嫁",cname:"五等分的新娘"},
+{id:"WS00016", name:"冴えない彼女の育てかた",cname:"不起眼女主角培育法"},
+{id:"WS00017", name:"Summer Pockets",cname:"夏日口袋"},
+{id:"WS00018", name:"灼眼のシャナ",cname:"灼眼的夏娜"},
+{id:"WS00019", name:"Charlotte",cname:"夏洛特"},
+{id:"WS00020", name:"涼宮ハルヒの憂鬱",cname:"涼宮春日的憂鬱"},
+{id:"WS00021", name:"青春ブタ野郎シリーズ",cname:"青春豬頭少年"},
+{id:"WS00022", name:"戦姫絶唱シンフォギア",cname:"戰姬絕唱"},
+{id:"WS00023", name:"ゼロの使い魔",cname:"零之使魔"},
+{id:"WS00024", name:"宇宙をかける少女／舞-HiME＆舞-乙HiME",cname:"穿越宇宙的少女／舞-HiME＆舞-乙HiME"},
+{id:"WS00025", name:"ダ・カーポ＆Dal Segno",cname:"DC | DS | 初音島"},
+{id:"WS00026", name:"デート・ア・ライブ",cname:"約會大作戰"},
+{id:"WS00027", name:"とある魔術の禁書目録／とある科学の超電磁砲",cname:"魔法禁書目錄／科學超電磁砲"},
+{id:"WS00028", name:"To LOVEる",cname:"出包王女"},
+{id:"WS00029", name:"DOG DAYS",cname:"DOG DAYS"},
+{id:"WS00030", name:"ニセコイ",cname:"偽戀"},
+{id:"WS00031", name:"日常",cname:"日常"},
+{id:"WS00032", name:"BanG Dream!",cname:"BanG Dream! 少女樂團派對"},
+{id:"WS00033", name:"ひなろじ ～from Luck ＆ Logic～",cname:"雛邏輯～from Luck & Logic～"},
+{id:"WS00034", name:"ビジュアルアーツ",cname:"Visual Art's"},
+{id:"WS00035", name:"ビビッドレッド・オペレーション",cname:"Vividred Operatio | 緋色戰姬"},
+{id:"WS00036", name:"ViVid Strike!",cname:"ViVid Strike!"},
+{id:"WS00037", name:"Phantom -Requiem for the Phantom-",cname:"Phantom -Requiem for the Phantom-"},
+{id:"WS00038", name:"富士見ファンタジア文庫",cname:"富士見Fantasia文庫"},
+{id:"WS00112", name:"ホロライブプロダクション",cname:"hololive | HOLOLIVE | Hololive"},
+{id:"WS00039", name:"魔法少女まどか☆マギカ",cname:"魔法少女小圓"},
+{id:"WS00040", name:"魔法少女リリカルなのは",cname:"魔法少女奈葉"},
+{id:"WS00041", name:"ゆらぎ荘の幽奈さん",cname:"搖曳莊的幽奈小姐"},
+{id:"WS00042", name:"らき☆すた",cname:"幸運☆星"},
+{id:"WS00043", name:"ラブライブ！",cname:"Love Live!"},
+{id:"WS00044", name:"ラブライブ！サンシャイン!!",cname:"Love Live! Sunshine!! | 水團"},
+{id:"WS00045", name:"ラブライブ！虹ヶ咲学園スクールアイドル同好会",cname:"Love Live! 虹咲學園學園偶像同好會 | 虹團"},
+{id:"WS00046", name:"リトルバスターズ！",cname:"Little Busters! | 校園剋星"},
+{id:"WS00047", name:"Rewrite",cname:"Rewrite"},
+{id:"WS00048", name:"ロボティクス・ノーツ",cname:"ROBOTICS;NOTES | 機械學報告"},
+{id:"WS00049", name:"アイドルマスター",cname:"偶像大師"},
+{id:"WS00050", name:"アイドルマスター シャイニーカラーズ",cname:"偶像大師 閃耀色彩"},
+{id:"WS00051", name:"アイドルマスター ミリオンライブ！",cname:"偶像大師 百萬人演唱會！"},
+{id:"WS00052", name:"アクセル・ワールド",cname:"加速世界"},
+{id:"WS00053", name:"アサルトリリィ",cname:"突擊莉莉"},
+{id:"WS00054", name:"アニメーション映画『GODZILLA』",cname:"哥吉拉"},
+{id:"WS00055", name:"痛いのは嫌なので防御力に極振りしたいと思います。",cname:"怕痛的我，把防禦力點滿就對了"},
+{id:"WS00056", name:"うーさーのその日暮らし",cname:"兔寶的悲慘日常"},
+{id:"WS00057", name:"ヱヴァンゲリヲン新劇場版",cname:"新·福音戰士劇場版"},
+{id:"WS00058", name:"おそ松さん",cname:"阿松"},
+{id:"WS00059", name:"オーバーロード",cname:"OVERLORD"},
+{id:"WS00060", name:"かぐや様は告らせたい～天才たちの恋愛頭脳戦～",cname:"輝夜姬想讓人告白~天才們的戀愛頭腦戰~"},
+{id:"WS00061", name:"刀語",cname:"刀語"},
+{id:"WS00062", name:"CANAAN",cname:"CANAAN"},
+{id:"WS00063", name:"艦隊これくしょん -艦これ-",cname:"艦隊收藏／艦娘"},
+{id:"WS00064", name:"カードゲームしよ子",cname:"卡片遊戲SHIYO子"},
+{id:"WS00065", name:"キズナイーバー",cname:"制約之絆"},
+{id:"WS00066", name:"境界のRINNE",cname:"境界的輪迴"},
+{id:"WS00067", name:"キルラキル",cname:"KILL la KILL"},
+{id:"WS00068", name:"THE KING OF FIGHTERS",cname:"格鬥天王"},
+{id:"WS00069", name:"ギルティクラウン",cname:"罪惡王冠"},
+{id:"WS00070", name:"クレヨンしんちゃん",cname:"蠟筆小新"},
+{id:"WS00071", name:"グリザイアの果実",cname:"灰色的果實"},
+{id:"WS00072", name:"劇場版マクロスF",cname:"劇場版 Macross F 虛空歌姬"},
+{id:"WS00073", name:"ゴブリンスレイヤー",cname:"哥布林殺手"},
+{id:"WS00074", name:"PSYCHO-PASS サイコパス",cname:"心靈判官"},
+{id:"WS00075", name:"シャイニングシリーズ",cname:"光明與黑暗系列"},
+{id:"WS00076", name:"STEINS;GATE",cname:"命運石之門"},
+{id:"WS00077", name:"少女☆歌劇 レヴュースタァライト",cname:"少女☆歌劇 Revue Starlight"},
+{id:"WS00078", name:"進撃の巨人",cname:"進撃的巨人"},
+{id:"WS00079", name:"新サクラ大戦",cname:"新櫻花大戰"},
+{id:"WS00080", name:"ジョジョの奇妙な冒険",cname:"JoJo的奇妙冒險"},
+{id:"WS00081", name:"翠星のガルガンティア",cname:"翠星上的加爾岡緹亞"},
+{id:"WS00082", name:"スクールガールストライカーズ",cname:"學園少女突襲者 | Schoolgirl Strikers"},
+{id:"WS00083", name:"STAR WARS",cname:"星際大戰"},
+{id:"WS00084", name:"戦国BASARA",cname:"戰國BASARA"},
+{id:"WS00085", name:"ソードアート・オンライン",cname:"刀劍神域 | SAO"},
+{id:"WS00086", name:"ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",cname:"刀劍神域外傳 Gun Gale Online | GGO"},
+{id:"WS00087", name:"探偵オペラ ミルキィホームズ",cname:"偵探歌劇 少女福爾摩斯"},
+{id:"WS00088", name:"ダーリン・イン・ザ・フランキス",cname:"DARLING in the FRANXX"},
+{id:"WS00089", name:"チェインクロニクル ～ヘクセイタスの閃～",cname:"鎖鏈戰記 ~赫克瑟塔斯之光~"},
+{id:"WS00090", name:"超爆裂異次元メンコバトル ギガントシューター つかさ",cname:"超爆裂異次元Menko Battle Gigant Shooter Tsukasa"},
+{id:"WS00091", name:"テラフォーマーズ",cname:"Terra Formars ~火星任務~"},
+{id:"WS00092", name:"TVアニメ「デビルサバイバー2」",cname:"惡魔倖存者2"},
+{id:"WS00093", name:"天元突破グレンラガン",cname:"天元突破 紅蓮螺巖"},
+{id:"WS00094", name:"転生したらスライムだった件",cname:"關於我轉生變成史萊姆這檔事"},
+{id:"WS00095", name:"ノーゲーム・ノーライフ",cname:"遊戲人生"},
+{id:"WS00096", name:"初音ミク -Project DIVA-",cname:"初音未來 -名伶計畫-"},
+{id:"WS00097", name:"FAIRY TAIL",cname:"魔導少年 | 妖精尾巴"},
+{id:"WS00098", name:"Fate",cname:"命運停駐之夜"},
+{id:"WS00099", name:"Fate/Apocrypha",cname:"命運/外傳"},
+{id:"WS00100", name:"Fate/Grand Order（アニメ）",cname:"命運/冠位指定"},
+{id:"WS00101", name:"ブラック★ロックシューター",cname:"BLACK★ROCK SHOOTER"},
+{id:"WS00102", name:"ぷよぷよ",cname:"魔法氣泡"},
+{id:"WS00103", name:"プリズマ☆イリヤ",cname:"Fate/kaleid liner 魔法少女☆伊莉雅"},
+{id:"WS00104", name:"ペルソナ",cname:"女神異聞錄Persona"},  
+{id:"WS00105", name:"魔界戦記ディスガイア",cname:"魔界戰記"},
+{id:"WS00111", name:"無職転生 ～異世界行ったら本気だす～",cname:"無職轉生～到了異世界就拿出真本事～"},
+{id:"WS00106", name:"MELTY BLOOD／空の境界",cname:"逝血之戰／空之境界"},
+{id:"WS00107", name:"〈物語〉シリーズ",cname:"《物語》系列"},
+{id:"WS00108", name:"Re:ゼロから始める異世界生活",cname:"Re: 從零開始的異世界生活"},
+{id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線"},
+{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"}  
+  ],
+  minLength:1,
+  showHintOnFocus:true,
+  scrollHeight:0,
+  items:'all',
+        matcher: function (item) {
+            var it = this.displayText(item);
+			var cname=item.cname+"";
+			if(cname.indexOf(this.query)>=0){
+				return item.name;
+			}else if(cname.toLowerCase().indexOf(this.query)>=0){
+				return item.name;
+			}
+            return ~it.toLowerCase().indexOf(this.query.toLowerCase());
+        },
+//  displayText: function(item) {
+//	return item.name
+//  },
+  fitToElement:true,
+  selectOnBlur:false
+
+});
+$input.change(function() {
+  var current = $input.typeahead("getActive");
+  if (current) {
+    // Some item from your model is active!
+    if (current.name == $input.val()) {
+	    search();
+		var buttontool=document.getElementById("button-tool");
+		buttontool.style='display';
+		document.getElementById("defaultArea").selected=true;
+	  //when you chose item
+    } else {
+		//alert($dropdown.val);
+      // This means it is only a partial match, you can either add a new item
+      // or take the active if you don't want new items
+    }
+  } else {
+    // Nothing is active so it is a new value (or maybe empty value)
+  }
+});
+
+
+function appendTreeArea(){
+	var deckListCard=document.getElementById('deckListCard');
+	var deckListCard_div_0 = document.createElement('div');
+	var deckListCard_div_1 = document.createElement('div');
+	var deckListCard_i = document.createElement('i');
+	var deckListCard_div_2 = document.createElement('div');
+	
+	deckListCard_div_0.setAttribute('class','overlay-wrapper');
+	deckListCard_div_0.setAttribute('id','overlay-3');
+	
+	deckListCard_div_1.setAttribute('class','overlay');
+	
+	deckListCard_i.setAttribute('class','fas fa-3x fa-sync-alt fa-spin');
+	deckListCard_div_2.setAttribute('class','text-bold pt-2');
+	deckListCard_div_2.innerHTML='Loading...';
+	
+	
+	deckListCard_div_1.appendChild(deckListCard_i);
+	deckListCard_div_1.appendChild(deckListCard_div_2);	
+	deckListCard_div_0.appendChild(deckListCard_div_1);
+	deckListCard.appendChild(deckListCard_div_0);
+}
+
+function search(e,attri){
+	var param=e;
+	
+	if(e===undefined){
+		param='ALL';
+		attri='ALL';
+	}
+				document.getElementById('overlay-1').style='display';
+				document.getElementById('overlay-2').style='display';	
+
+	actionKeyImage();
+	removeTable();
+	appendTreeArea();
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '牌組清單',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 2000, //切段資料
+      endCol : 10,//9欄
+	  par : param,
+	  attri: attri
+  };
+	  $.get('https://script.google.com/macros/s/AKfycbzetGxMZIVJFkDFBCrHGMlq9g2RVyBCBsO4v_bnbMQDy0y8TmwpAv0omcvAE2zHlu3-/exec',a, function(data){ //專案連結，檔案-->共用
+		var d = data.split(',');
+		var arr = [];
+	////////
+	//data attri
+	////////	
+		var title=document.getElementById('xxxx').value;
+		var isEmpty = true;
+		for(var i=1; i<(a.endRow-a.row+1); i++){
+		  arr[i] = d.splice(0, (a.endCol-a.col));
+		  if(arr[i].length===0){break;}
+		  //if(i===1){continue;}
+		  var gameTitle=arr[i][1];
+		  var coreCard=arr[i][6];
+		  var deckInfo=arr[i][8];
+
+		  if(title === gameTitle){
+			if(isEmpty){isEmpty=false;}
+			//以下有跟沒有一樣
+			if(param!='ALL'){
+				//if(coreCard.indexOf(param)>=0){
+				  console.log("coreCard:"+deckInfo+" + "+coreCard);
+				  appendEle(arr[i]);
+				//}
+			}else{
+				appendEle(arr[i]);
+			}
+		  }
+		}
+			if(isEmpty){		
+				addEmptyImageState('deckListCard');
+			}
+			document.getElementById('overlay-3').style='display:none';	
+	  });
+	//重新load twitter widgets
+	//twttr.widgets.load();	
+}
+
+function appendEle(arr){
+		var deckName = arr[0];
+		var deckGame = arr[1];
+		var deckGameType = arr[2];
+		var deckArea = arr[3];
+		var deckDate = arr[4];
+		var deckCore = arr[5];
+		var deckKeyCard = arr[6];
+		var deckDeckCode = arr[7];
+		var deckInfo = arr[8];
+
+		var deckListCard=document.getElementById('deckListCard');
+		
+		var div_top;
+		var div0_titleH5;
+		if(document.getElementById(deckCore)==null){		
+			 div_top = document.createElement("div");
+			 div_top.setAttribute("class","card card-outline collapsed-card");
+			 div_top.setAttribute("id",deckCore);
+				var div0_header = document.createElement("div");
+				div0_header.setAttribute("class","card-header btn");
+				div0_header.setAttribute("data-card-widget","collapse");
+				div0_header.setAttribute("data-animation-speed","550");
+					div0_titleH5 = document.createElement("h5");
+					div0_titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
+					div0_titleH5.setAttribute("class","card-title");
+					div0_titleH5.innerHTML=deckCore;
+					
+					var div0_header_tool = document.createElement("div");
+					div0_header_tool.setAttribute("class","card-tools");
+						var div0_tool_button = document.createElement("button");
+						div0_tool_button.setAttribute("type","button");
+						div0_tool_button.setAttribute("class","btn btn-tool");
+						//div0_tool_button.setAttribute("data-card-widget","collapse");
+						//div0_tool_button.setAttribute("data-animation-speed","500");
+							//var div0_tool_button_i = document.createElement("i");
+							//div0_tool_button_i.setAttribute("class","fas fa-plus");
+							//div0_tool_button.appendChild(div0_tool_button_i);
+							div0_header_tool.appendChild(div0_tool_button);
+					var div0_body = document.createElement("div");
+					div0_body.setAttribute("class","card-body");
+					div0_body.setAttribute("id",deckCore+"_body");
+
+		div0_header.appendChild(div0_titleH5);	
+		//div0_header.appendChild(div0_header_tool);
+		div_top.appendChild(div0_header);
+		div_top.appendChild(div0_body);				
+		}else{
+			 div_top = document.getElementById(deckCore);
+		}
+
+			if(deckDeckCode!=''){
+				deckDeckCode='https://decklog.bushiroad.com/view/'+deckDeckCode;
+				deckDeckCode="<a href="+deckDeckCode+">click</a>";
+			}
+			/*SNS Content*/
+			var deckInfoEmbed;
+			if(deckInfo.indexOf('twitter')!==-1){
+				deckInfoEmbed = document.createElement("div");
+				deckInfoEmbed.setAttribute("id","likebox-wrapper");
+				
+				var deckInfoEmbediframe = document.createElement("blockquote");
+				//deckInfoEmbediframe.setAttribute("id","likebox-wrapper");
+				deckInfoEmbediframe.setAttribute("class","twitter-tweet");
+				deckInfoEmbediframe.setAttribute("data-lang","ja");
+				deckInfoEmbediframe.setAttribute("data-theme","light");
+				var hrefForEmbed = document.createElement("a");
+				hrefForEmbed.setAttribute("href",deckInfo);
+					deckInfoEmbediframe.appendChild(hrefForEmbed);
+					deckInfoEmbed.appendChild(deckInfoEmbediframe);
+			}else if(deckInfo.indexOf('facebook')!==-1){
+				deckInfoEmbed = document.createElement("div");
+				deckInfoEmbed.setAttribute("id","likebox-wrapper");
+				var deckInfoEmbediframe = document.createElement("iframe");
+				var url = "https://www.facebook.com/plugins/post.php?href="+deckInfo+"&width=450&show_text=true&height=694&appId";
+				deckInfoEmbediframe.setAttribute("src",url);
+				deckInfoEmbediframe.setAttribute("height","694");
+				deckInfoEmbediframe.setAttribute("style","border:none;overflow:hidden");
+				deckInfoEmbediframe.setAttribute("scrolling","no");
+				deckInfoEmbediframe.setAttribute("frameborder","0");
+				deckInfoEmbediframe.setAttribute("allowfullscreen","true");
+				deckInfoEmbediframe.setAttribute("allow","autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share");
+				
+				deckInfoEmbed.appendChild(deckInfoEmbediframe);
+			}
+			
+		var div_1 = document.createElement("div");
+		div_1.setAttribute("class","card card-outline collapsed-card");
+		div_1.addEventListener("click", function(){
+							var snsContent=document.getElementById('snsContent');
+							var modalbodybottom=document.getElementById("modal-body-bottom");
+							var exampleModalLongTitle=document.getElementById("exampleModalLongTitle");
+							snsContent.innerHTML="";
+							modalbodybottom.innerHTML="";
+							exampleModalLongTitle.innerHTML="";
+							twttr.widgets.load();	
+							//var snsContent=document.getElementById('snsContent');
+							snsContent.appendChild(deckInfoEmbed);	
+														
+							$('#exampleModalCenter').modal('show');							
+							
+							var snsdownbutton=document.createElement('button');
+							snsdownbutton.setAttribute("type","button");
+							snsdownbutton.setAttribute("class","btn btn-secondary");
+							snsdownbutton.setAttribute("data-dismiss","modal");
+							snsdownbutton.innerHTML="Close";
+							
+							//var modalbodybottom=document.getElementById("modal-body-bottom");
+							modalbodybottom.appendChild(snsdownbutton);
+							exampleModalLongTitle.innerHTML=deckGameType;
+		});			
+
+		var div_header = document.createElement("div");
+		div_header.setAttribute("class","card-header");
+			var titleH5 = document.createElement("h5");
+			titleH5.setAttribute("style","font-family: 'Noto Sans TC', sans-serif;");
+			titleH5.setAttribute("class","card-title");
+			titleH5.innerHTML=deckName+" ♕ "+deckDate+" "+deckArea+" "+deckGameType;
+			var div_header_tool = document.createElement("div");
+			div_header_tool.setAttribute("class","card-tools");		
+				var tool_button = document.createElement("button");
+				tool_button.setAttribute("data-card-widget","collapse");
+				tool_button.setAttribute("data-animation-speed","500");
+					
+					div_header_tool.appendChild(tool_button);
+
+			
+		var div_body = document.createElement("div");
+		div_body.setAttribute("class","card-body"); 		
+		
+
+		div_header.appendChild(titleH5);		
+		//div_header.appendChild(div_header_tool);
+		div_1.appendChild(div_header);
+		div_1.appendChild(div_body);
+				
+		
+		if(document.getElementById(deckCore)!=null){
+		var d=document.getElementById(deckCore+"_body");
+		d.appendChild(div_1);
+		}else{
+		//由於Create element時div0_body有被宣告
+			div0_body.appendChild(div_1);
+		}
+		
+		deckListCard.appendChild(div_top);
+//重新load twitter widgets		
+twttr.widgets.load();		
+}
+
+function removeTable(){
+	var tabletree = document.getElementById('deckListCard');
+	if(tabletree !=null){
+		tabletree.innerHTML="";
+	}
+}
+
+function actionKeyImage(){
+  var coreCardImgListEle=document.getElementById('coreCardImgList');
+  coreCardImgListEle.innerHTML="";
+
+
+
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '效果日翻中',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 200, //切段資料
+      endCol : 3,//2欄
+	  par : 'ALL',
+	  attri: 'ALL'
+  };
+  $.get('https://script.google.com/macros/s/AKfycbzetGxMZIVJFkDFBCrHGMlq9g2RVyBCBsO4v_bnbMQDy0y8TmwpAv0omcvAE2zHlu3-/exec',a, function(data){ //專案連結，檔案-->共用
+    var d = data.split(',');
+	var arr = [];
+	
+    var title=document.getElementById('xxxx').value;
+	var isEmpty = true;
+    for(var i=1; i<(a.endRow-a.row+1); i++){
+      arr[i] = d.splice(0, (a.endCol-a.col));
+	  if(arr[i].length===0){break;}
+
+	  var gameTitle=arr[i][0];
+	  if(title === gameTitle){
+		if(arr[i][1]!=''){
+			isEmpty=false;
+			addImage(arr[i][1]);
+		}
+	  }
+    }
+	if(isEmpty){
+		addEmptyImageState('coreCardImgList');
+	}
+	document.getElementById('overlay-1').style.display='none';	
+	document.getElementById('overlay-2').style.display='none';	
+  });
+}
+
+function reflashTwttr(){
+	//重新load twitter widgets
+	twttr.widgets.load();	
+}
+function addEmptyImageState(action){
+		if(action==='coreCardImgList'){
+				var coreCardImgListEle=document.getElementById('coreCardImgList');	
+				var img=document.createElement("img");	
+				img.setAttribute("id","cardImg");
+				img.setAttribute("name","cardName_nonename");
+				img.setAttribute("src","https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png");
+				coreCardImgListEle.appendChild(img);
+		}else if(action==='deckListCard'){
+				var deckListCard=document.getElementById('deckListCard');
+				var imgDiv=document.createElement("img");	
+				imgDiv.setAttribute("id","cardImg");
+				imgDiv.setAttribute("name","imgDivcardName_nonename");
+				imgDiv.setAttribute("src","https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png");
+				deckListCard.appendChild(imgDiv);	
+		}
+	
+}
+
+function addImage(cardNumber){
+			var cardcorelist=cardNumber.split("|");
+			for(var imgInit=0;imgInit<cardcorelist.length;imgInit++){
+				var card_Num=cardcorelist[imgInit];
+					
+				if(card_Num.indexOf(' ')>=0){
+					card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+				}else{
+					card_Num=card_Num;				
+				}
+
+				var card_first=card_Num.substr(0,1);
+				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+					card_second=card_second.replace('/','_')
+				var card_third=card_Num.replace('/','_');
+					card_third=card_third.replace('-','_');								
+				var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+				var coreCardImgListEle=document.getElementById('coreCardImgList');	
+				var img=document.createElement("img");	
+				img.setAttribute("id","cardImg");		
+				img.setAttribute("name","cardName_"+card_Num);
+				img.setAttribute("src",urlCard);
+				img.setAttribute("onclick","click_image('"+card_Num+"')");
+				img.setAttribute("onmouseover","mouse_over('"+card_Num+"')");
+				img.setAttribute("class","pointer");
+				coreCardImgListEle.appendChild(img);				
+			}
+}
+
+function click_image(e){
+				//var cardNumberListener = document.getElementById("select_time");
+				var xxxx = document.getElementById("xxxx");			
+				var cardTitleListener = document.getElementById("select_area");	
+				var cardArea = cardTitleListener.value;
+				var cardTitle = xxxx.value;	
+				if(cardArea==='所有地區'){
+							cardArea='ALL';
+				}				
+	search(cardTitle+"|"+"|"+cardArea+"|"+e,'corenumber');
+
+}
+function mouse_over(e){
+}
+
