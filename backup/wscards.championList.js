@@ -121,7 +121,7 @@ $input.typeahead({
 {id:"WS00036", name:"ViVid Strike!",cname:"ViVid Strike!"},
 {id:"WS00037", name:"Phantom -Requiem for the Phantom-",cname:"Phantom -Requiem for the Phantom-"},
 {id:"WS00038", name:"富士見ファンタジア文庫",cname:"富士見Fantasia文庫"},
-{id:"WS00112", name:"ホロライブプロダクション",cname:"hololive | HOLOLIVE"},
+{id:"WS00112", name:"ホロライブプロダクション",cname:"hololive | HOLOLIVE | Hololive"},
 {id:"WS00039", name:"魔法少女まどか☆マギカ",cname:"魔法少女小圓"},
 {id:"WS00040", name:"魔法少女リリカルなのは",cname:"魔法少女奈葉"},
 {id:"WS00041", name:"ゆらぎ荘の幽奈さん",cname:"搖曳莊的幽奈小姐"},
