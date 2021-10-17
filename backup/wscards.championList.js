@@ -1,4 +1,3 @@
-
 window.onload=function(){
     setTimeout(function(){
         window.scrollTo(0, 1);
@@ -178,6 +177,7 @@ $input.typeahead({
 {id:"WS00092", name:"TVアニメ「デビルサバイバー2」",cname:"惡魔倖存者2"},
 {id:"WS00093", name:"天元突破グレンラガン",cname:"天元突破 紅蓮螺巖"},
 {id:"WS00094", name:"転生したらスライムだった件",cname:"關於我轉生變成史萊姆這檔事"},
+{id:"WS00114", name:"D_CIDE TRAUMEREI",cname:"D_CIDE TRAUMEREI"},
 {id:"WS00095", name:"ノーゲーム・ノーライフ",cname:"遊戲人生"},
 {id:"WS00096", name:"初音ミク -Project DIVA-",cname:"初音未來 -名伶計畫-"},
 {id:"WS00097", name:"FAIRY TAIL",cname:"魔導少年 | 妖精尾巴"},
@@ -194,7 +194,8 @@ $input.typeahead({
 {id:"WS00107", name:"〈物語〉シリーズ",cname:"《物語》系列"},
 {id:"WS00108", name:"Re:ゼロから始める異世界生活",cname:"Re: 從零開始的異世界生活"},
 {id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線"},
-{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"}  
+{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade"},
+{id:"WS00113", name:"ワールドトリガー",cname:"境界觸發者"}  
   ],
   minLength:1,
   showHintOnFocus:true,
@@ -587,4 +588,3 @@ function click_image(e){
 }
 function mouse_over(e){
 }
-
