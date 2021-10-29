@@ -224,6 +224,7 @@
 		  </li>				  
 		  <li class="nav-item">
 			<a href ="grading" class="nav-link  active">
+		
 			  <i class="fas fa-search-location  nav-icon"></i>
 			  <p>
 			  卡片鑑定資訊(icon自己做)
@@ -272,11 +273,11 @@
 						<ul class="nav nav-pills">
 							<li class="nav-item"><a class="nav-link" >各家公司列表</i></a></li>
 							<li class="nav-item"><a class="nav-link" ><i class="far fa-hand-point-right"></i></a></li>
-							<li class="nav-item"><a class="nav-link" href="#BGS" data-toggle="tab">BGS</a></li>
-							<li class="nav-item"><a class="nav-link" href="#PSA" data-toggle="tab">PSA</a></li>
-							<li class="nav-item"><a class="nav-link" href="#HGA" data-toggle="tab">HGA</a></li>
-							<li class="nav-item"><a class="nav-link" href="#CGC" data-toggle="tab">CGC</a></li>	
-							<li class="nav-item"><a class="nav-link" href="#BRG" data-toggle="tab">BRG</a></li>								
+							<li class="nav-item"><a class="nav-link" href="#BGS" data-toggle="tab" onclick="changeGradingRule('BGS');">BGS</a></li>
+							<li class="nav-item"><a class="nav-link" href="#PSA" data-toggle="tab" onclick="changeGradingRule('PSA');">PSA</a></li>
+							<li class="nav-item"><a class="nav-link" href="#HGA" data-toggle="tab" onclick="changeGradingRule('HGA');">HGA</a></li>
+							<li class="nav-item"><a class="nav-link" href="#CGC" data-toggle="tab" onclick="changeGradingRule('CGC');">CGC</a></li>	
+							<li class="nav-item"><a class="nav-link" href="#BRG" data-toggle="tab" onclick="changeGradingRule('BRG');">BRG</a></li>								
 						</ul>
 					</div>
 					<div class="card-body" >
@@ -551,24 +552,13 @@
 							</div>
 						   <h3 class="profile-username text-center">鑑定重點</h3>
 
-							<p class="text-muted text-center">BGS,PSA</p>
+							<p class="text-muted text-center" id="gradingIp">各家鑑定公司的注重的不同</p>
 
-							<ul class="list-group list-group-unbordered mb-3">
+							<ul class="list-group list-group-unbordered mb-3" id="gradingIplist">
 							  <li class="list-group-item text-center">
-								<b>置中 Centering</b>
+								<b>印刷瑕疵 PD(Print Defect)</b>
 							  </li>
-							  <li class="list-group-item text-center">
-								<b>角落 Corners</b> 
-							  </li>
-							  <li class="list-group-item text-center">
-								<b>邊緣 Edges</b> 
-							  </li>
-							  <li class="list-group-item text-center">
-								<b>表面 Surface</b>
-							  </li>
-							</ul>
-
-							<a href="#" class="btn btn-primary btn-block"><b><i class="fas fa-arrow-circle-right"></i></b></a>							
+							</ul>						
 					   </div>		
 				</div>
 		  </div>
@@ -696,10 +686,54 @@
 			annButton.addEventListener("click", function(){
 				$('#announceexampleModalCenter').modal('show');	
 	});	
-$(document).on('click', '[data-toggle="lightbox"]', function(event) {
+	$(document).on('click', '[data-toggle="lightbox"]', function(event) {
                 event.preventDefault();
                 $(this).ekkoLightbox();
             });
+	function changeGradingRule(company){
+		var gradingIp = $("#gradingIp");
+		var gradingIplist = document.getElementById("gradingIplist");
+		gradingIplist.innerHTML="";
+		gradingIp.text(company); 
+		
+		if("PSA" === company){
+			var rules = ['標示 MK(Marks)','裁切錯誤 MC(Miscut)','偏移中心 OC(Off Center)','染色 ST(Staining)','印刷瑕疵 PD(Print Defect)','失焦 OF(Out of Fucus)'];
+			var rules2 = ['https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-mkr-big.png'
+			,'https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-mc-big.png'
+			,'https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-oc-big.png'
+			,'https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-str-big.png'
+			,'https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-pd-big.png'
+			,'https://i.psacard.com/psacard/images/resources/gradingstandards/grdstd-qualifier-of-big.png'
+			];
+			rules.forEach((element,index) => createList(element,rules2[index]));	
+		}else{
+			var rules = ['置中 Centering','角落 Corners','邊緣 Edges','表面 Surface'];
+			rules.forEach(element => createList_noA(element));
+		}
+
+	}
+	
+	function createList_noA(arg){
+			var newli = document.createElement('li');
+			var bvalue = document.createElement('b');
+			bvalue.innerHTML=arg;
+			newli.setAttribute("class","list-group-item text-center");
+			newli.appendChild(bvalue);
+			gradingIplist.appendChild(newli);	
+	}
+	function createList(arg,arg2){
+			var newli = document.createElement('li');
+			var newa = document.createElement('a');
+			var bvalue = document.createElement('b');
+			var url = arg2;
+			newa.setAttribute("href",url);
+			newa.setAttribute("data-toggle","lightbox");
+			bvalue.innerHTML=arg;
+			newli.setAttribute("class","list-group-item text-center");
+			newa.appendChild(bvalue);
+			newli.appendChild(newa);
+			gradingIplist.appendChild(newli);	
+	}	
 </script>
 <style>
 </style>
