@@ -174,7 +174,7 @@ $input.typeahead({
 {id:"WS00087", name:"探偵オペラ ミルキィホームズ",cname:"偵探歌劇 少女福爾摩斯 | MK,MK2"},
 {id:"WS00117", name:"ダンジョンに出会いを求めるのは間違っているだろうか",cname:"ダンまち | 在地下城尋求邂逅是否搞錯了什麼 | 地錯 | 地城邂逅 | DDM"},
 {id:"WS00088", name:"ダーリン・イン・ザ・フランキス",cname:"DARLING in the FRANXX | FXX"},
-{id:"WS00089", name:"チェインクロニクル ～ヘクセイタスの閃～",cname:"鎖鏈戰記 ~赫克瑟塔斯之光~ | CC"},
+{id:"WS00089", name:"チェインクロニクル ～ヘクセイタスの閃～",cname:"鎖鏈戰記 ~赫克瑟塔斯之光~ | CC"},
 {id:"WS00090", name:"超爆裂異次元メンコバトル ギガントシューター つかさ",cname:"超爆裂異次元Menko Battle Gigant Shooter Tsukasa | GST"},
 {id:"WS00091", name:"テラフォーマーズ",cname:"Terra Formars ~火星任務~ | TF"},
 {id:"WS00092", name:"TVアニメ「デビルサバイバー2」",cname:"惡魔倖存者2 | DS2"},
@@ -199,6 +199,8 @@ $input.typeahead({
 {id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線 | LH"},
 {id:"WS00110", name:"ロストディケイド",cname:"Lost Decade | LOD"},
 {id:"WS00113", name:"ワールドトリガー",cname:"境界觸發者 | WTR"},
+{id:"WS00119", name:"Marvel/Card Collection",cname:"漫威 | MAR"},
+{id:"WS00120", name:"プロジェクトセカイ カラフルステージ！ feat. 初音ミク",cname:"世界計畫 繽紛舞台！ feat.初音未來 | PJS"}
   ],
   minLength:1,
   showHintOnFocus:true,
@@ -209,7 +211,7 @@ $input.typeahead({
 			var cname=item.cname+"";
 			if(cname.indexOf(this.query)>=0){
 				return item.name;
-			}else if(cname.toLowerCase().indexOf(this.query)>=0){
+			}else if(cname.toLowerCase().indexOf(this.query.toLowerCase())>=0){
 				return item.name;
 			}
             return ~it.toLowerCase().indexOf(this.query.toLowerCase());
@@ -283,7 +285,7 @@ function search(e,attri){
       sheetTag : '牌組清單',
       row: 1, //起始位置
       col: 1,
-      endRow : 2000, //切段資料
+      endRow : 4000, //切段資料
       endCol : 10,//9欄
 	  par : param,
 	  attri: attri
