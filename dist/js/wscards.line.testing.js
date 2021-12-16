@@ -157,6 +157,9 @@ source:[{id:"WS00001", name:"アイドルマスター シンデレラガール�
 			}
             return ~it.toLowerCase().indexOf(this.query.toLowerCase());
         },
+//  displayText: function(item) {
+//	return item.name
+//  },
   fitToElement:true,
   selectOnBlur:false
 	 
@@ -167,7 +170,7 @@ $input.change(function() {
   if (current) {
     // Some item from your model is active!
     if (current.name == $input.val()) {
-	    changeTitle();
+	    changeStandardForSuggest();
 	  //when you chose item
     } else {
 		//alert($dropdown.val);
@@ -275,8 +278,7 @@ $input.change(function() {
 			}
 			
 			function changeStandard(){
-			  var cardStandard=document.getElementById('xxxx').value;
-			  var cardStandardEle=document.getElementById('cardStandard');
+			  var cardStandard=document.getElementById('cardStandard').value;
 			  var selectTitle = document.getElementById("cardTitle"); 
 			  while (selectTitle.firstChild) {
 				selectTitle.removeChild(selectTitle.firstChild);
@@ -309,7 +311,42 @@ $input.change(function() {
 			  }		
 				changeStandardAfterChangeNumber();			  
 			}
-						
+			function changeStandardForSuggest(){
+				console.log("changeStandardForSuggest 001");
+			  var cardStandard=document.getElementById('xxxx').value;
+			  var cardStandardEle=document.getElementById('cardStandard');
+			  var selectTitle = document.getElementById("cardTitle"); 
+			  while (selectTitle.firstChild) {
+				selectTitle.removeChild(selectTitle.firstChild);
+			  }			  
+					console.log("changeStandardForSuggest 002");		  
+    		  requestTitle.open('GET', requestURLCardTitle);
+			  requestTitle.responseType = 'json';
+			  requestTitle.send();					
+			  requestTitle.onload = function(){
+				var cardsTitle = requestTitle.response;
+				var cardStandardArray = cardStandard.split(",");
+				for(var key in cardsTitle){	 
+				console.log("changeStandardForSuggest 003");
+					var keyStr=key.substr(0,key.indexOf('/'));//2~3
+					var keyStrLength=keyStr.length;
+
+					var filtered = cardStandardArray.filter(function(value) {
+						  return value === keyStr;
+					});						
+				    if(filtered==0){
+						//double check
+						continue;
+					}
+				console.log("changeStandardForSuggest 004");
+					var option = document.createElement("option");
+					option.setAttribute("value",key);
+					option.appendChild(document.createTextNode(cardsTitle[key])); 
+					selectTitle.appendChild(option);				
+				}
+			  }		
+				changeStandardAfterChangeNumber();			  
+			}						
 			function removeTitle(){			
 					document.getElementById('notuse').style.display='none';
 			}				
