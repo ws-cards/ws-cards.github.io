@@ -230,6 +230,7 @@ $input.change(function() {
 					for(var key in cardsW){	 
 						var option = document.createElement("option");
 						option.setAttribute("value",cardsW[key]);
+						option.setAttribute("id",key);
 						option.appendChild(document.createTextNode(key)); 
 						optgroupW.appendChild(option);				
 					}	
@@ -240,6 +241,7 @@ $input.change(function() {
 					for(var key in cardsS){	 
 						var option = document.createElement("option");
 						option.setAttribute("value",cardsS[key]);
+						option.setAttribute("id",key);						
 						option.appendChild(document.createTextNode(key)); 
 						optgroupS.appendChild(option);				
 					}					
