@@ -314,7 +314,7 @@ $input.change(function() {
 				changeStandardAfterChangeNumber();			  
 			}
 			function changeStandardForSuggest(productName){
-				document.getElementById("'"+productName+"'").selected=true
+				document.getElementById(productName).selected=true
 				changeStandard();		  
 			}						
 			function removeTitle(){			
