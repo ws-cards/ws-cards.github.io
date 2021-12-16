@@ -157,9 +157,6 @@ source:[{id:"WS00001", name:"アイドルマスター シンデレラガール�
 			}
             return ~it.toLowerCase().indexOf(this.query.toLowerCase());
         },
-//  displayText: function(item) {
-//	return item.name
-//  },
   fitToElement:true,
   selectOnBlur:false
 	 
@@ -170,7 +167,7 @@ $input.change(function() {
   if (current) {
     // Some item from your model is active!
     if (current.name == $input.val()) {
-	    changeStandard();
+	    changeTitle();
 	  //when you chose item
     } else {
 		//alert($dropdown.val);
