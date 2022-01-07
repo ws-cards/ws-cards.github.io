@@ -372,6 +372,68 @@ function appendEle(arr){
 					div0_body.setAttribute("id",deckCore+"_body");
 
 		div0_header.appendChild(div0_titleH5);	
+		/*trigger icon*/	
+		if (deckCore.indexOf('二爆') >= 0) {
+			var divtigger1 = document.createElement("img");
+			divtigger1.setAttribute("src","https://images.plurk.com/Zuvv5B2cDJwwgxiJG3Kxc.png");
+			divtigger1.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger1);
+		}		
+		if (deckCore.indexOf('開機') >= 0) { 
+			var divtigger3 = document.createElement("img");
+			divtigger3.setAttribute("src","https://ws-tcg.com/wordpress/wp-content/images/cardlist/_partimages/standby.gif");
+			divtigger3.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger3);
+		}		
+		if (deckCore.indexOf('金磚') >= 0) { 
+			var divtigger4 = document.createElement("img");
+			divtigger4.setAttribute("src","https://images.plurk.com/1OnWi3WQVsI4gk9aWalKAz.png");
+			divtigger4.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger4);
+		}
+		if (deckCore.indexOf('寶袋') >= 0) { 
+			var divtigger9 = document.createElement("img");
+			divtigger9.setAttribute("src","https://images.plurk.com/6dsBLGlLImzjpKHyTVXmvx.png");
+			divtigger9.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger9);
+		}		
+		if (deckCore.indexOf('木門') >= 0) { 
+			var divtigger5 = document.createElement("img");
+			divtigger5.setAttribute("src","https://images.plurk.com/4ky8yKNphHW1BuPgXgajBr.png");
+			divtigger5.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger5);
+		}
+		if (deckCore.indexOf('凱旋門') >= 0) { 
+			var divtigger2 = document.createElement("img");
+			divtigger2.setAttribute("src","https://ws-tcg.com/wordpress/wp-content/images/cardlist/_partimages/gate.gif");
+			divtigger2.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger2);
+		}		
+		if (deckCore.indexOf('箭頭') >= 0) { 
+			var divtigger6 = document.createElement("img");
+			divtigger6.setAttribute("src","https://images.plurk.com/58Fd738M76mMp51WnkWtHS.png");
+			divtigger6.setAttribute("class","trigger-Icon card-title"); 
+			div0_header.appendChild(divtigger6);
+		}
+		if (deckCore.indexOf('風吹') >= 0) { 
+			var divtigger7 = document.createElement("img");
+			divtigger7.setAttribute("src","https://images.plurk.com/5mDSRHVLYehGOBXX2DPcMV.png");
+			divtigger7.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger7);
+		}
+		if (deckCore.indexOf('火燒') >= 0) { 
+			var divtigger8 = document.createElement("img");
+			divtigger8.setAttribute("src","https://images.plurk.com/3ps1uXh7MdLBVCUejDLyYp.png");
+			divtigger8.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger8);
+		}
+		if (deckCore.indexOf('書') >= 0) { 
+			var divtigger10 = document.createElement("img");
+			divtigger10.setAttribute("src","https://images.plurk.com/3i1wDS4OvGMFB5TylHH4kk.png");
+			divtigger10.setAttribute("class","trigger-Icon card-title");
+			div0_header.appendChild(divtigger10);
+		}			
+			
 		//div0_header.appendChild(div0_header_tool);
 		div_top.appendChild(div0_header);
 		div_top.appendChild(div0_body);				
