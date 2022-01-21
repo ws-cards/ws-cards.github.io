@@ -62,7 +62,7 @@
 						tdCardNo.innerHTML = cardNo;
 						tdCardNo.setAttribute('id',cardNo);
 						tdCardNo.addEventListener("click", function(){
-							console.log('cardNo:'+cardNumber);
+							console.log('cardNo:'+cardNo);
 							
 							var card_Num=cardNo;
 							if(card_Num.indexOf(' ')>=0){
