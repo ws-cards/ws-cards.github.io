@@ -33,7 +33,7 @@
 					}else{
 						upArray.push({cardNo:key,price:cardPrice});
 						upArray.sort(function(a, b) {
-						return a.cardPrice < b.cardPrice ? 1: -1;
+						return a.price < b.price ? 1: -1;
 						});
 						upArray.pop();
 					}
@@ -50,45 +50,20 @@
 			function settingUpTable(upArray){
 				for(var key in upArray ){
 					var cardNo=upArray[key].cardNo;
-					var spread=upArray[key].cardSpread;
 					var price=upArray[key].price;
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
 						var tdPrice = document.createElement("td");
-						var tdRange = document.createElement("td");
-						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
-							cardNo = mappingRep[cardNo];
-						}
-						tdCardNo.innerHTML = cardNo;
-						tdPrice.innerHTML = price;
-						tdRange.innerHTML = "<small class='text-success mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-up' ></i>"+spread+"%</small>";
 
-						tr.appendChild(tdCardNo);  
-						tr.appendChild(tdPrice); 
-						tr.appendChild(tdRange); 
-						upTable.appendChild(tr);	
-				}					
-			}
-			function settingDownTable(downArray){
-				for(var key in downArray ){
-					var cardNo=downArray[key].cardNo;
-					var spread=downArray[key].cardSpread;
-					var price=downArray[key].price;					
-						var tr = document.createElement("tr");
-						//卡號稀有度價錢幅度
-						var tdCardNo = document.createElement("td");
-						var tdPrice = document.createElement("td");
-						var tdRange = document.createElement("td");
 						if(cardNo.indexOf('/')<0&&cardNo.indexOf('S')==0){
 							cardNo = mappingRep[cardNo];
 						}
 						tdCardNo.innerHTML = cardNo;
 						tdPrice.innerHTML = price;
-						tdRange.innerHTML = "<small class='text-warning mr-1' style='font-family: 'Noto Sans TC', sans-serif;font-size:10px;'><i class='fas fa-arrow-down' ></i>"+spread+"%</small>";
-						tr.appendChild(tdCardNo); 
-						tr.appendChild(tdPrice); 
-						tr.appendChild(tdRange); 
-						downTable.appendChild(tr);	
+						
+						tr.appendChild(tdCardNo);  
+						tr.appendChild(tdPrice);
+						upTable.appendChild(tr);	
 				}					
 			}
