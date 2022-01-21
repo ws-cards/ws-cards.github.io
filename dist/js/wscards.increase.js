@@ -36,12 +36,12 @@
 					var lastDatePrice;
 					var spread;
 					//塞入日期
-					if(document.getElementById("upperH5").innerHTML==="漲幅最大排行"){
+					
 						document.getElementById("upperH5").innerHTML="漲幅最大排行 更新時間("+updateDate+")";
-					}
-					if(document.getElementById("downerH5").innerHTML==="跌幅最大排行"){
+
+					
 						document.getElementById("downerH5").innerHTML="跌幅最大排行 更新時間("+updateDate+")";
-					}
+					
                                         //沒有特別意義的交換，但是後面的變數要改
 					if("upper" === statute){
 						firstDatePrice =cardPriceMin;
