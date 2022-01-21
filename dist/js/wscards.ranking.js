@@ -30,7 +30,7 @@
 					var cardPrice = cardPriceInfo ['cardPrice'];
 					var displayCardNumber = cardPriceInfo ['displayCardNumber'];
 				
-                    upArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
+                    upArray.push({cardNo:key,price:cardPrice});
 					
 					upArray.sort(function(a, b) {
 								return a.cardSpread < b.cardSpread ? 1: -1;
