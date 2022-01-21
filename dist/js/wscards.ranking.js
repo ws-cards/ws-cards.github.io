@@ -39,7 +39,8 @@
 					}
 				}
 				  console.log("41 line")
-				settingUpTable(upArray);
+			    	  console.log(upArray)
+				  settingUpTable(upArray);
 
 				//取消loading
 				document.getElementById('overlay1').style.display='none';	
