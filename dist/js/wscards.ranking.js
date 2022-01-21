@@ -61,6 +61,26 @@
 						}
 						tdCardNo.innerHTML = cardNo;
 						tdCardNo.setAttribute('id',cardNo);
+						tdCardNo.addEventListener("click", function(){
+							console.log('cardNo:'+cardNumber);
+							
+							var card_Num=cardNo;
+							if(card_Num.indexOf(' ')>=0){
+								card_Num=card_Num.substr(0,card_Num.indexOf(' '));
+							}else{
+								card_Num=card_Num;				
+							}
+
+							var card_first=card_Num.substr(0,1);
+							var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+								card_second=card_second.replace('/','_')
+							var card_third=card_Num.replace('/','_');
+								card_third=card_third.replace('-','_');								
+							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+						
+							var cardImg=document.getElementById('topImg');
+							cardImg.setAttribute("src",urlCard);
+				});						
 						tdPrice.innerHTML = price;
 						
 						tr.appendChild(tdCardNo);  
