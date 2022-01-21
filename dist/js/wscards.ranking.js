@@ -26,12 +26,11 @@
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
 					var upddate = cardPriceInfo ['upddate'];
-					var cardPrice = cardPriceInfo ['cardPrice'];
+					var cardPrice = cardPriceInfo ['cardPrice'][0];
 					var displayCardNumber = cardPriceInfo ['displayCardNumber'];
 					if(upArray.length<arraySetLength){
 						upArray.push({cardNo:key,price:cardPrice});
 					}else{
-						console.log(upArray)
 						upArray.push({cardNo:key,price:cardPrice});
 						upArray.sort(function(a, b) {
 						return a.price < b.price ? 1: -1;
