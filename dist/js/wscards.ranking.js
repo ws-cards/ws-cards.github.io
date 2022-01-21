@@ -60,6 +60,7 @@
 							cardNo = mappingRep[cardNo];
 						}
 						tdCardNo.innerHTML = cardNo;
+						tdCardNo.setAttribute('id',cardNo);
 						tdPrice.innerHTML = price;
 						
 						tr.appendChild(tdCardNo);  
