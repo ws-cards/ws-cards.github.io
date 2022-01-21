@@ -38,6 +38,7 @@
 						upArray.pop();
 					}
 				}
+				  console.log("41 line")
 				settingUpTable(upArray);
 
 				//取消loading
