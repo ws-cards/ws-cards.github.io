@@ -22,25 +22,27 @@
 			  requestPrice.onload = function(){
 				var cardsPrice = requestPrice.response;
 				var upArray=new Array();
-				var downArray=new Array();
 				var arraySetLength=times					
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
 					var upddate = cardPriceInfo ['upddate'];
 					var cardPrice = cardPriceInfo ['cardPrice'];
 					var displayCardNumber = cardPriceInfo ['displayCardNumber'];
-				
-                    upArray.push({cardNo:key,price:cardPrice});
-					
-					upArray.sort(function(a, b) {
-								return a.cardSpread < b.cardSpread ? 1: -1;
-					});
+					if(upArray.length<arraySetLength){
+						upArray.push({cardNo:key,price:cardPrice});
+					}else{
+						upArray.push({cardNo:key,price:cardPrice});
+						upArray.sort(function(a, b) {
+						return a.cardPrice < b.cardPrice ? 1: -1;
+						});
+						upArray.pop();
+					}
 				}
 				settingUpTable(upArray);
-				settingDownTable(downArray);
+
 				//取消loading
 				document.getElementById('overlay1').style.display='none';	
-				document.getElementById('overlay2').style.display='none';					
+				
 			  }
 
 			}
