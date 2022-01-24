@@ -81,7 +81,7 @@
 								card_third=card_third.replace('-','_');								
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
 						
-							var cardImg=document.getElementById('topImg');
+							var cardImg=document.getElementById('cardImg');
 							cardImg.setAttribute("src",urlCard);
 						  });						
 						tdPrice.innerHTML = price;
