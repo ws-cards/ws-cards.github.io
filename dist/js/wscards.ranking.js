@@ -171,7 +171,7 @@
 				/*listener*/				
 				var tdListener = document.getElementsByClassName("td");
 				Array.prototype.forEach.call(tdListener, function(el) {
-					el.addEventListener("change", function(){
+					el.addEventListener("click", function(){
 						chart.destroy();
 					});
 				});
