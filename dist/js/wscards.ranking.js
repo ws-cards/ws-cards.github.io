@@ -168,9 +168,11 @@
 					}
 				});		
 
-				/*listener*/				
+				/*listener*/
+				var chart = document.getElementById("myChart");
 				var buttonListener = document.getElementById("closeButton");
 				buttonListener.addEventListener("click", function(){
+					alert("now destroy");
 					chart.destroy();
 				});
 
