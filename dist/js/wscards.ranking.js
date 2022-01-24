@@ -39,7 +39,12 @@
 					}
 				}
 				  console.log("41 line")
-				  settingUpTable(upArray);
+				  for(var key in upArray ){
+				        var cardNo=upArray[key].cardNo;
+				        var price=upArray[key].price;
+					settingUpTable(cardNo,price);
+				  }
+				  
 
 				//取消loading
 				document.getElementById('overlay1').style.display='none';	
@@ -47,10 +52,7 @@
 			  }
 
 			}
-			function settingUpTable(upArray){
-				for(var key in upArray ){
-					var cardNo=upArray[key].cardNo;
-					var price=upArray[key].price;
+			function settingUpTable(cardNo,price){
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
@@ -88,4 +90,3 @@
 						tr.appendChild(tdPrice);
 						upTable.appendChild(tr);	
 				}					
-			}
