@@ -83,8 +83,6 @@
 						
 							var cardImg=document.getElementById('cardImg');
 							cardImg.setAttribute("src",urlCard);
-							var cardShowName=document.getElementById('cardName');
-							cardShowName.innerHTML=cardName;
 							var cardShowNumber=document.getElementById('exampleModalLongTitle');
 							cardShowNumber.innerHTML=card_Num;
 							$('#exampleModalCenter').modal('show');								
