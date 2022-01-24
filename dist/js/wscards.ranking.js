@@ -61,6 +61,7 @@
 						}
 						tdCardNo.innerHTML = cardNo;
 						tdCardNo.setAttribute('id',cardNo);
+						console.log('setCardNo:'+cardNo);
 						tdCardNo.addEventListener("click", function(){
 							console.log('cardNo:'+cardNo);
 							
@@ -80,7 +81,7 @@
 						
 							var cardImg=document.getElementById('topImg');
 							cardImg.setAttribute("src",urlCard);
-				});						
+						  });						
 						tdPrice.innerHTML = price;
 						
 						tr.appendChild(tdCardNo);  
