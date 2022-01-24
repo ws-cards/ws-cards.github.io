@@ -169,7 +169,7 @@
 				});		
 
 				/*listener*/				
-				var tdListener = document.getelementsbyclassname("td");
+				var tdListener = document.getElementsByClassName("td");
 				tdListener.addEventListener("change", function(){
 					chart.destroy();
 				});						
