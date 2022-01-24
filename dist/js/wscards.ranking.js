@@ -169,12 +169,11 @@
 				});		
 
 				/*listener*/				
-				var tdListener = document.getElementsByClassName("td");
-				Array.prototype.forEach.call(tdListener, function(el) {
-					el.addEventListener("click", function(){
-						chart.destroy();
-					});
+				var buttonListener = document.getElementById("closeButton");
+				buttonListener.addEventListener("click", function(){
+					chart.destroy();
 				});
+
 				
 						
 			}
