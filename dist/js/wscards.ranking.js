@@ -170,7 +170,11 @@
 
 				/*listener*/				
 				var tdListener = document.getElementsByClassName("td");
-				tdListener.addEventListener("change", function(){
-					chart.destroy();
-				});						
+				Array.prototype.forEach.call(tdListener, function(el) {
+					el.addEventListener("change", function(){
+						chart.destroy();
+					});
+				});
+				
+						
 			}
