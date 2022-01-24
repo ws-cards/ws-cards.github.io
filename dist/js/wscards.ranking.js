@@ -98,7 +98,7 @@
 			/*step1.實體區 */			
 			function changeNumber(card_second,internalCardNumber,cardNumberDisplay){	
 				 var cardTilteReplaceSpare =card_second.toUpperCase();
-			  console.log(cardTitle+'->'+cardTilteReplaceSpare);			 
+			  console.log('pre ->'+cardTilteReplaceSpare);			 
 			  document.getElementById('overlay-1').style.display='block';					
 			  document.getElementById('overlay-2').style.display='block';				
 				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
