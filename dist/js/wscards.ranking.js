@@ -174,7 +174,7 @@
 				buttonListener.addEventListener("click", function(){
 					alert("now destroy");
 					chart.destroy();
-					chart_now.destroy();
+					//chart_now.destroy();
 				});
 
 				
