@@ -3,6 +3,7 @@
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json';
 			var requestMapping = new XMLHttpRequest();			
 			var mappingRep;
+			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
 			requestMapping.open('GET',requestMappingURL);
 			requestMapping.responseType = 'json';
 			requestMapping.send();	
@@ -86,6 +87,7 @@
 			  }
 
 			}
+
 			function settingUpTable(upArray){
 				for(var key in upArray ){
 					var cardNo=upArray[key].cardNo;
@@ -107,6 +109,11 @@
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
 						upTable.appendChild(tr);	
+					
+						var card_Num=cardNo;
+						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+						card_second,=card_second.replace('/','_')					
+					        changeNumber(card_second,tdCardNo,tdCardNo);					
 				}					
 			}
 			function settingDownTable(downArray){
@@ -129,5 +136,83 @@
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
 						downTable.appendChild(tr);	
+					
+						var card_Num=cardNo;
+						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+						card_second,=card_second.replace('/','_')					
+					        changeNumber(card_second,tdCardNo,tdCardNo);
 				}					
 			}
+
+			/*step1.實體區 */			
+			function changeNumber(card_second,internalCardNumber,cardNumberDisplay){	
+				 var cardTilteReplaceSpare =card_second.toUpperCase();
+			  console.log('pre ->'+cardTilteReplaceSpare);			 				
+				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+				requestPrice.responseType = 'json';
+				requestPrice.send();
+				requestPrice.onload = function() {
+				  var cards = requestPrice.response;	
+				  getCardData(cards,internalCardNumber,cardNumberDisplay);
+				}		
+			}
+			/*step2.繪圖區*/
+			function getCardData(jsonObj,internalCardNumber,cardNum) {
+				console.log("進入繪圖區:"+cardNum);
+			  var cardInfo = jsonObj[internalCardNumber];
+				/*		
+				var cardNumber;
+				if(internalCardNumber.indexOf(' ')>=0){
+					cardNumber=internalCardNumber.substr(0,card_Num.indexOf(' '));
+				}else{
+					cardNumber=internalCardNumber;
+				}*/
+				var cardPriceUpDate=cardInfo['upddate'];
+				var cardData=cardInfo['cardPrice'];
+				 console.log("cardData:"+cardData); 
+				const canvas = document.getElementById('myChart');
+				const ctx = canvas.getContext('2d');
+				const chart = new Chart(ctx, {
+					responsive: true,
+					// The type of chart we want to create
+					type: 'line',
+
+					// The data for our dataset
+					data: {
+						labels: cardPriceUpDate,
+						datasets: [{
+							label: cardNum,
+							//fill:false,
+							borderColor: 'rgb(255, 99, 132)',
+							data: cardData
+						}],
+					},
+					// Configuration options go here
+					options: {
+					tooltips: {
+						mode: 'index',
+						intersect: false,
+					},
+					hover: {
+						mode: 'nearest',
+						intersect: true
+					},						
+						scales:{
+							xAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: '日期'
+								}
+							}],
+							yAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: '價格(日幣)'
+								}
+							}]
+						}
+					
+					}
+				});
