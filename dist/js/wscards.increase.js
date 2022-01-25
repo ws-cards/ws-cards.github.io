@@ -137,7 +137,7 @@
 						var card_Num=cardNo;
 						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 						card_second=card_second.replace('/','_')					
-					        changeNumber(card_second,tdCardNo,tdCardNo);					
+					        changeNumber(card_second,cardNo,cardNo);					
 				}					
 			}
 			function settingDownTable(downArray){
@@ -188,7 +188,7 @@
 						var card_Num=cardNo;
 						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 						card_second=card_second.replace('/','_')					
-					        changeNumber(card_second,card_Num,card_Num);
+					        changeNumber(card_second,cardNo,cardNo);
 				}					
 			}
 
