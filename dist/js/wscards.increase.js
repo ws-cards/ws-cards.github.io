@@ -79,8 +79,21 @@
 						}
 					}
 				}
-				settingUpTable(upArray);
-				settingDownTable(downArray);
+				for(var key in upArray ){
+					var cardNo=upArray[key].cardNo;
+					var spread=upArray[key].cardSpread;
+					var price=upArray[key].price;					
+					settingUpTable(cardNo,spread,price);
+				}
+				  
+				for(var key in downArray ){
+					var cardNo=downArray[key].cardNo;
+					var spread=downArray[key].cardSpread;
+					var price=downArray[key].price;						
+					settingDownTable(cardNo,spread,price);
+				}
+				
+				
 				//取消loading
 				document.getElementById('overlay1').style.display='none';	
 				document.getElementById('overlay2').style.display='none';					
@@ -88,11 +101,7 @@
 
 			}
 
-			function settingUpTable(upArray){
-				for(var key in upArray ){
-					var cardNo=upArray[key].cardNo;
-					var spread=upArray[key].cardSpread;
-					var price=upArray[key].price;
+			function settingUpTable(cardNo,spread,price){
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
@@ -132,15 +141,10 @@
 						tr.appendChild(tdCardNo);  
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
-						upTable.appendChild(tr);	
-										
-				}					
+						upTable.appendChild(tr);									
 			}
-			function settingDownTable(downArray){
-				for(var key in downArray ){
-					var cardNo=downArray[key].cardNo;
-					var spread=downArray[key].cardSpread;
-					var price=downArray[key].price;					
+
+			function settingDownTable(cardNo,spread,price){
 						var tr = document.createElement("tr");
 						//卡號稀有度價錢幅度
 						var tdCardNo = document.createElement("td");
@@ -179,8 +183,7 @@
 						tr.appendChild(tdCardNo); 
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
-						downTable.appendChild(tr);
-				}					
+						downTable.appendChild(tr);				
 			}
 
 			/*step1.實體區 */			
