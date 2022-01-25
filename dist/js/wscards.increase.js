@@ -216,3 +216,11 @@
 					
 					}
 				});
+				/*listener*/
+				var chart_now = document.getElementById("myChart");
+				var buttonListener = document.getElementById("closeButton");
+				buttonListener.addEventListener("click", function(){
+					chart.destroy();
+					//chart_now.destroy();
+				});
+			}
