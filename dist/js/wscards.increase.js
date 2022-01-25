@@ -133,11 +133,7 @@
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
 						upTable.appendChild(tr);	
-					
-						var card_Num=cardNo;
-						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
-						card_second=card_second.replace('/','_')					
-					        changeNumber(card_second,cardNo,cardNo);					
+										
 				}					
 			}
 			function settingDownTable(downArray){
@@ -175,7 +171,7 @@
 							cardImg.setAttribute("src",urlCard);
 							var cardShowNumber=document.getElementById('exampleModalLongTitle');
 							cardShowNumber.innerHTML=card_Num;
-							 changeNumber(card_second,card_Num,card_Num);
+							changeNumber(card_second,card_Num,card_Num);
 							$('#exampleModalCenter').modal('show');								
 						  });					
 						tdPrice.innerHTML = price;
@@ -183,12 +179,7 @@
 						tr.appendChild(tdCardNo); 
 						tr.appendChild(tdPrice); 
 						tr.appendChild(tdRange); 
-						downTable.appendChild(tr);	
-					
-						var card_Num=cardNo;
-						var card_second=card_Num.substr(0,card_Num.indexOf('-'));
-						card_second=card_second.replace('/','_')					
-					        changeNumber(card_second,cardNo,cardNo);
+						downTable.appendChild(tr);
 				}					
 			}
 
