@@ -172,13 +172,11 @@
 				var chart_now = document.getElementById("myChart");
 				var buttonListener = document.getElementById("closeButton");
 				buttonListener.addEventListener("click", function(){
-					alert("now destroy");
 					chart.destroy();
 					//chart_now.destroy();
 				});
 				var exampleModalCenterListener = document.getElementById("exampleModalCenter");
 				exampleModalCenterListener.addEventListener("click", function(){
-					alert("now destroy");
 					chart.destroy();
 					//chart_now.destroy();
 				});				
