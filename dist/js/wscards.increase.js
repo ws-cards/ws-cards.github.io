@@ -258,16 +258,7 @@
 					
 					}
 				});
-				/*listener*/
-				var chart_now = document.getElementById("myChart");
-				var buttonListener = document.getElementById("closeButton");
-				buttonListener.addEventListener("click", function(){
-					chart.destroy();
-					//chart_now.destroy();
-				});
-				var exampleModalCenterListener = document.getElementById("exampleModalCenter");
-				exampleModalCenterListener.addEventListener("click", function(){
-					chart.destroy();
-					//chart_now.destroy();
-				});	
+				$('#exampleModalCenter').on('hidden.bs.modal', function (e) {
+				 	chart.destroy();
+				})
 			}
