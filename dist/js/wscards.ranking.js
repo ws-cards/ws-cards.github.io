@@ -110,9 +110,7 @@
 			/*step2.繪圖區*/
 			function getCardData(jsonObj,internalCardNumber,cardNum) {
 				console.log("進入繪圖區:"+cardNum);
-			  var chart_now = document.getElementById("myChart");	
-			  chart_now.destroy();	
-				
+			
 			  var cardInfo = jsonObj[internalCardNumber];
 				/*		
 				var cardNumber;
@@ -172,18 +170,19 @@
 				});		
 
 				/*listener*/
-				//var chart_now = document.getElementById("myChart");
-				var buttonListener = document.getElementById("closeButton");
-				buttonListener.addEventListener("click", function(){
-					chart.destroy();
+				//var buttonListener = document.getElementById("closeButton");
+				//buttonListener.addEventListener("click", function(){
+					//chart.destroy();
 					//chart_now.destroy();
 				});
 				//var exampleModalCenterListener = document.getElementById("exampleModalCenter");
 				//exampleModalCenterListener.addEventListener("click", function(){
-				//	chart.destroy();
+					
 					//chart_now.destroy();
 				//});				
-
+				$('#exampleModalCenter').on('hidden.bs.modal', function (e) {
+				 	chart.destroy();
+				})
 				
 						
 			}
