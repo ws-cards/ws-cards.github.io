@@ -174,7 +174,7 @@
 				//buttonListener.addEventListener("click", function(){
 					//chart.destroy();
 					//chart_now.destroy();
-				});
+				//});
 				//var exampleModalCenterListener = document.getElementById("exampleModalCenter");
 				//exampleModalCenterListener.addEventListener("click", function(){
 					
