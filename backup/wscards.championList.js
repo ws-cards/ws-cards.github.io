@@ -328,6 +328,62 @@ function search(e,attri){
 	//twttr.widgets.load();	
 }
 
+function searchCard(e){
+	var param=e;
+	
+	document.getElementById('overlay-1').style='display';
+	document.getElementById('overlay-2').style='display';	
+
+	actionKeyImage();
+	removeTable();
+	appendTreeArea();
+  var a = {
+      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
+      sheetTag : '牌組清單',
+      row: 1, //起始位置
+      col: 1,
+      endRow : 2000, //切段資料
+      endCol : 10,//9欄
+	  cardNumber : param
+  };
+	  $.get('https://script.google.com/macros/s/AKfycbzAaTaIHBNXOt9L2OVcr3frWkYq66YhKcD1sUSjwLIEDDFaCKJKMHs6rf-TIu6HrN_PsQ/exec',a, function(data){ //專案連結，檔案-->共用
+		var d = data.split(',');
+		var arr = [];
+	////////
+	//data attri
+	////////	
+		var title=document.getElementById('xxxx').value;
+		var isEmpty = true;
+		for(var i=1; i<(a.endRow-a.row+1); i++){
+		  arr[i] = d.splice(0, (a.endCol-a.col));
+		  if(arr[i].length===0){break;}
+		  //if(i===1){continue;}
+		  var gameTitle=arr[i][1];
+		  var coreCard=arr[i][6];
+		  var deckInfo=arr[i][8];
+
+		  if(title === gameTitle){
+			if(isEmpty){isEmpty=false;}
+			//以下有跟沒有一樣
+			if(param!='ALL'){
+				//if(coreCard.indexOf(param)>=0){
+				  console.log("coreCard:"+deckInfo+" + "+coreCard);
+				  appendEle(arr[i]);
+				//}
+			}else{
+				appendEle(arr[i]);
+			}
+		  }
+		}
+			if(isEmpty){		
+				addEmptyImageState('deckListCard');
+			}
+			document.getElementById('overlay-3').style='display:none';	
+	  });
+	//重新load twitter widgets
+	//twttr.widgets.load();	
+}
+
 function appendEle(arr){
 		var deckName = arr[0];
 		var deckGame = arr[1];
@@ -650,8 +706,8 @@ function click_image(e){
 				if(cardArea==='所有地區'){
 							cardArea='ALL';
 				}				
-	search(cardTitle+"|"+"|"+cardArea+"|"+e,'corenumber');
-
+	//search(cardTitle+"|"+"|"+cardArea+"|"+e,'corenumber');
+	searchCard(e);
 }
 function mouse_over(e){
 }
