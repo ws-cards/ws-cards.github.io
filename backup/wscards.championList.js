@@ -437,7 +437,7 @@ function appendEle(arr){
 		}		
 		if (deckCore.indexOf('開機') >= 0) { 
 			var divtigger3 = document.createElement("img");
-			divtigger3.setAttribute("src","https://ws-tcg.com/wordpress/wp-content/images/cardlist/_partimages/standby.gif");
+			divtigger3.setAttribute("src","https://images.plurk.com/580LLKK7yOL7Vh1VdXIK0Y.png");
 			divtigger3.setAttribute("class","trigger-Icon card-title");
 			div0_header.appendChild(divtigger3);
 		}		
@@ -461,7 +461,7 @@ function appendEle(arr){
 		}
 		if (deckCore.indexOf('凱旋門') >= 0) { 
 			var divtigger2 = document.createElement("img");
-			divtigger2.setAttribute("src","https://ws-tcg.com/wordpress/wp-content/images/cardlist/_partimages/gate.gif");
+			divtigger2.setAttribute("src","https://images.plurk.com/5zMK79voAU3FmXYjO6446C.png");
 			divtigger2.setAttribute("class","trigger-Icon card-title");
 			div0_header.appendChild(divtigger2);
 		}		
