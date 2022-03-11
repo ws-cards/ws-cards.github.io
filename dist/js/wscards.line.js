@@ -137,7 +137,7 @@ source:[{id:"WS00001", name:"アイドルマスター シンデレラガール�
 {id:"WS00110", name:"ロストディケイド",cname:"Lost Decade | LOD"},
 {id:"WS00113", name:"ワールドトリガー",cname:"境界觸發者 | WTR"},
 {id:"WS00119", name:"Marvel/Card Collection",cname:"漫威 | MAR"},
-{id:"WS00120", name:"プロジェクトセカイ カラフルステージ！ feat. 初音ミク",cname:"世界計畫 繽紛舞台！ feat.初音未來 | PJS"}
+{id:"WS00120", name:"プロジェクトセカイ カラフルステージ！ feat. 初音ミク",cname:"世界計畫 繽紛舞台！ feat.初音未來 | PJS"},
 {id:"WS00121", name:"小林さんちのメイドラゴン",cname:"小林家的龍女僕 | KMD"},
 {id:"WS00122", name:"東京リベンジャーズ",cname:"東京卍復仇者 | TRV"}]
 ,
