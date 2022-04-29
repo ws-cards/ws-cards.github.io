@@ -98,7 +98,7 @@
 					var deckPriceDateList = deckCardList[0];
 					var deckUpdatePriceDate = deckPriceDateList['uppdate'];
 					console.log(deckUpdatePriceDate);
-					if(!(deckGameTitle==='2'||deckGameTitle==='5'||deckGameTitle==='12'||deckGameTitle==='122')){
+					if(!(deckGameTitle==='2'||deckGameTitle==='5'||deckGameTitle==='6'||deckGameTitle==='12'||deckGameTitle==='122')){
 						switch(deckGameTitle){
 							case '5':
 								alert('你輸入的是Reバース的牌組!');
@@ -124,7 +124,7 @@
 								Swal.fire({
 								  icon: 'error',
 								  title: '喔喔...',
-								  text: '不是WS或是rebirth的牌組喔!'
+								  text: '不是目前支援的的牌組喔!'
 								})		
 								document.getElementById('overlay-1').style.display='none';	
 						}	
