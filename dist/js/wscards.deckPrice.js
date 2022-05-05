@@ -36,37 +36,51 @@
 				var oform = document.forms["calForm"];
 				var deckCode = oform.elements["deckCode"].value.trim();
 				var deckCodeLength=deckCode.length;
-				if(deckCodeLength===4||deckCodeLength===5){
+				
+				var decklogFlag = document.getElementById("option1").checked;
+				var catcanFlag = document.getElementById("option2").checked;
+				var encodeFlag = document.getElementById("option3").checked;	
+				
+				if(decklogFlag){
 						Swal.fire({
-						  title: '要查詢DeckLog的日文版還是英文版?',
-						  icon: 'warning',
-						  showDenyButton: true,
-						  confirmButtonText: '日文',
-						  denyButtonText: '英文',
+							  title: '要查詢DeckLog的日文版還是英文版?',
+							  icon: 'warning',
+							  showDenyButton: true,
+							  confirmButtonText: '日文',
+							  denyButtonText: '英文',
 						}).then((result) => {
-						  if (result.isConfirmed) {
-							//日文
-							 console.log(deckCode); 
-							removeTable();
-							setDeckPrice(deckCode);		  
-						  } else if (result.isDenied) {
-							deckCode = "en_"+deckCode;
-							 console.log(deckCode);
-							removeTable();
-							setDeckPrice(deckCode);								  
-						  }
-						})					
+							  if (result.isConfirmed) {
+								//日文
+								console.log(deckCode); 
+								removeTable();
+								setDeckPrice(deckCode,"1");		  
+						} else if (result.isDenied) {
+								deckCode = "en_"+deckCode;
+								console.log(deckCode);
+								removeTable();
+								setDeckPrice(deckCode,"1");								  
+							  }
+						})							
+				}else if(catcanFlag){
+						removeTable();
+						setDeckPrice(deckCode,"2");			
+				}else if(encodeFlag){
+						removeTable();
+						setDeckPrice(deckCode,"3");								
 				}else{
-							removeTable();
-							setDeckPrice(deckCode);					
-				}				
+						Swal.fire({
+							  icon: 'error',
+							  title: '喔不...',
+							  text: '選取組牌器時發生錯誤，請利用右下角Messenger回報'
+						})	
+				}						
 
 			}
 			
-			function setDeckPrice(deckCode){
+			function setDeckPrice(deckCode,deckTool){
 			 try{
 			  //request 設定
-			  requestDeckLog.open('POST', requestURLDeckLogDeck+deckCode);
+			  requestDeckLog.open('POST', requestURLDeckLogDeck+deckCode+"&deckTool="+deckTool);
 			  requestDeckLog.responseType = 'json';
 			  requestDeckLog.send();
 			
