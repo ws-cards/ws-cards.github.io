@@ -36,7 +36,7 @@
 				var oform = document.forms["calForm"];
 				var deckCode = oform.elements["deckCode"].value.trim();
 				var deckCodeLength=deckCode.length;
-				if(deckCodeLength===4){
+				if(deckCodeLength===4||deckCodeLength===5){
 						Swal.fire({
 						  title: '要查詢DeckLog的日文版還是英文版?',
 						  icon: 'warning',
