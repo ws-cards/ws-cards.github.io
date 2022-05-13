@@ -1,4 +1,4 @@
-var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/yuyuPriceIncreaseReport.json';		
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/yuyuPriceIncreaseReport.json';		
 			var requestPrice = new XMLHttpRequest();	
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json';
 			var requestMapping = new XMLHttpRequest();			
@@ -79,44 +79,6 @@ var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.
 						}
 					}
 				}
-				
-				for(var key in cardsPrice){	 
-					var cardPriceInfo = cardsPrice[key];
-					var cardPriceMax = cardPriceInfo ['today'];
-					var cardPriceMin = cardPriceInfo ['prePrice'];
-					var statute = cardPriceInfo ['statute'];
-					var updateDate = cardPriceInfo ['updateDate'];
-					var firstDatePrice;
-					var lastDatePrice;
-					var spread;
-					//塞入日期
-						document.getElementById("upperH5").innerHTML="漲幅最大排行 更新時間("+updateDate+")";
-						document.getElementById("downerH5").innerHTML="跌幅最大排行 更新時間("+updateDate+")";
-					if("upper" === statute){
-						firstDatePrice =cardPriceMin;
-						lastDatePrice = cardPriceMax;					
-					}else{
-						firstDatePrice = cardPriceMax;
-						lastDatePrice = cardPriceMin ;	
-					}
-					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
-						if("upper" === statute){
-							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-							upArray.sort(function(a, b) {
-								return a.cardSpread < b.cardSpread ? 1: -1;
-							});
-							upArray.pop();					
-						}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
-							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
-							downArray.sort(function(a, b) {
-								return a.cardSpread < b.cardSpread ? 1: -1;
-							});
-							downArray.pop();						
-						}
-				}			
-				
-				
-				
 				for(var key in upArray ){
 					var cardNo=upArray[key].cardNo;
 					var spread=upArray[key].cardSpread;
