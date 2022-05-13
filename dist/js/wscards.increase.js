@@ -1,3 +1,4 @@
+			//memo:如果漲幅的資料量小於設定，最後的array不會排列
 			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/yuyuPriceIncreaseReport.json';		
 			var requestPrice = new XMLHttpRequest();	
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json';
