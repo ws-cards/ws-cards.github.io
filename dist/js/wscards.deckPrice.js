@@ -295,6 +295,9 @@
 							}else if(deckGameTitle==='12'){
 								card_third=card_third.replace('-','_');
 								urlCard="https://en.ws-tcg.com/wp/wp-content/images/cardimages/"+card_third.toUpperCase()+".png";
+							}else{
+								card_third=card_third.replace('-','_');
+								urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
 							}
 								
 							
