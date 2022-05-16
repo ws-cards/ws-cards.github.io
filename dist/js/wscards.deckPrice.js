@@ -283,15 +283,17 @@
 							var card_second=card_Num.substr(0,card_Num.indexOf('-'));
 								card_second=card_second.replace('/','_')
 							var card_third=card_Num.replace('/','_');
-								card_third=card_third.replace('-','_');								
+																
 							var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
 							console.log('dec:'+deckGameTitle);
 							if(deckGameTitle==='5'){
+								card_third=card_third.replace('-','_');
 								urlCard="https://s3-ap-northeast-1.amazonaws.com/rebirth-fy.com/wordpress/wp-content/images/cardlist/"+card_third.toLowerCase()+".png";
 							}else if(deckGameTitle==='6'){
 								//urlCard="https://shadowverse-evolve.com/wordpress/wp-content/images/cardlist/"+card_second.toUpperCase()+"/"+card_third.toLowerCase()+".png";
 							        urlCard="https://storage.googleapis.com/ws-cards.cloud/images/sve/cardlist/"+card_second.toUpperCase()+"/"+card_third.toUpperCase()+".png";
 							}else if(deckGameTitle==='12'){
+								card_third=card_third.replace('-','_');
 								urlCard="https://en.ws-tcg.com/wp/wp-content/images/cardimages/"+card_third.toUpperCase()+".png";
 							}
 								
