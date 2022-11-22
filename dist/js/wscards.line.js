@@ -159,6 +159,8 @@ source:[{id:"WS00001", name:"アイドルマスター シンデレラガール�
 				return item.name;
 			}else if(cname.toLowerCase().indexOf(this.query)>=0){
 				return item.name;
+			}else if(cname.toLowerCase().indexOf(this.query.toLowerCase())>=0){
+				return item.name;
 			}
             return ~it.toLowerCase().indexOf(this.query.toLowerCase());
         },
