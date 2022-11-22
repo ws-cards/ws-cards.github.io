@@ -141,7 +141,11 @@ source:[{id:"WS00001", name:"アイドルマスター シンデレラガール�
 {id:"WS00121", name:"小林さんちのメイドラゴン",cname:"小林家的龍女僕 | KMD"},
 {id:"WS00122", name:"東京リベンジャーズ",cname:"東京卍復仇者 | TRV"},
 {id:"WS00123", name:"PIXAR",cname:"皮克斯 | PXR"},
-{id:"WS00124", name:"D4DJ",cname:"D4DJ 電音派對 | DJ"}
+{id:"WS00124", name:"D4DJ",cname:"D4DJ 電音派對 | DJ"},
+{id:"WS00125", name:"ヘブンバーンズレッド",cname:"HEAVEN BURNS RED | HBR, Khb"},
+{id:"WS00126", name:"アズールレーン",cname:"碧藍航線 | AZL"},
+{id:"WS00127", name:"チェンソーマン",cname:"鏈鋸人 | CSM"},
+{id:"WS00128", name:"ありふれた職業で世界最強",cname:"平凡職業造就世界最強 | ARI"}
 ]
 ,
   minLength:1,
