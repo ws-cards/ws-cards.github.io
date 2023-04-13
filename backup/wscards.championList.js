@@ -208,7 +208,12 @@ $input.typeahead({
 {id:"WS00125", name:"ヘブンバーンズレッド",cname:"HEAVEN BURNS RED | HBR, Khb"},
 {id:"WS00126", name:"アズールレーン",cname:"碧藍航線 | AZL"},
 {id:"WS00127", name:"チェンソーマン",cname:"鏈鋸人 | CSM"},
-{id:"WS00128", name:"ありふれた職業で世界最強",cname:"平凡職業造就世界最強 | ARI"}  
+{id:"WS00128", name:"ありふれた職業で世界最強",cname:"平凡職業造就世界最強 | ARI"},
+{id:"WS00129", name:"Disney100",cname:"迪士尼100 | Dds,Dpx,Dmv,Dsw"},
+{id:"WS00130", name:"パズル＆ドラゴンズ",cname:"龍族拼圖 | 龍拼 | PAD"},
+{id:"WS00131", name:"リコリス・リコイル",cname:"Lycoris Recoil 莉可麗絲 | LRC"},
+{id:"WS00132", name:"ウマ娘 プリティーダービー",cname:"賽馬娘Pretty Derby | UMA"},
+{id:"WS00133", name:"SPY×FAMILY",cname:"間諜家家酒 | SPY"}
   ],
   minLength:1,
   showHintOnFocus:true,
