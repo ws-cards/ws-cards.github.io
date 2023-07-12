@@ -305,7 +305,7 @@ function search(e,attri){
 	  par : param,
 	  attri: attri
   };
-	  $.get('https://script.google.com/macros/s/AKfycbxETxBnCxjVD7XKEcsKYCmNc41DRpr1Rr_FXhnzpjIuVwVWl8qGChLgkulCmDOyP4KPYg/exec',a, function(data){ //專案連結，檔案-->共用
+	  $.get('https://script.google.com/macros/s/AKfycbyqizulAuA9FgW511rrnhXUc3ImcLxlqYqvE7Wo1tYsTpNuDDIacX0iymfTsC4larv3Wg/exec',a, function(data){ //專案連結，檔案-->共用
 		var d = data.split(',');
 		var arr = [];
 	////////
