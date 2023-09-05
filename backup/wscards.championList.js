@@ -213,7 +213,12 @@ $input.typeahead({
 {id:"WS00130", name:"パズル＆ドラゴンズ",cname:"龍族拼圖 | 龍拼 | PAD"},
 {id:"WS00131", name:"リコリス・リコイル",cname:"Lycoris Recoil 莉可麗絲 | LRC"},
 {id:"WS00132", name:"ウマ娘 プリティーダービー",cname:"賽馬娘Pretty Derby | UMA"},
-{id:"WS00133", name:"SPY×FAMILY",cname:"間諜家家酒 | SPY"}
+{id:"WS00133", name:"SPY×FAMILY",cname:"間諜家家酒 | SPY"},
+{id:"WS00134", name:"電撃文庫",cname:"電擊文庫 | G86,Gas,Gaw,Gbb,Gbc,Gbd,Gbl,Gby,Gc3,Gdc,Gdr,Gds,Gdy,Gem,Gfq,Gga,Ggh,Ggg,Ggu,Ghh,Ghm,Gid,Giy,Gkb,Gkl,Gkm,Glt,Gmf,Gmm,Gmr,Gms,Gnh,Gnm,Gns,Gny,Goi,Gok,Gom,Gos,Grk,Gsb,Gsc,Gsd,Gsk,Gso,Gsp,Gsr,Gss,Gtd,Gyf"},
+{id:"WS00135", name:"幻日のヨハネ -SUNSHINE in the MIRROR-",cname:"幻日夜羽 -鏡中暉光- | YHN"},
+{id:"WS00136", name:"アリス・ギア・アイギス",cname:"機戰少女Alice | AGS"},
+{id:"WS00137", name:"あやかしトライアングル",cname:"妖幻三重奏 | AYT"},
+{id:"WS00138", name:"【推しの子】",cname:"【我推的孩子】 | OSK"}
   ],
   minLength:1,
   showHintOnFocus:true,
