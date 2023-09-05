@@ -705,6 +705,10 @@ function addImage(cardNumber){
 				var card_third=card_Num.replace('/','_');
 					card_third=card_third.replace('-','_');								
 				var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";				
+				//for 電擊文庫
+				if((card_Num.toLowerCase()).indexOf('ws02')>=0){
+					urlCard="https://ws-tcg.com/wordpress/wp-content/images/cardlist/g/g_ws02/"+card_third.toLowerCase()+".png";
+				}
 				var coreCardImgListEle=document.getElementById('coreCardImgList');	
 				var img=document.createElement("img");	
 				img.setAttribute("id","cardImg");		
