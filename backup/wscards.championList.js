@@ -551,6 +551,17 @@ function appendEle(arr){
 				deckInfoEmbediframe.setAttribute("allow","autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share");
 				
 				deckInfoEmbed.appendChild(deckInfoEmbediframe);
+			}else if(deckInfo.indexOf('decklog')!==-1){
+				deckInfoEmbed = document.createElement("div");
+				deckInfoEmbed.setAttribute("id","likebox-wrapper");	
+				var deckInfoEmbediframe = document.createElement("a");				
+				var deckInfoEmbediframe_img = document.createElement("img");
+				deckInfoEmbediframe.setAttribute("href",deckInfo);  //現在
+				var deckCode = deckInfo.substr(35);
+				deckInfoEmbediframe_img.setAttribute("src","https://decklog.bushiroad.com/deckimages/"+deckCode+".png");
+				deckInfoEmbediframe_img.setAttribute("style","display: flex; max-width: 550px; width: 100%; margin-top: 10px; margin-bottom: 10px;");
+				deckInfoEmbediframe.appendChild(deckInfoEmbediframe_img);
+				deckInfoEmbed.appendChild(deckInfoEmbediframe);
 			}
 			
 		var div_1 = document.createElement("div");
