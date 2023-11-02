@@ -94,7 +94,7 @@ source:[
 {id:"WS00069", name:"ギルティクラウン",cname:"罪惡王冠 | GC"},
 {id:"WS00070", name:"クレヨンしんちゃん",cname:"蠟筆小新 | CS"},
 {id:"WS00071", name:"グリザイアの果実",cname:"灰色的果實 | GRI"},
-{id:"WS00072", name:"劇場版マクロスF",cname:"劇場版 Macross F 虛空歌姬 | MF"},
+{id:"WS00072", name:"マクロスシリーズ",cname:"超時空要塞系列 | Macross | 虛空歌姬 | MF,MDE"},
 {id:"WS00073", name:"ゴブリンスレイヤー",cname:"哥布林殺手 | GBS"},
 {id:"WS00074", name:"PSYCHO-PASS サイコパス",cname:"心靈判官 | PP"},
 {id:"WS00075", name:"シャイニングシリーズ",cname:"光明與黑暗系列 | SE,SF,SR"},
@@ -159,7 +159,8 @@ source:[
 {id:"WS00138", name:"【推しの子】",cname:"【我推的孩子】 | OSK"},
 {id:"WS00139", name:"ぼっち・ざ・ろっく！",cname:"孤獨搖滾！ | BTR"},
 {id:"WS00140", name:"葬送のフリーレン",cname:"葬送的芙莉蓮 | SFN"}	,
-{id:"WS00141", name:"ラブライブ！スクールアイドルフェスティバル2",cname:"Love Live! 學園偶像祭2 Miracle Live! | SIL,SIS,SIN,SIP,LSF"}
+{id:"WS00141", name:"ラブライブ！スクールアイドルフェスティバル2",cname:"Love Live! 學園偶像祭2 Miracle Live! | SIL,SIS,SIN,SIP,LSF"},
+{id:"WS00142", name:"リアセカイ",cname:"Rear Sekai 背面世界 | RSK"}
 ]
 ,
   minLength:1,
