@@ -312,7 +312,7 @@ function search(e,attri){
       sheetTag : '牌組清單',
       row: 1, //起始位置
       col: 1,
-      endRow : 4000, //切段資料
+      endRow : 10000, //切段資料
       endCol : 10,//9欄
 	  par : param,
 	  attri: attri
