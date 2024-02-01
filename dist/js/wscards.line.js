@@ -160,7 +160,8 @@ source:[
 {id:"WS00139", name:"ぼっち・ざ・ろっく！",cname:"孤獨搖滾！ | BTR"},
 {id:"WS00140", name:"葬送のフリーレン",cname:"葬送的芙莉蓮 | SFN"}	,
 {id:"WS00141", name:"ラブライブ！スクールアイドルフェスティバル2",cname:"Love Live! 學園偶像祭2 Miracle Live! | SIL,SIS,SIN,SIP,LSF"},
-{id:"WS00142", name:"リアセカイ",cname:"Rear Sekai 背面世界 | RSK"}
+{id:"WS00142", name:"リアセカイ",cname:"Rear Sekai 背面世界 | RSK"},
+{id:"WS00143", name:"ブルーアーカイブ",cname:"蔚藍檔案 Blue Archive | BAV"}
 ]
 ,
   minLength:1,
