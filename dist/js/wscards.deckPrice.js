@@ -9,7 +9,7 @@
 				var today = new Date();
 				var hours = today.getHours();
 				var mins = today.getMinutes();
-				if(hours === 10 && (mins < 59 && mins> 0)){
+				if(hours === 99 && (mins < 59 && mins> 0)){
 					Swal.fire({
 					  icon: 'error',
 					  title: '喔不...',
