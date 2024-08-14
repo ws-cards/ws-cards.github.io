@@ -226,7 +226,10 @@ $input.typeahead({
 {id:"WS00140", name:"葬送のフリーレン",cname:"葬送的芙莉蓮 | SFN"},
 {id:"WS00141", name:"ラブライブ！スクールアイドルフェスティバル2",cname:"Love Live! 學園偶像祭2 Miracle Live! | SIL,SIS,SIN,SIP,LSF"},
 {id:"WS00142", name:"リアセカイ",cname:"Rear Sekai 背面世界 | RSK"},
-{id:"WS00143", name:"ブルーアーカイブ",cname:"蔚藍檔案 Blue Archive | BAV"}
+{id:"WS00143", name:"ブルーアーカイブ",cname:"蔚藍檔案 Blue Archive | BAV"},
+{id:"WS00144", name:"『ゆるキャン△ SEASON３』",cname:"搖曳露營△ | YRC"},
+{id:"WS00145", name:"『キャプテン翼』",cname:"足球小將翼 | CTB"},
+{id:"WS00146", name:"るろうに剣心 －明治剣客浪漫譚－",cname:"神劍闖江湖 | RKN"}
   ],
   minLength:1,
   showHintOnFocus:true,
