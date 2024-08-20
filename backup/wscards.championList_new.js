@@ -1,5 +1,5 @@
 /*
-*20231212 更新，目前的正式版，如果此版無誤未來將以此版作為base
+*20240820 更新，目前的正式版，如果此版無誤未來將以此版作為base
 */
 window.onload=function(){
     setTimeout(function(){
