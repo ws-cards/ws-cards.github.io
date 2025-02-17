@@ -28,7 +28,8 @@
 				
 				let upMap = new Map();
 				let downMap = new Map();
-				
+				const newUpMap ;
+				const newDownMap;
 				var upArray=new Array();
 				var downArray=new Array();
 				var arraySetLength=times					
@@ -65,8 +66,8 @@
 						downMap.set(key,spread);
 					}
 					
-					const newUpMap = Array.from(upMap).sort((a, b) => b[1] - a[1]);
-					const newDownMap = Array.from(downMap).sort((c, d) => d[1] - c[1]);
+					newUpMap = Array.from(upMap).sort((a, b) => b[1] - a[1]);
+					newDownMap = Array.from(downMap).sort((c, d) => d[1] - c[1]);
 								
 					
 				}
