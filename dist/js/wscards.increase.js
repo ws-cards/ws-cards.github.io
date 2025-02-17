@@ -32,6 +32,8 @@
 				let newDownMap = new Map();
 				var upArray=new Array();
 				var downArray=new Array();
+				
+				let updownMap = new Map();
 				var arraySetLength=times					
 				for(var key in cardsPrice){	 
 					var cardPriceInfo = cardsPrice[key];
@@ -61,8 +63,10 @@
 					
 					if("upper" === statute){
 						upMap.set(key,spread);					
+						updownMap.set(key,lastDatePrice);
 					}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
 						downMap.set(key,spread);
+						updownMap.set(key,lastDatePrice);
 					}
 					
 					newUpMap = Array.from(upMap).sort((a, b) => b[1] - a[1]);
@@ -72,7 +76,7 @@
 				}
 				
 				for (let [key, value] of newUpMap) {
-					var cardNo=upArray[key].cardNo;
+					var cardNo=key;
 					var spread=upArray[key].cardSpread;
 					var price=upArray[key].price;					
 					settingUpTable(cardNo,spread,price);
