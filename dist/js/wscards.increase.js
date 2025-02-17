@@ -25,6 +25,10 @@
 			
 			  requestPrice.onload = function(){
 				var cardsPrice = requestPrice.response;
+				
+				let upMap = new Map();
+				let downMap = new Map();
+				
 				var upArray=new Array();
 				var downArray=new Array();
 				var arraySetLength=times					
@@ -54,40 +58,27 @@
 					}
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
-					if(upArray.length<arraySetLength||downArray.length<arraySetLength){
-						console.log("漲價牌組:"+upArray.length);
-						console.log("跌價牌組:"+downArray.length);
-						console.log("限制長度:"+arraySetLength);
-						if("upper" === statute && upArray.length<arraySetLength){
-							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-						}else if("downer" === statute && downArray.length<arraySetLength){
-							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
-							//console.log("第一次:"+key+":"+firstDatePrice+":"+spread);
-						}	
-					}else{
-						if("upper" === statute){
-							upArray.push({cardSpread:spread,cardNo:key,price:lastDatePrice});
-							upArray.sort(function(a, b) {
-								return a.cardSpread < b.cardSpread ? 1: -1;
-							});
+					if("upper" === statute){
+						upMap.set(key,spread);
 							upArray.pop();					
-						}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
-							downArray.push({cardSpread:spread,cardNo:key,price:firstDatePrice});
-							downArray.sort(function(a, b) {
-								return a.cardSpread < b.cardSpread ? 1: -1;
-							});
-							downArray.pop();						
-						}
+					}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
+						downMap.set(key,spread);
 					}
+					
+					const newUpMap = Array.from(upMap).sort((a, b) => b[1] - a[1]);
+					const newDownMap = Array.from(downMap).sort((c, d) => d[1] - c[1]);
+								
+					
 				}
-				for(var key in upArray ){
+				
+				for (let [key, value] of newUpMap) {
 					var cardNo=upArray[key].cardNo;
 					var spread=upArray[key].cardSpread;
 					var price=upArray[key].price;					
 					settingUpTable(cardNo,spread,price);
 				}
-				  
-				for(var key in downArray ){
+				
+				for (let [key, value] of newDownMap) {
 					var cardNo=downArray[key].cardNo;
 					var spread=downArray[key].cardSpread;
 					var price=downArray[key].price;						
