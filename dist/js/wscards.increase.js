@@ -28,8 +28,8 @@
 				
 				let upMap = new Map();
 				let downMap = new Map();
-				const newUpMap ;
-				const newDownMap;
+				const newUpMap = new Map();
+				const newDownMap = new Map();
 				var upArray=new Array();
 				var downArray=new Array();
 				var arraySetLength=times					
