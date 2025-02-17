@@ -77,15 +77,15 @@
 				
 				for (let [key, value] of newUpMap) {
 					var cardNo=key;
-					var spread=upArray[key].cardSpread;
-					var price=upArray[key].price;					
+					var spread=value;
+					var price=updownMap.get(key);		
 					settingUpTable(cardNo,spread,price);
 				}
 				
 				for (let [key, value] of newDownMap) {
-					var cardNo=downArray[key].cardNo;
-					var spread=downArray[key].cardSpread;
-					var price=downArray[key].price;						
+					var cardNo=key;
+					var spread=value;
+					var price=updownMap.get(key);					
 					settingDownTable(cardNo,spread,price);
 				}
 				
