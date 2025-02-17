@@ -28,8 +28,8 @@
 				
 				let upMap = new Map();
 				let downMap = new Map();
-				const newUpMap = new Map();
-				const newDownMap = new Map();
+				let newUpMap = new Map();
+				let newDownMap = new Map();
 				var upArray=new Array();
 				var downArray=new Array();
 				var arraySetLength=times					
@@ -60,8 +60,7 @@
 					spread=Math.round((((lastDatePrice-firstDatePrice)/firstDatePrice)*100)*100)/100;		
 					
 					if("upper" === statute){
-						upMap.set(key,spread);
-							upArray.pop();					
+						upMap.set(key,spread);					
 					}else if("downer" === statute){//console.log("連續進入:"+key+":"+firstDatePrice+":"+spread);
 						downMap.set(key,spread);
 					}
