@@ -207,6 +207,7 @@ $input.change(function() {
 			var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
 			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+			var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
 			var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
 			var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
@@ -439,6 +440,22 @@ $input.change(function() {
 				  getCardData(cards,internalCardNumber,cardNumberDisplay);
 				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
 				}
+				requestStock.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+				requestStock.responseType = 'json';
+				requestStock.send();
+				requestStock.onload = function() {
+				  var cards = requestStock.response;
+				  var cardNumberSelect=document.getElementById('cardNumber');
+				  var selectedIndex=cardNumberSelect.selectedIndex;
+				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+				  getCardData(cards,internalCardNumber,cardNumberDisplay);
+				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
+				}				
+				
+				
+				
+				
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
 					clearInterval(timer);
