@@ -426,6 +426,7 @@ $input.change(function() {
 				console.log(cardTitle+'->'+cardTilteReplaceSpare);			 
 			  document.getElementById('overlay-1').style.display='block';					
 			  document.getElementById('overlay-2').style.display='block';				
+			  document.getElementById('overlay-3').style.display='block';		
 				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 				requestPrice.responseType = 'json';
 				requestPrice.send();
@@ -587,7 +588,7 @@ $input.change(function() {
 				cardTitleListener.addEventListener("change", function(){
 					stockChart.destroy();
 				});		
-				document.getElementById('overlay-2').style.display='none';					
+				document.getElementById('overlay-3').style.display='none';					
 			}
 			
 			/*加上圖片*/
