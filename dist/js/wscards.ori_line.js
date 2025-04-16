@@ -438,9 +438,8 @@ $input.change(function() {
 				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
 				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
 				  getCardData(cards,internalCardNumber,cardNumberDisplay);
-				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
 				}
-				requestStock.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+				requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
 				requestStock.responseType = 'json';
 				requestStock.send();
 				requestStock.onload = function() {
@@ -449,7 +448,6 @@ $input.change(function() {
 				  var selectedIndex=cardNumberSelect.selectedIndex;
 				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
 				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
-				  getCardData(cards,internalCardNumber,cardNumberDisplay);
 				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
 				}				
 				
