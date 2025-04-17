@@ -213,14 +213,17 @@ $input.change(function() {
   }
 });  
 			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
+			var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
 			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+			var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
 			var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
 			var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
 			var requestStandardW = new XMLHttpRequest();
 			var requestStandardS = new XMLHttpRequest();			
 			var requestPrice = new XMLHttpRequest();	
+			var requestStock = new XMLHttpRequest();
 			var requestTitle = new XMLHttpRequest();	
 			var requestMapping = new XMLHttpRequest();
 			var mappingRep;
@@ -281,7 +284,11 @@ $input.change(function() {
 			  requestPrice.open('GET', requestURLCardPrice);
 			  requestPrice.responseType = 'json';
 			  requestPrice.send();	
-			
+
+			  requestStock.open('GET', requestURLCardStock);
+			  requestStock.responseType = 'json';
+			  requestStock.send();
+			  
 			  requestTitle.open('GET', requestURLCardTitle);
 			  requestTitle.responseType = 'json';
 			  requestTitle.send();
@@ -301,6 +308,11 @@ $input.change(function() {
 				  var cards = requestPrice.response;
 				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
 			  }
+			  requestStock.onload = function(){
+				  var cards = requestStock.response;
+				  getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+			  }			  
+			  
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
 					clearInterval(timer);
@@ -424,6 +436,7 @@ $input.change(function() {
 				console.log(cardTitle+'->'+cardTilteReplaceSpare);			 
 			  document.getElementById('overlay-1').style.display='block';					
 			  document.getElementById('overlay-2').style.display='block';				
+			  document.getElementById('overlay-3').style.display='block';		
 				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 				requestPrice.responseType = 'json';
 				requestPrice.send();
@@ -435,6 +448,21 @@ $input.change(function() {
 				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
 				  getCardData(cards,internalCardNumber,cardNumberDisplay);
 				}
+				requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
+				requestStock.responseType = 'json';
+				requestStock.send();
+				requestStock.onload = function() {
+				  var cards = requestStock.response;
+				  var cardNumberSelect=document.getElementById('cardNumber');
+				  var selectedIndex=cardNumberSelect.selectedIndex;
+				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
+				}				
+				
+				
+				
+				
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
 					clearInterval(timer);
@@ -447,7 +475,7 @@ $input.change(function() {
 
 			
 			
-			/*繪圖區*/
+			/*價格繪圖區*/
 			function getCardData(jsonObj,internalCardNumber,cardNum) {
 				console.log("進入繪圖區:"+cardNum);
 			  addPhoto(cardNum);
@@ -521,6 +549,71 @@ $input.change(function() {
 				document.getElementById('overlay-2').style.display='none';					
 			}
 
+			/*庫存繪圖區*/
+			function getCardStockData(jsonObj,internalCardNumber,cardNum) {
+			  console.log("進入庫存繪圖區:"+cardNum);
+			  var cardInfo = jsonObj[internalCardNumber];
+			  var cardPriceUpDate=cardInfo['upddate'];
+			  var cardData=cardInfo['cardPrice'];
+			  console.log("cardData:"+cardData); 
+			  const canvas = document.getElementById('myStockChart');
+			  const ctx = canvas.getContext('2d');
+			  const stockChart = new Chart(ctx, {
+					responsive: true,
+					// The type of chart we want to create
+					type: 'line',
+
+					// The data for our dataset
+					data: {
+						labels: cardPriceUpDate,
+						datasets: [{
+							label: cardNum,
+							//fill:false,
+							borderColor: 'rgb(255, 99, 132)',
+							data: cardData
+						}],
+					},
+					// Configuration options go here
+					options: {
+					tooltips: {
+						mode: 'index',
+						intersect: false,
+					},
+					hover: {
+						mode: 'nearest',
+						intersect: true
+					},						
+						scales:{
+							xAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: '日期'
+								}
+							}],
+							yAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: '庫存(24:00為基準)'
+								}
+							}]
+						}
+					
+					}
+				});		
+
+				/*listener*/				
+				var cardNumberListener = document.getElementById("cardNumber");
+				cardNumberListener.addEventListener("change", function(){
+					stockChart.destroy();
+				});		
+				var cardTitleListener = document.getElementById("cardTitle");	
+				cardTitleListener.addEventListener("change", function(){
+					stockChart.destroy();
+				});		
+				document.getElementById('overlay-3').style.display='none';					
+			}
 			
 			/*加上圖片*/
 			function addPhoto(cardNumberDisplay){
