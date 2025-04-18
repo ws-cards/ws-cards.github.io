@@ -595,7 +595,7 @@ $input.change(function() {
 								display: true,
 								scaleLabel: {
 									display: true,
-									labelString: '庫存(24:00為基準)'
+									labelString: '庫存'
 								}
 							}]
 						}
