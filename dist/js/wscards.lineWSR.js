@@ -460,13 +460,11 @@ $input.change(function() {
 					card_Num=cardNumberDisplay;				
 				}
 
-				var card_first=card_Num.substr(0,1);
-				var card_second=card_Num.substr(0,card_Num.indexOf('-'));
-					card_second=card_second.replace('/','_')
-				var card_third=card_Num.replace('/','_');
-					card_third=card_third.replace('-','_');	
+				var card_first=card_Num.split("_")[0];
+				var card_second=card_Num.split("_")[1]
+
 				const cardImg = document.getElementById('cardImg');
-				var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+				var urlCard="https://ws-rose.com/wordpress/wp-content/images/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_Num.toLowerCase()+".png";
 				//var urlCard="https://i.imgur.com/DKvx5hw.png";
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
