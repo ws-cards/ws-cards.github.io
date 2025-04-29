@@ -63,8 +63,8 @@ $input.change(function() {
     // Nothing is active so it is a new value (or maybe empty value)
   }
 });  
-			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
-			var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
+			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/OS01_R01.json';
+			var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/OS01_R01.json';
 			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
 			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
 			var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
@@ -142,11 +142,11 @@ $input.change(function() {
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
-				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+				  getCardData(cards,'OS01/R01-076SP','OS01/R01-076SP');			  
 			  }
 			  requestStock.onload = function(){
 				  var cards = requestStock.response;
-				  getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+				  getCardStockData(cards,'OS01/R01-076SP','OS01/R01-076SP');			  
 			  }			  
 			  
 				var timer = setInterval(function(){
