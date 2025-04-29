@@ -460,8 +460,10 @@ $input.change(function() {
 					card_Num=cardNumberDisplay;				
 				}
 
-				var card_first=card_Num.split("_")[0];
-				var card_second=card_Num.split("_")[1]
+				var	card_first=card_Num.replace('/','_')
+				var card_second=card_Num.replace('/','_');					
+				card_first=card_first.split("_")[0];
+				card_second=card_second.split("_")[1]
 
 				const cardImg = document.getElementById('cardImg');
 				var urlCard="https://ws-rose.com/wordpress/wp-content/images/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_Num.toLowerCase()+".png";
