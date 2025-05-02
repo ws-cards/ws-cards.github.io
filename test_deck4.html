@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, minimum-scale=1">
+    <title>TCG 組牌工具</title>
+    <style>
+        :root {
+            --primary-color: #ff4fa2; /* 螢光粉 */
+            --secondary-color: #111; /* 黑底 */
+            --accent-color: #ffb6e6; /* 亮粉 */
+            --background-color: #18141c; /* 深黑 */
+            --card-bg: #19171a; /* 卡片黑 */
+            --text-color: #fff; /* 白字 */
+            --subtext-color: #ffb6e6; /* 粉副字 */
+            --border-color: #ff4fa2; /* 粉邊 */
+            --shadow: 0 4px 24px 0 #ff4fa299, 0 0 0 2px #ff4fa2 inset;
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #18141c 0%, #111 100%);
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        header {
+            background: linear-gradient(90deg, var(--secondary-color) 60%, var(--primary-color) 100%);
+            padding: 2rem 0 1.2rem 0;
+            box-shadow: var(--shadow);
+            border-bottom: 4px solid var(--primary-color);
+            position: relative;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.3em;
+            color: var(--primary-color);
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 16px var(--primary-color), 0 0 2px #fff;
+            border-bottom: 2px solid var(--primary-color);
+            display: inline-block;
+            padding-bottom: 0.2em;
+        }
+
+        h2, h3 {
+            color: var(--accent-color);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .deck-info {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .deck-name {
+            padding: 0.5rem 1.2rem;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius);
+            background: #111;
+            color: var(--primary-color);
+            font-size: 1.1em;
+            font-weight: 700;
+            box-shadow: 0 0 8px var(--primary-color) inset;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .deck-name:focus {
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-color);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            padding-bottom: 80px;
+        }
+
+        .filters {
+            background: var(--card-bg);
+            padding: 1.5rem 1.2rem 1.5rem 1.2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 2px solid var(--primary-color);
+            position: sticky;
+            top: 1rem;
+            height: fit-content;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            font-size: 1em;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius);
+            background: #111;
+            color: var(--text-color);
+            margin-bottom: 1.2rem;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 0 8px var(--primary-color) inset;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-color);
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.4rem 1.2rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 20px;
+            background: #111;
+            color: var(--primary-color);
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--primary-color) inset;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active, .filter-btn:active {
+            background: var(--primary-color);
+            color: #fff;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 16px var(--accent-color), 0 0 8px var(--primary-color) inset;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+            position: relative;
+            border: 2px solid var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 0 32px 8px var(--primary-color), 0 0 0 2px var(--accent-color) inset;
+            border-color: var(--accent-color);
+        }
+
+        .card img {
+            width: 100%;
+            display: block;
+            border-bottom: 2px solid var(--primary-color);
+            filter: saturate(1.2) contrast(1.1) drop-shadow(0 0 8px var(--primary-color));
+        }
+
+        .card-content {
+            padding: 1.3rem 1.1rem 1.1rem 1.1rem;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px var(--primary-color), 0 0 2px #fff;
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            font-size: 0.95em;
+            color: var(--subtext-color);
+        }
+
+        .deck-preview {
+            width: 100%;
+            border-radius: 1em;
+            margin-top: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5em 0;
+        }
+        #openDeckLightbox {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            box-shadow: 0 0 16px #ff4fa2;
+            font-size: 1.2em;
+            border-radius: 1.5em;
+            padding: 1em 0;
+        }
+        @media (max-width: 900px) {
+            #openDeckLightbox {
+                max-width: 100vw;
+                font-size: 1.1em;
+            }
+        }
+        @media (max-width: 576px) {
+            .deck-preview {
+                padding: 0.2em 0;
+                margin-top: 1em;
+            }
+            #openDeckLightbox {
+                max-width: 100vw;
+                font-size: 1em;
+                border-radius: 0.8em;
+                padding: 0.8em 0;
+            }
+        }
+        .main-container { padding-bottom: 0; }
+
+        .deck-preview:hover {
+            transform: translateY(0);
+        }
+
+        .deck-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding: 0 0.5rem;
+        }
+
+        .deck-cards {
+            display: flex;
+            gap: 0.7rem;
+            overflow-x: auto;
+            padding: 0.5rem;
+            max-height: 180px;
+            align-items: flex-start;
+        }
+
+        .deck-card {
+            position: relative;
+            width: 130px;
+            flex-shrink: 0;
+            background: #111;
+            border-radius: 16px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 12px var(--primary-color);
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s, border 0.2s;
+        }
+
+        .deck-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 12px;
+            filter: saturate(1.2) contrast(1.1) drop-shadow(0 0 8px var(--primary-color));
+        }
+
+        .card-controls {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 4px;
+            background: linear-gradient(to bottom, rgba(255,79,162,0.8), rgba(0,0,0,0));
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .deck-card:hover .card-controls {
+            opacity: 1;
+        }
+
+        .card-control-btn {
+            width: 26px;
+            height: 26px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            background: #111;
+            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px var(--primary-color) inset;
+            transition: all 0.2s;
+        }
+
+        .card-control-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 16px var(--accent-color), 0 0 8px var(--primary-color) inset;
+            transform: scale(1.12);
+        }
+
+        .card-control-btn.success {
+            background-color: var(--primary-color) !important;
+            color: #fff !important;
+            border: 2px solid var(--accent-color) !important;
+            transform: scale(1.15);
+        }
+
+        .card-control-btn.error {
+            background-color: #ff4fa2 !important;
+            color: #fff !important;
+            border: 2px solid #fff !important;
+            transform: scale(1.15);
+        }
+
+        .card-count {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: #222;
+            color: var(--primary-color);
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            box-shadow: 0 0 8px var(--primary-color);
+            font-weight: 700;
+        }
+
+        .deck-card-info {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, var(--primary-color) 90%, rgba(0,0,0,0));
+            color: #fff;
+            padding: 20px 4px 4px 4px;
+            font-size: 0.8em;
+            opacity: 0;
+            transition: opacity 0.2s;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .deck-card:hover .deck-card-info {
+            opacity: 1;
+        }
+
+        .deck-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 1em;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .deck-stats span {
+            background: #111;
+            padding: 4px 12px;
+            border-radius: 8px;
+            color: var(--primary-color);
+            border: 1.5px solid var(--primary-color);
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.6rem;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            background: #111;
+            color: var(--primary-color);
+            font-size: 1.1em;
+            font-weight: 900;
+            box-shadow: 0 0 8px var(--primary-color) inset;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: #fff;
+            border: 2px solid var(--accent-color);
+        }
+
+        .btn-secondary {
+            background: var(--accent-color);
+            color: #fff;
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn:hover, .btn:focus {
+            background: var(--primary-color);
+            color: #fff;
+            border: 2.5px solid #fff;
+            box-shadow: 0 0 24px var(--accent-color), 0 0 8px var(--primary-color) inset;
+            outline: none;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                max-width: 98%;
+                grid-template-columns: 220px 1fr;
+            }
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            }
+            .deck-card {
+                width: 110px;
+            }
+        }
+        @media (max-width: 992px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            .deck-info {
+                width: 100%;
+                justify-content: center;
+            }
+            .deck-name {
+                max-width: 180px;
+            }
+            .main-container {
+                grid-template-columns: 160px 1fr;
+                gap: 1rem;
+            }
+            .filters {
+                padding: 1rem 0.5rem 1rem 0.5rem;
+            }
+            .deck-card {
+                width: 90px;
+            }
+        }
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .filters {
+                position: relative;
+                margin-bottom: 1rem;
+                width: 100%;
+                max-width: 94vw;
+            }
+            .filter-group {
+                margin-bottom: 1rem;
+            }
+            .filter-options {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .filter-btn {
+                white-space: nowrap;
+            }
+            .deck-preview {
+                transform: translateY(75%);
+            }
+            .deck-preview-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .deck-stats {
+                font-size: 0.9em;
+                gap: 0.5rem;
+            }
+            .deck-card {
+                width: 50px;
+            }
+            .card-controls {
+                opacity: 1;
+                background: linear-gradient(to bottom, rgba(255,79,162,0.9), rgba(0,0,0,0.6));
+            }
+            .card-control-btn {
+                width: 22px;
+                height: 22px;
+                font-size: 15px;
+            }
+        }
+        @media (max-width: 576px) {
+            header {
+                padding: 0.8rem;
+            }
+            h1 {
+                font-size: 1.3em;
+            }
+            .deck-info {
+                flex-direction: column;
+            }
+            .action-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+            .main-container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 0.7rem;
+            }
+            .card-content {
+                padding: 0.7rem;
+            }
+            .card-title {
+                font-size: 1em;
+            }
+            .card-stats {
+                font-size: 0.8em;
+                grid-template-columns: 1fr 1fr;
+            }
+            .deck-preview {
+                padding: 0.7rem;
+            }
+            .deck-card {
+                width: 38px;
+            }
+            .card-count {
+                width: 18px;
+                height: 18px;
+                font-size: 0.7em;
+                top: -4px;
+                right: -4px;
+            }
+        }
+        @media (hover: none) {
+            .card:hover {
+                transform: none;
+            }
+            .deck-preview {
+                transform: translateY(0);
+                position: static;
+                margin-top: 2rem;
+            }
+            .deck-cards {
+                max-height: 200px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .filter-btn {
+                padding: 0.5rem 1rem;
+            }
+            .filter-btn:active {
+                background: var(--primary-color);
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            .search-input {
+                background: rgba(255,255,255,0.08);
+            }
+            .filter-btn {
+                background: rgba(255,255,255,0.15);
+            }
+            .card {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+        }
+        .filter-options::-webkit-scrollbar,
+        .deck-cards::-webkit-scrollbar {
+            height: 4px;
+        }
+        .filter-options::-webkit-scrollbar-track,
+        .deck-cards::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+        .filter-options::-webkit-scrollbar-thumb,
+        .deck-cards::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        .card {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .card:active {
+            transform: scale(0.98);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .search-input:focus,
+        .deck-name:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--text-color);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+        /* 添加拖曳排序效果 */
+        .deck-card.dragging {
+            opacity: 0.5;
+            cursor: move;
+        }
+        .deck-card.drag-over {
+            transform: translateX(5px);
+        }
+        /* 添加按鈕動畫樣式 */
+        .card-control-btn.success {
+            background-color: #4CAF50 !important;
+            transform: scale(1.2);
+        }
+        .card-control-btn.error {
+            background-color: #f44336 !important;
+            transform: scale(1.2);
+        }
+        @keyframes buttonPop {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        /* 光箱彈窗 */
+        #lightbox {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+        }
+        #lightbox-content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2vw;
+            max-width: 90vw;
+            max-height: 90vh;
+            padding: 2vw;
+            background: rgba(25,23,26,0.98);
+            border-radius: 20px;
+            box-shadow: 0 0 32px #ff4fa2;
+            position: relative;
+        }
+        #lightbox-img {
+            max-width: 40vw;
+            max-height: 70vh;
+            border-radius: 16px;
+            border: 3px solid #ff4fa2;
+            box-shadow: 0 0 24px #ff4fa2;
+        }
+        #lightbox-info {
+            color: #fff;
+            max-width: 40vw;
+            max-height: 70vh;
+            overflow-y: auto;
+            font-size: 1.1em;
+        }
+        #lightbox-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4fa2;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 0 8px #ff4fa2;
+        }
+        /* RWD for lightbox */
+        @media (max-width: 900px) {
+            #lightbox-content { flex-direction: column; max-width: 96vw; }
+            #lightbox-img { max-width: 90vw; max-height: 40vh; }
+            #lightbox-info { max-width: 90vw; max-height: 30vh; }
+        }
+        @media (max-width: 576px) {
+            #lightbox-content { padding: 2vw 0.5vw; }
+            #lightbox-img { max-width: 98vw; max-height: 30vh; }
+            #lightbox-info { font-size: 1em; max-height: 20vh; }
+        }
+        /* deck-preview 懸浮刪除按鈕 */
+        .deck-card .remove-deck-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: #fff;
+            border: 2px solid #fff;
+            font-size: 1.2em;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px var(--primary-color);
+            cursor: pointer;
+            z-index: 2;
+            transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
+        }
+        .deck-card .remove-deck-btn:hover {
+            background: #fff;
+            color: var(--primary-color);
+            box-shadow: 0 0 16px var(--primary-color), 0 0 8px #fff inset;
+            transform: scale(1.15);
+        }
+        @media (max-width: 768px) {
+            .deck-card .remove-deck-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 1em;
+                top: 2px;
+                right: 2px;
+            }
+        }
+        #deck-lightbox {display:none;position:fixed;z-index:2100;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;}
+        #deck-lightbox-content {background:linear-gradient(90deg,#111 60%,#ff4fa2 100%);border-radius:24px;box-shadow:0 0 32px #ff4fa2;max-width:900px;width:96vw;max-height:90vh;padding:2vw 2vw 1vw 2vw;display:flex;flex-direction:column;position:relative;}
+        #deck-lightbox-close {position:absolute;top:10px;right:10px;background:#ff4fa2;color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.5em;cursor:pointer;box-shadow:0 0 8px #ff4fa2;z-index:2;}
+        #deckLightboxCards {flex-wrap:wrap;max-height:60vh;overflow-y:auto;}
+        @media (max-width: 900px) {
+            #deck-lightbox-content {max-width:99vw;padding:2vw 0.5vw;}
+            #deckLightboxCards {max-height:40vh;}
+        }
+        @media (max-width: 576px) {
+            #deck-lightbox-content {padding:2vw 0.5vw;}
+            #deckLightboxCards {max-height:30vh;}
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>TCG 組牌工具</h1>
+            <div class="deck-info">
+                <input type="text" class="deck-name" placeholder="牌組名稱" value="新牌組">
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="saveDeck">儲存牌組</button>
+                    <button class="btn btn-secondary" id="loadDeck">載入牌組</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <aside class="filters">
+            <input type="text" class="search-input" placeholder="搜尋卡片...">
+            
+            <div class="filter-group">
+                <h3>卡片類型</h3>
+                <div class="filter-options">
+                    <button class="filter-btn active">全部</button>
+                    <button class="filter-btn">角色</button>
+                    <button class="filter-btn">事件</button>
+                    <button class="filter-btn">名場面</button>
+                </div>
+            </div>
+			
+            <div class="filter-group">
+                <h3>等級</h3>
+                <div class="filter-options">
+                    <button class="filter-btn active">全部</button>
+                    <button class="filter-btn">0</button>
+                    <button class="filter-btn">1</button>
+                    <button class="filter-btn">2</button>
+                    <button class="filter-btn">3+</button>
+                </div>
+            </div>
+			
+            <div class="filter-group">
+                <h3>費用</h3>
+                <div class="filter-options">
+                    <button class="filter-btn active">全部</button>
+                    <button class="filter-btn">0</button>
+                    <button class="filter-btn">1</button>
+                    <button class="filter-btn">2</button>
+                    <button class="filter-btn">3+</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <h3>顏色</h3>
+                <div class="filter-options">
+                    <button class="filter-btn active">全部</button>
+                    <button class="filter-btn">青</button>
+                    <button class="filter-btn">赤</button>
+                    <button class="filter-btn">黄</button>
+                    <button class="filter-btn">緑</button>
+                </div>
+            </div>
+            <div class="filter-group"><!-- 未來要做成浮動的-->
+                <h3>稀有度</h3>
+                <div class="filter-options">
+                    <button class="filter-btn active">全部</button>
+                    <button class="filter-btn">SEC</button>
+                    <button class="filter-btn">SSP</button>
+                    <button class="filter-btn">SP</button>
+                    <button class="filter-btn">RR</button>
+                </div>
+            </div>
+            <!-- deck-preview 靜態放在 filters 下方 -->
+            <div class="deck-preview">
+                <button id="openDeckLightbox" class="btn btn-primary" style="width:100%;font-size:1.2em;padding:1em 0;letter-spacing:2px;">當前牌組</button>
+            </div>
+        </aside>
+
+        <section class="cards-container" id="cardsList">
+            <!-- 卡片將由 JavaScript 動態生成 -->
+        </section>
+    </main>
+
+    <!-- 光箱彈窗 -->
+    <div id="lightbox" style="display:none;position:fixed;z-index:2000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
+        <div id="lightbox-content" style="display:flex;flex-direction:row;align-items:center;gap:2vw;max-width:90vw;max-height:90vh;padding:2vw;background:rgba(25,23,26,0.98);border-radius:20px;box-shadow:0 0 32px #ff4fa2;position:relative;">
+            <img id="lightbox-img" src="" alt="" style="max-width:40vw;max-height:70vh;border-radius:16px;border:3px solid #ff4fa2;box-shadow:0 0 24px #ff4fa2;">
+            <div id="lightbox-info" style="color:#fff;max-width:40vw;max-height:70vh;overflow-y:auto;font-size:1.1em;"></div>
+            <button id="lightbox-close" style="position:absolute;top:10px;right:10px;background:#ff4fa2;color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.5em;cursor:pointer;box-shadow:0 0 8px #ff4fa2;">&times;</button>
+        </div>
+    </div>
+
+    <!-- deck-lightbox 彈窗 -->
+    <div id="deck-lightbox" style="display:none;position:fixed;z-index:2100;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+        <div id="deck-lightbox-content" style="background:linear-gradient(90deg,#111 60%,#ff4fa2 100%);border-radius:24px;box-shadow:0 0 32px #ff4fa2;max-width:900px;width:96vw;max-height:90vh;padding:2vw 2vw 1vw 2vw;display:flex;flex-direction:column;position:relative;">
+            <button id="deck-lightbox-close" style="position:absolute;top:10px;right:10px;background:#ff4fa2;color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.5em;cursor:pointer;box-shadow:0 0 8px #ff4fa2;">&times;</button>
+            <div class="deck-preview-header">
+                <h2>當前牌組</h2>
+                <div class="deck-stats">
+                    <span>卡片數量: <strong id="deckCount2">0</strong>/60</span>
+                    <span>角色: <strong id="creatureCount2">0</strong></span>
+                    <span>事件: <strong id="spellCount2">0</strong></span>
+                    <span>名場面: <strong id="trapCount2">0</strong></span>
+                </div>
+            </div>
+            <div class="deck-cards" id="deckLightboxCards" style="flex-wrap:wrap;max-height:60vh;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 示例卡片數據
+            const cards = [
+{id:1, name: 'チョコに込めた愛情 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p16.png', type: '角色', cost: 0, rarity:'PR', power: 1500, level:0, description:'【自】［手札の《妹》のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、他のあなたの《妹》のキャラがいて、あなたの思い出が2枚以下なら、コストを払ってよい。そうしたら、あなたは自分の控え室の《妹》のキャラを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-P16'},
+{id:2, name: 'チョコに込めた愛情 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p16s.png', type: '角色', cost: 0, rarity:'PR', power: 1500, level:0, description:'【自】［手札の《妹》のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、他のあなたの《妹》のキャラがいて、あなたの思い出が2枚以下なら、コストを払ってよい。そうしたら、あなたは自分の控え室の《妹》のキャラを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-P16S'},
+{id:3, name: '猫の気持ち あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p17.png', type: '角色', cost: 0, rarity:'PR', power: 1000, level:0, description:'【自】 あなたのCXフェイズの始めに、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】 集中 ［(1)］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、次の行動を行う。『あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加え、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-P17'},
+{id:4, name: 'KISSしたい好き 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p14.png', type: '角色', cost: 0, rarity:'PR', power: 5000, level:1, description:'【自】 記憶 このカードがアタックした時、あなたの思い出置場にカードがあるなら、そのターン中、このカードのパワーを＋Ｘ。Ｘはあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '黄', cardo:'OS01/R01-P14'},
+{id:5, name: 'KISSしたい好き 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p14s.png', type: '角色', cost: 0, rarity:'PR', power: 5000, level:1, description:'【自】 記憶 このカードがアタックした時、あなたの思い出置場にカードがあるなら、そのターン中、このカードのパワーを＋Ｘ。Ｘはあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '黄', cardo:'OS01/R01-P14S'},
+{id:6, name: '新たな被害者 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p15.png', type: '角色', cost: 0, rarity:'PR', power: 2500, level:0, description:'【自】［手札のCXを1枚控え室に置き、他のあなたの舞台のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室のCXを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-P15'},
+{id:7, name: '新たな被害者 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p15s.png', type: '角色', cost: 0, rarity:'PR', power: 2500, level:0, description:'【自】［手札のCXを1枚控え室に置き、他のあなたの舞台のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室のCXを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-P15S'},
+{id:8, name: '新年を迎えて', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p01.png', type: '事件', cost: 1, rarity:'PR', power: 0, level:2, description:'相手は自分のストックすべてを、山札に戻し、その山札をシャッフルし、自分の山札の上から同じ枚数をストックにする。 あなたは自分のキャラを1枚選び、そのターン中、パワーを＋3000。', color: '赤', cardo:'OS01/R01-P01'},
+{id:9, name: 'きらめく夏の一頁', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p02.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P02'},
+{id:10, name: 'きらめく夏の一頁', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p02s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P02S'},
+{id:11, name: '降り積もった通り道', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p03.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P03'},
+{id:12, name: '降り積もった通り道', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p03s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P03S'},
+{id:13, name: '天使降臨', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p04.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P04'},
+{id:14, name: '天使降臨', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p04s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-P04S'},
+{id:15, name: '二人だけの秘密の特訓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p05.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P05'},
+{id:16, name: '二人だけの秘密の特訓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p05s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P05S'},
+{id:17, name: 'いつも通りの日常', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p06.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P06'},
+{id:18, name: 'いつも通りの日常', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p06s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P06S'},
+{id:19, name: '紅に染まる時間', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p07.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P07'},
+{id:20, name: '紅に染まる時間', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p07s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-P07S'},
+{id:21, name: 'ふたりで守った未来', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p08.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P08'},
+{id:22, name: 'ふたりで守った未来', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p08s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P08S'},
+{id:23, name: '帰ってきた居場所', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p09.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P09'},
+{id:24, name: '帰ってきた居場所', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p09s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P09S'},
+{id:25, name: '猫かぶり少女の恋', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p10.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P10'},
+{id:26, name: '猫かぶり少女の恋', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p10s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-P10S'},
+{id:27, name: '嫌いだけど好き', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p11.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P11'},
+{id:28, name: '嫌いだけど好き', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p11s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P11S'},
+{id:29, name: '楽しい一日', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p12.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P12'},
+{id:30, name: '楽しい一日', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p12s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P12S'},
+{id:31, name: '重なったふたりの運命', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p13.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P13'},
+{id:32, name: '重なったふたりの運命', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_p13s.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-P13S'},
+{id:33, name: 'ヴァイスシュヴァルツロゼ、始動！', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/wsr/rpr/wsr_rpr_p01.png', type: '名場面', cost: 0, rarity:'PR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'WSR/RPR-P01'},
+{id:34, name: '君と僕のハジメテ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_001.png', type: '角色', cost: 0, rarity:'RR', power: 500, level:0, description:'【起】［(1) 【スタンド】しているこのカードを思い出にする］ あなたのレベルが2以上なら、あなたは自分の山札を上から3枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '黄', cardo:'OS01/R01-001'},
+{id:35, name: '君と僕のハジメテ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_001ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 500, level:0, description:'【起】［(1) 【スタンド】しているこのカードを思い出にする］ あなたのレベルが2以上なら、あなたは自分の山札を上から3枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '黄', cardo:'OS01/R01-001OFR'},
+{id:36, name: '君と僕のハジメテ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_001sp.png', type: '角色', cost: 0, rarity:'SP', power: 500, level:0, description:'【起】［(1) 【スタンド】しているこのカードを思い出にする］ あなたのレベルが2以上なら、あなたは自分の山札を上から3枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '黄', cardo:'OS01/R01-001SP'},
+{id:37, name: 'レヴィ９ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_002.png', type: '角色', cost: 0, rarity:'RR', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「きらめく夏の一頁」があり、他のあなたの〈同OS〉のキャラがいるなら、次の2つの効果を好きな順番で1回ずつ行う。『あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置き、自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。』『あなたの思い出が2枚以下なら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、思い出にしてよい。』', color: '黄', cardo:'OS01/R01-002'},
+{id:38, name: 'レヴィ９ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_002ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「きらめく夏の一頁」があり、他のあなたの〈同OS〉のキャラがいるなら、次の2つの効果を好きな順番で1回ずつ行う。『あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置き、自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。』『あなたの思い出が2枚以下なら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、思い出にしてよい。』', color: '黄', cardo:'OS01/R01-002OFR'},
+{id:39, name: 'レヴィ９ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_002sec.png', type: '角色', cost: 0, rarity:'SEC', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「きらめく夏の一頁」があり、他のあなたの〈同OS〉のキャラがいるなら、次の2つの効果を好きな順番で1回ずつ行う。『あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置き、自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。』『あなたの思い出が2枚以下なら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、思い出にしてよい。』', color: '黄', cardo:'OS01/R01-002SEC'},
+{id:40, name: 'Sympathy 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_003.png', type: '角色', cost: 2, rarity:'RR', power: 9000, level:3, description:'【永】 あなたの〈同OS〉のキャラが4枚以上なら、あなたの手札のこのカードのレベルを－1。 【永】 あなたのターン中、あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋2000。 【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。', color: '黄', cardo:'OS01/R01-003'},
+{id:41, name: 'Sympathy 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_003ofr.png', type: '角色', cost: 2, rarity:'OFR', power: 9000, level:3, description:'【永】 あなたの〈同OS〉のキャラが4枚以上なら、あなたの手札のこのカードのレベルを－1。 【永】 あなたのターン中、あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋2000。 【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。', color: '黄', cardo:'OS01/R01-003OFR'},
+{id:42, name: 'Sympathy 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_003ssp.png', type: '角色', cost: 2, rarity:'SSP', power: 9000, level:3, description:'【永】 あなたの〈同OS〉のキャラが4枚以上なら、あなたの手札のこのカードのレベルを－1。 【永】 あなたのターン中、あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋2000。 【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。', color: '黄', cardo:'OS01/R01-003SSP'},
+{id:43, name: '正義の裁き 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_004.png', type: '角色', cost: 0, rarity:'R', power: 1500, level:0, description:'【永】 あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋1000。 【自】［(1)］ このカードがアタックした時、コストを払ってよい。そうしたら、そのアタック中、あなたはトリガーステップにトリガーチェックを2回行う。', color: '黄', cardo:'OS01/R01-004'},
+{id:44, name: '正義の裁き 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_004s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【永】 あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋1000。 【自】［(1)］ このカードがアタックした時、コストを払ってよい。そうしたら、そのアタック中、あなたはトリガーステップにトリガーチェックを2回行う。', color: '黄', cardo:'OS01/R01-004S'},
+{id:45, name: '接客の練習 千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_005.png', type: '角色', cost: 0, rarity:'R', power: 2000, level:0, description:'【自】［(1) 手札の〈同OS〉のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、コストを払ってよい。そうしたら、あなたは自分の山札を上から2枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。', color: '黄', cardo:'OS01/R01-005'},
+{id:46, name: '接客の練習 千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_005s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【自】［(1) 手札の〈同OS〉のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、コストを払ってよい。そうしたら、あなたは自分の山札を上から2枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。', color: '黄', cardo:'OS01/R01-005S'},
+{id:47, name: '思わぬピンチ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_006.png', type: '角色', cost: 0, rarity:'R', power: 2000, level:1, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】 あなたのCXフェイズの始めに、あなたは自分の山札を上から1枚見てよい。 【起】［(2) このカードを【レスト】する］ あなたは自分のクロックの上から1枚を、控え室に置く。', color: '黄', cardo:'OS01/R01-006'},
+{id:48, name: '思わぬピンチ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_006s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:1, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】 あなたのCXフェイズの始めに、あなたは自分の山札を上から1枚見てよい。 【起】［(2) このカードを【レスト】する］ あなたは自分のクロックの上から1枚を、控え室に置く。', color: '黄', cardo:'OS01/R01-006S'},
+{id:49, name: '大和撫子はあこがれ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_007.png', type: '角色', cost: 0, rarity:'R', power: 5000, level:1, description:'【自】 このカードのバトル相手が【リバース】した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻し、自分の手札を1枚選び、控え室に置く。', color: '黄', cardo:'OS01/R01-007'},
+{id:50, name: '大和撫子はあこがれ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_007ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 5000, level:1, description:'【自】 このカードのバトル相手が【リバース】した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻し、自分の手札を1枚選び、控え室に置く。', color: '黄', cardo:'OS01/R01-007OFR'},
+{id:51, name: '大和撫子はあこがれ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_007sp.png', type: '角色', cost: 0, rarity:'SP', power: 5000, level:1, description:'【自】 このカードのバトル相手が【リバース】した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻し、自分の手札を1枚選び、控え室に置く。', color: '黄', cardo:'OS01/R01-007SP'},
+{id:52, name: '使命を帯びた天使 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_008.png', type: '角色', cost: 2, rarity:'R', power: 9000, level:3, description:'【永】 記憶 あなたの思い出置場に「君と見る白雪 乃愛」があるなら、このカードのパワーを＋1500。 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 あなたのアタックフェイズの始めに、CX置場に「天使降臨」があり、あなたの思い出が3枚以上なら、あなたは自分の控え室の〈同OS〉のキャラを1枚まで選び、手札に戻し、自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。', color: '黄', cardo:'OS01/R01-008'},
+{id:53, name: '使命を帯びた天使 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_008s.png', type: '角色', cost: 2, rarity:'SR', power: 9000, level:3, description:'【永】 記憶 あなたの思い出置場に「君と見る白雪 乃愛」があるなら、このカードのパワーを＋1500。 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 あなたのアタックフェイズの始めに、CX置場に「天使降臨」があり、あなたの思い出が3枚以上なら、あなたは自分の控え室の〈同OS〉のキャラを1枚まで選び、手札に戻し、自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。', color: '黄', cardo:'OS01/R01-008S'},
+{id:54, name: '半分こ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_009.png', type: '角色', cost: 0, rarity:'C', power: 1000, level:0, description:'【自】 このカードが手札から登場した時かアタックした時、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1500。', color: '黄', cardo:'OS01/R01-009'},
+{id:55, name: '半分こ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_009s.png', type: '角色', cost: 0, rarity:'SR', power: 1000, level:0, description:'【自】 このカードが手札から登場した時かアタックした時、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1500。', color: '黄', cardo:'OS01/R01-009S'},
+{id:56, name: '任務中 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_010.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】［手札の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは1枚引く。', color: '黄', cardo:'OS01/R01-010'},
+{id:57, name: '任務中 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_010s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】［手札の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは1枚引く。', color: '黄', cardo:'OS01/R01-010S'},
+{id:58, name: '水着を買いに！ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_011.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。 【起】［手札を1枚控え室に置き、このカードを控え室に置く］ あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-011'},
+{id:59, name: '水着を買いに！ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_011s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。 【起】［手札を1枚控え室に置き、このカードを控え室に置く］ あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-011S'},
+{id:60, name: '一目惚れ？ 彩里', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_012.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【永】 あなたのストックが2枚以下なら、このカードのレベルを＋1し、パワーを＋1000。 【自】 相手のアタックフェイズの始めに、あなたは相手の前列のキャラを1枚選び、前列のキャラのいない他の枠に動かしてよい。', color: '黄', cardo:'OS01/R01-012'},
+{id:61, name: '一目惚れ？ 彩里', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_012s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【永】 あなたのストックが2枚以下なら、このカードのレベルを＋1し、パワーを＋1000。 【自】 相手のアタックフェイズの始めに、あなたは相手の前列のキャラを1枚選び、前列のキャラのいない他の枠に動かしてよい。', color: '黄', cardo:'OS01/R01-012S'},
+{id:62, name: '小さい水着 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_013.png', type: '角色', cost: 0, rarity:'C', power: 2000, level:0, description:'【永】 前列の中央の枠にこのカードがいるなら、このカードのソウルを＋1。 【自】 このカードが手札から登場した時、そのターン中、このカードのパワーを＋1500。', color: '黄', cardo:'OS01/R01-013'},
+{id:63, name: '小さい水着 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_013s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【永】 前列の中央の枠にこのカードがいるなら、このカードのソウルを＋1。 【自】 このカードが手札から登場した時、そのターン中、このカードのパワーを＋1500。', color: '黄', cardo:'OS01/R01-013S'},
+{id:64, name: '初めてのビキニ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_014.png', type: '角色', cost: 0, rarity:'C', power: 2500, level:0, description:'【自】［(1) 手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室のCXを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-014'},
+{id:65, name: '初めてのビキニ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_014s.png', type: '角色', cost: 0, rarity:'SR', power: 2500, level:0, description:'【自】［(1) 手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室のCXを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-014S'},
+{id:66, name: '抱きつく千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_015.png', type: '角色', cost: 0, rarity:'C', power: 5000, level:1, description:'【自】 このカードのバトル相手が【リバース】した時、あなたはこのカードを思い出にしてよい。そうしたら、次のあなたのドローフェイズの始めに、あなたは自分の思い出置場の「抱きつく千咲」を1枚選び、舞台の好きな枠に置く。', color: '黄', cardo:'OS01/R01-015'},
+{id:67, name: '抱きつく千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_015s.png', type: '角色', cost: 0, rarity:'SR', power: 5000, level:1, description:'【自】 このカードのバトル相手が【リバース】した時、あなたはこのカードを思い出にしてよい。そうしたら、次のあなたのドローフェイズの始めに、あなたは自分の思い出置場の「抱きつく千咲」を1枚選び、舞台の好きな枠に置く。', color: '黄', cardo:'OS01/R01-015S'},
+{id:68, name: '手作り弁当 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_016.png', type: '角色', cost: 1, rarity:'C', power: 1000, level:1, description:'【起】【カウンター】 助太刀2000 レベル1 ［(1) 手札のこのカードを思い出にする］', color: '黄', cardo:'OS01/R01-016'},
+{id:69, name: '手作り弁当 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_016s.png', type: '角色', cost: 1, rarity:'SR', power: 1000, level:1, description:'【起】【カウンター】 助太刀2000 レベル1 ［(1) 手札のこのカードを思い出にする］', color: '黄', cardo:'OS01/R01-016S'},
+{id:70, name: '快活少女 千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_017.png', type: '角色', cost: 1, rarity:'C', power: 4500, level:1, description:'【永】 応援 このカードの前のあなたの〈同OS〉のキャラすべてに、パワーを＋Ｘ。Ｘはそのキャラのレベル×500に等しい。 【起】［(2) このカードを【レスト】する］ あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。', color: '黄', cardo:'OS01/R01-017'},
+{id:71, name: '快活少女 千咲', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_017s.png', type: '角色', cost: 1, rarity:'SR', power: 4500, level:1, description:'【永】 応援 このカードの前のあなたの〈同OS〉のキャラすべてに、パワーを＋Ｘ。Ｘはそのキャラのレベル×500に等しい。 【起】［(2) このカードを【レスト】する］ あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。', color: '黄', cardo:'OS01/R01-017S'},
+{id:72, name: '甘え上手 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_018.png', type: '角色', cost: 1, rarity:'C', power: 6000, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【起】［(2) このカードを【レスト】する］ あなたは相手のキャラを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-018'},
+{id:73, name: '甘え上手 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_018s.png', type: '角色', cost: 1, rarity:'SR', power: 6000, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【起】［(2) このカードを【レスト】する］ あなたは相手のキャラを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-018S'},
+{id:74, name: '可愛い忠犬 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_019.png', type: '角色', cost: 1, rarity:'C', power: 6500, level:2, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋1500し、このカードは『【自】 アンコール ［手札の〈同OS〉のキャラを1枚控え室に置く］』を得る。 【自】 このカードがアタックした時、そのターン中、このカードのパワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×1000に等しい。', color: '黄', cardo:'OS01/R01-019'},
+{id:75, name: '可愛い忠犬 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_019s.png', type: '角色', cost: 1, rarity:'SR', power: 6500, level:2, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋1500し、このカードは『【自】 アンコール ［手札の〈同OS〉のキャラを1枚控え室に置く］』を得る。 【自】 このカードがアタックした時、そのターン中、このカードのパワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×1000に等しい。', color: '黄', cardo:'OS01/R01-019S'},
+{id:76, name: '君と見る白雪 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_020.png', type: '角色', cost: 1, rarity:'C', power: 6500, level:2, description:'【永】 応援 このカードの前のあなたの〈同OS〉のキャラすべてに、パワーを＋1500。 【自】【CXコンボ】［このカードを思い出にする］ あなたのCXフェイズ中、CX置場に「天使降臨」が置かれた時、コストを払ってよい。そうしたら、あなたは自分の手札の「使命を帯びた天使 乃愛」を1枚まで選び、このカードがいた枠に置く。', color: '黄', cardo:'OS01/R01-020'},
+{id:77, name: '君と見る白雪 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_020s.png', type: '角色', cost: 1, rarity:'SR', power: 6500, level:2, description:'【永】 応援 このカードの前のあなたの〈同OS〉のキャラすべてに、パワーを＋1500。 【自】【CXコンボ】［このカードを思い出にする］ あなたのCXフェイズ中、CX置場に「天使降臨」が置かれた時、コストを払ってよい。そうしたら、あなたは自分の手札の「使命を帯びた天使 乃愛」を1枚まで選び、このカードがいた枠に置く。', color: '黄', cardo:'OS01/R01-020S'},
+{id:78, name: '日々の鍛錬 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_021.png', type: '角色', cost: 2, rarity:'C', power: 7500, level:2, description:'【永】 相手の後列のキャラ1枚につき、このカードのパワーを＋1000。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「降り積もった通り道」があるなら、あなたは相手に1ダメージを与えてよい。', color: '黄', cardo:'OS01/R01-021'},
+{id:79, name: '日々の鍛錬 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_021s.png', type: '角色', cost: 2, rarity:'SR', power: 7500, level:2, description:'【永】 相手の後列のキャラ1枚につき、このカードのパワーを＋1000。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「降り積もった通り道」があるなら、あなたは相手に1ダメージを与えてよい。', color: '黄', cardo:'OS01/R01-021S'},
+{id:80, name: 'O・BA・KA・SAN', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_022.png', type: '事件', cost: 1, rarity:'C', power: 0, level:2, description:'あなたは自分の【スタンド】しているカード名に「七海」を含むキャラを1枚選び【レスト】する。そうしたら、あなたは自分のクロック置場の〈同OS〉のキャラを1枚選び、手札に戻す。このカードを思い出にする。', color: '黄', cardo:'OS01/R01-022'},
+{id:81, name: 'O・BA・KA・SAN', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_022s.png', type: '事件', cost: 1, rarity:'SR', power: 0, level:2, description:'あなたは自分の【スタンド】しているカード名に「七海」を含むキャラを1枚選び【レスト】する。そうしたら、あなたは自分のクロック置場の〈同OS〉のキャラを1枚選び、手札に戻す。このカードを思い出にする。', color: '黄', cardo:'OS01/R01-022S'},
+{id:82, name: 'きらめく夏の一頁', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_023.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-023'},
+{id:83, name: 'きらめく夏の一頁', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_023a.png', type: '名場面', cost: 0, rarity:'AGR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-023A'},
+{id:84, name: 'きらめく夏の一頁', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_023s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-023S'},
+{id:85, name: '天使降臨', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_024.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-024'},
+{id:86, name: '天使降臨', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_024s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-024S'},
+{id:87, name: '降り積もった通り道', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_025.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-025'},
+{id:88, name: '降り積もった通り道', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_025s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【チョイス】：このカードがトリガーした時、あなたの控え室のトリガーアイコンに【ソウル】があるキャラを1枚選び、手札に戻すかストックにしてよい）', color: '黄', cardo:'OS01/R01-025S'},
+{id:89, name: '強がるオトナのSecret Labo 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_026.png', type: '角色', cost: 0, rarity:'RR', power: 1500, level:0, description:'【自】 あなたのCXがCX置場に置かれた時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '緑', cardo:'OS01/R01-026'},
+{id:90, name: '強がるオトナのSecret Labo 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_026ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 1500, level:0, description:'【自】 あなたのCXがCX置場に置かれた時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '緑', cardo:'OS01/R01-026OFR'},
+{id:91, name: '強がるオトナのSecret Labo 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_026sp.png', type: '角色', cost: 0, rarity:'SP', power: 1500, level:0, description:'【自】 あなたのCXがCX置場に置かれた時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '緑', cardo:'OS01/R01-026SP'},
+{id:92, name: '惚れて揺れて恋焦がれ かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_027.png', type: '角色', cost: 0, rarity:'RR', power: 4500, level:1, description:'【永】 あなたのターン中、このカードのパワーを＋1000。 【自】【CXコンボ】［手札を1枚控え室に置く］ あなたのCX置場に「二人だけの秘密の特訓」が置かれた時、コストを払ってよい。そうしたら、あなたは自分の控え室のコスト0以下の〈同OS〉のキャラを1枚選び、舞台の好きな枠に置く。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「二人だけの秘密の特訓」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。', color: '緑', cardo:'OS01/R01-027'},
+{id:93, name: '惚れて揺れて恋焦がれ かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_027ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 4500, level:1, description:'【永】 あなたのターン中、このカードのパワーを＋1000。 【自】【CXコンボ】［手札を1枚控え室に置く］ あなたのCX置場に「二人だけの秘密の特訓」が置かれた時、コストを払ってよい。そうしたら、あなたは自分の控え室のコスト0以下の〈同OS〉のキャラを1枚選び、舞台の好きな枠に置く。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「二人だけの秘密の特訓」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。', color: '緑', cardo:'OS01/R01-027OFR'},
+{id:94, name: '惚れて揺れて恋焦がれ かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_027sp.png', type: '角色', cost: 0, rarity:'SP', power: 4500, level:1, description:'【永】 あなたのターン中、このカードのパワーを＋1000。 【自】【CXコンボ】［手札を1枚控え室に置く］ あなたのCX置場に「二人だけの秘密の特訓」が置かれた時、コストを払ってよい。そうしたら、あなたは自分の控え室のコスト0以下の〈同OS〉のキャラを1枚選び、舞台の好きな枠に置く。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「二人だけの秘密の特訓」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。', color: '緑', cardo:'OS01/R01-027SP'},
+{id:95, name: '狩人の一族 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_028.png', type: '角色', cost: 0, rarity:'R', power: 1000, level:0, description:'【自】【CXコンボ】 あなたのCX置場に「いつも通りの日常」が置かれた時、あなたは他の自分のキャラを1枚選び、そのターン中、次の能力を与える。『【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札を上から4枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。』 【自】 他のあなたのキャラのバトル相手が【リバース】した時、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋1000。', color: '緑', cardo:'OS01/R01-028'},
+{id:96, name: '狩人の一族 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_028s.png', type: '角色', cost: 0, rarity:'SR', power: 1000, level:0, description:'【自】【CXコンボ】 あなたのCX置場に「いつも通りの日常」が置かれた時、あなたは他の自分のキャラを1枚選び、そのターン中、次の能力を与える。『【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札を上から4枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。』 【自】 他のあなたのキャラのバトル相手が【リバース】した時、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋1000。', color: '緑', cardo:'OS01/R01-028S'},
+{id:97, name: 'Growing! 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_029.png', type: '角色', cost: 0, rarity:'R', power: 1000, level:0, description:'【自】［(1) 手札の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札を上からＸ枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。Ｘは相手のキャラの枚数に等しい。 【自】［手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '緑', cardo:'OS01/R01-029'},
+{id:98, name: 'Growing! 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_029ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 1000, level:0, description:'【自】［(1) 手札の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札を上からＸ枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。Ｘは相手のキャラの枚数に等しい。 【自】［手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '緑', cardo:'OS01/R01-029OFR'},
+{id:99, name: 'Growing! 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_029sp.png', type: '角色', cost: 0, rarity:'SP', power: 1000, level:0, description:'【自】［(1) 手札の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札を上からＸ枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。Ｘは相手のキャラの枚数に等しい。 【自】［手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '緑', cardo:'OS01/R01-029SP'},
+{id:100, name: '潮の香りの去り際に オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_030.png', type: '角色', cost: 0, rarity:'R', power: 3500, level:1, description:'【自】 このカードがアタックした時、他のあなたの〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋2000。 【自】［(1) このカードを思い出にする］ 他のあなたの〈同OS〉のキャラがフロントアタックされた時、コストを払ってよい。そうしたら、あなたは自分のバトル中のキャラを1枚選び、そのターン中、パワーを＋2500。', color: '緑', cardo:'OS01/R01-030'},
+{id:101, name: '潮の香りの去り際に オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_030s.png', type: '角色', cost: 0, rarity:'SR', power: 3500, level:1, description:'【自】 このカードがアタックした時、他のあなたの〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋2000。 【自】［(1) このカードを思い出にする］ 他のあなたの〈同OS〉のキャラがフロントアタックされた時、コストを払ってよい。そうしたら、あなたは自分のバトル中のキャラを1枚選び、そのターン中、パワーを＋2500。', color: '緑', cardo:'OS01/R01-030S'},
+{id:102, name: '先で待つ 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_031.png', type: '角色', cost: 0, rarity:'R', power: 4000, level:1, description:'【永】 あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋2000。 【自】 アンコール ［あなたの山札の上から1枚をクロックにする］', color: '緑', cardo:'OS01/R01-031'},
+{id:103, name: '先で待つ 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_031s.png', type: '角色', cost: 0, rarity:'SR', power: 4000, level:1, description:'【永】 あなたのキャラすべてが〈同OS〉なら、このカードのパワーを＋2000。 【自】 アンコール ［あなたの山札の上から1枚をクロックにする］', color: '緑', cardo:'OS01/R01-031S'},
+{id:104, name: '暑いのは苦手 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_032.png', type: '角色', cost: 2, rarity:'R', power: 3500, level:3, description:'【永】 応援 このカードの前のあなたのキャラすべてに、パワーを＋2000。 【自】 このカードが手札から登場した時、あなたは1枚引いてよい。 【起】［このカードを【レスト】する］ そのターン中、このカードは次の能力を得る。『【自】 このカードが舞台から控え室に置かれた時、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。』', color: '緑', cardo:'OS01/R01-032'},
+{id:105, name: '暑いのは苦手 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_032s.png', type: '角色', cost: 2, rarity:'SR', power: 3500, level:3, description:'【永】 応援 このカードの前のあなたのキャラすべてに、パワーを＋2000。 【自】 このカードが手札から登場した時、あなたは1枚引いてよい。 【起】［このカードを【レスト】する］ そのターン中、このカードは次の能力を得る。『【自】 このカードが舞台から控え室に置かれた時、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。』', color: '緑', cardo:'OS01/R01-032S'},
+{id:106, name: '舞い落ちる桜 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_033.png', type: '角色', cost: 2, rarity:'R', power: 10000, level:3, description:'【永】 記憶 あなたの思い出置場の〈同OS〉のキャラが3枚以上なら、あなたの手札のこのカードのレベルを－1。 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。', color: '緑', cardo:'OS01/R01-033'},
+{id:107, name: '舞い落ちる桜 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_033s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【永】 記憶 あなたの思い出置場の〈同OS〉のキャラが3枚以上なら、あなたの手札のこのカードのレベルを－1。 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。', color: '緑', cardo:'OS01/R01-033S'},
+{id:108, name: '初めての吸血 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_034.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【自】 このカードが手札から登場した時、そのターン中、このカードは次の能力を得る。『【自】 このカードが舞台から控え室に置かれた時、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。』 【起】［このカードを【レスト】する］ あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1500。', color: '緑', cardo:'OS01/R01-034'},
+{id:109, name: '初めての吸血 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_034s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【自】 このカードが手札から登場した時、そのターン中、このカードは次の能力を得る。『【自】 このカードが舞台から控え室に置かれた時、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。』 【起】［このカードを【レスト】する］ あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1500。', color: '緑', cardo:'OS01/R01-034S'},
+{id:110, name: 'アクア・エデン市長補佐 アンナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_035.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【永】 他のあなたの「小さな油断 梓」すべてに、パワーを＋1000。 【自】 絆／「小さな油断 梓」 ［(1)］', color: '緑', cardo:'OS01/R01-035'},
+{id:111, name: 'アクア・エデン市長補佐 アンナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_035s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【永】 他のあなたの「小さな油断 梓」すべてに、パワーを＋1000。 【自】 絆／「小さな油断 梓」 ［(1)］', color: '緑', cardo:'OS01/R01-035S'},
+{id:112, name: '無茶な接触 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_036.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【永】 応援 このカードの前のあなたのキャラすべてに、次の能力を与える。『【永】 このカードは相手の効果に選ばれない。』 【起】［手札を1枚控え室に置き、このカードを【レスト】する］ あなたは自分の控え室の「興味本位の身体検査」を1枚選び、手札に戻す。', color: '緑', cardo:'OS01/R01-036'},
+{id:113, name: '無茶な接触 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_036s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【永】 応援 このカードの前のあなたのキャラすべてに、次の能力を与える。『【永】 このカードは相手の効果に選ばれない。』 【起】［手札を1枚控え室に置き、このカードを【レスト】する］ あなたは自分の控え室の「興味本位の身体検査」を1枚選び、手札に戻す。', color: '緑', cardo:'OS01/R01-036S'},
+{id:114, name: 'お姉さんの振る舞い 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_037.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは相手のキャラを1枚選び、次の相手のターンの終わりまで、次の能力を与える。『【永】 このカードは他の枠に動かせない。』 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '緑', cardo:'OS01/R01-037'},
+{id:115, name: 'お姉さんの振る舞い 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_037s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは相手のキャラを1枚選び、次の相手のターンの終わりまで、次の能力を与える。『【永】 このカードは他の枠に動かせない。』 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '緑', cardo:'OS01/R01-037S'},
+{id:116, name: '浜辺のかぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_038.png', type: '角色', cost: 0, rarity:'C', power: 2000, level:0, description:'【永】 他のあなたの【レスト】している〈同OS〉のキャラがいるなら、このカードのレベルを＋1し、パワーを＋1500。 【自】 このカードが手札から登場した時、すべてのプレイヤーは次の行動を行う。『あなたの思い出が5枚以上なら、あなたは自分の思い出置場のカードを4枚選び、それらのカード以外の自分の思い出置場のカードすべてを、控え室に置く。』', color: '緑', cardo:'OS01/R01-038'},
+{id:117, name: '浜辺のかぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_038s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【永】 他のあなたの【レスト】している〈同OS〉のキャラがいるなら、このカードのレベルを＋1し、パワーを＋1500。 【自】 このカードが手札から登場した時、すべてのプレイヤーは次の行動を行う。『あなたの思い出が5枚以上なら、あなたは自分の思い出置場のカードを4枚選び、それらのカード以外の自分の思い出置場のカードすべてを、控え室に置く。』', color: '緑', cardo:'OS01/R01-038S'},
+{id:118, name: 'お料理 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_039.png', type: '角色', cost: 0, rarity:'C', power: 2000, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋1000。 【自】［(1) 手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。', color: '緑', cardo:'OS01/R01-039'},
+{id:119, name: 'お料理 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_039s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋1000。 【自】［(1) 手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。', color: '緑', cardo:'OS01/R01-039S'},
+{id:120, name: '幸せの魔法 オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_040.png', type: '角色', cost: 0, rarity:'C', power: 4000, level:0, description:'【自】 あなたのCXフェイズの始めに、相手は自分のストックの上から2枚を、控え室に置いてよい。そうしたら、そのターン中、このカードはフロントアタックできない。', color: '緑', cardo:'OS01/R01-040'},
+{id:121, name: '幸せの魔法 オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_040s.png', type: '角色', cost: 0, rarity:'SR', power: 4000, level:0, description:'【自】 あなたのCXフェイズの始めに、相手は自分のストックの上から2枚を、控え室に置いてよい。そうしたら、そのターン中、このカードはフロントアタックできない。', color: '緑', cardo:'OS01/R01-040S'},
+{id:122, name: '小さな油断 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_041.png', type: '角色', cost: 0, rarity:'C', power: 5500, level:1, description:'-', color: '緑', cardo:'OS01/R01-041'},
+{id:123, name: '小さな油断 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_041s.png', type: '角色', cost: 0, rarity:'SR', power: 5500, level:1, description:'-', color: '緑', cardo:'OS01/R01-041S'},
+{id:124, name: '異世界からの来訪者 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_042.png', type: '角色', cost: 0, rarity:'C', power: 6500, level:1, description:'【自】 このカードが手札から登場した時、あなたは相手の前列のキャラを1枚選び、次の相手のターンの終わりまで、パワーを＋1000。', color: '緑', cardo:'OS01/R01-042'},
+{id:125, name: '異世界からの来訪者 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_042s.png', type: '角色', cost: 0, rarity:'SR', power: 6500, level:1, description:'【自】 このカードが手札から登場した時、あなたは相手の前列のキャラを1枚選び、次の相手のターンの終わりまで、パワーを＋1000。', color: '緑', cardo:'OS01/R01-042S'},
+{id:126, name: '異世界の味 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_043.png', type: '角色', cost: 1, rarity:'C', power: 4500, level:1, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが相手のレベルより高いなら、あなたは相手のクロックの上から1枚を、控え室に置いてよい。そうしたら、あなたはそのキャラをクロックにする。', color: '緑', cardo:'OS01/R01-043'},
+{id:127, name: '異世界の味 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_043s.png', type: '角色', cost: 1, rarity:'SR', power: 4500, level:1, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが相手のレベルより高いなら、あなたは相手のクロックの上から1枚を、控え室に置いてよい。そうしたら、あなたはそのキャラをクロックにする。', color: '緑', cardo:'OS01/R01-043S'},
+{id:128, name: '梅雨空のお出迎え オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_044.png', type: '角色', cost: 1, rarity:'C', power: 2500, level:2, description:'【自】［(2) あなたの舞台のキャラを1枚控え室に置く］ あなたがこのカードの『助太刀』を使った時、コストを払ってよい。そうしたら、あなたは相手の、レベルが相手のレベルより高いキャラを1枚選び、控え室に置く。 【起】【カウンター】 助太刀2500 レベル2 ［(1) 手札のこのカードを控え室に置く］', color: '緑', cardo:'OS01/R01-044'},
+{id:129, name: '梅雨空のお出迎え オリエ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_044s.png', type: '角色', cost: 1, rarity:'SR', power: 2500, level:2, description:'【自】［(2) あなたの舞台のキャラを1枚控え室に置く］ あなたがこのカードの『助太刀』を使った時、コストを払ってよい。そうしたら、あなたは相手の、レベルが相手のレベルより高いキャラを1枚選び、控え室に置く。 【起】【カウンター】 助太刀2500 レベル2 ［(1) 手札のこのカードを控え室に置く］', color: '緑', cardo:'OS01/R01-044S'},
+{id:130, name: '幸せな２人の朝 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_045.png', type: '角色', cost: 1, rarity:'C', power: 6000, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【起】［(2) このカードを【レスト】する］ あなたは自分のクロックの上から1枚を、控え室に置く。', color: '緑', cardo:'OS01/R01-045'},
+{id:131, name: '幸せな２人の朝 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_045s.png', type: '角色', cost: 1, rarity:'SR', power: 6000, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【起】［(2) このカードを【レスト】する］ あなたは自分のクロックの上から1枚を、控え室に置く。', color: '緑', cardo:'OS01/R01-045S'},
+{id:132, name: '研究員のお姉さん 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_046.png', type: '角色', cost: 2, rarity:'C', power: 9000, level:3, description:'【永】 あなたのターン中、このカードのパワーを＋1500し、このカードは次の能力を得る。『【永】 このカードの正面のキャラは他の枠に動かせない。』 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】［(1)］ このカードのバトル相手が【リバース】した時、あなたのCX置場に「紅に染まる時間」があるなら、コストを払ってよい。そうしたら、あなたはそのキャラをクロックにし、相手の山札を上から1枚見て、山札の上か下に置く。', color: '緑', cardo:'OS01/R01-046'},
+{id:133, name: '研究員のお姉さん 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_046s.png', type: '角色', cost: 2, rarity:'SR', power: 9000, level:3, description:'【永】 あなたのターン中、このカードのパワーを＋1500し、このカードは次の能力を得る。『【永】 このカードの正面のキャラは他の枠に動かせない。』 【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】［(1)］ このカードのバトル相手が【リバース】した時、あなたのCX置場に「紅に染まる時間」があるなら、コストを払ってよい。そうしたら、あなたはそのキャラをクロックにし、相手の山札を上から1枚見て、山札の上か下に置く。', color: '緑', cardo:'OS01/R01-046S'},
+{id:134, name: '興味本位の身体検査', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_047.png', type: '事件', cost: 1, rarity:'C', power: 0, level:1, description:'あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。このカードを思い出にする。', color: '緑', cardo:'OS01/R01-047'},
+{id:135, name: '興味本位の身体検査', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_047s.png', type: '事件', cost: 1, rarity:'SR', power: 0, level:1, description:'あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。このカードを思い出にする。', color: '緑', cardo:'OS01/R01-047S'},
+{id:136, name: '二人だけの秘密の特訓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_048.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-048'},
+{id:137, name: '二人だけの秘密の特訓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_048s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-048S'},
+{id:138, name: 'いつも通りの日常', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_049.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-049'},
+{id:139, name: 'いつも通りの日常', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_049s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-049S'},
+{id:140, name: '紅に染まる時間', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_050.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-050'},
+{id:141, name: '紅に染まる時間', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_050s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【トレジャー】：このカードがトリガーした時、このカードを手札に戻す。あなたの山札の上から1枚を、ストックにしてよい）', color: '緑', cardo:'OS01/R01-050S'},
+{id:142, name: 'Love Incident 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_051.png', type: '角色', cost: 0, rarity:'RR', power: 1500, level:0, description:'【自】［(1) あなたの山札の上から1枚をクロックにする］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札のレベル1以下のキャラを1枚までサーチし手札に加える。 【自】 記憶 このカードがアタックした時、あなたの思い出置場にカードがあるなら、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。', color: '赤', cardo:'OS01/R01-051'},
+{id:143, name: 'Love Incident 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_051ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 1500, level:0, description:'【自】［(1) あなたの山札の上から1枚をクロックにする］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札のレベル1以下のキャラを1枚までサーチし手札に加える。 【自】 記憶 このカードがアタックした時、あなたの思い出置場にカードがあるなら、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。', color: '赤', cardo:'OS01/R01-051OFR'},
+{id:144, name: 'Love Incident 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_051ssp.png', type: '角色', cost: 0, rarity:'SSP', power: 1500, level:0, description:'【自】［(1) あなたの山札の上から1枚をクロックにする］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札のレベル1以下のキャラを1枚までサーチし手札に加える。 【自】 記憶 このカードがアタックした時、あなたの思い出置場にカードがあるなら、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋2000。', color: '赤', cardo:'OS01/R01-051SSP'},
+{id:145, name: 'NO LIMIT エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_052.png', type: '角色', cost: 0, rarity:'RR', power: 4500, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出が2枚以上なら、このカードのパワーを＋2000。 【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードがアタックした時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら手札に加える。', color: '赤', cardo:'OS01/R01-052'},
+{id:146, name: 'NO LIMIT エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_052ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 4500, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出が2枚以上なら、このカードのパワーを＋2000。 【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードがアタックした時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら手札に加える。', color: '赤', cardo:'OS01/R01-052OFR'},
+{id:147, name: 'NO LIMIT エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_052sp.png', type: '角色', cost: 0, rarity:'SP', power: 4500, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出が2枚以上なら、このカードのパワーを＋2000。 【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードがアタックした時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら手札に加える。', color: '赤', cardo:'OS01/R01-052SP'},
+{id:148, name: '大人のいい女 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_053.png', type: '角色', cost: 2, rarity:'RR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。 【自】【CXコンボ】［手札を1枚控え室に置き、他のあなたの舞台のキャラを1枚控え室に置く］ このカードがアタックした時、CX置場に「ふたりで守った未来」があるなら、コストを払ってよい。そうしたら、相手に1ダメージを与え、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、相手にＸダメージを与え、次の相手のターンの終わりまで、このカードのパワーを＋1500。Ｘはそのキャラのレベルに等しい。', color: '赤', cardo:'OS01/R01-053'},
+{id:149, name: '大人のいい女 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_053ofr.png', type: '角色', cost: 2, rarity:'OFR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。 【自】【CXコンボ】［手札を1枚控え室に置き、他のあなたの舞台のキャラを1枚控え室に置く］ このカードがアタックした時、CX置場に「ふたりで守った未来」があるなら、コストを払ってよい。そうしたら、相手に1ダメージを与え、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、相手にＸダメージを与え、次の相手のターンの終わりまで、このカードのパワーを＋1500。Ｘはそのキャラのレベルに等しい。', color: '赤', cardo:'OS01/R01-053OFR'},
+{id:150, name: '大人のいい女 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_053sec.png', type: '角色', cost: 2, rarity:'SEC', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻してよい。 【自】【CXコンボ】［手札を1枚控え室に置き、他のあなたの舞台のキャラを1枚控え室に置く］ このカードがアタックした時、CX置場に「ふたりで守った未来」があるなら、コストを払ってよい。そうしたら、相手に1ダメージを与え、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、相手にＸダメージを与え、次の相手のターンの終わりまで、このカードのパワーを＋1500。Ｘはそのキャラのレベルに等しい。', color: '赤', cardo:'OS01/R01-053SEC'},
+{id:151, name: 'PERFECT GIRL あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_054.png', type: '角色', cost: 0, rarity:'R', power: 3500, level:1, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。 【自】 このカードがアタックした時、あなたのキャラすべてに、そのターン中、次の能力を与える。『【自】［(1)］ このカードのトリガーチェックでCXがでた時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を、ストックにし、自分のキャラを1枚選び、そのターン中、パワーを＋2000。』', color: '赤', cardo:'OS01/R01-054'},
+{id:152, name: 'PERFECT GIRL あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_054ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 3500, level:1, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。 【自】 このカードがアタックした時、あなたのキャラすべてに、そのターン中、次の能力を与える。『【自】［(1)］ このカードのトリガーチェックでCXがでた時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を、ストックにし、自分のキャラを1枚選び、そのターン中、パワーを＋2000。』', color: '赤', cardo:'OS01/R01-054OFR'},
+{id:153, name: 'PERFECT GIRL あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_054sp.png', type: '角色', cost: 0, rarity:'SP', power: 3500, level:1, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。 【自】 このカードがアタックした時、あなたのキャラすべてに、そのターン中、次の能力を与える。『【自】［(1)］ このカードのトリガーチェックでCXがでた時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を、ストックにし、自分のキャラを1枚選び、そのターン中、パワーを＋2000。』', color: '赤', cardo:'OS01/R01-054SP'},
+{id:154, name: '吸血鬼の力 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_055.png', type: '角色', cost: 1, rarity:'R', power: 5500, level:2, description:'【永】 このカードは、色条件を満たさずに手札からプレイできる。 【自】 このカードがアタックした時、他のあなたの〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋6000。 【自】［手札を1枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたのCX置場にCXがあるなら、コストを払ってよい。そうしたら、次の相手のターンの終わりまで、このカードは次の能力を得る。『【永】 このカードの正面のキャラのソウルを－2。』', color: '赤', cardo:'OS01/R01-055'},
+{id:155, name: '吸血鬼の力 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_055s.png', type: '角色', cost: 1, rarity:'SR', power: 5500, level:2, description:'【永】 このカードは、色条件を満たさずに手札からプレイできる。 【自】 このカードがアタックした時、他のあなたの〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋6000。 【自】［手札を1枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたのCX置場にCXがあるなら、コストを払ってよい。そうしたら、次の相手のターンの終わりまで、このカードは次の能力を得る。『【永】 このカードの正面のキャラのソウルを－2。』', color: '赤', cardo:'OS01/R01-055S'},
+{id:156, name: 'ちょっとエッチな女の子 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_056.png', type: '角色', cost: 2, rarity:'R', power: 10000, level:3, description:'【永】 あなたの控え室のCXが2枚以下なら、あなたの手札のこのカードのレベルを－1。 【自】 このカードが手札から登場した時、あなたは自分の山札を上からＸ枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。Ｘはあなたの〈同OS〉のキャラの枚数に等しい。', color: '赤', cardo:'OS01/R01-056'},
+{id:157, name: 'ちょっとエッチな女の子 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_056s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【永】 あなたの控え室のCXが2枚以下なら、あなたの手札のこのカードのレベルを－1。 【自】 このカードが手札から登場した時、あなたは自分の山札を上からＸ枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。Ｘはあなたの〈同OS〉のキャラの枚数に等しい。', color: '赤', cardo:'OS01/R01-056S'},
+{id:158, name: '学生会長 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_057.png', type: '角色', cost: 2, rarity:'R', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 あなたのアンコールステップの始めに、CX置場に「猫かぶり少女の恋」があり、前列にこのカードがいて、あなたの思い出置場に「知られた秘密 あやせ」があるなら、相手は自分の山札の上から20枚を、控え室に置き、次の相手のターンの終わりまで、このカードは次の能力を得る。『【永】 このカードは相手の効果に選ばれない。』', color: '赤', cardo:'OS01/R01-057'},
+{id:159, name: '学生会長 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_057s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 あなたのアンコールステップの始めに、CX置場に「猫かぶり少女の恋」があり、前列にこのカードがいて、あなたの思い出置場に「知られた秘密 あやせ」があるなら、相手は自分の山札の上から20枚を、控え室に置き、次の相手のターンの終わりまで、このカードは次の能力を得る。『【永】 このカードは相手の効果に選ばれない。』', color: '赤', cardo:'OS01/R01-057S'},
+{id:160, name: 'ディーラー エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_058.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。 【自】 このカードが手札から登場した時、相手は0か1か2か3を宣言する。あなたは自分の山札の上から1枚を、控え室に置き、そのカードが相手の宣言したレベルのカードなら、あなたはＸ枚まで引く。Ｘは相手の宣言した数＋1に等しい。', color: '赤', cardo:'OS01/R01-058'},
+{id:161, name: 'ディーラー エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_058s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。 【自】 このカードが手札から登場した時、相手は0か1か2か3を宣言する。あなたは自分の山札の上から1枚を、控え室に置き、そのカードが相手の宣言したレベルのカードなら、あなたはＸ枚まで引く。Ｘは相手の宣言した数＋1に等しい。', color: '赤', cardo:'OS01/R01-058S'},
+{id:162, name: '抑えきれない衝動 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_059.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが0以下なら、あなたはそのキャラを【リバース】してよい。 【起】［(1) このカードを思い出にする］ あなたは自分の控え室の「カジノのお仕事 エリナ」を1枚選び、手札に戻す。', color: '赤', cardo:'OS01/R01-059'},
+{id:163, name: '抑えきれない衝動 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_059s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが0以下なら、あなたはそのキャラを【リバース】してよい。 【起】［(1) このカードを思い出にする］ あなたは自分の控え室の「カジノのお仕事 エリナ」を1枚選び、手札に戻す。', color: '赤', cardo:'OS01/R01-059S'},
+{id:164, name: '女の子らしい恰好 ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_060.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【自】 他のあなたの〈同OS〉のキャラがアタックした時、そのターン中、このカードのパワーを＋1000。 【自】［(1)］ 相手のターン中、このカードが【リバース】した時、コストを払ってよい。そうしたら、このカードを【レスト】し、次のあなたのアンコールステップの始めに、このカードを思い出にする。', color: '赤', cardo:'OS01/R01-060'},
+{id:165, name: '女の子らしい恰好 ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_060s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【自】 他のあなたの〈同OS〉のキャラがアタックした時、そのターン中、このカードのパワーを＋1000。 【自】［(1)］ 相手のターン中、このカードが【リバース】した時、コストを払ってよい。そうしたら、このカードを【レスト】し、次のあなたのアンコールステップの始めに、このカードを思い出にする。', color: '赤', cardo:'OS01/R01-060S'},
+{id:166, name: '知られた秘密 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_061.png', type: '角色', cost: 0, rarity:'C', power: 500, level:0, description:'【永】 このカードの下にマーカーがないなら、このカードは《嘘》をすべて失う。 【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】 このカードが手札から登場した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、表向きでこのカードのマーカーにしてよい。 【自】 あなたのターン中、下にマーカーがあるこのカードが舞台から控え室に置かれた時、他のあなたの〈同OS〉のキャラがいるなら、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。', color: '赤', cardo:'OS01/R01-061'},
+{id:167, name: '知られた秘密 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_061s.png', type: '角色', cost: 0, rarity:'SR', power: 500, level:0, description:'【永】 このカードの下にマーカーがないなら、このカードは《嘘》をすべて失う。 【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】 このカードが手札から登場した時、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、表向きでこのカードのマーカーにしてよい。 【自】 あなたのターン中、下にマーカーがあるこのカードが舞台から控え室に置かれた時、他のあなたの〈同OS〉のキャラがいるなら、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。', color: '赤', cardo:'OS01/R01-061S'},
+{id:168, name: '思い出の上書き 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_062.png', type: '角色', cost: 0, rarity:'C', power: 1000, level:0, description:'【自】 あなたのCXフェイズの始めに、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】 集中 ［(1)］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、次の行動を行う。『あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加え、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-062'},
+{id:169, name: '思い出の上書き 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_062s.png', type: '角色', cost: 0, rarity:'SR', power: 1000, level:0, description:'【自】 あなたのCXフェイズの始めに、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】 集中 ［(1)］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、次の行動を行う。『あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加え、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-062S'},
+{id:170, name: '２人の夜 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_063.png', type: '角色', cost: 0, rarity:'C', power: 2000, level:0, description:'【永】 記憶 あなたの思い出置場に「知られた秘密 あやせ」があるなら、このカードのパワーを＋1500。 【自】［(1)］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の「知られた秘密 あやせ」を1枚選び、思い出にする。', color: '赤', cardo:'OS01/R01-063'},
+{id:171, name: '２人の夜 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_063s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【永】 記憶 あなたの思い出置場に「知られた秘密 あやせ」があるなら、このカードのパワーを＋1500。 【自】［(1)］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の「知られた秘密 あやせ」を1枚選び、思い出にする。', color: '赤', cardo:'OS01/R01-063S'},
+{id:172, name: 'プールサイドの一幕 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_064.png', type: '角色', cost: 0, rarity:'C', power: 3000, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラでないなら、このカードを【レスト】する。 【自】 このカードがアタックした時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、そのターン中、このカードのパワーを＋2000。', color: '赤', cardo:'OS01/R01-064'},
+{id:173, name: 'プールサイドの一幕 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_064s.png', type: '角色', cost: 0, rarity:'SR', power: 3000, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラでないなら、このカードを【レスト】する。 【自】 このカードがアタックした時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、そのターン中、このカードのパワーを＋2000。', color: '赤', cardo:'OS01/R01-064S'},
+{id:174, name: '衝撃の目覚め ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_065.png', type: '角色', cost: 0, rarity:'C', power: 4000, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出置場にカードがあるなら、このカードのパワーを＋2500し、このカードは次の能力を得る。『【自】 このカードがアタックした時、このカードの正面のキャラのレベルが2なら、そのターン中、このカードのパワーを＋6000。』', color: '赤', cardo:'OS01/R01-065'},
+{id:175, name: '衝撃の目覚め ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_065s.png', type: '角色', cost: 0, rarity:'SR', power: 4000, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出置場にカードがあるなら、このカードのパワーを＋2500し、このカードは次の能力を得る。『【自】 このカードがアタックした時、このカードの正面のキャラのレベルが2なら、そのターン中、このカードのパワーを＋6000。』', color: '赤', cardo:'OS01/R01-065S'},
+{id:176, name: 'カジノのお仕事 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_066.png', type: '角色', cost: 0, rarity:'C', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「帰ってきた居場所」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加え、自分のキャラを1枚選び、そのターン中、パワーを＋1000し、《エッチな話題》を与える。', color: '赤', cardo:'OS01/R01-066'},
+{id:177, name: 'カジノのお仕事 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_066s.png', type: '角色', cost: 0, rarity:'SR', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「帰ってきた居場所」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加え、自分のキャラを1枚選び、そのターン中、パワーを＋1000し、《エッチな話題》を与える。', color: '赤', cardo:'OS01/R01-066S'},
+{id:178, name: '曝された柔肌 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_067.png', type: '角色', cost: 1, rarity:'C', power: 5000, level:1, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが相手のレベルより高いなら、あなたはそのキャラを【リバース】してよい。', color: '赤', cardo:'OS01/R01-067'},
+{id:179, name: '曝された柔肌 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_067s.png', type: '角色', cost: 1, rarity:'SR', power: 5000, level:1, description:'【自】 このカードが【リバース】した時、このカードのバトル相手のレベルが相手のレベルより高いなら、あなたはそのキャラを【リバース】してよい。', color: '赤', cardo:'OS01/R01-067S'},
+{id:180, name: '素の態度 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_068.png', type: '角色', cost: 1, rarity:'C', power: 5500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【自】 アンコール ［手札のキャラを1枚控え室に置く］', color: '赤', cardo:'OS01/R01-068'},
+{id:181, name: '素の態度 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_068s.png', type: '角色', cost: 1, rarity:'SR', power: 5500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【自】 アンコール ［手札のキャラを1枚控え室に置く］', color: '赤', cardo:'OS01/R01-068S'},
+{id:182, name: '将来も一緒に あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_069.png', type: '角色', cost: 1, rarity:'C', power: 4500, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【永】 記憶 あなたの思い出が3枚以上なら、このカードは次の2つの能力を得る。『【自】 あなたのCXフェイズの始めに、あなたは自分のキャラを1枚選び、次の相手のターンの終わりまで、パワーを＋500。』『【起】［このカードを【レスト】する］ あなたは1枚引き、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-069'},
+{id:183, name: '将来も一緒に あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_069s.png', type: '角色', cost: 1, rarity:'SR', power: 4500, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【永】 記憶 あなたの思い出が3枚以上なら、このカードは次の2つの能力を得る。『【自】 あなたのCXフェイズの始めに、あなたは自分のキャラを1枚選び、次の相手のターンの終わりまで、パワーを＋500。』『【起】［このカードを【レスト】する］ あなたは1枚引き、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-069S'},
+{id:184, name: '面倒見のいい女の子 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_070.png', type: '角色', cost: 1, rarity:'C', power: 7000, level:2, description:'【自】［(1)］ このカードのバトル相手でレベル2以上のキャラが【リバース】した時、コストを払ってよい。そうしたら、あなたは1枚引く。 【自】 記憶 このカードがアタックした時、あなたの思い出置場の〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋Ｘ。Ｘはこのカードの正面のキャラのレベル×2000に等しい。', color: '赤', cardo:'OS01/R01-070'},
+{id:185, name: '面倒見のいい女の子 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_070s.png', type: '角色', cost: 1, rarity:'SR', power: 7000, level:2, description:'【自】［(1)］ このカードのバトル相手でレベル2以上のキャラが【リバース】した時、コストを払ってよい。そうしたら、あなたは1枚引く。 【自】 記憶 このカードがアタックした時、あなたの思い出置場の〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋Ｘ。Ｘはこのカードの正面のキャラのレベル×2000に等しい。', color: '赤', cardo:'OS01/R01-070S'},
+{id:186, name: '中二病吸血鬼 ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_071.png', type: '角色', cost: 2, rarity:'C', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。', color: '赤', cardo:'OS01/R01-071'},
+{id:187, name: '中二病吸血鬼 ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_071s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札を上から2枚まで見て、山札の上に好きな順番で置く。', color: '赤', cardo:'OS01/R01-071S'},
+{id:188, name: 'ドキドキの間接キス', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_072.png', type: '事件', cost: 1, rarity:'R', power: 0, level:2, description:'相手は自分のストックすべてを、山札に戻し、その山札をシャッフルし、自分の山札の上から同じ枚数をストックにする。 あなたは自分のキャラを1枚選び、そのターン中、パワーを＋3000。', color: '赤', cardo:'OS01/R01-072'},
+{id:189, name: 'ドキドキの間接キス', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_072s.png', type: '事件', cost: 1, rarity:'SR', power: 0, level:2, description:'相手は自分のストックすべてを、山札に戻し、その山札をシャッフルし、自分の山札の上から同じ枚数をストックにする。 あなたは自分のキャラを1枚選び、そのターン中、パワーを＋3000。', color: '赤', cardo:'OS01/R01-072S'},
+{id:190, name: 'ふたりで守った未来', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_073.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-073'},
+{id:191, name: 'ふたりで守った未来', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_073s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-073S'},
+{id:192, name: '猫かぶり少女の恋', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_074.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-074'},
+{id:193, name: '猫かぶり少女の恋', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_074s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-074S'},
+{id:194, name: '帰ってきた居場所', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_075.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-075'},
+{id:195, name: '帰ってきた居場所', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_075s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたの控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-075S'},
+{id:196, name: 'アオハルデイズ 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_076.png', type: '角色', cost: 0, rarity:'RR', power: 1000, level:0, description:'【自】 相手のアタックフェイズの始めに、あなたは自分の山札の上から1枚を、控え室に置いてよい。そのカードが〈同OS〉のキャラなら、あなたはこのカードを前列のキャラのいない枠に動かしてよい。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から4枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-076'},
+{id:197, name: 'アオハルデイズ 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_076ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 1000, level:0, description:'【自】 相手のアタックフェイズの始めに、あなたは自分の山札の上から1枚を、控え室に置いてよい。そのカードが〈同OS〉のキャラなら、あなたはこのカードを前列のキャラのいない枠に動かしてよい。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から4枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-076OFR'},
+{id:198, name: 'アオハルデイズ 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_076sp.png', type: '角色', cost: 0, rarity:'SP', power: 1000, level:0, description:'【自】 相手のアタックフェイズの始めに、あなたは自分の山札の上から1枚を、控え室に置いてよい。そのカードが〈同OS〉のキャラなら、あなたはこのカードを前列のキャラのいない枠に動かしてよい。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から4枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-076SP'},
+{id:199, name: 'ワタシだけ。 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_077.png', type: '角色', cost: 2, rarity:'RR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 ［(1) 手札を1枚控え室に置く］ このカードがアタックした時、CX置場に「嫌いだけど好き」があり、他のあなたの〈同OS〉のキャラがいて、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、次の2つの効果のうちあなたが選んだ1つを行う。『相手に3ダメージを与える。』『相手に4ダメージを与える。』', color: '青', cardo:'OS01/R01-077'},
+{id:200, name: 'ワタシだけ。 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_077ofr.png', type: '角色', cost: 2, rarity:'OFR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 ［(1) 手札を1枚控え室に置く］ このカードがアタックした時、CX置場に「嫌いだけど好き」があり、他のあなたの〈同OS〉のキャラがいて、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、次の2つの効果のうちあなたが選んだ1つを行う。『相手に3ダメージを与える。』『相手に4ダメージを与える。』', color: '青', cardo:'OS01/R01-077OFR'},
+{id:201, name: 'ワタシだけ。 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_077ssp.png', type: '角色', cost: 2, rarity:'SSP', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。 【自】【CXコンボ】 記憶 ［(1) 手札を1枚控え室に置く］ このカードがアタックした時、CX置場に「嫌いだけど好き」があり、他のあなたの〈同OS〉のキャラがいて、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、次の2つの効果のうちあなたが選んだ1つを行う。『相手に3ダメージを与える。』『相手に4ダメージを与える。』', color: '青', cardo:'OS01/R01-077SSP'},
+{id:202, name: 'きっと大丈夫 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_078.png', type: '角色', cost: 0, rarity:'R', power: 500, level:0, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】［手札のCXを1枚控え室に置く］ あなたのCXがトリガーした時、コストを払ってよい。そうしたら、あなたは自分の山札を上から2枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-078'},
+{id:203, name: 'きっと大丈夫 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_078ofr.png', type: '角色', cost: 0, rarity:'OFR', power: 500, level:0, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】［手札のCXを1枚控え室に置く］ あなたのCXがトリガーした時、コストを払ってよい。そうしたら、あなたは自分の山札を上から2枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-078OFR'},
+{id:204, name: 'きっと大丈夫 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_078sp.png', type: '角色', cost: 0, rarity:'SP', power: 500, level:0, description:'【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋500。 【自】［手札のCXを1枚控え室に置く］ あなたのCXがトリガーした時、コストを払ってよい。そうしたら、あなたは自分の山札を上から2枚まで見て、カードを1枚まで選び、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-078SP'},
+{id:205, name: '背徳的な状況 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_079.png', type: '角色', cost: 0, rarity:'R', power: 2000, level:0, description:'【自】［(1) あなたの山札の上から1枚をクロックにする］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。 【自】 相手のアタックフェイズの始めに、あなたはこのカードを前列の中央のキャラのいない枠に動かしてよい。', color: '青', cardo:'OS01/R01-079'},
+{id:206, name: '背徳的な状況 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_079s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:0, description:'【自】［(1) あなたの山札の上から1枚をクロックにする］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。 【自】 相手のアタックフェイズの始めに、あなたはこのカードを前列の中央のキャラのいない枠に動かしてよい。', color: '青', cardo:'OS01/R01-079S'},
+{id:207, name: 'wish 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_080.png', type: '角色', cost: 0, rarity:'R', power: 1000, level:1, description:'【自】［手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。 【自】 このカードが【リバース】した時、このカードのバトル相手のコストが0以下なら、あなたはそのキャラを山札の下に置いてよい。', color: '青', cardo:'OS01/R01-080'},
+{id:208, name: 'wish 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_080s.png', type: '角色', cost: 0, rarity:'SR', power: 1000, level:1, description:'【自】［手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。 【自】 このカードが【リバース】した時、このカードのバトル相手のコストが0以下なら、あなたはそのキャラを山札の下に置いてよい。', color: '青', cardo:'OS01/R01-080S'},
+{id:209, name: '大胆な姿 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_081.png', type: '角色', cost: 0, rarity:'R', power: 5000, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出置場にカードがあるなら、このカードのパワーを＋1500。 【自】 このカードかこのカードのバトル相手が【リバース】した時、そのターン中、そのキャラは『【自】 アンコール』を使えない。', color: '青', cardo:'OS01/R01-081'},
+{id:210, name: '大胆な姿 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_081s.png', type: '角色', cost: 0, rarity:'SR', power: 5000, level:1, description:'【永】 記憶 あなたのターン中、あなたの思い出置場にカードがあるなら、このカードのパワーを＋1500。 【自】 このカードかこのカードのバトル相手が【リバース】した時、そのターン中、そのキャラは『【自】 アンコール』を使えない。', color: '青', cardo:'OS01/R01-081S'},
+{id:211, name: '前世返り 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_082.png', type: '角色', cost: 1, rarity:'R', power: 5000, level:1, description:'【永】 記憶 あなたの思い出が2枚以上なら、このカードのパワーを＋2000し、このカードは次の能力を得る。『【自】 このカードがアタックした時、このカードの正面のキャラのレベルが2なら、そのターン中、このカードのパワーを＋6000。』 【自】 このカードがアタックした時、CX置場にCXがあるなら、そのターン中、このカードは次の能力を得る。『【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札の上から1枚を、ストックにしてよい。』', color: '青', cardo:'OS01/R01-082'},
+{id:212, name: '前世返り 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_082s.png', type: '角色', cost: 1, rarity:'SR', power: 5000, level:1, description:'【永】 記憶 あなたの思い出が2枚以上なら、このカードのパワーを＋2000し、このカードは次の能力を得る。『【自】 このカードがアタックした時、このカードの正面のキャラのレベルが2なら、そのターン中、このカードのパワーを＋6000。』 【自】 このカードがアタックした時、CX置場にCXがあるなら、そのターン中、このカードは次の能力を得る。『【自】 このカードのバトル相手が【リバース】した時、あなたは自分の山札の上から1枚を、ストックにしてよい。』', color: '青', cardo:'OS01/R01-082S'},
+{id:213, name: '夏の風物詩 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_083.png', type: '角色', cost: 2, rarity:'R', power: 11500, level:3, description:'【永】 舞台のこのカードのレベルを－3。このカードの正面のキャラはサイドアタックできない。 【自】［手札の〈同OS〉のキャラを1枚控え室に置く］ このカードのバトル相手が【リバース】した時、コストを払ってよい。そうしたら、相手に1ダメージを与える。 【自】 このカードがフロントアタックされた時、あなたは自分の山札を上から1枚見て、山札の上か控え室に置く。', color: '青', cardo:'OS01/R01-083'},
+{id:214, name: '夏の風物詩 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_083s.png', type: '角色', cost: 2, rarity:'SR', power: 11500, level:3, description:'【永】 舞台のこのカードのレベルを－3。このカードの正面のキャラはサイドアタックできない。 【自】［手札の〈同OS〉のキャラを1枚控え室に置く］ このカードのバトル相手が【リバース】した時、コストを払ってよい。そうしたら、相手に1ダメージを与える。 【自】 このカードがフロントアタックされた時、あなたは自分の山札を上から1枚見て、山札の上か控え室に置く。', color: '青', cardo:'OS01/R01-083S'},
+{id:215, name: 'チョコに込めた愛情 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_084.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【自】［手札の《妹》のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、他のあなたの《妹》のキャラがいて、あなたの思い出が2枚以下なら、コストを払ってよい。そうしたら、あなたは自分の控え室の《妹》のキャラを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-084'},
+{id:216, name: 'チョコに込めた愛情 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_084s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【自】［手札の《妹》のキャラを1枚控え室に置き、このカードを思い出にする］ このカードが【リバース】した時、他のあなたの《妹》のキャラがいて、あなたの思い出が2枚以下なら、コストを払ってよい。そうしたら、あなたは自分の控え室の《妹》のキャラを1枚選び、手札に戻す。', color: '青', cardo:'OS01/R01-084S'},
+{id:217, name: '月見酒に酔いしれて 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_085.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【永】 応援 このカードの前のあなたのレベル0以下のキャラすべてに、パワーを＋500。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '青', cardo:'OS01/R01-085'},
+{id:218, name: '月見酒に酔いしれて 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_085s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【永】 応援 このカードの前のあなたのレベル0以下のキャラすべてに、パワーを＋500。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '青', cardo:'OS01/R01-085S'},
+{id:219, name: '気の置けない仲 チカ＆カエデ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_086.png', type: '角色', cost: 0, rarity:'C', power: 1500, level:0, description:'【永】 応援 このカードの前のあなたのレベル0以下のキャラすべてに、パワーを＋1000。 【自】［このカードを控え室に置く］ 他のあなたのカード名に「来海」を含むキャラが舞台から控え室に置かれた時、後列にこのカードがいるなら、コストを払ってよい。そうしたら、そのキャラをそのキャラがいた枠に【レスト】して置く。', color: '青', cardo:'OS01/R01-086'},
+{id:220, name: '気の置けない仲 チカ＆カエデ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_086s.png', type: '角色', cost: 0, rarity:'SR', power: 1500, level:0, description:'【永】 応援 このカードの前のあなたのレベル0以下のキャラすべてに、パワーを＋1000。 【自】［このカードを控え室に置く］ 他のあなたのカード名に「来海」を含むキャラが舞台から控え室に置かれた時、後列にこのカードがいるなら、コストを払ってよい。そうしたら、そのキャラをそのキャラがいた枠に【レスト】して置く。', color: '青', cardo:'OS01/R01-086S'},
+{id:221, name: '熱に浮かされて 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_087.png', type: '角色', cost: 0, rarity:'C', power: 3000, level:0, description:'-', color: '青', cardo:'OS01/R01-087'},
+{id:222, name: '熱に浮かされて 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_087s.png', type: '角色', cost: 0, rarity:'SR', power: 3000, level:0, description:'-', color: '青', cardo:'OS01/R01-087S'},
+{id:223, name: 'お兄の頼み 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_088.png', type: '角色', cost: 0, rarity:'C', power: 2000, level:1, description:'【自】 あなたがこのカードの『助太刀』を使った時、あなたの〈同OS〉のキャラがいるなら、あなたは自分のバトル中のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】【カウンター】 助太刀1000 レベル1 ［手札のこのカードを控え室に置く］', color: '青', cardo:'OS01/R01-088'},
+{id:224, name: 'お兄の頼み 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_088s.png', type: '角色', cost: 0, rarity:'SR', power: 2000, level:1, description:'【自】 あなたがこのカードの『助太刀』を使った時、あなたの〈同OS〉のキャラがいるなら、あなたは自分のバトル中のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】【カウンター】 助太刀1000 レベル1 ［手札のこのカードを控え室に置く］', color: '青', cardo:'OS01/R01-088S'},
+{id:225, name: '沈めていた気持ち 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_089.png', type: '角色', cost: 0, rarity:'C', power: 4500, level:1, description:'【自】［(1)］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の「前世返り 天音」を1枚選び、思い出にする。 【自】 記憶 ［このカードを【レスト】する］ あなたのアタックフェイズの始めに、あなたのCX置場にCXがあり、前列にこのカードがいるなら、コストを払ってよい。そうしたら、あなたは自分の思い出置場の「前世返り 天音」を1枚とこのカードを選び、入れ替え、アンコールステップの始めに、それらのキャラを入れ替える。', color: '青', cardo:'OS01/R01-089'},
+{id:226, name: '沈めていた気持ち 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_089s.png', type: '角色', cost: 0, rarity:'SR', power: 4500, level:1, description:'【自】［(1)］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室の「前世返り 天音」を1枚選び、思い出にする。 【自】 記憶 ［このカードを【レスト】する］ あなたのアタックフェイズの始めに、あなたのCX置場にCXがあり、前列にこのカードがいるなら、コストを払ってよい。そうしたら、あなたは自分の思い出置場の「前世返り 天音」を1枚とこのカードを選び、入れ替え、アンコールステップの始めに、それらのキャラを入れ替える。', color: '青', cardo:'OS01/R01-089S'},
+{id:227, name: '夏夜に咲く華 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_090.png', type: '角色', cost: 0, rarity:'C', power: 5500, level:1, description:'【永】 舞台のこのカードのレベルを－1。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「楽しい一日」があるなら、あなたは自分の控え室のキャラを1枚選び、手札に戻してよい。', color: '青', cardo:'OS01/R01-090'},
+{id:228, name: '夏夜に咲く華 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_090s.png', type: '角色', cost: 0, rarity:'SR', power: 5500, level:1, description:'【永】 舞台のこのカードのレベルを－1。 【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「楽しい一日」があるなら、あなたは自分の控え室のキャラを1枚選び、手札に戻してよい。', color: '青', cardo:'OS01/R01-090S'},
+{id:229, name: '前世返り 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_091.png', type: '角色', cost: 0, rarity:'C', power: 5500, level:1, description:'【永】 舞台のこのカードのレベルを－1。 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '青', cardo:'OS01/R01-091'},
+{id:230, name: '前世返り 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_091s.png', type: '角色', cost: 0, rarity:'SR', power: 5500, level:1, description:'【永】 舞台のこのカードのレベルを－1。 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '青', cardo:'OS01/R01-091S'},
+{id:231, name: '好きになるためのデート 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_092.png', type: '角色', cost: 1, rarity:'C', power: 2500, level:2, description:'【永】 このカードの下にマーカーがあるなら、このカードのパワーを＋8500し、このカードは次の2つの能力を得る。『【永】 舞台のこのカードのレベルを－2。』『【自】 このカードがアタックした時、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋3000。』 【自】 このカードが手札から登場した時、あなたは自分の控え室の「前世返り 来海」を1枚選び、表向きでこのカードのマーカーにしてよい。', color: '青', cardo:'OS01/R01-092'},
+{id:232, name: '好きになるためのデート 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_092s.png', type: '角色', cost: 1, rarity:'SR', power: 2500, level:2, description:'【永】 このカードの下にマーカーがあるなら、このカードのパワーを＋8500し、このカードは次の2つの能力を得る。『【永】 舞台のこのカードのレベルを－2。』『【自】 このカードがアタックした時、あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋3000。』 【自】 このカードが手札から登場した時、あなたは自分の控え室の「前世返り 来海」を1枚選び、表向きでこのカードのマーカーにしてよい。', color: '青', cardo:'OS01/R01-092S'},
+{id:233, name: 'アレキサンド店員 ひよ里', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_093.png', type: '角色', cost: 1, rarity:'C', power: 5000, level:2, description:'【永】 あなたのクロック置場に「熱に浮かされて 莉音」があるなら、あなたの手札のこのカードのレベルを－1。 【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋1000。 【起】［手札の「熱に浮かされて 莉音」を1枚控え室に置き、このカードを【レスト】する］ あなたは自分のクロックを1枚選び、手札に戻し、自分の山札の上から1枚を、クロックにする。', color: '青', cardo:'OS01/R01-093'},
+{id:234, name: 'アレキサンド店員 ひよ里', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_093s.png', type: '角色', cost: 1, rarity:'SR', power: 5000, level:2, description:'【永】 あなたのクロック置場に「熱に浮かされて 莉音」があるなら、あなたの手札のこのカードのレベルを－1。 【永】 他のあなたの〈同OS〉のキャラすべてに、パワーを＋1000。 【起】［手札の「熱に浮かされて 莉音」を1枚控え室に置き、このカードを【レスト】する］ あなたは自分のクロックを1枚選び、手札に戻し、自分の山札の上から1枚を、クロックにする。', color: '青', cardo:'OS01/R01-093S'},
+{id:235, name: '告白のやり直し 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_094.png', type: '角色', cost: 1, rarity:'C', power: 6500, level:2, description:'【永】 記憶 あなたの思い出置場の異なるカード名のカードが2枚以上なら、このカードのパワーを＋1500し、このカードは『【自】 アンコール ［手札の〈同OS〉のキャラを1枚控え室に置く］』を得る。 【自】 このカードがアタックした時、このカードの正面のキャラのレベルが3以上なら、そのターン中、このカードのパワーを＋6000。', color: '青', cardo:'OS01/R01-094'},
+{id:236, name: '告白のやり直し 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_094s.png', type: '角色', cost: 1, rarity:'SR', power: 6500, level:2, description:'【永】 記憶 あなたの思い出置場の異なるカード名のカードが2枚以上なら、このカードのパワーを＋1500し、このカードは『【自】 アンコール ［手札の〈同OS〉のキャラを1枚控え室に置く］』を得る。 【自】 このカードがアタックした時、このカードの正面のキャラのレベルが3以上なら、そのターン中、このカードのパワーを＋6000。', color: '青', cardo:'OS01/R01-094S'},
+{id:237, name: 'ウェイトレスのお仕事 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_095.png', type: '角色', cost: 2, rarity:'C', power: 7000, level:2, description:'【永】 他のあなたの後列の〈同OS〉のキャラ1枚につき、このカードのパワーを＋1500。 【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、他のあなたの〈同OS〉のキャラが4枚以上なら、コストを払ってよい。そうしたら、あなたは自分の山札の上から2枚までを、ストックにする。', color: '青', cardo:'OS01/R01-095'},
+{id:238, name: 'ウェイトレスのお仕事 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_095s.png', type: '角色', cost: 2, rarity:'SR', power: 7000, level:2, description:'【永】 他のあなたの後列の〈同OS〉のキャラ1枚につき、このカードのパワーを＋1500。 【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、他のあなたの〈同OS〉のキャラが4枚以上なら、コストを払ってよい。そうしたら、あなたは自分の山札の上から2枚までを、ストックにする。', color: '青', cardo:'OS01/R01-095S'},
+{id:239, name: '純真無垢 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_096.png', type: '角色', cost: 2, rarity:'C', power: 10000, level:3, description:'【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。 【自】【CXコンボ】［(1)］ このカードのバトル相手が【リバース】した時、あなたのCX置場に「重なったふたりの運命」があるなら、コストを払ってよい。そうしたら、相手に2ダメージを与える。', color: '青', cardo:'OS01/R01-096'},
+{id:240, name: '純真無垢 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_096s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。 【自】【CXコンボ】［(1)］ このカードのバトル相手が【リバース】した時、あなたのCX置場に「重なったふたりの運命」があるなら、コストを払ってよい。そうしたら、相手に2ダメージを与える。', color: '青', cardo:'OS01/R01-096S'},
+{id:241, name: 'コミュ力おばけ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_097.png', type: '事件', cost: 1, rarity:'C', power: 0, level:1, description:'このカードは、あなたの〈同OS〉のキャラがいないなら、手札からプレイできない。あなたは自分の山札のCXを1枚までサーチし手札に加える。 このカードを思い出にする。', color: '青', cardo:'OS01/R01-097'},
+{id:242, name: 'コミュ力おばけ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_097s.png', type: '事件', cost: 1, rarity:'SR', power: 0, level:1, description:'このカードは、あなたの〈同OS〉のキャラがいないなら、手札からプレイできない。あなたは自分の山札のCXを1枚までサーチし手札に加える。 このカードを思い出にする。', color: '青', cardo:'OS01/R01-097S'},
+{id:243, name: '嫌いだけど好き', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_098.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-098'},
+{id:244, name: '嫌いだけど好き', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_098s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-098S'},
+{id:245, name: '楽しい一日', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_099.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-099'},
+{id:246, name: '楽しい一日', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_099s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-099S'},
+{id:247, name: '重なったふたりの運命', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_100.png', type: '名場面', cost: 0, rarity:'C', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-100'},
+{id:248, name: '重なったふたりの運命', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_100s.png', type: '名場面', cost: 0, rarity:'SR', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたの控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-100S'},
+{id:249, name: '内緒のキモチ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t01.png', type: '角色', cost: 0, rarity:'TD', power: 1000, level:0, description:'【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開し、自分の控え室のレベルＸ以下のキャラを1枚選び、手札に戻す。Ｘは公開されたカードのレベルに等しい。（CXのレベルは0として扱う。公開したカードは元に戻す）', color: '黄', cardo:'OS01/R01-T01'},
+{id:250, name: '内緒のキモチ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t01s.png', type: '角色', cost: 0, rarity:'SR', power: 1000, level:0, description:'【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開し、自分の控え室のレベルＸ以下のキャラを1枚選び、手札に戻す。Ｘは公開されたカードのレベルに等しい。（CXのレベルは0として扱う。公開したカードは元に戻す）', color: '黄', cardo:'OS01/R01-T01S'},
+{id:251, name: '内緒のキモチ 七海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t01sp.png', type: '角色', cost: 0, rarity:'SP', power: 1000, level:0, description:'【自】［手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の上から1枚を公開し、自分の控え室のレベルＸ以下のキャラを1枚選び、手札に戻す。Ｘは公開されたカードのレベルに等しい。（CXのレベルは0として扱う。公開したカードは元に戻す）', color: '黄', cardo:'OS01/R01-T01SP'},
+{id:252, name: '水着を買いに！ 乃愛', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t02.png', type: '角色', cost: 0, rarity:'TD', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋2000。（公開したカードは元に戻す） 【起】［手札を1枚控え室に置き、このカードを控え室に置く］ あなたは自分の控え室の〈同OS〉のキャラを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-T02'},
+{id:253, name: '初めてのビキニ 羽月', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t03.png', type: '角色', cost: 0, rarity:'TD', power: 2500, level:0, description:'【自】［(1) 手札のCXを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の控え室のCXを1枚選び、手札に戻す。', color: '黄', cardo:'OS01/R01-T03'},
+{id:254, name: '初めての吸血 梓', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t04.png', type: '角色', cost: 0, rarity:'TD', power: 500, level:0, description:'【自】 このカードが手札から登場した時、そのターン中、このカードは次の能力を得る。『【自】 このカードが舞台から控え室に置かれた時、あなたはこのカードをこのカードがいた枠に【レスト】して置いてよい。』 【起】［このカードを【レスト】する］ あなたは自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋1500。', color: '緑', cardo:'OS01/R01-T04'},
+{id:255, name: 'お姉さんの振る舞い 茉優', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t05.png', type: '角色', cost: 0, rarity:'TD', power: 1500, level:0, description:'【自】 このカードが手札から登場した時、あなたは相手のキャラを1枚選び、次の相手のターンの終わりまで、次の能力を与える。『【永】 このカードは他の枠に動かせない。』 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '緑', cardo:'OS01/R01-T05'},
+{id:256, name: 'お料理 かぐ耶', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t06.png', type: '角色', cost: 0, rarity:'TD', power: 2000, level:0, description:'【自】 このカードが手札から登場した時、あなたは自分の山札の上から1枚を公開する。そのカードが〈同OS〉のキャラなら、あなたは自分のキャラを1枚選び、そのターン中、パワーを＋1000。（公開したカードは元に戻す） 【自】［(1) 手札を1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分の山札の〈同OS〉のキャラを1枚までサーチし手札に加える。', color: '緑', cardo:'OS01/R01-T06'},
+{id:257, name: '女の子らしい恰好 ニコラ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t07.png', type: '角色', cost: 0, rarity:'TD', power: 500, level:0, description:'【自】 他のあなたの〈同OS〉のキャラがアタックした時、そのターン中、このカードのパワーを＋1000。 【自】［(1)］ 相手のターン中、このカードが【リバース】した時、コストを払ってよい。そうしたら、このカードを【レスト】し、次のあなたのアンコールステップの始めに、このカードを思い出にする。', color: '赤', cardo:'OS01/R01-T07'},
+{id:258, name: 'カジノのお仕事 エリナ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t08.png', type: '角色', cost: 0, rarity:'TD', power: 5000, level:1, description:'【自】【CXコンボ】 このカードのバトル相手が【リバース】した時、あなたのCX置場に「帰ってきた居場所」があり、他のあなたの〈同OS〉のキャラがいるなら、あなたは自分の山札の〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、その山札をシャッフルし、自分のキャラを1枚選び、そのターン中、パワーを＋1000し、《エッチな話題》を与える。', color: '赤', cardo:'OS01/R01-T08'},
+{id:259, name: '素の態度 あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t09.png', type: '角色', cost: 1, rarity:'TD', power: 5500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【自】 アンコール ［手札のキャラを1枚控え室に置く］ （このカードが舞台から控え室に置かれた時、あなたはコストを払ってよい。そうしたら、このカードがいた枠に【レスト】して置く）', color: '赤', cardo:'OS01/R01-T09'},
+{id:260, name: '将来も一緒に あやせ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t10.png', type: '角色', cost: 1, rarity:'TD', power: 4500, level:2, description:'【永】 応援 このカードの前のあなたのレベル3以上のキャラすべてに、パワーを＋2000。 【永】 記憶 あなたの思い出が3枚以上なら、このカードは次の2つの能力を得る。『【自】 あなたのCXフェイズの始めに、あなたは自分のキャラを1枚選び、次の相手のターンの終わりまで、パワーを＋500。』『【起】［このカードを【レスト】する］ あなたは1枚引き、自分の手札を1枚選び、控え室に置く。』', color: '赤', cardo:'OS01/R01-T10'},
+{id:261, name: '面倒見のいい女の子 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t11.png', type: '角色', cost: 1, rarity:'TD', power: 7000, level:2, description:'【自】［(1)］ このカードのバトル相手でレベル2以上のキャラが【リバース】した時、コストを払ってよい。そうしたら、あなたは1枚引く。 【自】 記憶 このカードがアタックした時、あなたの思い出置場の〈同OS〉のキャラが2枚以上なら、そのターン中、このカードのパワーを＋Ｘ。Ｘはこのカードの正面のキャラのレベル×2000に等しい。', color: '赤', cardo:'OS01/R01-T11'},
+{id:262, name: '魅惑の姿 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t12.png', type: '角色', cost: 2, rarity:'TD', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、他のあなたの〈同OS〉のキャラが2枚以上なら、あなたは自分のクロック置場のキャラを1枚選び、思い出にしてよい。 【自】 記憶 ［(2) 手札を1枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、相手に2ダメージを与える。（ダメージキャンセルは発生する）', color: '赤', cardo:'OS01/R01-T12'},
+{id:263, name: '魅惑の姿 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t12s.png', type: '角色', cost: 2, rarity:'SR', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、他のあなたの〈同OS〉のキャラが2枚以上なら、あなたは自分のクロック置場のキャラを1枚選び、思い出にしてよい。 【自】 記憶 ［(2) 手札を1枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、相手に2ダメージを与える。（ダメージキャンセルは発生する）', color: '赤', cardo:'OS01/R01-T12S'},
+{id:264, name: '魅惑の姿 美羽', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t12sp.png', type: '角色', cost: 2, rarity:'SP', power: 10000, level:3, description:'【自】 このカードが手札から登場した時、他のあなたの〈同OS〉のキャラが2枚以上なら、あなたは自分のクロック置場のキャラを1枚選び、思い出にしてよい。 【自】 記憶 ［(2) 手札を1枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたの思い出が3枚以上なら、コストを払ってよい。そうしたら、相手に2ダメージを与える。（ダメージキャンセルは発生する）', color: '赤', cardo:'OS01/R01-T12SP'},
+{id:265, name: '帰ってきた居場所', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t13.png', type: '名場面', cost: 0, rarity:'TD', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【カムバック】：このカードがトリガーした時、あなたは自分の控え室のキャラを1枚選び、手札に戻してよい）', color: '赤', cardo:'OS01/R01-T13'},
+{id:266, name: '月見酒に酔いしれて 風実花', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t14.png', type: '角色', cost: 0, rarity:'TD', power: 1500, level:0, description:'【永】 応援 このカードの前のあなたのレベル0以下のキャラすべてに、パワーを＋500。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から4枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは自分の控え室のキャラを1枚まで選び、手札に戻す。', color: '青', cardo:'OS01/R01-T14'},
+{id:267, name: 'お兄の頼み 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t15.png', type: '角色', cost: 0, rarity:'TD', power: 2000, level:1, description:'【自】 あなたがこのカードの『助太刀』を使った時、あなたの〈同OS〉のキャラがいるなら、あなたは自分のバトル中のキャラを1枚選び、そのターン中、パワーを＋1000。 【起】【カウンター】 助太刀1000 レベル1 ［手札のこのカードを控え室に置く］ （あなたは自分のフロントアタックされているキャラを1枚選び、そのターン中、パワーを＋1000）', color: '青', cardo:'OS01/R01-T15'},
+{id:268, name: '寂しいアピール 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t16.png', type: '角色', cost: 0, rarity:'TD', power: 3500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-T16'},
+{id:269, name: '寂しいアピール 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t16s.png', type: '角色', cost: 0, rarity:'SR', power: 3500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-T16S'},
+{id:270, name: '寂しいアピール 天音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t16sp.png', type: '角色', cost: 0, rarity:'SP', power: 3500, level:1, description:'【永】 他のあなたの〈同OS〉のキャラが2枚以上なら、このカードのパワーを＋2000。 【起】［(1) このカードを思い出にする］ あなたは自分の山札を上から3枚まで見て、〈同OS〉のキャラを1枚まで選んで相手に見せ、手札に加え、残りのカードを控え室に置く。', color: '青', cardo:'OS01/R01-T16SP'},
+{id:271, name: '前世返り 来海', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t17.png', type: '角色', cost: 0, rarity:'TD', power: 5500, level:1, description:'【永】 舞台のこのカードのレベルを－1。 【自】 このカードがアタックした時、あなたは他の自分の〈同OS〉のキャラを1枚選び、そのターン中、パワーを＋Ｘ。Ｘは他のあなたの〈同OS〉のキャラの枚数×500に等しい。', color: '青', cardo:'OS01/R01-T17'},
+{id:272, name: '純真無垢 莉音', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t18.png', type: '角色', cost: 2, rarity:'TD', power: 10000, level:3, description:'【自】［他のあなたの舞台の〈同OS〉のキャラを1枚控え室に置く］ このカードが手札から登場した時、コストを払ってよい。そうしたら、あなたは自分のクロックの上から1枚を、ストックにする。 【自】【CXコンボ】［(1)］ このカードのバトル相手が【リバース】した時、あなたのCX置場に「重なったふたりの運命」があるなら、コストを払ってよい。そうしたら、相手に2ダメージを与える。（ダメージキャンセルは発生する）', color: '青', cardo:'OS01/R01-T18'},
+{id:273, name: 'コミュ力おばけ', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t19.png', type: '事件', cost: 1, rarity:'TD', power: 0, level:1, description:'このカードは、あなたの〈同OS〉のキャラがいないなら、手札からプレイできない。あなたは自分の山札のCXを1枚までサーチし手札に加える。 このカードを思い出にする。', color: '青', cardo:'OS01/R01-T19'},
+{id:274, name: '重なったふたりの運命', image: 'https://ws-rose.com/wordpress/wp-content/images/cardlist/os01/r01/os01_r01_t20.png', type: '名場面', cost: 0, rarity:'TD', power: 0, level:0, description:'【永】 あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。 （【ゲート】：このカードがトリガーした時、あなたは自分の控え室のCXを1枚選び、手札に戻してよい）', color: '青', cardo:'OS01/R01-T20'},
+
+                // 可以繼續添加更多卡片
+            ];
+
+            const deck = new Map(); // 儲存當前牌組
+            const maxDeckSize = 60;
+
+            // 渲染卡片列表
+            function renderCards(cardsToRender = cards) {
+                const container = document.getElementById('cardsList');
+                container.innerHTML = '';
+
+                cardsToRender.forEach(card => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'card';
+                    const inDeckCount = deck.get(card.id) || 0;
+                    cardElement.innerHTML = `
+                        <img src="${card.image}" alt="${card.name}" class="card-img">
+                        <div class="card-content">
+                            <div class="card-title">${card.name}</div>
+                            <div class="card-stats">
+                                ${card.type === '角色' ? `
+                                     <span>等級: ${card.level}</span>
+									 <span>費用: ${card.cost}</span>
+									 <span>攻擊: ${card.power}</span>
+									 <span>顏色: ${card.color}</span>
+									 <span>稀有度: ${card.rarity}</span>
+                                ` : ''}
+                                ${card.type === '名場面' ? `
+                                     <span>顏色: ${card.color}</span>
+									 <span>稀有度: ${card.rarity}</span>
+                                ` : ''}		
+                                ${card.type === '事件' ? `
+                                     <span>等級: ${card.level}</span>
+									 <span>費用: ${card.cost}</span>
+									 <span>顏色: ${card.color}</span>
+									 <span>稀有度: ${card.rarity}</span>
+                                ` : ''}									
+                            </div>
+                            <div style="margin-top:0.7em;display:flex;align-items:center;gap:0.5em;">
+                                <button class="btn btn-primary add-to-deck" style="padding:0.2em 0.8em;font-size:1.1em;">＋</button>
+                                ${inDeckCount > 0 ? `<button class="btn btn-secondary remove-from-deck" style="padding:0.2em 0.8em;font-size:1.1em;">－</button><span style='color:#ff4fa2;font-weight:900;'>x${inDeckCount}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    // 點擊圖片開啟光箱
+                    cardElement.querySelector('.card-img').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openLightbox(card);
+                    });
+
+                    // 增加卡片到牌組
+                    cardElement.querySelector('.add-to-deck').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addToDeck(card);
+                        // 動畫提示
+                        cardElement.querySelector('.add-to-deck').classList.add('success');
+                        setTimeout(()=>cardElement.querySelector('.add-to-deck').classList.remove('success'), 300);
+                    });
+                    // 減少卡片數量
+                    if (inDeckCount > 0) {
+                        cardElement.querySelector('.remove-from-deck').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            removeFromDeck(card.id);
+                            // 動畫提示
+                            cardElement.querySelector('.remove-from-deck').classList.add('error');
+                            setTimeout(()=>cardElement.querySelector('.remove-from-deck').classList.remove('error'), 300);
+                        });
+                    }
+
+                    cardElement.addEventListener('click', () => addToDeck(card));
+                    container.appendChild(cardElement);
+                });
+            }
+
+            // 光箱功能
+            function openLightbox(card) {
+                const lightbox = document.getElementById('lightbox');
+                const img = document.getElementById('lightbox-img');
+                const info = document.getElementById('lightbox-info');
+                img.src = card.image;
+                img.alt = card.name;
+                info.innerHTML = `
+                    <div style='font-size:1.3em;font-weight:900;color:#ff4fa2;margin-bottom:0.5em;'>${card.name}</div>
+                    <div style='margin-bottom:0.5em;'>
+                        <span style='background:#ff4fa2;color:#fff;padding:2px 10px;border-radius:8px;margin-right:8px;'>${card.type}</span>
+                        <span style='background:#222;color:#ffb6e6;padding:2px 10px;border-radius:8px;margin-right:8px;'>費用: ${card.cost}</span>
+                        <span style='background:#222;color:#ffb6e6;padding:2px 10px;border-radius:8px;'>${card.rarity}</span>
+                    </div>
+                    ${card.type === '角色' ? `<div style='margin-bottom:0.5em;'><span style='color:#ffb6e6;'>攻擊:</span> ${card.power}　<span style='color:#ffb6e6;'>等級:</span> ${card.level}</div>` : ''}
+                    <div style='color:#fff;line-height:1.7;'>${card.description}</div>
+                `;
+                lightbox.style.display = 'flex';
+            }
+            document.getElementById('lightbox-close').onclick = function() {
+                document.getElementById('lightbox').style.display = 'none';
+            };
+            document.getElementById('lightbox').onclick = function(e) {
+                if(e.target === this) this.style.display = 'none';
+            };
+            // RWD for lightbox
+            const lightboxStyle = document.createElement('style');
+            lightboxStyle.textContent = `
+                @media (max-width: 900px) {
+                    #lightbox-content { flex-direction: column; max-width: 96vw; }
+                    #lightbox-img { max-width: 90vw; max-height: 40vh; }
+                    #lightbox-info { max-width: 90vw; max-height: 30vh; }
+                }
+                @media (max-width: 576px) {
+                    #lightbox-content { padding: 2vw 0.5vw; }
+                    #lightbox-img { max-width: 98vw; max-height: 30vh; }
+                    #lightbox-info { font-size: 1em; max-height: 20vh; }
+                }
+            `;
+            document.head.appendChild(lightboxStyle);
+
+            // 添加卡片到牌組
+            function addToDeck(card) {
+                const currentCount = deck.get(card.id) || 0;
+                const totalCards = Array.from(deck.values()).reduce((a, b) => a + b, 0);
+
+                if (totalCards >= maxDeckSize) {
+                    alert('牌組已達到上限！');
+                    return;
+                }
+
+                if (currentCount >= 4) {
+                    alert('同名卡片最多只能放入4張！');
+                    return;
+                }
+
+                deck.set(card.id, currentCount + 1);
+                updateDeckPreview();
+            }
+
+            // 更新牌組預覽
+            function updateDeckPreview() {
+                // 更新牌組統計
+                const totalCount = Array.from(deck.values()).reduce((a, b) => a + b, 0);
+                const creatureCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '角色')
+                    .reduce((sum, [, count]) => sum + count, 0);
+                const spellCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '事件')
+                    .reduce((sum, [, count]) => sum + count, 0);
+                const trapCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '名場面')
+                    .reduce((sum, [, count]) => sum + count, 0);
+
+                if (document.getElementById('deckCount')) document.getElementById('deckCount').textContent = totalCount;
+                if (document.getElementById('creatureCount')) document.getElementById('creatureCount').textContent = creatureCount;
+                if (document.getElementById('spellCount')) document.getElementById('spellCount').textContent = spellCount;
+                if (document.getElementById('trapCount')) document.getElementById('trapCount').textContent = trapCount;
+
+                renderCards();
+            }
+
+            // 從牌組中移除卡片
+            function removeFromDeck(cardId) {
+                const currentCount = deck.get(cardId);
+                if (currentCount > 1) {
+                    deck.set(cardId, currentCount - 1);
+                } else {
+                    deck.delete(cardId);
+                }
+                updateDeckPreview();
+            }
+
+            // 重新排序牌組
+            function reorderDeck(fromId, toId) {
+                const deckArray = Array.from(deck.entries());
+                const fromIndex = deckArray.findIndex(([id]) => id === fromId);
+                const toIndex = deckArray.findIndex(([id]) => id === toId);
+                
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    const [movedItem] = deckArray.splice(fromIndex, 1);
+                    deckArray.splice(toIndex, 0, movedItem);
+                    
+                    deck.clear();
+                    deckArray.forEach(([id, count]) => deck.set(id, count));
+                    
+                    updateDeckPreview();
+                }
+            }
+
+            // 過濾按鈕點擊事件
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filterGroup = this.closest('.filter-group');
+                    filterGroup.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    applyFilters();
+                });
+            });
+
+            // 應用所有過濾條件
+            function applyFilters() {
+                const typeFilter = document.querySelector('.filter-group:nth-child(2) .filter-btn.active').textContent;
+                const levelFilter = document.querySelector('.filter-group:nth-child(3) .filter-btn.active').textContent;
+				const costFilter = document.querySelector('.filter-group:nth-child(4) .filter-btn.active').textContent;
+				const colorFilter = document.querySelector('.filter-group:nth-child(5) .filter-btn.active').textContent;
+				const rarityFilter = document.querySelector('.filter-group:nth-child(6) .filter-btn.active').textContent;
+                const searchTerm = document.querySelector('.search-input').value.toLowerCase();
+
+                const filteredCards = cards.filter(card => {
+                    const matchesType = typeFilter === '全部' || card.type === typeFilter;
+                    const matchesLevel = levelFilter === '全部' || 
+                        (levelFilter === '3+' ? card.level >= 3 : card.level === parseInt(levelFilter));					
+                    const matchesCost = costFilter === '全部' || 
+                        (costFilter === '3+' ? card.cost >= 3 : card.cost === parseInt(costFilter));
+					const matchesColor = colorFilter === '全部' || card.color === colorFilter;
+					const matchesRarity = rarityFilter === '全部' || card.rarity === rarityFilter;
+                    const matchesSearch = card.name.toLowerCase().includes(searchTerm) ||
+                        card.description.toLowerCase().includes(searchTerm);
+
+                    return matchesType && matchesLevel && matchesCost && matchesColor && matchesRarity && matchesSearch;
+                });
+
+                renderCards(filteredCards);
+
+                // 顯示過濾結果統計
+                showFilterStats(filteredCards);
+            }
+
+            // 顯示過濾結果統計
+            function showFilterStats(filteredCards) {
+                const statsContainer = document.createElement('div');
+                statsContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: var(--card-bg);
+                    padding: 10px 15px;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    z-index: 999;
+                    font-size: 0.9em;
+                    animation: fadeIn 0.3s ease-out;
+                `;
+                statsContainer.textContent = `找到 ${filteredCards.length} 張符合條件的卡片`;
+
+                // 移除舊的統計資訊
+                const oldStats = document.querySelector('.filter-stats');
+                if (oldStats) oldStats.remove();
+
+                statsContainer.classList.add('filter-stats');
+                document.body.appendChild(statsContainer);
+
+                // 3秒後自動消失
+                setTimeout(() => {
+                    statsContainer.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => statsContainer.remove(), 300);
+                }, 3000);
+            }
+
+            // 儲存牌組
+            document.getElementById('saveDeck').addEventListener('click', () => {
+                const deckName = document.querySelector('.deck-name').value;
+                const deckData = {
+                    name: deckName,
+                    cards: Array.from(deck.entries())
+                };
+                localStorage.setItem(`deck_${Date.now()}`, JSON.stringify(deckData));
+                alert('牌組已儲存！');
+            });
+
+            // 載入牌組
+            document.getElementById('loadDeck').addEventListener('click', () => {
+                // 獲取所有已保存的牌組
+                const decks = Object.entries(localStorage)
+                    .filter(([key]) => key.startsWith('deck_'))
+                    .map(([key, value]) => {
+                        const data = JSON.parse(value);
+                        return {
+                            id: key,
+                            name: data.name,
+                            timestamp: parseInt(key.split('_')[1])
+                        };
+                    })
+                    .sort((a, b) => b.timestamp - a.timestamp);
+
+                if (decks.length === 0) {
+                    alert('沒有已保存的牌組！');
+                    return;
+                }
+
+                // 創建牌組選擇對話框
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: var(--card-bg);
+                    padding: 20px;
+                    border-radius: 8px;
+                    z-index: 1001;
+                    max-width: 80%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                `;
+
+                dialog.innerHTML = `
+                    <h3 style="margin-bottom: 15px;">選擇要載入的牌組</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${decks.map(deck => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                                <span>${deck.name}</span>
+                                <div>
+                                    <button class="btn btn-primary load-deck-btn" data-deck-id="${deck.id}">載入</button>
+                                    <button class="btn btn-secondary delete-deck-btn" data-deck-id="${deck.id}">刪除</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="this.parentElement.remove()">關閉</button>
+                `;
+
+                // 添加背景遮罩
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.7);
+                    z-index: 1000;
+                `;
+                overlay.onclick = () => {
+                    dialog.remove();
+                    overlay.remove();
+                };
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(dialog);
+
+                // 載入牌組事件
+                dialog.querySelectorAll('.load-deck-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const deckId = btn.dataset.deckId;
+                        const deckData = JSON.parse(localStorage.getItem(deckId));
+                        
+                        // 清空當前牌組
+                        deck.clear();
+                        
+                        // 載入保存的牌組
+                        deckData.cards.forEach(([id, count]) => {
+                            deck.set(parseInt(id), count);
+                        });
+                        
+                        // 更新牌組名稱
+                        document.querySelector('.deck-name').value = deckData.name;
+                        
+                        // 更新預覽
+                        updateDeckPreview();
+                        
+                        // 關閉對話框
+                        dialog.remove();
+                        overlay.remove();
+                        
+                        // 顯示成功消息
+                        showNotification('牌組載入成功！');
+                    });
+                });
+
+                // 刪除牌組事件
+                dialog.querySelectorAll('.delete-deck-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('確定要刪除這個牌組嗎？')) {
+                            const deckId = btn.dataset.deckId;
+                            localStorage.removeItem(deckId);
+                            btn.closest('div').parentElement.remove();
+                            
+                            // 如果沒有牌組了，關閉對話框
+                            if (dialog.querySelectorAll('.load-deck-btn').length === 0) {
+                                dialog.remove();
+                                overlay.remove();
+                                alert('沒有更多已保存的牌組！');
+                            }
+                        }
+                    });
+                });
+            });
+
+            // 添加通知功能
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 25px;
+                    background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+                    color: white;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    z-index: 1002;
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+
+            // 添加通知動畫
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 初始化渲染
+            renderCards();
+
+            // deck-lightbox 彈窗功能
+            function renderDeckLightbox() {
+                const preview = document.getElementById('deckLightboxCards');
+                if (!preview) return;
+                preview.innerHTML = '';
+                const deckCards = Array.from(deck.entries()).map(([id, count]) => {
+                    const card = cards.find(c => c.id === id);
+                    return { ...card, count };
+                });
+                deckCards.sort((a, b) => a.cost - b.cost);
+                deckCards.forEach(card => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'deck-card';
+                    cardElement.draggable = true;
+                    cardElement.innerHTML = `
+                        <button class="remove-deck-btn" title="移除一張">－</button>
+                        <div class="card-controls">
+                            <button class="card-control-btn add-card" data-card-id="${card.id}">+</button>
+                        </div>
+                        <img src="${card.image}" alt="${card.name}">
+                        <div class="card-count">x${card.count}</div>
+                        <div class="deck-card-info">
+                            <div>${card.name}</div>
+                            <div>費用: ${card.cost}</div>
+                        </div>
+                    `;
+                    cardElement.querySelector('.remove-deck-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        removeFromDeck(card.id);
+                        cardElement.querySelector('.remove-deck-btn').classList.add('error');
+                        setTimeout(()=>cardElement.querySelector('.remove-deck-btn').classList.remove('error'), 300);
+                        renderDeckLightbox();
+                    });
+                    const addBtn = cardElement.querySelector('.add-card');
+                    addBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addToDeck(cards.find(c => c.id === card.id));
+                        renderDeckLightbox();
+                    });
+                    // 拖曳排序功能（可選，與主預覽一致）
+                    cardElement.addEventListener('dragstart', (e) => {
+                        cardElement.classList.add('dragging');
+                        e.dataTransfer.setData('text/plain', card.id);
+                    });
+                    cardElement.addEventListener('dragend', () => {
+                        cardElement.classList.remove('dragging');
+                    });
+                    cardElement.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const draggingCard = preview.querySelector('.dragging');
+                        if (draggingCard !== cardElement) {
+                            cardElement.classList.add('drag-over');
+                        }
+                    });
+                    cardElement.addEventListener('dragleave', () => {
+                        cardElement.classList.remove('drag-over');
+                    });
+                    cardElement.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        cardElement.classList.remove('drag-over');
+                        const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+                        const dropId = card.id;
+                        if (draggedId !== dropId) {
+                            reorderDeck(draggedId, dropId);
+                            renderDeckLightbox();
+                        }
+                    });
+                    preview.appendChild(cardElement);
+                });
+                // 更新統計
+                const totalCount = Array.from(deck.values()).reduce((a, b) => a + b, 0);
+                const creatureCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '角色')
+                    .reduce((sum, [, count]) => sum + count, 0);
+                const spellCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '事件')
+                    .reduce((sum, [, count]) => sum + count, 0);
+                const trapCount = Array.from(deck.entries())
+                    .filter(([id]) => cards.find(c => c.id === id).type === '名場面')
+                    .reduce((sum, [, count]) => sum + count, 0);
+                document.getElementById('deckCount2').textContent = totalCount;
+                document.getElementById('creatureCount2').textContent = creatureCount;
+                document.getElementById('spellCount2').textContent = spellCount;
+                document.getElementById('trapCount2').textContent = trapCount;
+            }
+            document.getElementById('openDeckLightbox').onclick = function() {
+                renderDeckLightbox();
+                document.getElementById('deck-lightbox').style.display = 'flex';
+            };
+            document.getElementById('deck-lightbox-close').onclick = function() {
+                document.getElementById('deck-lightbox').style.display = 'none';
+            };
+            document.getElementById('deck-lightbox').onclick = function(e) {
+                if(e.target === this) this.style.display = 'none';
+            };
+
+            // 搜尋功能
+            const searchInput = document.querySelector('.search-input');
+            searchInput.addEventListener('input', () => {
+                applyFilters();
+            });
+        });
+    </script>
+</body>
+</html> 
