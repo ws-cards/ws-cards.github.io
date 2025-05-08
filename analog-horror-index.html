@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANALOG HORROR TCG</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=UnifrakturCook:wght@700&display=swap');
+        body {
+            background: #111;
+            color: #e0e0e0;
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* CRT掃描線效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            left: 0; top: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.03) 0px,
+                rgba(255,255,255,0.03) 2px,
+                transparent 2px,
+                transparent 6px
+            );
+            z-index: 10;
+        }
+        /* 雜訊覆蓋層 */
+        .noise {
+            pointer-events: none;
+            position: fixed;
+            left: 0; top: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
+            z-index: 20;
+            opacity: 0.13;
+            background: url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif') repeat;
+            mix-blend-mode: lighten;
+        }
+        header {
+            text-align: center;
+            padding: 4rem 0 1.5rem 0;
+            position: relative;
+            z-index: 2;
+        }
+        .main-title {
+            font-family: 'UnifrakturCook', cursive;
+            font-size: 3.2rem;
+            color: #fff;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 12px #ff003c, 0 0 2px #fff, 0 0 40px #000;
+            filter: blur(0.5px) contrast(1.2);
+            margin-bottom: 0.5rem;
+            animation: flicker 2.5s infinite alternate;
+        }
+        @keyframes flicker {
+            0% { opacity: 1; text-shadow: 0 0 12px #ff003c, 0 0 2px #fff, 0 0 40px #000; }
+            10% { opacity: 0.8; text-shadow: 0 0 18px #ff003c, 0 0 4px #fff, 0 0 60px #000; }
+            20% { opacity: 1; }
+            30% { opacity: 0.7; }
+            40% { opacity: 1; }
+            100% { opacity: 0.95; }
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ff003c;
+            letter-spacing: 0.08em;
+            margin-bottom: 2.5rem;
+            text-shadow: 0 0 8px #000, 0 0 2px #ff003c;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .enter-btn {
+            background: #111;
+            color: #fff;
+            border: 2px solid #ff003c;
+            border-radius: 6px;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            box-shadow: 0 0 16px #ff003c44, 0 0 2px #fff;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+            margin-bottom: 2.5rem;
+        }
+        .enter-btn:hover {
+            background: #ff003c;
+            color: #111;
+            border: 2px solid #fff;
+        }
+        .cards {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+            z-index: 2;
+            position: relative;
+        }
+        .card {
+            background: #181818;
+            border: 2.5px solid #ff003c;
+            border-radius: 12px;
+            width: 180px;
+            height: 260px;
+            box-shadow: 0 0 32px #000a, 0 0 8px #ff003c44;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            filter: grayscale(0.7) contrast(1.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.04) rotate(-1deg);
+            box-shadow: 0 0 48px #ff003c99, 0 0 16px #fff2;
+            filter: grayscale(0.3) contrast(1.3);
+        }
+        .card-title {
+            font-family: 'UnifrakturCook', cursive;
+            color: #fff;
+            font-size: 1.1rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.7rem;
+            text-shadow: 0 0 8px #ff003c, 0 0 2px #fff;
+        }
+        .card-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 0.7rem;
+            box-shadow: 0 0 12px #000a;
+            filter: blur(0.5px) grayscale(0.8) contrast(1.2);
+        }
+        .card-desc {
+            font-size: 0.95rem;
+            color: #ff003c;
+            text-align: center;
+            padding: 0 0.5rem;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 4px #000;
+        }
+        @media (max-width: 900px) {
+            .cards {
+                gap: 1.2rem;
+            }
+            .card {
+                width: 90vw;
+                max-width: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <header>
+        <div class="main-title">ANALOG HORROR TCG</div>
+        <div class="subtitle">你真的準備好揭開這副卡牌的祕密了嗎？</div>
+        <button class="enter-btn">進入遊戲</button>
+    </header>
+    <div class="cards">
+        <div class="card">
+            <div class="card-title">THE STATIC</div>
+            <img class="card-img" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=400&q=80" alt="static">
+            <div class="card-desc">螢幕雜訊中，潛藏著未知的凝視。</div>
+        </div>
+        <div class="card">
+            <div class="card-title">THE EYE</div>
+            <img class="card-img" src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&q=80" alt="eye">
+            <div class="card-desc">祂一直在看著你，從未移開視線。</div>
+        </div>
+        <div class="card">
+            <div class="card-title">THE SIGNAL</div>
+            <img class="card-img" src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=400&q=80" alt="signal">
+            <div class="card-desc">失真的訊號，傳來不屬於這個世界的低語。</div>
+        </div>
+    </div>
+</body>
+</html> 
