@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>卡牌圖鑑收集</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      margin: 30px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .top-bar {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    select {
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .card img {
+      max-width: 100%;
+      border-radius: 5px;
+    }
+
+    .rarity {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    .rarity.normal { color: gray; }
+    .rarity.rare { color: blue; }
+    .rarity.legendary { color: goldenrod; }
+
+    .collect-btn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .collected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .not-collected {
+      background-color: #ccc;
+      color: black;
+    }
+
+    .progress {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* 詳情彈窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+
+    .modal img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .modal .rarity {
+      margin: 10px 0;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>卡牌圖鑑收集</h1>
+
+  <div class="top-bar">
+    <label for="rarityFilter">稀有度篩選：</label>
+    <select id="rarityFilter">
+      <option value="all">全部</option>
+      <option value="RR">RR</option>
+      <option value="R">R</option>
+	  <option value="SR">SR</option>
+	  <option value="SP">SP</option>
+      <option value="SSP">SSP</option>
+    </select>
+	<label for="parallelFilter">稀罕篩選：</label>
+    <select id="parallelFilter">
+      <option value="all">全部</option>
+      <option value="Yes">稀有</option>
+      <option value="No">普通</option>
+    </select>	
+    <div class="progress" id="collectionProgress">已收藏 0 / 0 張</div>
+  </div>
+
+  <div class="card-grid" id="cardGrid">
+    <!-- 卡片將用 JS 動態生成 -->
+  </div>
+
+  <!-- 詳情彈窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent">
+      <button class="close-btn" id="closeModal">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const cardData = [
+      {
+        id: "1",
+        name: "貴族令嬢の幼馴染 ディア(Sak/W123-071)",
+        rarity: "R",
+		parallel: "No",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071.png",
+        description: "最弱的怪物，但在大自然中數量龐大。"
+      },
+      {
+        id: "2",
+        name: "暗殺者 ルーグ(Sak/W123-074)",
+        rarity: "R",
+		parallel: "No",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_074.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_074.png",
+        description: "騎乘飛龍的戰士，擁有強大的空中機動力。"
+      },
+      {
+        id: "3",
+        name: "貴族令嬢の幼馴染 ディア(Sak/W123-071S)",
+        rarity: "SR",
+		parallel: "Yes",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071s.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071s.png",
+        description: "傳說中的不死鳥，能夠從火焰中重生。"
+      },
+      {
+        id: "4",
+        name: "暗殺者 ルーグ(Sak/W123-074s)",
+        rarity: "SR",
+		parallel: "Yes",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_074s.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_074s.png",
+        description: "精通黑暗魔法，擅長詛咒與召喚。"
+      },
+      {
+        id: "5",
+        name: "助手兼専属メイド タルト(Sak/W123-078)",
+        rarity: "U",
+		parallel: "No",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_078.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_078.png",
+        description: "狡猾的小怪物，經常成群結隊攻擊。"
+      },
+      {
+        id: "6",
+        name: "貴族令嬢の幼馴染 ディア(Sak/W123-071SP)",
+        rarity: "SP",
+		parallel: "Yes",
+        image: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071sp.png",
+        bigImage: "https://ws-tcg.com/wordpress/wp-content/images/cardlist/s/sxx_w123/sak_w123_071sp.png",
+        description: "狡猾的小怪物，經常成群結隊攻擊。"
+      }	  
+    ];
+
+    const cardGrid = document.getElementById('cardGrid');
+    const filterSelect = document.getElementById('rarityFilter');
+    const progressDisplay = document.getElementById('collectionProgress');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalBody = document.getElementById('modalBody');
+    const closeModal = document.getElementById('closeModal');
+	const parallelFilterSelect = document.getElementById('parallelFilter');
+	
+    let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
+
+    function createCard(card) {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.dataset.rarity = card.rarity;
+      cardEl.dataset.id = card.id;
+
+      cardEl.innerHTML = `
+        <img src="${card.image}" alt="${card.name}">
+        <div>${card.name}</div>
+        <div class="rarity ${card.rarity}">${getRarityName(card.rarity)}</div>
+        <button class="collect-btn">收藏</button>
+      `;
+
+      // 詳情彈窗觸發（圖片或文字）
+      cardEl.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('collect-btn')) {
+          showDetail(card);
+        }
+      });
+
+      // 收藏按鈕
+      const btn = cardEl.querySelector('.collect-btn');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 防止觸發彈窗
+        toggleCollect(card.id, btn);
+      });
+
+      updateCollectButton(card.id, btn);
+
+      return cardEl;
+    }
+
+    function toggleCollect(id, button) {
+      if (collected.includes(id)) {
+        collected = collected.filter(cid => cid !== id);
+      } else {
+        collected.push(id);
+      }
+      localStorage.setItem('collectedCards', JSON.stringify(collected));
+      updateCollectButton(id, button);
+      updateProgress();
+    }
+
+    function updateCollectButton(id, button) {
+      if (collected.includes(id)) {
+        button.textContent = "取消收藏";
+        button.classList.add('collected');
+        button.classList.remove('not-collected');
+      } else {
+        button.textContent = "收藏";
+        button.classList.add('not-collected');
+        button.classList.remove('collected');
+      }
+    }
+
+    function updateProgress() {
+      progressDisplay.textContent = `已收藏 ${collected.length} / ${cardData.length} 張`;
+    }
+
+    function renderCards() {
+      cardGrid.innerHTML = '';
+      const selected = filterSelect.value;
+
+      cardData.forEach(card => {
+        if (selected === 'all' || card.rarity === selected) {
+          const cardEl = createCard(card);
+          cardGrid.appendChild(cardEl);
+        }
+      });
+      updateProgress();
+    }
+	
+    function renderParallelCards() {
+      cardGrid.innerHTML = '';
+      const selected = parallelFilterSelect.value;
+
+      cardData.forEach(card => {
+        if (selected === 'all' || card.parallel === selected) {
+          const cardEl = createCard(card);
+          cardGrid.appendChild(cardEl);
+        }
+      });
+      updateProgress();
+    }
+	
+    function getRarityName(rarity) {
+      switch (rarity) {
+        case "normal": return "普通";
+        case "rare": return "稀有";
+        case "legendary": return "傳說";
+        default: return rarity;
+      }
+    }
+
+    function showDetail(card) {
+      modalBody.innerHTML = `
+        <img src="${card.bigImage}" alt="${card.name}">
+        <h2>${card.name}</h2>
+        <div class="rarity ${card.rarity}">${getRarityName(card.rarity)}</div>
+        <p>${card.description}</p>
+      `;
+      modalOverlay.style.display = 'flex';
+    }
+
+    closeModal.addEventListener('click', () => {
+      modalOverlay.style.display = 'none';
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.style.display = 'none';
+      }
+    });
+
+    filterSelect.addEventListener('change', renderCards);
+	parallelFilterSelect.addEventListener('change', renderParallelCards);
+    renderCards();
+  </script>
+</body>
+</html>
