@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
-  <title>TCG圖鑑收集</title>
+  <title>✖✖✖TCG圖鑑收集✖✖✖</title>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Yomogi&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
   <style>
@@ -269,6 +269,7 @@
       max-width: 500px;
       max-height: 90vh;
       overflow-y: auto;
+	  overflow-x: hidden;
       text-align: center;
       position: relative;
       box-shadow: 0 4px 20px rgba(255, 105, 180, 0.2);
@@ -377,7 +378,7 @@
     <div class="floating-icon">🎀</div>
     <div class="floating-icon">✧</div>
   </div>
-  <h1>TCG 圖鑑</h1>
+  <h1>✖✖✖TCG 圖鑑收集✖✖✖</h1>
 
   <div class="top-bar">
     <label for="rarityFilter">稀有度篩選：</label>
@@ -390,12 +391,13 @@
     </select>
     <div class="progress" id="collectionProgress">已收藏 0 / 0 張</div>
     <button id="exportBtn" style="background:var(--accent-pink);color:var(--primary-black);font-weight:bold;border-radius:6px;padding:8px 18px;margin-left:10px;">匯出收藏</button>
+	<button onclick="clearStorage()" style="background:var(--accent-pink);color:var(--primary-black);font-weight:bold;border-radius:6px;padding:8px 18px;margin-left:10px;">清除收藏</button>
+
   </div>
 
   <div class="card-grid" id="cardGrid">
     <!-- 卡片將用 JS 動態生成 -->
   </div>
-
   <!-- 詳情彈窗 -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modalContent">
@@ -408,14 +410,25 @@
   <div id="exportModal" style="display:none;position:fixed;z-index:2000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;">
     <div style="background:var(--secondary-black);padding:30px 24px;border-radius:12px;box-shadow:0 4px 20px #ff69b4a0;text-align:center;min-width:220px;">
       <div style="color:var(--accent-pink);font-size:1.2rem;font-family:'Yomogi',cursive;margin-bottom:18px;">選擇匯出格式</div>
-      <button id="exportImg" style="margin:8px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">匯出成圖片</button><br>
-      <button id="exportPDF" style="margin:12px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">匯出成PDF</button><br>
+      <button id="exportImg" style="margin:8px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;" >匯出成圖片</button><br>
+      <button id="exportPDF" style="margin:12px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">匯出成PDF[no working]</button><br>
       <button id="closeExportModal" style="margin:18px 0 0 0;padding:6px 18px;border-radius:6px;background:var(--secondary-black);color:var(--accent-pink);font-weight:bold;border:1px solid var(--accent-pink);">取消</button>
     </div>
   </div>
 
+    <!-- 匯出卡片清單彈窗 -->
+  <div class="modal-overlay" id="modalCardListOverlay">
+    <div class="modal" id="modalCardListContent">
+	  <button class="close-btn" id="closeCardListModal"><h3>✖✖✖</h3></button>
+      <div id="modalCardListBody"></div>
+    </div>
+  </div>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <script>
     const cardData = [
 {"id":"GIM/W124-T01" , "name":"胸を張って一歩ずつ 倉本千奈 (GIM/W124-T01)" , "rarity":"TD" , "parallel": "No" , "image":"https://ws-tcg.com/wordpress/wp-content/images/cardlist/g/gim_w124/gim_w124_t01.png ","bigImage" :"https://ws-tcg.com/wordpress/wp-content/images/cardlist/g/gim_w124/gim_w124_t01.png", "description":"【自】［このカードを山札の下に置く］ 他のあなたの《音楽》のキャラが【リバース】した時、後列にこのカードがいるなら、あなたはコストを払ってよい。そうしたら、あなたはそのキャラを手札に戻す。 【起】 集中 ［(1) このカードを【レスト】する］ あなたは自分の山札の上から5枚をめくり、控え室に置く。それらのカードのCX1枚につき、あなたは1枚まで引く。"},
@@ -756,12 +769,51 @@
     const filterSelect = document.getElementById('rarityFilter');
     const progressDisplay = document.getElementById('collectionProgress');
     const modalOverlay = document.getElementById('modalOverlay');
+	const modalCardListOverlay = document.getElementById('modalCardListOverlay');
     const modalBody = document.getElementById('modalBody');
     const closeModal = document.getElementById('closeModal');
+	const closeCardListModal = document.getElementById('closeCardListModal');
     const parallelFilterSelect = document.getElementById('parallelFilter');
 
     let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
 
+	//清除local
+	function clearStorage(){
+		const collectedIds = collected;
+		if(!collectedIds.length){
+		    Swal.fire({
+			  title: "收藏匣是空的！",
+			  text: "",
+			  icon: "warning"
+			});
+		}else{
+		    localStorage.clear();
+		    Swal.fire({
+			  title: "已清除收藏!",
+			  text: "",
+			  icon: "success"
+			});
+		
+		
+			collectedIds.forEach(id => {
+			const cards = document.getElementsByClassName('card');
+			  try{
+				Array.prototype.forEach.call(cards, function(element) {
+					
+					const cardid = element.dataset.id;
+					if(id === cardid){
+					 const btn = element.querySelector('.collect-btn');
+					 toggleCollect(cardid, btn);
+					 throw new Error("LoopInterrupt");
+					}			
+				});
+			  }catch(e){
+				if(e.message !=  "LoopInterrupt") throw e;
+			  }
+			});			
+		}		
+	}
+	
     function createCard(card) {
       const cardEl = document.createElement('div');
       cardEl.className = 'card';
@@ -861,12 +913,20 @@
     closeModal.addEventListener('click', () => {
       modalOverlay.style.display = 'none';
     });
-
+	
+    closeCardListModal.addEventListener('click', () => {
+      modalCardListOverlay.style.display = 'none';
+    });
+	
     modalOverlay.addEventListener('click', (e) => {
       if (e.target === modalOverlay) {
         modalOverlay.style.display = 'none';
       }
     });
+	
+	function showList(){
+		modalCardListOverlay.style.display = 'flex';
+	}
 
     filterSelect.addEventListener('change', renderCards);
     parallelFilterSelect.addEventListener('change', renderCards);
@@ -903,12 +963,17 @@
       // 只顯示已收藏卡片
       const collectedIds = collected;
       if (!collectedIds.length) {
-        alert('你還沒有收藏任何卡片！');
+		    Swal.fire({
+			  title: "收藏匣是空的！",
+			  text: "",
+			  icon: "warning"
+			});
         return;
       }
       // 建立一個臨時容器，並複製網站的 card-grid 結構
       const temp = document.createElement('div');
       temp.className = 'card-grid';
+	  temp.id = 'tempID';
       temp.style.background = 'var(--primary-black)';
       temp.style.padding = '24px';
       temp.style.margin = '0 auto';
@@ -917,6 +982,7 @@
       collectedIds.forEach(id => {
         const card = cardData.find(c => c.id === id);
         if (card) {
+			console.log(card.image);
           const cardDiv = document.createElement('div');
           cardDiv.className = 'card';
           cardDiv.innerHTML = `
@@ -942,23 +1008,10 @@
         .rarity.TD { color: var(--accent-pink); }
       `;
       temp.appendChild(style);
-      document.body.appendChild(temp);
+	  document.getElementById('modalCardListBody').appendChild(temp);
+      //document.body.appendChild(temp);
       window.scrollTo(0,0);
-      await new Promise(r => setTimeout(r, 200));
-      html2canvas(temp, {backgroundColor: null, useCORS: true}).then(canvas => {
-        if (type === 'image') {
-          const link = document.createElement('a');
-          link.download = '收藏卡片.png';
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-        } else if (type === 'pdf') {
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new window.jspdf.jsPDF({orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height]});
-          pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-          pdf.save('收藏卡片.pdf');
-        }
-        temp.remove();
-      });
+	  showList();
     }
   </script>
 </body>
