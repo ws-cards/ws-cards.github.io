@@ -540,6 +540,8 @@
     <div class="progress" id="collectionProgress">已收藏 0 / 0 張</div>
   </div>
 
+<input type="text" id="searchInput" placeholder="搜尋..." oninput="filterCards()">
+
   <div class="action-buttons full-width">
     <button id="exportBtn">匯出收藏</button>
     <button onclick="clearStorage()">清除收藏</button>
@@ -563,10 +565,10 @@
       <div style="color:var(--accent-pink);font-size:1.2rem;font-family:'Yomogi',cursive;margin-bottom:18px;">選擇匯出格式</div>
       <button id="exportImg" style="margin:8px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;" >匯出成圖片</button><br>
       <button id="exportPDF" style="margin:12px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">匯出成PDF[no working]</button><br>
-<!-- ✅ 新增：匯出成文字檔按鈕 -->
-<button id="exportText" style="margin:12px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">
-  匯出文字檔
-</button>  
+	  <!--  新增：匯出成文字檔按鈕 -->
+	  <button id="exportText" style="margin:12px 0 0 0;padding:8px 20px;border-radius:6px;background:var(--accent-pink);color:var(--primary-black);font-weight:bold;">
+	    匯出文字檔
+       </button>  
       <button id="closeExportModal" style="margin:18px 0 0 0;padding:6px 18px;border-radius:6px;background:var(--secondary-black);color:var(--accent-pink);font-weight:bold;border:1px solid var(--accent-pink);">取消</button>
     </div>
   </div>
@@ -997,7 +999,7 @@
 	const costFilterSelect = document.getElementById('costFilter');
 	const colorFilterSelect = document.getElementById('colorFilter');
 	const kindFilterSelect = document.getElementById('kindFilter');
-
+	const inputFilter = document.getElementById('searchInput');
 
 	
     let collected = JSON.parse(localStorage.getItem('collectedCards')) || [];
@@ -1101,6 +1103,8 @@
       progressDisplay.textContent = `已收藏 ${collected.length} / ${cardData.length} 張`;
     }
 
+
+
     function renderCards() {
       cardGrid.innerHTML = '';
       const selected = filterSelect.value;
@@ -1109,6 +1113,8 @@
 	  const costFilterSelected = costFilterSelect.value;
 	  const colorFilterSelected = colorFilterSelect.value;
 	  const kindFilterSelected = kindFilterSelect.value;
+	  const inputFilterStr = inputFilter.value.toLowerCase();
+	  
 	  
       cardData.forEach(card => {
         if ((selected === '0_all' || card.rarity === selected) &&
@@ -1116,7 +1122,8 @@
 			( lvFilterSelected === 'all' || card.lv ===  lvFilterSelected) &&
 			( costFilterSelected === 'all' || card.cost ===  costFilterSelected) &&			
 			( colorFilterSelected === 'all' || card.color ===  colorFilterSelected) &&
-			( kindFilterSelected === 'all' || card.kind ===  kindFilterSelected)			 
+			( kindFilterSelected === 'all' || card.kind ===  kindFilterSelected) &&		
+			( card.name.includes(inputFilterStr))			
 			) {
           const cardEl = createCard(card);
           cardGrid.appendChild(cardEl);
@@ -1202,6 +1209,7 @@
 	costFilterSelect.addEventListener('change', renderCards);
 	colorFilterSelect.addEventListener('change', renderCards);
 	kindFilterSelect.addEventListener('change', renderCards);
+	inputFilter.addEventListener('change', renderCards);
     renderCards();
 
 	
