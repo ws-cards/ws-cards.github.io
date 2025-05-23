@@ -540,7 +540,7 @@
     <div class="progress" id="collectionProgress">已收藏 0 / 0 張</div>
   </div>
 
-<input type="text" id="searchInput" placeholder="搜尋..." oninput="filterCards()">
+<input type="text" id="searchInput" placeholder="名稱搜尋..." oninput="filterCards()">
 
   <div class="action-buttons full-width">
     <button id="exportBtn">匯出收藏</button>
@@ -1363,6 +1363,7 @@
 /////////////////////////////////////////////////////
 
     async function exportCollected(type) {
+	  
       // 只顯示已收藏卡片
       const collectedIds = collected;
       if (!collectedIds.length) {
@@ -1373,48 +1374,55 @@
 			});
         return;
       }
-      // 建立一個臨時容器，並複製網站的 card-grid 結構
-      const temp = document.createElement('div');
-      temp.className = 'card-grid layout-a';
-	  temp.id = 'tempID';
-      temp.style.background = 'var(--primary-black)';
-      temp.style.padding = '24px';
-      temp.style.margin = '0 auto';
-      temp.style.maxWidth = '900px';
-      // 複製網站的 card 樣式
-      collectedIds.forEach(id => {
-        const card = cardData.find(c => c.id === id);
-        if (card) {
-			console.log(card.image);
-          const cardDiv = document.createElement('div');
-          cardDiv.className = 'card';
-          cardDiv.innerHTML = `
-            <img src="${card.image}" alt="${card.name}">
-            <div>${card.name}</div>
-            <div class="rarity ${card.rarity}">${getRarityName(card.rarity)}</div>
-          `;
-          temp.appendChild(cardDiv);
-        }
-      });
-      // 複製主要 CSS 到臨時容器
-      const style = document.createElement('style');
-      style.textContent = `
-        body { background: var(--primary-black); }
-        .card-grid.layout-a { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 10px; }
-        .card { background-color: var(--secondary-black); padding: 12px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); text-align: center; border: 1px solid var(--accent-pink); }
-        .card img { max-width: 100%; height: auto; border-radius: 5px; border: 2px solid var(--accent-pink); }
-        .card > div { font-size: clamp(0.8rem, 2vw, 1rem); margin: 5px 0; word-break: break-word; color: var(--text-white); }
-        .rarity { font-family: 'Yomogi', cursive; margin-top: 8px; font-weight: bold; }
-        .rarity.normal { color: var(--text-gray); }
-        .rarity.rare { color: var(--accent-pink); }
-        .rarity.legendary { color: var(--accent-wine); }
-        .rarity.TD { color: var(--accent-pink); }
-      `;
-      temp.appendChild(style);
-	  document.getElementById('modalCardListBody').appendChild(temp);
-      //document.body.appendChild(temp);
-      window.scrollTo(0,0);
-	  showList();  
+	  if(document.getElementById('tempID')!=null){
+		  //清掉舊結構
+		  document.getElementById('modalCardListBody').innerHTML = "";
+	  }
+
+		  // 建立一個臨時容器，並複製網站的 card-grid 結構 
+		  const temp = document.createElement('div');
+		  temp.className = 'card-grid layout-a';
+		  temp.id = 'tempID';
+		  temp.style.background = 'var(--primary-black)';
+		  temp.style.padding = '24px';
+		  temp.style.margin = '0 auto';
+		  temp.style.maxWidth = '900px';
+		  // 複製網站的 card 樣式
+		  collectedIds.forEach(id => {
+			const card = cardData.find(c => c.id === id);
+			if (card) {
+				console.log(card.image);
+			  const cardDiv = document.createElement('div');
+			  cardDiv.className = 'card';
+			  cardDiv.innerHTML = `
+				<img src="${card.image}" alt="${card.name}">
+				<div>${card.name}</div>
+				<button class="collect-btn">收藏</button>
+			  `;
+			  temp.appendChild(cardDiv);
+			}
+		  });
+		  // 複製主要 CSS 到臨時容器
+		  const style = document.createElement('style');
+		  style.textContent = `
+			body { background: var(--primary-black); }
+			.card-grid.layout-a { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; padding: 10px; }
+		@media (max-width: 668px) {.card-grid.layout-a{grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));gap: 10px;}
+		.card-grid.layout-b {grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;}}		
+			.card { background-color: var(--secondary-black); padding: 12px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); text-align: center; border: 1px solid var(--accent-pink); }
+			.card img { max-width: 100%; height: auto; border-radius: 5px; border: 2px solid var(--accent-pink); }
+			.card > div { font-size: clamp(0.8rem, 2vw, 1rem); margin: 5px 0; word-break: break-word; color: var(--text-white); }
+			.rarity { font-family: 'Yomogi', cursive; margin-top: 8px; font-weight: bold; }
+			.rarity.normal { color: var(--text-gray); }
+			.rarity.rare { color: var(--accent-pink); }
+			.rarity.legendary { color: var(--accent-wine); }
+			.rarity.TD { color: var(--accent-pink); }
+		  `;
+		  temp.appendChild(style);
+		  document.getElementById('modalCardListBody').appendChild(temp);
+		  //document.body.appendChild(temp);
+		  window.scrollTo(0,0);
+		  showList();  
     }
 
 
