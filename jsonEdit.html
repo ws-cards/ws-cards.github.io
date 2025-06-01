@@ -1,221 +1,181 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>商品一覽</title>
-  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+  <meta charset="UTF-8">
+  <title>多卡片 JSON 編輯器</title>
   <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .filter {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .filter select {
-      background: #111;
-      color: #fff;
-      padding: 0.5rem 1rem;
-      border: 1px solid #333;
-      border-radius: 0.5rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-    }
-    .card {
-      background: #111;
-      padding: 1rem;
-      border-radius: 1rem;
-      cursor: pointer;
-      transform: scale(1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-    }
-    .card img {
-      max-width: 100%;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .dialog-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    .dialog-flip {
-      width: 90%;
-      max-width: 500px;
-      perspective: 1000px;
-    }
-    .flip-inner {
-      width: 100%;
-      transition: transform 1.2s ease;
-      transform-style: preserve-3d;
-      position: relative;
-    }
-    .flip-front, .flip-back {
-      backface-visibility: hidden;
-      position: absolute;
-      width: 100%;
-      padding: 2rem;
-      border-radius: 1rem;
-      background: #111;
-      box-sizing: border-box;
-    }
-    .flip-front {
-      transform: rotateY(0deg);
-      z-index: 2;
-    }
-    .flip-back {
-      transform: rotateY(180deg);
-    }
-    .flip-inner.show-back {
-      transform: rotateY(180deg);
-    }
-    .flip-back img {
-      max-width: 100%;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .button {
-      background: #fff;
-      color: #000;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    @media (max-width: 480px) {
-      body {
-        padding: 1rem;
-      }
-      .flip-front, .flip-back {
-        padding: 1rem;
-      }
-    }
+    body { font-family: sans-serif; margin: 20px; }
+    .card-block { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+    .card-title { font-weight: bold; margin-bottom: 10px; }
+    table { border-collapse: collapse; width: 100%; max-width: 600px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    input[type="text"], input[type="number"] { width: 100%; }
+    button { margin-top: 10px; margin-right: 10px; }
   </style>
 </head>
 <body>
-  <h1>商品一覽</h1>
-  <div class="filter">
-    <label for="category">分類：</label>
-    <select id="category" onchange="filterProducts()">
-      <option value="all">全部</option>
-      <option value="typeA">類別 A</option>
-      <option value="typeB">類別 B</option>
-    </select>
-  </div>
-  <div class="grid" id="product-grid"></div>
-  <div id="dialog" class="dialog-overlay" style="display: none">
-    <div class="dialog-flip">
-      <div class="flip-inner" id="dialog-flip-inner">
-        <div class="flip-front"></div>
-        <div class="flip-back">
-          <h2 id="dialog-title"></h2>
-          <img id="dialog-img" src="" alt="" />
-          <p id="dialog-desc"></p>
-          <button class="button" id="buy-button">前往購買</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init({
-      once: true,
-      duration: 800,
-      easing: 'ease-out-cubic'
-    });
+<h2>多卡片價格編輯器</h2>
 
-    const products = [
-      {
-        name: '商品名稱 A',
-        image: '/product-a.jpg',
-        description: '這是商品 A 的詳細資訊',
-        buyUrl: 'https://external.com/buy-a',
-        category: 'typeA'
-      },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
-      }
-    ];
+<!-- 上傳區 -->
+<label for="jsonFile">📥 上傳 JSON 檔案：</label>
+<input type="file" id="jsonFile" accept=".json" onchange="handleFileUpload(event)">
+<br><br>
 
-    function renderProducts(filter = 'all') {
-      const container = document.getElementById('product-grid');
-      container.innerHTML = '';
-      const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
-      filtered.forEach((product, index) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        const direction = index % 2 === 0 ? 'fade-right' : 'fade-left';
-        card.setAttribute('data-aos', direction);
-        card.setAttribute('data-aos-delay', index * 100);
-        card.onclick = () => openDialog(product);
-        card.innerHTML = `
-          <img src="${product.image}" alt="${product.name}" />
-          <h2>${product.name}</h2>
-        `;
-        container.appendChild(card);
+<textarea id="jsonInput" style="width:100%; height:200px;">
+{
+  "OVL/SE51-39H": {
+    "upddate": ["20250530", "20250531"],
+    "displayName": ["OVL/SE51-39H_price"],
+    "cardPrice": [50, 55]
+  }
+}
+</textarea><br><br>
+
+<!-- 按鈕區 -->
+<button onclick="renderEditor()">轉換成編輯介面</button>
+<button onclick="generateJSON()">輸出更新後 JSON</button>
+<button onclick="downloadJSON()">📤 下載 JSON</button>
+
+<!-- 編輯區 -->
+<div id="editorContainer"></div>
+
+<h3>輸出結果：</h3>
+<pre id="output"></pre>
+
+<script>
+  // 處理檔案上傳
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('jsonInput').value = e.target.result;
+      renderEditor();
+    };
+    reader.readAsText(file);
+  }
+
+  // 建立表格
+  function renderEditor() {
+    const container = document.getElementById('editorContainer');
+    container.innerHTML = '';
+    const raw = JSON.parse(document.getElementById('jsonInput').value);
+
+    for (const cardId in raw) {
+      const data = raw[cardId];
+
+      const block = document.createElement('div');
+      block.className = 'card-block';
+      block.setAttribute('data-card-id', cardId);
+      block.setAttribute('data-display-name', data.displayName[0]);
+
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = `卡片名稱：${data.displayName[0]}（${cardId}）`;
+      block.appendChild(title);
+
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      thead.innerHTML = `<tr><th>日期</th><th>價格</th><th>操作</th></tr>`;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      data.upddate.forEach((date, i) => {
+        tbody.appendChild(createRow(date, data.cardPrice[i]));
       });
-      AOS.refresh();
-    }
+      table.appendChild(tbody);
+      block.appendChild(table);
 
-    function filterProducts() {
-      const selected = document.getElementById('category').value;
-      renderProducts(selected);
-    }
+      const addBtn = document.createElement('button');
+      addBtn.textContent = '➕ 新增一筆';
+      addBtn.onclick = () => {
+        tbody.appendChild(createRow('', 0));
+      };
+      block.appendChild(addBtn);
 
-    function openDialog(product) {
-      const overlay = document.getElementById('dialog');
-      const flipInner = document.getElementById('dialog-flip-inner');
-      document.getElementById('dialog-title').innerText = product.name;
-      document.getElementById('dialog-img').src = product.image;
-      document.getElementById('dialog-img').alt = product.name;
-      document.getElementById('dialog-desc').innerText = product.description;
-      document.getElementById('buy-button').onclick = () => window.open(product.buyUrl, '_blank');
-      overlay.style.display = 'flex';
-      requestAnimationFrame(() => {
-        flipInner.classList.add('show-back');
-      });
+      container.appendChild(block);
     }
+  }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('dialog').addEventListener('click', function(e) {
-        if (e.target.id === 'dialog') {
-          const flipInner = document.getElementById('dialog-flip-inner');
-          flipInner.classList.remove('show-back');
-          setTimeout(() => {
-            document.getElementById('dialog').style.display = 'none';
-          }, 1200);
+  // 建立一筆 row
+  function createRow(dateVal, priceVal) {
+    const row = document.createElement('tr');
+
+    const dateTd = document.createElement('td');
+    const dateInput = document.createElement('input');
+    dateInput.type = 'text';
+    dateInput.pattern = "\\d{8}";
+    dateInput.value = dateVal;
+    dateTd.appendChild(dateInput);
+    row.appendChild(dateTd);
+
+    const priceTd = document.createElement('td');
+    const priceInput = document.createElement('input');
+    priceInput.type = 'number';
+    priceInput.value = priceVal;
+    priceTd.appendChild(priceInput);
+    row.appendChild(priceTd);
+
+    const actionTd = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => row.remove();
+    actionTd.appendChild(delBtn);
+    row.appendChild(actionTd);
+
+    return row;
+  }
+
+  // 將編輯結果輸出成 JSON（顯示用）
+  function generateJSON() {
+    const result = collectData();
+    document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+  }
+
+  // 將編輯結果輸出成 JSON 檔案
+  function downloadJSON() {
+    const result = collectData();
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "cards.json";
+    link.click();
+  }
+
+  // 共用資料收集器
+  function collectData() {
+    const blocks = document.querySelectorAll('.card-block');
+    const result = {};
+
+    blocks.forEach(block => {
+      const cardId = block.getAttribute('data-card-id');
+      const displayName = block.getAttribute('data-display-name');
+      const rows = block.querySelectorAll('tbody tr');
+
+      const upddate = [];
+      const cardPrice = [];
+
+      rows.forEach(row => {
+        const date = row.querySelector('input[type="text"]').value;
+        const price = parseFloat(row.querySelector('input[type="number"]').value);
+        if (date && !isNaN(price)) {
+          upddate.push(date);
+          cardPrice.push(price);
         }
       });
-      renderProducts();
+
+      result[cardId] = {
+        upddate,
+        displayName: [displayName],
+        cardPrice
+      };
     });
-  </script>
+
+    return result;
+  }
+</script>
+
 </body>
 </html>

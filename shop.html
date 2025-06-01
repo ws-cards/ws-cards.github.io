@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>商品一覽</title>
-  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
   <style>
     body {
       background-color: #000;
       color: #fff;
       font-family: sans-serif;
-      padding: 2rem;
+      padding: 200px;
+      box-sizing: border-box;
     }
     h1 {
       text-align: center;
@@ -28,9 +29,10 @@
       border-radius: 0.5rem;
     }
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 1.5rem;
+      justify-content: center;
     }
     .card {
       background: #111;
@@ -39,6 +41,9 @@
       cursor: pointer;
       transform: scale(1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: calc(25% - 1.5rem);
+      max-width: 200px;
+      box-sizing: border-box;
     }
     .card:hover {
       transform: scale(1.05);
@@ -59,18 +64,29 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      animation: fadeIn 0.3s ease;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
     }
-    .dialog {
+    .dialog-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .dialog-box {
       background: #111;
       padding: 2rem;
       border-radius: 1rem;
-      max-width: 500px;
       width: 90%;
-      transform: scale(0.9);
-      animation: popUp 0.3s ease forwards;
+      max-width: 500px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
     }
-    .dialog img {
+    .dialog-overlay.show .dialog-box {
+      opacity: 1;
+    }
+    .dialog-box img {
       max-width: 100%;
       border-radius: 0.5rem;
       margin-bottom: 1rem;
@@ -84,27 +100,27 @@
       cursor: pointer;
       font-weight: bold;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @media (max-width: 1024px) {
+      .card {
+        width: calc(50% - 1.5rem);
+      }
     }
-    @keyframes popUp {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
+      .card {
+        width: 100%;
+      }
       body {
         padding: 1rem;
       }
-      .dialog {
+      .dialog-box {
         padding: 1rem;
       }
     }
   </style>
 </head>
 <body>
-  <h1 data-aos="fade-down">商品一覽</h1>
-  <div class="filter" data-aos="fade-up">
+  <h1>商品一覽</h1>
+  <div class="filter">
     <label for="category">分類：</label>
     <select id="category" onchange="filterProducts()">
       <option value="all">全部</option>
@@ -113,11 +129,10 @@
     </select>
   </div>
   <div class="grid" id="product-grid"></div>
-
-  <div id="dialog" class="dialog-overlay" style="display:none;">
-    <div class="dialog">
+  <div id="dialog" class="dialog-overlay">
+    <div class="dialog-box">
       <h2 id="dialog-title"></h2>
-      <img id="dialog-img" src="" alt="">
+      <img id="dialog-img" src="" alt="" />
       <p id="dialog-desc"></p>
       <button class="button" id="buy-button">前往購買</button>
     </div>
@@ -125,7 +140,11 @@
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>
-    AOS.init();
+    AOS.init({
+      once: true,
+      duration: 800,
+      easing: 'ease-out-cubic'
+    });
 
     const products = [
       {
@@ -142,41 +161,48 @@
         buyUrl: 'https://external.com/buy-b',
         category: 'typeB'
       },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
       },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
       },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
       },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
       },
-      {
-        name: '商品名稱 B',
-        image: '/product-b.jpg',
-        description: '這是商品 B 的詳細資訊',
-        buyUrl: 'https://external.com/buy-b',
-        category: 'typeB'
-      },	  
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
+      },
+	        {
+        name: '商品名稱 A',
+        image: '/product-a.jpg',
+        description: '這是商品 A 的詳細資訊',
+        buyUrl: 'https://external.com/buy-a',
+        category: 'typeA'
+      }
     ];
 
     function renderProducts(filter = 'all') {
@@ -186,7 +212,8 @@
       filtered.forEach((product, index) => {
         const card = document.createElement('div');
         card.className = 'card';
-        card.setAttribute('data-aos', 'fade-up');
+        const direction = index % 2 === 0 ? 'fade-right' : 'fade-left';
+        card.setAttribute('data-aos', direction);
         card.setAttribute('data-aos-delay', index * 100);
         card.onclick = () => openDialog(product);
         card.innerHTML = `
@@ -204,21 +231,25 @@
     }
 
     function openDialog(product) {
+      const overlay = document.getElementById('dialog');
       document.getElementById('dialog-title').innerText = product.name;
       document.getElementById('dialog-img').src = product.image;
       document.getElementById('dialog-img').alt = product.name;
       document.getElementById('dialog-desc').innerText = product.description;
       document.getElementById('buy-button').onclick = () => window.open(product.buyUrl, '_blank');
-      document.getElementById('dialog').style.display = 'flex';
+      overlay.classList.add('show');
     }
 
-    document.getElementById('dialog').addEventListener('click', function(e) {
-      if (e.target.id === 'dialog') {
-        this.style.display = 'none';
-      }
+    document.addEventListener('DOMContentLoaded', () => {
+      const overlay = document.getElementById('dialog');
+      overlay.addEventListener('click', function(e) {
+        if (e.target.id === 'dialog') {
+          overlay.classList.remove('show');
+        }
+      });
+      renderProducts();
     });
-
-    renderProducts();
+	//https://amii.base.shop/ 排版請參考
   </script>
 </body>
 </html>
