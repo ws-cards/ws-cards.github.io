@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML 編輯器（RWD + 預設內容）</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    textarea, pre, iframe {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 200px;
+      font-family: monospace;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #output {
+      border: 1px solid #ccc;
+      padding: 10px;
+      white-space: pre-wrap;
+      background-color: #f9f9f9;
+    }
+
+    iframe {
+      height: 200px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        display: flex;
+        gap: 20px;
+      }
+
+      .left, .right {
+        flex: 1;
+      }
+
+      iframe {
+        height: 300px;
+      }
+
+      textarea {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>HTML 編輯器（RWD + 預設內容）</h2>
+  <p>請在下方輸入 HTML 內容：</p>
+
+  <div class="container">
+    <div class="left">
+  	  <input type="text" id="title" maxlength="50" placeholder="輸入標題">
+      <textarea id="productContent" placeholder="產品內容..." style="height: 50px;"></textarea>
+      <input type="text" id="status" maxlength="50" placeholder="商品狀態">
+      <button onclick="generateHTML()">產生 HTML</button>
+    </div>
+
+    <div class="right">
+      <button onclick="copyHTML()">複製已產生的HTML</button>
+      <pre id="output"></pre>
+
+
+
+      <h3>預覽：</h3>
+      <iframe id="preview"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const preHTML =  `
+<style type="text/css">
+td,th{border: 1px solid #00FFFF;text-align: left;padding: 8px;}
+table{border-collapse: collapse;}
+span.tidied-202202231715-4 {color: #ff0000;}
+span.tidied-202202231715-3 {color: #ffffff; background-color: #ff6600;}
+span.tidied-202202231715-2 {background-color: #ffffff;}
+span.tidied-202202231715-1 {color: #272727; font-size: 12pt; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'PingFang TC', PingFangTC, PingFangTC-Regular, 'Microsoft JhengHei', PMingLiU, sans-serif; background-color: #ffffff;}
+span.tidied-202202232116-2 {color: #272727; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'PingFang TC', PingFangTC, PingFangTC-Regular, 'Microsoft JhengHei', PMingLiU, sans-serif;}
+span.tidied-202202232116-1 {background-color: #ffffff; font-weight: bold}
+tr.tidied-202203289127-4 {background-color: #f5f5dc;}
+th.tidied-202203289127-3 {text-align: left;}
+tr.tidied-202203289127-2 {background-color: #fff8dc;}
+td.tidied-202203289127-1 {text-align: left;solid #dddddd;}
+tr.tidied-202203288670-2 {background-color: #fff8dc;}
+td.tidied-202203288670-1 {text-align: left;solid #dddddd;}
+table.tidied-202203282684-3 {background-color: #cccccc; width: 94px; height: 19px;}
+tr.tidied-202203282684-2 {background-color: #ffffff;}
+span.tidied-202203282684-1 {background-color: #fff8dc;}
+span.tidied-202203284237-1 {background-color: #cccccc;}
+tr.tidied-202203286831-4 {background-color: #f5f5dc;}
+th.tidied-202203286831-3 {text-align: left;}
+tr.tidied-202203286831-2 {background-color: #fff8dc;}
+td.tidied-202203286831-1 {text-align: left;}
+span.tidied-202203281577-1 {color: #ff0000;}
+tr.tidied-202310137959-2 {background-color: gray;}
+span.tidied-202310137959-1 {color: #ffffff;}
+span.tidied-202501133227-1 {font-weight: bold}
+</style>
+`;
+
+    function generateHTML() {
+	  const titleHTML = "<div> "+document.getElementById('title').value+" </div>";
+	  const contentHTML = document.getElementById('productContent').value;
+	  const formattedInput = contentHTML.replace(/\n/g, '<br>');
+      const statusHTML = document.getElementById('status').value;	  
+      const fixedHTML = `
+<br>
+<div><strong><span class="tidied-202202231715-1">《購買前須知》</span></strong></div>
+<br>
+<table>
+<tr class="tidied-202203286831-2">
+<td class="tidied-202203286831-1">此商品狀態為</td>
+<td class="tidied-202203286831-1"><strong><span class="tidied-202203281577-1">${statusHTML}</span></strong></td>
+</tr>
+</table>
+<p><br/> 狀態Rank</p>
+<table>
+<tr><th class="tidied-202203286831-3">狀態</th><th class="tidied-202203286831-3">說明</th></tr>
+<tr class="tidied-202203286831-4">
+<td class="tidied-202203286831-1">S</td>
+<td class="tidied-202203286831-1">未開封</td>
+</tr>
+<tr class="tidied-202310137959-2">
+<td class="tidied-202203286831-1">A</span></td>
+<td class="tidied-202203286831-1"><span class="tidied-202310137959-1">無明顯傷，商品狀態良好；打牌用</span></td>
+</tr>
+<tr class="tidied-202203286831-4">
+<td class="tidied-202203286831-1"><span class="tidied-202310137959-1">B</td>
+<td class="tidied-202203286831-1">看得到傷但外觀不明顯且不影響使用，比狀態C好；打牌用</td>
+</tr>
+<tr>
+<td class="tidied-202203286831-1">C</td>
+<td class="tidied-202203286831-1">看得出明顯傷痕，能正常使用</td>
+</tr>
+<tr class="tidied-202203286831-4">
+<td class="tidied-202203286831-1">D</td>
+<td class="tidied-202203286831-1">商品整體外傷嚴重，可能需要自行修理</td>
+</tr>
+<tr>
+<td class="tidied-202203286831-1">J</td>
+<td class="tidied-202203286831-1">垃圾</td>
+</tr>
+</table>
+`;	  
+      const fullHTML = preHTML + titleHTML + "<br>" + formattedInput + "<br>" +fixedHTML ;
+      document.getElementById('output').textContent = fullHTML;
+      document.getElementById('preview').srcdoc = fullHTML;
+    }
+
+
+function copyHTML() {
+  const output = document.getElementById('output').textContent;
+  navigator.clipboard.writeText(output).then(() => {
+    alert("HTML 已複製到剪貼簿！");
+  }).catch(err => {
+    alert("複製失敗：" + err);
+  });
+}
+	
+  </script>
+</body>
+</html>
