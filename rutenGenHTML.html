@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HTML 編輯器（RWD + 預設內容）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1, minimum-scale=1">
+  <title>露天商品內容編輯器</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -21,6 +21,7 @@
       height: 200px;
       font-family: monospace;
       padding: 10px;
+	  margin-top: 10px;
       margin-bottom: 10px;
     }
 
@@ -64,31 +65,26 @@
   </style>
 </head>
 <body>
-  <h2>HTML 編輯器（RWD + 預設內容）</h2>
+  <h2>露天商品內容編輯器</h2>
   <p>請在下方輸入 HTML 內容：</p>
 
   <div class="container">
     <div class="left">
-  	  <input type="text" id="title" maxlength="50" placeholder="輸入標題">
+	  <input type="text" id="title" maxlength="50" placeholder="輸入標題">
       <textarea id="productContent" placeholder="產品內容..." style="height: 50px;"></textarea>
-      <input type="text" id="status" maxlength="50" placeholder="商品狀態">
+      <input type="text" id="status" maxlength="50" placeholder="商品狀態"><br>
       <button onclick="generateHTML()">產生 HTML</button>
     </div>
 
-    <div class="right">
-      <button onclick="copyHTML()">複製已產生的HTML</button>
-      <pre id="output"></pre>
-
-
-
+    <div class="right" id="resultPanel">
+      <pre id="output" onclick="copyHTML();"></pre>
       <h3>預覽：</h3>
       <iframe id="preview"></iframe>
     </div>
   </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    const preHTML =  `
-<style type="text/css">
+    const preHTML =  `<style type="text/css">
 td,th{border: 1px solid #00FFFF;text-align: left;padding: 8px;}
 table{border-collapse: collapse;}
 span.tidied-202202231715-4 {color: #ff0000;}
@@ -123,7 +119,7 @@ span.tidied-202501133227-1 {font-weight: bold}
 	  const contentHTML = document.getElementById('productContent').value;
 	  const formattedInput = contentHTML.replace(/\n/g, '<br>');
       const statusHTML = document.getElementById('status').value;	  
-      const fixedHTML = `
+      const fixedHTML_1 = `
 <br>
 <div><strong><span class="tidied-202202231715-1">《購買前須知》</span></strong></div>
 <br>
@@ -135,46 +131,103 @@ span.tidied-202501133227-1 {font-weight: bold}
 </table>
 <p><br/> 狀態Rank</p>
 <table>
-<tr><th class="tidied-202203286831-3">狀態</th><th class="tidied-202203286831-3">說明</th></tr>
-<tr class="tidied-202203286831-4">
-<td class="tidied-202203286831-1">S</td>
-<td class="tidied-202203286831-1">未開封</td>
+<tr><th class="tidied-202203286831-3">狀態</th><th class="tidied-202203286831-3">說明</th></tr>`;	
+
+let tr_1_class = ``;
+let tr_2_class = `class="tidied-202203286831-4"`;
+let tr_3_class = ``;
+let tr_4_class = `class="tidied-202203286831-4"`;
+let tr_5_class = ``;
+let tr_6_class = `class="tidied-202203286831-4"`;
+let span_1_class = ``;
+let span_2_class = ``;
+let span_3_class = ``;
+let span_4_class = ``;
+let span_5_class = ``;
+let span_6_class = ``;
+
+switch (statusHTML) {
+  case 'S':
+    tr_1_class = `class="tidied-202310137959-2"`;
+	span_1_class = `<span class="tidied-202310137959-1">`;
+    break;
+  case 'A':
+    tr_2_class = `class="tidied-202310137959-2"`
+	span_2_class = `<span class="tidied-202310137959-1">`;
+    break;
+  case 'B':
+    tr_3_class = `class="tidied-202310137959-2"`
+	span_3_class = `<span class="tidied-202310137959-1">`;
+    break;
+  case 'C':
+    tr_4_class = `class="tidied-202310137959-2"`
+	span_4_class = `<span class="tidied-202310137959-1">`;
+    break;
+  case 'D':
+    tr_5_class = `class="tidied-202310137959-2"`
+	span_5_class = `<span class="tidied-202310137959-1">`;
+    break;
+  default:
+    tr_6_class = `class="tidied-202310137959-2"`
+	span_6_class = `<span class="tidied-202310137959-1">`;
+}
+
+      const fixedHTML_2 = `
+<tr id="tr_1" ${tr_1_class}>
+<td class="tidied-202203286831-1">${span_1_class}S</td>
+<td class="tidied-202203286831-1">${span_1_class}未開封</td>
 </tr>
-<tr class="tidied-202310137959-2">
-<td class="tidied-202203286831-1">A</span></td>
-<td class="tidied-202203286831-1"><span class="tidied-202310137959-1">無明顯傷，商品狀態良好；打牌用</span></td>
+<tr id="tr_2" ${tr_2_class}>
+<td class="tidied-202203286831-1">${span_2_class}A</span></td>
+<td class="tidied-202203286831-1">${span_2_class}無明顯傷，商品狀態良好；打牌用</span></td>
 </tr>
-<tr class="tidied-202203286831-4">
-<td class="tidied-202203286831-1"><span class="tidied-202310137959-1">B</td>
-<td class="tidied-202203286831-1">看得到傷但外觀不明顯且不影響使用，比狀態C好；打牌用</td>
+<tr id="tr_3" ${tr_3_class}>
+<td class="tidied-202203286831-1">${span_3_class}B</td>
+<td class="tidied-202203286831-1">${span_3_class}看得到傷但外觀不明顯且不影響使用，比狀態C好；打牌用</td>
 </tr>
-<tr>
-<td class="tidied-202203286831-1">C</td>
-<td class="tidied-202203286831-1">看得出明顯傷痕，能正常使用</td>
+<tr id="tr_4" ${tr_4_class}>
+<td class="tidied-202203286831-1">${span_4_class}C</td>
+<td class="tidied-202203286831-1">${span_4_class}看得出明顯傷痕，能正常使用</td>
 </tr>
-<tr class="tidied-202203286831-4">
-<td class="tidied-202203286831-1">D</td>
-<td class="tidied-202203286831-1">商品整體外傷嚴重，可能需要自行修理</td>
+<tr id="tr_5" ${tr_5_class}>
+<td class="tidied-202203286831-1">${span_5_class}D</td>
+<td class="tidied-202203286831-1">${span_5_class}商品整體外傷嚴重，可能需要自行修理</td>
 </tr>
-<tr>
-<td class="tidied-202203286831-1">J</td>
-<td class="tidied-202203286831-1">垃圾</td>
+<tr id="tr_6" ${tr_6_class}>
+<td class="tidied-202203286831-1">${span_6_class}J</td>
+<td class="tidied-202203286831-1">${span_6_class}垃圾</span></td>
 </tr>
 </table>
 `;	  
-      const fullHTML = preHTML + titleHTML + "<br>" + formattedInput + "<br>" +fixedHTML ;
+      const fullHTML = preHTML + titleHTML + "<br>" + formattedInput + "<br>" +fixedHTML_1 + fixedHTML_2;
       document.getElementById('output').textContent = fullHTML;
-      document.getElementById('preview').srcdoc = fullHTML;
+      document.getElementById('preview').srcdoc = fullHTML;  
+
+	  Swal.fire({
+		  title: "SUCCESS",
+		  html:`已產生HTML<br><hr>點HTML即可複製`,
+		  icon: "success"
+	  });
+	  
     }
-
-
+	
 function copyHTML() {
   const output = document.getElementById('output').textContent;
-  navigator.clipboard.writeText(output).then(() => {
-    alert("HTML 已複製到剪貼簿！");
-  }).catch(err => {
-    alert("複製失敗：" + err);
-  });
+  if(output != ''){
+	  navigator.clipboard.writeText(output).then(() => {
+		Swal.fire({
+		  title: "SUCCESS",
+		  html:`HTML 已複製到剪貼簿！`,
+		  icon: "success"
+		});
+	  }).catch(err => {
+		Swal.fire({
+		  title: "ERROR",
+		  html:`"複製失敗：" + err`,
+		  icon: "error"
+		});
+	  });
+  }
 }
 	
   </script>
