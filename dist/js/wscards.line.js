@@ -170,7 +170,8 @@ source:[
 {id:"WS00149", name:"ガールズバンドクライ",cname:"Girls Band Cry 少女樂團 吶喊吧 少哭 少女樂團哭 | GCR"},
 {id:"WS00150", name:"ラブライブ！蓮ノ空女学院スクールアイドルクラブ feat. Link！Like！ラブライブ！",cname:"蓮之空女學院學園偶像俱樂部 | LHS"},
 {id:"WS00151", name:"甘神さんちの縁結び",cname:"結緣甘神神社 | AMG"},
-{id:"WS00152", name:"学園アイドルマスター",cname:"學園偶像大師 | 學偶 | GIM"}
+{id:"WS00152", name:"学園アイドルマスター",cname:"學園偶像大師 | 學偶 | GIM"},
+{id:"WS00153", name:"あおぎり高校",cname:"青桐高中 | AOH"}
 ]
 ,
   minLength:1,
