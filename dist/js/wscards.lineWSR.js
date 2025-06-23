@@ -20,7 +20,11 @@ var a = {
 $(".typeahead").typeahead({ 
 source:[
 {id:"R000001", name:"ゆずソフト",cname:"柚子社 YUZUSOFT | OS01"},
-{id:"R000002", name:"魔法少女にあこがれて",cname:"夢想成為魔法少女 | OS02"}
+{id:"R000002", name:"魔法少女にあこがれて",cname:"夢想成為魔法少女 | OS02"},
+{id:"R000003", name:"HARUKAZE",cname:"春風社 HARUKAZE | OS03"},
+{id:"R000004", name:"異種族レビュアーズ",cname:"異種族風俗娘評鑑指南 | OS04"},
+{id:"R000005", name:"sprite",cname:"雪碧社 精靈社 | OS05"},
+{id:"R000006", name:"枕",cname:"枕 Makura KeroQ | OS06"}
 ]
 ,
   minLength:1,
