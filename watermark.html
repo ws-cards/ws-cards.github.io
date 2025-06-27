@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>地雷系文字 / 圖片 浮水印工具</title>
+<!-- 萌系圓體字型 (地雷系) -->
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Honk&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --pink:#ff7fdf;   /* 霓虹粉 */
+    --black:#111;
+  }
+  body{
+    background:#faf6fc;
+    font-family:"Mochiy Pop One",sans-serif;
+    text-align:center;
+    padding:24px;
+    color:var(--black);
+  }
+  h2{margin:8px 0 16px}
+  input,select,button,label{margin:6px;padding:4px 8px;font-family:inherit}
+  button{cursor:pointer}
+  canvas{border:1px solid #ddd;max-width:100%;margin-top:12px}
+  #imageControls{display:none}
+  .panel{border:2px dashed var(--pink);padding:10px;border-radius:10px;margin:10px 0}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Honk&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&amp;display=swap" rel="stylesheet"/></head>
+<body>
+<h2>🖤💗 地雷系浮水印產生器 v2 💗🖤</h2>
+<!-- 主圖 -->
+<div class="panel">
+<b>➊ 上傳主要圖片</b><br/>
+<input accept="image/*" id="imageInput" type="file"/>
+</div>
+<!-- 浮水印設定 -->
+<div class="panel">
+<b>➋ 選擇浮水印類型</b><br/>
+<label><input checked="" name="wmType" type="radio" value="text"/> 文字</label>
+<label><input name="wmType" type="radio" value="image"/> 圖片</label>
+</div>
+<!-- 文字控制 -->
+<div class="panel" id="textControls">
+<b>文字浮水印</b><br/>
+<input id="watermarkText" placeholder="預設：♡ Jirai Kei ♡" type="text"/><br/>
+  字體大小(px)：<input id="fontSize" style="width:70px" type="number" value="48"/>
+  透明度：<input id="opacity" max="1" min="0" step="0.1" style="width:70px" type="number" value="0.8"/>
+<br/>
+  Font Style:
+<select id="fontStyle">
+<option value="Mochiy Pop One">Mochiy Pop One</option>
+<option value="Honk">Honk</option>
+<option value="UnifrakturMaguntia">UnifrakturMaguntia</option>
+</select><br/>
+</div>
+<!-- 圖片控制 -->
+<div class="panel" id="imageControls">
+<b>圖片浮水印</b><br/>
+<input accept="image/*" id="wmImageInput" type="file"/><br/>
+  寬度(主圖 %)：<input id="wmScale" style="width:70px" type="number" value="20"/> %
+  透明度：<input id="wmOpacity" max="1" min="0" step="0.1" style="width:70px" type="number" value="0.6"/>
+</div>
+<!-- 共同設定 -->
+<div class="panel">
+<b>位置</b>：
+  <select id="position">
+<option value="top-left">左上</option>
+<option value="top-right">右上</option>
+<option value="bottom-left">左下</option>
+<option selected="" value="bottom-right">右下</option>
+<option value="center">中央</option>
+</select><br/>
+<button onclick="addWatermark()">加上浮水印</button>
+<button onclick="downloadImage()">下載圖片</button>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let baseImg  = null;    // 主圖
+let logoImg  = null;    // 漂浮水印圖 (若有)
+
+// 1. 主圖讀取
+document.getElementById('imageInput').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    baseImg=new Image();
+    baseImg.onload=()=>{
+      canvas.width = baseImg.width;
+      canvas.height= baseImg.height;
+      ctx.drawImage(baseImg,0,0);
+    };
+    baseImg.src=evt.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// 2. 浮水印類型切換：顯示對應面板
+document.querySelectorAll("input[name='wmType']").forEach(r=>{
+  r.addEventListener('change',()=>{
+    const type=document.querySelector("input[name='wmType']:checked").value;
+    document.getElementById('textControls').style.display  = (type==='text')  ? '' : 'none';
+    document.getElementById('imageControls').style.display = (type==='image') ? 'block' : 'none';
+  });
+});
+
+// 3. 浮水印圖片讀取
+document.getElementById('wmImageInput').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file) {logoImg=null;return;}
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    logoImg=new Image();
+    logoImg.src=evt.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function addWatermark(){
+  if(!baseImg) return alert("請先上傳主要圖片！");
+  // 先重畫主圖
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(baseImg,0,0);
+
+  const position=document.getElementById('position').value;
+  const type    =document.querySelector("input[name='wmType']:checked").value;
+
+  if(type==='text'){
+    drawTextWm(position);
+  }else{
+    drawImageWm(position);
+  }
+}
+
+/* ---------- 文字浮水印 ---------- */
+function drawTextWm(position){
+  const text     = document.getElementById('watermarkText').value || '♡ Jirai Kei ♡';
+  const fontSize = parseInt(document.getElementById('fontSize').value||48);
+  const opacity  = parseFloat(document.getElementById('opacity').value||0.8);
+  const fontStyle = document.getElementById('fontStyle').value;
+  const fontSpec = `${fontSize}px "${fontStyle}"`;
+
+  document.fonts.load(fontSpec).then(() => {
+  const text     = document.getElementById('watermarkText').value || '♡ Jirai Kei ♡';
+  const fontSize = parseInt(document.getElementById('fontSize').value||48);
+  const opacity  = parseFloat(document.getElementById('opacity').value||0.8);
+  var fontStyle = document.getElementById('fontStyle').value;
+  
+      ctx.font = `${fontSize}px "${fontStyle}",sans-serif`;
+  ctx.textBaseline = 'bottom';
+  ctx.lineJoin     = 'round';
+
+  const textW = ctx.measureText(text).width;
+  let x=20,y=20+fontSize;
+
+  switch(position){
+    case 'top-right':    x=canvas.width-textW-20; y=fontSize+20;             break;
+    case 'bottom-left':  x=20;                       y=canvas.height-20;     break;
+    case 'bottom-right': x=canvas.width-textW-20;    y=canvas.height-20;     break;
+    case 'center':       x=(canvas.width-textW)/2;   y=(canvas.height+fontSize)/2; break;
+  }
+
+  // 霓虹
+  ctx.shadowColor=`rgba(255,127,223,${opacity*0.6})`;
+  ctx.shadowBlur =fontSize*0.6;
+  // 描邊
+  ctx.lineWidth  =fontSize*0.12;
+  ctx.strokeStyle=`rgba(255,127,223,${opacity})`;
+  ctx.strokeText(text,x,y);
+  // 填色
+  ctx.fillStyle  =`rgba(17,17,17,${opacity})`;
+  ctx.fillText(text,x,y);
+      ctx.shadowBlur=0;
+  });
+}
+
+/* ---------- 圖片浮水印 ---------- */
+function drawImageWm(position){
+  if(!logoImg) return alert("請先上傳浮水印圖片！");
+  const scalePct = parseFloat(document.getElementById('wmScale').value||20) / 100;
+  const opacity  = parseFloat(document.getElementById('wmOpacity').value||0.6);
+
+  // 計算寬高：保持比例，寬度 = 主圖寬 * 比例
+  const wmW = canvas.width * scalePct;
+  const ratio = logoImg.width / logoImg.height;
+  const wmH = wmW / ratio;
+
+  let x=20, y=20;
+
+  switch(position){
+    case 'top-right':    x = canvas.width - wmW - 20;  y = 20;               break;
+    case 'bottom-left':  x = 20;                       y = canvas.height - wmH - 20; break;
+    case 'bottom-right': x = canvas.width - wmW - 20;  y = canvas.height - wmH - 20; break;
+    case 'center':       x = (canvas.width - wmW)/2;   y = (canvas.height - wmH)/2;  break;
+  }
+
+  ctx.globalAlpha = opacity;
+  ctx.drawImage(logoImg,x,y,wmW,wmH);
+  ctx.globalAlpha = 1;  // 還原不透明度
+}
+
+function downloadImage(){
+  if(!baseImg) return;
+  const link=document.createElement('a');
+  link.download='watermarked.png';
+  link.href=canvas.toDataURL();
+  link.click();
+}
+</script>
+</body>
+</html>
