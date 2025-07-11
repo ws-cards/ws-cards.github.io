@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>大轉盤抽選</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 90vw;
+      max-width: 400px;
+      aspect-ratio: 1 / 1;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 5px solid #333;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+
+    button {
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      max-width: 90%;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-container">
+    <div class="pointer"></div>
+    <canvas id="wheel"></canvas>
+  </div>
+
+  <button onclick="spin()">開始抽選</button>
+  <div id="result"></div>
+
+  <script>
+    const options = ["閃耀色彩", "碧藍艦隊", "學園偶像", "我推", "NIKKE", "妖精尾巴","敗北","艦隊收藏"];
+    const colors = ["#f44336", "#ff9800", "#ffeb3b", "#4caf50", "#2196f3", "#9c27b0","#f44336","#ffeb3b"];
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const resultEl = document.getElementById("result");
+
+    let angle = 0;
+    let spinning = false;
+
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      const size = container.offsetWidth;
+      canvas.width = size;
+      canvas.height = size;
+      drawWheel();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
+
+    function drawWheel() {
+      const radius = canvas.width / 2;
+      const arc = 2 * Math.PI / options.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < options.length; i++) {
+        const startAngle = angle + i * arc;
+        const endAngle = startAngle + arc;
+
+        // 畫扇形區塊
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.stroke();
+
+        // 畫文字（保持水平）
+        const midAngle = startAngle + arc / 2;
+        const textRadius = radius * 0.7;
+        const textX = radius + textRadius * Math.cos(midAngle);
+        const textY = radius + textRadius * Math.sin(midAngle);
+
+        ctx.save();
+        ctx.translate(textX, textY);
+        ctx.rotate(0); // 保持水平
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#000";
+        ctx.font = `${canvas.width * 0.05}px sans-serif`;
+        ctx.fillText(options[i], 0, 0);
+        ctx.restore();
+      }
+    }
+
+	function spin() {
+	  if (spinning) return;
+	  spinning = true;
+	  resultEl.textContent = "";
+
+	  const arc = 2 * Math.PI / options.length;
+	  const randomIndex = Math.floor(Math.random() * options.length);
+
+	  // ✅ 保留當前角度在 0~2PI 之間
+	  angle = angle % (2 * Math.PI);
+	  const startAngle = angle;
+
+	  // ✅ 計算最終目標角度（轉 3 圈 + 指到中間）
+	  const spins = 3;
+	  const targetAngle = startAngle + (spins * 2 * Math.PI) + ((options.length - randomIndex - 0.5) * arc);
+
+	  const duration = 5000;
+	  const start = performance.now();
+
+	  function animate(now) {
+		const elapsed = now - start;
+		const progress = Math.min(elapsed / duration, 1);
+		const ease = 1 - Math.pow(1 - progress, 3); // ease-out
+		angle = startAngle + (targetAngle - startAngle) * ease;
+		drawWheel();
+
+		if (progress < 1) {
+		  requestAnimationFrame(animate);
+		} else {
+		  spinning = false;
+		  resultEl.textContent = `抽中：${options[randomIndex]}`;
+		}
+	  }
+
+	  requestAnimationFrame(animate);
+	}
+
+
+    resizeCanvas();
+  </script>
+</body>
+</html>
