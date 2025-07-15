@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>抽獎系統</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .prize-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .prize-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .prize-card img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: gold;
+      color: black;
+      padding: 3px 8px;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .lottery-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 15px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .lottery-button {
+      padding: 12px 8px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      min-height: 50px;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .lottery-button:hover:not(:disabled) {
+      background: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .lottery-button:disabled {
+      background: #7f8c8d;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 平板尺寸 */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+      }
+      
+      h2 {
+        font-size: 20px;
+      }
+      
+      .prize-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+      
+      .product-highlight {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding: 15px;
+      }
+      
+      .product-highlight .container {
+        padding: 15px;
+      }
+      
+      .prize-section {
+        padding: 15px;
+        margin-bottom: 30px;
+      }
+      
+      .prize-section::before,
+      .lottery-section::before {
+        font-size: 12px;
+        padding: 3px 10px;
+        top: -10px;
+        left: 15px;
+      }
+      
+      .lottery-section {
+        padding: 15px;
+        margin-bottom: 70px;
+      }
+      
+      .lottery-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      
+      .lottery-button {
+        padding: 10px 6px;
+        font-size: 14px;
+        min-height: 45px;
+      }
+      
+      .floating-selection {
+        bottom: 15px;
+        right: 15px;
+        left: 15px;
+        min-width: auto;
+        max-width: none;
+      }
+      
+      .floating-selection.minimized {
+        height: 35px;
+        width: 35px;
+        padding: 3px;
+        left: auto;
+        right: 15px;
+        min-width: 35px;
+        max-width: 35px;
+        z-index: 999;
+      }
+      
+      .floating-selection.minimized .minimize-button {
+        width: 29px;
+        height: 29px;
+        font-size: 9px;
+      }
+      
+      .floating-header h3 {
+        font-size: 16px;
+      }
+      
+      .minimize-button {
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+      
+      h2 {
+        font-size: 18px;
+      }
+      
+      .prize-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      
+      .prize-card {
+        padding: 8px;
+      }
+      
+      .prize-card img {
+        margin-bottom: 8px;
+      }
+      
+      .badge {
+        top: 8px;
+        left: 8px;
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+      
+      .product-highlight {
+        padding: 12px;
+        margin-bottom: 20px;
+      }
+      
+      .product-highlight .container {
+        padding: 12px;
+      }
+      
+      .prize-section {
+        padding: 12px;
+        margin-bottom: 20px;
+      }
+      
+      .lottery-section {
+        padding: 12px;
+        margin-bottom: 60px;
+      }
+      
+      .prize-section::before,
+      .lottery-section::before {
+        font-size: 11px;
+        padding: 2px 8px;
+        top: -8px;
+        left: 12px;
+      }
+      
+      .progress-container {
+        margin-top: 12px;
+      }
+      
+      .progress-label {
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      
+      .progress-bar {
+        height: 16px;
+      }
+      
+      .lottery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      
+      .lottery-button {
+        padding: 8px 4px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+    }
+
+    /* 小手機尺寸 */
+    @media (max-width: 360px) {
+      .lottery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      
+      .lottery-button {
+        padding: 8px 4px;
+        font-size: 11px;
+        min-height: 35px;
+      }
+      
+      .prize-section,
+      .lottery-section,
+      .product-highlight {
+        padding: 10px;
+      }
+      
+      .lottery-section {
+        margin-bottom: 50px;
+      }
+      
+      .prize-section::before,
+      .lottery-section::before {
+        font-size: 10px;
+        padding: 2px 6px;
+        top: -7px;
+        left: 10px;
+      }
+    }
+
+    /* 進度條樣式 */
+    .progress-container {
+      margin-top: 15px;
+      text-align: left;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #ecf0f1;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .product-highlight {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+      border: 2px solid #e8eaed;
+      border-radius: 12px;
+      padding: 20px;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .product-highlight .container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 10px;
+      text-align: center;
+    }
+
+    /* 獎品區域外框 */
+    .prize-section {
+      border: 2px solid #f39c12;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 40px;
+      background: #fefefe;
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.1);
+      position: relative;
+    }
+
+    .prize-section::before {
+      content: "🎁 獎品列表";
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: #f39c12;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* 抽籤區域外框 */
+    .lottery-section {
+      border: 2px solid #e74c3c;
+      border-radius: 12px;
+      padding: 20px;
+      background: #fefefe;
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.1);
+      position: relative;
+      margin-bottom: 40px; 
+    }
+
+    .lottery-section::before {
+      content: "🎟️ 抽獎區域";
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .lottery-section h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    /* 浮動選擇區塊 */
+    .floating-selection {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #ffffff;
+      border: 3px solid #e74c3c;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      z-index: 1000;
+      min-width: 280px;
+      max-width: 350px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    .floating-selection.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .floating-selection.minimized {
+      height: 40px;
+      width: 40px;
+      overflow: hidden;
+      padding: 5px;
+      border-radius: 50%;
+      min-width: 40px;
+      max-width: 40px;
+      z-index: 999;
+      pointer-events: auto;
+    }
+
+    .floating-selection.minimized .floating-content {
+      display: none;
+      pointer-events: none;
+    }
+
+    .floating-selection.minimized .floating-header {
+      margin-bottom: 0;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .floating-selection.minimized .floating-header h3 {
+      display: none;
+    }
+
+    .floating-selection.minimized .minimize-button {
+      transform: rotate(0deg);
+      width: 30px;
+      height: 30px;
+      font-size: 10px;
+      pointer-events: auto;
+    }
+
+    .floating-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-top: 5px;
+    }
+
+    .floating-selection.minimized .floating-header {
+      margin-bottom: 0;
+    }
+
+    .floating-header h3 {
+      margin: 0;
+      color: #e74c3c;
+      font-size: 18px;
+      border: none;
+      padding: 0;
+    }
+
+    .minimize-button {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .minimize-button:hover {
+      background: #c0392b;
+      transform: scale(1.1);
+    }
+
+    .floating-content {
+      transition: all 0.3s ease;
+    }
+
+    .selected-numbers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+      min-height: 40px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .selected-number {
+      background: #e74c3c;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .selected-number:hover {
+      background: #c0392b;
+      transform: scale(1.05);
+    }
+
+    .selection-info {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+
+    .draw-button {
+      width: 100%;
+      background: linear-gradient(45deg, #e74c3c, #c0392b);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .draw-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(231, 76, 60, 0.3);
+    }
+
+    .draw-button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .clear-button {
+      width: 100%;
+      background: transparent;
+      color: #7f8c8d;
+      border: 2px solid #bdc3c7;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .clear-button:hover {
+      background: #ecf0f1;
+      border-color: #95a5a6;
+    }
+
+    /* 資訊外框 */
+    .information-section {
+      border: 2px solid #f39c12;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 40px;
+      background: #fefefe;
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.1);
+      position: relative;
+    }
+    .information-section::before {
+      content: "ℹ️ 詳細資訊";
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: #f39c12;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+	<h1>OOOXXX</h1>
+	<div class="product-highlight">
+		<div class="container">
+		<h2>XXXXOOOOXX</h2>
+		<p class="subtitle">【XXXX】XXX！OOOOOO</p>
+		<p><strong>發售時間：</strong>2025-07-11 12:04:42</p>
+		<p><strong>價格：</strong>R 120 /套</p>
+		<p><strong>剩餘數量：</strong>剩 45 / 50 抽</p>
+		
+		<!-- 進度條 -->
+		<div class="progress-container">
+			<div class="progress-label">
+				<span>剩餘進度</span>
+				<span>97%</span>
+			</div>
+			<div class="progress-bar">
+				<div class="progress-fill" style="width: 97%;"></div>
+			</div>
+		</div>
+		</div>
+	</div>
+  <!-- 🎁 獎品列表區及配率 -->
+  <div class="prize-section">
+    <div class="prize-grid">
+      <div class="prize-card">
+        <div class="badge">金賞</div>
+        <img src="https://via.placeholder.com/100x100?text=Gengar" alt="Gengar">
+        <div>精靈寶可夢 公仔</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>
+      </div>
+      <div class="prize-card">
+        <div class="badge" style="background: #3498db;">A賞</div>
+        <img src="https://via.placeholder.com/100x100?text=Suicune" alt="A賞">
+        <div>精靈寶可夢 公仔</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>
+      </div>
+      <!-- 更多獎項可依樣新增 -->
+      <div class="prize-card">
+        <div class="badge" style="background: #95a5a6;">I賞</div>
+        <img src="https://via.placeholder.com/100x100?text=貼紙" alt="I賞">
+        <div>寶可夢隨機貼紙</div>
+        <div>數量：40／40</div>
+        <div>機率：40.82%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎟️ 抽籤按鈕區 -->
+  <div class="lottery-section">
+    <h2 style="text-align:center">抽獎籤號</h2>
+    <div class="lottery-grid" id="lotteryGrid"></div>
+  </div>
+
+  <!-- 浮動選擇區塊 -->
+  <div class="floating-selection" id="floatingSelection">
+    <div class="floating-header">
+      <h3>🎯 已選擇的籤號</h3>
+      <button class="minimize-button" id="minimizeButton" title="縮小/展開">
+        ▼
+      </button>
+    </div>
+    <div class="floating-content" id="floatingContent">
+      <button class="clear-button" id="clearButton">清除所有選擇</button>
+      <div class="selected-numbers" id="selectedNumbers">
+        <div class="selection-info">請點擊上方籤號進行選擇</div>
+      </div>
+      <div class="selection-info">
+        已選擇：<span id="selectedCount">0</span> 個籤號
+      </div>
+      <button class="draw-button" id="drawButton" disabled>
+        🎲 確定開抽
+      </button>
+    </div>
+  </div>
+  <!-- ℹ️ 獎品列表區及配率 -->
+  <div class="information-section">
+    <div class="prize-grid">
+        <div>精靈寶可夢 公仔</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>
+        <div>數量：1／1</div>
+        <div>機率：1.02%</div>        
+    </div>
+  </div>
+  
+  <script>
+    const lotteryGrid = document.getElementById('lotteryGrid');
+    const floatingSelection = document.getElementById('floatingSelection');
+    const selectedNumbersContainer = document.getElementById('selectedNumbers');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const drawButton = document.getElementById('drawButton');
+    const clearButton = document.getElementById('clearButton');
+    const minimizeButton = document.getElementById('minimizeButton');
+    const floatingContent = document.getElementById('floatingContent');
+    
+    const totalTickets = 50;
+    let drawn = new Set();
+    let selected = new Set();
+    let isMinimized = false;
+
+    // 創建抽籤按鈕
+    for (let i = 1; i <= totalTickets; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'lottery-button';
+      btn.textContent = i;
+      btn.id = `ticket-${i}`;
+      
+      btn.onclick = () => {
+        if (!drawn.has(i)) {
+          if (selected.has(i)) {
+            // 取消選擇
+            selected.delete(i);
+            btn.style.background = '#e74c3c';
+            btn.style.transform = '';
+          } else {
+            // 選擇籤號
+            selected.add(i);
+            btn.style.background = '#f39c12';
+            btn.style.transform = 'scale(0.95)';
+          }
+          updateSelection();
+        }
+      };
+      
+      lotteryGrid.appendChild(btn);
+    }
+
+    // 更新選擇顯示
+    function updateSelection() {
+      selectedNumbersContainer.innerHTML = '';
+      
+      if (selected.size === 0) {
+        selectedNumbersContainer.innerHTML = '<div class="selection-info">請點擊上方籤號進行選擇</div>';
+        floatingSelection.classList.remove('show');
+        drawButton.disabled = true;
+      } else {
+        floatingSelection.classList.add('show');
+        
+        // 顯示選中的籤號（按順序排列）
+        Array.from(selected).sort((a, b) => a - b).forEach(num => {
+          const numberSpan = document.createElement('span');
+          numberSpan.className = 'selected-number';
+          numberSpan.textContent = num;
+          numberSpan.title = '點擊取消選擇';
+          numberSpan.onclick = () => {
+            selected.delete(num);
+            const btn = document.getElementById(`ticket-${num}`);
+            btn.style.background = '#e74c3c';
+            btn.style.transform = '';
+            updateSelection();
+          };
+          selectedNumbersContainer.appendChild(numberSpan);
+        });
+        
+        drawButton.disabled = false;
+      }
+      
+      selectedCountSpan.textContent = selected.size;
+    }
+
+    // 確定開抽按鈕
+    drawButton.onclick = () => {
+      if (selected.size === 0) return;
+      
+      const selectedArray = Array.from(selected);
+      const results = [];
+      
+      // 模擬抽獎結果
+      selectedArray.forEach(num => {
+        drawn.add(num);
+        const btn = document.getElementById(`ticket-${num}`);
+        btn.disabled = true;
+        btn.style.background = '#7f8c8d';
+        btn.style.transform = '';
+        
+        // 簡單的獎項分配邏輯
+        let prize;
+        const random = Math.random();
+        if (random < 0.01) {
+          prize = '🏆 金賞 - 精靈寶可夢公仔';
+        } else if (random < 0.02) {
+          prize = '🥈 A賞 - 精靈寶可夢公仔';
+        } else if (random < 0.4) {
+          prize = '🎨 I賞 - 寶可夢隨機貼紙';
+        } else {
+          prize = '😢 未中獎';
+        }
+        
+        results.push(`第 ${num} 號：${prize}`);
+      });
+      
+      // 顯示結果
+      const resultMessage = '🎉 開抽結果：\n\n' + results.join('\n') + '\n\n感謝您的參與！';
+      alert(resultMessage);
+      
+      // 清除選擇
+      selected.clear();
+      updateSelection();
+    };
+
+    // 清除選擇按鈕
+    clearButton.onclick = () => {
+      selected.forEach(num => {
+        if (!drawn.has(num)) {
+          const btn = document.getElementById(`ticket-${num}`);
+          btn.style.background = '#e74c3c';
+          btn.style.transform = '';
+        }
+      });
+      selected.clear();
+      updateSelection();
+    };
+
+    // 最小化/還原 浮動區塊
+    minimizeButton.onclick = () => {
+      isMinimized = !isMinimized;
+      
+      if (isMinimized) {
+        floatingSelection.classList.add('minimized');
+        minimizeButton.textContent = '▲';
+        minimizeButton.title = '展開';
+      } else {
+        floatingSelection.classList.remove('minimized');
+        minimizeButton.textContent = '▼';
+        minimizeButton.title = '縮小';
+      }
+    };
+
+    // 初始化
+    updateSelection();
+  </script>
+
+</body>
+</html>
