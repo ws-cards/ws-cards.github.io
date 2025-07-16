@@ -31,6 +31,27 @@
       padding: 10px;
       text-align: center;
       position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .prize-card.sold-out {
+      opacity: 0.5;
+      filter: grayscale(100%);
+    }
+
+    .prize-card.sold-out::after {
+      content: '已售完';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(231, 76, 60, 0.9);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      z-index: 10;
     }
 
     .prize-card img {
@@ -82,6 +103,62 @@
       background: #7f8c8d;
       cursor: not-allowed;
       transform: none;
+      position: relative;
+      overflow: visible;
+    }
+
+    /* 獎品標籤樣式 */
+    .prize-label {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(45deg, #f39c12, #e67e22);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      animation: prizeAppear 0.5s ease-out;
+    }
+
+    .prize-label.gold {
+      background: linear-gradient(45deg, #ffd700, #ffb347);
+      color: #333;
+    }
+
+    .prize-label.silver {
+      background: linear-gradient(45deg, #c0c0c0, #a8a8a8);
+      color: #333;
+    }
+
+    .prize-label.bronze {
+      background: linear-gradient(45deg, #cd7f32, #b8860b);
+      color: white;
+    }
+
+    .prize-label.normal {
+      background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+      color: white;
+    }
+
+    .prize-label.empty {
+      background: linear-gradient(45deg, #e74c3c, #c0392b);
+      color: white;
+    }
+
+    @keyframes prizeAppear {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px) scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
     }
 
     /* 平板尺寸 */
@@ -143,6 +220,14 @@
         padding: 10px 6px;
         font-size: 14px;
         min-height: 45px;
+        position: relative;
+        overflow: visible;
+      }
+      
+      .prize-label {
+        font-size: 9px;
+        padding: 2px 5px;
+        top: -7px;
       }
       
       .floating-selection {
@@ -265,6 +350,14 @@
         padding: 8px 4px;
         font-size: 12px;
         min-height: 40px;
+        position: relative;
+        overflow: visible;
+      }
+      
+      .prize-label {
+        font-size: 8px;
+        padding: 1px 4px;
+        top: -6px;
       }
     }
 
@@ -279,6 +372,14 @@
         padding: 8px 4px;
         font-size: 11px;
         min-height: 35px;
+        position: relative;
+        overflow: visible;
+      }
+      
+      .prize-label {
+        font-size: 7px;
+        padding: 1px 3px;
+        top: -5px;
       }
       
       .prize-section,
@@ -635,16 +736,16 @@
 		<p class="subtitle">【XXXX】XXX！OOOOOO</p>
 		<p><strong>發售時間：</strong>2025-07-11 12:04:42</p>
 		<p><strong>價格：</strong>R 120 /套</p>
-		<p><strong>剩餘數量：</strong>剩 45 / 50 抽</p>
+		<p><strong>剩餘數量：</strong>剩 <span id="remainingCount">50</span> / <span id="totalCount">50</span> 抽</p>
 		
 		<!-- 進度條 -->
 		<div class="progress-container">
 			<div class="progress-label">
 				<span>剩餘進度</span>
-				<span>97%</span>
+				<span id="progressPercentage">100%</span>
 			</div>
 			<div class="progress-bar">
-				<div class="progress-fill" style="width: 97%;"></div>
+				<div class="progress-fill" id="progressFill" style="width: 100%;"></div>
 			</div>
 		</div>
 		</div>
@@ -652,28 +753,35 @@
   <!-- 🎁 獎品列表區及配率 -->
   <div class="prize-section">
     <div class="prize-grid">
-      <div class="prize-card">
+      <div class="prize-card" id="prize-gold">
         <div class="badge">金賞</div>
         <img src="https://via.placeholder.com/100x100?text=Gengar" alt="Gengar">
         <div>精靈寶可夢 公仔</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>
+        <div>數量：<span id="gold-remaining">1</span>／<span id="gold-total">1</span></div>
+        <div>機率：<span id="gold-probability">2.00%</span></div>
       </div>
-      <div class="prize-card">
+      <div class="prize-card" id="prize-a">
         <div class="badge" style="background: #3498db;">A賞</div>
         <img src="https://via.placeholder.com/100x100?text=Suicune" alt="A賞">
         <div>精靈寶可夢 公仔</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>
+        <div>數量：<span id="a-remaining">1</span>／<span id="a-total">1</span></div>
+        <div>機率：<span id="a-probability">2.00%</span></div>
       </div>
       <!-- 更多獎項可依樣新增 -->
-      <div class="prize-card">
-        <div class="badge" style="background: #95a5a6;">I賞</div>
-        <img src="https://via.placeholder.com/100x100?text=貼紙" alt="I賞">
+      <div class="prize-card" id="prize-b">
+        <div class="badge" style="background: #95a5a6;">B賞</div>
+        <img src="https://via.placeholder.com/100x100?text=貼紙" alt="B賞">
         <div>寶可夢隨機貼紙</div>
-        <div>數量：40／40</div>
-        <div>機率：40.82%</div>
+        <div>數量：<span id="b-remaining">20</span>／<span id="b-total">20</span></div>
+        <div>機率：<span id="b-probability">40.00%</span></div>
       </div>
+      <div class="prize-card" id="prize-n">
+        <div class="badge" style="background: #5b59e7;">普賞</div>
+        <img src="https://via.placeholder.com/100x100?text=貼紙" alt="普賞">
+        <div>寶可夢空氣</div>
+        <div>數量：<span id="n-remaining">28</span>／<span id="n-total">28</span></div>
+        <div>機率：<span id="n-probability">56.00%</span></div>
+      </div>      
     </div>
   </div>
 
@@ -707,15 +815,24 @@
   <!-- ℹ️ 獎品列表區及配率 -->
   <div class="information-section">
     <div class="prize-grid">
-        <div>精靈寶可夢 公仔</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>
-        <div>數量：1／1</div>
-        <div>機率：1.02%</div>        
+        <div>
+    【消費方式】<br>
+    一抽露魂：購買露天點數 > 抽賞 > 我的賞品盒打包商品出貨 > 等待收貨。<br>
+    <br>
+   【排隊抽賞規則】 <br>
+    每次抽選時限 180 秒。<br>
+    抽選後進入「保留時間」，在期限內抽選幾次都可以，直到倒數完畢為止，將開放其他用戶抽選。<br>
+    【賞品交易說明】<br>
+    一抽露魂為「線上機率型」商品，一但完成抽獎程序，除有商品本體瑕疵（不包含盒損）外「不接受退貨及退款」。<br>
+    若因商品瑕疵，「收到商品拆封請全程錄影以保護雙方權益」。<br>
+    商品運送及檢驗時可能會造成盒損及二次膠拆檢等狀況。<br>
+    若您對商品包裝盒況有相當高的要求，建議您不要購買。<br>
+    購買前請「務必」確認我們的賞品交易說明再進行購買，謝謝！<br>
+     【機率公平性】<br>
+      一抽露魂：安全 × 公平 × 隨機，讓幸運真正發光<br>
+      <br>
+      在「一抽露魂」，露天相信抽獎不該被人為控制，而是靠科技保障公平、安全守護驚喜<br>
+        </div>  
     </div>
   </div>
   
@@ -729,10 +846,147 @@
     const minimizeButton = document.getElementById('minimizeButton');
     const floatingContent = document.getElementById('floatingContent');
     
-    const totalTickets = 50;
+    // 新增：動態進度更新元素
+    const remainingCountSpan = document.getElementById('remainingCount');
+    const totalCountSpan = document.getElementById('totalCount');
+    const progressPercentageSpan = document.getElementById('progressPercentage');
+    const progressFill = document.getElementById('progressFill');
+    
+    // 新增：獎品管理系統
+    const prizes = {
+      gold: {
+        name: '金賞',
+        total: 1,
+        remaining: 1,
+        probability: 0.02, // 2%
+        remainingSpan: document.getElementById('gold-remaining'),
+        probabilitySpan: document.getElementById('gold-probability'),
+        card: document.getElementById('prize-gold')
+      },
+      a: {
+        name: 'A賞',
+        total: 1,
+        remaining: 1,
+        probability: 0.02, // 2%
+        remainingSpan: document.getElementById('a-remaining'),
+        probabilitySpan: document.getElementById('a-probability'),
+        card: document.getElementById('prize-a')
+      },
+      b: {
+        name: 'B賞',
+        total: 20,
+        remaining: 20,
+        probability: 0.40, // 40%
+        remainingSpan: document.getElementById('b-remaining'),
+        probabilitySpan: document.getElementById('b-probability'),
+        card: document.getElementById('prize-b')
+      },
+      n: {
+        name: '普賞',
+        total: 28,
+        remaining: 28,
+        probability: 0.56, // 56%
+        remainingSpan: document.getElementById('n-remaining'),
+        probabilitySpan: document.getElementById('n-probability'),
+        card: document.getElementById('prize-n')
+      }      
+    };
+    
+    //總獎數
+    const totalTickets = prizes.gold.total + prizes.a.total + prizes.b.total + prizes.n.total;
     let drawn = new Set();
     let selected = new Set();
     let isMinimized = false;
+
+    // 更新獎品顯示和機率
+    function updatePrizes() {
+      const remainingTickets = totalTickets - drawn.size;
+      
+      // 計算總獎品剩餘數量
+      let totalPrizesRemaining = 0;
+      Object.values(prizes).forEach(prize => {
+        totalPrizesRemaining += prize.remaining;
+      });
+      
+      // 更新每個獎品的顯示和機率
+      Object.keys(prizes).forEach(key => {
+        const prize = prizes[key];
+        
+        // 更新剩餘數量顯示
+        prize.remainingSpan.textContent = prize.remaining;
+        
+        // 計算新的機率（基於剩餘票數）
+        let newProbability = 0;
+        if (remainingTickets > 0 && prize.remaining > 0) {
+          newProbability = (prize.remaining / remainingTickets) * 100;
+        }
+        
+        // 更新機率顯示
+        prize.probabilitySpan.textContent = newProbability.toFixed(2) + '%';
+        
+        // 如果獎品已售完，添加售完樣式
+        if (prize.remaining === 0) {
+          prize.card.style.opacity = '0.5';
+          prize.card.style.filter = 'grayscale(100%)';
+          prize.probabilitySpan.textContent = '已售完';
+        } else {
+          prize.card.style.opacity = '1';
+          prize.card.style.filter = 'none';
+        }
+      });
+    }
+
+    // 根據機率決定中獎獎品
+    function determinePrize() {
+      const random = Math.random();
+      let cumulativeProbability = 0;
+      
+      // 檢查每個獎品是否中獎（按順序檢查）
+      for (const [key, prize] of Object.entries(prizes)) {
+        if (prize.remaining > 0) {
+          const remainingTickets = totalTickets - drawn.size;
+          const prizeProbability = prize.remaining / remainingTickets;
+          cumulativeProbability += prizeProbability;
+          
+          if (random < cumulativeProbability) {
+            return key;
+          }
+        }
+      }
+      
+      return null; // 未中獎
+    }
+
+    // 更新剩餘進度和數量
+    function updateProgress() {
+      const remainingTickets = totalTickets - drawn.size;
+      const progressPercentage = Math.round((remainingTickets / totalTickets) * 100);
+      
+      // 更新數量顯示
+      remainingCountSpan.textContent = remainingTickets;
+      totalCountSpan.textContent = totalTickets;
+      
+      // 更新進度百分比
+      progressPercentageSpan.textContent = progressPercentage + '%';
+      
+      // 更新進度條寬度
+      progressFill.style.width = progressPercentage + '%';
+      
+      // 根據剩餘量調整進度條顏色
+      if (progressPercentage > 50) {
+        progressFill.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)'; // 綠色
+      } else if (progressPercentage > 20) {
+        progressFill.style.background = 'linear-gradient(90deg, #f39c12, #e67e22)'; // 橙色
+      } else {
+        progressFill.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)'; // 紅色
+      }
+      
+      // 如果售完，可以添加特殊樣式
+      if (remainingTickets === 0) {
+        progressPercentageSpan.textContent = '已售完';
+        progressFill.style.background = '#95a5a6'; // 灰色
+      }
+    }
 
     // 創建抽籤按鈕
     for (let i = 1; i <= totalTickets; i++) {
@@ -809,21 +1063,55 @@
         btn.style.background = '#7f8c8d';
         btn.style.transform = '';
         
-        // 簡單的獎項分配邏輯
-        let prize;
-        const random = Math.random();
-        if (random < 0.01) {
-          prize = '🏆 金賞 - 精靈寶可夢公仔';
-        } else if (random < 0.02) {
-          prize = '🥈 A賞 - 精靈寶可夢公仔';
-        } else if (random < 0.4) {
-          prize = '🎨 I賞 - 寶可夢隨機貼紙';
+        // 使用新的獎品決定邏輯
+        const wonPrizeKey = determinePrize();
+        let prize = '😢 未中獎';
+        let prizeLabel = '';
+        let labelClass = 'empty';
+        
+        if (wonPrizeKey) {
+          const wonPrize = prizes[wonPrizeKey];
+          wonPrize.remaining--;
+          
+          // 根據獎品類型設定顯示文字和標籤
+          switch(wonPrizeKey) {
+            case 'gold':
+              prize = '🏆 金賞 - 精靈寶可夢公仔';
+              prizeLabel = '金賞';
+              labelClass = 'gold';
+              break;
+            case 'a':
+              prize = '🥈 A賞 - 精靈寶可夢公仔';
+              prizeLabel = 'A賞';
+              labelClass = 'silver';
+              break;
+            case 'b':
+              prize = '🎨 B賞 - 寶可夢隨機貼紙';
+              prizeLabel = 'B賞';
+              labelClass = 'bronze';
+              break;
+            case 'n':
+              prize = '🎨 普賞 - 寶可夢空氣';
+              prizeLabel = '普賞';
+              labelClass = 'normal';
+              break;              
+          }
         } else {
-          prize = '😢 未中獎';
+          prizeLabel = '未中';
+          labelClass = 'empty';
         }
+        
+        // 在按鈕上添加獎品標籤
+        addPrizeLabel(btn, prizeLabel, labelClass);
         
         results.push(`第 ${num} 號：${prize}`);
       });
+      
+      // 更新進度條和剩餘數量
+      updateProgress();
+      
+      // 更新獎品顯示和機率
+      updatePrizes();
       
       // 顯示結果
       const resultMessage = '🎉 開抽結果：\n\n' + results.join('\n') + '\n\n感謝您的參與！';
@@ -833,6 +1121,27 @@
       selected.clear();
       updateSelection();
     };
+
+    // 添加獎品標籤到按鈕上
+    function addPrizeLabel(button, labelText, labelClass) {
+      // 移除舊的標籤（如果存在）
+      const existingLabel = button.querySelector('.prize-label');
+      if (existingLabel) {
+        existingLabel.remove();
+      }
+      
+      // 創建新的獎品標籤
+      const prizeLabel = document.createElement('span');
+      prizeLabel.className = `prize-label ${labelClass}`;
+      prizeLabel.textContent = labelText;
+      
+      // 將標籤添加到按鈕中
+      button.appendChild(prizeLabel);
+      
+      // 為按鈕添加特殊樣式以顯示獎品
+      button.style.position = 'relative';
+      button.style.overflow = 'visible';
+    }
 
     // 清除選擇按鈕
     clearButton.onclick = () => {
@@ -864,6 +1173,8 @@
 
     // 初始化
     updateSelection();
+    updateProgress(); // 初始化進度顯示
+    updatePrizes(); // 初始化獎品顯示
   </script>
 
 </body>
