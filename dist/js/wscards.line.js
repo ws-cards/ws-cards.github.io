@@ -172,7 +172,8 @@ source:[
 {id:"WS00151", name:"甘神さんちの縁結び",cname:"結緣甘神神社 | AMG"},
 {id:"WS00152", name:"学園アイドルマスター",cname:"學園偶像大師 | 學偶 | GIM"},
 {id:"WS00153", name:"あおぎり高校",cname:"青桐高中 | AOH"},
-{id:"WS00154", name:"負けヒロインが多すぎる！",cname:"敗北女角太多了！ | MKI"}
+{id:"WS00154", name:"負けヒロインが多すぎる！",cname:"敗北女角太多了！ | MKI"},
+{id:"WS00155", name:"怪獣８号",cname:"怪獸8號 | 怪8 | KJ8"}	
 ]
 ,
   minLength:1,
@@ -693,3 +694,4 @@ $input.change(function() {
             } 
             sortlist("cardNumber",sOrder); 
         } 	
+
