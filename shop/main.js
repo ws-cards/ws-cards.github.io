@@ -381,7 +381,7 @@ async function fetchJsonData() {
         console.log(data);
         return data;
     } catch (error) {
-        console.error('錯誤:', error);
+        console.log('錯誤:'+ error);
         console.log('使用預設商品數據');
         const defaultProducts = [
             {
@@ -395,4 +395,5 @@ async function fetchJsonData() {
         ]
         return defaultProducts;
     }
+
 }
