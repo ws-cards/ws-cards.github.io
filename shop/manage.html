@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>商品管理 | Personal Shop Admin</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta name="description" content="個人商店商品管理系統">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="商品管理">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='manage.css'>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">🛍️ 商品管理</h1>
+            <nav class="nav">
+                <a href="shop.html" class="nav-link">返回商店</a>
+                <a href="#products" class="nav-link active">商品列表</a>
+                <a href="#add" class="nav-link">新增商品</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Add Product Section -->
+        <section id="add" class="add-product">
+            <div class="container">
+                <h2 class="section-title">新增商品</h2>
+                <div class="form-container">
+                    <form id="productForm" class="product-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productTitle">商品名稱 *</label>
+                                <input type="text" id="productTitle" name="title" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productCategory">商品分類 *</label>
+                                <select id="productCategory" name="category" required>
+                                    <option value="">請選擇分類</option>
+                                    <option value="服飾">服飾</option>
+                                    <option value="配件">配件</option>
+                                    <option value="鞋類">鞋類</option>
+                                    <option value="電子產品">電子產品</option>
+                                    <option value="居家用品">居家用品</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productPrice">商品價格 *</label>
+                                <input type="number" id="productPrice" name="price" min="0" step="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productImage">商品圖片URL *</label>
+                                <input type="url" id="productImage" name="image" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productDescription">商品描述 *</label>
+                            <textarea id="productDescription" name="description" rows="4" required></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span id="submitText">新增商品</span>
+                                <span id="submitLoader" class="btn-loader" style="display: none;">處理中...</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetForm()">清除表單</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Management Section -->
+        <section id="products" class="products-management">
+            <div class="container">
+                <div class="management-header">
+                    <h2 class="section-title">商品管理</h2>
+                    <div class="management-actions">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="搜尋商品...">
+                            <button class="search-btn" onclick="performSearch()">🔍</button>
+                        </div>
+                        <select id="categoryFilter" onchange="filterByCategory()">
+                            <option value="all">全部分類</option>
+                            <option value="服飾">服飾</option>
+                            <option value="配件">配件</option>
+                            <option value="鞋類">鞋類</option>
+                            <option value="電子產品">電子產品</option>
+                            <option value="居家用品">居家用品</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="products-stats">
+                    <div class="stat-card">
+                        <h3>總商品數</h3>
+                        <span id="totalProducts">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>總價值</h3>
+                        <span id="totalValue">NT$ 0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>分類數量</h3>
+                        <span id="categoryCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>圖片</th>
+                                <th>商品名稱</th>
+                                <th>分類</th>
+                                <th>價格</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Edit Product Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>編輯商品</h3>
+                <span class="modal-close" id="editModalClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm" class="product-form">
+                    <input type="hidden" id="editProductId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editProductTitle">商品名稱 *</label>
+                            <input type="text" id="editProductTitle" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editProductCategory">商品分類 *</label>
+                            <select id="editProductCategory" name="category" required>
+                                <option value="">請選擇分類</option>
+                                <option value="服飾">服飾</option>
+                                <option value="配件">配件</option>
+                                <option value="鞋類">鞋類</option>
+                                <option value="電子產品">電子產品</option>
+                                <option value="居家用品">居家用品</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editProductPrice">商品價格 *</label>
+                            <input type="number" id="editProductPrice" name="price" min="0" step="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editProductImage">商品圖片URL *</label>
+                            <input type="url" id="editProductImage" name="image" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductDescription">商品描述 *</label>
+                        <textarea id="editProductDescription" name="description" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">更新商品</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>確認刪除</h3>
+                <span class="modal-close" id="deleteModalClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>您確定要刪除這個商品嗎？此操作無法復原。</p>
+                <div class="delete-product-info">
+                    <img id="deleteProductImage" src="" alt="">
+                    <div>
+                        <h4 id="deleteProductTitle"></h4>
+                        <p id="deleteProductPrice"></p>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="confirmDelete" class="btn btn-danger">確認刪除</button>
+                    <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src='manage.js'></script>
+</body>
+</html>
