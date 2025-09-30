@@ -376,7 +376,7 @@ function handleSwipe() {
 // 使用 async/await
 async function fetchJsonData() {
     try {
-        const response = await fetch('defaultProducts.json');
+        const response = await fetch('https://ws-cards.cloud/shop/defaultProducts.json');
         const data = await response.json();
         console.log(data);
         return data;
@@ -397,3 +397,4 @@ async function fetchJsonData() {
     }
 
 }
+
