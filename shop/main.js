@@ -6,68 +6,52 @@ function loadProducts() {
  
     // 使用 fetchJsonData 函數
     const managedProductsJSON = fetchJsonData();    
+    console.log("managedProductsJSON:",managedProductsJSON);
     // 首先嘗試從管理系統載入商品數據
-    const managedProducts = localStorage.getItem('products');
+    // const managedProducts = localStorage.getItem('products');
     if (managedProductsJSON) {
-        products = JSON.parse(managedProducts);
-        return;
+        managedProductsJSON.then(
+            (result)=>{products = result;},
+            (error)=>{console.log(error);}
+        );
+    }else{
+        // 如果沒有管理的商品數據，使用預設數據並儲存
+        const defaultProducts = [
+            {
+                id: 1,
+                title: "經典白色T恤",
+                description: "100%純棉材質，舒適透氣，適合日常穿著。簡約設計，百搭款式，是您衣櫃中不可缺少的基本款。",
+                price: 899,
+                image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
+                category: "服飾",
+                storeid: "GM2510015921258"
+            },
+            {
+                id: 2,
+                title: "時尚背包",
+                description: "多功能設計，大容量收納空間。防水材質，適合上班上學使用。時尚外觀搭配實用功能。",
+                price: 1299,
+                image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
+                category: "配件",
+                storeid: "GM2510015921258"
+            },
+            {
+                id: 3,
+                title: "運動鞋",
+                description: "專業運動鞋，提供優秀的腳部支撐和緩震效果。適合跑步、健身等各種運動場合。",
+                price: 2499,
+                image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop",
+                category: "鞋類",
+                storeid: "GM2510015921258"
+            }
+        ];
+    
+        products = defaultProducts;
     }
     
 
-    // 如果沒有管理的商品數據，使用預設數據並儲存
-    const defaultProducts = [
-        {
-            id: 1,
-            title: "經典白色T恤",
-            description: "100%純棉材質，舒適透氣，適合日常穿著。簡約設計，百搭款式，是您衣櫃中不可缺少的基本款。",
-            price: 899,
-            image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
-            category: "服飾"
-        },
-        {
-            id: 2,
-            title: "時尚背包",
-            description: "多功能設計，大容量收納空間。防水材質，適合上班上學使用。時尚外觀搭配實用功能。",
-            price: 1299,
-            image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
-            category: "配件"
-        },
-        {
-            id: 3,
-            title: "運動鞋",
-            description: "專業運動鞋，提供優秀的腳部支撐和緩震效果。適合跑步、健身等各種運動場合。",
-            price: 2499,
-            image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop",
-            category: "鞋類"
-        },
-        {
-            id: 4,
-            title: "無線耳機",
-            description: "高品質音效，長續航力，支援降噪功能。輕巧設計，攜帶方便，是音樂愛好者的首選。",
-            price: 3999,
-            image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
-            category: "電子產品"
-        },
-        {
-            id: 5,
-            title: "咖啡杯",
-            description: "精美陶瓷材質，保溫效果佳。優雅設計，適合居家使用或辦公室享用咖啡時光。",
-            price: 599,
-            image: "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=500&h=500&fit=crop",
-            category: "居家用品"
-        },
-        {
-            id: 6,
-            title: "手錶",
-            description: "精緻石英機芯，不鏽鋼錶帶，防水設計。商務休閒兩相宜，展現您的品味與格調。",
-            price: 4999,
-            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop",
-            category: "配件"
-        }
-    ];
-    
-    products = defaultProducts;
-    localStorage.setItem('products', JSON.stringify(products));
+
+    // localStorage.setItem('products', JSON.stringify(products));
 }
 
 // DOM 元素
@@ -96,7 +80,7 @@ function initializeApp() {
     
     // PWA 相關
     if ('serviceWorker' in navigator) {
-        registerServiceWorker();
+        // registerServiceWorker();
     }
 }   
 
@@ -139,7 +123,8 @@ function openLightbox(productId) {
     lightboxPrice.textContent = `NT$ ${product.price.toLocaleString()}`;
     
     // 設定按鈕事件
-    addToCartBtn.onclick = () => addToCart(product);
+    // addToCartBtn.onclick = () => addToCart(product);
+    // alert("product store:"+product.storeid);
     buyNowBtn.onclick = () => buyNow(product);
     
     lightbox.classList.add('active');
@@ -170,11 +155,12 @@ function addToCart(product) {
 
 // 立即購買
 function buyNow(product) {
-    addToCart(product);
-    showNotification(`正在前往結帳頁面...`);
+    //addToCart(product);
+    showNotification(`正在前往賣貨便賣場頁面...`);
+    console.log(product.storeid);
     // 這裡可以跳轉到結帳頁面
     setTimeout(() => {
-        alert('結帳功能開發中，敬請期待！');
+        window.open('https://myship.7-11.com.tw/cart/confirm/'+product.storeid,'_blank')
     }, 1000);
 }
 
@@ -395,6 +381,4 @@ async function fetchJsonData() {
         ]
         return defaultProducts;
     }
-
 }
-
