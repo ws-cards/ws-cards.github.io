@@ -1,7 +1,51 @@
 // 商品管理系統
-
-// 從 main.js 導入商品數據或使用本地存儲
 let products = [];
+
+// 載入商品數據
+ async function loadProducts() {
+    // 使用 fetchJsonData 函數
+    const managedProductsJSON = await fetchJsonData();     
+    console.log("managedProductsJSON:",managedProductsJSON);
+    // 首先嘗試從管理系統載入商品數據
+    // const managedProducts = localStorage.getItem('products');
+    if (managedProductsJSON && managedProductsJSON.length > 0) {
+        products = managedProductsJSON;
+    }else{
+        // 如果沒有管理的商品數據，使用預設數據並儲存
+        const defaultProducts = [
+            {
+                id: 1,
+                title: "經典白色T恤",
+                description: "100%純棉材質，舒適透氣，適合日常穿著。簡約設計，百搭款式，是您衣櫃中不可缺少的基本款。",
+                price: 899,
+                image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
+                category: "服飾",
+                storeid: "GM2510015921258"
+            },
+            {
+                id: 2,
+                title: "時尚背包",
+                description: "多功能設計，大容量收納空間。防水材質，適合上班上學使用。時尚外觀搭配實用功能。",
+                price: 1299,
+                image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
+                category: "配件",
+                storeid: "GM2510015921258"
+            },
+            {
+                id: 3,
+                title: "運動鞋",
+                description: "專業運動鞋，提供優秀的腳部支撐和緩震效果。適合跑步、健身等各種運動場合。",
+                price: 2499,
+                image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop",
+                category: "鞋類",
+                storeid: "GM2510015921258"
+            }
+        ];
+    
+        products = defaultProducts;
+    }
+}
+
 let editingProductId = null;
 let deleteProductId = null;
 
@@ -30,27 +74,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 初始化管理系統
-function initializeManagement() {
-    loadProducts();
+async function initializeManagement() {
+    await loadProducts();
     setupEventListeners();
     displayProducts();
     updateStatistics();
     
     // PWA 相關
     if ('serviceWorker' in navigator) {
-        registerServiceWorker();
+        // registerServiceWorker();
     }
 }
 
-// 載入商品數據
-function loadProducts() {
-    // 從 localStorage 載入商品數據，如果沒有則使用預設數據
-    const storedProducts = localStorage.getItem('products');
-    if (storedProducts) {
-        products = JSON.parse(storedProducts);
-    } else {
-        // 使用預設商品數據
-        products = [
+
+// 使用 async/await
+async function fetchJsonData() {
+    try {
+        const response = await fetch('https://ws-cards.cloud/shop/defaultProducts.json');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.log('錯誤:'+ error);
+        console.log('使用預設商品數據');
+        const defaultProducts = [
             {
                 id: 1,
                 title: "經典白色T恤",
@@ -58,52 +104,11 @@ function loadProducts() {
                 price: 899,
                 image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
                 category: "服飾"
-            },
-            {
-                id: 2,
-                title: "時尚背包",
-                description: "多功能設計，大容量收納空間。防水材質，適合上班上學使用。時尚外觀搭配實用功能。",
-                price: 1299,
-                image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
-                category: "配件"
-            },
-            {
-                id: 3,
-                title: "運動鞋",
-                description: "專業運動鞋，提供優秀的腳部支撐和緩震效果。適合跑步、健身等各種運動場合。",
-                price: 2499,
-                image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop",
-                category: "鞋類"
-            },
-            {
-                id: 4,
-                title: "無線耳機",
-                description: "高品質音效，長續航力，支援降噪功能。輕巧設計，攜帶方便，是音樂愛好者的首選。",
-                price: 3999,
-                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
-                category: "電子產品"
-            },
-            {
-                id: 5,
-                title: "咖啡杯",
-                description: "精美陶瓷材質，保溫效果佳。優雅設計，適合居家使用或辦公室享用咖啡時光。",
-                price: 599,
-                image: "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=500&h=500&fit=crop",
-                category: "居家用品"
-            },
-            {
-                id: 6,
-                title: "手錶",
-                description: "精緻石英機芯，不鏽鋼錶帶，防水設計。商務休閒兩相宜，展現您的品味與格調。",
-                price: 4999,
-                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop",
-                category: "配件"
             }
-        ];
-        saveProducts();
+        ]
+        return defaultProducts;
     }
 }
-
 // 儲存商品數據
 function saveProducts() {
     localStorage.setItem('products', JSON.stringify(products));
@@ -114,7 +119,7 @@ function saveProducts() {
 // 顯示商品列表
 function displayProducts(productsToShow = products) {
     showLoading();
-    
+    console.log('displayProducts:'+productsToShow.length);
     setTimeout(() => {
         productsTableBody.innerHTML = productsToShow.map(product => createProductRow(product)).join('');
         hideLoading();
@@ -246,7 +251,8 @@ function handleAddProduct(e) {
             description: formData.get('description'),
             price: parseInt(formData.get('price')),
             image: formData.get('image'),
-            category: formData.get('category')
+            category: formData.get('category'),
+            storeid: formData.get('storeid')
         };
         
         // 驗證數據
@@ -281,7 +287,8 @@ function handleEditProduct(e) {
         description: formData.get('description'),
         price: parseInt(formData.get('price')),
         image: formData.get('image'),
-        category: formData.get('category')
+        category: formData.get('category'),
+        storeid: formData.get('storeid')
     };
     
     // 驗證數據
@@ -306,7 +313,8 @@ function validateProduct(product) {
            product.description && 
            product.price > 0 && 
            product.image && 
-           product.category;
+           product.category && 
+           product.storeid;
 }
 
 // 開啟編輯模態框
@@ -320,7 +328,8 @@ function openEditModal(productId) {
     document.getElementById('editProductPrice').value = product.price;
     document.getElementById('editProductImage').value = product.image;
     document.getElementById('editProductCategory').value = product.category;
-    
+    document.getElementById('editStoreid').value = product.storeid;
+
     editModal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -467,19 +476,30 @@ function registerServiceWorker() {
 
 // 匯出數據（可選功能）
 function exportData() {
-    const dataStr = JSON.stringify(products, null, 2);
+    // 創建包含額外資訊的匯出對象
+    const exportData = {
+
+        products: products
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], {type: 'application/json'});
     const url = URL.createObjectURL(dataBlob);
     
+    // 使用當前日期時間作為檔案名
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 19).replace(/[:\-T]/g, '');
+    const fileName = `products_export_${dateStr}.json`;
+    
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'products.json';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    showToast('數據匯出成功！', 'success');
+    showToast(`已匯出 ${products.length} 個商品到 ${fileName}`, 'success');
 }
 
 // 匯入數據（可選功能）
