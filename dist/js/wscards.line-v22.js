@@ -400,7 +400,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		showSearchNotification('正在搜尋後綴: ' + cardParts.suffix);
 		var suffixFound = await findAndSetCardSuffix(cardParts.suffix);
 		if (!suffixFound) {
-			console.warn('找不到對應的卡號:', cardParts.suffix);
+			console.warn('後綴找不到對應的卡號:', cardParts.suffix);
 			showSearchNotification('找不到對應的卡號: ' + cardParts.suffix, 'error');
 			return;
 		}
@@ -1061,9 +1061,9 @@ async function findAndSetCardSuffix(suffix) {
   return new Promise((resolve) => {
     var checkInterval = setInterval(() => {
       var cardTitleSelect = document.getElementById('cardTitle');
-      if (!cardTitleSelect || cardTitleSelect.options.length <= 1) {
-        return; // 還沒載入完成
-      }
+     //if (!cardTitleSelect || cardTitleSelect.options.length <= 1) {
+     //   return; // 還沒載入完成
+     // }
       
       clearInterval(checkInterval);
       
@@ -1261,6 +1261,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
