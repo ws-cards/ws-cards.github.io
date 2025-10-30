@@ -224,10 +224,11 @@ function handleInputChange() {
       changeStandardForSuggest(current.name);
       //when you chose item
     } else {
-      //alert($dropdown.val);
-      // This means it is only a partial match, you can either add a new item
-      // or take the active if you don't want new items
-      console.log('Partial match detected');
+        console.log('Partial match detected->check number');
+	    if (inputValue && isCardNumberFormat(inputValue)) {
+	      console.log('檢測到卡號格式，嘗試直接搜尋:', inputValue);
+	      searchByCardNumber(inputValue);
+	    }		
     }
   } else {
     // Nothing is active so it is a new value (or maybe empty value)
@@ -1260,6 +1261,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
