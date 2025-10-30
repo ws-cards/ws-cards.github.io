@@ -1072,7 +1072,9 @@ async function findAndSetCardSuffix(suffix) {
         var option = cardTitleSelect.options[i];
         var value = option.value;
         var searchTarget = suffix.toLowerCase();
-
+        console.log("key in searchTarget:"+searchTarget);
+		console.log("value:"+value);
+		  console.log("option.text:"+option.text);
         if (value && value.toLowerCase().includes(searchTarget)) {
           console.log('找到匹配的主題:', option.text, 'value:', value);
           option.selected = true;
@@ -1261,6 +1263,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
