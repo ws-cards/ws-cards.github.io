@@ -1189,8 +1189,8 @@ async function findAndSetCardNumberBySuffix(fullNumber) {
       // 遍歷所有選項找到匹配的
       for (var i = 0; i < cardNumberSelect.options.length; i++) {
         var option = cardNumberSelect.options[i];
-        var value = option.value;
-        var searchTarget = fullNumber.toLowerCase();
+        var value = option.value+"/";
+        var searchTarget = fullNumber.toLowerCase()+"/";
         console.log('findAndSetCardNumberBySuffix searchTarget:'+searchTarget);
 		 console.log('findAndSetCardNumberBySuffix value.toLowerCase():'+value.toLowerCase());  
 		if (value && value.toLowerCase().includes(searchTarget)) {
@@ -1262,6 +1262,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
