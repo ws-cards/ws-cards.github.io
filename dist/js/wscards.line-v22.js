@@ -1095,7 +1095,7 @@ async function findAndSetCardSuffix(suffix) {
       for (var i = 0; i < cardStandardSelect.options.length; i++) {
         var option = cardStandardSelect.options[i];
         var value = option.value;
-        var searchTarget = prefix.toLowerCase();
+        var searchTarget = suffix.toLowerCase();
         // 檢查值是否包含我們的前綴
         if (value && value.toLowerCase().includes(searchTarget)) {
           console.log('找到匹配的作品標準:', option.text, 'value:', value);
@@ -1259,5 +1259,6 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
