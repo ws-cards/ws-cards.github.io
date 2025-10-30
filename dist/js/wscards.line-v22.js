@@ -214,8 +214,9 @@ function handleInputChange() {
   var current = $input.typeahead("getActive");
   var inputValue = $input.val().trim();
   
-  console.log('Input change detected:', inputValue);
-  
+  console.log('Input change detected(inputValue):', inputValue);
+  console.log('current:',current);
+  console.log('current.name:',current.name);
   if (current) {
     // Some item from your model is active!
     if (current.name == inputValue) {
@@ -1259,6 +1260,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
