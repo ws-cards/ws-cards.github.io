@@ -1191,8 +1191,8 @@ async function findAndSetCardNumberBySuffix(fullNumber) {
         var option = cardNumberSelect.options[i];
         var value = option.value+"/";
         var searchTarget = fullNumber.toLowerCase()+"/";
-        console.log('findAndSetCardNumberBySuffix searchTarget:'+searchTarget);
-		 console.log('findAndSetCardNumberBySuffix value.toLowerCase():'+value.toLowerCase());  
+        // console.log('findAndSetCardNumberBySuffix searchTarget:'+searchTarget);
+		// console.log('findAndSetCardNumberBySuffix value.toLowerCase():'+value.toLowerCase());  
 		if (value && value.toLowerCase().includes(searchTarget)) {
           console.log('找到匹配的卡號:', option.text, 'value:', value);
           option.selected = true;
@@ -1262,6 +1262,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
