@@ -398,7 +398,7 @@ async function setSelectorsFromCardParts(cardParts) {
 	}else{
 		// 2.5 設置 cardSuffix
 		showSearchNotification('正在搜尋後綴: ' + cardParts.suffix);
-		var suffixFound = await findAndSetCardSuffix(cardParts.suffix);
+		var suffixFound = await findAndSetCardSuffix(cardParts.prefix,cardParts.suffix);
 		if (!suffixFound) {
 			console.warn('後綴找不到對應的卡號:', cardParts.suffix);
 			showSearchNotification('找不到對應的卡號: ' + cardParts.suffix, 'error');
@@ -1057,7 +1057,7 @@ async function findAndSetCardTitle(series) {
  * @param {string} suffix - 卡號系列 (例如: W01-001)
  * @returns {Promise<boolean>} - 是否找到並設置成功
  */
-async function findAndSetCardSuffix(suffix) {
+async function findAndSetCardSuffix(prefix,suffix) {
   return new Promise((resolve) => {
     var checkInterval = setInterval(() => {
       var cardTitleSelect = document.getElementById('cardTitle');
@@ -1071,11 +1071,11 @@ async function findAndSetCardSuffix(suffix) {
       for (var i = 0; i < cardTitleSelect.options.length; i++) {
         var option = cardTitleSelect.options[i];
         var value = option.value;
-        var searchTarget = suffix.toLowerCase();
+        var searchTarget = prefix.toLowerCase();
         console.log("key in searchTarget:"+searchTarget);
 		console.log("value:"+value);
-		  console.log("option.text:"+option.text);
-        if (value && value.toLowerCase().includes(searchTarget)) {
+		console.log("option.text:"+option.text);
+        if (value && value.toLowerCase().includes("/"+searchTarget)) {
           console.log('找到匹配的主題:', option.text, 'value:', value);
           option.selected = true;
           
@@ -1263,6 +1263,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
