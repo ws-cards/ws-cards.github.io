@@ -148,8 +148,15 @@
 			<div class="card">
 			    <div class="card-body">
 				<!-- Input form -->
-				<input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱、作品代碼或完整卡號 (例如: PRD/W01-001)" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
-				<small class="form-text text-muted">💡 提示：可以直接輸入完整卡號進行快速搜尋，格式如 PRD/W01-001</small>
+        <div class="input-group">
+				    <input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱、作品代碼或完整卡號 (例如: PRD/W01-001)" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="貼上">
+                        <i class="fas fa-paste"></i>
+                    </button>
+                </div>
+          </div>
+        <small class="form-text text-muted">💡 提示：可以直接輸入完整卡號進行快速搜尋，格式如 PRD/W01-001</small>
 				</div>
 			</div>	
 		</div>		
@@ -341,7 +348,35 @@
 				$('#announceexampleModalCenter').modal('show');	
 			});	
 
-
+// 貼上按鈕功能 - 混合方案
+document.getElementById('pasteButton').addEventListener('click', async function() {
+    const inputElement = document.getElementById('xxxx');
+    
+    // 方法1: 嘗試現代 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+            const text = await navigator.clipboard.readText();
+            inputElement.value = text;
+            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        } catch (err) {
+            console.log('Clipboard API failed, trying execCommand');
+        }
+    }
+    
+ 
+    
+    // 方法3: 提示手動貼上
+    Swal.fire({
+        icon: 'info',
+        title: '請手動貼上',
+        text: '請在輸入框中按 Ctrl+V 貼上內容',
+        showConfirmButton: true,
+        confirmButtonText: '確定'
+    }).then(() => {
+        inputElement.focus();
+    });
+});  
 //Swal.fire({
 //  icon: 'info',
 //  title: '公告',
