@@ -1398,19 +1398,11 @@ function reGenTitle(){
 			  requestTitle.send();					
 			  requestTitle.onload = function(){
 				var cardsTitle = requestTitle.response;
-				var cardStandardArray = cardStandard.split(",");
+
 				for(var key in cardsTitle){	 
 
 					var keyStr=key.substr(0,key.indexOf('/'));//2~3
 					var keyStrLength=keyStr.length;
-
-					var filtered = cardStandardArray.filter(function(value) {
-						  return value === keyStr;
-					});						
-				    if(filtered==0){
-						//double check
-						continue;
-					}
 
 					var option = document.createElement("option");
 					option.setAttribute("value",key);
