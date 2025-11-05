@@ -366,7 +366,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		return;
 	  }
     }
-    
+    reGenTitle();
     // 等待 cardTitle 選項載入完成
     showSearchNotification('正在載入主題選項...');
     await waitForTitleOptionsLoaded();
@@ -421,7 +421,7 @@ async function setSelectorsFromCardParts(cardParts) {
     // 搜尋成功後平滑滾動到結果區域
     setTimeout(() => {
         scrollToResults();
-    }, 1000); // 延遲一秒讓圖表載入完成	
+    }, 200); // 延遲一秒讓圖表載入完成	
 
   } catch (error) {
     console.error('設置選擇器時發生錯誤:', error);
@@ -1384,4 +1384,38 @@ function scrollToCharts() {
     smoothScrollToAnchor('myChart', 'smooth', 'start');
 }
 
+/**
+ * 重組title
+ */
+function reGenTitle(){
+			  var selectTitle = document.getElementById("cardTitle"); 
+			  while (selectTitle.firstChild) {
+				selectTitle.removeChild(selectTitle.firstChild);
+			  }			  
+			  
+    		  requestTitle.open('GET', requestURLCardTitle);
+			  requestTitle.responseType = 'json';
+			  requestTitle.send();					
+			  requestTitle.onload = function(){
+				var cardsTitle = requestTitle.response;
+				var cardStandardArray = cardStandard.split(",");
+				for(var key in cardsTitle){	 
 
+					var keyStr=key.substr(0,key.indexOf('/'));//2~3
+					var keyStrLength=keyStr.length;
+
+					var filtered = cardStandardArray.filter(function(value) {
+						  return value === keyStr;
+					});						
+				    if(filtered==0){
+						//double check
+						continue;
+					}
+
+					var option = document.createElement("option");
+					option.setAttribute("value",key);
+					option.appendChild(document.createTextNode(cardsTitle[key])); 
+					selectTitle.appendChild(option);				
+				}
+			  }	
+}
