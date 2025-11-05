@@ -600,15 +600,7 @@ async function setSelectorsFromCardParts(cardParts) {
 					selectTitle.appendChild(option);	
 					selectTitle.insertBefore(option,selectTitle.childNodes[0]);
 
-				var selectCardStandard = document.getElementById("cardStandard");
-				while (selectCardStandard.firstChild) {
-					selectCardStandard.removeChild(selectCardStandard.firstChild);
-				}		
-				var optionStandard = document.createElement("option"); 
-					optionStandard.setAttribute("value",0);
-					optionStandard.appendChild(document.createTextNode("")); 				  
-					selectCardStandard.appendChild(optionStandard);	
-					selectCardStandard.insertBefore(optionStandard,selectCardStandard.childNodes[0]);				
+				removeTitle();			
 			}
 			
 			async function checkTitleOfCardNumberList(suffix){	
