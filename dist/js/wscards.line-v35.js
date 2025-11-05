@@ -922,7 +922,29 @@ async function setSelectorsFromCardParts(cardParts) {
 				cardImg.setAttribute("src",urlCard);
 				showCardImage(urlCard);
 			}
-			
+
+			// 現代化圖片載入效果
+			function showCardImage(src) {
+			    const img = document.getElementById('cardImg');
+			    const placeholder = document.querySelector('.image-placeholder');
+			    
+			    if (src) {
+			        // 淡入效果
+			        img.style.opacity = '0';
+			        img.style.display = 'block';
+			        img.src = src;
+			        
+			        img.onload = function() {
+			            placeholder.style.display = 'none';
+			            img.style.transition = 'opacity 0.5s ease';
+			            img.style.opacity = '1';
+			        };
+			    } else {
+			        img.style.display = 'none';
+			        placeholder.style.display = 'block';
+			    }
+			}    
+
 		/*	
 		Sort Option			
 		*/
@@ -1316,6 +1338,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
