@@ -417,7 +417,12 @@ async function setSelectorsFromCardParts(cardParts) {
 
     console.log('✓ 卡號搜尋完成:', cardParts.fullNumber);
     showSearchNotification('搜尋成功！已找到卡號: ' + cardParts.fullNumber, 'success');
-    
+ 
+    // 搜尋成功後平滑滾動到結果區域
+    setTimeout(() => {
+        scrollToResults();
+    }, 1000); // 延遲一秒讓圖表載入完成	
+
   } catch (error) {
     console.error('設置選擇器時發生錯誤:', error);
     showSearchNotification('設置選擇器時發生錯誤: ' + error.message, 'error');
@@ -922,7 +927,7 @@ async function setSelectorsFromCardParts(cardParts) {
 				cardImg.setAttribute("src",urlCard);
 				showCardImage(urlCard);
 			}
-
+			
 			// 現代化圖片載入效果
 			function showCardImage(src) {
 			    const img = document.getElementById('cardImg');
@@ -944,7 +949,7 @@ async function setSelectorsFromCardParts(cardParts) {
 			        placeholder.style.display = 'block';
 			    }
 			}    
-
+						
 		/*	
 		Sort Option			
 		*/
@@ -1341,15 +1346,40 @@ async function waitForNumberOptionsLoaded() {
 
 
 
+/**
+ * 平滑滾動到指定錨點
+ * @param {string} anchorId - 錨點元素的 ID (不包含 #)
+ * @param {string} behavior - 滾動行為 ('smooth' 或 'auto')
+ * @param {string} block - 垂直對齊方式 ('start', 'center', 'end', 'nearest')
+ */
+function smoothScrollToAnchor(anchorId, behavior = 'smooth', block = 'start') {
+    const targetElement = document.getElementById(anchorId);
+    
+    if (targetElement) {
+        targetElement.scrollIntoView({
+            behavior: behavior,
+            block: block,
+            inline: 'nearest'
+        });
+        
+        console.log(`平滑滾動到錨點: ${anchorId}`);
+    } else {
+        console.warn(`找不到錨點元素: ${anchorId}`);
+    }
+}
 
+/**
+ * 搜尋完成後滾動到結果區域
+ */
+function scrollToResults() {
+    // 滾動到卡片預覽區域
+    smoothScrollToAnchor('preview-container', 'smooth', 'center');
+}
 
-
-
-
-
-
-
-
-
-
-
+/**
+ * 滾動到圖表區域 (no USED)
+ */
+function scrollToCharts() {
+    // 滾動到圖表區域
+    smoothScrollToAnchor('myChart', 'smooth', 'start');
+}
