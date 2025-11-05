@@ -242,7 +242,9 @@ function handleInputChange() {
   }
 }
 // 監聽 click 事件 
-$cardNumberEle.click(scrollToResults);
+$cardNumberEle.click(setTimeout(() => {
+        scrollToResults();
+    }, 200));
 
 // 監聽 change 事件 (失去焦點時觸發)
 $input.change(handleInputChange);
