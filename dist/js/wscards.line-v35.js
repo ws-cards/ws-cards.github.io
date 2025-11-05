@@ -726,8 +726,6 @@ async function setSelectorsFromCardParts(cardParts) {
 				}				
 				
 				
-				scrollToResults();
-				
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
 					clearInterval(timer);
@@ -821,7 +819,8 @@ async function setSelectorsFromCardParts(cardParts) {
 				});		
 
 				console.log('價格圖表創建完成');
-				document.getElementById('overlay-2').style.display='none';					
+				document.getElementById('overlay-2').style.display='none';	
+				scrollToResults();				
 			}
 
 			/*庫存繪圖區*/
