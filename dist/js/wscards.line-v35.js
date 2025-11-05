@@ -6,7 +6,7 @@
 	}
 var $input = $(".typeahead");
 var $dropdown = $(".dropdown-menu");
-var $cardNumberEle = $("#cardNumber");
+
 
 // 全域圖表變數 - 用於正確的圖表銷毀管理
 var myChart = null;
@@ -241,8 +241,7 @@ function handleInputChange() {
     }
   }
 }
-// 監聽 click 事件 
-$cardNumberEle.blur(scrollToResults());
+
 
 // 監聽 change 事件 (失去焦點時觸發)
 $input.change(handleInputChange);
@@ -1421,3 +1420,10 @@ function reGenTitle(){
 				}
 			  }	
 }
+var elementCardNumber = document.getElementById('cardNumber');
+elementCardNumber.addEventListener('click', function() {
+     // 搜尋成功後平滑滾動到結果區域
+    setTimeout(() => {
+        scrollToResults();
+    }, 200); // 延遲一秒讓圖表載入完成	
+});
