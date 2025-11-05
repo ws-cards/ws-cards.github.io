@@ -1,4 +1,4 @@
-	window.onload=function(){
+=	window.onload=function(){
 		setTimeout(function(){
 			window.scrollTo(0, 1);
 		}, 100);		
@@ -576,27 +576,39 @@ async function setSelectorsFromCardParts(cardParts) {
 			  }		
 				changeStandardAfterChangeNumber();			  
 			}
+
 			function changeStandardForSuggest(productName){
 				document.getElementById(productName).selected=true
 				changeStandard();		  
-			}							
+			}	
+
 			function removeTitle(){			
 					document.getElementById('notuse').style.display='none';
 			}				
 			
 			function changeStandardAfterChangeNumber(){
-			  var selectPrice = document.getElementById("cardNumber"); 
-			  selectPrice.style.visibility = 'visible';		
-			  while (selectPrice.firstChild) {
-				selectPrice.removeChild(selectPrice.firstChild);
-			  }				
-			  var cardTitle = document.getElementById('cardTitle').value;
-			  var selectTitle = document.getElementById("cardTitle"); 			  
-			  var option = document.createElement("option"); 
-				  option.setAttribute("value",0);
-				  option.appendChild(document.createTextNode("選擇產品")); 				  
-				  selectTitle.appendChild(option);	
-				  selectTitle.insertBefore(option,selectTitle.childNodes[0]);			 
+				var selectPrice = document.getElementById("cardNumber"); 
+				selectPrice.style.visibility = 'visible';		
+				while (selectPrice.firstChild) {
+					selectPrice.removeChild(selectPrice.firstChild);
+				}				
+				var cardTitle = document.getElementById('cardTitle').value;
+				var selectTitle = document.getElementById("cardTitle"); 			  
+				var option = document.createElement("option"); 
+					option.setAttribute("value",0);
+					option.appendChild(document.createTextNode("選擇產品")); 				  
+					selectTitle.appendChild(option);	
+					selectTitle.insertBefore(option,selectTitle.childNodes[0]);
+
+				var selectCardStandard = document.getElementById("cardStandard");
+				while (selectCardStandard.firstChild) {
+					selectCardStandard.removeChild(selectCardStandard.firstChild);
+				}		
+				var optionStandard = document.createElement("option"); 
+					optionStandard.setAttribute("value",0);
+					optionStandard.appendChild(document.createTextNode("")); 				  
+					selectCardStandard.appendChild(optionStandard);	
+					selectCardStandard.insertBefore(optionStandard,selectCardStandard.childNodes[0]);				
 			}
 			
 			async function checkTitleOfCardNumberList(suffix){	
@@ -1420,12 +1432,10 @@ function reGenTitle(){
 				}
 			  }	
 }
-
 var elementCardNumber = document.getElementById('cardNumber');
-elementCardNumber.addEventListener('change', function() {
+elementCardNumber.addEventListener('click', function() {
      // 搜尋成功後平滑滾動到結果區域
     setTimeout(() => {
         scrollToResults();
     }, 200); // 延遲一秒讓圖表載入完成	
 });
-
