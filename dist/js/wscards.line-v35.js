@@ -222,6 +222,7 @@ function handleInputChange() {
     if (current.name == inputValue) {
       console.log('Typeahead item selected:', current.name);
       changeStandardForSuggest(current.name);
+	  scrollToFilters();
       //when you chose item
     } else {
         console.log('Partial match detected->check number');
@@ -591,7 +592,7 @@ async function setSelectorsFromCardParts(cardParts) {
 			  var selectTitle = document.getElementById("cardTitle"); 			  
 			  var option = document.createElement("option"); 
 				  option.setAttribute("value",0);
-				  option.appendChild(document.createTextNode("--選擇主題--")); 				  
+				  option.appendChild(document.createTextNode("選擇產品")); 				  
 				  selectTitle.appendChild(option);	
 				  selectTitle.insertBefore(option,selectTitle.childNodes[0]);			 
 			}
@@ -725,7 +726,7 @@ async function setSelectorsFromCardParts(cardParts) {
 				}				
 				
 				
-				
+				scrollToResults();
 				
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
@@ -1369,11 +1370,19 @@ function smoothScrollToAnchor(anchorId, behavior = 'smooth', block = 'start') {
 }
 
 /**
- * 搜尋完成後滾動到結果區域
+ * 搜尋完成後滾動到結果區域:卡片預覽區域
  */
 function scrollToResults() {
     // 滾動到卡片預覽區域
     smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
+}
+
+/**
+ * 搜尋完成後滾動到結果區域:篩選條件區域
+ */
+function scrollToFilters() {
+    // 滾動到篩選條件區域
+    smoothScrollToAnchor('filter-card-tag', 'smooth', 'center');
 }
 
 /**
