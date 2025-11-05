@@ -1420,10 +1420,12 @@ function reGenTitle(){
 				}
 			  }	
 }
+
 var elementCardNumber = document.getElementById('cardNumber');
-elementCardNumber.addEventListener('click', function() {
+elementCardNumber.addEventListener('change', function() {
      // 搜尋成功後平滑滾動到結果區域
     setTimeout(() => {
         scrollToResults();
     }, 200); // 延遲一秒讓圖表載入完成	
 });
+
