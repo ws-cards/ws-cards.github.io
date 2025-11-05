@@ -6,6 +6,7 @@
 	}
 var $input = $(".typeahead");
 var $dropdown = $(".dropdown-menu");
+var $cardNumberEle = $("#cardNumber");
 
 // 全域圖表變數 - 用於正確的圖表銷毀管理
 var myChart = null;
@@ -240,6 +241,8 @@ function handleInputChange() {
     }
   }
 }
+// 監聽 click 事件 
+$cardNumberEle.click(scrollToResults);
 
 // 監聽 change 事件 (失去焦點時觸發)
 $input.change(handleInputChange);
@@ -819,8 +822,7 @@ async function setSelectorsFromCardParts(cardParts) {
 				});		
 
 				console.log('價格圖表創建完成');
-				document.getElementById('overlay-2').style.display='none';	
-				scrollToResults();				
+				document.getElementById('overlay-2').style.display='none';		
 			}
 
 			/*庫存繪圖區*/
