@@ -920,6 +920,7 @@ async function setSelectorsFromCardParts(cardParts) {
 				//var urlCard="https://i.imgur.com/DKvx5hw.png";
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
+				showCardImage(urlCard);
 			}
 			
 		/*	
@@ -1315,6 +1316,7 @@ async function waitForNumberOptionsLoaded() {
     }, 5000);
   });
 }
+
 
 
 
