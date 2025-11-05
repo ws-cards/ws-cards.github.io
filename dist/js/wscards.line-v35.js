@@ -1373,7 +1373,7 @@ function smoothScrollToAnchor(anchorId, behavior = 'smooth', block = 'start') {
  */
 function scrollToResults() {
     // 滾動到卡片預覽區域
-    smoothScrollToAnchor('displayCardPhoto', 'smooth', 'center');
+    smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
 }
 
 /**
@@ -1383,4 +1383,5 @@ function scrollToCharts() {
     // 滾動到圖表區域
     smoothScrollToAnchor('myChart', 'smooth', 'start');
 }
+
 
