@@ -1038,6 +1038,106 @@
 .info-row:nth-child(4) { animation-delay: 0.25s; }
 .info-row:nth-child(5) { animation-delay: 0.3s; }
 .info-row:nth-child(6) { animation-delay: 0.35s; }
+
+/* 浮動回到頂部按鈕 */
+.scroll-to-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: rgba(247, 239, 255, 0.2);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(56, 52, 61, 0.2);
+}
+
+.scroll-to-top-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top-btn:hover {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 25px 50px rgba(211, 215, 237, 0.4);
+}
+
+.scroll-to-top-btn:active {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.scroll-to-top-btn i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.scroll-to-top-btn:hover i {
+    transform: translateY(-2px);
+}
+
+/* 暗色模式下的樣式 */
+[data-theme="dark"] .scroll-to-top-btn {
+    background: var(--primary-gradient);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .scroll-to-top-btn:hover {
+    box-shadow: 0 25px 50px rgba(102, 126, 234, 0.6);
+}
+
+/* 手機版調整 */
+@media (max-width: 768px) {
+    .scroll-to-top-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+    }
+    
+    .scroll-to-top-btn i {
+        font-size: 1rem;
+    }
+}
+
+/* 超小螢幕調整 */
+@media (max-width: 480px) {
+    .scroll-to-top-btn {
+        bottom: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .scroll-to-top-btn i {
+        font-size: 0.9rem;
+    }
+}
+
+/* 按鈕脈衝動畫（可選） */
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: var(--shadow-medium);
+    }
+    50% {
+        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
+    }
+}
+
+.scroll-to-top-btn.pulse {
+    animation: pulse-glow 2s infinite;
+}
 </style>	
 </head>
 <body class="hold-transition sidebar-mini  layout-fixed layout-navbar-fixed">
@@ -1704,6 +1804,69 @@ document.addEventListener('DOMContentLoaded', function() {
         infoSwiper.handleResize();
     });
 });
+
+// 回到頂部按鈕功能
+(function() {
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    let isScrolling = false;
+    
+    // 平滑滾動到頂部
+    function scrollToTop() {
+        if (isScrolling) return;
+        
+        isScrolling = true;
+        
+        // 使用原生的平滑滾動
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // 重置滾動狀態
+        setTimeout(() => {
+            isScrolling = false;
+        }, 1000);
+    }
+    
+    // 顯示/隱藏按鈕
+    function toggleScrollButton() {
+        if (window.pageYOffset > 200) {
+            scrollToTopBtn.classList.add('visible');
+        } else {
+            scrollToTopBtn.classList.remove('visible');
+        }
+    }
+    
+    // 節流函數，避免過度觸發
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        }
+    }
+    
+    // 事件監聽器
+    scrollToTopBtn.addEventListener('click', scrollToTop);
+    window.addEventListener('scroll', throttle(toggleScrollButton, 100));
+    
+    // 鍵盤快捷鍵支援 (可選)
+    document.addEventListener('keydown', function(e) {
+        // 按 Home 鍵回到頂部
+        if (e.key === 'Home' && e.ctrlKey) {
+            e.preventDefault();
+            scrollToTop();
+        }
+    });
+    
+    // 初始化檢查
+    toggleScrollButton();
+})();
 </script>
 
 </body>
