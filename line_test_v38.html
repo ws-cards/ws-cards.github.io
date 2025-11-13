@@ -776,9 +776,14 @@
 
 /* 當開始滑動時隱藏提示 */
 .info-swiper.dragging::before {
-    display: none;
+    display: none !important;
 }
 
+/* 當標記為已看過時永久隱藏提示 */
+.info-swiper.hint-hidden::before {
+    display: none !important;
+    animation: none !important;
+}
 
 .info-items-container {
     display: flex;
@@ -1662,7 +1667,11 @@ class InfoSwiper {
     init() {
         // 指示器點擊事件
         this.indicators.forEach((dot, index) => {
-            dot.addEventListener('click', () => this.goTo(index));
+            dot.addEventListener('click', () => {
+                this.goTo(index);
+                // 點擊指示器也算作交互，標記為已看過
+                this.markHintAsSeen();
+            });
         });
         
         // 滑鼠事件
@@ -1690,7 +1699,9 @@ class InfoSwiper {
         
         this.startPos = this.getPositionX(e);
         this.animationId = requestAnimationFrame(this.updatePosition.bind(this));
-    }
+        // 當用戶開始拖拽時，記錄為已看過提示
+        this.markHintAsSeen();    
+      }
     
     drag(e) {
         if (!this.isDragging) return;
@@ -1765,34 +1776,55 @@ class InfoSwiper {
             item.classList.toggle('active', index === this.currentIndex);
         });
     }
+
+    // 檢查是否已看過提示
+    hasSeenHint() {
+        return localStorage.getItem('infoSwiperHintSeen') === 'true';
+    }
     
-    // 提示動畫
+    // 標記提示為已看過
+    markHintAsSeen() {
+        localStorage.setItem('infoSwiperHintSeen', 'true');
+        this.hideHint();
+        // console.log('滑動提示已標記為已看過');
+    }
+    
+    // 隱藏提示
+    hideHint() {
+        this.swiper.classList.add('hint-hidden');
+    }
+
+    // 提示動畫- 只顯示一次
     startHintAnimation() {
-        let hintShown = false;
+        // 檢查是否已經看過提示
+        if (this.hasSeenHint()) {
+            // console.log('用戶已看過滑動提示，跳過顯示');
+            this.hideHint();
+            return;
+        }
         
-        // 3秒後如果沒有交互，顯示提示
+        // console.log('首次訪問，將顯示滑動提示');
+        
+        // 2秒後顯示提示（如果還沒有交互）
         setTimeout(() => {
-            if (!hintShown) {
-                this.swiper.style.setProperty('--hint-opacity', '1');
+            if (!this.hasSeenHint()) {
+                // console.log('顯示滑動提示動畫');
+                // 提示會自動通過 CSS 動畫顯示
             }
-        }, 3000);
-        
-        // 首次交互後隱藏提示
-        const hideHint = () => {
-            hintShown = true;
-            this.swiper.style.setProperty('--hint-opacity', '0');
-            this.swiper.removeEventListener('mousedown', hideHint);
-            this.swiper.removeEventListener('touchstart', hideHint);
-        };
-        
-        this.swiper.addEventListener('mousedown', hideHint);
-        this.swiper.addEventListener('touchstart', hideHint);
+        }, 2000);
     }
     
     // 響應式處理
     handleResize() {
         this.setPositionByIndex();
     }
+
+    // 重置提示（開發測試用，可選）
+    resetHint() {
+        localStorage.removeItem('infoSwiperHintSeen');
+        this.swiper.classList.remove('hint-hidden');
+        console.log('滑動提示已重置');
+    }    
 }
 
 // 初始化滑動器
@@ -1803,6 +1835,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', () => {
         infoSwiper.handleResize();
     });
+
+    // 開發者工具：在控制台輸入 resetSwipeHint() 可以重置提示（測試用）
+    window.resetSwipeHint = function() {
+        infoSwiper.resetHint();
+        location.reload();
+    };
+
 });
 
 // 回到頂部按鈕功能
