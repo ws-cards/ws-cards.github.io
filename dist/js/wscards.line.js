@@ -141,7 +141,7 @@ source:[
 {id:"WS00120", name:"プロジェクトセカイ カラフルステージ！ feat. 初音ミク",cname:"世界計畫 繽紛舞台！ feat.初音未來 | PJS"},
 {id:"WS00121", name:"小林さんちのメイドラゴン",cname:"小林家的龍女僕 | KMD"},
 {id:"WS00122", name:"東京リベンジャーズ",cname:"東京卍復仇者 | TRV"},
-{id:"WS00123", name:"PIXAR",cname:"皮克斯 | PXR,Dpx"},
+{id:"WS00123", name:"PIXAR",cname:"皮克斯 | PXR,Dpx,MRp"},
 {id:"WS00124", name:"D4DJ",cname:"D4DJ 電音派對 | DJ"},
 {id:"WS00125", name:"ヘブンバーンズレッド",cname:"HEAVEN BURNS RED | HBR,Khb"},
 {id:"WS00126", name:"アズールレーン",cname:"碧藍航線 | AZL"},
@@ -173,7 +173,10 @@ source:[
 {id:"WS00152", name:"学園アイドルマスター",cname:"學園偶像大師 | 學偶 | GIM"},
 {id:"WS00153", name:"あおぎり高校",cname:"青桐高中 | AOH"},
 {id:"WS00154", name:"負けヒロインが多すぎる！",cname:"敗北女角太多了！ | MKI"},
-{id:"WS00155", name:"怪獣８号",cname:"怪獸8號 | 怪8 | KJ8"}	
+{id:"WS00155", name:"怪獣８号",cname:"怪獸8號 | 怪8 | KJ8"},
+{id:"WS00157", name:"『テイルズ オブ』シリーズ",cname:"傳奇系列 | TAL"},
+{id:"WS00158", name:"Disney",cname:"Disney | 迪士尼 | Dds,MRd"},
+{id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"}	
 ]
 ,
   minLength:1,
@@ -694,4 +697,5 @@ $input.change(function() {
             } 
             sortlist("cardNumber",sOrder); 
         } 	
+
 
