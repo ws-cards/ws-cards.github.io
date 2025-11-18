@@ -1527,8 +1527,8 @@ function loadCardData(cardNumber) {
         })
         .then(data => {
             // 在JSON資料中找到對應的卡片
-            const cardData = data.find(card => card.cardno === cardNumber);
-            
+            const cardData = data[cardNumber];
+            console.log('載入的卡片資料:', cardData);
             if (cardData) {
                 updateCardInfo(cardData);
             } else {
