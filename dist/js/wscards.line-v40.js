@@ -1507,8 +1507,9 @@ function updateCardInfo(cardData) {
 // 載入並解析JSON資料
 function loadCardData(cardNumber) {
     // 從卡號提取作品代碼（例如：BD/W54-070SSP -> BAV_W129）
-    const standard = cardNumber.split('/')[0]; // 取得 BD
-    const titleCode = extractTitleCode(cardNumber); // 需要根據您的對應規則實現
+    let standard = cardNumber.split('-')[0]; // 取得 BD/W54
+	standard = standard.replace('/','_');
+    const titleCode = standard; // 需要根據您的對應規則實現
     
     // 構建JSON URL
     const jsonUrl = `https://ws-cards.cloud/json/${titleCode}.json`;
@@ -1530,9 +1531,6 @@ function loadCardData(cardNumber) {
             
             if (cardData) {
                 updateCardInfo(cardData);
-                
-                // 更新卡片圖片
-                updateCardImage(cardData.cardno);
             } else {
                 console.error('找不到卡號:', cardNumber);
                 Swal.fire({
@@ -1556,21 +1554,7 @@ function loadCardData(cardNumber) {
         });
 }
 
-// 輔助函數：從卡號提取作品代碼
-function extractTitleCode(cardNumber) {
-    // 這裡需要根據您的實際對應規則來實現
-    // 例如：BD/W54-070SSP 對應到 BAV_W129
-    
-    // 簡化版本：您需要一個對應表或規則
-    const titleMap = {
-        'BD/W54': 'BAV_W129',
-        'BD/W63': 'BAV_W140',
-        // ... 添加更多對應
-    };
-    
-    const prefix = cardNumber.split('-')[0]; // 取得 BD/W54
-    return titleMap[prefix] || 'BAV_W129'; // 預設值
-}
+
 
 // 顯示/隱藏 overlay
 function showOverlay(overlayId) {
