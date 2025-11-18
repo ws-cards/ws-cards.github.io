@@ -1456,7 +1456,7 @@ function updateCardInfo(cardData) {
     // 更新顏色（帶背景色）
     const colorElement = document.getElementById('cardcolor');
     const colorMap = {
-        '青': { bg: '#0437F2', text: '青' },
+        '青': { bg: '#0437F2', text: '藍' },
         '赤': { bg: '#F20404', text: '赤' },
         '黄': { bg: '#F2E205', text: '黄' },
         '緑': { bg: '#04F240', text: '緑' },
@@ -1533,20 +1533,10 @@ function loadCardData(cardNumber) {
                 updateCardInfo(cardData);
             } else {
                 console.error('找不到卡號:', cardNumber);
-                Swal.fire({
-                    icon: 'error',
-                    title: '找不到卡片',
-                    text: `卡號 ${cardNumber} 不存在於資料庫中`
-                });
             }
         })
         .catch(error => {
             console.error('載入卡片資料失敗:', error);
-            Swal.fire({
-                icon: 'error',
-                title: '載入失敗',
-                text: '無法載入卡片資料，請稍後再試'
-            });
         })
         .finally(() => {
             // 隱藏載入動畫
