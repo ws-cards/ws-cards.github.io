@@ -431,21 +431,22 @@ async function setSelectorsFromCardParts(cardParts) {
     showSearchNotification('設置選擇器時發生錯誤: ' + error.message, 'error');
   }
 }  
-			var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
-			var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
-			var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
-			var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
-			var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
-			var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
-			var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
-			var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
-			var requestStandardW = new XMLHttpRequest();
-			var requestStandardS = new XMLHttpRequest();			
-			var requestPrice = new XMLHttpRequest();	
-			var requestStock = new XMLHttpRequest();
-			var requestTitle = new XMLHttpRequest();	
-			var requestMapping = new XMLHttpRequest();
-			var mappingRep;
+
+var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
+var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
+var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
+var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
+var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
+var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
+var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
+var requestStandardW = new XMLHttpRequest();
+var requestStandardS = new XMLHttpRequest();			
+var requestPrice = new XMLHttpRequest();	
+var requestStock = new XMLHttpRequest();
+var requestTitle = new XMLHttpRequest();	
+var requestMapping = new XMLHttpRequest();
+var mappingRep;
 			  requestMapping.open('GET',requestMappingURL);
 			  requestMapping.responseType = 'json';
 			  requestMapping.send();	
@@ -525,20 +526,22 @@ async function setSelectorsFromCardParts(cardParts) {
 			  
 			  requestPrice.onload = function(){
 				  var cards = requestPrice.response;
-				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
+				  //loadCardData 預設
+				  loadCardData('BD/W54-070SSP');  
 			  }
 			  requestStock.onload = function(){
 				  var cards = requestStock.response;
 				  getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
 			  }			  
 			  
-				var timer = setInterval(function(){
+			  var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
-					clearInterval(timer);
-					console.log(document.getElementById('cardImg').complete)
-					document.getElementById('overlay-1').style.display='none';	
+						clearInterval(timer);
+						console.log(document.getElementById('cardImg').complete)
+						document.getElementById('overlay-1').style.display='none';	
 					}
-				}, 10);	
+			  }, 10);	
 			}
 			
 			function changeStandard(){
@@ -731,15 +734,13 @@ async function setSelectorsFromCardParts(cardParts) {
 				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
 				}				
 				/**
-				 * 
+				 * update 卡片資訊
 				 */
 				const cardNumber = document.getElementById('cardNumber').value;
 				if (cardNumber && cardNumber !== '000/000-000') {
 					// 載入卡片資料
 					loadCardData(cardNumber);
 				}				
-
-
 
 				var timer = setInterval(function(){
 					if (document.getElementById('cardImg').complete){
