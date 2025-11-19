@@ -587,7 +587,6 @@ function setFun(){
 	var timer = setInterval(function(){
 		if (document.getElementById('cardImg').complete){
 			clearInterval(timer);
-			console.log(document.getElementById('cardImg').complete)
 			document.getElementById('overlay-1').style.display='none';	
 		}
 	}, 10);	
@@ -1090,7 +1089,7 @@ function addPhoto(cardNumberDisplay){
 				const cardImg = document.getElementById('cardImg');
 				var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
 				//var urlCard="https://i.imgur.com/DKvx5hw.png";
-				console.log(urlCard);
+				console.log("url card:"+urlCard);
 				cardImg.setAttribute("src",urlCard);
 				showCardImage(urlCard);
 }
@@ -1634,8 +1633,17 @@ elementCardNumber.addEventListener('change', function() {
     }, 200); // 延遲一秒讓圖表載入完成	
 });
 
-
-// 更新卡片資訊函數
+/**
+ * 更新卡片資訊函數
+ * @param {object} cardData - 卡片資料物件
+ * 
+ * 更新所有卡片資訊欄位，包括:
+ * - 卡號、卡名、稀有度
+ * - 顏色（帶背景色）
+ * - 種類、等級、魂
+ * - Cost、Power、サイド
+ * - 觸發、特徵、效果
+ */
 function updateCardInfo(cardData) {
     // 更新卡號
     document.getElementById('cardno').textContent = cardData.cardno || '-';
@@ -1650,9 +1658,9 @@ function updateCardInfo(cardData) {
     const colorElement = document.getElementById('cardcolor');
     const colorMap = {
         '青': { bg: '#0437F2', text: '藍' },
-        '赤': { bg: '#F20404', text: '赤' },
-        '黄': { bg: '#F2E205', text: '黄' },
-        '緑': { bg: '#04F240', text: '緑' },
+        '赤': { bg: '#F20404', text: '紅' },
+        '黄': { bg: '#F2E205', text: '黃' },
+        '緑': { bg: '#04F240', text: '綠' },
         '無': { bg: '#CCCCCC', text: '無' }
     };
     
