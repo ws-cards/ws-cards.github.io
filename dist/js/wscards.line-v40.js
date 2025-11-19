@@ -1,9 +1,16 @@
-	window.onload=function(){
+/**
+ * 頁面載入完成後執行
+ * - 滾動到頂部
+ * - 初始化基本設定
+ */
+window.onload=function(){
 		setTimeout(function(){
 			window.scrollTo(0, 1);
 		}, 100);		
-			  setFun();  
-	}
+		setFun();  
+}
+
+// Typeahead 輸入框和下拉選單元素
 var $input = $(".typeahead");
 var $dropdown = $(".dropdown-menu");
 
@@ -12,17 +19,11 @@ var $dropdown = $(".dropdown-menu");
 var myChart = null;
 var myStockChart = null;
 
-var a = {
-      sheetUrl : 'https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/edit?usp=sharing', //試算表連結，檔案-->共用
-      sheetTag : '中日對照',
-      row: 1, //起始位置
-      col: 1,
-      endRow : 200, //切段資料
-      endCol : 3,//2欄
-	  par : 'ALL',
-	  attri: 'ALL'
-  };
-
+/**
+ * 初始化 Typeahead 自動完成功能
+ * - 設定資料來源（作品列表）
+ * - 配置搜尋行為和顯示選項
+ */
 $(".typeahead").typeahead({ 
 source:[
 {id:"WS00001", name:"アイドルマスター シンデレラガールズ",cname:"偶像大師 灰姑娘女孩 | IMC"},
@@ -186,10 +187,10 @@ source:[
 {id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"}
 ]
 ,
-  minLength:1,
-  showHintOnFocus:true,
-  scrollHeight:0,
-  items:'all',
+  minLength:1,          // 最少輸入字數
+  showHintOnFocus:true, // 焦點時顯示提示
+  scrollHeight:0,       // 滾動高度
+  items:'all',          // 顯示所有項目
         matcher: function (item) {
             var it = this.displayText(item);
 			var cname=item.cname+"";
@@ -205,12 +206,15 @@ source:[
 //  displayText: function(item) {
 //	return item.name
 //  },
-  fitToElement:true,
-  selectOnBlur:false
-	 
-	 });
+  fitToElement:true,     // 適應元素寬度
+  selectOnBlur:false     // 失去焦點時不自動選擇
+});
 	
-// 處理 typeahead 選擇和卡號直接輸入的函數
+/**
+ * 處理 Typeahead 選擇和卡號直接輸入
+ * - 檢測是從下拉選單選擇還是直接輸入卡號
+ * - 根據不同情況執行對應的搜尋邏輯
+ */
 function handleInputChange() {
   var current = $input.typeahead("getActive");
   var inputValue = $input.val().trim();
@@ -246,8 +250,11 @@ function handleInputChange() {
 // 監聽 change 事件 (失去焦點時觸發)
 $input.change(handleInputChange);
 
-// 監聽 input 事件 (即時輸入時觸發) - 但只處理卡號格式(此段看會不會影響操作)
-// 及時輸入查詢
+/**
+ * 監聽 input 事件 (即時輸入時觸發)
+ * - 只處理看起來像完整卡號的輸入
+ * - 延遲執行避免干擾 typeahead
+ */
 $input.on('input', function() {
   var inputValue = $input.val().trim();
   // 只在輸入看起來像完整卡號時才即時處理
@@ -432,6 +439,7 @@ async function setSelectorsFromCardParts(cardParts) {
   }
 }  
 
+// API 端點 URL 設定
 var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
 var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
 var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
@@ -440,6 +448,8 @@ var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicl
 var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
 var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
+
+// XMLHttpRequest 物件
 var requestStandardW = new XMLHttpRequest();
 var requestStandardS = new XMLHttpRequest();			
 var requestPrice = new XMLHttpRequest();	
@@ -447,316 +457,445 @@ var requestStock = new XMLHttpRequest();
 var requestTitle = new XMLHttpRequest();	
 var requestMapping = new XMLHttpRequest();
 var mappingRep;
-			  requestMapping.open('GET',requestMappingURL);
-			  requestMapping.responseType = 'json';
-			  requestMapping.send();	
-			  requestMapping.onload = function() {
-			  mappingRep = requestMapping.response;
-			  
-			  }			  
-			
-			function setFun(){
-			  //select 設定
-			  var selectStandard = document.getElementById("cardStandard");
-			  selectStandard.length = 1;
-			  selectStandard.options[0].selected = true;	
-			  
-			  var selectPrice = document.getElementById("cardNumber"); 
-			  selectPrice.length = 1;
-			  selectPrice.options[0].selected = true;	
-			  selectPrice.style.visibility = 'hidden';
 
-			  var selectTitle = document.getElementById("cardTitle"); 
-			  selectTitle.length = 1;
-			  selectTitle.options[0].selected = true;	
+/**
+ * 載入卡號顯示對應表
+ * - 用於處理特殊格式的卡號顯示
+ */
+requestMapping.open('GET',requestMappingURL);
+requestMapping.responseType = 'json';
+requestMapping.send();	
+requestMapping.onload = function() {
+	mappingRep = requestMapping.response;		
+}			  
+	
+/**
+ * 初始化設定函數
+ * - 載入作品標準資料 (Weiss 和 Schwarz)
+ * - 載入主題資料
+ * - 載入預設卡片資料
+ * - 設置選擇器初始狀態
+ */
+function setFun(){
+	//select 設定
+	var selectStandard = document.getElementById("cardStandard");
+	selectStandard.length = 1;
+	selectStandard.options[0].selected = true;	
 			  
-			  //request 設定
-			  requestStandardW.open('GET', standardWURL);
-			  requestStandardW.responseType = 'json';
-			  requestStandardW.send();				  
-			  requestStandardS.open('GET', standardSURL);
-			  requestStandardS.responseType = 'json';
-			  requestStandardS.send();	
-			  
-			  requestStandardW.onload = function(){
-					var optgroupW = document.getElementById("Weiss");
-			  		var cardsW = requestStandardW.response;
-					for(var key in cardsW){	 
-						var option = document.createElement("option");
-						option.setAttribute("value",cardsW[key]);
-						option.setAttribute("id",key);
-						option.appendChild(document.createTextNode(key)); 
-						optgroupW.appendChild(option);				
-					}	
-			  }
-			  requestStandardS.onload = function(){
-					var optgroupS = document.getElementById("Schwarz");				  
-			  		var cardsS = requestStandardS.response;		
-					for(var key in cardsS){	 
-						var option = document.createElement("option");
-						option.setAttribute("value",cardsS[key]);
-						option.setAttribute("id",key);	
-						option.appendChild(document.createTextNode(key)); 
-						optgroupS.appendChild(option);				
-					}					
-			  }
-			  
-			  requestPrice.open('GET', requestURLCardPrice);
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();	
+	var selectPrice = document.getElementById("cardNumber"); 
+	selectPrice.length = 1;
+	selectPrice.options[0].selected = true;	
+	selectPrice.style.visibility = 'hidden';
 
-			  requestStock.open('GET', requestURLCardStock);
-			  requestStock.responseType = 'json';
-			  requestStock.send();
+	var selectTitle = document.getElementById("cardTitle"); 
+	selectTitle.length = 1;
+	selectTitle.options[0].selected = true;	
 			  
-			  requestTitle.open('GET', requestURLCardTitle);
-			  requestTitle.responseType = 'json';
-			  requestTitle.send();
-			
-			  requestTitle.onload = function(){
-				var cardsTitle = requestTitle.response;
-				for(var key in cardsTitle){	 
-					var option = document.createElement("option");
-					option.setAttribute("value",key);
-					option.appendChild(document.createTextNode(cardsTitle[key])); 
-					selectTitle.appendChild(option);				
-				}
-			
-			  }
+	// 載入 Weiss 作品標準
+	requestStandardW.open('GET', standardWURL);
+	requestStandardW.responseType = 'json';
+	requestStandardW.send();
+
+	// 載入 Schwarz 作品標準		  
+	requestStandardS.open('GET', standardSURL);
+	requestStandardS.responseType = 'json';
+	requestStandardS.send();
+
+    /**
+     * Weiss 作品標準載入完成後
+     * - 填充 Weiss 選項群組
+     */			  
+	requestStandardW.onload = function(){
+		var optgroupW = document.getElementById("Weiss");
+		var cardsW = requestStandardW.response;
+		for(var key in cardsW){	 
+			var option = document.createElement("option");
+			option.setAttribute("value",cardsW[key]);
+			option.setAttribute("id",key);
+			option.appendChild(document.createTextNode(key)); 
+			optgroupW.appendChild(option);				
+		}	
+	}
+
+    /**
+     * Schwarz 作品標準載入完成後
+     * - 填充 Schwarz 選項群組
+     */	
+	requestStandardS.onload = function(){
+		var optgroupS = document.getElementById("Schwarz");				  
+		var cardsS = requestStandardS.response;		
+		for(var key in cardsS){	 
+			var option = document.createElement("option");
+			option.setAttribute("value",cardsS[key]);
+			option.setAttribute("id",key);	
+			option.appendChild(document.createTextNode(key)); 
+			optgroupS.appendChild(option);				
+		}					
+	}
+
+    // 載入預設價格資料			  
+	requestPrice.open('GET', requestURLCardPrice);
+	requestPrice.responseType = 'json';
+	requestPrice.send();	
+
+	requestStock.open('GET', requestURLCardStock);
+	requestStock.responseType = 'json';
+	requestStock.send();
 			  
-			  requestPrice.onload = function(){
-				  var cards = requestPrice.response;
-				  getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
-				  //loadCardData 預設
-				  loadCardData('BD/W54-070SSP');  
-			  }
-			  requestStock.onload = function(){
-				  var cards = requestStock.response;
-				  getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
-			  }			  
-			  
-			  var timer = setInterval(function(){
-					if (document.getElementById('cardImg').complete){
-						clearInterval(timer);
-						console.log(document.getElementById('cardImg').complete)
-						document.getElementById('overlay-1').style.display='none';	
-					}
-			  }, 10);	
+	requestTitle.open('GET', requestURLCardTitle);
+	requestTitle.responseType = 'json';
+	requestTitle.send();
+
+    /**
+     * 主題資料載入完成後
+     * - 填充主題選擇器
+     */	
+	requestTitle.onload = function(){
+		var cardsTitle = requestTitle.response;
+		for(var key in cardsTitle){	 
+			var option = document.createElement("option");
+			option.setAttribute("value",key);
+			option.appendChild(document.createTextNode(cardsTitle[key])); 
+			selectTitle.appendChild(option);				
+		}
+	}
+
+    /**
+     * 預設價格資料載入完成後
+     * - 顯示預設卡片 (BD/W54-070SSP)
+     */	
+	requestPrice.onload = function(){
+		var cards = requestPrice.response;
+		getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
+		//loadCardData 預設
+		loadCardData('BD/W54-070SSP');  
+	}
+	
+	/**
+     * 預設庫存資料載入完成後
+     * - 顯示預設卡片庫存
+     */		  
+	requestStock.onload = function(){
+		var cards = requestStock.response;
+		getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+	}			
+
+    /**
+     * 等待卡片圖片載入完成
+     * - 載入完成後隱藏 overlay
+     */			  
+	var timer = setInterval(function(){
+		if (document.getElementById('cardImg').complete){
+			clearInterval(timer);
+			console.log(document.getElementById('cardImg').complete)
+			document.getElementById('overlay-1').style.display='none';	
+		}
+	}, 10);	
+}
+
+/**
+ * 作品標準變更處理函數
+ * - 根據選擇的作品標準篩選可用的主題
+ * - 重新載入主題選項
+ */			
+function changeStandard(){
+	var cardStandard=document.getElementById('cardStandard').value;
+	var cardStandardEle=document.getElementById('cardStandard');
+	var selectTitle = document.getElementById("cardTitle"); 
+    
+	// 清空主題選擇器	
+	while (selectTitle.firstChild) {
+		selectTitle.removeChild(selectTitle.firstChild);
+	}			  
+	
+	// 重新載入主題資料
+    requestTitle.open('GET', requestURLCardTitle);
+	requestTitle.responseType = 'json';
+	requestTitle.send();	
+
+    /**
+     * 主題資料載入完成後
+     * - 根據作品標準篩選主題
+     */			
+	requestTitle.onload = function(){
+		var cardsTitle = requestTitle.response;
+		var cardStandardArray = cardStandard.split(",");
+		
+		for(var key in cardsTitle){	 
+			// 提取主題前綴
+			var keyStr=key.substr(0,key.indexOf('/'));//2~3
+			var keyStrLength=keyStr.length;
+
+			// 檢查是否符合選擇的作品標準
+			var filtered = cardStandardArray.filter(function(value) {
+				return value === keyStr;
+			});			
+
+			if(filtered==0){
+				//double check
+				continue;
 			}
-			
-			function changeStandard(){
-			  var cardStandard=document.getElementById('cardStandard').value;
-			  var cardStandardEle=document.getElementById('cardStandard');
-			  var selectTitle = document.getElementById("cardTitle"); 
-			  while (selectTitle.firstChild) {
-				selectTitle.removeChild(selectTitle.firstChild);
-			  }			  
-			  
-    		  requestTitle.open('GET', requestURLCardTitle);
-			  requestTitle.responseType = 'json';
-			  requestTitle.send();					
-			  requestTitle.onload = function(){
-				var cardsTitle = requestTitle.response;
-				var cardStandardArray = cardStandard.split(",");
-				for(var key in cardsTitle){	 
 
-					var keyStr=key.substr(0,key.indexOf('/'));//2~3
-					var keyStrLength=keyStr.length;
+			var option = document.createElement("option");
+			option.setAttribute("value",key);
+			option.appendChild(document.createTextNode(cardsTitle[key])); 
+			selectTitle.appendChild(option);				
+		}
+	}		
+	changeStandardAfterChangeNumber();			  
+}
 
-					var filtered = cardStandardArray.filter(function(value) {
-						  return value === keyStr;
-					});						
-				    if(filtered==0){
-						//double check
-						continue;
-					}
+/**
+ * 根據建議的作品名稱變更作品標準
+ * @param {string} productName - 作品名稱
+ * 
+ * 用於 Typeahead 選擇後自動設置
+ */
+function changeStandardForSuggest(productName){
+	document.getElementById(productName).selected=true
+	changeStandard();		  
+}	
 
-					var option = document.createElement("option");
-					option.setAttribute("value",key);
-					option.appendChild(document.createTextNode(cardsTitle[key])); 
-					selectTitle.appendChild(option);				
-				}
-			  }		
-				changeStandardAfterChangeNumber();			  
-			}
+/**
+ * 移除標題提示
+ * - 隱藏 "notuse" 元素
+ */
+function removeTitle(){			
+	document.getElementById('notuse').style.display='none';
+}				
 
-			function changeStandardForSuggest(productName){
-				document.getElementById(productName).selected=true
-				changeStandard();		  
-			}	
+/**
+ * 作品標準變更後更新卡號選擇器
+ * - 清空卡號選擇器
+ * - 顯示卡號選擇器
+ * - 添加預設選項
+ */
+function changeStandardAfterChangeNumber(){
+	var selectPrice = document.getElementById("cardNumber"); 
+	selectPrice.style.visibility = 'visible';		
 
-			function removeTitle(){			
-					document.getElementById('notuse').style.display='none';
-			}				
-			
-			function changeStandardAfterChangeNumber(){
-				var selectPrice = document.getElementById("cardNumber"); 
-				selectPrice.style.visibility = 'visible';		
-				while (selectPrice.firstChild) {
-					selectPrice.removeChild(selectPrice.firstChild);
-				}				
-				var cardTitle = document.getElementById('cardTitle').value;
-				var selectTitle = document.getElementById("cardTitle"); 			  
-				var option = document.createElement("option"); 
-					option.setAttribute("value",0);
-					option.appendChild(document.createTextNode("選擇產品")); 				  
-					selectTitle.appendChild(option);	
-					selectTitle.insertBefore(option,selectTitle.childNodes[0]);
+	while (selectPrice.firstChild) {
+		selectPrice.removeChild(selectPrice.firstChild);
+	}		
 
-				removeTitle();			
-			}
-			
-			async function checkTitleOfCardNumberList(suffix){	
-			  console.log("checkTitleOfCardNumberList");
+	var cardTitle = document.getElementById('cardTitle').value;
+	var selectTitle = document.getElementById("cardTitle"); 			  
+	var option = document.createElement("option"); 
+	option.setAttribute("value",0);
+	option.appendChild(document.createTextNode("選擇產品")); 				  
+	selectTitle.appendChild(option);	
+	selectTitle.insertBefore(option,selectTitle.childNodes[0]);
 
-				return new Promise((resolve) => {
-					var cardTitle = document.getElementById('cardTitle').value;
-					var cardTilteReplaceSpare = cardTitle.replace('/','_');
-					console.log(cardTitle+'->'+cardTilteReplaceSpare);
+	removeTitle();			
+}
+	
+
+/**
+ * 檢查主題中是否包含指定後綴的卡號
+ * @param {string} suffix - 卡號後綴 (例如: W01-001)
+ * @returns {Promise<boolean>} - 是否找到匹配的卡號
+ * 
+ * 用於判斷是否需要使用後綴方式搜尋
+ */
+async function checkTitleOfCardNumberList(suffix){	
+	 console.log("checkTitleOfCardNumberList");
+
+	return new Promise((resolve) => {
+		var cardTitle = document.getElementById('cardTitle').value;
+		var cardTilteReplaceSpare = cardTitle.replace('/','_');
+		console.log(cardTitle+'->'+cardTilteReplaceSpare);
 					
-					requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
-					requestPrice.responseType = 'json';
-					requestPrice.send();				  
+		requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+		requestPrice.responseType = 'json';
+		requestPrice.send();				  
 					
-					requestPrice.onload = function() {
-					var cards = requestPrice.response;
-					var found = false;
+		requestPrice.onload = function() {
+		var cards = requestPrice.response;
+		var found = false;
 					
-					for(var key in cards){
-						//console.log("checkTitleOfCardNumberList - key:"+key);
+		for(var key in cards){
+			//console.log("checkTitleOfCardNumberList - key:"+key);
 						
-						if(key.indexOf('/')<0 && key.indexOf('S')==0){
-							var cardNumberDisplay = mappingRep[key];
-							if(cardNumberDisplay && cardNumberDisplay.includes(suffix)){
-								found = true;
-								break;
-							}
-						} else {
-							if(key.toLowerCase().includes(suffix.toLowerCase())){
-								found = true;
-								break;
-							}
-						}					
-					}
-					
-					console.log("checkTitleOfCardNumberList result:", found);
-					resolve(found);
-					};
-					
-					requestPrice.onerror = function() {
-					console.error("checkTitleOfCardNumberList request failed");
-					resolve(false);
-					};
-				});
-			}
-
-			function changeTitle(){				
-			// 先銷毀現有圖表
-			destroyAllCharts();
-			
-			  sortOption();
-			  //select 設定
-			  var selectPrice = document.getElementById("cardNumber"); 
-			  selectPrice.style.visibility = 'visible';
-			  
-			  selectPrice.length = 1;
-			  selectPrice.options[0].selected = true;	
-			  while (selectPrice.firstChild) {
-				selectPrice.removeChild(selectPrice.firstChild);
-			  }					  
-			  
-			  var cardTitle = document.getElementById('cardTitle').value;
-			  			  
-			  var cardTilteReplaceSpare = cardTitle.replace('/','_');
-			  console.log(cardTitle+'->'+cardTilteReplaceSpare);
-			  requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
-			  requestPrice.responseType = 'json';
-			  requestPrice.send();				  
-
-				  requestPrice.onload = function() {
-
-					var cards = requestPrice.response;
-					  for(var key in cards){console.log("debug:6");
-							if(key.indexOf('/')<0&&key.indexOf('S')==0){
-										
-												var option = document.createElement("option"); 
-												option.setAttribute("value",key);
-												option.appendChild(document.createTextNode(mappingRep[key])); 							
-												selectPrice.appendChild(option);	
-										console.log("debug:7");					
-								}else{
-									var option = document.createElement("option"); 
-									option.setAttribute("value",key);
-									option.appendChild(document.createTextNode(key)); 							
-									selectPrice.appendChild(option);
-								}					
-						  }			
-						 //重新排列option
-
-						 sortOption();
-						 selectPrice.options[0].selected=true;
-						 changeNumber();
+			if(key.indexOf('/')<0 && key.indexOf('S')==0){
+				var cardNumberDisplay = mappingRep[key];
+				if(cardNumberDisplay && cardNumberDisplay.includes(suffix)){
+					found = true;
+					break;
 				}
-			}
-					
-			
-			function changeNumber(){	
-				 var cardTitle = document.getElementById('cardTitle').value;
-				 var cardTilteReplaceSpare = cardTitle.replace('/','_');
-				console.log(cardTitle+'->'+cardTilteReplaceSpare);
-				
-				// 先銷毀現有圖表
-				destroyAllCharts();
-				
-			  document.getElementById('overlay-1').style.display='block';					
-			  document.getElementById('overlay-2').style.display='block';				
-			  document.getElementById('overlay-3').style.display='block';		
-				requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
-				requestPrice.responseType = 'json';
-				requestPrice.send();
-				requestPrice.onload = function() {
-				  var cards = requestPrice.response;
-				  var cardNumberSelect=document.getElementById('cardNumber');
-				  var selectedIndex=cardNumberSelect.selectedIndex;
-				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
-				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
-				  getCardData(cards,internalCardNumber,cardNumberDisplay);
+			} else {
+				if(key.toLowerCase().includes(suffix.toLowerCase())){
+					found = true;
+					break;
 				}
-				requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
-				requestStock.responseType = 'json';
-				requestStock.send();
-				requestStock.onload = function() {
-				  var cards = requestStock.response;
-				  var cardNumberSelect=document.getElementById('cardNumber');
-				  var selectedIndex=cardNumberSelect.selectedIndex;
-				  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
-				  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
-				  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
-				}				
-				/**
-				 * update 卡片資訊
-				 */
-				const cardNumber = document.getElementById('cardNumber').value;
-				if (cardNumber && cardNumber !== '000/000-000') {
-					// 載入卡片資料
-					loadCardData(cardNumber);
-				}				
+			}					
+		}
+					
+		console.log("checkTitleOfCardNumberList result:", found);
+		resolve(found);
+		};
+					
+		requestPrice.onerror = function() {
+		console.error("checkTitleOfCardNumberList request failed");
+		resolve(false);
+		};
+	});
+}
 
-				var timer = setInterval(function(){
-					if (document.getElementById('cardImg').complete){
-					clearInterval(timer);
-					console.log(document.getElementById('cardImg').complete)
-					document.getElementById('overlay-1').style.display='none';	
-					}
-				}, 10);			
-			}
+/**
+ * 主題變更處理函數
+ * - 銷毀現有圖表
+ * - 載入新主題的卡號列表
+ * - 排序卡號選項
+ * - 顯示第一個卡號的資料
+ */
+function changeTitle(){				
+	// 先銷毀現有圖表
+	destroyAllCharts();
+			
+	sortOption();
+
+	// 設定卡號選擇器
+	var selectPrice = document.getElementById("cardNumber"); 
+	selectPrice.style.visibility = 'visible';
+	selectPrice.length = 1;
+	selectPrice.options[0].selected = true;	
+
+	// 清空卡號選擇器
+	while (selectPrice.firstChild) {
+		selectPrice.removeChild(selectPrice.firstChild);
+	}					  
+			  
+	var cardTitle = document.getElementById('cardTitle').value;	  
+	var cardTilteReplaceSpare = cardTitle.replace('/','_');
+	console.log(cardTitle+'->'+cardTilteReplaceSpare);
+  	
+	// 載入對應主題的價格資料			  
+	requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+	requestPrice.responseType = 'json';
+	requestPrice.send();				  
+
+	/**
+     * 價格資料載入完成後
+     * - 填充卡號選項
+     * - 處理特殊格式卡號的顯示
+     */
+	requestPrice.onload = function() {
+		var cards = requestPrice.response;
+
+		for(var key in cards){
+			if(key.indexOf('/')<0&&key.indexOf('S')==0){
+				// 特殊格式卡號，使用對應表顯示					
+				var option = document.createElement("option"); 
+				option.setAttribute("value",key);
+				option.appendChild(document.createTextNode(mappingRep[key])); 							
+				selectPrice.appendChild(option);					
+			}else{
+				var option = document.createElement("option"); 
+				option.setAttribute("value",key);
+				option.appendChild(document.createTextNode(key)); 							
+				selectPrice.appendChild(option);
+			}					
+		}			
+		
+		
+		//重新排列option
+		sortOption();
+		selectPrice.options[0].selected=true;
+		changeNumber();
+	}
+}
+					
+/**
+ * 卡號變更處理函數
+ * - 銷毀現有圖表
+ * - 顯示載入動畫
+ * - 載入新卡號的價格和庫存資料
+ * - 更新卡片資訊
+ * - 等待圖片載入完成
+ */			
+function changeNumber(){	
+	var cardTitle = document.getElementById('cardTitle').value;
+	var cardTilteReplaceSpare = cardTitle.replace('/','_');
+	console.log(cardTitle+'->'+cardTilteReplaceSpare);
+				
+	// 先銷毀現有圖表
+	destroyAllCharts();
+
+	// 顯示載入動畫
+	document.getElementById('overlay-1').style.display='block';					
+	document.getElementById('overlay-2').style.display='block';				
+	document.getElementById('overlay-3').style.display='block';		
+	
+	// 載入價格資料
+	requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+	requestPrice.responseType = 'json';
+	requestPrice.send();
+
+    /**
+     * 價格資料載入完成後
+     * - 繪製價格圖表
+     */	
+	requestPrice.onload = function() {
+		var cards = requestPrice.response;
+	    var cardNumberSelect=document.getElementById('cardNumber');
+	    var selectedIndex=cardNumberSelect.selectedIndex;
+		var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+	    var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+	    getCardData(cards,internalCardNumber,cardNumberDisplay);
+	}
+
+	// 載入庫存資料
+	requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
+	requestStock.responseType = 'json';
+	requestStock.send();
+    
+    /**
+     * 庫存資料載入完成後
+     * - 繪製庫存圖表
+     */
+
+	requestStock.onload = function() {
+	  var cards = requestStock.response;
+	  var cardNumberSelect=document.getElementById('cardNumber');
+	  var selectedIndex=cardNumberSelect.selectedIndex;
+	  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+	  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+	  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
+	}				
+
+	/**
+	 * update 卡片資訊
+	*/
+	const cardNumber = document.getElementById('cardNumber').value;
+	if (cardNumber && cardNumber !== '000/000-000') {
+		// 載入卡片資料
+		loadCardData(cardNumber);
+	}				
+
+    /**
+     * 等待卡片圖片載入完成
+     * - 載入完成後隱藏 overlay
+     */
+	var timer = setInterval(function(){
+		if (document.getElementById('cardImg').complete){
+			clearInterval(timer);
+			console.log(document.getElementById('cardImg').complete)
+			document.getElementById('overlay-1').style.display='none';	
+		}
+	}, 10);			
+}
 			
 
-			
-			
-			/*價格繪圖區*/
-			function getCardData(jsonObj,internalCardNumber,cardNum) {
-				console.log("進入繪圖區:"+cardNum);
+/**
+ * 繪製價格走勢圖
+ * @param {object} jsonObj - 包含所有卡片資料的 JSON 物件
+ * @param {string} internalCardNumber - 內部卡號 (用於索引)
+ * @param {string} cardNum - 顯示用卡號
+ * 
+ * 使用 Chart.js 繪製折線圖
+ */			
+function getCardData(jsonObj,internalCardNumber,cardNum) {
+	console.log("進入繪圖區:"+cardNum);
 				
 				// 1. 先銷毀現有的價格圖表
 				if (myChart) {
@@ -836,10 +975,17 @@ var mappingRep;
 
 				console.log('價格圖表創建完成');
 				document.getElementById('overlay-2').style.display='none';		
-			}
+}
 
-			/*庫存繪圖區*/
-			function getCardStockData(jsonObj,internalCardNumber,cardNum) {
+/**
+ * 繪製庫存走勢圖
+ * @param {object} jsonObj - 包含所有卡片資料的 JSON 物件
+ * @param {string} internalCardNumber - 內部卡號 (用於索引)
+ * @param {string} cardNum - 顯示用卡號
+ * 
+ * 使用 Chart.js 繪製折線圖
+ */
+function getCardStockData(jsonObj,internalCardNumber,cardNum) {
 				console.log("進入庫存繪圖區:"+cardNum);
 				
 				// 1. 先銷毀現有的庫存圖表
@@ -919,10 +1065,16 @@ var mappingRep;
 
 				console.log('庫存圖表創建完成');
 				document.getElementById('overlay-3').style.display='none';					
-			}
-			
-			/*加上圖片*/
-			function addPhoto(cardNumberDisplay){
+}
+
+/**
+ * 添加卡片圖片
+ * @param {string} cardNumberDisplay - 顯示用卡號
+ * 
+ * 根據卡號構建圖片 URL 並顯示
+ * URL 格式: https://ws-tcg.com/wordpress/wp-content/cardimages/{first}/{second}/{third}.png
+ */
+function addPhoto(cardNumberDisplay){
 				var card_Num;
 				if(cardNumberDisplay.indexOf(' ')>=0){
 					card_Num=cardNumberDisplay.substr(0,cardNumberDisplay.indexOf(' '));
@@ -941,10 +1093,15 @@ var mappingRep;
 				console.log(urlCard);
 				cardImg.setAttribute("src",urlCard);
 				showCardImage(urlCard);
-			}
+}
 			
-			// 現代化圖片載入效果
-			function showCardImage(src) {
+/**
+ * 顯示卡片圖片（現代化效果）
+ * @param {string} src - 圖片 URL
+ * 
+ * 提供淡入效果和載入狀態管理
+ */
+function showCardImage(src) {
 			    const img = document.getElementById('cardImg');
 			    const placeholder = document.querySelector('.image-placeholder');
 			    
@@ -963,17 +1120,27 @@ var mappingRep;
 			        img.style.display = 'none';
 			        placeholder.style.display = 'block';
 			    }
-			}    
+}    
 						
-		/*	
-		Sort Option			
-		*/
-        function addOption(object, object2) { 
+/**
+ * 添加選項到 select 元素
+ * @param {HTMLSelectElement} object - select 元素
+ * @param {Array} object2 - 選項陣列
+ */
+function addOption(object, object2) { 
             each(object2, function(o, index) { 
                 object.options[index] = o; 
             }) 
-        } 
-        function sortlist(sortName,isDesc) { 
+}
+
+/**
+ * 排序選項列表
+ * @param {string} sortName - select 元素的 ID
+ * @param {boolean} isDesc - 是否降序排列
+ * 
+ * 按照選項文字進行排序
+ */
+function sortlist(sortName,isDesc) { 
             var what = document.getElementById(sortName); 
             this._options = map(what.options, function(o) { 
                 return o; 
@@ -987,15 +1154,30 @@ var mappingRep;
             }); 
             what.options.length = 0;// clear current options 
             addOption(what, this._options); 
-        } 
-        function map(object, callback, thisp) { 
+} 
+/**
+ * 映射函數
+ * @param {object} object - 要映射的物件或陣列
+ * @param {function} callback - 回調函數
+ * @param {object} thisp - this 指向
+ * @returns {Array} - 映射後的陣列
+ */
+function map(object, callback, thisp) { 
             var ret = []; 
             each.call(thisp, object, function() { 
                 ret.push(callback.apply(thisp, arguments)); 
             }); 
             return ret; 
-        } 
-        function each(object, callback) { 
+} 
+
+/**
+ * 遍歷函數
+ * @param {object} object - 要遍歷的物件或陣列
+ * @param {function} callback - 回調函數
+ * 
+ * 支援物件和陣列的遍歷
+ */
+function each(object, callback) { 
             if (undefined === object.length) { 
                 for ( var name in object) { 
                     if (false === callback(object[name], name, object)) 
@@ -1009,19 +1191,29 @@ var mappingRep;
                     } 
                 } 
             } 
-        } 
-        var sOrder = true; 
-        function sortOption(){         
+} 
+// 排序順序標記
+var sOrder = true; 
+/**
+ * 切換排序順序並排序
+ * 
+ * 用於卡號選項的排序
+ */
+function sortOption(){         
             if(sOrder){ 
                 sOrder    = false; 
             }else{ 
                 sOrder    = true; 
             } 
             sortlist("cardNumber",sOrder); 
-        } 	
+} 	
 
-		// 新增統一的圖表銷毀函數
-		function destroyAllCharts() {
+/**
+ * 銷毀所有圖表
+ * 
+ * 在變更卡號或主題時調用，避免圖表重疊
+ */
+function destroyAllCharts() {
 			console.log('開始銷毀所有圖表...');
 			
 			if (myChart) {
@@ -1043,7 +1235,7 @@ var mappingRep;
 				}
 				myStockChart = null;
 			}
-		}
+}
 
 /**
  * 根據前綴找到並設置 cardStandard
