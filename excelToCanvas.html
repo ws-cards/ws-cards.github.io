@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel 訂單轉圖片工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-box.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            margin: 10px 5px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .canvas-container {
+            padding: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        #canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 100%;
+        }
+
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .info-message {
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .info-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .info-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .file-info {
+            margin: 15px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .drag-info {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .edit-mode-info {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #ffeaa7;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Excel 訂單轉圖片工具</h1>
+            <p>上傳 Excel 文件，自動解析訂單資料並生成可下載的圖片</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📁</div>
+                <h3>點擊選擇 Excel 文件或拖放至此處</h3>
+                <p style="color: #888; margin-top: 10px;">支援 .xlsx 和 .xls 格式</p>
+                <input type="file" id="fileInput" accept=".xlsx,.xls">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">選擇文件</button>
+            </div>
+
+            <div class="file-info" id="fileInfo"></div>
+            <div class="loader" id="loader"></div>
+            <div class="info-message" id="message"></div>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <div class="edit-mode-info">
+                💡 <strong>編輯模式：</strong>點擊並拖動任何欄位（如：商品編號、買家帳號等）來調整位置
+            </div>
+            <canvas id="canvas"></canvas>
+            <div class="controls">
+                <button class="btn" id="downloadBtn">📥 下載圖片</button>
+                <button class="btn" id="resetBtn">🔄 重新上傳</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局變數
+        let excelData = [];
+        let canvas, ctx;
+        let isDragging = false;
+        let draggedElement = null;
+        let startX, startY;
+        let offsetX = 0, offsetY = 0;
+        let elements = []; // 存儲所有可拖動的元素
+
+        // 必要欄位（必須存在於 Excel 中）
+        const requiredFields = [
+            '結帳時間', '訂單編號', '訂單狀態', '付款方式',
+            '買家帳號', '商品編號', '商品名稱', '數量', '單價', '運送方式',
+            '露天折扣碼金額', '賣家折扣碼金額', '運費', '露幣折抵金額', '結帳總金額'
+        ];
+
+        // 所有要顯示的欄位（包含選填欄位）
+        const displayFields = [
+            '結帳時間', '訂單編號', '訂單狀態', '付款方式', '付款時間',
+            '買家帳號', '商品編號', '商品名稱', '規格', '項目',
+            '賣家自用料號', '數量', '單價', '運送方式', '露天折扣碼金額',
+            '賣家折扣碼金額', '運費', '露幣折抵金額', '結帳總金額'
+        ];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const uploadBox = document.getElementById('uploadBox');
+            const fileInput = document.getElementById('fileInput');
+
+            // 文件選擇
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // 拖放功能
+            uploadBox.addEventListener('dragover', handleDragOver);
+            uploadBox.addEventListener('dragleave', handleDragLeave);
+            uploadBox.addEventListener('drop', handleDrop);
+
+            // 點擊上傳區域
+            uploadBox.addEventListener('click', function(e) {
+                if (e.target !== fileInput && !e.target.classList.contains('btn')) {
+                    fileInput.click();
+                }
+            });
+
+            // Canvas 拖動
+            canvas.addEventListener('mousedown', startDrag);
+            canvas.addEventListener('mousemove', drag);
+            canvas.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('mouseleave', endDrag);
+
+            // 觸摸事件支援
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', endDrag);
+
+            // 下載按鈕
+            document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+
+            // 重置按鈕
+            document.getElementById('resetBtn').addEventListener('click', resetUpload);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function processFile(file) {
+            // 檢查文件類型
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel'
+            ];
+            
+            const fileName = file.name.toLowerCase();
+            const isValidExtension = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+            if (!validTypes.includes(file.type) && !isValidExtension) {
+                showMessage('請上傳有效的 Excel 文件 (.xlsx 或 .xls)', 'error');
+                return;
+            }
+
+            // 顯示文件資訊
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `
+                <strong>檔案名稱：</strong>${file.name}<br>
+                <strong>檔案大小：</strong>${(file.size / 1024).toFixed(2)} KB
+            `;
+            fileInfo.style.display = 'block';
+
+            // 顯示載入動畫
+            document.getElementById('loader').style.display = 'block';
+            showMessage('正在解析 Excel 文件...', 'info');
+
+            // 讀取文件
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    // 讀取第一個工作表
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    if (jsonData.length === 0) {
+                        throw new Error('Excel 文件中沒有資料');
+                    }
+
+                    // 驗證欄位
+                    const firstRow = jsonData[0];
+                    const missingFields = requiredFields.filter(field => !(field in firstRow));
+
+                    if (missingFields.length > 0) {
+                        showMessage(`缺少必要欄位：${missingFields.join(', ')}`, 'error');
+                        document.getElementById('loader').style.display = 'none';
+                        return;
+                    }
+
+                    excelData = jsonData;
+                    showMessage(`成功解析 ${jsonData.length} 筆訂單資料`, 'success');
+                    document.getElementById('loader').style.display = 'none';
+
+                    // 按買家帳號分組
+                    const groupedData = groupByBuyer(jsonData);
+                    showMessage(`成功解析 ${jsonData.length} 筆訂單，共 ${groupedData.length} 位買家`, 'success');
+
+                    // 繪製到 Canvas
+                    drawDataToCanvas(groupedData);
+
+                } catch (error) {
+                    showMessage('解析 Excel 文件時發生錯誤：' + error.message, 'error');
+                    document.getElementById('loader').style.display = 'none';
+                }
+            };
+
+            reader.onerror = function() {
+                showMessage('讀取文件時發生錯誤', 'error');
+                document.getElementById('loader').style.display = 'none';
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function groupByBuyer(data) {
+            const grouped = {};
+            
+            data.forEach(order => {
+                const buyer = order['買家帳號'] || '未知買家';
+                
+                if (!grouped[buyer]) {
+                    grouped[buyer] = {
+                        buyer: buyer,
+                        orders: [],
+                        // 共用資訊（取第一筆訂單的）
+                        paymentMethod: order['付款方式'],
+                        paymentTime: order['付款時間'],
+                        shippingMethod: order['運送方式'],
+                        checkoutTime: order['結帳時間']
+                    };
+                }
+                
+                grouped[buyer].orders.push(order);
+            });
+            
+            // 轉換為陣列並排序
+            return Object.values(grouped).sort((a, b) => {
+                return a.buyer.localeCompare(b.buyer, 'zh-TW');
+            });
+        }
+
+        function drawDataToCanvas(groupedData) {
+            if (!groupedData || groupedData.length === 0) return;
+
+            // 清空元素陣列
+            elements = [];
+
+            // 收據樣式設定
+            const padding = 30;
+            const receiptWidth = 450;
+            const lineHeight = 25;
+            const sectionGap = 15;
+            const fontSize = 14;
+            const titleFontSize = 20;
+            const labelFontSize = 12;
+
+            // 計算每個買家收據的高度（根據訂單數量動態調整）
+            let totalHeight = 100;
+            const buyerHeights = [];
+            
+            groupedData.forEach(buyerGroup => {
+                const itemCount = buyerGroup.orders.length;
+                const baseHeight = 400; // 基礎高度
+                const itemHeight = 30; // 每個商品項目高度
+                const height = baseHeight + (itemCount * itemHeight);
+                buyerHeights.push(height);
+                totalHeight += height + 30;
+            });
+
+            canvas.width = receiptWidth;
+            canvas.height = totalHeight;
+
+            let currentY = 40;
+
+            // 繪製每位買家的收據
+            groupedData.forEach((buyerGroup, index) => {
+                drawBuyerReceipt(buyerGroup, index, receiptWidth, buyerHeights[index], padding, lineHeight, sectionGap, fontSize, titleFontSize, labelFontSize, currentY);
+                currentY += buyerHeights[index] + 30;
+            });
+
+            // 顯示 Canvas 容器
+            document.getElementById('canvasContainer').style.display = 'block';
+            
+            // 重繪畫布
+            redrawCanvas();
+
+            // 滾動到 Canvas
+            canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function drawBuyerReceipt(buyerGroup, index, receiptWidth, receiptHeight, padding, lineHeight, sectionGap, fontSize, titleFontSize, labelFontSize, startY) {
+            const leftX = 40;
+            const rightX = receiptWidth / 2 + 10;
+            const valueOffset = 80;
+
+            let currentY = startY + 20;
+
+            // 添加收據邊框
+            elements.push({
+                type: 'border',
+                x: 20,
+                y: startY,
+                width: receiptWidth - 40,
+                height: receiptHeight - 20,
+                orderIndex: index,
+                draggable: false
+            });
+
+            // 標題
+            elements.push({
+                type: 'title',
+                text: 'DEVILFOX',
+                x: receiptWidth / 2,
+                y: currentY,
+                font: `bold ${titleFontSize}px Microsoft JhengHei`,
+                align: 'center',
+                orderIndex: index,
+                draggable: false
+            });
+
+            currentY += 10;
+
+
+
+            currentY += sectionGap + 10;
+
+            // 買家資訊（作為條碼區域）
+            elements.push({
+                type: 'barcode',
+                text: '|||||||||||||||||||||||||||',
+                x: receiptWidth / 2,
+                y: currentY,
+                font: `${labelFontSize}px Courier New`,
+                align: 'center',
+                orderIndex: index,
+                draggable: false
+            });
+
+            currentY += lineHeight;
+
+            elements.push({
+                type: 'text',
+                text: buyerGroup.buyer,
+                x: receiptWidth / 2,
+                y: currentY,
+                font: `bold ${fontSize}px Microsoft JhengHei`,
+                align: 'center',
+                orderIndex: index,
+                draggable: false
+            });
+
+            currentY += sectionGap + 5;
+
+            // 基本資訊
+            elements.push({
+                type: 'field',
+                label: '買家帳號',
+                value: buyerGroup.buyer,
+                x: leftX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            elements.push({
+                type: 'field',
+                label: '訂單數量',
+                value: buyerGroup.orders.length + ' 筆',
+                x: rightX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            currentY += lineHeight;
+
+            elements.push({
+                type: 'field',
+                label: '結帳時間',
+                value: buyerGroup.checkoutTime || '',
+                x: leftX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            elements.push({
+                type: 'field',
+                label: '付款方式',
+                value: buyerGroup.paymentMethod || '',
+                x: rightX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            currentY += sectionGap + 10;
+
+            // 分隔線
+            elements.push({
+                type: 'line',
+                x1: 30,
+                y1: currentY,
+                x2: receiptWidth - 30,
+                y2: currentY,
+                orderIndex: index,
+                draggable: false
+            });
+            currentY += sectionGap;
+
+            // 商品清單標題
+            elements.push({
+                type: 'section-title',
+                text: '商品清單：',
+                x: leftX,
+                y: currentY,
+                font: `bold ${fontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: false
+            });
+            currentY += lineHeight;
+
+            // 計算總金額
+            let totalAmount = 0;
+            let totalDiscount = 0;
+            let totalShipping = 0;
+
+            // 繪製每個商品項目
+            buyerGroup.orders.forEach((order, orderIdx) => {
+                // 訂單編號
+                elements.push({
+                    type: 'field',
+                    label: `訂單 ${orderIdx + 1}`,
+                    value: order['訂單編號'] || '',
+                    x: leftX,
+                    y: currentY,
+                    font: `${labelFontSize}px Microsoft JhengHei`,
+                    align: 'left',
+                    orderIndex: index,
+                    draggable: true,
+                    offsetX: 0,
+                    offsetY: 0
+                });
+                currentY += lineHeight;
+
+                // 商品編號
+                elements.push({
+                    type: 'field',
+                    label: '商品編號',
+                    value: order['商品編號'] || '',
+                    x: leftX + 20,
+                    y: currentY,
+                    font: `${labelFontSize}px Microsoft JhengHei`,
+                    align: 'left',
+                    orderIndex: index,
+                    draggable: true,
+                    offsetX: 0,
+                    offsetY: 0
+                });
+                currentY += lineHeight;
+
+                // 商品名稱
+                const productName = order['商品名稱'] || '';
+                elements.push({
+                    type: 'field',
+                    label: '商品名稱',
+                    value: productName.substring(0, 25) + (productName.length > 25 ? '...' : ''),
+                    x: leftX + 20,
+                    y: currentY,
+                    font: `${labelFontSize}px Microsoft JhengHei`,
+                    align: 'left',
+                    orderIndex: index,
+                    draggable: true,
+                    offsetX: 0,
+                    offsetY: 0
+                });
+                currentY += lineHeight;
+
+                // 規格、數量、單價
+                const specs = [];
+                if (order['規格']) specs.push('規格: ' + order['規格']);
+                specs.push('數量: ' + (order['數量'] || '0'));
+                specs.push('單價: NT$' + (order['單價'] || '0'));
+
+                elements.push({
+                    type: 'text',
+                    text: specs.join(' | '),
+                    x: leftX + 20,
+                    y: currentY,
+                    font: `${labelFontSize - 1}px Microsoft JhengHei`,
+                    align: 'left',
+                    orderIndex: index,
+                    draggable: false
+                });
+                currentY += lineHeight + 5;
+
+                // 累計金額
+                totalAmount += parseFloat(order['結帳總金額'] || 0);
+                totalDiscount += parseFloat(order['露天折扣碼金額'] || 0) + parseFloat(order['賣家折扣碼金額'] || 0) + parseFloat(order['露幣折抵金額'] || 0);
+                totalShipping += parseFloat(order['運費'] || 0);
+            });
+
+            currentY += 5;
+
+            // 分隔線
+            elements.push({
+                type: 'line',
+                x1: 30,
+                y1: currentY,
+                x2: receiptWidth - 30,
+                y2: currentY,
+                orderIndex: index,
+                draggable: false
+            });
+            currentY += sectionGap;
+
+            // 金額彙總
+            elements.push({
+                type: 'section-title',
+                text: '金額彙總：',
+                x: leftX,
+                y: currentY,
+                font: `bold ${fontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: false
+            });
+            currentY += lineHeight;
+
+            elements.push({
+                type: 'field',
+                label: '總折扣',
+                value: 'NT$' + totalDiscount.toFixed(0),
+                x: leftX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            elements.push({
+                type: 'field',
+                label: '運費',
+                value: 'NT$' + totalShipping.toFixed(0),
+                x: rightX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            currentY += lineHeight;
+
+            elements.push({
+                type: 'field',
+                label: '運送方式',
+                value: buyerGroup.shippingMethod || '',
+                x: leftX,
+                y: currentY,
+                font: `${labelFontSize}px Microsoft JhengHei`,
+                align: 'left',
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+
+            currentY += sectionGap + 10;
+
+            // 總金額線
+            elements.push({
+                type: 'thick-line',
+                x1: 30,
+                y1: currentY,
+                x2: receiptWidth - 30,
+                y2: currentY,
+                orderIndex: index,
+                draggable: false
+            });
+            currentY += sectionGap;
+
+            // 結帳總金額
+            elements.push({
+                type: 'total',
+                label: '結帳總金額：',
+                value: 'NT$' + totalAmount.toFixed(0),
+                labelX: leftX,
+                valueX: receiptWidth - 40,
+                y: currentY,
+                font: `bold ${fontSize + 2}px Microsoft JhengHei`,
+                orderIndex: index,
+                draggable: true,
+                offsetX: 0,
+                offsetY: 0
+            });
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            elements.forEach(el => {
+                drawElement(el);
+            });
+        }
+
+        function drawElement(el) {
+            const x = el.x + (el.offsetX || 0);
+            const y = el.y + (el.offsetY || 0);
+
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#cccccc';
+
+            switch (el.type) {
+                case 'border':
+                    ctx.strokeStyle = '#cccccc';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(el.x, el.y, el.width, el.height);
+                    break;
+
+                case 'title':
+                case 'section-title':
+                case 'text':
+                    ctx.font = el.font;
+                    ctx.textAlign = el.align;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(el.text, x, y);
+                    break;
+
+                case 'barcode':
+                    ctx.font = el.font;
+                    ctx.textAlign = el.align;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(el.text, x, y);
+                    break;
+
+                case 'field':
+                    ctx.font = el.font;
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = el.draggable && draggedElement === el ? '#667eea' : '#000000';
+                    
+                    // 如果被選中，顯示背景
+                    if (draggedElement === el) {
+                        ctx.fillStyle = '#e8f0ff';
+                        const metrics = ctx.measureText(el.label + '：' + el.value);
+                        ctx.fillRect(x - 2, y - 15, metrics.width + 4, 20);
+                        ctx.fillStyle = '#667eea';
+                    }
+                    
+                    ctx.fillText(el.label + '：', x, y);
+                    const labelWidth = ctx.measureText(el.label + '：').width;
+                    ctx.fillText(el.value, x + labelWidth, y);
+                    break;
+
+                case 'total':
+                    ctx.font = el.font;
+                    ctx.fillStyle = el.draggable && draggedElement === el ? '#667eea' : '#000000';
+                    
+                    if (draggedElement === el) {
+                        ctx.fillStyle = '#e8f0ff';
+                        ctx.fillRect(el.labelX + (el.offsetX || 0) - 2, y - 18, canvas.width - 80, 25);
+                        ctx.fillStyle = '#667eea';
+                    }
+                    
+                    ctx.textAlign = 'left';
+                    ctx.fillText(el.label, el.labelX + (el.offsetX || 0), y);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(el.value, el.valueX + (el.offsetX || 0), y);
+                    break;
+
+                case 'line':
+                    ctx.strokeStyle = '#dddddd';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(el.x1, el.y1);
+                    ctx.lineTo(el.x2, el.y2);
+                    ctx.stroke();
+                    break;
+
+                case 'thick-line':
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(el.x1, el.y1);
+                    ctx.lineTo(el.x2, el.y2);
+                    ctx.stroke();
+                    break;
+            }
+        }
+
+        function getElementAtPosition(x, y) {
+            // 反向遍歷，優先選擇上層元素
+            for (let i = elements.length - 1; i >= 0; i--) {
+                const el = elements[i];
+                if (!el.draggable) continue;
+
+                const elX = el.x + (el.offsetX || 0);
+                const elY = el.y + (el.offsetY || 0);
+
+                // 計算元素範圍
+                let width = 200;
+                let height = 20;
+
+                if (el.type === 'field' || el.type === 'total') {
+                    // 檢查是否點擊在元素範圍內
+                    if (x >= elX - 5 && x <= elX + width &&
+                        y >= elY - 15 && y <= elY + 5) {
+                        return el;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Canvas 拖動功能
+        function startDrag(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const element = getElementAtPosition(x, y);
+            
+            if (element && element.draggable) {
+                isDragging = true;
+                draggedElement = element;
+                startX = x - (element.offsetX || 0);
+                startY = y - (element.offsetY || 0);
+                canvas.style.cursor = 'grabbing';
+                redrawCanvas();
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging || !draggedElement) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            draggedElement.offsetX = x - startX;
+            draggedElement.offsetY = y - startY;
+            
+            redrawCanvas();
+        }
+
+        function endDrag() {
+            if (isDragging && draggedElement) {
+                isDragging = false;
+                draggedElement = null;
+                canvas.style.cursor = 'move';
+                redrawCanvas();
+            }
+        }
+
+        function handleTouchStart(e) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            const element = getElementAtPosition(x, y);
+            
+            if (element && element.draggable) {
+                isDragging = true;
+                draggedElement = element;
+                startX = x - (element.offsetX || 0);
+                startY = y - (element.offsetY || 0);
+                redrawCanvas();
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!isDragging || !draggedElement) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            draggedElement.offsetX = x - startX;
+            draggedElement.offsetY = y - startY;
+            
+            redrawCanvas();
+        }
+
+        function downloadImage() {
+            // 生成下載
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            link.download = `訂單明細_${timestamp}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            showMessage('圖片已下載', 'success');
+        }
+
+        function resetUpload() {
+            excelData = [];
+            elements = [];
+            draggedElement = null;
+            offsetX = 0;
+            offsetY = 0;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('canvasContainer').style.display = 'none';
+            document.getElementById('message').style.display = 'none';
+            showMessage('', '');
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            if (!text) {
+                messageEl.style.display = 'none';
+                return;
+            }
+            
+            messageEl.textContent = text;
+            messageEl.className = 'info-message ' + type;
+            messageEl.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
