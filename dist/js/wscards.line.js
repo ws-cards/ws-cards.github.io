@@ -52,7 +52,7 @@ source:[
 {id:"WS00029", name:"DOG DAYS",cname:"DOG DAYS | DD"},
 {id:"WS00030", name:"ニセコイ",cname:"偽戀 | NK"},
 {id:"WS00031", name:"日常",cname:"日常 | NJ"},
-{id:"WS00032", name:"BanG Dream!",cname:"BanG Dream! 少女樂團派對 | BD"},
+{id:"WS00032", name:"BanG Dream!",cname:"BanG Dream! 少女樂團派對 | BD,BDY"},
 {id:"WS00033", name:"ひなろじ ～from Luck ＆ Logic～",cname:"雛邏輯～from Luck & Logic～ | HLL"},
 {id:"WS00034", name:"ビジュアルアーツ",cname:"Visual Art's | VA"},
 {id:"WS00035", name:"ビビッドレッド・オペレーション",cname:"Vividred Operatio | 緋色戰姬 | VR"},
@@ -177,7 +177,9 @@ source:[
 {id:"WS00156", name:"きんいろモザイク",cname:"黃金拼圖 | KMS"},	
 {id:"WS00157", name:"『テイルズ オブ』シリーズ",cname:"傳奇系列 | TAL"},
 {id:"WS00158", name:"Disney",cname:"Disney | 迪士尼 | Dds,MRd"},
-{id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"}	
+{id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"},
+{id:"WS00160", name:"VIRTUAL GIRL",cname:"虛擬少女@世界終焉 | VRG,BDY"},
+{id:"WS00161", name:"東方Project",cname:"東方Project | THP"}	
 ]
 ,
   minLength:1,
@@ -698,6 +700,7 @@ $input.change(function() {
             } 
             sortlist("cardNumber",sOrder); 
         } 	
+
 
 
 
