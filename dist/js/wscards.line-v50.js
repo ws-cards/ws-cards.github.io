@@ -1835,6 +1835,10 @@ function loadCardData(cardNumber) {
             const cardData = data[cardNumber];
             console.log('載入的卡片資料:', cardData);
             if (cardData) {
+                // 確保 cardData 包含卡號資訊，否則記錄不會成功
+                if (!cardData.cardno) {
+                    cardData.cardno = cardNumber;
+                }
                 updateCardInfo(cardData);
             } else {
                 console.error('找不到卡號:', cardNumber);
