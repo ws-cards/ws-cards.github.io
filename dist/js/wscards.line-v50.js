@@ -288,6 +288,7 @@ function isCardNumberFormat(input) {
  * @param {string} cardNumber - 完整的卡號
  */
 function searchByCardNumber(cardNumber) {
+  window._hasUserModified = true;
   try {
     console.log('開始解析卡號:', cardNumber);
     
@@ -813,6 +814,7 @@ function changeTitle(){
  * - 等待圖片載入完成
  */			
 function changeNumber(){	
+	window._hasUserModified = true;
 	var cardTitle = document.getElementById('cardTitle').value;
 	var cardTilteReplaceSpare = cardTitle.replace('/','_');
 	console.log(cardTitle+'->'+cardTilteReplaceSpare);
@@ -979,7 +981,7 @@ function getCardData(jsonObj,internalCardNumber,cardNum) {
 				updatePriceSummary(cardData);
 
 				// 6. 記錄到搜尋歷史 (有變動才寫入)
-				if (window._isUserChangeRecorded && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
+				if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
 					// 嘗試從卡號解析稀有度 (例如 BD/W54-070SSP -> SSP)
 					var rareMatch = cardNum.match(/[0-9]+([A-Z+]+)$/i);
 					var parsedRare = rareMatch ? rareMatch[1] : '';
@@ -1771,14 +1773,15 @@ function reGenTitle(){
 			  }	
 }
 var elementCardNumber = document.getElementById('cardNumber');
-elementCardNumber.addEventListener('change', function() {
-	 // 標記使用者或程式有觸發過變動，允許寫入 localStorage
-	 window._isUserChangeRecorded = true;
-     // 搜尋成功後平滑滾動到結果區域
-    setTimeout(() => {
-        scrollToResults();
-    }, 200); // 延遲一秒讓圖表載入完成	
-});
+if (elementCardNumber) {
+	elementCardNumber.addEventListener('change', function() {
+		 window._hasUserModified = true;
+	     // 搜尋成功後平滑滾動到結果區域
+	    setTimeout(() => {
+	        scrollToResults();
+	    }, 200); // 延遲一秒讓圖表載入完成	
+	});
+}
 
 /**
  * 更新卡片資訊函數
@@ -1852,7 +1855,7 @@ function updateCardInfo(cardData) {
     console.log('卡片資訊已更新:', cardData.cardno);
 
     // 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度 (有變動才寫入)
-    if (window._isUserChangeRecorded && typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
+    if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
         SearchHistory.addItem({
             cardNumber: cardData.cardno,
             cardName: cardData.cardname || '',
