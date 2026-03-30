@@ -978,8 +978,8 @@ function getCardData(jsonObj,internalCardNumber,cardNum) {
 				// 5. 更新價格摘要統計卡片
 				updatePriceSummary(cardData);
 
-				// 6. 記錄到搜尋歷史
-				if (typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
+				// 6. 記錄到搜尋歷史 (有變動才寫入)
+				if (window._isUserChangeRecorded && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
 					// 嘗試從卡號解析稀有度 (例如 BD/W54-070SSP -> SSP)
 					var rareMatch = cardNum.match(/[0-9]+([A-Z+]+)$/i);
 					var parsedRare = rareMatch ? rareMatch[1] : '';
@@ -1742,6 +1742,8 @@ function reGenTitle(){
 }
 var elementCardNumber = document.getElementById('cardNumber');
 elementCardNumber.addEventListener('change', function() {
+	 // 標記使用者或程式有觸發過變動，允許寫入 localStorage
+	 window._isUserChangeRecorded = true;
      // 搜尋成功後平滑滾動到結果區域
     setTimeout(() => {
         scrollToResults();
@@ -1819,8 +1821,8 @@ function updateCardInfo(cardData) {
     
     console.log('卡片資訊已更新:', cardData.cardno);
 
-    // 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度
-    if (typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
+    // 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度 (有變動才寫入)
+    if (window._isUserChangeRecorded && typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
         SearchHistory.addItem({
             cardNumber: cardData.cardno,
             cardName: cardData.cardname || '',
