@@ -288,7 +288,6 @@ function isCardNumberFormat(input) {
  * @param {string} cardNumber - 完整的卡號
  */
 function searchByCardNumber(cardNumber) {
-  window._hasUserModified = true;
   try {
     console.log('開始解析卡號:', cardNumber);
     
@@ -748,7 +747,8 @@ async function checkTitleOfCardNumberList(suffix){
  * - 排序卡號選項
  * - 顯示第一個卡號的資料
  */
-function changeTitle(){				
+function changeTitle(){	
+	window._hasUserModified = false;			
 	// 先銷毀現有圖表
 	destroyAllCharts();
 			
@@ -814,7 +814,6 @@ function changeTitle(){
  * - 等待圖片載入完成
  */			
 function changeNumber(){	
-	window._hasUserModified = true;
 	var cardTitle = document.getElementById('cardTitle').value;
 	var cardTilteReplaceSpare = cardTitle.replace('/','_');
 	console.log(cardTitle+'->'+cardTilteReplaceSpare);
@@ -1583,6 +1582,8 @@ async function findAndSetCardNumber(fullNumber) {
           console.log('找到匹配的卡號:', option.text, 'value:', value);
           option.selected = true;
           
+          window._hasUserModified = true;
+
           // 先銷毀現有圖表再觸发變更事件
           destroyAllCharts();
           
@@ -1631,6 +1632,8 @@ async function findAndSetCardNumberBySuffix(fullNumber) {
           console.log('找到匹配的卡號:', option.text, 'value:', value);
           option.selected = true;
           
+          window._hasUserModified = true;
+
           // 先銷毀現有圖表再觸發變更事件
           destroyAllCharts();
           
