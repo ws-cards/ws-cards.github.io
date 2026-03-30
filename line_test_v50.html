@@ -1183,67 +1183,133 @@
 .price-summary-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-radius: var(--border-radius-small);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    transition: all 0.3s ease;
+    gap: 1rem;
+    padding: 1.25rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.98) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
+/* 科技感網格背景 - 改為淺色版 */
+.price-summary-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(100, 116, 139, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 116, 139, 0.03) 1px, transparent 1px);
+    background-size: 15px 15px;
+    opacity: 0.8;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.price-summary-item:hover::after {
+    animation: digitalScan 3s linear infinite;
+}
+
+@keyframes digitalScan {
+    0% { background-position: 0 0; }
+    100% { background-position: 15px 15px; }
+}
+
+/* 霓虹左側光條 - 調整陰影適應淺色 */
 .price-summary-item::before {
     content: '';
     position: absolute;
-    top: 0;
+    top: 10%;
     left: 0;
     width: 4px;
-    height: 100%;
-    border-radius: 4px 0 0 4px;
+    height: 80%;
+    border-radius: 0 4px 4px 0;
+    z-index: 2;
+    transition: all 0.3s ease;
 }
 
 .price-summary-item.current::before {
-    background: linear-gradient(180deg, #667eea, #764ba2);
+    background: #667eea;
+    box-shadow: 0 0 8px rgba(102, 126, 234, 0.6);
 }
 .price-summary-item.highest::before {
-    background: linear-gradient(180deg, #f56565, #e53e3e);
+    background: #e53e3e;
+    box-shadow: 0 0 8px rgba(229, 62, 62, 0.6);
 }
 .price-summary-item.lowest::before {
-    background: linear-gradient(180deg, #48bb78, #38a169);
+    background: #38a169;
+    box-shadow: 0 0 8px rgba(56, 161, 105, 0.6);
 }
 .price-summary-item.change::before {
-    background: linear-gradient(180deg, #ed8936, #dd6b20);
+    background: #dd6b20;
+    box-shadow: 0 0 8px rgba(221, 107, 32, 0.6);
 }
 
 .price-summary-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.8);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.price-summary-item:hover::before {
+    height: 100%;
+    top: 0;
+}
+
+/* 將內容置於特效模層之上 */
+.price-summary-icon, .price-summary-content {
+    position: relative;
+    z-index: 1;
 }
 
 .price-summary-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 1rem;
+    font-size: 1.25rem;
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* 圖標科技感內框 - 改為適應淺色 */
+.price-summary-icon::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
 }
 
 .price-summary-item.current .price-summary-icon {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.9));
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.2);
+    color: #ffffff;
 }
 .price-summary-item.highest .price-summary-icon {
-    background: linear-gradient(135deg, #f56565, #e53e3e);
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.8), rgba(229, 62, 62, 0.9));
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+    border-color: rgba(245, 101, 101, 0.2);
+    color: #ffffff;
 }
 .price-summary-item.lowest .price-summary-icon {
-    background: linear-gradient(135deg, #48bb78, #38a169);
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.8), rgba(56, 161, 105, 0.9));
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+    border-color: rgba(72, 187, 120, 0.2);
+    color: #ffffff;
 }
 .price-summary-item.change .price-summary-icon {
-    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.8), rgba(221, 107, 32, 0.9));
+    box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
+    border-color: rgba(237, 137, 54, 0.2);
+    color: #ffffff;
 }
 
 .price-summary-content {
@@ -1254,47 +1320,57 @@
 
 .price-summary-label {
     font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    letter-spacing: 0.5px;
+    color: #718096; /* 加深為淺色模式 */
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     white-space: nowrap;
+    text-shadow: none; /* 移除發光，改為俐落字體 */
 }
 
 .price-summary-value {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--text-primary);
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #2d3748; /* 加深為主字體色 */
+    font-family: /*'Courier New', Courier, */'Noto Sans TC', sans-serif;
     line-height: 1.2;
     white-space: nowrap;
+    text-shadow: none; /* 移除發光，改為俐落字體 */
+    letter-spacing: 0.5px;
 }
 
-/* 漲跌幅顏色 */
+/* 漲跌幅顏色與發光改為底色淺色模式 */
 .price-summary-value.price-up {
     color: #e53e3e;
+    text-shadow: none;
 }
 .price-summary-value.price-down {
     color: #38a169;
+    text-shadow: none;
 }
 .price-summary-value.price-flat {
-    color: var(--text-secondary);
+    color: #718096;
+    text-shadow: none;
 }
 
-/* 漲跌幅圖標動態變化 */
+/* 漲跌幅圖標動態變化 (科技感風格淺色化) */
 .price-summary-item.change.is-up .price-summary-icon {
-    background: linear-gradient(135deg, #f56565, #e53e3e);
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.8), rgba(229, 62, 62, 0.9));
+    border-color: rgba(245, 101, 101, 0.2);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
 }
 .price-summary-item.change.is-down .price-summary-icon {
-    background: linear-gradient(135deg, #48bb78, #38a169);
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.8), rgba(56, 161, 105, 0.9));
+    border-color: rgba(72, 187, 120, 0.2);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
-/* 暗色模式 */
+/* 暗色模式調整 (既然已是科技暗色風格，可以減弱預設暗色模式的衝突) */
 [data-theme="dark"] .price-summary-item {
-    background: rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .price-summary-value {
-    color: #f7fafc;
+    background: linear-gradient(135deg, rgba(5, 8, 15, 0.95) 0%, rgba(10, 15, 25, 0.98) 100%);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* 平板 */
@@ -1981,7 +2057,7 @@
                           <i class="fas fa-arrow-up"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">最高價</span>
+                          <span class="price-summary-label">近月最高</span>
                           <span class="price-summary-value" id="summaryHighPrice">--</span>
                         </div>
                       </div>
@@ -1990,7 +2066,7 @@
                           <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">最低價</span>
+                          <span class="price-summary-label">近月最低</span>
                           <span class="price-summary-value" id="summaryLowPrice">--</span>
                         </div>
                       </div>
@@ -1999,7 +2075,7 @@
                           <i class="fas fa-percentage"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">漲跌幅</span>
+                          <span class="price-summary-label">近7天漲跌</span>
                           <span class="price-summary-value" id="summaryChangePercent">--</span>
                         </div>
                       </div>
