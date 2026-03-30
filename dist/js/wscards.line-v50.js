@@ -764,7 +764,7 @@ function changeTitle(){
 		selectPrice.removeChild(selectPrice.firstChild);
 	}					  
 			  
-	var cardTitle = document.getElementById('cardTitle').value;	  
+	var cardTitle = document.getElementById('cardTitle').value;	  	
 	var cardTilteReplaceSpare = cardTitle.replace('/','_');
 	console.log(cardTitle+'->'+cardTilteReplaceSpare);
   	
@@ -977,6 +977,29 @@ function getCardData(jsonObj,internalCardNumber,cardNum) {
 
 				// 5. 更新價格摘要統計卡片
 				updatePriceSummary(cardData);
+
+				// 6. 記錄到搜尋歷史
+				if (typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
+					// 嘗試從卡號解析稀有度 (例如 BD/W54-070SSP -> SSP)
+					var rareMatch = cardNum.match(/[0-9]+([A-Z+]+)$/i);
+					var parsedRare = rareMatch ? rareMatch[1] : '';
+					
+					var cardTitleSelect = document.getElementById('cardTitle');
+					var titleText = (cardTitleSelect && cardTitleSelect.selectedIndex >= 0) 
+						? cardTitleSelect.options[cardTitleSelect.selectedIndex].text 
+						: '';
+
+					// 嘗試獲取目前畫面上的卡名 (如果已經載入的話)
+					var cardNameEl = document.getElementById('cardname');
+					var currentName = (cardNameEl && cardNameEl.textContent !== '-') ? cardNameEl.textContent : '';
+
+					SearchHistory.addItem({
+						cardNumber: cardNum,
+						cardName: currentName,
+						cardRare: parsedRare,
+						cardTitle: titleText
+					});
+				}
 }
 
 /**
@@ -1459,7 +1482,7 @@ async function findAndSetCardSuffix(prefix,suffix) {
           }
 
           //resolve(true);
-          //return;
+          // return;
         }
       }
 	  //先註解
@@ -1490,7 +1513,7 @@ async function findAndSetCardSuffix(prefix,suffix) {
     //     }
     //   }
 
-	  
+	  	
     //   resolve(false);
     }, 100);
     
@@ -1528,7 +1551,7 @@ async function findAndSetCardNumber(fullNumber) {
           console.log('找到匹配的卡號:', option.text, 'value:', value);
           option.selected = true;
           
-          // 先銷毀現有圖表再觸發變更事件
+          // 先銷毀現有圖表再觸发變更事件
           destroyAllCharts();
           
           // 觸發變更事件
@@ -1796,7 +1819,7 @@ function updateCardInfo(cardData) {
     
     console.log('卡片資訊已更新:', cardData.cardno);
 
-    // 6. 記錄到搜尋歷史
+    // 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度
     if (typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
         SearchHistory.addItem({
             cardNumber: cardData.cardno,
