@@ -748,7 +748,7 @@ async function checkTitleOfCardNumberList(suffix){
  * - 顯示第一個卡號的資料
  */
 function changeTitle(){	
-	window._hasUserModified = false;			
+	window._hasUserModified = true;			
 	// 先銷毀現有圖表
 	destroyAllCharts();
 			
