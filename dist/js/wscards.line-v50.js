@@ -1010,8 +1010,33 @@ function getCardData(jsonObj,internalCardNumber,cardNum) {
  */
 function updatePriceSummary(priceData) {
 	var summaryCard = document.getElementById('priceSummaryCard');
-	if (!summaryCard || !priceData || priceData.length === 0) {
-		if (summaryCard) summaryCard.style.display = 'none';
+	if (!summaryCard) return;
+
+	var elCurrent = document.getElementById('summaryCurrentPrice');
+	var elHigh = document.getElementById('summaryHighPrice');
+	var elLow = document.getElementById('summaryLowPrice');
+	var elChange = document.getElementById('summaryChangePercent');
+	var changeItem = summaryCard.querySelector('.price-summary-item.change');
+
+	// 重置為預設狀態（無資料）
+	function forceDefault() {
+		summaryCard.style.display = 'block'; // 確保佔位存在，避免佈局抖動
+		if (elCurrent) elCurrent.textContent = '--';
+		if (elHigh) elHigh.textContent = '--';
+		if (elLow) elLow.textContent = '--';
+		if (elChange) {
+			elChange.textContent = '--';
+			elChange.className = 'price-summary-value price-flat';
+		}
+		if (changeItem) {
+			changeItem.classList.remove('is-up', 'is-down');
+			var changeIcon = changeItem.querySelector('.price-summary-icon i');
+			if (changeIcon) changeIcon.className = 'fas fa-minus';
+		}
+	}
+
+	if (!priceData || priceData.length === 0) {
+		forceDefault();
 		return;
 	}
 
@@ -1021,7 +1046,7 @@ function updatePriceSummary(priceData) {
 	});
 
 	if (validPrices.length === 0) {
-		summaryCard.style.display = 'none';
+		forceDefault();
 		return;
 	}
 
@@ -1046,33 +1071,38 @@ function updatePriceSummary(priceData) {
 	var elLow = document.getElementById('summaryLowPrice');
 	var elChange = document.getElementById('summaryChangePercent');
 
+	// 重新啟動動畫的輔助函數
+	function triggerAnimate(el, baseClass) {
+		if (!el) return;
+		el.className = baseClass; // 先移除 animate
+		void el.offsetWidth; // 觸發重繪
+		el.className = baseClass + ' animate';
+	}
+
 	if (elCurrent) {
 		elCurrent.textContent = '¥' + currentPrice.toLocaleString();
-		elCurrent.className = 'price-summary-value animate';
+		triggerAnimate(elCurrent, 'price-summary-value');
 	}
 	if (elHigh) {
 		elHigh.textContent = '¥' + highPrice.toLocaleString();
-		elHigh.className = 'price-summary-value animate';
+		triggerAnimate(elHigh, 'price-summary-value');
 	}
 	if (elLow) {
 		elLow.textContent = '¥' + lowPrice.toLocaleString();
-		elLow.className = 'price-summary-value animate';
+		triggerAnimate(elLow, 'price-summary-value');
 	}
 	if (elChange) {
 		var sign = changePercent > 0 ? '+' : '';
 		elChange.textContent = sign + changePercent + '%';
 		// 漲跌顏色
-		if (changePercent > 0) {
-			elChange.className = 'price-summary-value animate price-up';
-		} else if (changePercent < 0) {
-			elChange.className = 'price-summary-value animate price-down';
-		} else {
-			elChange.className = 'price-summary-value animate price-flat';
-		}
+		var colorClass = 'price-flat';
+		if (changePercent > 0) colorClass = 'price-up';
+		else if (changePercent < 0) colorClass = 'price-down';
+		
+		triggerAnimate(elChange, 'price-summary-value ' + colorClass);
 	}
 
 	// 更新漲跌圖標方向
-	var changeItem = summaryCard.querySelector('.price-summary-item.change');
 	if (changeItem) {
 		changeItem.classList.remove('is-up', 'is-down');
 		var changeIcon = changeItem.querySelector('.price-summary-icon i');
