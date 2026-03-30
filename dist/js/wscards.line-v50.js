@@ -1004,11 +1004,17 @@ function updatePriceSummary(priceData) {
 
 	// 計算統計數據
 	var currentPrice = validPrices[validPrices.length - 1];
-	var highPrice = Math.max.apply(null, validPrices);
-	var lowPrice = Math.min.apply(null, validPrices);
-	var firstPrice = validPrices[0];
-	var changePercent = firstPrice !== 0 
-		? ((currentPrice - firstPrice) / firstPrice * 100).toFixed(1) 
+
+	// 最高價/最低價只看近一個月（30天）
+	var recent30 = validPrices.slice(-30);
+	var highPrice = Math.max.apply(null, recent30);
+	var lowPrice = Math.min.apply(null, recent30);
+
+	// 漲跌幅只看最近 7 天
+	var recent7 = validPrices.slice(-7);
+	var basePrice7 = recent7[0]; // 7天前（或資料不足7天時的第一筆）
+	var changePercent = basePrice7 !== 0 
+		? ((currentPrice - basePrice7) / basePrice7 * 100).toFixed(1) 
 		: 0;
 
 	// 更新 DOM
