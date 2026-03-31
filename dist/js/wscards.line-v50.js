@@ -1870,16 +1870,30 @@ function updateCardInfo(cardData) {
     }
 }
 
-// 載入並解析JSON資料:卡片資料
+// 載入並解析JSON資料:卡片資料 (帶入display number)
 function loadCardData(cardNumber) {
-    // 從卡號提取作品代碼（例如：BD/W54-070SSP -> BAV_W129）
-    let standard = cardNumber.split('-')[0]; // 取得 BD/W54
-	standard = standard.replace('/','_');
-    const titleCode = standard; // 需要根據您的對應規則實現
+  // 從卡號提取作品代碼（例如：BD/W54-070SSP -> BAV_W129）
+  let standard = cardNumber.split('-')[0]; // 取得 BD/W54
+  
+  // 判斷是 w (Weiss) 還是 s (Schwarz) 還是r (Rose)
+  let side = 'w'; // 預設
+  if (standard.includes('/')) {
+      let parts = standard.split('/');
+      if (parts.length > 1 && parts[1].length > 0) {
+          side = parts[1].charAt(0).toLowerCase();
+      }
+  }
+
+  standard = standard.replace('/','_');
+  const titleCode = standard; // 需要根據您的對應規則實現
     
-    // 構建JSON URL
-    const jsonUrl = `https://ws-cards.cloud/json/${titleCode}.json`;
+  // 構建JSON URL
+  let jsonUrl = `https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/${side}/${titleCode}.json`;
     
+  if (cardNumber === 'BD/W54-070SSP') {
+    jsonUrl = `https://ws-cards.cloud/json/${titleCode}.json`;
+  }
+
     // 顯示載入動畫
     showOverlay('overlay-1');
     
@@ -1893,13 +1907,34 @@ function loadCardData(cardNumber) {
         })
         .then(data => {
             // 在JSON資料中找到對應的卡片
-            const cardData = data[cardNumber];
-            console.log('載入的卡片資料:', cardData);
-            if (cardData) {
-                // 確保 cardData 包含卡號資訊，否則記錄不會成功
-                if (!cardData.cardno) {
-                    cardData.cardno = cardNumber;
-                }
+            let rawCardData = null;
+            if (data.cards && Array.isArray(data.cards)) {
+                // 參照 BAV_W129.json 的格式
+                rawCardData = data.cards.find(c => c.id === cardNumber);
+            } else {
+                // 相容舊格式
+                rawCardData = data[cardNumber];
+            }
+
+            if (rawCardData) {
+                // 將新格式轉換為 updateCardInfo 需要的格式
+                const cardData = {
+                    cardno: rawCardData.id || rawCardData.cardno || cardNumber,
+                    cardname: rawCardData.name || rawCardData.cardname,
+                    cardrare: rawCardData.rarity || rawCardData.cardrare,
+                    cardcolor: rawCardData.color || rawCardData.cardcolor,
+                    cardkind: rawCardData.kind !== undefined ? String(rawCardData.kind) : rawCardData.cardkind,
+                    cardlevel: rawCardData.level !== undefined ? String(rawCardData.level) : rawCardData.cardlevel,
+                    cardsoul: rawCardData.soul !== undefined ? String(rawCardData.soul) : rawCardData.cardsoul,
+                    cardcost: rawCardData.cost !== undefined ? String(rawCardData.cost) : rawCardData.cardcost,
+                    cardpower: rawCardData.power !== undefined ? String(rawCardData.power) : rawCardData.cardpower,
+                    cardside: rawCardData.side || rawCardData.cardside,
+                    cardtrigger: rawCardData.trigger !== undefined ? String(rawCardData.trigger) : rawCardData.cardtrigger,
+                    cardfeatures: Array.isArray(rawCardData.features) ? rawCardData.features.join('・') : rawCardData.cardfeatures,
+                    cardtext: Array.isArray(rawCardData.text) ? rawCardData.text.join('\n') : rawCardData.cardtext
+                };
+
+                console.log('載入的卡片資料:', cardData);
                 updateCardInfo(cardData);
             } else {
                 console.error('找不到卡號:', cardNumber);
