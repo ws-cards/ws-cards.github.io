@@ -19,6 +19,16 @@ var $dropdown = $(".dropdown-menu");
 var myChart = null;
 var myStockChart = null;
 
+// ====================================================
+// 搜尋防抖與鎖定機制
+// - _searchDebounceTimer: input 事件的 debounce timer
+// - _isSearching: 搜尋進行中的鎖定旗標
+// - _lastSearchedValue: 上次成功觸發搜尋的卡號值（防重複）
+// ====================================================
+var _searchDebounceTimer = null;
+var _isSearching = false;
+var _lastSearchedValue = '';
+
 /**
  * 初始化 Typeahead 自動完成功能
  * - 設定資料來源（作品列表）
@@ -222,6 +232,18 @@ function handleInputChange() {
   console.log('Input change detected(inputValue):', inputValue);
   console.log('current:',current);
 
+  // 清除任何待執行的 debounce timer（change 事件優先處理）
+  if (_searchDebounceTimer) {
+    clearTimeout(_searchDebounceTimer);
+    _searchDebounceTimer = null;
+  }
+
+  // 如果正在搜尋中，跳過
+  if (_isSearching) {
+    console.log('搜尋進行中，跳過 change 事件');
+    return;
+  }
+
   if (current) {
     // Some item from your model is active!
     if (current.name == inputValue) {
@@ -231,7 +253,7 @@ function handleInputChange() {
       //when you chose item
     } else {
         console.log('Partial match detected->check number');
-	    if (inputValue && isCardNumberFormat(inputValue)) {
+	    if (inputValue && isCardNumberFormat(inputValue) && inputValue !== _lastSearchedValue) {
 	      console.log('檢測到卡號格式，嘗試直接搜尋:', inputValue);
 	      searchByCardNumber(inputValue);
 	    }		
@@ -239,7 +261,7 @@ function handleInputChange() {
   } else {
     // Nothing is active so it is a new value (or maybe empty value)
     // 檢查是否為卡號格式 (例如: PRD/W01-001)
-    if (inputValue && isCardNumberFormat(inputValue)) {
+    if (inputValue && isCardNumberFormat(inputValue) && inputValue !== _lastSearchedValue) {
       console.log('檢測到卡號格式，嘗試直接搜尋:', inputValue);
       searchByCardNumber(inputValue);
     }
@@ -252,20 +274,29 @@ $input.change(handleInputChange);
 
 /**
  * 監聽 input 事件 (即時輸入時觸發)
- * - 只處理看起來像完整卡號的輸入
- * - 延遲執行避免干擾 typeahead
+ * - 使用 debounce 機制，避免輸入過程中頻繁觸發搜尋
+ * - 每次新的輸入會清除前一次的 timer，只有停頓超過 1200ms 才觸發
+ * - 搜尋進行中或已搜尋過同一值時不重複觸發
  */
 $input.on('input', function() {
+  // 每次輸入都清除上一次的 debounce timer
+  if (_searchDebounceTimer) {
+    clearTimeout(_searchDebounceTimer);
+    _searchDebounceTimer = null;
+  }
+
   var inputValue = $input.val().trim();
-  // 只在輸入看起來像完整卡號時才即時處理
+  // 只在輸入看起來像完整卡號時才啟動 debounce
   if (inputValue && inputValue.length >= 8 && isCardNumberFormat(inputValue)) {
-    console.log('即時檢測到完整卡號格式:', inputValue);
-    setTimeout(function() {
-      // 延遲一點點執行，避免干擾 typeahead
-      if ($input.val().trim() === inputValue) {
+    console.log('即時檢測到完整卡號格式，啟動 debounce:', inputValue);
+    _searchDebounceTimer = setTimeout(function() {
+      _searchDebounceTimer = null;
+      // 再次確認輸入值沒有改變、沒有正在搜尋、且不是重複搜尋
+      var currentValue = $input.val().trim();
+      if (currentValue === inputValue && !_isSearching && inputValue !== _lastSearchedValue) {
         searchByCardNumber(inputValue);
       }
-    }, 500);
+    }, 1200);
   }
 });
 
@@ -289,8 +320,22 @@ function isCardNumberFormat(input) {
  */
 function searchByCardNumber(cardNumber) {
   try {
+    // 防止重複搜尋：正在搜尋中 或 與上次搜尋值相同
+    if (_isSearching) {
+      console.log('搜尋進行中，忽略重複請求:', cardNumber);
+      return;
+    }
+    if (cardNumber === _lastSearchedValue) {
+      console.log('與上次搜尋值相同，忽略重複請求:', cardNumber);
+      return;
+    }
+
     console.log('開始解析卡號:', cardNumber);
     
+    // 鎖定搜尋狀態
+    _isSearching = true;
+    _lastSearchedValue = cardNumber;
+
     // 顯示搜尋提示
     showSearchNotification('正在搜尋卡號: ' + cardNumber);
     
@@ -299,6 +344,7 @@ function searchByCardNumber(cardNumber) {
     if (!cardParts) {
       console.warn('無法解析卡號格式:', cardNumber);
       showSearchNotification('卡號格式不正確: ' + cardNumber, 'error');
+      _isSearching = false;
       return;
     }
     
@@ -310,6 +356,7 @@ function searchByCardNumber(cardNumber) {
   } catch (error) {
     console.error('搜尋卡號時發生錯誤:', error);
     showSearchNotification('搜尋失敗: ' + error.message, 'error');
+    _isSearching = false;
   }
 }
 
@@ -373,6 +420,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		//W103-001 這類的就不會進來
 		console.warn('找不到對應的作品標準:', cardParts.prefix);
 		showSearchNotification('找不到對應的作品: ' + cardParts.prefix, 'error');
+		_isSearching = false;
 		return;
 	  }
     }
@@ -388,6 +436,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		if(cardParts.prefix !== cardParts.series){
 			console.warn('找不到對應的主題:', cardParts.series);
 			showSearchNotification('找不到對應的主題: ' + cardParts.series, 'error');
+			_isSearching = false;
 			return;
 		}
     }
@@ -403,6 +452,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		if (!numberFound) {
 		console.warn('找不到對應的卡號:', cardParts.fullNumber);
 		showSearchNotification('找不到對應的卡號: ' + cardParts.fullNumber, 'error');
+		_isSearching = false;
 		return;
 		}
 	}else{
@@ -412,6 +462,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		if (!suffixFound) {
 			console.warn('後綴找不到對應的卡號:', cardParts.suffix);
 			showSearchNotification('找不到對應的卡號: ' + cardParts.suffix, 'error');
+			_isSearching = false;
 			return;
 		}
 
@@ -421,6 +472,7 @@ async function setSelectorsFromCardParts(cardParts) {
 		if (!numberFound) {
 			console.warn('找不到對應的卡號:', cardParts.fullNumber);
 			showSearchNotification('找不到對應的卡號: ' + cardParts.fullNumber, 'error');
+			_isSearching = false;
 			return;
 		}
 	}
@@ -428,6 +480,9 @@ async function setSelectorsFromCardParts(cardParts) {
     console.log('✓ 卡號搜尋完成:', cardParts.fullNumber);
     showSearchNotification('搜尋成功！已找到卡號: ' + cardParts.fullNumber, 'success');
  
+    // 搜尋完成，釋放鎖定
+    _isSearching = false;
+
     // 搜尋成功後平滑滾動到結果區域
     setTimeout(() => {
         scrollToResults();
@@ -436,6 +491,7 @@ async function setSelectorsFromCardParts(cardParts) {
   } catch (error) {
     console.error('設置選擇器時發生錯誤:', error);
     showSearchNotification('設置選擇器時發生錯誤: ' + error.message, 'error');
+    _isSearching = false;
   }
 }  
 
