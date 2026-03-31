@@ -748,13 +748,7 @@
 /* 滑動容器 */
 .info-swiper {
     position: relative;
-    overflow: hidden;
     border-radius: var(--border-radius-small);
-    cursor: grab;
-    user-select: text; /* 允許選取內容 */
-}
-.info-swiper:active {
-    cursor: grabbing;
 }
 
 .info-swiper::before {
@@ -787,9 +781,57 @@
     }
 }
 
-/* 當開始滑動時隱藏提示 */
-.info-swiper.dragging::before {
-    display: none !important;
+/* 左右控制按鈕 */
+.swiper-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 10;
+    color: #667eea;
+    transition: all 0.2s ease;
+    opacity: 0; /* 預設隱藏，hover時顯示或桌面端顯示 */
+    pointer-events: none;
+}
+
+.info-swiper:hover .swiper-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.swiper-btn:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.swiper-btn:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed;
+    transform: translateY(-50%);
+}
+
+.swiper-prev {
+    left: 8px;
+}
+
+.swiper-next {
+    right: 8px;
+}
+
+@media (max-width: 768px) {
+    .swiper-btn {
+        display: none !important; /* 在手機版隱藏左右按鈕，靠滑動即可 */
+    }
 }
 
 /* 當標記為已看過時永久隱藏提示 */
@@ -800,13 +842,18 @@
 
 .info-items-container {
     display: flex;
-    transition: transform 0.3s ease;
     width: 100%;
-    will-change: transform;   
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
 }
-.info-items-container.no-transition {
-    transition: none;
+
+.info-items-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Webkit */
 }
+
 .info-item {
     display: grid;
     gap: 0.75rem; /* 行間距和列間距 */
@@ -818,10 +865,10 @@
     width: 100%; /* 與容器同寬 */
     min-width: 100%; /* 最小寬度也是100% */
     max-width: 100%; /* 最大寬度限制為100% */
+    flex: 0 0 100%;
+    scroll-snap-align: start;
     
     box-sizing: border-box;
-    transition: all 0.3s ease;
-    flex-shrink: 0; /* 防止收縮 */
     margin: 0; /* 確保沒有margin */
 }
 /* 混合佈局：同時包含兩欄和單欄 */
@@ -1952,6 +1999,10 @@
                     </div>
                     <div class="card-body">
           <div class="info-swiper" id="infoSwiper">           
+              <!-- 左右控制按鈕 (桌面端) -->
+              <button class="swiper-btn swiper-prev" id="swiperPrev" aria-label="上一頁"><i class="fas fa-chevron-left"></i></button>
+              <button class="swiper-btn swiper-next" id="swiperNext" aria-label="下一頁"><i class="fas fa-chevron-right"></i></button>
+
               <!-- 滑動內容容器 -->
               <!-- 第一頁：混合佈局（兩欄 + 單欄） --> 
               <div class="info-items-container" id="infoItemsContainer">
@@ -2063,7 +2114,7 @@
                           <i class="fas fa-arrow-up"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">近月最高</span>
+                          <span class="price-summary-label">當月最高</span>
                           <span class="price-summary-value" id="summaryHighPrice">--</span>
                         </div>
                       </div>
@@ -2072,7 +2123,7 @@
                           <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">近月最低</span>
+                          <span class="price-summary-label">當月最低</span>
                           <span class="price-summary-value" id="summaryLowPrice">--</span>
                         </div>
                       </div>
@@ -2292,141 +2343,92 @@ class InfoSwiper {
         this.container = document.getElementById('infoItemsContainer');
         this.items = document.querySelectorAll('.info-item');
         this.indicators = document.querySelectorAll('.swipe-dot');
+        this.prevBtn = document.getElementById('swiperPrev');
+        this.nextBtn = document.getElementById('swiperNext');
         
         this.currentIndex = 0;
         this.totalItems = this.items.length;
-        
-        // 拖拽相關變數
-        this.isDragging = false;
-        this.startPos = 0;
-        this.currentTranslate = 0;
-        this.prevTranslate = 0;
-        this.animationId = 0;
         
         this.init();
     }
     
     init() {
-        // 指示器點擊事件
+        // 點擊指示器切換
         this.indicators.forEach((dot, index) => {
             dot.addEventListener('click', () => {
                 this.goTo(index);
-                // 點擊指示器也算作交互，標記為已看過
                 this.markHintAsSeen();
             });
         });
+
+        // 左右按鈕切換
+        if (this.prevBtn) {
+            this.prevBtn.addEventListener('click', () => {
+                if (this.currentIndex > 0) {
+                    this.goTo(this.currentIndex - 1);
+                    this.markHintAsSeen();
+                }
+            });
+        }
+
+        if (this.nextBtn) {
+            this.nextBtn.addEventListener('click', () => {
+                if (this.currentIndex < this.totalItems - 1) {
+                    this.goTo(this.currentIndex + 1);
+                    this.markHintAsSeen();
+                }
+            });
+        }
+
+        // 監聽滾動以更新指示器與按鈕
+        this.container.addEventListener('scroll', () => {
+            const scrollLeft = this.container.scrollLeft;
+            const itemWidth = this.container.clientWidth;
+            // 根據滾動位置計算當前索引
+            let newIndex = Math.round(scrollLeft / itemWidth);
+            
+            // 安全邊界處理
+            newIndex = Math.max(0, Math.min(newIndex, this.totalItems - 1));
+            
+            if (this.currentIndex !== newIndex) {
+                this.currentIndex = newIndex;
+                this.updateIndicators();
+                this.updateActiveItem();
+                this.updateButtons();
+                this.markHintAsSeen();
+            }
+        });
         
-        // 滑鼠事件
-        this.swiper.addEventListener('mousedown', this.startDrag.bind(this));
-        this.swiper.addEventListener('mousemove', this.drag.bind(this));
-        this.swiper.addEventListener('mouseup', this.endDrag.bind(this));
-        this.swiper.addEventListener('mouseleave', this.endDrag.bind(this));
-        
-        // 觸控事件
-        this.swiper.addEventListener('touchstart', this.startDrag.bind(this));
-        this.swiper.addEventListener('touchmove', this.drag.bind(this));
-        this.swiper.addEventListener('touchend', this.endDrag.bind(this));
-        
-        // 禁止圖片拖拽
-        this.swiper.addEventListener('dragstart', (e) => e.preventDefault());
-        
+        // 初始化按鈕狀態
+        this.updateButtons();
+
         // 自動播放提示
         this.startHintAnimation();
     }
     
-    startDrag(e) {
-        // 若使用者在文字上點擊（非觸控），且正在選取文字，則不啟動拖曳
-        if (e.type.includes('mouse') && e.target.closest('.info-value, span')) {
-            // 可選: 移除 return 讓它既可拖曳也可點擊，但為保證選取順暢，
-            // 我們可以記錄這是一次可能的文字選取
-            // 但為避免干擾正常操作，我們可以直接不 return，
-            // 而是在 drag 時判斷 window.getSelection().toString() 是否有值
-        }
-        
-        this.isDragging = true;
-        this.swiper.classList.add('dragging');
-        this.container.classList.add('no-transition');
-        
-        this.startPos = this.getPositionX(e);
-        this.animationId = requestAnimationFrame(this.updatePosition.bind(this));
-        // 當用戶開始拖拽時，記錄為已看過提示
-        this.markHintAsSeen();    
-      }
-    
-    drag(e) {
-        if (!this.isDragging) return;
-        
-        // 如果使用者正在選取文字，則不進行拖曳
-        if (window.getSelection().toString().length > 0 && e.type.includes('mouse')) {
-            this.isDragging = false;
-            return;
-        }
-
-        const currentPosition = this.getPositionX(e);
-        const diff = Math.abs(currentPosition - this.startPos);
-        
-        // 為了允許文字選取，只有在真正拖動時或觸控事件時才取消預設行為
-        if (e.type.includes('touch') || diff > 5) {
-            if (e.cancelable) e.preventDefault();
-        }
-        
-        this.currentTranslate = this.prevTranslate + currentPosition - this.startPos;
-        
-        // 限制拖拽範圍
-        const maxTranslate = 0;
-        const minTranslate = -(this.totalItems - 1) * this.swiper.offsetWidth;
-        
-        this.currentTranslate = Math.max(minTranslate, Math.min(maxTranslate, this.currentTranslate));
-    }
-    
-    endDrag() {
-        if (!this.isDragging) return;
-        
-        this.isDragging = false;
-        this.swiper.classList.remove('dragging');
-        this.container.classList.remove('no-transition');
-        
-        cancelAnimationFrame(this.animationId);
-        
-        // 計算最接近的頁面
-        const movedBy = this.currentTranslate - this.prevTranslate;
-        
-        if (Math.abs(movedBy) > this.swiper.offsetWidth * 0.3) {
-            if (movedBy < 0 && this.currentIndex < this.totalItems - 1) {
-                this.currentIndex += 1;
-            } else if (movedBy > 0 && this.currentIndex > 0) {
-                this.currentIndex -= 1;
-            }
-        }
-        
-        this.setPositionByIndex();
-    }
-    
-    updatePosition() {
-        this.container.style.transform = `translateX(${this.currentTranslate}px)`;
-        
-        if (this.isDragging) {
-            requestAnimationFrame(this.updatePosition.bind(this));
-        }
-    }
-    
-    getPositionX(e) {
-        return e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-    }
-    
-    setPositionByIndex() {
-        this.currentTranslate = this.currentIndex * -this.swiper.offsetWidth;
-        this.prevTranslate = this.currentTranslate;
-        this.container.style.transform = `translateX(${this.currentTranslate}px)`;
-        this.updateIndicators();
-        this.updateActiveItem();
-    }
-    
     goTo(index) {
         this.currentIndex = index;
-        this.setPositionByIndex();
+        const targetScrollLeft = index * this.container.clientWidth;
+        
+        this.container.scrollTo({
+            left: targetScrollLeft,
+            behavior: 'smooth'
+        });
+        
+        this.updateIndicators();
+        this.updateActiveItem();
+        this.updateButtons();
     }
     
+    updateButtons() {
+        if (this.prevBtn) {
+            this.prevBtn.disabled = this.currentIndex === 0;
+        }
+        if (this.nextBtn) {
+            this.nextBtn.disabled = this.currentIndex === this.totalItems - 1;
+        }
+    }
+
     updateIndicators() {
         this.indicators.forEach((dot, index) => {
             dot.classList.toggle('active', index === this.currentIndex);
@@ -2448,7 +2450,6 @@ class InfoSwiper {
     markHintAsSeen() {
         localStorage.setItem('infoSwiperHintSeen', 'true');
         this.hideHint();
-        // console.log('滑動提示已標記為已看過');
     }
     
     // 隱藏提示
@@ -2458,27 +2459,22 @@ class InfoSwiper {
 
     // 提示動畫- 只顯示一次
     startHintAnimation() {
-        // 檢查是否已經看過提示
         if (this.hasSeenHint()) {
-            // console.log('用戶已看過滑動提示，跳過顯示');
             this.hideHint();
             return;
         }
         
-        // console.log('首次訪問，將顯示滑動提示');
-        
-        // 2秒後顯示提示（如果還沒有交互）
         setTimeout(() => {
             if (!this.hasSeenHint()) {
-                // console.log('顯示滑動提示動畫');
-                // 提示會自動通過 CSS 動畫顯示
+                // Hint display logic
             }
         }, 2000);
     }
     
     // 響應式處理
     handleResize() {
-        this.setPositionByIndex();
+        // 重置當前索引的滾動位置，確保在調整大小時仍對齊
+        this.goTo(this.currentIndex);
     }
 
     // 重置提示（開發測試用，可選）
