@@ -2285,15 +2285,16 @@ var SearchHistory = (function() {
 
 // ====================================================
 // 下載統計圖片功能
-// - 合成圖片：上方顯示卡片資訊，中間顯示價格走勢圖
+// - 合成圖片：上方顯示卡片資訊+卡圖，中間顯示價格走勢圖
 // - 使用純 Canvas API 繪製
 // ====================================================
 
 /**
  * 生成並下載統計圖片
  * 圖片結構：
- *   上方 1/3：卡名、卡號、系列名稱、作品名稱
- *   中間：價格走勢圖
+ *   上方 (460px)：左側卡片資訊+價格摘要，右上角卡片圖片
+ *   中間 (460px)：價格走勢圖
+ *   底部 (60px)：浮水印
  */
 function generateStatsImage() {
     // 檢查是否有價格圖表
@@ -2307,6 +2308,14 @@ function generateStatsImage() {
         ? document.getElementById('cardno').textContent : '';
     var cardName = (document.getElementById('cardname') && document.getElementById('cardname').textContent !== '-') 
         ? document.getElementById('cardname').textContent : '';
+    var cardRare = (document.getElementById('cardrare') && document.getElementById('cardrare').textContent !== '-') 
+        ? document.getElementById('cardrare').textContent : '';
+    var cardColor = (document.getElementById('cardcolor') && document.getElementById('cardcolor').textContent !== '-') 
+        ? document.getElementById('cardcolor').textContent : '';
+    var cardLevel = (document.getElementById('cardlevel') && document.getElementById('cardlevel').textContent !== '-') 
+        ? document.getElementById('cardlevel').textContent : '';
+    var cardPower = (document.getElementById('cardpower') && document.getElementById('cardpower').textContent !== '-') 
+        ? document.getElementById('cardpower').textContent : '';
     
     // 作品名稱（從 cardStandard 選擇器）
     var cardStandardSelect = document.getElementById('cardStandard');
@@ -2330,10 +2339,69 @@ function generateStatsImage() {
     var lowPrice = document.getElementById('summaryLowPrice') ? document.getElementById('summaryLowPrice').textContent : '--';
     var changePercent = document.getElementById('summaryChangePercent') ? document.getElementById('summaryChangePercent').textContent : '--';
 
-    // ===== Canvas 合成 =====
+    // 取得卡片圖片 URL
+    var cardImgEl = document.getElementById('cardImg');
+    var cardImgSrc = (cardImgEl && cardImgEl.src) ? cardImgEl.src : '';
+
+    // 取得圖表 base64
+    var chartBase64 = '';
+    try {
+        chartBase64 = myChart.toBase64Image();
+    } catch (e) {
+        console.error('取得圖表圖片失敗:', e);
+    }
+
+    // ===== 載入卡片圖片（跨域），載入完成後再合成 =====
+    var cardImage = new Image();
+    cardImage.crossOrigin = 'anonymous';
+    var cardImageLoaded = false;
+
+    function doCompose() {
+        _composeStatsCanvas({
+            cardNo: cardNo,
+            cardName: cardName,
+            cardRare: cardRare,
+            cardColor: cardColor,
+            cardLevel: cardLevel,
+            cardPower: cardPower,
+            productName: productName,
+            seriesName: seriesName,
+            currentPrice: currentPrice,
+            highPrice: highPrice,
+            lowPrice: lowPrice,
+            changePercent: changePercent,
+            chartBase64: chartBase64,
+            cardImage: cardImageLoaded ? cardImage : null
+        });
+    }
+
+    if (cardImgSrc) {
+        cardImage.onload = function() {
+            cardImageLoaded = true;
+            doCompose();
+        };
+        cardImage.onerror = function() {
+            cardImageLoaded = false;
+            doCompose();
+        };
+        cardImage.src = cardImgSrc;
+        // 如果圖片已經在快取中
+        if (cardImage.complete && cardImage.naturalWidth > 0) {
+            cardImageLoaded = true;
+        }
+    } else {
+        doCompose();
+    }
+}
+
+/**
+ * 合成統計圖片 Canvas 並觸發下載
+ * @param {object} info - 所有需要的資料
+ */
+function _composeStatsCanvas(info) {
     var IMG_WIDTH = 1200;
-    var HEADER_HEIGHT = 320;  // 上方資訊區域
-    var CHART_HEIGHT = 600;   // 圖表區域
+    var HEADER_HEIGHT = 460;  // 上方資訊+卡圖區域
+    var CHART_HEIGHT = 460;   // 圖表區域
     var FOOTER_HEIGHT = 60;   // 底部
     var IMG_HEIGHT = HEADER_HEIGHT + CHART_HEIGHT + FOOTER_HEIGHT;
 
@@ -2343,7 +2411,6 @@ function generateStatsImage() {
     var ctx = offscreen.getContext('2d');
 
     // --- 背景 ---
-    // 漸層背景
     var bgGrad = ctx.createLinearGradient(0, 0, IMG_WIDTH, IMG_HEIGHT);
     bgGrad.addColorStop(0, '#667eea');
     bgGrad.addColorStop(1, '#764ba2');
@@ -2351,117 +2418,195 @@ function generateStatsImage() {
     ctx.fillRect(0, 0, IMG_WIDTH, IMG_HEIGHT);
 
     // 上方資訊區域：半透明白底
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.10)';
     ctx.beginPath();
     ctx.rect(0, 0, IMG_WIDTH, HEADER_HEIGHT);
     ctx.fill();
 
-    // --- 上方 1/3：卡片資訊 ---
+    // ===== 右上角卡片圖片 =====
+    var CARD_IMG_WIDTH = 280;
+    var CARD_IMG_HEIGHT = 390;
+    var CARD_IMG_X = IMG_WIDTH - CARD_IMG_WIDTH - 40;
+    var CARD_IMG_Y = 35;
+    var textAreaRight = CARD_IMG_X - 30; // 文字區域右邊界（不與卡圖重疊）
+
+    if (info.cardImage) {
+        try {
+            // 卡片圖片底部陰影
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 25;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 8;
+
+            // 圓角裁切卡片圖片
+            ctx.save();
+            ctx.beginPath();
+            roundRectPath(ctx, CARD_IMG_X, CARD_IMG_Y, CARD_IMG_WIDTH, CARD_IMG_HEIGHT, 12);
+            ctx.clip();
+            ctx.drawImage(info.cardImage, CARD_IMG_X, CARD_IMG_Y, CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+            ctx.restore();
+
+            // 重置陰影
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // 卡圖邊框
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            roundRectPath(ctx, CARD_IMG_X, CARD_IMG_Y, CARD_IMG_WIDTH, CARD_IMG_HEIGHT, 12);
+            ctx.stroke();
+        } catch (e) {
+            console.warn('繪製卡片圖片失敗（可能跨域限制）:', e);
+            // 繪製佔位框
+            _drawCardPlaceholder(ctx, CARD_IMG_X, CARD_IMG_Y, CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+        }
+    } else {
+        // 沒有卡圖時繪製佔位框
+        _drawCardPlaceholder(ctx, CARD_IMG_X, CARD_IMG_Y, CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+    }
+
+    // ===== 左側卡片文字資訊 =====
     var leftPadding = 50;
-    var y = 50;
+    var y = 48;
 
     // WS-Cards 品牌標誌
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = 'bold 16px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText('WS-Cards | 價格走勢統計', leftPadding, y);
-    y += 15;
+    y += 12;
 
     // 分隔線
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(leftPadding, y);
-    ctx.lineTo(IMG_WIDTH - leftPadding, y);
+    ctx.lineTo(textAreaRight, y);
     ctx.stroke();
-    y += 30;
+    y += 32;
 
     // 卡號（大字）
-    if (cardNo) {
+    if (info.cardNo) {
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 36px "Noto Sans TC", "Source Sans Pro", sans-serif';
+        ctx.font = 'bold 40px "Noto Sans TC", "Source Sans Pro", sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText(cardNo, leftPadding, y);
-        y += 48;
+        ctx.fillText(info.cardNo, leftPadding, y);
+        y += 52;
     }
 
     // 卡名
-    if (cardName) {
+    if (info.cardName) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.font = '600 28px "Noto Sans TC", "Source Sans Pro", sans-serif';
+        ctx.font = '600 30px "Noto Sans TC", "Source Sans Pro", sans-serif';
         ctx.textAlign = 'left';
-        // 長卡名截斷
-        var displayCardName = cardName.length > 30 ? cardName.substring(0, 30) + '...' : cardName;
+        var maxTextWidth = textAreaRight - leftPadding;
+        var displayCardName = _truncateText(ctx, info.cardName, maxTextWidth);
         ctx.fillText(displayCardName, leftPadding, y);
-        y += 40;
+        y += 44;
     }
 
-    // 作品名稱 & 系列名稱
-    if (productName || seriesName) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    // 稀有度 & 顏色 & 等級 標籤列
+    var tagX = leftPadding;
+    var tagY = y;
+    if (info.cardRare) {
+        tagX = _drawTag(ctx, tagX, tagY, info.cardRare, _getRareTagColor(info.cardRare));
+    }
+    if (info.cardColor) {
+        tagX = _drawTag(ctx, tagX, tagY, info.cardColor, _getCardColorBg(info.cardColor));
+    }
+    if (info.cardLevel) {
+        tagX = _drawTag(ctx, tagX, tagY, 'Lv.' + info.cardLevel, '#5a67d8');
+    }
+    if (info.cardPower) {
+        tagX = _drawTag(ctx, tagX, tagY, 'PWR ' + info.cardPower, '#4a5568');
+    }
+    y += 42;
+
+    // 作品名稱
+    if (info.productName) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.font = '500 20px "Noto Sans TC", "Source Sans Pro", sans-serif';
-        var infoLine = '';
-        if (productName) infoLine += '作品：' + productName;
-        if (productName && seriesName) infoLine += '　|　';
-        if (seriesName) infoLine += '系列：' + seriesName;
-        // 長文截斷
-        if (infoLine.length > 50) infoLine = infoLine.substring(0, 50) + '...';
-        ctx.fillText(infoLine, leftPadding, y);
+        var maxProdWidth = textAreaRight - leftPadding;
+        var prodText = '作品：' + _truncateText(ctx, info.productName, maxProdWidth - ctx.measureText('作品：').width);
+        ctx.fillText(prodText, leftPadding, y);
+        y += 30;
+    }
+
+    // 系列名稱
+    if (info.seriesName) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '500 20px "Noto Sans TC", "Source Sans Pro", sans-serif';
+        var maxSerWidth = textAreaRight - leftPadding;
+        var serText = '系列：' + _truncateText(ctx, info.seriesName, maxSerWidth - ctx.measureText('系列：').width);
+        ctx.fillText(serText, leftPadding, y);
         y += 35;
     }
 
-    // --- 價格摘要統計（小卡片風格）---
-    var summaryY = HEADER_HEIGHT - 80;
+    // ===== 價格摘要統計（2×2 網格）=====
+    var summaryStartY = HEADER_HEIGHT - 140;
     var summaryItems = [
-        { label: '目前價格', value: currentPrice, color: '#667eea' },
-        { label: '當月最高', value: highPrice, color: '#e53e3e' },
-        { label: '當月最低', value: lowPrice, color: '#38a169' },
-        { label: '近7天漲跌', value: changePercent, color: '#dd6b20' }
+        { label: '目前價格', value: info.currentPrice, color: '#667eea', icon: '¥' },
+        { label: '當月最高', value: info.highPrice, color: '#e53e3e', icon: '↑' },
+        { label: '當月最低', value: info.lowPrice, color: '#38a169', icon: '↓' },
+        { label: '近7天漲跌', value: info.changePercent, color: '#dd6b20', icon: '%' }
     ];
 
-    var cardWidth = 240;
-    var cardGap = 30;
-    var totalCardsWidth = summaryItems.length * cardWidth + (summaryItems.length - 1) * cardGap;
-    var startX = (IMG_WIDTH - totalCardsWidth) / 2;
+    var summaryCardW = 340;
+    var summaryCardH = 56;
+    var summaryGapX = 20;
+    var summaryGapY = 12;
+    var summaryStartX = leftPadding;
 
     for (var i = 0; i < summaryItems.length; i++) {
         var item = summaryItems[i];
-        var cx = startX + i * (cardWidth + cardGap);
+        var col = i % 2;
+        var row = Math.floor(i / 2);
+        var sx = summaryStartX + col * (summaryCardW + summaryGapX);
+        var sy = summaryStartY + row * (summaryCardH + summaryGapY);
 
         // 卡片背景
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        roundRect(ctx, cx, summaryY, cardWidth, 60, 10);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.13)';
+        roundRect(ctx, sx, sy, summaryCardW, summaryCardH, 10);
         ctx.fill();
 
         // 左側色條
         ctx.fillStyle = item.color;
-        roundRect(ctx, cx, summaryY, 5, 60, 2);
+        roundRect(ctx, sx, sy + 6, 4, summaryCardH - 12, 2);
         ctx.fill();
 
+        // Icon 圓圈
+        ctx.fillStyle = item.color;
+        ctx.beginPath();
+        ctx.arc(sx + 28, sy + summaryCardH / 2, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.icon, sx + 28, sy + summaryCardH / 2 + 5);
+
         // Label
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.font = '500 13px "Noto Sans TC", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = '500 12px "Noto Sans TC", sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText(item.label, cx + 18, summaryY + 22);
+        ctx.fillText(item.label, sx + 52, sy + 22);
 
         // Value
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
-        ctx.fillText(item.value, cx + 18, summaryY + 50);
+        ctx.font = 'bold 20px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(item.value, sx + 52, sy + 46);
     }
 
-    // --- 中間：價格走勢圖 ---
+    // ===== 中間：價格走勢圖 =====
     var chartY = HEADER_HEIGHT + 10;
     var chartAreaWidth = IMG_WIDTH - 80;
     var chartAreaHeight = CHART_HEIGHT - 20;
     var chartX = 40;
 
-    // 圖表區域白色底
-    ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, chartX, chartY, chartAreaWidth, chartAreaHeight, 12);
-    ctx.fill();
-
-    // 圖表底部陰影
+    // 圖表區域白色底+陰影
     ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
     ctx.shadowBlur = 20;
     ctx.shadowOffsetY = 5;
@@ -2472,38 +2617,141 @@ function generateStatsImage() {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // 從 Chart.js 取得圖表圖片
-    try {
-        var chartBase64 = myChart.toBase64Image();
+    // 繪製圖表
+    if (info.chartBase64) {
         var chartImg = new Image();
         chartImg.onload = function() {
-            // 在白色圓角區域中繪製圖表（留 padding）
             var padding = 15;
             ctx.save();
-            // 設定裁切區域（圓角矩形）
             ctx.beginPath();
             roundRectPath(ctx, chartX + padding, chartY + padding, chartAreaWidth - padding * 2, chartAreaHeight - padding * 2, 8);
             ctx.clip();
             ctx.drawImage(chartImg, chartX + padding, chartY + padding, chartAreaWidth - padding * 2, chartAreaHeight - padding * 2);
             ctx.restore();
 
-            // --- 底部 ---
+            // 底部
             drawFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_HEIGHT);
-
-            // 下載
-            triggerDownload(offscreen, cardNo);
+            // 嘗試下載（可能因跨域 taint 失敗）
+            _tryDownload(offscreen, info.cardNo);
         };
         chartImg.onerror = function() {
-            // 即使圖表載入失敗也下載
             drawFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_HEIGHT);
-            triggerDownload(offscreen, cardNo);
+            _tryDownload(offscreen, info.cardNo);
         };
-        chartImg.src = chartBase64;
-    } catch (e) {
-        console.error('取得圖表圖片失敗:', e);
+        chartImg.src = info.chartBase64;
+    } else {
         drawFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_HEIGHT);
-        triggerDownload(offscreen, cardNo);
+        _tryDownload(offscreen, info.cardNo);
     }
+}
+
+/**
+ * 嘗試下載 canvas，若因跨域 taint 失敗則重試不含卡圖
+ */
+function _tryDownload(canvas, cardNo) {
+    try {
+        triggerDownload(canvas, cardNo);
+    } catch (e) {
+        console.warn('Canvas tainted，嘗試不含卡圖重新生成...', e);
+        // 跨域導致 taint，重新生成不含卡圖的版本
+        Swal.fire({
+            icon: 'info',
+            title: '跨域限制',
+            text: '由於卡片圖片跨域限制，將生成不含卡圖的版本',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        // 重新呼叫，但不帶卡圖
+        var infoWithoutImg = Object.assign({}, _lastComposeInfo || {});
+        infoWithoutImg.cardImage = null;
+        _composeStatsCanvas(infoWithoutImg);
+    }
+}
+
+/**
+ * 繪製卡圖佔位框
+ */
+function _drawCardPlaceholder(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    roundRect(ctx, x, y, w, h, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    roundRectPath(ctx, x, y, w, h, 12);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 圖示
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.font = '48px "Font Awesome 5 Free", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🃏', x + w / 2, y + h / 2 + 10);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.font = '14px "Noto Sans TC", sans-serif';
+    ctx.fillText('Card Image', x + w / 2, y + h / 2 + 40);
+}
+
+/**
+ * 繪製標籤 tag
+ * @returns {number} 下一個 tag 的 x 座標
+ */
+function _drawTag(ctx, x, y, text, bgColor) {
+    ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
+    var textWidth = ctx.measureText(text).width;
+    var tagW = textWidth + 20;
+    var tagH = 28;
+
+    ctx.fillStyle = bgColor;
+    roundRect(ctx, x, y - tagH + 6, tagW, tagH, 6);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x + 10, y);
+
+    return x + tagW + 8;
+}
+
+/**
+ * 稀有度對應標籤顏色
+ */
+function _getRareTagColor(rare) {
+    var rareUpper = (rare || '').toUpperCase();
+    if (rareUpper.indexOf('SSP') >= 0 || rareUpper.indexOf('SEC') >= 0) return '#d69e2e';
+    if (rareUpper.indexOf('SP') >= 0) return '#ed8936';
+    if (rareUpper.indexOf('RRR') >= 0 || rareUpper.indexOf('OFR') >= 0) return '#e53e3e';
+    if (rareUpper.indexOf('SR') >= 0 || rareUpper.indexOf('RR') >= 0) return '#9f7aea';
+    if (rareUpper.indexOf('R') >= 0) return '#667eea';
+    if (rareUpper.indexOf('U') >= 0) return '#38a169';
+    if (rareUpper.indexOf('C') >= 0 || rareUpper.indexOf('CR') >= 0) return '#718096';
+    return '#5a67d8';
+}
+
+/**
+ * 卡片顏色對應背景
+ */
+function _getCardColorBg(colorText) {
+    if (colorText === '藍' || colorText === '青') return '#2b6cb0';
+    if (colorText === '紅' || colorText === '赤') return '#c53030';
+    if (colorText === '黃' || colorText === '黄') return '#b7791f';
+    if (colorText === '綠' || colorText === '緑') return '#276749';
+    return '#718096';
+}
+
+/**
+ * 文字截斷（根據 canvas measureText）
+ */
+function _truncateText(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    var truncated = text;
+    while (truncated.length > 0 && ctx.measureText(truncated + '...').width > maxWidth) {
+        truncated = truncated.substring(0, truncated.length - 1);
+    }
+    return truncated + '...';
 }
 
 /**
