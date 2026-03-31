@@ -2584,8 +2584,8 @@ function _composeStatsCanvas(info) {
     }
 
     // ===== 中間：價格走勢圖 =====
-    var chartY = HEADER_HEIGHT + 10;
-    var chartAreaWidth = IMG_WIDTH - 80;
+    var chartY = HEADER_HEIGHT + 40;
+    var chartAreaWidth = IMG_WIDTH - 140;
     var chartAreaHeight = CHART_HEIGHT - 20;
     var chartX = 40;
 
