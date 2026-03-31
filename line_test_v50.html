@@ -558,6 +558,11 @@
 		color: var(--text-secondary);
 	}
 
+	.chart {
+		min-height: 250px;
+		position: relative;
+	}
+
 	.modern-chart {
 		background: rgba(255, 255, 255, 0.05);
 		border-radius: var(--border-radius-small);
@@ -746,7 +751,7 @@
     overflow: hidden;
     border-radius: var(--border-radius-small);
     cursor: grab;
-    user-select: none;    
+    user-select: text; /* 允許選取內容 */
 }
 .info-swiper:active {
     cursor: grabbing;
@@ -888,6 +893,7 @@
     line-height: 1.2; /* 設定行高讓多行文字更好看 */
     max-width: 120px; /* 可選：設定最大寬度控制換行時機 */
     text-align: right; /* 保持右對齊 */
+    cursor: text;
 }
 
 .info-value.white-space-nowrap {
@@ -2329,6 +2335,14 @@ class InfoSwiper {
     }
     
     startDrag(e) {
+        // 若使用者在文字上點擊（非觸控），且正在選取文字，則不啟動拖曳
+        if (e.type.includes('mouse') && e.target.closest('.info-value, span')) {
+            // 可選: 移除 return 讓它既可拖曳也可點擊，但為保證選取順暢，
+            // 我們可以記錄這是一次可能的文字選取
+            // 但為避免干擾正常操作，我們可以直接不 return，
+            // 而是在 drag 時判斷 window.getSelection().toString() 是否有值
+        }
+        
         this.isDragging = true;
         this.swiper.classList.add('dragging');
         this.container.classList.add('no-transition');
@@ -2342,8 +2356,20 @@ class InfoSwiper {
     drag(e) {
         if (!this.isDragging) return;
         
-        e.preventDefault();
+        // 如果使用者正在選取文字，則不進行拖曳
+        if (window.getSelection().toString().length > 0 && e.type.includes('mouse')) {
+            this.isDragging = false;
+            return;
+        }
+
         const currentPosition = this.getPositionX(e);
+        const diff = Math.abs(currentPosition - this.startPos);
+        
+        // 為了允許文字選取，只有在真正拖動時或觸控事件時才取消預設行為
+        if (e.type.includes('touch') || diff > 5) {
+            if (e.cancelable) e.preventDefault();
+        }
+        
         this.currentTranslate = this.prevTranslate + currentPosition - this.startPos;
         
         // 限制拖拽範圍
