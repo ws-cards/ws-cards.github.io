@@ -2400,8 +2400,8 @@ function generateStatsImage() {
  */
 function _composeStatsCanvas(info) {
     var IMG_WIDTH = 1200;
-    var HEADER_HEIGHT = 460;  // 上方資訊+卡圖區域
-    var CHART_HEIGHT = 460;   // 圖表區域
+    var HEADER_HEIGHT = 420;  // 上方資訊+卡圖區域
+    var CHART_HEIGHT = 500;   // 圖表區域
     var FOOTER_HEIGHT = 60;   // 底部
     var IMG_HEIGHT = HEADER_HEIGHT + CHART_HEIGHT + FOOTER_HEIGHT;
 
@@ -2424,8 +2424,8 @@ function _composeStatsCanvas(info) {
     ctx.fill();
 
     // ===== 右上角卡片圖片 =====
-    var CARD_IMG_WIDTH = 280;
-    var CARD_IMG_HEIGHT = 390;
+    var CARD_IMG_WIDTH = 246.5;
+    var CARD_IMG_HEIGHT = 331.5;
     var CARD_IMG_X = IMG_WIDTH - CARD_IMG_WIDTH - 40;
     var CARD_IMG_Y = 35;
     var textAreaRight = CARD_IMG_X - 30; // 文字區域右邊界（不與卡圖重疊）
@@ -2507,23 +2507,6 @@ function _composeStatsCanvas(info) {
         ctx.fillText(displayCardName, leftPadding, y);
         y += 44;
     }
-
-    // 稀有度 & 顏色 & 等級 標籤列
-    var tagX = leftPadding;
-    var tagY = y;
-    if (info.cardRare) {
-        tagX = _drawTag(ctx, tagX, tagY, info.cardRare, _getRareTagColor(info.cardRare));
-    }
-    if (info.cardColor) {
-        tagX = _drawTag(ctx, tagX, tagY, info.cardColor, _getCardColorBg(info.cardColor));
-    }
-    if (info.cardLevel) {
-        tagX = _drawTag(ctx, tagX, tagY, 'Lv.' + info.cardLevel, '#5a67d8');
-    }
-    if (info.cardPower) {
-        tagX = _drawTag(ctx, tagX, tagY, 'PWR ' + info.cardPower, '#4a5568');
-    }
-    y += 42;
 
     // 作品名稱
     if (info.productName) {
