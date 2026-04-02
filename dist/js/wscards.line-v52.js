@@ -117,7 +117,7 @@ source:[
 {id:"WS00075", name:"シャイニングシリーズ",cname:"光明與黑暗系列 | SE,SF,SR"},
 {id:"WS00076", name:"STEINS;GATE",cname:"命運石之門 | STG"},
 {id:"WS00077", name:"少女☆歌劇 レヴュースタァライト",cname:"少女☆歌劇 Revue Starlight | RSL"},
-{id:"WS00078", name:"進撃の巨人",cname:"進撃的巨人 | AOT"},
+{id:"WS00078", name:"進撃の巨人",cname:"進擊的巨人 | AOT"},
 {id:"WS00079", name:"新サクラ大戦",cname:"新櫻花大戰 | SKR"},
 {id:"WS00080", name:"ジョジョの奇妙な冒険",cname:"JoJo的奇妙冒險 | JJ"},
 {id:"WS00081", name:"翠星のガルガンティア",cname:"翠星上的加爾岡緹亞 | GG"},
@@ -882,6 +882,11 @@ function changeNumber(){
 	document.getElementById('overlay-2').style.display='block';				
 	document.getElementById('overlay-3').style.display='block';		
 	
+	var downloadCardTag = document.getElementById('download-card-tag');
+	if (downloadCardTag) {
+		downloadCardTag.style.display = 'none';
+	}
+	
 	// 載入價格資料
 	requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
 	requestPrice.responseType = 'json';
@@ -1056,6 +1061,11 @@ function getCardData(jsonObj,internalCardNumber,cardNum) {
 						cardRare: parsedRare,
 						cardTitle: titleText
 					});
+					
+					var downloadCardTag = document.getElementById('download-card-tag');
+					if (downloadCardTag) {
+						downloadCardTag.style.display = 'block';
+					}
 				}
 }
 
