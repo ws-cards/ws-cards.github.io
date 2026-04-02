@@ -1864,12 +1864,17 @@ function updateCardInfo(cardData) {
     document.getElementById('cardrare').textContent = cardData.cardrare || '-';
     
     // 更新顏色（帶背景色）
+    // 中文/日文皆強制對應到統一顯示文字
     const colorElement = document.getElementById('cardcolor');
     const colorMap = {
         '青': { bg: '#0437F2', text: '藍' },
+        '藍': { bg: '#0437F2', text: '藍' },
         '赤': { bg: '#F20404', text: '紅' },
+        '紅': { bg: '#F20404', text: '紅' },
         '黄': { bg: '#F2E205', text: '黃' },
+        '黃': { bg: '#F2E205', text: '黃' },
         '緑': { bg: '#04F240', text: '綠' },
+        '綠': { bg: '#04F240', text: '綠' },
         '無': { bg: '#CCCCCC', text: '無' }
     };
     
