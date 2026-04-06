@@ -3053,35 +3053,37 @@ function renderGradingData() {
     html += '<span>' + totalCount.toLocaleString() + ' 張</span>';
     html += '</div>';
 
-    html += '<div class="grading-list">';
+    html += '<div class="grading-chart">';
     grades.forEach(function(grade) {
         var count = parseInt(companyData[grade], 10) || 0;
         var pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
-        var barWidth = maxCount > 0 ? ((count / maxCount) * 100).toFixed(1) : '0';
+        var barHeight = maxCount > 0 ? ((count / maxCount) * 100).toFixed(1) : '0';
         var isTen = (grade === '10');
         var barClass = getBarClass(grade);
 
-        html += '<div class="grading-row' + (isTen ? ' is-ten' : '') + '">';
-        html += '<div class="grading-label">' + grade + '</div>';
-        html += '<div class="grading-bar-wrapper">';
-        html += '<div class="grading-bar ' + barClass + '" style="width:' + barWidth + '%"></div>';
+        html += '<div class="grading-col' + (isTen ? ' is-ten' : '') + '">';
+        html += '<div class="grading-col-info">';
+        html += '<span class="grading-col-count">' + count + '</span>';
+        html += '<span class="grading-col-pct">' + pct + '%</span>';
         html += '</div>';
-        html += '<div class="grading-count">' + count.toLocaleString() + ' 張</div>';
-        html += '<div class="grading-pct">' + pct + '%</div>';
+        html += '<div class="grading-col-bar-wrapper">';
+        html += '<div class="grading-col-bar ' + barClass + '" style="height:' + barHeight + '%"></div>';
+        html += '</div>';
+        html += '<div class="grading-col-label">' + grade + '</div>';
         html += '</div>';
     });
     html += '</div>';
 
     container.innerHTML = html;
 
-    // 延遲觸發動畫（從 0 到實際寬度）
+    // 延遲觸發動畫（從 0 到實際高度）
     requestAnimationFrame(function() {
-        var bars = container.querySelectorAll('.grading-bar');
+        var bars = container.querySelectorAll('.grading-col-bar');
         bars.forEach(function(bar) {
-            var targetWidth = bar.style.width;
-            bar.style.width = '0%';
+            var targetHeight = bar.style.height;
+            bar.style.height = '0%';
             requestAnimationFrame(function() {
-                bar.style.width = targetWidth;
+                bar.style.height = targetHeight;
             });
         });
     });
