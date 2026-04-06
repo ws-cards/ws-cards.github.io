@@ -2855,35 +2855,35 @@ var currentCompany = 'PSA';
 var gradingData = null;
 var requestURLGradingBase = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/gradingJson/';
 
-var PSA_GRADES = ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
-var BGS_GRADES = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
-var ARS_GRADES = ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
+var PSA_GRADES = ['10', '9', '8', '7', '6'];
+var BGS_GRADES = ['黑10', '金10', '9.5', '9', '8.5'];
+var ARS_GRADES = ['10+', '10', '9', '8', '7'];
 
 // ── 預設模擬資料（後端就緒後可移除） ──
 var MOCK_GRADING_DATA = {
     'BD/W54-070SSP': {
-        'PSA': { '10': 18, '9': 42, '8': 27, '7': 11, '6': 5, '5': 2, '4': 1, '3': 0, '2': 0, '1': 0 },
-        'BGS': { '10': 3, '9.5': 15, '9': 22, '8.5': 12, '8': 8, '7.5': 4, '7': 2, '6.5': 1, '6': 0, '5.5': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 },
+        'PSA': { '10': 18, '9': 42, '8': 27, '7': 11, '6': 5 },
+        'BGS': { '黑10': 1, '金10': 3, '9.5': 15, '9': 22, '8.5': 12 },
         'ARS': null
     },
     'BD/W54-036SP': {
-        'PSA': { '10': 8, '9': 35, '8': 20, '7': 9, '6': 3, '5': 1, '4': 0, '3': 0, '2': 0, '1': 0 },
+        'PSA': { '10': 8, '9': 35, '8': 20, '7': 9, '6': 3 },
         'BGS': null,
-        'ARS': { '10': 5, '9': 18, '8': 12, '7': 6, '6': 2, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 }
+        'ARS': { '10+': 2, '10': 5, '9': 18, '8': 12, '7': 6 }
     },
     'SAO/S80-024SSP': {
-        'PSA': { '10': 25, '9': 58, '8': 31, '7': 14, '6': 6, '5': 3, '4': 1, '3': 0, '2': 0, '1': 0 },
-        'BGS': { '10': 6, '9.5': 20, '9': 30, '8.5': 15, '8': 10, '7.5': 5, '7': 3, '6.5': 1, '6': 0, '5.5': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 },
-        'ARS': { '10': 12, '9': 28, '8': 16, '7': 7, '6': 3, '5': 1, '4': 0, '3': 0, '2': 0, '1': 0 }
+        'PSA': { '10': 25, '9': 58, '8': 31, '7': 14, '6': 6 },
+        'BGS': { '黑10': 2, '金10': 6, '9.5': 20, '9': 30, '8.5': 15 },
+        'ARS': { '10+': 4, '10': 12, '9': 28, '8': 16, '7': 7 }
     },
     'HOL/W91-074SSP': {
-        'PSA': { '10': 32, '9': 65, '8': 38, '7': 17, '6': 8, '5': 4, '4': 2, '3': 0, '2': 0, '1': 0 },
-        'BGS': { '10': 10, '9.5': 28, '9': 35, '8.5': 18, '8': 12, '7.5': 6, '7': 3, '6.5': 1, '6': 0, '5.5': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 },
-        'ARS': { '10': 15, '9': 30, '8': 18, '7': 8, '6': 4, '5': 1, '4': 0, '3': 0, '2': 0, '1': 0 }
+        'PSA': { '10': 32, '9': 65, '8': 38, '7': 17, '6': 8 },
+        'BGS': { '黑10': 3, '金10': 10, '9.5': 28, '9': 35, '8.5': 18 },
+        'ARS': { '10+': 6, '10': 15, '9': 30, '8': 18, '7': 8 }
     },
     'OSK/S104-078SSP': {
-        'PSA': { '10': 45, '9': 72, '8': 40, '7': 18, '6': 7, '5': 3, '4': 1, '3': 0, '2': 0, '1': 0 },
-        'BGS': { '10': 12, '9.5': 32, '9': 40, '8.5': 20, '8': 14, '7.5': 7, '7': 4, '6.5': 2, '6': 1, '5.5': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 },
+        'PSA': { '10': 45, '9': 72, '8': 40, '7': 18, '6': 7 },
+        'BGS': { '黑10': 4, '金10': 12, '9.5': 32, '9': 40, '8.5': 20 },
         'ARS': null
     }
 };
@@ -2896,12 +2896,18 @@ function getGradesForCompany(company) {
     }
 }
 
+function isGradeTen(grade) {
+    return grade === '10' || grade === '10+' || grade === '黑10' || grade === '金10';
+}
+
 function getBarClass(grade) {
+    if (isGradeTen(grade)) return 'grade-10';
     var g = parseFloat(grade);
-    if (g >= 10) return 'grade-10';
-    if (g >= 9) return 'grade-9';
-    if (g >= 8) return 'grade-8';
-    if (g >= 7) return 'grade-7';
+    if (!isNaN(g)) {
+        if (g >= 9) return 'grade-9';
+        if (g >= 8) return 'grade-8';
+        if (g >= 7) return 'grade-7';
+    }
     return 'grade-low';
 }
 
@@ -3042,7 +3048,7 @@ function renderGradingData() {
     grades.forEach(function(grade) {
         var count = parseInt(companyData[grade], 10) || 0;
         totalCount += count;
-        if (grade === '10') tenCount = count;
+        if (isGradeTen(grade)) tenCount += count;
         if (count > maxCount) maxCount = count;
     });
 
@@ -3058,7 +3064,7 @@ function renderGradingData() {
         var count = parseInt(companyData[grade], 10) || 0;
         var pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
         var barHeight = maxCount > 0 ? ((count / maxCount) * 100).toFixed(1) : '0';
-        var isTen = (grade === '10');
+        var isTen = isGradeTen(grade);
         var barClass = getBarClass(grade);
 
         html += '<div class="grading-col' + (isTen ? ' is-ten' : '') + '">';
