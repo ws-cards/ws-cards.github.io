@@ -1314,93 +1314,123 @@
     color: #667eea;
 }
 
-.grading-list {
+/* 橫向柱狀圖容器 */
+.grading-chart {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.grading-row {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.45rem 0.75rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.grading-row:hover {
-    background: rgba(102, 126, 234, 0.04);
-}
-
-.grading-row.is-ten {
-    background: linear-gradient(135deg, rgba(214, 158, 46, 0.08), rgba(237, 137, 54, 0.06));
-    border: 1px solid rgba(214, 158, 46, 0.2);
-}
-
-.grading-label {
-    width: 36px;
-    font-weight: 800;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-    flex-shrink: 0;
-}
-
-.grading-row.is-ten .grading-label {
-    color: #b7791f;
-}
-
-.grading-bar-wrapper {
-    flex: 1;
-    height: 22px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 6px;
-    overflow: hidden;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 0.5rem 0 0;
     position: relative;
 }
 
-.grading-bar {
-    height: 100%;
-    border-radius: 6px;
-    transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+/* 底線 */
+.grading-chart::after {
+    content: '';
+    position: absolute;
+    bottom: 28px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* 每根柱子 */
+.grading-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     min-width: 0;
+    position: relative;
+    z-index: 1;
 }
 
-.grading-bar.grade-10 {
-    background: linear-gradient(135deg, #d69e2e, #ed8936);
-}
-.grading-bar.grade-9 {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-}
-.grading-bar.grade-8 {
-    background: linear-gradient(135deg, #3182ce, #4299e1);
-}
-.grading-bar.grade-7 {
-    background: linear-gradient(135deg, #38b2ac, #4fd1c5);
-}
-.grading-bar.grade-low {
-    background: linear-gradient(135deg, #a0aec0, #cbd5e0);
+.grading-col-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 4px;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
 }
 
-.grading-count {
-    width: 55px;
-    text-align: right;
-    font-size: 0.8rem;
-    font-weight: 600;
+.grading-col:hover .grading-col-info {
+    opacity: 1;
+}
+
+.grading-col-count {
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--text-primary);
-    flex-shrink: 0;
+    line-height: 1.2;
 }
 
-.grading-pct {
-    width: 48px;
-    text-align: right;
-    font-size: 0.78rem;
+.grading-col-pct {
+    font-size: 0.62rem;
     font-weight: 600;
     color: var(--text-secondary);
-    flex-shrink: 0;
+    line-height: 1.2;
 }
 
+/* 柱子容器（控制高度） */
+.grading-col-bar-wrapper {
+    width: 100%;
+    height: 140px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 18%;
+}
+
+/* 柱子本體 */
+.grading-col-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    min-height: 0;
+    position: relative;
+}
+
+.grading-col:hover .grading-col-bar {
+    filter: brightness(1.1);
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.grading-col-bar.grade-10 {
+    background: linear-gradient(to top, #d69e2e, #ed8936);
+}
+.grading-col-bar.grade-9 {
+    background: linear-gradient(to top, #667eea, #764ba2);
+}
+.grading-col-bar.grade-8 {
+    background: linear-gradient(to top, #3182ce, #4299e1);
+}
+.grading-col-bar.grade-7 {
+    background: linear-gradient(to top, #38b2ac, #4fd1c5);
+}
+.grading-col-bar.grade-low {
+    background: linear-gradient(to top, #a0aec0, #cbd5e0);
+}
+
+/* 等級標籤 */
+.grading-col-label {
+    margin-top: 6px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.grading-col.is-ten .grading-col-label {
+    color: #b7791f;
+    font-size: 0.85rem;
+}
+
+.grading-col.is-ten .grading-col-count {
+    color: #b7791f;
+}
+
+/* 10 分率 */
 .grading-ten-rate {
     display: flex;
     align-items: center;
@@ -1443,13 +1473,12 @@
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-[data-theme="dark"] .grading-bar-wrapper {
-    background: rgba(255, 255, 255, 0.06);
+[data-theme="dark"] .grading-chart::after {
+    background: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .grading-row.is-ten {
-    background: linear-gradient(135deg, rgba(214, 158, 46, 0.12), rgba(237, 137, 54, 0.08));
-    border-color: rgba(214, 158, 46, 0.3);
+[data-theme="dark"] .grading-col-bar-wrapper {
+    background: transparent;
 }
 
 /* 手機版 */
@@ -1458,23 +1487,20 @@
         padding: 0.45rem 0.5rem;
         font-size: 0.8rem;
     }
-    .grading-row {
-        gap: 0.4rem;
-        padding: 0.35rem 0.5rem;
+    .grading-col-bar-wrapper {
+        height: 110px;
+        padding: 0 12%;
     }
-    .grading-label {
-        width: 30px;
-        font-size: 0.8rem;
+    .grading-col-count {
+        font-size: 0.65rem;
     }
-    .grading-bar-wrapper {
-        height: 18px;
+    .grading-col-pct {
+        font-size: 0.55rem;
     }
-    .grading-count {
-        width: 45px;
-        font-size: 0.75rem;
+    .grading-col-label {
+        font-size: 0.68rem;
     }
-    .grading-pct {
-        width: 40px;
+    .grading-col.is-ten .grading-col-label {
         font-size: 0.72rem;
     }
     .grading-ten-rate {
@@ -1490,13 +1516,18 @@
         padding: 0.4rem 0.3rem;
         font-size: 0.75rem;
     }
-    .grading-count {
-        width: 40px;
-        font-size: 0.7rem;
+    .grading-col-bar-wrapper {
+        height: 90px;
+        padding: 0 10%;
     }
-    .grading-pct {
-        width: 36px;
-        font-size: 0.68rem;
+    .grading-col-count {
+        font-size: 0.6rem;
+    }
+    .grading-col-pct {
+        display: none;
+    }
+    .grading-col-label {
+        font-size: 0.62rem;
     }
 }
 
