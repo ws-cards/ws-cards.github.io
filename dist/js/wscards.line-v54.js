@@ -2859,34 +2859,7 @@ var PSA_GRADES = ['10', '9', '8', '7', '6'];
 var BGS_GRADES = ['黑10', '金10', '9.5', '9', '8.5'];
 var ARS_GRADES = ['10+', '10', '9', '8', '7'];
 
-// ── 預設模擬資料（後端就緒後可移除） ──
-var MOCK_GRADING_DATA = {
-    'BD/W54-070SSP': {
-        'PSA': { '10': 18, '9': 42, '8': 27, '7': 11, '6': 5 },
-        'BGS': { '黑10': 1, '金10': 3, '9.5': 15, '9': 22, '8.5': 12 },
-        'ARS': null
-    },
-    'BD/W54-036SP': {
-        'PSA': { '10': 8, '9': 35, '8': 20, '7': 9, '6': 3 },
-        'BGS': null,
-        'ARS': { '10+': 2, '10': 5, '9': 18, '8': 12, '7': 6 }
-    },
-    'SAO/S80-024SSP': {
-        'PSA': { '10': 25, '9': 58, '8': 31, '7': 14, '6': 6 },
-        'BGS': { '黑10': 2, '金10': 6, '9.5': 20, '9': 30, '8.5': 15 },
-        'ARS': { '10+': 4, '10': 12, '9': 28, '8': 16, '7': 7 }
-    },
-    'HOL/W91-074SSP': {
-        'PSA': { '10': 32, '9': 65, '8': 38, '7': 17, '6': 8 },
-        'BGS': { '黑10': 3, '金10': 10, '9.5': 28, '9': 35, '8.5': 18 },
-        'ARS': { '10+': 6, '10': 15, '9': 30, '8': 18, '7': 8 }
-    },
-    'OSK/S104-078SSP': {
-        'PSA': { '10': 45, '9': 72, '8': 40, '7': 18, '6': 7 },
-        'BGS': { '黑10': 4, '金10': 12, '9.5': 32, '9': 40, '8.5': 20 },
-        'ARS': null
-    }
-};
+var GRADING_COMPANIES = ['PSA', 'BGS', 'ARS'];
 
 function getGradesForCompany(company) {
     switch (company) {
@@ -2932,19 +2905,30 @@ function switchCompany(company) {
 }
 
 /**
- * 從模擬資料中查找卡號（支援顯示名稱模糊匹配）
+ * 讀取單一鑑定公司 JSON
+ * URL 格式: {base}{titleCode}_{company}.json
+ * JSON 格式: { "卡號": { "等級": 數量 } } 或 { "卡號": null }
  */
-function findMockData(cardNumber) {
-    if (MOCK_GRADING_DATA[cardNumber]) return MOCK_GRADING_DATA[cardNumber];
-    var lowerKey = cardNumber.toLowerCase();
-    for (var key in MOCK_GRADING_DATA) {
-        if (key.toLowerCase() === lowerKey) return MOCK_GRADING_DATA[key];
-    }
-    return null;
+function fetchCompanyData(titleCode, cardNumber, company) {
+    var url = requestURLGradingBase + titleCode + '_' + company + '.json';
+    return fetch(url)
+        .then(function(response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            if (data && data[cardNumber] && typeof data[cardNumber] === 'object') {
+                return data[cardNumber];
+            }
+            return null;
+        })
+        .catch(function() {
+            return null;
+        });
 }
 
 /**
- * 載入鑑定資料
+ * 載入鑑定資料（分別讀取 PSA / BGS / ARS 三個 JSON）
  * @param {string} titleCode - 作品代碼（已替換 / 為 _）
  * @param {string} cardNumber - 顯示用卡號（如 BD/W54-070SSP）
  */
@@ -2954,37 +2938,29 @@ function loadGradingData(titleCode, cardNumber) {
         return;
     }
 
-    var url = requestURLGradingBase + titleCode + '.json';
-    console.log('載入鑑定資料:', url, '卡號:', cardNumber);
+    console.log('載入鑑定資料, titleCode:', titleCode, '卡號:', cardNumber);
 
-    fetch(url)
-        .then(function(response) {
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data[cardNumber]) {
-                gradingData = data[cardNumber];
-                console.log('鑑定資料載入成功（API）:', cardNumber);
-            } else {
-                throw new Error('API 無此卡號資料');
-            }
-            updateButtonStates();
-            renderGradingData();
-        })
-        .catch(function(error) {
-            console.log('API 載入失敗，嘗試模擬資料:', error.message);
-            var mock = findMockData(cardNumber);
-            if (mock) {
-                gradingData = mock;
-                console.log('使用模擬鑑定資料:', cardNumber);
-            } else {
-                gradingData = null;
-                console.log('此卡片無鑑定資料:', cardNumber);
-            }
-            updateButtonStates();
-            renderGradingData();
+    var promises = GRADING_COMPANIES.map(function(company) {
+        return fetchCompanyData(titleCode, cardNumber, company);
+    });
+
+    Promise.all(promises).then(function(results) {
+        gradingData = {};
+        GRADING_COMPANIES.forEach(function(company, index) {
+            gradingData[company] = results[index];
         });
+
+        var hasAny = GRADING_COMPANIES.some(function(c) { return gradingData[c] !== null; });
+        if (!hasAny) {
+            gradingData = null;
+            console.log('此卡片無鑑定資料:', cardNumber);
+        } else {
+            console.log('鑑定資料載入完成:', cardNumber, gradingData);
+        }
+
+        updateButtonStates();
+        renderGradingData();
+    });
 }
 
 function updateButtonStates() {
