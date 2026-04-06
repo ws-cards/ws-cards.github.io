@@ -3059,25 +3059,53 @@ function renderGradingData() {
     html += '<span>' + totalCount.toLocaleString() + ' 張</span>';
     html += '</div>';
 
-    html += '<div class="grading-chart">';
+    var gradeStats = [];
     grades.forEach(function(grade) {
         var count = parseInt(companyData[grade], 10) || 0;
         var pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
         var barHeight = maxCount > 0 ? ((count / maxCount) * 100).toFixed(1) : '0';
         var isTen = isGradeTen(grade);
         var barClass = getBarClass(grade);
+        gradeStats.push({ grade: grade, count: count, pct: pct, barHeight: barHeight, isTen: isTen, barClass: barClass });
+    });
 
-        html += '<div class="grading-col' + (isTen ? ' is-ten' : '') + '">';
+    html += '<div class="grading-chart">';
+    gradeStats.forEach(function(s) {
+        html += '<div class="grading-col' + (s.isTen ? ' is-ten' : '') + '">';
         html += '<div class="grading-col-info">';
-        html += '<span class="grading-col-count">' + count + '</span>';
-        html += '<span class="grading-col-pct">' + pct + '%</span>';
+        html += '<span class="grading-col-count">' + s.count + '</span>';
+        html += '<span class="grading-col-pct">' + s.pct + '%</span>';
         html += '</div>';
         html += '<div class="grading-col-bar-wrapper">';
-        html += '<div class="grading-col-bar ' + barClass + '" style="height:' + barHeight + '%"></div>';
+        html += '<div class="grading-col-bar ' + s.barClass + '" style="height:' + s.barHeight + '%"></div>';
         html += '</div>';
-        html += '<div class="grading-col-label">' + grade + '</div>';
+        html += '<div class="grading-col-label">' + s.grade + '</div>';
         html += '</div>';
     });
+    html += '</div>';
+
+    html += '<div class="grading-table-wrap">';
+    html += '<table class="grading-table">';
+    html += '<thead><tr>';
+    html += '<th class="th-label">等級</th>';
+    gradeStats.forEach(function(s) {
+        html += '<th class="' + (s.isTen ? 'th-ten' : '') + '">' + s.grade + '</th>';
+    });
+    html += '</tr></thead>';
+    html += '<tbody>';
+    html += '<tr class="row-count">';
+    html += '<td class="td-label">數量</td>';
+    gradeStats.forEach(function(s) {
+        html += '<td class="' + (s.isTen ? 'td-ten' : '') + '">' + s.count + '</td>';
+    });
+    html += '</tr>';
+    html += '<tr class="row-pct">';
+    html += '<td class="td-label">佔比</td>';
+    gradeStats.forEach(function(s) {
+        html += '<td class="' + (s.isTen ? 'td-ten' : '') + '">' + s.pct + '%</td>';
+    });
+    html += '</tr>';
+    html += '</tbody></table>';
     html += '</div>';
 
     container.innerHTML = html;
