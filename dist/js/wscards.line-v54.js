@@ -3065,13 +3065,17 @@ function renderGradingData() {
         var pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
         var barHeight = maxCount > 0 ? ((count / maxCount) * 100).toFixed(1) : '0';
         var isTen = isGradeTen(grade);
-        var barClass = getBarClass(grade);
-        gradeStats.push({ grade: grade, count: count, pct: pct, barHeight: barHeight, isTen: isTen, barClass: barClass });
+        var isBlack10 = (grade === '黑10');
+        var barClass = isBlack10 ? 'grade-black10' : getBarClass(grade);
+        gradeStats.push({ grade: grade, count: count, pct: pct, barHeight: barHeight, isTen: isTen, isBlack10: isBlack10, barClass: barClass });
     });
 
     html += '<div class="grading-chart">';
     gradeStats.forEach(function(s) {
-        html += '<div class="grading-col' + (s.isTen ? ' is-ten' : '') + '">';
+        var colClass = 'grading-col';
+        if (s.isBlack10) colClass += ' is-black10';
+        else if (s.isTen) colClass += ' is-ten';
+        html += '<div class="' + colClass + '">';
         html += '<div class="grading-col-info">';
         html += '<span class="grading-col-count">' + s.count + '</span>';
         html += '<span class="grading-col-pct">' + s.pct + '%</span>';
@@ -3089,20 +3093,23 @@ function renderGradingData() {
     html += '<thead><tr>';
     html += '<th class="th-label">等級</th>';
     gradeStats.forEach(function(s) {
-        html += '<th class="' + (s.isTen ? 'th-ten' : '') + '">' + s.grade + '</th>';
+        var thCls = s.isBlack10 ? 'th-black10' : (s.isTen ? 'th-ten' : '');
+        html += '<th class="' + thCls + '">' + s.grade + '</th>';
     });
     html += '</tr></thead>';
     html += '<tbody>';
     html += '<tr class="row-count">';
     html += '<td class="td-label">數量</td>';
     gradeStats.forEach(function(s) {
-        html += '<td class="' + (s.isTen ? 'td-ten' : '') + '">' + s.count + '</td>';
+        var tdCls = s.isBlack10 ? 'td-black10' : (s.isTen ? 'td-ten' : '');
+        html += '<td class="' + tdCls + '">' + s.count + '</td>';
     });
     html += '</tr>';
     html += '<tr class="row-pct">';
     html += '<td class="td-label">佔比</td>';
     gradeStats.forEach(function(s) {
-        html += '<td class="' + (s.isTen ? 'td-ten' : '') + '">' + s.pct + '%</td>';
+        var tdCls = s.isBlack10 ? 'td-black10' : (s.isTen ? 'td-ten' : '');
+        html += '<td class="' + tdCls + '">' + s.pct + '%</td>';
     });
     html += '</tr>';
     html += '</tbody></table>';
