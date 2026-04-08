@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 編輯工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; max-width: 800px; margin: 20px auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background-color: #fff; }
+        h1 { text-align: center; color: #4CAF50; }
+        .row { display: flex; margin-bottom: 10px; gap: 10px; align-items: center; }
+        .row input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .row button { padding: 10px 15px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .row button:hover { background-color: #c0392b; }
+        .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        .actions button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .actions button:hover { background-color: #45a049; }
+        .actions .btn-secondary { background-color: #3498db; }
+        .actions .btn-secondary:hover { background-color: #2980b9; }
+        #jsonPreview { margin-top: 20px; padding: 15px; background-color: #282c34; color: #abb2bf; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-family: monospace; display: none; }
+    </style>
+</head>
+<body>
+    <h1>Mapping JSON 編輯工具</h1>
+    <div id="editor"></div>
+    <div class="actions">
+        <button class="btn-secondary" onclick="addRow()"> 新增一筆</button>
+        <button onclick="document.getElementById('fileInput').click()"> 讀取 JSON 檔案</button>
+        <input type="file" id="fileInput" accept=".json" onchange="loadJSON(event)" style="display:none;">
+        <button onclick="saveJSON()"> 儲存 (下載 JSON)</button>
+    </div>
+    
+    <pre id="jsonPreview"></pre>
+
+    <script>
+        let jsonData = {
+          "025Gehenna Academy, Mutsuki": "BAV/W129-025S",
+          "046Prefect Team, Chinatsu": "BAV/W129-046SP"
+        };
+
+        const editor = document.getElementById('editor');
+
+        function renderEditor() {
+            editor.innerHTML = '';
+            for (const [key, value] of Object.entries(jsonData)) {
+                createRow(key, value);
+            }
+        }
+
+        function createRow(key = '', value = '') {
+            const row = document.createElement('div');
+            row.className = 'row';
+
+            const keyInput = document.createElement('input');
+            keyInput.type = 'text';
+            keyInput.value = key;
+            keyInput.placeholder = 'Key (例如: 025Gehenna ...)';
+            keyInput.className = 'json-key';
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.value = value;
+            valueInput.placeholder = 'Value (例如: BAV/W129-025S)';
+            valueInput.className = 'json-value';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '刪除';
+            deleteBtn.onclick = () => row.remove();
+
+            row.appendChild(keyInput);
+            row.appendChild(valueInput);
+            row.appendChild(deleteBtn);
+            editor.appendChild(row);
+        }
+
+        function addRow() {
+            createRow();
+        }
+
+        function getCurrentJSON() {
+            const newJson = {};
+            const rows = editor.querySelectorAll('.row');
+            rows.forEach(row => {
+                const key = row.querySelector('.json-key').value.trim();
+                const value = row.querySelector('.json-value').value.trim();
+                if (key) {
+                    newJson[key] = value;
+                }
+            });
+            return newJson;
+        }
+
+        function saveJSON() {
+            const fileName = prompt("請輸入要儲存的檔案名稱 (不需輸入副檔名):", "mapping");
+            if (!fileName) return; // 如果使用者取消或未輸入名稱則不執行
+
+            const newJson = getCurrentJSON();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(newJson, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", fileName + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function loadJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    jsonData = JSON.parse(e.target.result);
+                    renderEditor();
+                } catch (err) {
+                    alert('載入失敗，請確認是否為正確的 JSON 檔案');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        window.onload = renderEditor;
+    </script>
+</body>
+</html>
