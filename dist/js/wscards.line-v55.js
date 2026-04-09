@@ -2889,7 +2889,6 @@ function init() {
     var buttons = document.querySelectorAll('.grading-toggle-btn');
     buttons.forEach(function(btn) {
         btn.addEventListener('click', function() {
-            if (btn.disabled) return;
             var company = btn.getAttribute('data-company');
             switchCompany(company);
         });
@@ -2970,36 +2969,11 @@ function loadGradingData(titleCode, cardNumber) {
 
 function updateButtonStates() {
     var companies = ['PSA', 'BGS', 'ARS'];
-    var firstAvailable = null;
-
     companies.forEach(function(company) {
         var btn = document.getElementById('btn' + company);
         if (!btn) return;
-
-        var hasData = gradingData && gradingData[company] &&
-            typeof gradingData[company] === 'object' &&
-            Object.keys(gradingData[company]).length > 0;
-
-        btn.disabled = !hasData;
-
-        if (hasData && !firstAvailable) {
-            firstAvailable = company;
-        }
+        btn.disabled = false;
     });
-
-    if (gradingData) {
-        var currentHasData = gradingData[currentCompany] &&
-            typeof gradingData[currentCompany] === 'object' &&
-            Object.keys(gradingData[currentCompany]).length > 0;
-
-        if (!currentHasData && firstAvailable) {
-            currentCompany = firstAvailable;
-            var buttons = document.querySelectorAll('.grading-toggle-btn');
-            buttons.forEach(function(btn) {
-                btn.classList.toggle('active', btn.getAttribute('data-company') === firstAvailable);
-            });
-        }
-    }
 }
 
 function renderGradingData() {
