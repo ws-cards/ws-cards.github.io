@@ -1022,6 +1022,23 @@ console.log("進入繪圖區:"+cardNum);
                 tooltips: {
                     mode: 'index',
                     intersect: false,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = tooltipItem[0].xLabel || tooltipItem[0].label || tooltipItem[0].labelString || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        }
+                    }
                 },
                 hover: {
                     mode: 'nearest',
@@ -1280,6 +1297,23 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                 tooltips: {
                     mode: 'index',
                     intersect: false,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = tooltipItem[0].xLabel || tooltipItem[0].label || tooltipItem[0].labelString || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        }
+                    }
                 },
                 hover: {
                     mode: 'nearest',
