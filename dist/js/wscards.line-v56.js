@@ -1036,7 +1036,21 @@ console.log("進入繪圖區:"+cardNum);
                             },
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 7
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
                             }
                         }],
                         yAxes: [{
@@ -1280,7 +1294,21 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                             },
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 7
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
                             }
                         }],
                         yAxes: [{
