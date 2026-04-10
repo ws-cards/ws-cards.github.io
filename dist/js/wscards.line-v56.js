@@ -1037,6 +1037,13 @@ console.log("進入繪圖區:"+cardNum);
                                 }
                             }
                             return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (datasetLabel) datasetLabel += ': ';
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return datasetLabel + '¥' + tooltipItem.yLabel;
+                            return datasetLabel + '¥' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
                         }
                     }
                 },
@@ -1317,6 +1324,13 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                                 }
                             }
                             return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (datasetLabel) datasetLabel += ': ';
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return datasetLabel + tooltipItem.yLabel;
+                            return datasetLabel + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
                         }
                     }
                 },
