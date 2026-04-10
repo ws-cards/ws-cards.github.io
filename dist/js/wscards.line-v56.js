@@ -1026,13 +1026,17 @@ console.log("進入繪圖區:"+cardNum);
                 hover: {
                     mode: 'nearest',
                     intersect: true
-                },						
+                },
                     scales:{
                         xAxes: [{
                             display: true,
                             scaleLabel: {
                                 display: true,
                                 labelString: '日期'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 7
                             }
                         }],
                         yAxes: [{
@@ -1266,13 +1270,17 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                 hover: {
                     mode: 'nearest',
                     intersect: true
-                },						
+                },
                     scales:{
                         xAxes: [{
                             display: true,
                             scaleLabel: {
                                 display: true,
                                 labelString: '日期'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 7
                             }
                         }],
                         yAxes: [{
