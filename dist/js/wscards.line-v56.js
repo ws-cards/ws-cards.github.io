@@ -1075,10 +1075,15 @@ console.log("進入繪圖區:"+cardNum);
                             scaleLabel: {
                                 display: true,
                                 labelString: '價格(日幣)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
                             }
                         }]
                     }
-                
+
                 }
             });		
 
@@ -1350,10 +1355,15 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                             scaleLabel: {
                                 display: true,
                                 labelString: '庫存'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
                             }
                         }]
                     }
-                
+
                 }
             });		
 
