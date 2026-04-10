@@ -3081,7 +3081,6 @@ function renderGradingData() {
         Object.keys(gradingData[currentCompany]).length === 0) {
         container.innerHTML =
             '<div class="grading-placeholder">' +
-            '<i class="fas fa-certificate"></i>' +
             '<p>此卡片暫無 ' + currentCompany + ' 鑑定資料</p>' +
             '</div>';
         return;
@@ -3198,7 +3197,6 @@ function resetUI() {
     if (container) {
         container.innerHTML =
             '<div class="grading-placeholder">' +
-            '<i class="fas fa-certificate"></i>' +
             '<p>請選擇卡片查看鑑定資訊</p>' +
             '</div>';
     }
