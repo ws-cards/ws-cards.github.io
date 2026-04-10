@@ -1024,7 +1024,7 @@ console.log("進入繪圖區:"+cardNum);
                     intersect: false,
                     callbacks: {
                         title: function(tooltipItem, data) {
-                            var title = tooltipItem[0].xLabel || tooltipItem[0].label || tooltipItem[0].labelString || '';
+                            var title = data.labels[tooltipItem[0].index] || '';
                             if (typeof title === 'string') {
                                 if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
                                     return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
@@ -1299,7 +1299,7 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                     intersect: false,
                     callbacks: {
                         title: function(tooltipItem, data) {
-                            var title = tooltipItem[0].xLabel || tooltipItem[0].label || tooltipItem[0].labelString || '';
+                            var title = data.labels[tooltipItem[0].index] || '';
                             if (typeof title === 'string') {
                                 if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
                                     return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
