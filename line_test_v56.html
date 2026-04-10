@@ -2983,6 +2983,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 })();
+
+// 依據螢幕寬度移動鑑定卡區塊 (在手機版顯示於最下方)
+(function() {
+    function adjustGradingCardPosition() {
+        const gradingCard = document.getElementById('grading-card-tag');
+        if (!gradingCard) return;
+        
+        const leftCol = document.getElementById('preview-card-tag')?.closest('.col-lg-6');
+        const rightCol = document.getElementById('priceSummaryCard')?.closest('.col-lg-6');
+        
+        if (!leftCol || !rightCol) return;
+        
+        if (window.innerWidth < 992) {
+            // 手機、平板尺寸時(col-lg 斷點以下)，將鑑定卡移到右側欄位的最後面(確保呈現於最下方)
+            if (gradingCard.parentElement !== rightCol) {
+                rightCol.appendChild(gradingCard);
+            }
+        } else {
+            // 桌面尺寸時，移回左側欄位
+            if (gradingCard.parentElement !== leftCol) {
+                leftCol.appendChild(gradingCard);
+            }
+        }
+    }
+    
+    // 綁定 Resize 事件，並於載入完成後執行一次
+    window.addEventListener('resize', adjustGradingCardPosition);
+    adjustGradingCardPosition();
+})();
 </script>
 
 </body>
