@@ -1575,11 +1575,26 @@
 
 .price-summary-item:hover {
     transform: translateY(-4px) scale(1.01);
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    background: #1a202c; /* 滑鼠懸停時改為黑底 */
+    border-color: #1a202c;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
-.price-summary-item:hover::before { opacity: 1; }
+.price-summary-item:hover::before { opacity: 0; }
+
+.price-summary-item:hover .price-summary-label {
+    color: #a0aec0;
+}
+.price-summary-item:hover .price-summary-value {
+    color: #ffffff;
+    text-shadow: none;
+}
+.price-summary-item:hover .price-summary-icon i,
+.price-summary-item:hover .price-summary-icon svg {
+    color: #ffffff;
+}
+.price-summary-item:hover .price-summary-value.price-up { color: #f7fafc; }
+.price-summary-item:hover .price-summary-value.price-down { color: #cbd5e0; }
+.price-summary-item:hover .price-summary-value.price-flat { color: #a0aec0; }
 
 
 .price-summary-content {
@@ -1596,6 +1611,7 @@
     letter-spacing: 0.5px;
     white-space: nowrap;
     text-transform: uppercase;
+    transition: color 0.4s ease;
 }
 
 .price-summary-value {
@@ -1607,6 +1623,7 @@
     white-space: nowrap;
     letter-spacing: -0.025em;
     text-shadow: 0 2px 5px rgba(255, 255, 255, 0.5); /* 輕微反光增強立體感 */
+    transition: color 0.4s ease, text-shadow 0.4s ease;
 }
 
 /* 漲跌幅動態顏色 - 改為黑灰白理性的顏色 */
@@ -1626,10 +1643,17 @@
     background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
 }
 [data-theme="dark"] .price-summary-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    background: #f7fafc; /* 暗色模式下懸停改為白底 */
+    border-color: #f7fafc;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
+[data-theme="dark"] .price-summary-item:hover .price-summary-label { color: #718096; }
+[data-theme="dark"] .price-summary-item:hover .price-summary-value { color: #1a202c; text-shadow: none; }
+[data-theme="dark"] .price-summary-item:hover .price-summary-icon i,
+[data-theme="dark"] .price-summary-item:hover .price-summary-icon svg { color: #1a202c; }
+[data-theme="dark"] .price-summary-item:hover .price-summary-value.price-up { color: #2d3748; }
+[data-theme="dark"] .price-summary-item:hover .price-summary-value.price-down { color: #4a5568; }
+[data-theme="dark"] .price-summary-item:hover .price-summary-value.price-flat { color: #718096; }
 
 
 [data-theme="dark"] .price-summary-label { color: #a0aec0; }
