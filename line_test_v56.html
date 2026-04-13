@@ -1531,13 +1531,11 @@
     }
 }
 
-/*****************價格摘要統計卡片 (Minimalist B&W Outline)******************/
+/*****************價格摘要統計卡片 (Monochrome Glass)******************/
+/* 結合毛玻璃與黑灰白冷峻風格 */
 .price-summary-card {
     animation: fadeInUp 0.5s ease-out;
     margin-bottom: 1.5rem;
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
 }
 
 .price-summary-grid {
@@ -1551,27 +1549,79 @@
     align-items: center;
     gap: 1.25rem;
     padding: 1.5rem 1.25rem;
-    border-radius: 8px; /* 俐落的小圓角 */
-    background: transparent;
-    border: 2px solid #e2e8f0; /* 淡淡的灰色邊框 */
-    box-shadow: none;
-    transition: all 0.3s ease;
+    border-radius: var(--border-radius-small);
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 0, 0, 0.05); /* 偏黑的極細邊框 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
     z-index: 1;
 }
 
-/* 懸浮效果：微細的黑白反轉或陰影加深 */
-.price-summary-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 4px 4px 0px #111827; /* 復古／俐落的實色偏移陰影 */
-    background: #fdfdfd;
+/* 微妙的光澤滑動特效 - 黑白版 */
+.price-summary-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%);
+    opacity: 0.5;
+    transition: opacity 0.4s ease;
+    z-index: 0;
 }
 
+.price-summary-item:hover {
+    transform: translateY(-4px) scale(1.01);
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+.price-summary-item:hover::before { opacity: 1; }
 
+.price-summary-icon, .price-summary-content {
+    position: relative;
+    z-index: 1;
+}
 
+/* 灰階質感的圖示底色 */
+.price-summary-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.35rem;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.04);
+}
 
+/* 全面採用黑灰白階設計 */
+.price-summary-item.current .price-summary-icon {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: #ffffff;
+}
+.price-summary-item.highest .price-summary-icon {
+    background: linear-gradient(135deg, #718096 0%, #a0aec0 100%);
+    color: #ffffff;
+}
+.price-summary-item.lowest .price-summary-icon {
+    background: linear-gradient(135deg, #e2e8f0 0%, #edf2f7 100%);
+    color: #4a5568;
+}
+.price-summary-item.change .price-summary-icon {
+    background: linear-gradient(135deg, #cbd5e0 0%, #e2e8f0 100%);
+    color: #2d3748;
+}
 
+.price-summary-item:hover .price-summary-icon {
+    transform: scale(1.05);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
 
 .price-summary-content {
     display: flex;
@@ -1582,41 +1632,74 @@
 
 .price-summary-label {
     font-size: 0.8rem;
-    color: #4b5563; /* 偏黑色 */
+    color: #718096;
     font-weight: 600;
     letter-spacing: 0.5px;
     white-space: nowrap;
+    text-transform: uppercase;
 }
 
 .price-summary-value {
-    font-size: 1.35rem;
+    font-size: 1.45rem;
     font-weight: 800;
-    color: #111827;
+    color: #1a202c;
     font-family: 'Noto Sans TC', sans-serif;
     line-height: 1.2;
     white-space: nowrap;
     letter-spacing: -0.025em;
+    text-shadow: 0 2px 5px rgba(255, 255, 255, 0.5); /* 輕微反光增強立體感 */
 }
 
-/* 漲跌幅保留紅綠提示，但降低飽和度以融入簡約風 */
-.price-summary-value.price-up { color: #dc2626; }
-.price-summary-value.price-down { color: #16a34a; }
-.price-summary-value.price-flat { color: #111827; }
+/* 漲跌幅動態顏色 - 改為黑灰白理性的顏色 */
+.price-summary-value.price-up { color: #2d3748; }  /* 深灰黑代紅 */
+.price-summary-value.price-down { color: #a0aec0; } /* 淺灰代綠 */
+.price-summary-value.price-flat { color: #718096; } /* 中底灰 */
 
-/* 暗色模式調整 (Dark Mode) */
+/* 動態圖塊改變顏色 - 灰階 */
+.price-summary-item.change.is-up .price-summary-icon {
+    background: linear-gradient(135deg, #4a5568 0%, #718096 100%);
+    color: #ffffff;
+}
+.price-summary-item.change.is-down .price-summary-icon {
+    background: linear-gradient(135deg, #cbd5e0 0%, #e2e8f0 100%);
+    color: #4a5568;
+}
+
+/* 暗色模式調整 (Dark Mode - 黑灰調) */
 [data-theme="dark"] .price-summary-item {
-    border-color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+[data-theme="dark"] .price-summary-item::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
 }
 [data-theme="dark"] .price-summary-item:hover {
-    box-shadow: 4px 4px 0px #f3f4f6;
-    background: #111827;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .price-summary-icon {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .price-summary-item.current .price-summary-icon { background: #e2e8f0; color: #1a202c; }
+[data-theme="dark"] .price-summary-item.highest .price-summary-icon,
+[data-theme="dark"] .price-summary-item.change.is-up .price-summary-icon { background: #a0aec0; color: #1a202c; }
+[data-theme="dark"] .price-summary-item.lowest .price-summary-icon,
+[data-theme="dark"] .price-summary-item.change.is-down .price-summary-icon { background: #4a5568; color: #f7fafc; }
+[data-theme="dark"] .price-summary-item.change .price-summary-icon { background: #718096; color: #f7fafc; }
+
+[data-theme="dark"] .price-summary-item:hover .price-summary-icon {
+    transform: scale(1.05);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="dark"] .price-summary-label { color: #9ca3af; }
-[data-theme="dark"] .price-summary-value { color: #f3f4f6; }
-[data-theme="dark"] .price-summary-value.price-flat { color: #f3f4f6; }
-[data-theme="dark"] .price-summary-value.price-up { color: #f87171; }
-[data-theme="dark"] .price-summary-value.price-down { color: #4ade80; }
+[data-theme="dark"] .price-summary-label { color: #a0aec0; }
+[data-theme="dark"] .price-summary-value { color: #f7fafc; text-shadow: none; }
+[data-theme="dark"] .price-summary-value.price-flat { color: #718096; }
+[data-theme="dark"] .price-summary-value.price-up { color: #e2e8f0; } /* 亮灰取代紅 */
+[data-theme="dark"] .price-summary-value.price-down { color: #718096; } /* 沉灰取代綠 */
 
 /* 平板 */
 @media (max-width: 992px) {
@@ -1634,12 +1717,16 @@
     }
     .price-summary-item {
         padding: 1rem;
-        gap: 0.75rem;
-        border-radius: 6px;
+        gap: 1rem;
+        border-radius: var(--border-radius-small);
     }
-
-    .price-summary-value {
+    .price-summary-icon {
+        width: 44px;
+        height: 44px;
         font-size: 1.15rem;
+    }
+    .price-summary-value {
+        font-size: 1.25rem;
     }
     .price-summary-label {
         font-size: 0.75rem;
@@ -1653,11 +1740,17 @@
         gap: 0.5rem;
     }
     .price-summary-item {
-        padding: 0.75rem 0.6rem;
-        gap: 0.5rem;
+        padding: 0.75rem;
+        gap: 0.6rem;
+    }
+    .price-summary-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+        border-radius: 10px;
     }
     .price-summary-value {
-        font-size: 0.9rem;
+        font-size: 1.05rem;
     }
     .price-summary-label {
         font-size: 0.65rem;
