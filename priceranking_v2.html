@@ -462,7 +462,7 @@
       }
 
       /** 卡號→價格物件：依 JSON 鍵順序取前 limit 筆（此份前十筆） */
-      function topCardsFromPriceMap(obj, limit) {
+      function (obj, limit) {
         var cap = limit == null ? 10 : limit;
         var keys = Object.keys(obj || {});
         var out = [];
@@ -554,7 +554,7 @@
           .then(function (data) {
             var cards = [];
             if (data && typeof data === 'object' && !Array.isArray(data) && data.cards == null) {
-              cards = topCardsFromPriceMap(data, 10).map(function (row) {
+              cards = topCardsFromPriceMap(data, 50).map(function (row) {
                 return {
                   cardNo: row.cardNo,
                   price: row.price,
