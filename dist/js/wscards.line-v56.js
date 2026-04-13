@@ -3139,12 +3139,12 @@ function renderGradingData() {
 
     html += '<div class="grading-detail-table-wrap">';
     html += '<table class="grading-detail-table">';
-    html += '<thead><tr><th>Grade</th><th>Quantity</th><th>Qualifier</th></tr></thead>';
+    html += '<thead><tr><th>Grade</th><th>Quantity</th></tr></thead>';
     html += '<tbody>';
     visibleGrades.forEach(function(g) {
-        html += '<tr><td><strong>' + g.grade + '</strong></td><td>' + g.count.toLocaleString() + '</td><td>-</td></tr>';
+        html += '<tr><td><strong>' + g.grade + '</strong></td><td>' + g.count.toLocaleString() + '</td></tr>';
     });
-    html += '<tr class="grading-detail-total-row"><td><strong>Total</strong></td><td><strong>' + totalCount.toLocaleString() + '</strong></td><td>-</td></tr>';
+    html += '<tr class="grading-detail-total-row"><td><strong>Total</strong></td><td><strong>' + totalCount.toLocaleString() + '</strong></td></tr>';
     html += '</tbody></table>';
     html += '</div>';
 
