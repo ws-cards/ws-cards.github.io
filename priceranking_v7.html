@@ -1,0 +1,1103 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WS 卡牌價格數據中心｜全方位行情解析</title>
+  <meta name="description" content="聚焦 WS 卡牌市場成交數據與稀有度分析，提供最完整的價格排行與投資參考指標。" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Outfit"', '"Noto Sans TC"', 'system-ui', 'sans-serif'],
+            serif: ['"Cormorant Garamond"', '"Noto Serif TC"', 'Georgia', 'serif'],
+          },
+          colors: {
+            void: { DEFAULT: '#0D0D12', 50: '#16161f', 100: '#1c1c28', 200: '#252532' },
+            champagne: { DEFAULT: '#c9a962', light: '#e8d5a3', muted: '#8a7a52' },
+            gold: { glow: 'rgba(201, 169, 98, 0.35)' },
+          },
+          backgroundImage: {
+            'gold-sheen': 'linear-gradient(120deg, rgba(201,169,98,0.15) 0%, transparent 40%, rgba(232,213,163,0.08) 60%, transparent 100%)',
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.0.0/iconify-icon.min.js"></script>
+  <style>
+    :root {
+      --glass-border: rgba(201, 169, 98, 0.22);
+      --glass-bg: rgba(22, 22, 31, 0.45);
+    }
+    html { scroll-behavior: smooth; }
+    .noise-layer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      opacity: 0.055;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 24px 48px -12px rgba(0, 0, 0, 0.55);
+    }
+    .tilt-card {
+      transform-style: preserve-3d;
+    }
+    .hero-bg-img {
+      background-image: url('https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?auto=format&fit=crop&w=2400&q=85');
+      background-size: cover;
+      background-position: center;
+    }
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+    .char-wrap { overflow: hidden; display: inline-block; vertical-align: bottom; }
+    .char-inner {
+      display: inline-block;
+      will-change: transform;
+    }
+    .nav-blur {
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      background: rgba(13, 13, 18, 0.72);
+      border-bottom: 1px solid rgba(201, 169, 98, 0.12);
+    }
+    .gold-line {
+      background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.5), transparent);
+      height: 1px;
+    }
+    .btn-cta {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-cta::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%);
+      transform: translateX(-100%);
+    }
+    .btn-cta:hover::after {
+      animation: sheen 0.85s ease forwards;
+    }
+    @keyframes sheen {
+      to { transform: translateX(100%); }
+    }
+    .reveal-up { opacity: 0; transform: translateY(36px); }
+    .flip-root {
+      perspective: 2200px;
+      perspective-origin: 50% 45%;
+    }
+    .flip-inner {
+      position: relative;
+      transform-style: preserve-3d;
+      min-height: 100vh;
+      transition: transform 0.95s cubic-bezier(0.65, 0, 0.24, 1);
+    }
+    .flip-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+    .flip-face {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .flip-face--front {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+    .flip-face--back {
+      transform: rotateY(180deg);
+      left: 0;
+      right: 0;
+      top: 0;
+      /* 勿用 inset-0：否則高度會跟首頁一樣長，列表永遠不觸發 overflow，又配合 body:hidden 會無法捲動 */
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      pointer-events: none;
+    }
+    .flip-inner.is-flipped .flip-face--back {
+      pointer-events: auto;
+    }
+    .flip-inner.is-flipped .flip-face--front {
+      pointer-events: none;
+    }
+    
+    /* SPA View Switching Styles */
+    .spa-view {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .spa-view.active {
+      display: block;
+      opacity: 1;
+      animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUpFade {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .nav-link-active {
+      color: #c9a962 !important;
+      position: relative;
+    }
+    .nav-link-active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #c9a962;
+    }
+  </style>
+</head>
+<body class="bg-void text-stone-200 antialiased selection:bg-champagne/30 selection:text-white overflow-x-hidden">
+  <div class="noise-layer" aria-hidden="true"></div>
+
+  <div id="flipRoot" class="flip-root">
+    <div id="flipInner" class="flip-inner">
+      <div class="flip-face flip-face--front">
+  <header class="fixed top-0 left-0 right-0 z-[8000] nav-blur">
+    <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
+      <a href="#hero" class="group flex items-center gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-full border border-champagne/30 bg-void-50/80">
+          <iconify-icon icon="solar:crown-bold" class="text-champagne text-xl" aria-hidden="true"></iconify-icon>
+        </span>
+        <span class="font-serif text-lg font-semibold tracking-wide text-stone-100 md:text-xl">WS 價格數據中心</span>
+      </a>
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#hero" data-spa-target="home" class="spa-link nav-link-active text-sm font-medium text-stone-400 transition hover:text-champagne relative">數據總覽</a>
+        <a href="#insights" data-spa-target="insights" class="spa-link text-sm font-medium text-stone-400 transition hover:text-champagne relative">市場焦點</a>
+        <a href="#value" data-spa-target="value" class="spa-link text-sm font-medium text-stone-400 transition hover:text-champagne relative">核心維度</a>
+        <a href="#method" data-spa-target="method" class="spa-link text-sm font-medium text-stone-400 transition hover:text-champagne relative">運算邏輯</a>
+      </div>
+      <a href="#" data-magnetic data-open-ranking class="btn-cta rounded-full bg-gradient-to-r from-champagne/90 to-champagne-light/85 px-5 py-2.5 text-sm font-semibold text-void shadow-lg shadow-champagne/15 hover:shadow-champagne/25 hover:scale-[1.02] active:scale-[0.98]">
+        啟用數據庫
+      </a>
+    </nav>
+  </header>
+
+  <main class="w-full relative min-h-screen overflow-hidden pb-16">
+    <!-- Hero / Home View -->
+    <section id="home" class="spa-view active pb-20">
+      <div id="hero" class="relative min-h-[100svh] flex flex-col justify-center overflow-hidden">
+      <div class="hero-bg-img absolute inset-0 scale-105"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-void/88 via-void/82 to-void"></div>
+      <div class="absolute inset-0 bg-gold-sheen opacity-90"></div>
+      <canvas id="hero-canvas"></canvas>
+
+      <svg class="pointer-events-none absolute -right-24 top-1/4 h-[420px] w-[420px] opacity-[0.12] text-champagne md:right-0" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="currentColor" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" stroke="url(#g1)" stroke-width="0.6" class="hero-ring" />
+        <circle cx="100" cy="100" r="58" stroke="currentColor" stroke-opacity="0.25" stroke-width="0.4" />
+        <path d="M100 22v156M22 100h156" stroke="currentColor" stroke-opacity="0.15" stroke-width="0.35" />
+      </svg>
+
+      <div class="relative z-10 mx-auto max-w-6xl px-5 pb-24 pt-32 lg:px-8 lg:pt-36">
+        <p class="reveal-up mb-4 inline-flex items-center gap-2 rounded-full border border-champagne/25 bg-void-50/60 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-champagne-light/90">
+          <iconify-icon icon="mdi:chart-timeline-variant" class="text-base" aria-hidden="true"></iconify-icon>
+          MARKET DATA CENTER
+        </p>
+        <h1 class="font-serif text-4xl font-semibold leading-[1.12] text-stone-50 sm:text-5xl lg:text-6xl xl:text-7xl">
+          <span id="heroTitle" class="block">WS 卡牌價格數據中心</span>
+        </h1>
+        <p class="reveal-up mt-6 max-w-xl text-base leading-relaxed text-stone-400 sm:text-lg">
+          以精準的大數據為軸心，實時捕捉市場價格走勢。我們提供專業級的行情分析與多維度的稀有度對比，在深邃的介面中，呈現最客觀的價值指標。
+          <span class="mt-3 block text-sm md:text-base font-medium text-champagne/90">※ 提示：主要展示 5,000 日幣以上之高價值數據</span>
+        </p>
+        <div class="reveal-up mt-10 flex flex-wrap items-center gap-4">
+          <a href="#" data-magnetic data-open-ranking class="btn-cta inline-flex items-center gap-2 rounded-full bg-champagne px-8 py-3.5 text-base font-semibold text-void shadow-xl shadow-champagne/20">
+            <iconify-icon icon="solar:magnifer-bold" class="text-xl" aria-hidden="true"></iconify-icon>
+            進入數據終端
+          </a>
+          <a href="#value" class="inline-flex items-center gap-2 rounded-full border border-stone-600/80 px-6 py-3.5 text-sm font-medium text-stone-300 transition hover:border-champagne/50 hover:text-champagne">
+            <iconify-icon icon="solar:arrow-down-linear" class="text-lg" aria-hidden="true"></iconify-icon>
+            解析維度
+          </a>
+        </div>
+        <div class="reveal-up mt-16 grid grid-cols-3 gap-6 border-t border-white/10 pt-10 sm:max-w-lg">
+          <div>
+            <p class="font-serif text-2xl text-champagne-light md:text-3xl">即時</p>
+            <p class="mt-1 text-xs text-stone-500">市場行情追蹤</p>
+          </div>
+          <div>
+            <p class="font-serif text-2xl text-champagne-light md:text-3xl">精確</p>
+            <p class="mt-1 text-xs text-stone-500">異群與噪點過濾</p>
+          </div>
+          <div>
+            <p class="font-serif text-2xl text-champagne-light md:text-3xl">深度</p>
+            <p class="mt-1 text-xs text-stone-500">多維度數據交叉比對</p>
+          </div>
+        </div>
+      </div>
+      <div class="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 lg:bottom-10">
+        <div class="flex h-10 w-6 justify-center rounded-full border border-champagne/30 pt-2">
+          <span class="h-2 w-1 animate-bounce rounded-full bg-champagne/80"></span>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Inquire moved as final section or here if desired -->
+    <section id="inquire" class="relative py-16 lg:py-24">
+      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-[0.18]"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-void via-void/95 to-void"></div>
+      <div class="relative z-10 mx-auto max-w-3xl px-5 text-center lg:px-8">
+        <p class="text-xs font-medium uppercase tracking-[0.35em] text-champagne/80">DATA TERMINAL · WS CARDS</p>
+        <h2 class="mt-4 font-serif text-3xl font-semibold text-white sm:text-4xl lg:text-5xl">啟動數據檢索系統？</h2>
+        <p class="mx-auto mt-5 max-w-lg text-stone-400">現在就啟用終端，進入 WS 大數據分析的沉浸式體驗。我們以科技質感的暗色介面，展示客觀的行情深度。</p>
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+          <a href="#" data-magnetic data-open-ranking class="btn-cta inline-flex items-center gap-2 rounded-full bg-champagne px-10 py-4 text-base font-semibold text-void shadow-xl shadow-champagne/25">
+            <iconify-icon icon="solar:bolt-circle-bold" class="text-xl"></iconify-icon>
+            啟動終端
+          </a>
+          <a href="index.html" class="rounded-full border border-stone-600 px-8 py-4 text-sm font-medium text-stone-300 transition hover:border-champagne/40 hover:text-champagne">
+            返回主站
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Value View -->
+    <section id="value" class="spa-view pt-32 pb-20">
+      <div class="gold-line mx-auto mb-16 max-w-4xl"></div>
+      <div class="mx-auto max-w-6xl px-5 lg:px-8">
+        <div class="max-w-2xl">
+          <h2 class="font-serif text-3xl font-semibold text-stone-50 sm:text-4xl lg:text-5xl">專業級的數據視角</h2>
+          <p class="mt-4 text-stone-400">三大核心維度，支撐你的每一次投資與收藏決策。</p>
+        </div>
+        <div class="mt-14 grid gap-8 md:grid-cols-3">
+          <article class="value-card group relative overflow-hidden rounded-2xl glass-card tilt-card">
+            <div class="relative h-48 overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=85" alt="數據趨勢展示" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" width="900" height="600" loading="lazy" />
+              <div class="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent"></div>
+            </div>
+            <div class="relative p-6">
+              <iconify-icon icon="solar:ranking-bold-duotone" class="text-3xl text-champagne" aria-hidden="true"></iconify-icon>
+              <h3 class="mt-4 font-serif text-xl text-stone-100">巨量行情聚合</h3>
+              <p class="mt-2 text-sm leading-relaxed text-stone-400">聚合多通路的真實成交與釋出紀錄，讓單點價格結構化，轉譯為可視化的指標。</p>
+            </div>
+          </article>
+          <article class="value-card group relative overflow-hidden rounded-2xl glass-card tilt-card">
+            <div class="relative h-48 overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=85" alt="金融級分析面板" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" width="900" height="600" loading="lazy" />
+              <div class="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent"></div>
+            </div>
+            <div class="relative p-6">
+              <iconify-icon icon="solar:graph-new-up-bold-duotone" class="text-3xl text-champagne" aria-hidden="true"></iconify-icon>
+              <h3 class="mt-4 font-serif text-xl text-stone-100">層級走勢深度</h3>
+              <p class="mt-2 text-sm leading-relaxed text-stone-400">追蹤時間軸上的波動與流動性變化，協助洞察市場熱度與隱藏的價格斷層。</p>
+            </div>
+          </article>
+          <article class="value-card group relative overflow-hidden rounded-2xl glass-card tilt-card">
+            <div class="relative h-48 overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=85" alt="高階篩選模型" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" width="900" height="600" loading="lazy" />
+              <div class="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent"></div>
+            </div>
+            <div class="relative p-6">
+              <iconify-icon icon="solar:star-circle-bold-duotone" class="text-3xl text-champagne" aria-hidden="true"></iconify-icon>
+              <h3 class="mt-4 font-serif text-xl text-stone-100">稀有度交叉演算</h3>
+              <p class="mt-2 text-sm leading-relaxed text-stone-400">結合罕見度、版本與市場品相等複合變數，還原最客觀的數據參考語境。</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Logic View -->
+    <section id="method" class="spa-view pt-32 pb-20">
+      <div id="method-inner" class="relative border-y border-white/5 bg-void-50/30 py-24 lg:py-28">
+        <div class="mx-auto grid max-w-6xl gap-12 px-5 lg:grid-cols-2 lg:items-center lg:px-8">
+        <div class="relative overflow-hidden rounded-2xl border border-champagne/15 shadow-2xl">
+          <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=85" alt="數據處理架構" class="h-full min-h-[280px] w-full object-cover" width="1200" height="800" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-tr from-void/90 via-void/25 to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <p class="font-serif text-xl text-champagne-light">Objective · Data Driven</p>
+            <p class="mt-1 text-sm text-stone-400">高度嚴謹的數據架構，建構最純粹的市場分析生態。</p>
+          </div>
+        </div>
+        <div>
+          <h2 class="font-serif text-3xl font-semibold text-stone-50 sm:text-4xl">系統演算邏輯</h2>
+          <ul class="mt-8 space-y-6">
+            <li class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-champagne/30 bg-void text-champagne">
+                <iconify-icon icon="solar:database-bold" class="text-xl"></iconify-icon>
+              </span>
+              <div>
+                <h3 class="font-medium text-stone-200">去中心化資訊爬搜</h3>
+                <p class="mt-1 text-sm text-stone-500">串接日本各大交易平台與指標店鋪，自動同步實時成交紀錄。</p>
+              </div>
+            </li>
+            <li class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-champagne/30 bg-void text-champagne">
+                <iconify-icon icon="solar:shield-check-bold" class="text-xl"></iconify-icon>
+              </span>
+              <div>
+                <h3 class="font-medium text-stone-200">清洗與過濾機制</h3>
+                <p class="mt-1 text-sm text-stone-500">利用統計模型排除極端溢價與無效報價，確保基化數據的乾淨與準確性。</p>
+              </div>
+            </li>
+            <li class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-champagne/30 bg-void text-champagne">
+                <iconify-icon icon="solar:crown-line-bold-duotone" class="text-xl"></iconify-icon>
+              </span>
+              <div>
+                <h3 class="font-medium text-stone-200">動態排行產出</h3>
+                <p class="mt-1 text-sm text-stone-500">依據過濾後的數據集自動運算，反映出每一期卡牌圈最核心的價值指標。</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section id="insights" class="spa-view pt-32 pb-20">
+      <div id="insights-inner" class="relative bg-void py-24 lg:py-28">
+        <div class="mx-auto max-w-6xl px-5 lg:px-8">
+          <div class="mb-12 text-center">
+            <p class="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-champagne">Market Insights</p>
+            <h2 class="font-serif text-3xl font-semibold text-stone-50 sm:text-4xl">市場焦點極值</h2>
+            <p class="mt-4 text-sm text-stone-400">目前為展示用假資料，未來將介接實際數據</p>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <!-- SP 最便宜 -->
+          <article class="glass-card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6 border-b border-champagne/15 pb-4">
+              <iconify-icon icon="solar:tag-price-bold-duotone" class="text-2xl text-champagne"></iconify-icon>
+              <h3 class="font-serif text-xl font-medium text-stone-100">最便宜的 SP</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">1</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">LSS/W53-066SP</p>
+                  <p class="truncate text-xs text-stone-500">Aqours</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">980 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">2</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">GTL/W106-068SP</p>
+                  <p class="truncate text-xs text-stone-500">Gundam</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">1,200 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">3</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">HOL/W91-123SP</p>
+                  <p class="truncate text-xs text-stone-500">Hololive</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">1,500 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">4</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">SAO/S71-008SP</p>
+                  <p class="truncate text-xs text-stone-500">SAO</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">1,800 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">5</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">DAL/W79-052SP</p>
+                  <p class="truncate text-xs text-stone-500">Date A Live</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">2,100 円</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+
+          <!-- SSP 最便宜 -->
+          <article class="glass-card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6 border-b border-champagne/15 pb-4">
+              <iconify-icon icon="solar:star-fall-bold-duotone" class="text-2xl text-champagne"></iconify-icon>
+              <h3 class="font-serif text-xl font-medium text-stone-100">最便宜的 SSP</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">1</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">PJS/S91-053SSP</p>
+                  <p class="truncate text-xs text-stone-500">Project Sekai</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">12,000 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">2</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">BD/W95-072SSP</p>
+                  <p class="truncate text-xs text-stone-500">BanG Dream!</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">14,500 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">3</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">HOL/W91-002SSP</p>
+                  <p class="truncate text-xs text-stone-500">Hololive</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">18,000 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">4</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">RZ/S68-060SSP</p>
+                  <p class="truncate text-xs text-stone-500">Re:Zero</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">21,000 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">5</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">GBS/S63-001SSP</p>
+                  <p class="truncate text-xs text-stone-500">Goblin Slayer</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">25,800 円</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+
+          <!-- RR 最貴 -->
+          <article class="glass-card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-6 border-b border-champagne/15 pb-4">
+              <iconify-icon icon="solar:fire-bold-duotone" class="text-2xl text-champagne"></iconify-icon>
+              <h3 class="font-serif text-xl font-medium text-stone-100">最貴的 RR</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">1</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">HOL/W104-035RR</p>
+                  <p class="truncate text-xs text-stone-500">Hololive</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">5,500 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">2</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">SAO/S71-030RR</p>
+                  <p class="truncate text-xs text-stone-500">SAO</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">4,200 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">3</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">PJS/S91-002RR</p>
+                  <p class="truncate text-xs text-stone-500">Project Sekai</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">3,800 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">4</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">RZ/S68-051RR</p>
+                  <p class="truncate text-xs text-stone-500">Re:Zero</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">3,500 円</p>
+                </div>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="w-5 text-center font-serif text-lg font-bold text-stone-600">5</span>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate text-sm text-stone-200">FZO/W68-005RR</p>
+                  <p class="truncate text-xs text-stone-500">Fate/Zero</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-champagne-light">3,100 円</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Wait, delete this section to avoid duplicate -->
+    </main>
+
+  <footer class="border-t border-white/5 bg-void py-12">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-5 text-center text-sm text-stone-500 md:flex-row md:text-left lg:px-8">
+      <div class="flex items-center gap-2">
+        <iconify-icon icon="solar:crown-bold" class="text-champagne text-lg"></iconify-icon>
+        <span class="font-serif text-stone-400">WS 卡片價格最高價排行</span>
+      </div>
+      <p>© <span id="y"></span> 僅供展示與參考，實際成交請以市場為準。<span class="ml-1 inline-block text-champagne/70">※ 僅列出 5000 日幣以上排行</span></p>
+      <div class="flex gap-5">
+        <a href="#hero" class="hover:text-champagne">首頁</a>
+        <a href="#value" class="hover:text-champagne">價值</a>
+        <a href="priceranking_v1.html" class="hover:text-champagne">v1 版本</a>
+      </div>
+    </div>
+  </footer>
+      </div>
+
+      <div class="flip-face flip-face--back absolute z-[7500] bg-void bg-gold-sheen">
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-void via-void/92 to-void"></div>
+        <header class="sticky top-0 z-10 nav-blur">
+          <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-4 lg:max-w-4xl lg:px-8">
+            <button type="button" id="rankingBackBtn" class="inline-flex items-center gap-2 rounded-full border border-champagne/35 px-4 py-2 text-sm font-medium text-champagne-light transition hover:bg-champagne/10">
+              <iconify-icon icon="solar:undo-left-round-bold" class="text-lg"></iconify-icon>
+              返回首頁
+            </button>
+            <div class="text-right">
+              <p class="font-serif text-sm text-stone-100 md:text-base">最高價格排行</p>
+              <p class="text-[11px] text-champagne/80 md:text-xs">※ 僅列出 5000 日幣以上</p>
+            </div>
+          </div>
+        </header>
+        <div class="relative z-[1] mx-auto max-w-3xl px-5 pb-16 pt-6 lg:max-w-4xl lg:px-8 lg:pt-8">
+          <div id="rankingLoading" class="hidden flex-col items-center justify-center gap-3 py-20 text-stone-500">
+            <span class="h-9 w-9 animate-spin rounded-full border-2 border-champagne/30 border-t-champagne" aria-hidden="true"></span>
+            <span class="text-sm tracking-wide">讀取資料中…</span>
+          </div>
+          <div id="rankingList" class="flex flex-col gap-4" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    /* 立即查詢：翻面 → 讀取 JSON → 卡片列淡入 */
+    (function () {
+      var flipInner = document.getElementById('flipInner');
+      var rankingLoading = document.getElementById('rankingLoading');
+      var rankingList = document.getElementById('rankingList');
+      if (!flipInner || !rankingList) return;
+
+      var RANKING_JSON_URL =
+        'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/rankingJson/dailyPrice_20260412.json';
+      var RANKING_DISPLAY_LIMIT = 3398;
+
+      function escapeHtml(str) {
+        if (str == null) return '';
+        var d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+      }
+
+      var PLACEHOLDER_IMAGE =
+        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=400&q=80';
+
+      var WS_TCG_CARDLIST_BASE =
+        'https://ws-tcg.com/wordpress/wp-content/images/cardlist/';
+
+      /**
+       * 卡號 → 官方卡圖 URL（例：SMP/W137-001 → …/s/smp_w137/smp_w137_001.png）
+       * 規則：cardlist/{系列首字母}/{系列_擴充小寫}/{系列_擴充小寫}_{卡號小寫}.png
+       */
+      function cardNoToWsTcgImageUrl(cardNo) {
+        if (cardNo == null) return '';
+        var s = String(cardNo).trim();
+        var m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+        if (!m) return '';
+        var series = m[1].toLowerCase();
+        var expansion = m[2].toLowerCase();
+        var cardId = m[3].replace(/\s+/g, '').toLowerCase();
+        if (!series || !expansion || !cardId) return '';
+        var slug = series + '_' + expansion;
+        var first = series.charAt(0);
+        return WS_TCG_CARDLIST_BASE + first + '/' + slug + '/' + slug + '_' + cardId + '.png';
+      }
+
+      function formatPriceYen(n) {
+        var num = Number(n);
+        if (!isFinite(num)) return '—';
+        return new Intl.NumberFormat('ja-JP').format(num) + ' 円';
+      }
+
+      /** 卡號→價格物件：依 JSON 鍵順序取前 limit 筆 */
+      function topCardsFromPriceMap(obj, limit) {
+        var cap = limit == null ? RANKING_DISPLAY_LIMIT : limit;
+        var keys = Object.keys(obj || {});
+        var out = [];
+        for (var i = 0; i < keys.length && out.length < cap; i++) {
+          var k = keys[i];
+          var p = Number(obj[k]);
+          if (!isFinite(p)) continue;
+          out.push({ cardNo: k, price: p });
+        }
+        return out;
+      }
+
+      function showLoading(on) {
+        if (!rankingLoading) return;
+        if (on) {
+          rankingLoading.classList.remove('hidden');
+          rankingLoading.classList.add('flex');
+        } else {
+          rankingLoading.classList.add('hidden');
+          rankingLoading.classList.remove('flex');
+        }
+      }
+
+      var vsData = [];
+      var vsRenderedNodes = new Map();
+      var vScrollRAF = null;
+      var scrollContainer = null;
+
+      // 動態判定精準的單個卡片物理高度 (包含 16px 的 gap) 156+16=172, 192+16=208
+      function getVsItemHeight() {
+        return window.innerWidth >= 768 ? 208 : 172;
+      }
+
+      function createVirtualCard(c, i) {
+        var img = c.image || cardNoToWsTcgImageUrl(c.cardNo) || PLACEHOLDER_IMAGE;
+        var article = document.createElement('article');
+        
+        // 賦予卡片絕對固定高度：h-[156px] 與 md:h-[192px]，並限制溢出
+        article.className = 'ranking-row glass-card flex flex-row items-center gap-4 rounded-xl p-4 md:gap-6 md:p-5 w-full h-[156px] md:h-[192px] overflow-hidden';
+        
+        article.style.position = 'absolute';
+        article.style.left = '0';
+        article.style.right = '0';
+        article.style.top = (i * getVsItemHeight()) + 'px';
+
+        article.innerHTML =
+          '<div class="flex shrink-0 w-10 flex-col items-center justify-center md:w-12">' +
+          '<span class="font-serif text-2xl text-champagne/90 md:text-3xl">' +
+          escapeHtml(String(i + 1)) +
+          '</span></div>' +
+          '<div class="shrink-0 w-[88px] md:w-[108px] flex flex-col justify-center">' +
+          '<div class="aspect-[63/88] w-full overflow-hidden rounded-lg border border-champagne/20 bg-void-100 shadow-lg">' +
+          '<img src="' + escapeHtml(img) + '" alt="" class="h-full w-full object-cover" loading="lazy" width="200" height="280" />' +
+          '</div></div>' +
+          '<div class="flex min-w-0 flex-1 flex-col justify-center gap-1.5">' +
+          '<p class="font-serif text-lg leading-tight text-stone-100 md:text-xl line-clamp-2">' +
+          escapeHtml(c.name != null ? c.name : c.cardNo) +
+          '</p>' +
+          '<p class="text-sm text-champagne md:text-base"><span class="text-stone-500">卡號</span> ' +
+          escapeHtml(c.cardNo) +
+          '</p>' +
+          (c.price != null
+            ? '<p class="text-base font-semibold text-champagne-light md:text-lg">' +
+              escapeHtml(formatPriceYen(c.price)) +
+              '</p>'
+            : '') +
+          '</div>';
+
+        var imgEl = article.querySelector('img');
+        if (imgEl && img.indexOf('ws-tcg.com') !== -1) {
+          imgEl.addEventListener('error', function () { imgEl.src = PLACEHOLDER_IMAGE; }, { once: true });
+        }
+        return article;
+      }
+
+      function renderVisibleItems(isInitial) {
+        if (!scrollContainer) return;
+        var scrollTop = scrollContainer.scrollTop;
+        var viewportHeight = scrollContainer.clientHeight;
+        if(viewportHeight === 0) viewportHeight = window.innerHeight;
+
+        var h = getVsItemHeight();
+        var startIdx = Math.floor(scrollTop / h);
+        var endIdx = Math.min(vsData.length - 1, startIdx + Math.ceil(viewportHeight / h) + 6);
+        startIdx = Math.max(0, startIdx - 3);
+
+        // 移除畫面外的節點 (DOM 回收)
+        vsRenderedNodes.forEach(function (node, idx) {
+          if (idx < startIdx || idx > endIdx) {
+            node.remove();
+            vsRenderedNodes.delete(idx);
+          }
+        });
+
+        // 建立畫面範圍內的節點
+        var newlyAdded = [];
+        var frag = document.createDocumentFragment();
+        for (var i = startIdx; i <= endIdx; i++) {
+          if (!vsRenderedNodes.has(i)) {
+            var node = createVirtualCard(vsData[i], i);
+            frag.appendChild(node);
+            vsRenderedNodes.set(i, node);
+            if (isInitial) newlyAdded.push(node);
+          }
+        }
+        rankingList.appendChild(frag);
+
+        // 只有在第一次載入列表時，為新節點掛上 GSAP 動畫
+        if (isInitial && typeof gsap !== 'undefined' && newlyAdded.length) {
+          gsap.fromTo(
+            newlyAdded,
+            { opacity: 0, y: 22 },
+            { opacity: 1, y: 0, duration: 0.52, stagger: 0.082, ease: 'power3.out' }
+          );
+        }
+      }
+
+      function handleVirtualScroll() {
+        if (vScrollRAF) return;
+        vScrollRAF = requestAnimationFrame(function () {
+          renderVisibleItems(false);
+          vScrollRAF = null;
+        });
+      }
+
+      function handleResize() {
+        if (!scrollContainer || vsData.length === 0) return;
+        rankingList.style.height = (vsData.length * getVsItemHeight()) + 'px';
+        vsRenderedNodes.forEach(function (node) { node.remove(); });
+        vsRenderedNodes.clear();
+        renderVisibleItems(false);
+      }
+
+      function initVirtualScroll(cards) {
+        vsData = cards;
+        rankingList.innerHTML = '';
+        scrollContainer = document.querySelector('.flip-face--back');
+
+        rankingList.className = 'relative w-full';
+        rankingList.style.height = (cards.length * getVsItemHeight()) + 'px';
+        
+        scrollContainer.addEventListener('scroll', handleVirtualScroll);
+        window.addEventListener('resize', handleResize);
+
+        renderVisibleItems(true); // 渲染最初的幾筆
+      }
+
+      function loadRankingData() {
+        return fetch(RANKING_JSON_URL, { cache: 'no-store' }).then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        });
+      }
+
+      function openRanking() {
+        if (flipInner.classList.contains('is-flipped')) return;
+        rankingList.innerHTML = '';
+        showLoading(true);
+        flipInner.classList.add('is-flipped');
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        window.scrollTo(0, 0);
+        var backFace = document.querySelector('.flip-face--back');
+        if (backFace) backFace.scrollTo(0, 0);
+
+        loadRankingData()
+          .then(function (data) {
+            var cards = [];
+            if (data && typeof data === 'object' && !Array.isArray(data) && data.cards == null) {
+              cards = topCardsFromPriceMap(data, RANKING_DISPLAY_LIMIT).map(function (row) {
+                return {
+                  cardNo: row.cardNo,
+                  price: row.price,
+                  name: row.cardNo,
+                };
+              });
+            } else if (data && Array.isArray(data.cards)) {
+              cards = data.cards.slice(0, RANKING_DISPLAY_LIMIT);
+            }
+            showLoading(false);
+            initVirtualScroll(cards);
+          })
+          .catch(function () {
+            showLoading(false);
+            initVirtualScroll([]);
+          });
+      }
+
+      function closeRanking() {
+        if (!flipInner.classList.contains('is-flipped')) return;
+        flipInner.classList.remove('is-flipped');
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        showLoading(false);
+        if (typeof gsap !== 'undefined') {
+          gsap.killTweensOf('#rankingList .ranking-row');
+        }
+        if (scrollContainer) {
+          scrollContainer.removeEventListener('scroll', handleVirtualScroll);
+          window.removeEventListener('resize', handleResize);
+        }
+        setTimeout(function () {
+          rankingList.innerHTML = '';
+          vsRenderedNodes.clear();
+          if (rankingList) rankingList.style.height = 'auto';
+        }, 960);
+      }
+
+      document.querySelectorAll('[data-open-ranking]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          openRanking();
+        });
+      });
+      var backBtn = document.getElementById('rankingBackBtn');
+      if (backBtn) backBtn.addEventListener('click', closeRanking);
+    })();
+
+    /* Hero title — char reveal */
+    (function () {
+      const el = document.getElementById('heroTitle');
+      if (!el) return;
+      const text = el.textContent.trim();
+      el.textContent = '';
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const wrap = document.createElement('span');
+        wrap.className = 'char-wrap';
+        const inner = document.createElement('span');
+        inner.className = 'char-inner';
+        inner.textContent = ch === ' ' ? '\u00A0' : ch;
+        wrap.appendChild(inner);
+        frag.appendChild(wrap);
+      }
+      el.appendChild(frag);
+      const chars = el.querySelectorAll('.char-inner');
+      gsap.set(chars, { yPercent: 110 });
+      gsap.to(chars, {
+        yPercent: 0,
+        duration: 1.05,
+        ease: 'power4.out',
+        stagger: 0.028,
+        delay: 0.2,
+      });
+    })();
+
+    /* SVG hero ring */
+    gsap.to('.hero-ring', {
+      rotate: 360,
+      transformOrigin: '50% 50%',
+      duration: 48,
+      repeat: -1,
+      ease: 'none',
+    });
+
+    /* Scroll reveals */
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.utils.toArray('.reveal-up').forEach(function (block) {
+      gsap.to(block, {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: block,
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        },
+      });
+    });
+    gsap.utils.toArray('.value-card').forEach(function (card, i) {
+      gsap.from(card, {
+        opacity: 0,
+        y: 48,
+        duration: 0.9,
+        ease: 'power3.out',
+        delay: i * 0.12,
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 90%',
+        },
+      });
+    });
+
+    /* Hover tilt cards */
+    document.querySelectorAll('.tilt-card').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        gsap.to(card, {
+          rotateY: px * 8,
+          rotateX: -py * 8,
+          transformPerspective: 900,
+          duration: 0.4,
+          ease: 'power2.out',
+        });
+      });
+      card.addEventListener('mouseleave', function () {
+        gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.6, ease: 'power3.out' });
+      });
+    });
+
+    /* Magnetic buttons */
+    document.querySelectorAll('[data-magnetic]').forEach(function (btn) {
+      btn.addEventListener('mousemove', function (e) {
+        const r = btn.getBoundingClientRect();
+        const mx = e.clientX - (r.left + r.width / 2);
+        const my = e.clientY - (r.top + r.height / 2);
+        gsap.to(btn, { x: mx * 0.22, y: my * 0.22, duration: 0.35, ease: 'power2.out' });
+      });
+      btn.addEventListener('mouseleave', function () {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.55, ease: 'elastic.out(1, 0.5)' });
+      });
+    });
+
+    /* Three.js — subtle gold particles */
+    (function () {
+      const canvas = document.getElementById('hero-canvas');
+      if (!canvas || typeof THREE === 'undefined') return;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+      camera.position.z = 4;
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      function resize() {
+        const w = canvas.parentElement.clientWidth;
+        const h = canvas.parentElement.clientHeight;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const count = 420;
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 14;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.035,
+        color: 0xc9a962,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      let t = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // 效能優化：當翻面顯示清單時，暫停背景 3D 的渲染
+        var flipInner = document.getElementById('flipInner');
+        if (flipInner && flipInner.classList.contains('is-flipped')) return;
+
+        t += 0.0009;
+        points.rotation.y = t * 0.8;
+        points.rotation.x = Math.sin(t * 0.6) * 0.08;
+        renderer.render(scene, camera);
+      }
+      animate();
+    })();
+
+    /* Anime.js — CTA pulse */
+    if (typeof anime !== 'undefined') {
+      anime({
+        targets: '#inquire .btn-cta',
+        boxShadow: [
+          '0 20px 40px -10px rgba(201, 169, 98, 0.15)',
+          '0 24px 56px -8px rgba(201, 169, 98, 0.35)',
+          '0 20px 40px -10px rgba(201, 169, 98, 0.15)',
+        ],
+        duration: 3200,
+        easing: 'easeInOutSine',
+        loop: true,
+      });
+    }
+  </script>
+    <script>
+    /* SPA Routing */
+    (function () {
+      const links = document.querySelectorAll('.spa-link');
+      const views = document.querySelectorAll('.spa-view');
+
+      links.forEach(link => {
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          const targetId = link.getAttribute('data-spa-target');
+
+          // Update Nav style
+          links.forEach(l => l.classList.remove('nav-link-active', 'text-champagne'));
+          links.forEach(l => l.classList.add('text-stone-400'));
+          link.classList.remove('text-stone-400');
+          link.classList.add('nav-link-active', 'text-champagne');
+
+          // Update View visibility
+          views.forEach(view => {
+            view.classList.remove('active');
+          });
+          const targetView = document.getElementById(targetId);
+          if (targetView) {
+            targetView.classList.add('active');
+            window.scrollTo(0, 0);
+          }
+        });
+      });
+    })();
+    </script>
+</body>
+</html>
