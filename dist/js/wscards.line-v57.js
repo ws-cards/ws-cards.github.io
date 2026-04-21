@@ -1390,7 +1390,7 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
 * @param {string} cardNumberDisplay - 顯示用卡號
 * 
 * 根據卡號構建圖片 URL 並顯示
-* URL 格式: https://ws-tcg.com/wordpress/wp-content/cardimages/{first}/{second}/{third}.png
+* URL 格式: https://ws-tcg.com/wordpress/wp-content/images/cardlist/{first}/{second}/{third}.png
 */
 function addPhoto(cardNumberDisplay){
             var card_Num;
@@ -1406,7 +1406,7 @@ function addPhoto(cardNumberDisplay){
             var card_third=card_Num.replace('/','_');
                 card_third=card_third.replace('-','_');	
             const cardImg = document.getElementById('cardImg');
-            var urlCard="https://ws-tcg.com/wordpress/wp-content/cardimages/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+            var urlCard="https://ws-tcg.com/wordpress/wp-content/images/cardlist/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
             //var urlCard="https://i.imgur.com/DKvx5hw.png";
             console.log("url card:"+urlCard);
             cardImg.setAttribute("src",urlCard);
