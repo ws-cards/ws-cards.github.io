@@ -1,0 +1,1922 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WS 場上戰況計算</title>
+  <link rel="stylesheet" href="../plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="../dist/css/adminlte.min.css">
+  <style>
+    :root{
+      /* 黑白相間 + 單線條（極簡） */
+      --bg: #ffffff;
+      --ink: #0a0a0a;
+      --muted: rgba(10,10,10,.62);
+      --line: rgba(10,10,10,.82);
+      --hairline: rgba(10,10,10,.22);
+      --alt: rgba(10,10,10,.04);
+      --alt2: rgba(10,10,10,.02);
+      --border: var(--hairline);
+      /* 保留變數名，避免舊的 utility class 引用到未定義的 CSS 變數 */
+      --danger: #0a0a0a;
+      --good: #0a0a0a;
+      --radius: 10px;
+    }
+    html, body { height: 100%; }
+    body{
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+      letter-spacing: .2px;
+      user-select: none;
+    }
+    .container-page{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 110px;
+    }
+    .topbar{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+    }
+    .title h1{
+      font-size: 18px;
+      margin: 0;
+      letter-spacing: .3px;
+      font-weight: 800;
+    }
+    .title .sub{
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .board{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .board-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--alt2);
+    }
+    .board-header .left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .board-header .right{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .btn-ghost{
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .btn-ghost:hover{ background: var(--alt); }
+    .btn-ghost:active{ transform: translateY(1px); }
+    .mat{
+      padding: 12px;
+      background: transparent;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1.6fr 1.2fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .col{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .zone{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: transparent;
+      overflow: hidden;
+      min-height: 84px;
+    }
+    .zone.public{ cursor: pointer; }
+    .zone.public:hover{ background: var(--alt); }
+    .zone.hidden{ background: var(--alt2); cursor: pointer; }
+    .zone.hidden:hover{ background: var(--alt); }
+    .zone .zhead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--hairline);
+      background: var(--alt2);
+    }
+    .zone .zname{
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: .4px;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .zone .zcount{
+      font-weight: 900;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+    }
+    .zone .zbody{
+      padding: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .zone .chips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+      user-select: none;
+      cursor: pointer;
+    }
+    .chip:hover{ background: var(--alt); }
+    .chip i{ opacity: .85; }
+
+    .stage{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: transparent;
+      overflow: hidden;
+    }
+    .stage-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px;
+      border-bottom: 1px solid var(--hairline);
+      background: var(--alt2);
+    }
+    .stage-title{
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: .4px;
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .stage-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+    .row2{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 980px){
+      .row2{ grid-template-columns: 1fr; }
+    }
+    .slot{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: transparent;
+      padding: 10px;
+      min-height: 66px;
+    }
+    .slot .slot-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .slot .slot-title small{
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .3px;
+    }
+    .slot .slot-body{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .slot.empty .slot-body{ color: rgba(255,255,255,.45); }
+    .slot.clickable{ cursor:pointer; }
+    .slot.clickable:hover{
+      background: var(--alt);
+    }
+
+    .fab{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1050;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--ink);
+      box-shadow: none;
+      color: var(--bg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .fab:hover{ background: #111; }
+    .fab:active{ transform: translateY(1px); }
+
+    .modal-content{
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    .modal-header{
+      border-bottom: 1px solid var(--hairline);
+    }
+    .modal-footer{
+      border-top: 1px solid var(--hairline);
+    }
+    .form-control, .form-select{
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+    }
+    .form-control:focus, .form-select:focus{
+      background: #fff;
+      border-color: var(--line);
+      box-shadow: none;
+      color: var(--ink);
+    }
+    .list-group-item{
+      background: #fff;
+      border: 1px solid var(--hairline);
+      color: var(--ink);
+    }
+
+    /* 區塊統計（角色/事件/CX） */
+    .zone-stats{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 10px 0 12px;
+    }
+    @media (max-width: 720px){
+      .zone-stats{ grid-template-columns: 1fr; }
+    }
+    .zone-stat{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 10px;
+      background: #fff;
+    }
+    .zone-stat .label{
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .2px;
+      text-transform: uppercase;
+    }
+    .zone-stat .value{
+      margin-top: 6px;
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .zone-stat .count{
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .zone-stat .pct{
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .zone-stat-foot{
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .suggest-wrap{ position: relative; }
+    .suggest-panel{
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      z-index: 2000;
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      display: none;
+    }
+    .suggest-item{
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--hairline);
+      background: #fff;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--ink);
+      cursor: pointer;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .suggest-item:hover{ background: var(--alt2); }
+    .suggest-item:last-child{ border-bottom: 0; }
+    .suggest-meta{ color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .suggest-hint{ font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .suggest-thumb{
+      width: 46px;
+      height: 64px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      flex: 0 0 auto;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .suggest-thumb img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:block;
+    }
+    .suggest-text{ flex: 1 1 auto; min-width: 0; }
+
+    .zone-thumb{
+      width: 46px;
+      height: 64px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      flex: 0 0 auto;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor: pointer;
+    }
+    .zone-thumb img{ width:100%; height:100%; object-fit: contain; display:block; }
+    .zone-row-main{ display:flex; align-items:center; gap: 10px; min-width: 0; flex: 1 1 auto; }
+
+    .pick-card-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      max-height: 320px;
+      overflow:auto;
+      padding: 2px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    @media (max-width: 520px){
+      .pick-card-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .pick-tile{
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pick-tile:hover{ background: var(--alt2); }
+    .pick-tile.selected{
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px rgba(10,10,10,.10);
+    }
+    .pick-tile .thumb2{
+      width: 100%;
+      aspect-ratio: 63 / 88;
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+    }
+    .pick-tile .thumb2 img{ width:100%; height:100%; object-fit: contain; display:block; }
+    .pick-tile .cap{
+      margin-top: 6px;
+      font-size: 10px;
+      line-height: 1.15;
+      color: var(--muted);
+      max-height: 2.4em;
+      overflow: hidden;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: rgba(10,10,10,.72);
+    }
+    .minihelp{ color: var(--muted); font-size: 12px; }
+    .danger{ color: var(--danger); }
+
+    /* 讓「黑白相間」更明顯：欄位內區塊交錯底色（但保持單線條） */
+    .col > :nth-child(even){
+      background: var(--alt2);
+    }
+    .col > :nth-child(odd){
+      background: transparent;
+    }
+
+    /* 修正：原本空 slot 的顏色是白字，改為灰黑 */
+    .slot.empty .slot-body{ color: rgba(10,10,10,.45); }
+
+    /* AdminLTE 的按鈕字色覆寫（避免 btn-outline-light 在白底 modal 看不見） */
+    .btn-outline-light{
+      color: var(--ink) !important;
+      border-color: var(--line) !important;
+    }
+    .btn-outline-light:hover{
+      background: var(--alt) !important;
+      color: var(--ink) !important;
+    }
+    .btn-outline-danger{
+      color: var(--ink) !important;
+      border-color: var(--line) !important;
+      background: transparent !important;
+    }
+    .btn-outline-danger:hover{
+      background: var(--alt) !important;
+    }
+
+    /* 關閉按鈕改黑字 */
+    .modal .close{ color: var(--ink) !important; opacity: .9; }
+    .modal .close:hover{ opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container-page">
+    <div class="topbar">
+      <div class="title">
+        <h1>WS 場上戰況計算</h1>
+        <div class="sub">能量區、牌組僅顯示數量；其他公開區可點擊查看清單。</div>
+      </div>
+      <div class="pill" id="saveStatus">
+        <i class="fas fa-circle text-success" style="font-size:10px;"></i>
+        <span>已自動儲存</span>
+      </div>
+    </div>
+
+    <div class="board">
+      <div class="board-header">
+        <div class="left">
+          <button class="btn-ghost" id="btnReset">
+            <i class="fas fa-rotate-left mr-1"></i>重置（保留隨機牌組）
+          </button>
+          <button class="btn-ghost" id="btnNewDeck">
+            <i class="fas fa-shuffle mr-1"></i>重抽隨機 50 張
+          </button>
+        </div>
+        <div class="right">
+          <button class="btn-ghost" id="btnImportDeck">
+            <i class="fas fa-file-import mr-1"></i>匯入牌組（可選）
+          </button>
+        </div>
+      </div>
+
+      <div class="mat">
+        <div class="grid">
+          <!-- 左欄 -->
+          <div class="col">
+            <div class="zone hidden" data-zone="energy" role="button" tabindex="0" aria-label="能量區（統計）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-bolt"></i>能量區</div>
+                <div class="zcount" id="count-energy">0</div>
+              </div>
+              <div class="zbody">
+                不顯示逐張內容；可點擊查看「角色/事件/CX」的預估分佈（依牌組內容推估）。
+                <div class="chips">
+                  <div class="chip" id="btnEnergyPlus"><i class="fas fa-plus"></i>+1</div>
+                  <div class="chip" id="btnEnergyMinus"><i class="fas fa-minus"></i>-1</div>
+                  <div class="chip" id="btnEnergyToWaiting"><i class="fas fa-arrow-right"></i>送去休息室</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="zone hidden" data-zone="deck" role="button" tabindex="0" aria-label="牌組（統計）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-layer-group"></i>牌組</div>
+                <div class="zcount" id="count-deck">50</div>
+              </div>
+              <div class="zbody">
+                不顯示逐張內容；可點擊查看「角色/事件/CX」的預估分佈（依牌組內容推估）。
+                <div class="chips">
+                  <div class="chip" id="btnDraw"><i class="fas fa-hand-paper"></i>抽 1 → 手牌</div>
+                  <div class="chip" id="btnMill"><i class="fas fa-arrow-down"></i>磨 1 → 休息室</div>
+                  <div class="chip" id="btnShuffleDeck"><i class="fas fa-random"></i>洗牌</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="zone public" data-zone="hand" role="button" tabindex="0" aria-label="手牌（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-hand-paper"></i>手牌</div>
+                <div class="zcount" id="count-hand">0</div>
+              </div>
+              <div class="zbody">點擊查看清單；也可在右下角編輯加入/移動卡。</div>
+            </div>
+
+            <div class="zone public" data-zone="stock" role="button" tabindex="0" aria-label="庫存（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-coins"></i>庫存</div>
+                <div class="zcount" id="count-stock">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+          </div>
+
+          <!-- 中欄：舞台 -->
+          <div class="col">
+            <div class="stage" aria-label="舞台">
+              <div class="stage-head">
+                <div class="stage-title"><i class="fas fa-theater-masks"></i>舞台（公開）</div>
+                <div class="pill" style="padding:6px 10px;">
+                  <i class="fas fa-hashtag" style="font-size:11px;"></i>
+                  <span>前列/後列可點擊查看清單</span>
+                </div>
+              </div>
+              <div class="stage-grid">
+                <div class="row2">
+                  <div class="slot clickable" data-zone="stageFront1">
+                    <div class="slot-title"><span>前列</span><small id="count-stageFront1">0</small></div>
+                    <div class="slot-body" id="hint-stageFront1">點擊查看清單</div>
+                  </div>
+                  <div class="slot clickable" data-zone="stageFront2">
+                    <div class="slot-title"><span>前列</span><small id="count-stageFront2">0</small></div>
+                    <div class="slot-body" id="hint-stageFront2">點擊查看清單</div>
+                  </div>
+                  <div class="slot clickable" data-zone="stageFront3">
+                    <div class="slot-title"><span>前列</span><small id="count-stageFront3">0</small></div>
+                    <div class="slot-body" id="hint-stageFront3">點擊查看清單</div>
+                  </div>
+                </div>
+                <div class="row2">
+                  <div class="slot clickable" data-zone="stageBack1">
+                    <div class="slot-title"><span>後列</span><small id="count-stageBack1">0</small></div>
+                    <div class="slot-body" id="hint-stageBack1">點擊查看清單</div>
+                  </div>
+                  <div class="slot clickable" data-zone="stageBack2">
+                    <div class="slot-title"><span>後列</span><small id="count-stageBack2">0</small></div>
+                    <div class="slot-body" id="hint-stageBack2">點擊查看清單</div>
+                  </div>
+                  <div class="slot empty">
+                    <div class="slot-title"><span>備註</span><small class="mono" id="count-stageTotal">0</small></div>
+                    <div class="slot-body">舞台總數（前列+後列）</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右欄 -->
+          <div class="col">
+            <div class="zone public" data-zone="memory" role="button" tabindex="0" aria-label="思出區（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-box-open"></i>思出區</div>
+                <div class="zcount" id="count-memory">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+
+            <div class="zone public" data-zone="clock" role="button" tabindex="0" aria-label="時鐘區（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-clock"></i>時鐘區</div>
+                <div class="zcount" id="count-clock">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+
+            <div class="zone public" data-zone="level" role="button" tabindex="0" aria-label="等級區（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-signal"></i>等級區</div>
+                <div class="zcount" id="count-level">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+
+            <div class="zone public" data-zone="climax" role="button" tabindex="0" aria-label="名場區（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-clone"></i>名場區</div>
+                <div class="zcount" id="count-climax">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+
+            <div class="zone public" data-zone="waiting" role="button" tabindex="0" aria-label="休息室（公開清單）">
+              <div class="zhead">
+                <div class="zname"><i class="fas fa-inbox"></i>休息室</div>
+                <div class="zcount" id="count-waiting">0</div>
+              </div>
+              <div class="zbody">點擊查看清單。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button class="fab" id="fabEdit" title="編輯公開區">
+    <i class="fas fa-pen"></i>
+  </button>
+
+  <!-- Zone List Modal -->
+  <div class="modal fade" id="zoneListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header d-flex align-items-center">
+          <h5 class="modal-title mb-0" id="zoneListTitle">區域清單</h5>
+          <div class="ml-auto d-flex align-items-center" style="gap: 8px;">
+            <button type="button" class="btn btn-sm btn-outline-light" id="zoneListEditBtn" title="編輯此區卡牌" style="display:none;">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="margin:0;">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="minihelp mb-2" id="zoneListHint"></div>
+          <div id="zoneListStats" aria-label="角色/事件/CX 統計"></div>
+          <div class="list-group" id="zoneList"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Image Modal -->
+  <div class="modal fade" id="cardImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cardImageTitle">卡牌預覽</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="minihelp mb-2" id="cardImageMeta"></div>
+          <div class="d-flex justify-content-center">
+            <img id="cardImageEl" alt="card" style="max-width:100%; max-height:72vh; border:1px solid var(--line); border-radius: var(--radius); background: var(--alt2);" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor Modal -->
+  <div class="modal fade" id="editorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">編輯公開區（新增/移動/刪除）</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-lg-6">
+              <label class="minihelp mb-2">新增卡到指定區域</label>
+              <div class="form-group suggest-wrap">
+                <input class="form-control" id="newCardName" placeholder="輸入卡名（或任何識別文字）" autocomplete="off">
+                <div class="suggest-hint" id="newCardNameHint" style="display:none;">依「牌組」內容提示（匯入後才會有資料）</div>
+                <div class="suggest-panel" id="newCardNameSuggest" aria-label="卡名建議"></div>
+              </div>
+              <div class="form-group suggest-wrap">
+                <input class="form-control" id="newCardImageUrl" placeholder="卡號（可選，例如：IMC/WE51-40，用於自動顯示卡圖）" autocomplete="off">
+                <div class="suggest-hint" id="newCardNoHint" style="display:none;">依「牌組」內容提示（匯入後才會有資料）</div>
+                <div class="suggest-panel" id="newCardNoSuggest" aria-label="卡號建議"></div>
+              </div>
+              <div class="form-group">
+                <input class="form-control" id="newCardType" placeholder="卡牌類型（可選，例：角色/事件/名場/支援）">
+              </div>
+              <div class="form-group">
+                <select class="form-select" id="newCardZone"></select>
+              </div>
+              <button class="btn btn-outline-light btn-block" id="btnAddCard">
+                <i class="fas fa-plus mr-1"></i>加入
+              </button>
+              <div class="minihelp mt-3">
+                你也可以把「手牌/舞台/休息室/名場區…」當作公開區的清單管理工具使用。
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <label class="minihelp mb-2">快速移動/刪除（選一張卡）</label>
+              <div class="form-group">
+                <select class="form-select" id="pickFromZone"></select>
+              </div>
+              <div class="form-group">
+                <div class="minihelp mb-2">點選一張卡（圖示）</div>
+                <input type="hidden" id="pickCardId" value="" />
+                <div id="pickCardGrid" class="pick-card-grid" aria-label="選取卡牌"></div>
+                <div class="minihelp mt-2" id="pickCardEmpty" style="display:none;">此區沒有卡。</div>
+              </div>
+              <div class="form-group">
+                <select class="form-select" id="moveToZone"></select>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-light flex-fill" id="btnMoveCard">
+                  <i class="fas fa-arrow-right mr-1"></i>移動
+                </button>
+                <button class="btn btn-outline-danger flex-fill" id="btnRemoveCard">
+                  <i class="fas fa-trash mr-1"></i>刪除
+                </button>
+              </div>
+              <div class="minihelp mt-3">
+                小提醒：牌組/能量區屬於不可公開區，不會出現在這裡（但你可以用左側快捷按鈕改數量/抽牌）。
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Deck Modal -->
+  <div class="modal fade" id="importDeckModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">匯入牌組（可選）</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="minihelp mb-2">
+            支援格式（每行一筆）：
+            <br><span class="mono">數量|卡號|卡名</span>（例：<span class="mono">4|BD/W54-070SSP|“鳥籠の歌姫”湊友希那</span>）
+            <br><span class="mono">數量|卡號|卡名|卡牌類型</span>（第 4 欄是類型，卡名內可含 <span class="mono">|</span>，會併到卡名內容）
+            <br>也支援省略數量：<span class="mono">卡號|卡名</span>或<span class="mono">卡號|卡名|卡牌類型</span>（預設數量為 1）
+            <br>圖片會依卡號自動使用官方卡圖網址（不需要再貼圖片網址）。
+            若未匯入，系統會使用內建隨機 50 張。
+          </div>
+          <textarea class="form-control" id="deckTextarea" rows="10" placeholder="貼上牌表..."></textarea>
+          <div class="minihelp mt-2">匯入後會直接建立 50 張（或依你輸入的總張數），並重置所有區域。</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-outline-warning" id="btnApplyDeck">
+            <i class="fas fa-check mr-1"></i>套用牌組
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../plugins/jquery/jquery.min.js"></script>
+  <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const STORAGE_KEY = "ws-battle-counter-v1";
+
+    const PUBLIC_ZONES = [
+      { key: "hand", label: "手牌" },
+      { key: "stock", label: "庫存" },
+      { key: "memory", label: "思出區" },
+      { key: "clock", label: "時鐘區" },
+      { key: "level", label: "等級區" },
+      { key: "climax", label: "名場區" },
+      { key: "waiting", label: "休息室" },
+      { key: "stageFront1", label: "舞台-前列 1" },
+      { key: "stageFront2", label: "舞台-前列 2" },
+      { key: "stageFront3", label: "舞台-前列 3" },
+      { key: "stageBack1", label: "舞台-後列 1" },
+      { key: "stageBack2", label: "舞台-後列 2" },
+    ];
+
+    const HIDDEN_ZONES = [
+      { key: "deck", label: "牌組" },
+      { key: "energy", label: "能量區" },
+    ];
+
+    const BUILTIN_POOL = [
+      "角色 A","角色 B","角色 C","角色 D","角色 E","事件 A","事件 B","事件 C",
+      "名場面 A","名場面 B","名場面 C","支援 A","支援 B","支援 C",
+      "等級 0 角色","等級 1 角色","等級 2 角色","等級 3 角色",
+      "移動用占位卡 1","移動用占位卡 2","移動用占位卡 3",
+      "後列支援 1","後列支援 2","前列打手 1","前列打手 2",
+      "抽牌事件","回收事件","增傷事件","防禦事件"
+    ];
+
+    function uid() {
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function randPick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    const WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
+
+    function normalizeCardNo(cardNo) {
+      return String(cardNo || "").trim();
+    }
+
+    function wsImageUrlFromCardNo(cardNo) {
+      const cn = normalizeCardNo(cardNo);
+      // 例：IMC/WE51-40 → https://.../i/imc_we51/imc_we51_40.png
+      const m = cn.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/);
+      if (!m) return "";
+      const series = m[1].toLowerCase();
+      const setId = m[2].toLowerCase();
+      const num = m[3].toLowerCase();
+      const folder = `${series}_${setId}`;
+      // 官方路徑規則：以作品代碼首字母當資料夾（例如 IMC → i）
+      const alpha = series.slice(0, 1) || "x";
+      return `${WS_CARD_IMAGE_BASE}/${alpha}/${folder}/${folder}_${num}.png`;
+    }
+
+    function isDigitsOnly(s) {
+      return /^\d+$/.test(String(s || "").trim());
+    }
+
+    function looksLikeWSCardNo(s) {
+      // 例：IMC/WE51-40
+      return /^[A-Za-z0-9]+\/[A-Za-z0-9]+-[A-Za-z0-9]+$/.test(String(s || "").trim());
+    }
+
+    function createCard(name, cardNo, type) {
+      const cn = normalizeCardNo(cardNo);
+      const t = String(type || "").trim();
+      const imageUrl = cn ? wsImageUrlFromCardNo(cn) : "";
+      return { id: uid(), name: (name || "未命名卡"), cardNo: cn, type: t, imageUrl };
+    }
+
+    function buildRandomDeck(n = 50) {
+      const deck = [];
+      for (let i = 0; i < n; i++) deck.push(createCard(randPick(BUILTIN_POOL), "", ""));
+      return deck;
+    }
+
+    function parseDeckText(text) {
+      // 先把各種換行正規化成 \n（含部分剪貼簿會出現的 Unicode line separators）
+      const normalized = String(text || "")
+        .replaceAll("\r\n", "\n")
+        .replaceAll("\r", "\n")
+        .replaceAll("\u2028", "\n") // LINE SEPARATOR
+        .replaceAll("\u2029", "\n") // PARAGRAPH SEPARATOR
+        .replaceAll("\u0085", "\n") // NEXT LINE (NEL)
+        .replaceAll("\u000B", "\n") // VT
+        .replaceAll("\u000C", "\n"); // FF
+
+      const lines = normalized
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+      const cards = [];
+      for (const line of lines) {
+        // 新規則：
+        // - 數量|卡號|卡名
+        // - 數量|卡號|卡名|卡牌類型
+        // - 卡號|卡名（數量預設 1）
+        // - 卡號|卡名|卡牌類型（數量預設 1）
+        // 移除舊規則「數量 空白 卡名」
+        const parts = line.split("|").map(s => s.trim());
+        if (parts.length === 0) continue;
+
+        // 4+ 欄位：最後一欄是「卡牌類型」，其餘中間內容併成卡名（可含額外 |）
+        if (parts.length >= 4) {
+          if (isDigitsOnly(parts[0]) && looksLikeWSCardNo(parts[1])) {
+            // 數量|卡號|卡名(可含|...)|卡牌類型
+            const qty = Math.max(1, parseInt(parts[0], 10) || 1);
+            const cardNo = parts[1];
+            const type = parts[parts.length - 1] || "";
+            const name = parts.slice(2, -1).join("|").trim();
+            for (let i = 0; i < qty; i++) cards.push(createCard(name, cardNo, type));
+            continue;
+          }
+          if (looksLikeWSCardNo(parts[0]) && !isDigitsOnly(parts[0])) {
+            // 卡號|卡名(可含|...)|卡牌類型
+            const cardNo = parts[0];
+            const type = parts[parts.length - 1] || "";
+            const name = parts.slice(1, -1).join("|").trim();
+            cards.push(createCard(name, cardNo, type));
+            continue;
+          }
+        }
+
+        if (parts.length >= 3) {
+          const firstIsQty = isDigitsOnly(parts[0]);
+          const secondIsCardNo = looksLikeWSCardNo(parts[1]);
+          const firstIsCardNo = looksLikeWSCardNo(parts[0]);
+          if (firstIsQty && secondIsCardNo) {
+            // 數量|卡號|卡名（可含|）
+            const qty = Math.max(1, parseInt(parts[0], 10) || 1);
+            const cardNo = parts[1];
+            const name = parts.slice(2).join("|").trim();
+            for (let i = 0; i < qty; i++) cards.push(createCard(name, cardNo, ""));
+            continue;
+          }
+          if (!firstIsQty && firstIsCardNo && parts.length === 3) {
+            // 卡號|卡名|卡牌類型（數量預設 1）
+            const cardNo = parts[0];
+            const name = parts[1];
+            const type = parts[2];
+            cards.push(createCard(name, cardNo, type));
+            continue;
+          }
+        }
+        if (parts.length === 2) {
+          const cardNo = parts[0];
+          const name = parts[1];
+          if (looksLikeWSCardNo(cardNo)) {
+            cards.push(createCard(name, cardNo, ""));
+            continue;
+          }
+        }
+        // 容錯：只有卡名（不建議，但避免整批失敗）
+        cards.push(createCard(parts[0] || line, "", ""));
+      }
+      return cards;
+    }
+
+    function blankState(deckCards) {
+      return {
+        version: 1,
+        updatedAt: Date.now(),
+        zones: {
+          deck: deckCards.slice(),
+          energy: [],
+          hand: [],
+          stock: [],
+          memory: [],
+          clock: [],
+          level: [],
+          climax: [],
+          waiting: [],
+          stageFront1: [],
+          stageFront2: [],
+          stageFront3: [],
+          stageBack1: [],
+          stageBack2: [],
+        }
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.zones) return null;
+        return data;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveState() {
+      state.updatedAt = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      flashSaved();
+    }
+
+    let saveTimer = null;
+    function saveSoon() {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveState(), 120);
+    }
+
+    function flashSaved() {
+      const el = document.getElementById("saveStatus");
+      if (!el) return;
+      el.style.borderColor = "rgba(45,212,191,.55)";
+      setTimeout(() => { el.style.borderColor = "var(--border)"; }, 450);
+    }
+
+    function zoneLabel(key) {
+      const all = [...PUBLIC_ZONES, ...HIDDEN_ZONES];
+      return (all.find(z => z.key === key) || { label: key }).label;
+    }
+
+    function zoneCount(key) {
+      const z = state.zones[key];
+      return Array.isArray(z) ? z.length : 0;
+    }
+
+    function ensureZone(key) {
+      if (!state.zones[key]) state.zones[key] = [];
+      if (!Array.isArray(state.zones[key])) state.zones[key] = [];
+    }
+
+    function renderCounts() {
+      const ids = [
+        "energy","deck","hand","stock","memory","clock","level","climax","waiting",
+        "stageFront1","stageFront2","stageFront3","stageBack1","stageBack2"
+      ];
+      for (const key of ids) {
+        const el = document.getElementById("count-" + key);
+        if (el) el.textContent = String(zoneCount(key));
+      }
+      const totalStage = zoneCount("stageFront1") + zoneCount("stageFront2") + zoneCount("stageFront3") + zoneCount("stageBack1") + zoneCount("stageBack2");
+      const elTotal = document.getElementById("count-stageTotal");
+      if (elTotal) elTotal.textContent = String(totalStage);
+
+      for (const k of ["stageFront1","stageFront2","stageFront3","stageBack1","stageBack2"]) {
+        const hint = document.getElementById("hint-" + k);
+        if (!hint) continue;
+        hint.textContent = zoneCount(k) ? "點擊查看清單" : "空";
+        const slot = document.querySelector('.slot[data-zone="' + k + '"]');
+        if (slot) slot.classList.toggle("empty", zoneCount(k) === 0);
+      }
+    }
+
+    function isHiddenZoneKey(zoneKey) {
+      return HIDDEN_ZONES.some(z => z.key === zoneKey);
+    }
+
+    function formatPct(n, d) {
+      if (!d || d <= 0) return "—";
+      return (Math.round((n * 10000) / d) / 100).toFixed(2) + "%";
+    }
+
+    function jointText(c) {
+      const t1 = String(c && c.type ? c.type : "");
+      const t2 = String(c && c.name ? c.name : "");
+      return (t1 + " " + t2).toLowerCase();
+    }
+
+    function isCxText(hay) {
+      const s = String(hay || "");
+      if (!s) return false;
+      // CX / 名場 / climax 關鍵字（盡量寬鬆）
+      return /(\bcx\b|クライ|名場|climax)/i.test(s);
+    }
+
+    function isEventText(hay) {
+      const s = String(hay || "");
+      if (!s) return false;
+      return /(事件|イベント|\bev\b|event)/i.test(s);
+    }
+
+    function isCharText(hay) {
+      const s = String(hay || "");
+      if (!s) return false;
+      return /(角色|キャラ|character|chara)/i.test(s);
+    }
+
+    function classifyWSCardBucket(c) {
+      const hay = jointText(c);
+      // 優先：CX
+      if (isCxText(hay)) return "cx";
+      // 次：事件
+      if (isEventText(hay)) return "event";
+      // 最後：角色
+      if (isCharText(hay)) return "char";
+      return "unk";
+    }
+
+    function aggregateWSCardBuckets(cards) {
+      const out = { char: 0, event: 0, cx: 0, unk: 0 };
+      for (const c of (cards || [])) {
+        const b = classifyWSCardBucket(c);
+        if (b === "char") out.char++;
+        else if (b === "event") out.event++;
+        else if (b === "cx") out.cx++;
+        else out.unk++;
+      }
+      const denom = out.char + out.event + out.cx + out.unk;
+      return { out, denom };
+    }
+
+    function renderBucketStatsToEl(el, agg, mode, footnote) {
+      if (!el) return;
+      el.innerHTML = "";
+      const { out, denom } = agg;
+      const grid = document.createElement("div");
+      grid.className = "zone-stats";
+      const rows = [
+        { key: "char", label: "角色" },
+        { key: "event", label: "事件" },
+        { key: "cx", label: "CX" },
+      ];
+      for (const r of rows) {
+        const n = out[r.key] || 0;
+        const stat = document.createElement("div");
+        stat.className = "zone-stat";
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = r.label;
+        const value = document.createElement("div");
+        value.className = "value";
+        const count = document.createElement("div");
+        count.className = "count";
+        count.textContent = String(n);
+        const pct = document.createElement("div");
+        pct.className = "pct";
+        pct.textContent = formatPct(n, denom);
+        value.appendChild(count);
+        value.appendChild(pct);
+        stat.appendChild(label);
+        stat.appendChild(value);
+        grid.appendChild(stat);
+      }
+      const foot = document.createElement("div");
+      foot.className = "zone-stat-foot";
+      const modeText = (mode === "public")
+        ? "比例＝各類別張數 / 本區可見卡牌總張數（含未分類）。"
+        : "比例＝各類別張數 / 牌組可辨識總張數（含未分類；依牌組內容做預估，不代表能量堆實際卡面）。";
+      const unkLine = (out.unk > 0) ? ("未分類：" + out.unk + " 張。 ") : "";
+      foot.textContent = modeText + " " + unkLine + (footnote || "");
+      el.appendChild(grid);
+      el.appendChild(foot);
+    }
+
+    function openZoneList(zoneKey) {
+      const title = document.getElementById("zoneListTitle");
+      const hint = document.getElementById("zoneListHint");
+      const list = document.getElementById("zoneList");
+      const stats = document.getElementById("zoneListStats");
+      const editBtn = document.getElementById("zoneListEditBtn");
+      ensureZone(zoneKey);
+
+      const hidden = isHiddenZoneKey(zoneKey);
+      title.textContent = zoneLabel(zoneKey) + "（" + zoneCount(zoneKey) + "）";
+
+      if (editBtn) {
+        editBtn.style.display = hidden ? "none" : "inline-flex";
+        editBtn.setAttribute("data-zone-key", zoneKey);
+        editBtn.setAttribute("title", hidden ? "此區不支援逐張編輯" : "編輯此區卡牌");
+      }
+
+      if (hidden) {
+        hint.textContent = (zoneKey === "deck")
+          ? "非公開：此彈窗不顯示逐張內容。下方分佈依「牌組」內容做預估（角色/事件/CX/未分類）。"
+          : "非公開：此彈窗不顯示逐張內容。下方分佈依「牌組」內容推估「能量堆」可能的分佈（實務上能量是蓋牌，此為參考值）。";
+      } else {
+        hint.textContent = "公開：下方分佈依本區實際卡牌內容計算；點擊卡名可預覽卡圖。點右上角鉛筆可立刻編輯此區，或使用右下角浮動按鈕。";
+      }
+
+      // 統計（角色/事件/CX）
+      if (hidden) {
+        ensureZone("deck");
+        const deckCards = state.zones.deck || [];
+        const agg = aggregateWSCardBuckets(deckCards);
+        renderBucketStatsToEl(stats, agg, "private", "");
+      } else {
+        const items = state.zones[zoneKey] || [];
+        const agg = aggregateWSCardBuckets(items);
+        renderBucketStatsToEl(stats, agg, "public", "");
+      }
+
+      // 清單：公開顯示；非公開不顯示
+      list.innerHTML = "";
+      if (hidden) {
+        const note = document.createElement("div");
+        note.className = "list-group-item";
+        note.textContent = "非公開區域不顯示逐張卡面清單。";
+        list.appendChild(note);
+        $("#zoneListModal").modal("show");
+        return;
+      }
+
+      const items = state.zones[zoneKey];
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "list-group-item";
+        empty.textContent = "（空）";
+        list.appendChild(empty);
+      } else {
+        for (let i = 0; i < items.length; i++) {
+          const it = items[i];
+          const row = document.createElement("div");
+          row.className = "list-group-item d-flex align-items-center justify-content-between";
+          row.style.gap = "10px";
+          const rowMain = document.createElement("div");
+          rowMain.className = "zone-row-main";
+          rowMain.style.flex = "1 1 auto";
+          rowMain.style.minWidth = "0";
+
+          const thumb = document.createElement("div");
+          thumb.className = "zone-thumb";
+          thumb.title = "預覽卡圖";
+          const img = document.createElement("img");
+          img.alt = "";
+          img.decoding = "async";
+          img.loading = "lazy";
+          const tUrl = String(it.imageUrl || "").trim() || (it.cardNo ? wsImageUrlFromCardNo(it.cardNo) : "");
+          img.onerror = function() {
+            try { this.onerror = null; } catch {}
+            this.src = placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+          };
+          img.src = tUrl || placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+          thumb.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openCardImage(it, zoneKey, i);
+          });
+          thumb.appendChild(img);
+
+          const left = document.createElement("div");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn btn-link p-0 m-0 text-left";
+          btn.style.color = "var(--ink)";
+          btn.style.textDecoration = "underline";
+          btn.style.textUnderlineOffset = "3px";
+          btn.style.fontWeight = "800";
+          const no = it.cardNo ? (' <span class="mono" style="text-decoration:none;">(' + escapeHtml(it.cardNo) + ')</span>') : "";
+          const ty = it.type ? (' <span class="mono" style="text-decoration:none;">[' + escapeHtml(it.type) + ']</span>') : "";
+          btn.innerHTML = '<span class="mono mr-2" style="text-decoration:none;">#' + (i + 1) + '</span>' + escapeHtml(it.name) + no + ty;
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openCardImage(it, zoneKey, i);
+          });
+          left.appendChild(btn);
+
+          rowMain.appendChild(thumb);
+          rowMain.appendChild(left);
+          const right = document.createElement("div");
+          right.className = "mono";
+          right.textContent = it.id.slice(-6);
+          row.appendChild(rowMain);
+          row.appendChild(right);
+          list.appendChild(row);
+        }
+      }
+      $("#zoneListModal").modal("show");
+    }
+
+    function placeholderSvgDataUrl(title) {
+      const t = String(title || "CARD").slice(0, 24);
+      const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1280">' +
+          '<rect width="100%" height="100%" fill="#fff"/>' +
+          '<rect x="18" y="18" width="864" height="1244" fill="none" stroke="#0a0a0a" stroke-width="3"/>' +
+          '<line x1="18" y1="160" x2="882" y2="160" stroke="#0a0a0a" stroke-width="2"/>' +
+          '<text x="50%" y="110" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="34" fill="#0a0a0a">' + escapeXml(t) + '</text>' +
+          '<text x="50%" y="52%" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="24" fill="rgba(10,10,10,.55)">' +
+            'NO IMAGE URL' +
+          '</text>' +
+          '<text x="50%" y="58%" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="18" fill="rgba(10,10,10,.42)">' +
+            '在編輯器新增「圖片網址」即可顯示卡圖' +
+          '</text>' +
+        '</svg>';
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
+
+    function escapeXml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
+    }
+
+    function openCardImage(card, zoneKey, index) {
+      const title = document.getElementById("cardImageTitle");
+      const meta = document.getElementById("cardImageMeta");
+      const img = document.getElementById("cardImageEl");
+      const zone = zoneLabel(zoneKey);
+      const name = card?.name || "未命名卡";
+      const cardNo = normalizeCardNo(card?.cardNo || "");
+      const cardType = String(card?.type || "").trim();
+      const url = String(card?.imageUrl || wsImageUrlFromCardNo(cardNo) || "").trim();
+
+      title.textContent = name;
+      meta.innerHTML =
+        '<span class="mono">區域：</span>' + escapeHtml(zone) +
+        ' <span class="mono ml-2">序號：</span>' + (index + 1) +
+        (cardNo ? (' <span class="mono ml-2">卡號：</span>' + escapeHtml(cardNo)) : '') +
+        (cardType ? (' <span class="mono ml-2">類型：</span>' + escapeHtml(cardType)) : '');
+
+      img.onerror = () => {
+        img.onerror = null;
+        img.src = placeholderSvgDataUrl(name);
+      };
+      img.src = url || placeholderSvgDataUrl(name);
+
+      $("#cardImageModal").modal("show");
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function moveOne(fromKey, toKey) {
+      ensureZone(fromKey);
+      ensureZone(toKey);
+      const c = state.zones[fromKey].shift();
+      if (!c) return false;
+      state.zones[toKey].push(c);
+      return true;
+    }
+
+    function addCard(toKey, name, cardNo, type) {
+      ensureZone(toKey);
+      state.zones[toKey].push(createCard(name, cardNo, type));
+    }
+
+    function removeCard(zoneKey, cardId) {
+      ensureZone(zoneKey);
+      const before = state.zones[zoneKey].length;
+      state.zones[zoneKey] = state.zones[zoneKey].filter(c => c.id !== cardId);
+      return state.zones[zoneKey].length !== before;
+    }
+
+    function moveCard(fromKey, toKey, cardId) {
+      ensureZone(fromKey);
+      ensureZone(toKey);
+      const idx = state.zones[fromKey].findIndex(c => c.id === cardId);
+      if (idx < 0) return false;
+      const [c] = state.zones[fromKey].splice(idx, 1);
+      state.zones[toKey].push(c);
+      return true;
+    }
+
+    function shuffleZone(key) {
+      ensureZone(key);
+      const a = state.zones[key];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+    }
+
+    function publicZoneOptionsHtml() {
+      return PUBLIC_ZONES.map(z => '<option value="' + z.key + '">' + z.label + '</option>').join("");
+    }
+
+    let pendingEditorZone = null;
+
+    function isPublicEditorZoneKey(zoneKey) {
+      return PUBLIC_ZONES.some(z => z.key === zoneKey);
+    }
+
+    function openEditorForZoneKey(zoneKey) {
+      if (!isPublicEditorZoneKey(zoneKey)) {
+        // 非公開區域沒有「逐張編輯」；引導到匯入牌組
+        $("#importDeckModal").modal("show");
+        return;
+      }
+      pendingEditorZone = zoneKey;
+      rebuildEditorSelectors();
+      pendingEditorZone = null;
+      $("#editorModal").modal("show");
+      setTimeout(() => {
+        const name = document.getElementById("newCardName");
+        if (name) name.focus();
+      }, 50);
+    }
+
+    function rebuildEditorSelectors() {
+      const elNewZone = document.getElementById("newCardZone");
+      const elFromZone = document.getElementById("pickFromZone");
+      const elMoveTo = document.getElementById("moveToZone");
+      if (elNewZone) elNewZone.innerHTML = publicZoneOptionsHtml();
+      if (elFromZone) elFromZone.innerHTML = publicZoneOptionsHtml();
+      if (elMoveTo) elMoveTo.innerHTML = publicZoneOptionsHtml();
+
+      const prefer = pendingEditorZone && isPublicEditorZoneKey(pendingEditorZone) ? pendingEditorZone : "hand";
+      if (elFromZone) elFromZone.value = prefer;
+      if (elMoveTo) elMoveTo.value = "waiting";
+      if (elNewZone) elNewZone.value = prefer;
+      rebuildPickCard();
+    }
+
+    function updatePickMoveButtonsState() {
+      const cardId = document.getElementById("pickCardId")?.value || "";
+      const btnMove = document.getElementById("btnMoveCard");
+      const btnRemove = document.getElementById("btnRemoveCard");
+      const disabled = !cardId;
+      if (btnMove) btnMove.disabled = disabled;
+      if (btnRemove) btnRemove.disabled = disabled;
+    }
+
+    function setPickSelection(cardId) {
+      const input = document.getElementById("pickCardId");
+      if (input) input.value = cardId || "";
+      document.querySelectorAll("#pickCardGrid .pick-tile").forEach((el) => {
+        el.classList.toggle("selected", !!cardId && el.getAttribute("data-card-id") === cardId);
+      });
+      updatePickMoveButtonsState();
+    }
+
+    function rebuildPickCard() {
+      const fromKey = document.getElementById("pickFromZone")?.value || "hand";
+      ensureZone(fromKey);
+      const grid = document.getElementById("pickCardGrid");
+      const emptyHint = document.getElementById("pickCardEmpty");
+      const input = document.getElementById("pickCardId");
+      if (!grid || !input) return;
+      const items = state.zones[fromKey] || [];
+      const prev = input.value;
+
+      grid.innerHTML = "";
+      if (emptyHint) emptyHint.style.display = items.length ? "none" : "block";
+
+      if (!items.length) {
+        input.value = "";
+        updatePickMoveButtonsState();
+        return;
+      }
+
+      const still = prev && items.some(c => c.id === prev);
+      const selected = still ? prev : items[0].id;
+
+      for (let i = 0; i < items.length; i++) {
+        const c = items[i];
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "pick-tile";
+        tile.setAttribute("data-card-id", c.id);
+        tile.title = (c.name || "") + (c.cardNo ? (" / " + c.cardNo) : "");
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb2";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const url = String(c.imageUrl || "").trim() || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        };
+        img.src = url || placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        thumb.appendChild(img);
+
+        const cap = document.createElement("div");
+        cap.className = "cap mono";
+        const line1 = (i + 1) + ". " + (c.name || "未命名");
+        const line2 = (c.cardNo ? c.cardNo : "（無卡號）") + (c.type ? (" · " + c.type) : "");
+        cap.textContent = line1 + " " + line2;
+
+        tile.appendChild(thumb);
+        tile.appendChild(cap);
+        tile.addEventListener("click", (e) => {
+          e.preventDefault();
+          setPickSelection(c.id);
+        });
+
+        grid.appendChild(tile);
+      }
+
+      setPickSelection(selected);
+    }
+
+    let state = null;
+
+    const refCatalog = {
+      items: [], // {name, cardNo, type, imageUrl}
+      byName: new Map(), // name -> item
+      byNo: new Map(), // cardNo -> item
+    };
+
+    function rebuildRefCatalogFromDeck() {
+      refCatalog.items = [];
+      refCatalog.byName = new Map();
+      refCatalog.byNo = new Map();
+      if (!state || !state.zones || !Array.isArray(state.zones.deck)) return;
+
+      for (const c of state.zones.deck) {
+        const name = String(c && c.name ? c.name : "").trim();
+        const cardNo = String(c && c.cardNo ? c.cardNo : "").trim();
+        const type = String(c && c.type ? c.type : "").trim();
+        if (!name && !cardNo) continue;
+        const imageUrl = String(c && c.imageUrl ? c.imageUrl : "").trim() || (cardNo ? wsImageUrlFromCardNo(cardNo) : "");
+        const item = { name, cardNo, type, imageUrl };
+        refCatalog.items.push(item);
+        if (name && !refCatalog.byName.has(name)) refCatalog.byName.set(name, item);
+        if (cardNo && !refCatalog.byNo.has(cardNo)) refCatalog.byNo.set(cardNo, item);
+      }
+    }
+
+    function scoreMatch(hay, q) {
+      const h = String(hay || "").toLowerCase();
+      const qq = String(q || "").toLowerCase().trim();
+      if (!qq) return 0;
+      if (h === qq) return 120;
+      if (h.startsWith(qq)) return 100;
+      const idx = h.indexOf(qq);
+      if (idx === 0) return 90;
+      if (idx > 0) return 70;
+      return 0;
+    }
+
+    function bestItemScore(item, q) {
+      const qq = String(q || "").trim();
+      if (!qq) return 0;
+      const s1 = scoreMatch(item.name, qq);
+      const s2 = scoreMatch(item.cardNo, qq);
+      const s3 = scoreMatch(item.type, qq);
+      return Math.max(s1, s2, s3);
+    }
+
+    function renderSuggestPanel(panelEl, items, onPick) {
+      if (!panelEl) return;
+      panelEl.innerHTML = "";
+      if (!items.length) {
+        panelEl.style.display = "none";
+        return;
+      }
+      for (const it of items) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "suggest-item";
+        const thumb = document.createElement("div");
+        thumb.className = "suggest-thumb";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const url = String(it.imageUrl || "").trim() || (it.cardNo ? wsImageUrlFromCardNo(it.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+        };
+        img.src = url || placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+        thumb.appendChild(img);
+
+        const text = document.createElement("div");
+        text.className = "suggest-text";
+        const t1 = document.createElement("div");
+        t1.textContent = it.name || "（未命名）";
+        const t2 = document.createElement("div");
+        t2.className = "suggest-meta mono";
+        const left = it.cardNo ? it.cardNo : "（無卡號）";
+        const right = it.type ? (" · " + it.type) : "";
+        t2.textContent = left + right;
+        text.appendChild(t1);
+        text.appendChild(t2);
+
+        btn.appendChild(thumb);
+        btn.appendChild(text);
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          onPick(it);
+        });
+        panelEl.appendChild(btn);
+      }
+      panelEl.style.display = "block";
+    }
+
+    function updateNameSuggestUI() {
+      const input = document.getElementById("newCardName");
+      const panel = document.getElementById("newCardNameSuggest");
+      const hint = document.getElementById("newCardNameHint");
+      if (!input || !panel) return;
+      if (hint) hint.style.display = refCatalog.items.length ? "block" : "none";
+
+      const q = input.value;
+      if (!q || q.trim().length < 1) {
+        panel.style.display = "none";
+        panel.innerHTML = "";
+        return;
+      }
+      const scored = refCatalog.items
+        .map(it => ({ it, s: bestItemScore(it, q) }))
+        .filter(x => x.s > 0)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 20)
+        .map(x => x.it);
+
+      renderSuggestPanel(panel, scored, (picked) => {
+        document.getElementById("newCardName").value = picked.name || "";
+        document.getElementById("newCardImageUrl").value = picked.cardNo || "";
+        if (document.getElementById("newCardType") && picked.type) {
+          document.getElementById("newCardType").value = picked.type;
+        }
+        panel.style.display = "none";
+      });
+    }
+
+    function updateNoSuggestUI() {
+      const input = document.getElementById("newCardImageUrl");
+      const panel = document.getElementById("newCardNoSuggest");
+      const hint = document.getElementById("newCardNoHint");
+      if (!input || !panel) return;
+      if (hint) hint.style.display = refCatalog.items.length ? "block" : "none";
+
+      const q = input.value;
+      if (!q || q.trim().length < 1) {
+        panel.style.display = "none";
+        panel.innerHTML = "";
+        return;
+      }
+      const scored = refCatalog.items
+        .map(it => ({ it, s: Math.max(scoreMatch(it.cardNo, q), scoreMatch(it.name, q)) }))
+        .filter(x => x.s > 0)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 20)
+        .map(x => x.it);
+
+      renderSuggestPanel(panel, scored, (picked) => {
+        document.getElementById("newCardImageUrl").value = picked.cardNo || "";
+        document.getElementById("newCardName").value = picked.name || "";
+        if (document.getElementById("newCardType") && picked.type) {
+          document.getElementById("newCardType").value = picked.type;
+        }
+        panel.style.display = "none";
+      });
+    }
+
+    function wireAddCardAutocompletes() {
+      const name = document.getElementById("newCardName");
+      const no = document.getElementById("newCardImageUrl");
+      if (name) {
+        name.addEventListener("input", () => updateNameSuggestUI());
+        name.addEventListener("focus", () => updateNameSuggestUI());
+        name.addEventListener("blur", () => {
+          setTimeout(() => {
+            const panel = document.getElementById("newCardNameSuggest");
+            if (panel) panel.style.display = "none";
+          }, 150);
+        });
+      }
+      if (no) {
+        no.addEventListener("input", () => updateNoSuggestUI());
+        no.addEventListener("focus", () => updateNoSuggestUI());
+        no.addEventListener("blur", () => {
+          setTimeout(() => {
+            const panel = document.getElementById("newCardNoSuggest");
+            if (panel) panel.style.display = "none";
+          }, 150);
+        });
+      }
+    }
+
+    function init() {
+      state = loadState();
+      if (!state) {
+        state = blankState(buildRandomDeck(50));
+        saveState();
+      } else {
+        // 補齊缺漏 zone
+        for (const z of [...PUBLIC_ZONES, ...HIDDEN_ZONES]) ensureZone(z.key);
+      }
+      rebuildRefCatalogFromDeck();
+      wireAddCardAutocompletes();
+      // 讓匯入/洗牌後也能即時更新提示索引
+      $("#editorModal").on("shown.bs.modal", function() {
+        rebuildRefCatalogFromDeck();
+      });
+
+      // 綁定：公開區點擊
+      document.querySelectorAll(".zone.public").forEach(el => {
+        const key = el.getAttribute("data-zone");
+        el.addEventListener("click", () => openZoneList(key));
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openZoneList(key);
+          }
+        });
+      });
+
+      // 綁定：非公開區（牌組/能量）點擊看「預估分佈」
+      document.querySelectorAll(".zone.hidden").forEach(el => {
+        const key = el.getAttribute("data-zone");
+        el.addEventListener("click", () => openZoneList(key));
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openZoneList(key);
+          }
+        });
+      });
+
+      // 非公開區內的快捷按鈕（chip）不要觸發「打開彈窗」
+      document.querySelectorAll(".zone.hidden .chip").forEach((chip) => {
+        chip.addEventListener("click", (e) => e.stopPropagation());
+      });
+
+      // 區塊清單彈窗：右上角鉛筆 → 直接開啟編輯器並切到該區
+      const zoneListEditBtn = document.getElementById("zoneListEditBtn");
+      if (zoneListEditBtn) {
+        zoneListEditBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const key = zoneListEditBtn.getAttribute("data-zone-key") || "";
+          if (!key) return;
+          $("#zoneListModal").modal("hide");
+          setTimeout(() => openEditorForZoneKey(key), 150);
+        });
+      }
+
+      // 綁定：舞台 slot 點擊
+      document.querySelectorAll(".slot.clickable").forEach(el => {
+        const key = el.getAttribute("data-zone");
+        el.addEventListener("click", () => openZoneList(key));
+      });
+
+      // 能量區快捷按鈕
+      document.getElementById("btnEnergyPlus").addEventListener("click", () => {
+        state.zones.energy.push(createCard("能量", "", ""));
+        renderCounts(); saveSoon();
+      });
+      document.getElementById("btnEnergyMinus").addEventListener("click", () => {
+        state.zones.energy.pop();
+        renderCounts(); saveSoon();
+      });
+      document.getElementById("btnEnergyToWaiting").addEventListener("click", () => {
+        if (moveOne("energy", "waiting")) {
+          renderCounts(); saveSoon();
+        }
+      });
+
+      // 牌組快捷按鈕
+      document.getElementById("btnDraw").addEventListener("click", () => {
+        if (moveOne("deck", "hand")) {
+          renderCounts();
+          rebuildRefCatalogFromDeck();
+          saveSoon();
+        }
+      });
+      document.getElementById("btnMill").addEventListener("click", () => {
+        if (moveOne("deck", "waiting")) {
+          renderCounts();
+          rebuildRefCatalogFromDeck();
+          saveSoon();
+        }
+      });
+      document.getElementById("btnShuffleDeck").addEventListener("click", () => {
+        shuffleZone("deck");
+        rebuildRefCatalogFromDeck();
+        saveSoon();
+      });
+
+      // 浮動按鈕：編輯
+      document.getElementById("fabEdit").addEventListener("click", () => {
+        rebuildEditorSelectors();
+        $("#editorModal").modal("show");
+      });
+
+      // 編輯器：新增
+      document.getElementById("btnAddCard").addEventListener("click", () => {
+        const name = document.getElementById("newCardName").value.trim();
+        const cardNo = document.getElementById("newCardImageUrl").value.trim();
+        const type = (document.getElementById("newCardType") && document.getElementById("newCardType").value) ? document.getElementById("newCardType").value.trim() : "";
+        const toKey = document.getElementById("newCardZone").value;
+        if (!name) return;
+        addCard(toKey, name, cardNo, type);
+        document.getElementById("newCardName").value = "";
+        document.getElementById("newCardImageUrl").value = "";
+        if (document.getElementById("newCardType")) document.getElementById("newCardType").value = "";
+        renderCounts();
+        rebuildPickCard();
+        saveSoon();
+      });
+
+      // 編輯器：from zone 變更
+      document.getElementById("pickFromZone").addEventListener("change", () => rebuildPickCard());
+
+      // 編輯器：移動
+      document.getElementById("btnMoveCard").addEventListener("click", () => {
+        const fromKey = document.getElementById("pickFromZone").value;
+        const idEl = document.getElementById("pickCardId");
+        const cardId = (idEl && idEl.value) ? idEl.value.trim() : "";
+        const toKey = document.getElementById("moveToZone").value;
+        if (!cardId) return;
+        if (moveCard(fromKey, toKey, cardId)) {
+          renderCounts();
+          rebuildPickCard();
+          saveSoon();
+        }
+      });
+
+      // 編輯器：刪除
+      document.getElementById("btnRemoveCard").addEventListener("click", () => {
+        const fromKey = document.getElementById("pickFromZone").value;
+        const idEl = document.getElementById("pickCardId");
+        const cardId = (idEl && idEl.value) ? idEl.value.trim() : "";
+        if (!cardId) return;
+        if (removeCard(fromKey, cardId)) {
+          renderCounts();
+          rebuildPickCard();
+          saveSoon();
+        }
+      });
+
+      // 重置（保留 deck）
+      document.getElementById("btnReset").addEventListener("click", () => {
+        const deckKeep = state.zones.deck.slice();
+        state = blankState(deckKeep);
+        renderCounts();
+        rebuildRefCatalogFromDeck();
+        saveState();
+      });
+
+      // 重抽隨機 deck
+      document.getElementById("btnNewDeck").addEventListener("click", () => {
+        state = blankState(buildRandomDeck(50));
+        renderCounts();
+        rebuildRefCatalogFromDeck();
+        saveState();
+      });
+
+      // 匯入牌組
+      document.getElementById("btnImportDeck").addEventListener("click", () => {
+        document.getElementById("deckTextarea").value = "";
+        $("#importDeckModal").modal("show");
+      });
+      document.getElementById("btnApplyDeck").addEventListener("click", () => {
+        const text = document.getElementById("deckTextarea").value;
+        const cards = parseDeckText(text);
+        const deckCards = cards.length ? cards : buildRandomDeck(50);
+        state = blankState(deckCards);
+        renderCounts();
+        rebuildRefCatalogFromDeck();
+        saveState();
+        $("#importDeckModal").modal("hide");
+      });
+
+      renderCounts();
+    }
+
+    init();
+  </script>
+</body>
+</html>
