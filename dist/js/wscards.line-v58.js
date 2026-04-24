@@ -886,11 +886,6 @@ document.getElementById('overlay-1').style.display='block';
 document.getElementById('overlay-2').style.display='block';				
 document.getElementById('overlay-3').style.display='block';		
 
-document.getElementById('linkMercari').href = `https://jp.mercari.com/search?keyword=${encodeURIComponent(cardTitle)}`;
-document.getElementById('linkYahoo').href = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(cardTitle)}`;
-document.getElementById('linkYuyu').href = `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent(cardTitle)}`;
-document.getElementById('linkRuten').href = `https://www.ruten.com.tw/find/?q=${encodeURIComponent(cardTitle)}`;
-
 var downloadCardTag = document.getElementById('download-card-tag');
 if (downloadCardTag) {
     downloadCardTag.style.display = 'none';
@@ -950,6 +945,12 @@ if (cardNumberValue && cardNumberValue !== '000/000-000') {
         GradingModule.loadGradingData(cardTilteReplaceSpare, cardNumberDisplayText);
     }
 }
+
+
+document.getElementById('linkMercari').href = `https://jp.mercari.com/search?keyword=${encodeURIComponent(cardNumberValue)}`;
+document.getElementById('linkYahoo').href = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(cardNumberValue)}`;
+document.getElementById('linkYuyu').href = `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent(cardNumberValue)}`;
+document.getElementById('linkRuten').href = `https://www.ruten.com.tw/find/?q=${encodeURIComponent(cardNumberValue)}`;
 
 /**
  * 等待卡片圖片載入完成
