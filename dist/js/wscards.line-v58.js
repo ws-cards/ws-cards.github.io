@@ -2118,6 +2118,10 @@ fetch(jsonUrl)
                 cardtext: Array.isArray(rawCardData.text) ? rawCardData.text.join('\n') : rawCardData.cardtext
             };
 
+            //更新搜尋關鍵字
+            document.getElementById('linkMercari').href = `https://jp.mercari.com/search?keyword=${encodeURIComponent(cardData.cardname || cardNumber)}`;
+            document.getElementById('linkYahoo').href = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(cardData.cardname || cardNumber)}`;            
+            
             console.log('載入的卡片資料:', cardData);
             updateCardInfo(cardData);
             hideInfoMask();
