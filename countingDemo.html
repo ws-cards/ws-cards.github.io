@@ -386,11 +386,98 @@
       font-size: 12px;
       color: var(--ink);
       cursor: pointer;
+      display:flex;
+      align-items:center;
+      gap: 10px;
     }
     .suggest-item:hover{ background: var(--alt2); }
     .suggest-item:last-child{ border-bottom: 0; }
     .suggest-meta{ color: var(--muted); font-size: 11px; margin-top: 2px; }
     .suggest-hint{ font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .suggest-thumb{
+      width: 46px;
+      height: 64px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      flex: 0 0 auto;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .suggest-thumb img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:block;
+    }
+    .suggest-text{ flex: 1 1 auto; min-width: 0; }
+
+    .zone-thumb{
+      width: 46px;
+      height: 64px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      flex: 0 0 auto;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor: pointer;
+    }
+    .zone-thumb img{ width:100%; height:100%; object-fit: contain; display:block; }
+    .zone-row-main{ display:flex; align-items:center; gap: 10px; min-width: 0; flex: 1 1 auto; }
+
+    .pick-card-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      max-height: 320px;
+      overflow:auto;
+      padding: 2px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    @media (max-width: 520px){
+      .pick-card-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .pick-tile{
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pick-tile:hover{ background: var(--alt2); }
+    .pick-tile.selected{
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px rgba(10,10,10,.10);
+    }
+    .pick-tile .thumb2{
+      width: 100%;
+      aspect-ratio: 63 / 88;
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+    }
+    .pick-tile .thumb2 img{ width:100%; height:100%; object-fit: contain; display:block; }
+    .pick-tile .cap{
+      margin-top: 6px;
+      font-size: 10px;
+      line-height: 1.15;
+      color: var(--muted);
+      max-height: 2.4em;
+      overflow: hidden;
+    }
     .mono{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
@@ -702,7 +789,10 @@
                 <select class="form-select" id="pickFromZone"></select>
               </div>
               <div class="form-group">
-                <select class="form-select" id="pickCard"></select>
+                <div class="minihelp mb-2">點選一張卡（圖示）</div>
+                <input type="hidden" id="pickCardId" value="" />
+                <div id="pickCardGrid" class="pick-card-grid" aria-label="選取卡牌"></div>
+                <div class="minihelp mt-2" id="pickCardEmpty" style="display:none;">此區沒有卡。</div>
               </div>
               <div class="form-group">
                 <select class="form-select" id="moveToZone"></select>
@@ -747,7 +837,10 @@
             <br>圖片會依卡號自動使用官方卡圖網址（不需要再貼圖片網址）。
             若未匯入，系統會使用內建隨機 50 張。
           </div>
-          <textarea class="form-control" id="deckTextarea" rows="10" placeholder="貼上牌表..."></textarea>
+          <div class="minihelp mb-2" style="border-top:1px solid var(--line); padding-top:10px; margin-top:6px;">
+            也支援直接貼 <b>DECK LOG</b> 的 XHR 回應 JSON（F12 → Network → <span class="mono">.../system/app/api/view/&lt;代碼&gt;</span> → Copy Response 全文），可以省去人工整理牌表。
+          </div>
+          <textarea class="form-control" id="deckTextarea" rows="10" placeholder="貼上牌表...（或貼 Deck Log 的 JSON Response）"></textarea>
           <div class="minihelp mt-2">匯入後會直接建立 50 張（或依你輸入的總張數），並重置所有區域。</div>
         </div>
         <div class="modal-footer">
@@ -924,6 +1017,62 @@
         cards.push(createCard(parts[0] || line, "", ""));
       }
       return cards;
+    }
+
+    function looksLikeDecklogJson(text) {
+      const t = String(text || "").trim();
+      if (!t || t.charAt(0) !== "{") return false;
+      return t.indexOf('"list"') >= 0 || t.indexOf('"card_number"') >= 0;
+    }
+
+    function decklogWsTypeFromCardKind(cardKind) {
+      const k = Number(cardKind);
+      if (k === 2) return "角色";
+      if (k === 3) return "事件";
+      if (k === 4) return "CX";
+      return "";
+    }
+
+    function mergeDecklogListParts(data) {
+      if (!data || typeof data !== "object") return [];
+      const a = Array.isArray(data.list) ? data.list : [];
+      const b = Array.isArray(data.sub_list) ? data.sub_list : [];
+      const c = Array.isArray(data.p_list) ? data.p_list : [];
+      return a.concat(b, c).filter((row) => row && row.card_number != null);
+    }
+
+    function cardsFromDecklogPayload(data) {
+      if (Array.isArray(data) && data.length === 0) {
+        throw new Error("Deck Log 回應為空陣列，請檢查代碼或代理。");
+      }
+      if (data == null || typeof data !== "object") throw new Error("非有效的 Deck Log 資料。");
+      const items = mergeDecklogListParts(data);
+      if (data.message && !items.length) throw new Error(String(data.message));
+      if (!items.length) throw new Error("此牌組沒有卡表清單或為空。");
+      const gid = data.game_title_id;
+      const useWsType = (gid == null || gid === 2);
+      const cards = [];
+      for (const row of items) {
+        const n = Math.max(0, parseInt(row.num, 10) || 0);
+        if (!n) continue;
+        const cardNo = normalizeCardNo(String(row.card_number || "").replace(/\\/g, "/"));
+        const name = String(row.name != null ? row.name : "未命名").trim() || "未命名";
+        const t = useWsType ? decklogWsTypeFromCardKind(row.card_kind) : "";
+        for (let i = 0; i < n; i++) cards.push(createCard(name, cardNo, t));
+      }
+      if (!cards.length) throw new Error("匯出為 0 張（請檢查 num/卡號欄位）。");
+      return cards;
+    }
+
+    function resolveDeckCardsFromUserInput(text) {
+      const t = String(text || "").trim();
+      if (!t) return [];
+      if (looksLikeDecklogJson(t)) {
+        let j;
+        try { j = JSON.parse(t); } catch (e) { throw new Error("JSON 解析失敗：" + (e && e.message ? e.message : e)); }
+        return cardsFromDecklogPayload(j);
+      }
+      return parseDeckText(t);
     }
 
     function blankState(deckCards) {
@@ -1177,6 +1326,32 @@
           const it = items[i];
           const row = document.createElement("div");
           row.className = "list-group-item d-flex align-items-center justify-content-between";
+          row.style.gap = "10px";
+          const rowMain = document.createElement("div");
+          rowMain.className = "zone-row-main";
+          rowMain.style.flex = "1 1 auto";
+          rowMain.style.minWidth = "0";
+
+          const thumb = document.createElement("div");
+          thumb.className = "zone-thumb";
+          thumb.title = "預覽卡圖";
+          const img = document.createElement("img");
+          img.alt = "";
+          img.decoding = "async";
+          img.loading = "lazy";
+          const tUrl = String(it.imageUrl || "").trim() || (it.cardNo ? wsImageUrlFromCardNo(it.cardNo) : "");
+          img.onerror = function() {
+            try { this.onerror = null; } catch {}
+            this.src = placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+          };
+          img.src = tUrl || placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+          thumb.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openCardImage(it, zoneKey, i);
+          });
+          thumb.appendChild(img);
+
           const left = document.createElement("div");
           const btn = document.createElement("button");
           btn.type = "button";
@@ -1194,10 +1369,13 @@
             openCardImage(it, zoneKey, i);
           });
           left.appendChild(btn);
+
+          rowMain.appendChild(thumb);
+          rowMain.appendChild(left);
           const right = document.createElement("div");
           right.className = "mono";
           right.textContent = it.id.slice(-6);
-          row.appendChild(left);
+          row.appendChild(rowMain);
           row.appendChild(right);
           list.appendChild(row);
         }
@@ -1348,24 +1526,91 @@
       rebuildPickCard();
     }
 
+    function updatePickMoveButtonsState() {
+      const cardId = document.getElementById("pickCardId")?.value || "";
+      const btnMove = document.getElementById("btnMoveCard");
+      const btnRemove = document.getElementById("btnRemoveCard");
+      const disabled = !cardId;
+      if (btnMove) btnMove.disabled = disabled;
+      if (btnRemove) btnRemove.disabled = disabled;
+    }
+
+    function setPickSelection(cardId) {
+      const input = document.getElementById("pickCardId");
+      if (input) input.value = cardId || "";
+      document.querySelectorAll("#pickCardGrid .pick-tile").forEach((el) => {
+        el.classList.toggle("selected", !!cardId && el.getAttribute("data-card-id") === cardId);
+      });
+      updatePickMoveButtonsState();
+    }
+
     function rebuildPickCard() {
       const fromKey = document.getElementById("pickFromZone")?.value || "hand";
       ensureZone(fromKey);
-      const pick = document.getElementById("pickCard");
-      if (!pick) return;
-      const items = state.zones[fromKey];
-      pick.innerHTML = items.map((c, idx) => {
-        const t = c.type ? (" [" + c.type + "]") : "";
-        const label = (idx + 1) + ". " + c.name + t;
-        return '<option value="' + c.id + '">' + escapeHtml(label) + '</option>';
-      }).join("");
-      if (!items.length) pick.innerHTML = '<option value="">（此區為空）</option>';
+      const grid = document.getElementById("pickCardGrid");
+      const emptyHint = document.getElementById("pickCardEmpty");
+      const input = document.getElementById("pickCardId");
+      if (!grid || !input) return;
+      const items = state.zones[fromKey] || [];
+      const prev = input.value;
+
+      grid.innerHTML = "";
+      if (emptyHint) emptyHint.style.display = items.length ? "none" : "block";
+
+      if (!items.length) {
+        input.value = "";
+        updatePickMoveButtonsState();
+        return;
+      }
+
+      const still = prev && items.some(c => c.id === prev);
+      const selected = still ? prev : items[0].id;
+
+      for (let i = 0; i < items.length; i++) {
+        const c = items[i];
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "pick-tile";
+        tile.setAttribute("data-card-id", c.id);
+        tile.title = (c.name || "") + (c.cardNo ? (" / " + c.cardNo) : "");
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb2";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const url = String(c.imageUrl || "").trim() || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        };
+        img.src = url || placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        thumb.appendChild(img);
+
+        const cap = document.createElement("div");
+        cap.className = "cap mono";
+        const line1 = (i + 1) + ". " + (c.name || "未命名");
+        const line2 = (c.cardNo ? c.cardNo : "（無卡號）") + (c.type ? (" · " + c.type) : "");
+        cap.textContent = line1 + " " + line2;
+
+        tile.appendChild(thumb);
+        tile.appendChild(cap);
+        tile.addEventListener("click", (e) => {
+          e.preventDefault();
+          setPickSelection(c.id);
+        });
+
+        grid.appendChild(tile);
+      }
+
+      setPickSelection(selected);
     }
 
     let state = null;
 
     const refCatalog = {
-      items: [], // {name, cardNo, type}
+      items: [], // {name, cardNo, type, imageUrl}
       byName: new Map(), // name -> item
       byNo: new Map(), // cardNo -> item
     };
@@ -1381,7 +1626,8 @@
         const cardNo = String(c && c.cardNo ? c.cardNo : "").trim();
         const type = String(c && c.type ? c.type : "").trim();
         if (!name && !cardNo) continue;
-        const item = { name, cardNo, type };
+        const imageUrl = String(c && c.imageUrl ? c.imageUrl : "").trim() || (cardNo ? wsImageUrlFromCardNo(cardNo) : "");
+        const item = { name, cardNo, type, imageUrl };
         refCatalog.items.push(item);
         if (name && !refCatalog.byName.has(name)) refCatalog.byName.set(name, item);
         if (cardNo && !refCatalog.byNo.has(cardNo)) refCatalog.byNo.set(cardNo, item);
@@ -1420,6 +1666,22 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "suggest-item";
+        const thumb = document.createElement("div");
+        thumb.className = "suggest-thumb";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const url = String(it.imageUrl || "").trim() || (it.cardNo ? wsImageUrlFromCardNo(it.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+        };
+        img.src = url || placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+        thumb.appendChild(img);
+
+        const text = document.createElement("div");
+        text.className = "suggest-text";
         const t1 = document.createElement("div");
         t1.textContent = it.name || "（未命名）";
         const t2 = document.createElement("div");
@@ -1427,8 +1689,11 @@
         const left = it.cardNo ? it.cardNo : "（無卡號）";
         const right = it.type ? (" · " + it.type) : "";
         t2.textContent = left + right;
-        btn.appendChild(t1);
-        btn.appendChild(t2);
+        text.appendChild(t1);
+        text.appendChild(t2);
+
+        btn.appendChild(thumb);
+        btn.appendChild(text);
         btn.addEventListener("click", (e) => {
           e.preventDefault();
           onPick(it);
@@ -1650,7 +1915,8 @@
       // 編輯器：移動
       document.getElementById("btnMoveCard").addEventListener("click", () => {
         const fromKey = document.getElementById("pickFromZone").value;
-        const cardId = document.getElementById("pickCard").value;
+        const idEl = document.getElementById("pickCardId");
+        const cardId = (idEl && idEl.value) ? idEl.value.trim() : "";
         const toKey = document.getElementById("moveToZone").value;
         if (!cardId) return;
         if (moveCard(fromKey, toKey, cardId)) {
@@ -1663,7 +1929,8 @@
       // 編輯器：刪除
       document.getElementById("btnRemoveCard").addEventListener("click", () => {
         const fromKey = document.getElementById("pickFromZone").value;
-        const cardId = document.getElementById("pickCard").value;
+        const idEl = document.getElementById("pickCardId");
+        const cardId = (idEl && idEl.value) ? idEl.value.trim() : "";
         if (!cardId) return;
         if (removeCard(fromKey, cardId)) {
           renderCounts();
@@ -1696,13 +1963,17 @@
       });
       document.getElementById("btnApplyDeck").addEventListener("click", () => {
         const text = document.getElementById("deckTextarea").value;
-        const cards = parseDeckText(text);
-        const deckCards = cards.length ? cards : buildRandomDeck(50);
-        state = blankState(deckCards);
-        renderCounts();
-        rebuildRefCatalogFromDeck();
-        saveState();
-        $("#importDeckModal").modal("hide");
+        try {
+          const cards = resolveDeckCardsFromUserInput(text);
+          const deckCards = cards && cards.length ? cards : buildRandomDeck(50);
+          state = blankState(deckCards);
+          renderCounts();
+          rebuildRefCatalogFromDeck();
+          saveState();
+          $("#importDeckModal").modal("hide");
+        } catch (e) {
+          alert("匯入失敗：" + (e && e.message ? e.message : e));
+        }
       });
 
       renderCounts();
