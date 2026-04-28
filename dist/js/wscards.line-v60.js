@@ -359,11 +359,11 @@ function searchByCardName(keyword) {
         if (!_cardDictionary) return;
         
         var lowerKeyword = keyword.toLowerCase();
-        // 進行比對並取得前 10 筆
+        // 進行比對並取得前 30 筆
         var results = _cardDictionary.filter(function(item) {
             return (item[1] && item[1].toLowerCase().includes(lowerKeyword)) || 
                    (item[0] && item[0].toLowerCase().includes(lowerKeyword));
-        }).slice(0, 10);
+        }).slice(0, 30);
 
         renderCardNameSearchResults(results);
     });
