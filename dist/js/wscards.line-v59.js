@@ -2166,7 +2166,7 @@ fetch(jsonUrl)
                     
                     const label = document.createElement('label');
                     label.className = 'filter-label';
-                    label.innerHTML = '<i class="fas fa-star mr-2"></i>稀有度';
+                    label.innerHTML = '<i class="fas fa-star mr-2"></i>其他稀有度(普版、高版)';
                     
                     const select = document.createElement('select');
                     select.name = 'cardRareFilter';
