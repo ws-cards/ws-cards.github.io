@@ -1156,36 +1156,36 @@ console.log("進入繪圖區:"+cardNum);
             // 4. 創建新的圖表實例
             myChart = new Chart(ctx, {
                 responsive: true,
+                // The type of chart we want to create
                 type: 'line',
+
+                // The data for our dataset
                 data: {
                     labels: cardPriceUpDate,
                     datasets: [{
                         label: '日圓',
                         fill: false,
-                        borderColor: '#2c3e6b',
-                        backgroundColor: 'transparent',
-                        pointBackgroundColor: '#2c3e6b',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
+                        borderColor: '#1e2d5a',
+                        backgroundColor: '#1e2d5a',
+                        pointBackgroundColor: '#1e2d5a',
+                        pointBorderColor: '#1e2d5a',
                         pointRadius: 4,
                         pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#2c3e6b',
                         borderWidth: 2,
                         data: cardData,
                         tension: 0.3
                     }],
                 },
+                // Configuration options go here
                 options: {
                 legend: {
                     display: true,
-                    position: 'top',
                     align: 'start',
                     labels: {
-                        boxWidth: 20,
-                        fontSize: 12,
                         fontColor: '#555',
-                        padding: 16,
-                        usePointStyle: true
+                        fontSize: 12,
+                        usePointStyle: true,
+                        boxWidth: 8
                     }
                 },
                 tooltips: {
@@ -1193,8 +1193,8 @@ console.log("進入繪圖區:"+cardNum);
                     intersect: false,
                     backgroundColor: 'rgba(255,255,255,0.95)',
                     titleFontColor: '#333',
-                    bodyFontColor: '#555',
-                    borderColor: '#ddd',
+                    bodyFontColor: '#333',
+                    borderColor: '#e0e0e0',
                     borderWidth: 1,
                     callbacks: {
                         title: function(tooltipItem, data) {
@@ -1223,56 +1223,56 @@ console.log("進入繪圖區:"+cardNum);
                     mode: 'nearest',
                     intersect: true
                 },
-                scales: {
-                    xAxes: [{
-                        display: true,
-                        gridLines: {
-                            display: false
-                        },
-                        scaleLabel: {
-                            display: false
-                        },
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 7,
-                            fontColor: '#888',
-                            fontSize: 11,
-                            callback: function(value, index, values) {
-                                if (typeof value === 'string') {
-                                    if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
-                                        return value.substring(4, 6) + '/' + value.substring(6, 8);
-                                    } else if (value.includes('-')) {
-                                        var parts = value.split('-');
-                                        if (parts.length === 3) return parts[1] + '/' + parts[2];
-                                    } else if (value.includes('/')) {
-                                        var parts = value.split('/');
-                                        if (parts.length === 3) return parts[1] + '/' + parts[2];
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
                                     }
+                                    return value;
                                 }
-                                return value;
                             }
-                        }
-                    }],
-                    yAxes: [{
-                        display: true,
-                        position: 'left',
-                        gridLines: {
-                            color: 'rgba(0,0,0,0.05)',
-                            zeroLineColor: 'rgba(0,0,0,0.1)'
-                        },
-                        scaleLabel: {
-                            display: false
-                        },
-                        ticks: {
-                            fontColor: '#888',
-                            fontSize: 11,
-                            callback: function(value) {
-                                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
-                                return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }],
+                        yAxes: [{
+                            display: true,
+                            gridLines: {
+                                color: 'rgba(0,0,0,0.05)',
+                                drawBorder: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                callback: function(value) {
+                                    if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
                             }
-                        }
-                    }]
-                }
+                        }]
+                    }
+
                 }
             });		
 
@@ -1471,28 +1471,36 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
             // 4. 創建新的圖表實例
             myStockChart = new Chart(ctx, {
                 responsive: true,
-                type: 'bar',
+                // The type of chart we want to create
+                type: 'line',
+
+                // The data for our dataset
                 data: {
                     labels: cardPriceUpDate,
                     datasets: [{
                         label: '數量',
-                        backgroundColor: 'rgba(180, 200, 230, 0.55)',
-                        borderColor: 'rgba(160, 185, 220, 0.7)',
-                        borderWidth: 1,
-                        hoverBackgroundColor: 'rgba(150, 175, 215, 0.75)',
-                        data: cardData
+                        fill: false,
+                        borderColor: '#1e2d5a',
+                        backgroundColor: '#1e2d5a',
+                        pointBackgroundColor: '#1e2d5a',
+                        pointBorderColor: '#1e2d5a',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                        data: cardData,
+                        tension: 0.3
                     }],
                 },
+                // Configuration options go here
                 options: {
                 legend: {
                     display: true,
-                    position: 'top',
                     align: 'start',
                     labels: {
-                        boxWidth: 20,
-                        fontSize: 12,
                         fontColor: '#555',
-                        padding: 16
+                        fontSize: 12,
+                        usePointStyle: true,
+                        boxWidth: 8
                     }
                 },
                 tooltips: {
@@ -1500,8 +1508,8 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                     intersect: false,
                     backgroundColor: 'rgba(255,255,255,0.95)',
                     titleFontColor: '#333',
-                    bodyFontColor: '#555',
-                    borderColor: '#ddd',
+                    bodyFontColor: '#333',
+                    borderColor: '#e0e0e0',
                     borderWidth: 1,
                     callbacks: {
                         title: function(tooltipItem, data) {
@@ -1532,55 +1540,55 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                     mode: 'nearest',
                     intersect: true
                 },
-                scales: {
-                    xAxes: [{
-                        display: true,
-                        gridLines: {
-                            display: false
-                        },
-                        scaleLabel: {
-                            display: false
-                        },
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 7,
-                            fontColor: '#888',
-                            fontSize: 11,
-                            callback: function(value, index, values) {
-                                if (typeof value === 'string') {
-                                    if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
-                                        return value.substring(4, 6) + '/' + value.substring(6, 8);
-                                    } else if (value.includes('-')) {
-                                        var parts = value.split('-');
-                                        if (parts.length === 3) return parts[1] + '/' + parts[2];
-                                    } else if (value.includes('/')) {
-                                        var parts = value.split('/');
-                                        if (parts.length === 3) return parts[1] + '/' + parts[2];
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
                                     }
+                                    return value;
                                 }
-                                return value;
                             }
-                        }
-                    }],
-                    yAxes: [{
-                        display: true,
-                        position: 'right',
-                        gridLines: {
-                            color: 'rgba(0,0,0,0.05)',
-                            zeroLineColor: 'rgba(0,0,0,0.1)'
-                        },
-                        scaleLabel: {
-                            display: false
-                        },
-                        ticks: {
-                            fontColor: '#888',
-                            fontSize: 11,
-                            callback: function(value) {
-                                return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }],
+                        yAxes: [{
+                            display: true,
+                            gridLines: {
+                                color: 'rgba(0,0,0,0.05)',
+                                drawBorder: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
                             }
-                        }
-                    }]
-                }
+                        }]
+                    }
+
                 }
             });		
 
