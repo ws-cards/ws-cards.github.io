@@ -19,12 +19,6 @@ var $dropdown = $(".dropdown-menu");
 var myChart = null;
 var myStockChart = null;
 
-// 暫存等待合併繪圖的資料
-var _pendingPriceData = null;
-var _pendingStockData = null;
-var _pendingLabels = null;
-var _pendingCardNum = null;
-
 // ====================================================
 // 搜尋防抖與鎖定機制
 // - _searchDebounceTimer: input 事件的 debounce timer
@@ -1146,14 +1140,113 @@ console.log("進入繪圖區:"+cardNum);
             var cardInfo = jsonObj[internalCardNumber];
             var cardPriceUpDate=cardInfo['upddate'];
             var cardData=cardInfo['cardPrice'];
+            
+            // 2. 清理並重新獲取 canvas 元素
+            const canvas = document.getElementById('myChart');
+            if (canvas) {
+                // 清理 canvas 的事件監聽器和上下文
+                const newCanvas = canvas.cloneNode(true);
+                canvas.parentNode.replaceChild(newCanvas, canvas);
+            }
+            
+            // 3. 重新獲取清理後的 canvas
+            const cleanCanvas = document.getElementById('myChart');
+            const ctx = cleanCanvas.getContext('2d');
+            
+            // 4. 創建新的圖表實例
+            myChart = new Chart(ctx, {
+                responsive: true,
+                // The type of chart we want to create
+                type: 'line',
 
-            // 暫存價格資料，等待庫存資料一起渲染
-            _pendingPriceData = cardData;
-            _pendingLabels = cardPriceUpDate;
-            _pendingCardNum = cardNum;
+                // The data for our dataset
+                data: {
+                    labels: cardPriceUpDate,
+                    datasets: [{
+                        label: cardNum,
+                        //fill:false,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(203, 203, 203, 0.1)',
+                        data: cardData,
+                        tension: 0.1
+                    }],
+                },
+                // Configuration options go here
+                options: {
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = data.labels[tooltipItem[0].index] || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (datasetLabel) datasetLabel += ': ';
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return datasetLabel + '¥' + tooltipItem.yLabel;
+                            return '¥' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }
+                    }
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: '日期'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: '價格(日幣)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
+                            }
+                        }]
+                    }
 
-            // 若庫存資料已就緒，立即合併繪圖；否則先畫無庫存版本
-            _drawCombinedChart(cardPriceUpDate, cardData, _pendingStockData, cardNum);
+                }
+            });		
 
             console.log('價格圖表創建完成');
             document.getElementById('overlay-2').style.display='none';
@@ -1188,179 +1281,6 @@ console.log("進入繪圖區:"+cardNum);
                     downloadCardTag.style.display = 'block';
                 }
             }
-}
-
-/**
- * 複合圖表繪製函數（折線 + 長條 + 雙Y軸）
- * @param {Array} labels - X軸日期標籤
- * @param {Array} priceData - 價格陣列
- * @param {Array|null} stockData - 庫存陣列（可為 null）
- * @param {string} cardNum - 卡號顯示名稱
- */
-function _drawCombinedChart(labels, priceData, stockData, cardNum) {
-    // 清理並重新獲取 canvas 元素
-    var canvas = document.getElementById('myChart');
-    if (canvas) {
-        var newCanvas = canvas.cloneNode(true);
-        canvas.parentNode.replaceChild(newCanvas, canvas);
-    }
-
-    var cleanCanvas = document.getElementById('myChart');
-    var ctx = cleanCanvas.getContext('2d');
-
-    // 格式化日期輔助函數
-    function formatDateLabel(value) {
-        if (typeof value === 'string') {
-            if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
-                return value.substring(4, 6) + '/' + value.substring(6, 8);
-            } else if (value.includes('-')) {
-                var p = value.split('-');
-                if (p.length >= 3) return p[1] + '/' + p[2].substring(0,2);
-            } else if (value.includes('/')) {
-                var p = value.split('/');
-                if (p.length >= 3) return p[1] + '/' + p[2].substring(0,2);
-            }
-        }
-        return value;
-    }
-
-    function formatDateTitle(value) {
-        if (typeof value === 'string') {
-            if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
-                return value.substring(0, 4) + '年' + parseInt(value.substring(4, 6), 10) + '月' + parseInt(value.substring(6, 8), 10) + '日';
-            } else if (value.includes('-')) {
-                var p = value.split('-');
-                if (p.length >= 3) return p[0] + '年' + parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
-            } else if (value.includes('/')) {
-                var p = value.split('/');
-                if (p.length >= 3) return p[0] + '年' + parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
-            }
-        }
-        return value;
-    }
-
-    var datasets = [
-        {
-            // 長條圖（庫存）- 置底，先宣告
-            label: '數量',
-            type: 'bar',
-            data: stockData || [],
-            backgroundColor: 'rgba(176, 196, 222, 0.5)',
-            borderColor: 'rgba(176, 196, 222, 0.7)',
-            borderWidth: 1,
-            yAxisID: 'y-stock',
-            order: 2
-        },
-        {
-            // 折線圖（價格）- 置頂
-            label: '日圓',
-            type: 'line',
-            data: priceData,
-            borderColor: '#1e3a5f',
-            backgroundColor: 'rgba(30, 58, 95, 0.05)',
-            borderWidth: 2,
-            pointBackgroundColor: '#1e3a5f',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 1.5,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0.3,
-            fill: false,
-            yAxisID: 'y-price',
-            order: 1
-        }
-    ];
-
-    myChart = new Chart(ctx, {
-        type: 'bar', // 外層設 bar，各 dataset 再各自指定 type
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            legend: {
-                display: true,
-                position: 'top',
-                align: 'start',
-                labels: {
-                    boxWidth: 16,
-                    fontColor: '#4a5568',
-                    fontSize: 12,
-                    padding: 16
-                }
-            },
-            tooltips: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(255,255,255,0.95)',
-                titleFontColor: '#2d3748',
-                bodyFontColor: '#4a5568',
-                borderColor: '#e2e8f0',
-                borderWidth: 1,
-                callbacks: {
-                    title: function(tooltipItems) {
-                        return formatDateTitle(tooltipItems[0].label || '');
-                    },
-                    label: function(tooltipItem, data) {
-                        var ds = data.datasets[tooltipItem.datasetIndex];
-                        var val = Number(tooltipItem.yLabel);
-                        if (ds.yAxisID === 'y-price') {
-                            return '日圓: ¥' + (isNaN(val) ? tooltipItem.yLabel : val.toLocaleString());
-                        } else {
-                            return '數量: ' + (isNaN(val) ? tooltipItem.yLabel : val.toLocaleString());
-                        }
-                    }
-                }
-            },
-            hover: { mode: 'index', intersect: false },
-            scales: {
-                xAxes: [{
-                    display: true,
-                    gridLines: {
-                        display: false
-                    },
-                    ticks: {
-                        autoSkip: true,
-                        maxTicksLimit: 8,
-                        fontColor: '#718096',
-                        fontSize: 11,
-                        callback: function(value) { return formatDateLabel(value); }
-                    }
-                }],
-                yAxes: [
-                    {
-                        id: 'y-price',
-                        position: 'left',
-                        display: true,
-                        gridLines: {
-                            color: 'rgba(0,0,0,0.05)',
-                            zeroLineColor: 'rgba(0,0,0,0.1)'
-                        },
-                        ticks: {
-                            fontColor: '#4a5568',
-                            fontSize: 11,
-                            callback: function(value) {
-                                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
-                                return value;
-                            }
-                        }
-                    },
-                    {
-                        id: 'y-stock',
-                        position: 'right',
-                        display: true,
-                        gridLines: { display: false },
-                        ticks: {
-                            fontColor: '#a0aec0',
-                            fontSize: 11,
-                            callback: function(value) { return value; }
-                        }
-                    }
-                ]
-            }
-        }
-    });
 }
 
 /**
@@ -1493,23 +1413,130 @@ summaryCard.style.display = 'block';
 function getCardStockData(jsonObj,internalCardNumber,cardNum) {
             console.log("進入庫存繪圖區:"+cardNum);
             
+            // 1. 先銷毀現有的庫存圖表
+            if (myStockChart) {
+                console.log('銷毀現有的庫存圖表');
+                try {
+                    myStockChart.destroy();
+                } catch (error) {
+                    console.error('銷毀庫存圖表時發生錯誤:', error);
+                }
+                myStockChart = null;
+            }
+            
             var cardInfo = jsonObj[internalCardNumber];
-            if (!cardInfo) {
-                console.warn('庫存資料找不到卡號:', internalCardNumber);
-                document.getElementById('overlay-3').style.display='none';
-                return;
+            var cardPriceUpDate=cardInfo['upddate'];
+            var cardData=cardInfo['cardPrice'];
+            
+            // 2. 清理並重新獲取 canvas 元素
+            const canvas = document.getElementById('myStockChart');
+            if (canvas) {
+                // 清理 canvas 的事件監聽器和上下文
+                const newCanvas = canvas.cloneNode(true);
+                canvas.parentNode.replaceChild(newCanvas, canvas);
             }
-            var cardData = cardInfo['cardPrice'];
+            
+            // 3. 重新獲取清理後的 canvas
+            const cleanCanvas = document.getElementById('myStockChart');
+            const ctx = cleanCanvas.getContext('2d');
+            
+            // 4. 創建新的圖表實例
+            myStockChart = new Chart(ctx, {
+                responsive: true,
+                // The type of chart we want to create
+                type: 'line',
 
-            // 暫存庫存資料
-            _pendingStockData = cardData;
+                // The data for our dataset
+                data: {
+                    labels: cardPriceUpDate,
+                    datasets: [{
+                        label: cardNum,
+                        //fill:false,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        data: cardData,
+                        tension: 0.1
+                    }],
+                },
+                // Configuration options go here
+                options: {
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = data.labels[tooltipItem[0].index] || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (datasetLabel) datasetLabel += ': ';
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return datasetLabel + tooltipItem.yLabel;
+                            return datasetLabel + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }
+                    }
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: '日期'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: '庫存'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
+                            }
+                        }]
+                    }
 
-            // 若價格資料已就緒，重繪複合圖（把庫存長條疊入）
-            if (_pendingPriceData && _pendingLabels && _pendingCardNum) {
-                _drawCombinedChart(_pendingLabels, _pendingPriceData, cardData, _pendingCardNum);
-            }
+                }
+            });		
 
-            document.getElementById('overlay-3').style.display='none';
+            console.log('庫存圖表創建完成');
+            document.getElementById('overlay-3').style.display='none';					
 }
 
 /**
@@ -1680,12 +1707,6 @@ function destroyAllCharts() {
             }
             myStockChart = null;
         }
-
-        // 清空合併繪圖暫存資料
-        _pendingPriceData = null;
-        _pendingStockData = null;
-        _pendingLabels = null;
-        _pendingCardNum = null;
 }
 
 /**
