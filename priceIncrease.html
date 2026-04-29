@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>價格漲幅觀測</title>
+    <meta name="description" content="依 1/3/7 日漲幅排序觀測卡片價格變動" />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.12);
+        --good: #4ade80;
+        --bad: #fb7185;
+        --warn: #fbbf24;
+        --focus: #60a5fa;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: radial-gradient(1200px 700px at 15% 0%, rgba(96, 165, 250, 0.18), transparent 55%),
+          radial-gradient(1000px 700px at 90% 10%, rgba(74, 222, 128, 0.12), transparent 60%),
+          radial-gradient(900px 600px at 50% 100%, rgba(251, 113, 133, 0.10), transparent 65%),
+          var(--bg);
+        color: var(--text);
+        margin: 0;
+        font-family: var(--sans);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 18px 64px;
+      }
+
+      header {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .titleRow {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--panel2), var(--panel));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      @media (min-width: 900px) {
+        .controls {
+          grid-template-columns: 1.2fr 1fr 1fr;
+          align-items: center;
+        }
+      }
+
+      .controlGroup {
+        display: grid;
+        gap: 6px;
+      }
+
+      .label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      input[type="search"],
+      input[type="number"],
+      select,
+      button {
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 10px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      input[type="search"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      button:focus {
+        border-color: rgba(96, 165, 250, 0.7);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+      }
+
+      input[type="search"] {
+        width: min(520px, 100%);
+      }
+
+      select {
+        padding-right: 28px;
+      }
+
+      button {
+        cursor: pointer;
+        transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.22);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.22);
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .kpiRow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 0 12px 12px;
+        border-top: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .kpi {
+        padding: 10px 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        min-width: 170px;
+      }
+
+      .kpi .k {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .kpi .v {
+        margin-top: 4px;
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .status {
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-top: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.16);
+      }
+
+      .status strong {
+        color: var(--text);
+      }
+
+      .tableWrap {
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 980px;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: rgba(11, 16, 32, 0.85);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+        text-align: left;
+        padding: 12px 12px;
+        white-space: nowrap;
+      }
+
+      tbody td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 11px 12px;
+        font-size: 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      tbody tr:hover td {
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .pct {
+        font-variant-numeric: tabular-nums;
+        font-family: var(--mono);
+        font-weight: 650;
+      }
+
+      .pct.good {
+        color: var(--good);
+      }
+
+      .pct.bad {
+        color: var(--bad);
+      }
+
+      .pct.zero {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .tag {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tag b {
+        color: var(--text);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .dangerBox {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(251, 113, 133, 0.35);
+        background: rgba(251, 113, 133, 0.10);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .dangerBox code {
+        font-family: var(--mono);
+      }
+
+      .small {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="titleRow">
+          <div>
+            <h1>價格漲幅觀測</h1>
+            <div class="subtitle">
+              依 <span class="mono">change1dPct / change3dPct / change7dPct</span> 排序｜資料來源：遠端 JSON
+            </div>
+          </div>
+          <div class="row">
+            <span class="pill small">
+              <span class="muted">資料時間</span>
+              <strong id="generatedAtText" class="mono">—</strong>
+            </span>
+            <button id="reloadBtn" type="button" title="重新載入資料">重新載入</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="controls">
+          <div class="controlGroup">
+            <div class="label">搜尋卡號</div>
+            <input id="q" type="search" placeholder="例如：AGS/W108-T09" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">排序依據</div>
+            <div class="row">
+              <select id="metric">
+                <option value="change1dPct">1日內漲幅（change1dPct）</option>
+                <option value="change3dPct" selected>3日內漲幅（change3dPct）</option>
+                <option value="change7dPct">1週內漲幅（change7dPct）</option>
+              </select>
+              <select id="direction" title="排序方向">
+                <option value="desc" selected>由高到低</option>
+                <option value="asc">由低到高</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">篩選</div>
+            <div class="row">
+              <span class="tag" title="只顯示漲幅 >= 閾值 (%)">
+                <b>最低漲幅</b>
+                <input id="minPct" type="number" inputmode="decimal" step="0.01" value="0" style="width: 110px" />
+                <span>%</span>
+              </span>
+              <span class="tag" title="只顯示前 N 筆（0 代表全部）">
+                <b>Top</b>
+                <input id="limit" type="number" inputmode="numeric" step="1" min="0" value="200" style="width: 92px" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpiRow">
+          <div class="kpi">
+            <div class="k">總卡數</div>
+            <div class="v mono" id="kpiTotal">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">目前顯示</div>
+            <div class="v mono" id="kpiShown">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">最高漲幅（依目前排序欄位）</div>
+            <div class="v mono" id="kpiMax">—</div>
+          </div>
+        </div>
+
+        <div class="status">
+          <div>
+            <strong id="statusText">載入中…</strong>
+            <span class="muted" id="statusSub"></span>
+          </div>
+          <div class="muted small mono" id="sourceText"></div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>卡號</th>
+                <th class="right">最新價</th>
+                <th>最新日期</th>
+                <th class="right">1日漲幅</th>
+                <th class="right">3日漲幅</th>
+                <th class="right">7日漲幅</th>
+                <th class="right">1日基準價</th>
+                <th class="right">3日基準價</th>
+                <th class="right">7日基準價</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="errorBox" class="dangerBox" style="display: none"></div>
+      </section>
+    </div>
+
+    <script>
+      (() => {
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+
+        /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
+        let rawData = null;
+        /** @type {Array<any>} */
+        let cardRows = [];
+
+        const els = {
+          generatedAtText: document.getElementById("generatedAtText"),
+          reloadBtn: document.getElementById("reloadBtn"),
+          q: document.getElementById("q"),
+          metric: document.getElementById("metric"),
+          direction: document.getElementById("direction"),
+          minPct: document.getElementById("minPct"),
+          limit: document.getElementById("limit"),
+          kpiTotal: document.getElementById("kpiTotal"),
+          kpiShown: document.getElementById("kpiShown"),
+          kpiMax: document.getElementById("kpiMax"),
+          statusText: document.getElementById("statusText"),
+          statusSub: document.getElementById("statusSub"),
+          sourceText: document.getElementById("sourceText"),
+          tbody: document.getElementById("tbody"),
+          errorBox: document.getElementById("errorBox"),
+        };
+
+        function fmtDateYmd(yyyymmdd) {
+          if (!yyyymmdd) return "—";
+          const s = String(yyyymmdd);
+          if (s.length !== 8) return s;
+          return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+        }
+
+        function fmtNum(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          return new Intl.NumberFormat("zh-TW").format(Number(n));
+        }
+
+        function fmtPct(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const v = Number(n);
+          const sign = v > 0 ? "+" : "";
+          return `${sign}${v.toFixed(2)}%`;
+        }
+
+        function pctClass(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "zero";
+          if (v > 0) return "good";
+          if (v < 0) return "bad";
+          return "zero";
+        }
+
+        function setStatus(main, sub = "") {
+          els.statusText.textContent = main;
+          els.statusSub.textContent = sub ? `｜${sub}` : "";
+        }
+
+        function showError(html) {
+          els.errorBox.style.display = "block";
+          els.errorBox.innerHTML = html;
+        }
+
+        function clearError() {
+          els.errorBox.style.display = "none";
+          els.errorBox.innerHTML = "";
+        }
+
+        function toRows(data) {
+          const entries = Object.entries((data && data.cards) || {});
+          return entries.map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestDate: c.latestDate,
+            latestPrice: c.latestPrice,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+            base1dDate: c.base1dDate,
+            base1dPrice: c.base1dPrice,
+            base3dDate: c.base3dDate,
+            base3dPrice: c.base3dPrice,
+            base7dDate: c.base7dDate,
+            base7dPrice: c.base7dPrice,
+          }));
+        }
+
+        function sortAndFilterRows(rows) {
+          const q = (els.q.value || "").trim().toLowerCase();
+          const metric = els.metric.value;
+          const dir = els.direction.value; // asc|desc
+          const minPct = Number(els.minPct.value || 0);
+          const limit = Math.max(0, Math.floor(Number(els.limit.value || 0)));
+
+          let out = rows;
+          if (q) {
+            out = out.filter((r) => String(r.cardNo || "").toLowerCase().includes(q));
+          }
+
+          out = out.filter((r) => {
+            const v = Number(r[metric]);
+            if (!Number.isFinite(v)) return false;
+            return v >= minPct;
+          });
+
+          out = out.slice().sort((a, b) => {
+            const av = Number(a[metric]);
+            const bv = Number(b[metric]);
+            const aSafe = Number.isFinite(av) ? av : -Infinity;
+            const bSafe = Number.isFinite(bv) ? bv : -Infinity;
+            return dir === "asc" ? aSafe - bSafe : bSafe - aSafe;
+          });
+
+          if (limit > 0) out = out.slice(0, limit);
+          return out;
+        }
+
+        function render() {
+          if (!rawData) return;
+          clearError();
+
+          const metric = els.metric.value;
+          const filtered = sortAndFilterRows(cardRows);
+
+          els.kpiTotal.textContent = String(cardRows.length);
+          els.kpiShown.textContent = String(filtered.length);
+          els.kpiMax.textContent =
+            filtered.length > 0 ? fmtPct(filtered[0][metric]) : "—";
+
+          const frag = document.createDocumentFragment();
+          for (const r of filtered) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="mono">${escapeHtml(String(r.cardNo ?? ""))}</td>
+              <td class="right mono">${escapeHtml(fmtNum(r.latestPrice))}</td>
+              <td class="mono">${escapeHtml(fmtDateYmd(r.latestDate))}</td>
+              <td class="right pct ${pctClass(r.change1dPct)}">${escapeHtml(fmtPct(r.change1dPct))}</td>
+              <td class="right pct ${pctClass(r.change3dPct)}">${escapeHtml(fmtPct(r.change3dPct))}</td>
+              <td class="right pct ${pctClass(r.change7dPct)}">${escapeHtml(fmtPct(r.change7dPct))}</td>
+              <td class="right mono">${escapeHtml(fmtNum(r.base1dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base1dDate))})</span></td>
+              <td class="right mono">${escapeHtml(fmtNum(r.base3dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base3dDate))})</span></td>
+              <td class="right mono">${escapeHtml(fmtNum(r.base7dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base7dDate))})</span></td>
+            `.trim();
+            frag.appendChild(tr);
+          }
+
+          els.tbody.replaceChildren(frag);
+          setStatus("已載入", `依「${els.metric.selectedOptions[0].text}」排序`);
+        }
+
+        function escapeHtml(s) {
+          return s
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
+
+        function setGeneratedAt(ms) {
+          if (!ms || !Number.isFinite(Number(ms))) {
+            els.generatedAtText.textContent = "—";
+            return;
+          }
+          const d = new Date(Number(ms));
+          const s = new Intl.DateTimeFormat("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }).format(d);
+          els.generatedAtText.textContent = s;
+        }
+
+        async function load() {
+          setStatus("載入中…");
+          clearError();
+          els.sourceText.textContent = "";
+          els.tbody.replaceChildren();
+
+          try {
+            const data = await fetchJson(REMOTE_URL);
+            rawData = data;
+            cardRows = toRows(data);
+            setGeneratedAt(data.generatedAt);
+            els.sourceText.textContent = `source: ${REMOTE_URL}`;
+            render();
+            return;
+          } catch (e) {
+            const err1 = e instanceof Error ? e.message : String(e);
+            setStatus("載入失敗", "請確認網路或 JSON 來源是否可用");
+            showError(
+              `遠端資料載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
+                `你可以稍後按右上角「重新載入」重試。`
+            );
+          }
+        }
+
+        function bind() {
+          const onChange = () => render();
+          els.q.addEventListener("input", onChange);
+          els.metric.addEventListener("change", onChange);
+          els.direction.addEventListener("change", onChange);
+          els.minPct.addEventListener("input", onChange);
+          els.limit.addEventListener("input", onChange);
+          els.reloadBtn.addEventListener("click", () => load());
+
+          window.addEventListener("keydown", (ev) => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
+              ev.preventDefault();
+              load();
+            }
+            if (ev.key === "/" && document.activeElement !== els.q) {
+              ev.preventDefault();
+              els.q.focus();
+            }
+          });
+        }
+
+        bind();
+        load();
+      })();
+    </script>
+  </body>
+</html>
