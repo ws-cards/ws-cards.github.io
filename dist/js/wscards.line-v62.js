@@ -436,6 +436,20 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// scroll / resize 時同步更新浮動面板位置
+function _updateCardNameSearchPos() {
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (!searchDiv || searchDiv.style.display === 'none') return;
+    var inputEl = document.getElementById('xxxx');
+    if (!inputEl) return;
+    var rect = inputEl.getBoundingClientRect();
+    searchDiv.style.top  = (rect.bottom + 2) + 'px';
+    searchDiv.style.left = rect.left + 'px';
+    searchDiv.style.width = rect.width + 'px';
+}
+window.addEventListener('scroll', _updateCardNameSearchPos, true);
+window.addEventListener('resize', _updateCardNameSearchPos);
+
 function hideCardNameSearchResults() {
     var searchDiv = document.getElementById('cardNameSearchContainer');
     if (searchDiv) {
@@ -469,27 +483,26 @@ function renderCardNameSearchResults(results) {
 
     var searchDiv = document.getElementById('cardNameSearchContainer');
     if (!searchDiv) {
-        // 動態建立浮動視窗
+        // 動態建立浮動視窗，掛在 body 上以避免被父層 overflow / position 影響
         searchDiv = document.createElement('div');
         searchDiv.id = 'cardNameSearchContainer';
-        searchDiv.style.position = 'absolute';
-        searchDiv.style.zIndex = '9999';
+        searchDiv.style.position = 'fixed';
+        searchDiv.style.zIndex = '99999';
         searchDiv.style.background = '#fff';
         searchDiv.style.border = '1px solid #ccc';
-        searchDiv.style.borderRadius = '0 0 5px 5px';
-        searchDiv.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-        searchDiv.style.width = inputEl.offsetWidth + 'px';
+        searchDiv.style.borderRadius = '0 0 6px 6px';
+        searchDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
         searchDiv.style.maxHeight = '300px';
         searchDiv.style.overflowY = 'auto';
-        searchDiv.style.marginTop = '2px';
         searchDiv.style.display = 'none';
-        
-        // 插入到 inputEl 後面
-        inputEl.parentNode.insertBefore(searchDiv, inputEl.nextSibling);
+        document.body.appendChild(searchDiv);
     }
 
-    // 更新位置和寬度（如果視窗大小改變）
-    searchDiv.style.width = inputEl.offsetWidth + 'px';
+    // 每次顯示前重新計算輸入框位置（fixed 定位基於 viewport）
+    var rect = inputEl.getBoundingClientRect();
+    searchDiv.style.top = (rect.bottom + 2) + 'px';
+    searchDiv.style.left = rect.left + 'px';
+    searchDiv.style.width = rect.width + 'px';
 
     if (results.length === 0) {
         searchDiv.innerHTML = '<div style="padding: 10px; color: #999; text-align: center;">找不到符合的卡片</div>';
