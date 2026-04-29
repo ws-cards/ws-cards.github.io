@@ -1169,7 +1169,7 @@ console.log("進入繪圖區:"+cardNum);
                         backgroundColor: '#1e2d5a',
                         pointBackgroundColor: '#1e2d5a',
                         pointBorderColor: '#1e2d5a',
-                        pointRadius: 4,
+                        pointRadius: 2,
                         pointHoverRadius: 6,
                         borderWidth: 2,
                         data: cardData,
