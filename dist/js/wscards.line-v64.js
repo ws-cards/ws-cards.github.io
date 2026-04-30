@@ -3056,7 +3056,7 @@ function _composeStatsCanvas(info) {
     var HEADER_H = 290;     // 卡圖 + 卡片資訊
     var SUMMARY_H = 120;    // 4格價格摘要
     var CHART_PANEL_H = 360; // 左統計 + 右圖表
-    var FOOTER_H = 80;      // 底部浮水印
+    var FOOTER_H = 30;      // 底部浮水印
     var SECTION_GAP = 14;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + SUMMARY_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
@@ -3304,67 +3304,12 @@ function _composeStatsCanvas(info) {
     ctx.textAlign = 'left';
     ctx.fillText(latestPriceText, lpX + 12, cy0 + 32);
 
-    // ── 左側統計格（2×2）──
-    var STATS_X = PAD + 16;
-    var STATS_Y = cy0 + TITLE_BAR_H + 14;
-    var STATS_W = 220;
-    var STATS_H = cpH - TITLE_BAR_H - 28;
-
-    var statItems = [
-        { label: '當月最高', value: info.highPrice,   prefix: '↑', prefixColor: C_UP },
-        { label: '目前價格', value: info.currentPrice, prefix: '',  prefixColor: C_TEXT1 },
-        { label: '當月最低', value: info.lowPrice,    prefix: '↓', prefixColor: C_DOWN },
-        { label: '近7天漲跌', value: info.changePercent, prefix: '', prefixColor: C_NEUTRAL, isChange: true }
-    ];
-
-    var statCellW = (STATS_W - 10) / 2;
-    var statCellH = (STATS_H - 10) / 2;
-
-    for (var j = 0; j < statItems.length; j++) {
-        var st = statItems[j];
-        var sc = j % 2;
-        var sr = Math.floor(j / 2);
-        var stx = STATS_X + sc * (statCellW + 10);
-        var sty = STATS_Y + sr * (statCellH + 10);
-
-        // 儲存格背景
-        ctx.fillStyle = '#f8f9fc';
-        roundRect(ctx, stx, sty, statCellW, statCellH, 8);
-        ctx.fill();
-        ctx.strokeStyle = C_BORDER;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        roundRectPath(ctx, stx, sty, statCellW, statCellH, 8);
-        ctx.stroke();
-
-        // Label
-        ctx.fillStyle = C_TEXT3;
-        ctx.font = '12px "Noto Sans TC", sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(st.label, stx + 10, sty + 20);
-
-        // Value
-        var stVal = st.value || '--';
-        var stColor = st.prefixColor;
-        if (st.isChange) {
-            if (stVal.indexOf('-') >= 0) stColor = C_DOWN;
-            else if (stVal !== '--' && stVal !== '0.0%' && stVal !== '0%') stColor = C_UP;
-            else stColor = C_NEUTRAL;
-        }
-        ctx.fillStyle = stColor;
-        ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
-        if (st.prefix) {
-            ctx.fillText(st.prefix + ' ' + stVal, stx + 10, sty + statCellH - 12);
-        } else {
-            ctx.fillText(stVal, stx + 10, sty + statCellH - 12);
-        }
-    }
-
-    // ── 右側圖表 ──
-    var CH_X = STATS_X + STATS_W + 14;
-    var CH_Y = STATS_Y;
-    var CH_W = cpW - (CH_X - PAD) - 14;
-    var CH_H = STATS_H;
+    // ── 折線圖（全寬置中）──
+    var CH_INNER_PAD = 14;
+    var CH_X = PAD + CH_INNER_PAD;
+    var CH_Y = cy0 + TITLE_BAR_H + CH_INNER_PAD;
+    var CH_W = cpW - CH_INNER_PAD * 2;
+    var CH_H = cpH - TITLE_BAR_H - CH_INNER_PAD * 2;
 
     if (info.chartBase64) {
         var chartImg = new Image();
