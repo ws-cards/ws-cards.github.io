@@ -567,9 +567,11 @@ function renderUnifiedSearchContainer() {
         _typeaheadSuggestions.forEach(function(item) {
             var displayName = (item.name || '').replace(/'/g, '&#39;');
             var cname       = (item.cname || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            // onclick 使用單引號包裹字串，並跳脫 ' 和 \ 避免 HTML attribute 截斷
+            var safeArg = (item.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             html += '<div class="unified-search-item typeahead-suggest-item"'
                   + ' style="padding:8px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;"'
-                  + ' onclick="handleTypeaheadItemClick(' + JSON.stringify(item.name) + ')">';
+                  + ' onclick="handleTypeaheadItemClick(\'' + safeArg + '\')">';
             html += '<div style="font-size:0.88em;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + displayName + '">' + displayName + '</div>';
             if (cname) {
                 html += '<div style="font-size:0.75em;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + cname + '">' + cname + '</div>';
