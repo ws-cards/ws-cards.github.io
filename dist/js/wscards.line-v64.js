@@ -3079,10 +3079,15 @@ function _composeStatsCanvas(info) {
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + SUMMARY_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
 
+    // ── HiDPI：以 2x 解析度繪製，確保輸出清晰 ──
+    var DPR = 2;
     var offscreen = document.createElement('canvas');
-    offscreen.width = IMG_WIDTH;
-    offscreen.height = IMG_HEIGHT;
+    offscreen.width = IMG_WIDTH * DPR;
+    offscreen.height = IMG_HEIGHT * DPR;
+    offscreen.style.width = IMG_WIDTH + 'px';
+    offscreen.style.height = IMG_HEIGHT + 'px';
     var ctx = offscreen.getContext('2d');
+    ctx.scale(DPR, DPR);
 
     // ── 全域顏色常數 ──
     var C_BG        = '#f0f2f5';  // 頁面底色（淡灰）
@@ -3332,7 +3337,16 @@ function _composeStatsCanvas(info) {
     if (info.chartBase64) {
         var chartImg = new Image();
         chartImg.onload = function() {
-            // 圖表背景
+            // 計算維持原始比例的繪製尺寸（contain 模式，置中）
+            var srcW = chartImg.naturalWidth || chartImg.width;
+            var srcH = chartImg.naturalHeight || chartImg.height;
+            var scale = Math.min(CH_W / srcW, CH_H / srcH);
+            var drawW = srcW * scale;
+            var drawH = srcH * scale;
+            var drawX = CH_X + (CH_W - drawW) / 2;
+            var drawY = CH_Y + (CH_H - drawH) / 2;
+
+            // 圖表背景（填滿整個容器）
             ctx.fillStyle = '#f8f9fc';
             roundRect(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
             ctx.fill();
@@ -3341,7 +3355,7 @@ function _composeStatsCanvas(info) {
             ctx.beginPath();
             roundRectPath(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
             ctx.clip();
-            ctx.drawImage(chartImg, CH_X, CH_Y, CH_W, CH_H);
+            ctx.drawImage(chartImg, drawX, drawY, drawW, drawH);
             ctx.restore();
 
             ctx.strokeStyle = C_BORDER;
