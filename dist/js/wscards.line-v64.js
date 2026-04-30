@@ -3024,7 +3024,7 @@ function doCompose() {
     });
 }
 
-var CARD_BACK_URL = 'https://storage.googleapis.com/imgs.devilfox.net/ws/cardback.png';
+var CARD_BACK_URL = './dist/img/cardback.png';
 
 function loadFallbackCardBack() {
     var fallback = new Image();
