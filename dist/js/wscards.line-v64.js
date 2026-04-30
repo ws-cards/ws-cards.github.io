@@ -3024,14 +3024,31 @@ function doCompose() {
     });
 }
 
+var CARD_BACK_URL = 'https://storage.googleapis.com/imgs.devilfox.net/ws/cardback.png';
+
+function loadFallbackCardBack() {
+    var fallback = new Image();
+    fallback.crossOrigin = 'anonymous';
+    fallback.onload = function() {
+        cardImageLoaded = true;
+        cardImage = fallback;
+        doCompose();
+    };
+    fallback.onerror = function() {
+        cardImageLoaded = false;
+        doCompose();
+    };
+    fallback.src = CARD_BACK_URL;
+}
+
 if (cardImgSrc) {
     cardImage.onload = function() {
         cardImageLoaded = true;
         doCompose();
     };
     cardImage.onerror = function() {
-        cardImageLoaded = false;
-        doCompose();
+        // 原圖失敗，改用卡背
+        loadFallbackCardBack();
     };
     cardImage.src = cardImgSrc;
     // 如果圖片已經在快取中
@@ -3039,7 +3056,8 @@ if (cardImgSrc) {
         cardImageLoaded = true;
     }
 } else {
-    doCompose();
+    // 沒有卡圖 src，直接用卡背
+    loadFallbackCardBack();
 }
 }
 
@@ -3056,7 +3074,7 @@ function _composeStatsCanvas(info) {
     var HEADER_H = 290;     // 卡圖 + 卡片資訊
     var SUMMARY_H = 120;    // 4格價格摘要
     var CHART_PANEL_H = 360; // 左統計 + 右圖表
-    var FOOTER_H = 30;      // 底部浮水印
+    var FOOTER_H = 42;      // 底部浮水印
     var SECTION_GAP = 14;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + SUMMARY_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
@@ -3358,26 +3376,23 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     ctx.strokeStyle = C_BORDER;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(pad, fy + 10); ctx.lineTo(imgW - pad, fy + 10);
+    ctx.moveTo(pad, fy + 8); ctx.lineTo(imgW - pad, fy + 8);
     ctx.stroke();
+
+    var textY = fy + 30;
 
     // 左：品牌
     ctx.fillStyle = C_ACCENT;
-    ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
+    ctx.font = 'bold 13px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('WS-Cards', pad, fy + 38);
+    ctx.fillText('WS-Cards  ws-cards.cloud', pad, textY);
 
-    ctx.fillStyle = C_TEXT3;
-    ctx.font = '12px "Noto Sans TC", sans-serif';
-    ctx.fillText('ws-cards.cloud', pad, fy + 56);
-
-    // 右：日期與來源
+    // 右：來源 + 日期（同一行）
     var dateStr = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     ctx.fillStyle = C_TEXT3;
     ctx.font = '12px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('資料來源：遊々亭', imgW - pad, fy + 38);
-    ctx.fillText('製表時間：' + dateStr, imgW - pad, fy + 56);
+    ctx.fillText('資料來源：遊々亭　製表時間：' + dateStr, imgW - pad, textY);
 }
 
 /**
