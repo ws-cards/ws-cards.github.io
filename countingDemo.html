@@ -561,6 +561,117 @@
       color: var(--muted);
       font-size: 11px;
     }
+
+    .deck-price-list-panel{
+      margin-bottom: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: transparent;
+      overflow: hidden;
+    }
+    .deck-price-list-panel .dpl-toolbar{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--hairline);
+      background: var(--alt2);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: .2px;
+    }
+    .deck-price-list-panel .dpl-scroll{
+      max-height: min(52vh, 560px);
+      overflow: auto;
+      padding: 12px;
+      background: transparent;
+    }
+    .deck-price-list-panel .dpl-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .dpl-item{
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      background: var(--alt2);
+      min-width: 0;
+    }
+    .dpl-thumb{
+      flex: 0 0 72px;
+      width: 72px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      background: #fff;
+      align-self: flex-start;
+    }
+    .dpl-thumb img{
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 63 / 88;
+      object-fit: cover;
+    }
+    .dpl-info{
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .dpl-info .dpl-no{
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-weight: 900;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .dpl-info .dpl-name{
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .dpl-info .dpl-price{
+      margin-top: 8px;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: .2px;
+    }
+    .dpl-info .dpl-price.muted{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .dpl-info .dpl-sub{
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .dpl-empty{
+      padding: 16px 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dpl-item-plain{
+      grid-column: 1 / -1;
+      padding: 10px 12px;
+      border: 1px dashed var(--hairline);
+      border-radius: var(--radius);
+      background: var(--alt2);
+      font-size: 12px;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -576,6 +687,17 @@
       </div>
     </div>
 
+    <div id="deckPriceListPanel" class="deck-price-list-panel" style="display:none;" aria-hidden="true">
+      <div class="dpl-toolbar">
+        <span><i class="fas fa-images mr-1"></i>牌組行情清單（剩餘牌組 · 卡圖與最新價）</span>
+        <button type="button" class="btn-ghost" id="btnCloseDeckPriceList" style="padding:6px 12px;font-size:11px;">收合</button>
+      </div>
+      <div class="dpl-scroll">
+        <div id="deckPriceListEmpty" class="dpl-empty" style="display:none;"></div>
+        <div id="deckPriceListGrid" class="dpl-grid" aria-label="牌組價格清單"></div>
+      </div>
+    </div>
+
     <div class="board">
       <div class="board-header">
         <div class="left">
@@ -587,6 +709,9 @@
           </button>
         </div>
         <div class="right">
+          <button class="btn-ghost" id="btnToggleDeckPriceList" type="button" title="在上方展開卡圖與最新價格清單" aria-expanded="false">
+            <i class="fas fa-list-alt mr-1"></i>牌組價格清單
+          </button>
           <button class="btn-ghost" id="btnRefreshPrices" type="button" title="重新抓取當日卡牌行情 JSON">
             <i class="fas fa-coins mr-1"></i>更新行情
           </button>
@@ -1224,6 +1349,7 @@
     let latestByCardPayload = null;
     let latestByCardError = null;
     let latestByCardLoading = false;
+    let deckPriceListExpanded = false;
 
     function formatReportYmd(ymd) {
       const s = String(ymd || "").trim();
@@ -1321,6 +1447,161 @@
       const p = computeDeckValuationParts();
       mainEl.textContent = p.main;
       metaEl.textContent = p.meta;
+      if (deckPriceListExpanded) renderDeckPriceList();
+    }
+
+    function setDeckPriceListVisible(show) {
+      deckPriceListExpanded = !!show;
+      const panel = document.getElementById("deckPriceListPanel");
+      const btn = document.getElementById("btnToggleDeckPriceList");
+      if (panel) {
+        panel.style.display = deckPriceListExpanded ? "block" : "none";
+        panel.setAttribute("aria-hidden", deckPriceListExpanded ? "false" : "true");
+      }
+      if (btn) btn.setAttribute("aria-expanded", deckPriceListExpanded ? "true" : "false");
+      if (deckPriceListExpanded) renderDeckPriceList();
+    }
+
+    function renderDeckPriceList() {
+      const grid = document.getElementById("deckPriceListGrid");
+      const emptyEl = document.getElementById("deckPriceListEmpty");
+      if (!grid) return;
+      grid.innerHTML = "";
+      if (emptyEl) {
+        emptyEl.style.display = "none";
+        emptyEl.textContent = "";
+      }
+
+      if (latestByCardLoading) {
+        if (emptyEl) {
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "行情載入中…";
+        }
+        return;
+      }
+      if (latestByCardError) {
+        if (emptyEl) {
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "無法載入行情：" + String(latestByCardError);
+        }
+        return;
+      }
+      if (!latestByCardPayload || !latestByCardPayload.cards) {
+        if (emptyEl) {
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "尚未載入行情，請按「更新行情」。";
+        }
+        return;
+      }
+      if (!state || !state.zones) return;
+
+      ensureZone("deck");
+      const deckCards = state.zones.deck || [];
+      const cardsMap = latestByCardPayload.cards;
+
+      const byNo = new Map();
+      let noCardNoQty = 0;
+      for (const c of deckCards) {
+        const cn = normalizeCardNo(c && c.cardNo);
+        if (!cn) {
+          noCardNoQty++;
+          continue;
+        }
+        if (!byNo.has(cn)) {
+          byNo.set(cn, { cardNo: cn, qty: 0, sample: c });
+        }
+        const row = byNo.get(cn);
+        row.qty++;
+      }
+
+      const rows = Array.from(byNo.values()).sort((a, b) => a.cardNo.localeCompare(b.cardNo));
+
+      if (!rows.length && noCardNoQty === 0) {
+        if (emptyEl) {
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "牌組為空。";
+        }
+        return;
+      }
+
+      for (const row of rows) {
+        const item = document.createElement("div");
+        item.className = "dpl-item";
+
+        const imgUrl = String(row.sample.imageUrl || "").trim() || (row.cardNo ? wsImageUrlFromCardNo(row.cardNo) : "");
+        const thumb = document.createElement("div");
+        thumb.className = "dpl-thumb";
+        thumb.title = "預覽卡圖";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        img.onerror = function() {
+          try { this.onerror = null; } catch (e) {}
+          this.src = placeholderSvgDataUrl(row.sample.name || row.cardNo || "CARD");
+        };
+        img.src = imgUrl || placeholderSvgDataUrl(row.sample.name || row.cardNo || "CARD");
+        thumb.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCardImage(row.sample, "deck", 0);
+        });
+        thumb.appendChild(img);
+
+        const info = document.createElement("div");
+        info.className = "dpl-info";
+
+        const noEl = document.createElement("div");
+        noEl.className = "dpl-no";
+        noEl.textContent = row.cardNo;
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "dpl-name";
+        const nm = String(row.sample.name || "").trim();
+        nameEl.textContent = nm || "（無卡名）";
+        nameEl.style.display = nm ? "" : "none";
+
+        const priceRow = cardsMap[row.cardNo];
+        const unit = priceRow && typeof priceRow.latestPrice === "number" ? priceRow.latestPrice : null;
+
+        const priceEl = document.createElement("div");
+        if (unit != null) {
+          priceEl.className = "dpl-price";
+          const sub = unit * row.qty;
+          priceEl.textContent = row.qty > 1
+            ? ("NT$ " + unit.toLocaleString("zh-TW") + " × " + row.qty + " ＝ NT$ " + sub.toLocaleString("zh-TW"))
+            : ("NT$ " + unit.toLocaleString("zh-TW"));
+          const subEl = document.createElement("div");
+          subEl.className = "dpl-sub";
+          const ld = priceRow && priceRow.latestDate ? formatReportYmd(String(priceRow.latestDate)) : "";
+          subEl.textContent = ld ? ("行情日 " + ld) : "";
+          info.appendChild(noEl);
+          info.appendChild(nameEl);
+          info.appendChild(priceEl);
+          if (subEl.textContent) info.appendChild(subEl);
+        } else {
+          priceEl.className = "dpl-price muted";
+          priceEl.textContent = "無報價";
+          const subEl = document.createElement("div");
+          subEl.className = "dpl-sub";
+          subEl.textContent = "× " + row.qty + " 張";
+          info.appendChild(noEl);
+          info.appendChild(nameEl);
+          info.appendChild(priceEl);
+          info.appendChild(subEl);
+        }
+
+        item.appendChild(thumb);
+        item.appendChild(info);
+        grid.appendChild(item);
+      }
+
+      if (noCardNoQty > 0) {
+        const plain = document.createElement("div");
+        plain.className = "dpl-item-plain";
+        plain.textContent = "無卡號無法對照行情 · 共 " + noCardNoQty + " 張";
+        grid.appendChild(plain);
+      }
     }
 
     function fillZoneDeckValuationModal() {
@@ -2184,6 +2465,21 @@
         btnRp.addEventListener("click", () => {
           fetchLatestByCardReport();
         });
+      }
+
+      const btnTgl = document.getElementById("btnToggleDeckPriceList");
+      const btnCloseDpl = document.getElementById("btnCloseDeckPriceList");
+      if (btnTgl) {
+        btnTgl.addEventListener("click", () => {
+          setDeckPriceListVisible(!deckPriceListExpanded);
+          if (deckPriceListExpanded) {
+            const pan = document.getElementById("deckPriceListPanel");
+            if (pan) pan.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+      }
+      if (btnCloseDpl) {
+        btnCloseDpl.addEventListener("click", () => setDeckPriceListVisible(false));
       }
 
       renderCounts();
