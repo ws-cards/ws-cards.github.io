@@ -1231,6 +1231,26 @@
       return s.slice(0, 4) + "/" + s.slice(4, 6) + "/" + s.slice(6, 8);
     }
 
+    /** 新版：卡號為頂層 key；舊版：包在 cards 內 */
+    const LATEST_REPORT_META_KEYS = new Set(["generatedAt"]);
+
+    function extractCardsMapFromLatestByCardJson(j) {
+      if (!j || typeof j !== "object") return null;
+      if (j.cards && typeof j.cards === "object" && j.cards !== null) {
+        return j.cards;
+      }
+      const out = {};
+      for (const k of Object.keys(j)) {
+        if (LATEST_REPORT_META_KEYS.has(k)) continue;
+        const v = j[k];
+        if (!v || typeof v !== "object") continue;
+        const cn = normalizeCardNo(v.cardNo != null ? v.cardNo : k);
+        if (!cn) continue;
+        out[cn] = v;
+      }
+      return Object.keys(out).length ? out : null;
+    }
+
     function sumDeckAgainstPriceMap(deckCards, cardsMap) {
       const map = cardsMap && typeof cardsMap === "object" ? cardsMap : null;
       let total = 0;
@@ -1326,8 +1346,11 @@
         const r = await fetch(LATEST_BY_CARD_JSON_URL);
         if (!r.ok) throw new Error("HTTP " + r.status);
         const j = await r.json();
-        if (!j || typeof j.cards !== "object" || j.cards === null) throw new Error("JSON 缺少 cards");
-        latestByCardPayload = { generatedAt: j.generatedAt, cards: j.cards };
+        const cardsMap = extractCardsMapFromLatestByCardJson(j);
+        if (!cardsMap || !Object.keys(cardsMap).length) {
+          throw new Error("無卡牌行情（需頂層卡號欄位或舊版 cards 物件）");
+        }
+        latestByCardPayload = { generatedAt: j.generatedAt, cards: cardsMap };
       } catch (e) {
         latestByCardError = e && e.message ? e.message : String(e);
         latestByCardPayload = null;
