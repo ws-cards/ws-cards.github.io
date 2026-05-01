@@ -540,6 +540,27 @@
     /* 關閉按鈕改黑字 */
     .modal .close{ color: var(--ink) !important; opacity: .9; }
     .modal .close:hover{ opacity: 1; }
+
+    .deck-valuation{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--hairline);
+      background: var(--alt2);
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .deck-valuation .dv-main{
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: .2px;
+    }
+    .deck-valuation .dv-meta{
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
   </style>
 </head>
 <body>
@@ -566,6 +587,9 @@
           </button>
         </div>
         <div class="right">
+          <button class="btn-ghost" id="btnRefreshPrices" type="button" title="重新抓取當日卡牌行情 JSON">
+            <i class="fas fa-coins mr-1"></i>更新行情
+          </button>
           <button class="btn-ghost" id="btnImportDeck">
             <i class="fas fa-file-import mr-1"></i>匯入牌組（可選）
           </button>
@@ -598,6 +622,10 @@
               </div>
               <div class="zbody">
                 不顯示逐張內容；可點擊查看「角色/事件/CX」的預估分佈（依牌組內容推估）。
+                <div class="deck-valuation" id="deckValuationPanel" aria-live="polite">
+                  <div class="dv-main" id="deckValuationMain">參考估價：—</div>
+                  <div class="dv-meta" id="deckValuationMeta"></div>
+                </div>
                 <div class="chips">
                   <div class="chip" id="btnDraw"><i class="fas fa-hand-paper"></i>抽 1 → 手牌</div>
                   <div class="chip" id="btnMill"><i class="fas fa-arrow-down"></i>磨 1 → 休息室</div>
@@ -736,6 +764,7 @@
         <div class="modal-body">
           <div class="minihelp mb-2" id="zoneListHint"></div>
           <div id="zoneListStats" aria-label="角色/事件/CX 統計"></div>
+          <div id="zoneDeckValuation" class="deck-valuation mb-2" style="display:none;" aria-label="牌組參考估價"></div>
           <div class="list-group" id="zoneList"></div>
         </div>
         <div class="modal-footer">
@@ -1186,6 +1215,126 @@
         const slot = document.querySelector('.slot[data-zone="' + k + '"]');
         if (slot) slot.classList.toggle("empty", zoneCount(k) === 0);
       }
+      updateDeckValuationUI();
+    }
+
+    /** 當日卡牌行情（與牌組卡號對應後加總） */
+    const LATEST_BY_CARD_JSON_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_20260501.json";
+
+    let latestByCardPayload = null;
+    let latestByCardError = null;
+    let latestByCardLoading = false;
+
+    function formatReportYmd(ymd) {
+      const s = String(ymd || "").trim();
+      if (s.length !== 8 || !/^\d{8}$/.test(s)) return s || "—";
+      return s.slice(0, 4) + "/" + s.slice(4, 6) + "/" + s.slice(6, 8);
+    }
+
+    function sumDeckAgainstPriceMap(deckCards, cardsMap) {
+      const map = cardsMap && typeof cardsMap === "object" ? cardsMap : null;
+      let total = 0;
+      let noCardNo = 0;
+      let missingPriceQty = 0;
+      const byNo = new Map();
+      for (const c of deckCards || []) {
+        const cn = normalizeCardNo(c && c.cardNo);
+        if (!cn) {
+          noCardNo++;
+          continue;
+        }
+        byNo.set(cn, (byNo.get(cn) || 0) + 1);
+      }
+      for (const [cn, qty] of byNo) {
+        const row = map && map[cn];
+        const p = row && typeof row.latestPrice === "number" ? row.latestPrice : null;
+        if (p == null) missingPriceQty += qty;
+        else total += p * qty;
+      }
+      return { total, noCardNo, missingPriceQty, countedNos: byNo.size };
+    }
+
+    function pickReportDateLabel(cardsMap) {
+      if (!cardsMap || typeof cardsMap !== "object") return "";
+      for (const k of Object.keys(cardsMap)) {
+        const d = cardsMap[k] && cardsMap[k].latestDate;
+        if (d) return String(d);
+      }
+      return "";
+    }
+
+    function computeDeckValuationParts() {
+      if (latestByCardLoading) {
+        return { main: "參考估價：載入中…", meta: "" };
+      }
+      if (latestByCardError) {
+        return {
+          main: "參考估價：無法載入行情",
+          meta: String(latestByCardError)
+        };
+      }
+      if (!latestByCardPayload || !latestByCardPayload.cards) {
+        return { main: "參考估價：尚未載入", meta: "請稍候或按「更新行情」。" };
+      }
+      if (!state || !state.zones) {
+        return { main: "參考估價：—", meta: "" };
+      }
+      ensureZone("deck");
+      const deckCards = state.zones.deck || [];
+      const cardsMap = latestByCardPayload.cards;
+      const ymd = pickReportDateLabel(cardsMap);
+      const dateLabel = formatReportYmd(ymd);
+      const s = sumDeckAgainstPriceMap(deckCards, cardsMap);
+      const n = deckCards.length;
+      const parts = [];
+      if (s.missingPriceQty > 0) parts.push("無報價 " + s.missingPriceQty + " 張");
+      if (s.noCardNo > 0) parts.push("無卡號 " + s.noCardNo + " 張");
+      const meta = "行情日 " + dateLabel + " · 牌組剩餘 " + n + " 張" + (parts.length ? " · " + parts.join(" · ") : "");
+      const main = "參考估價（加總）：NT$ " + s.total.toLocaleString("zh-TW");
+      return { main, meta };
+    }
+
+    function updateDeckValuationUI() {
+      const mainEl = document.getElementById("deckValuationMain");
+      const metaEl = document.getElementById("deckValuationMeta");
+      if (!mainEl || !metaEl) return;
+      const p = computeDeckValuationParts();
+      mainEl.textContent = p.main;
+      metaEl.textContent = p.meta;
+    }
+
+    function fillZoneDeckValuationModal() {
+      const wrap = document.getElementById("zoneDeckValuation");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      const p = computeDeckValuationParts();
+      const d1 = document.createElement("div");
+      d1.className = "dv-main";
+      d1.textContent = p.main;
+      const d2 = document.createElement("div");
+      d2.className = "dv-meta";
+      d2.textContent = p.meta;
+      wrap.appendChild(d1);
+      wrap.appendChild(d2);
+    }
+
+    async function fetchLatestByCardReport() {
+      latestByCardLoading = true;
+      latestByCardError = null;
+      updateDeckValuationUI();
+      try {
+        const r = await fetch(LATEST_BY_CARD_JSON_URL);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const j = await r.json();
+        if (!j || typeof j.cards !== "object" || j.cards === null) throw new Error("JSON 缺少 cards");
+        latestByCardPayload = { generatedAt: j.generatedAt, cards: j.cards };
+      } catch (e) {
+        latestByCardError = e && e.message ? e.message : String(e);
+        latestByCardPayload = null;
+      } finally {
+        latestByCardLoading = false;
+        updateDeckValuationUI();
+      }
     }
 
     function isHiddenZoneKey(zoneKey) {
@@ -1295,6 +1444,11 @@
       const list = document.getElementById("zoneList");
       const stats = document.getElementById("zoneListStats");
       const editBtn = document.getElementById("zoneListEditBtn");
+      const zoneDeckVal = document.getElementById("zoneDeckValuation");
+      if (zoneDeckVal) {
+        zoneDeckVal.style.display = "none";
+        zoneDeckVal.innerHTML = "";
+      }
       ensureZone(zoneKey);
 
       const hidden = isHiddenZoneKey(zoneKey);
@@ -1333,6 +1487,10 @@
         note.className = "list-group-item";
         note.textContent = "非公開區域不顯示逐張卡面清單。";
         list.appendChild(note);
+        if (zoneKey === "deck" && zoneDeckVal) {
+          zoneDeckVal.style.display = "block";
+          fillZoneDeckValuationModal();
+        }
         $("#zoneListModal").modal("show");
         return;
       }
@@ -1998,7 +2156,15 @@
         }
       });
 
+      const btnRp = document.getElementById("btnRefreshPrices");
+      if (btnRp) {
+        btnRp.addEventListener("click", () => {
+          fetchLatestByCardReport();
+        });
+      }
+
       renderCounts();
+      fetchLatestByCardReport();
     }
 
     init();
