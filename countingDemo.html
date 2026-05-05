@@ -690,7 +690,12 @@
     <div id="deckPriceListPanel" class="deck-price-list-panel" style="display:none;" aria-hidden="true">
       <div class="dpl-toolbar">
         <span><i class="fas fa-images mr-1"></i>牌組行情清單（剩餘牌組 · 卡圖與最新價［日幣］）</span>
-        <button type="button" class="btn-ghost" id="btnCloseDeckPriceList" style="padding:6px 12px;font-size:11px;">收合</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button type="button" class="btn-ghost" id="btnExportDeckPriceImg" style="padding:6px 12px;font-size:11px;" title="將清單匯出為圖片">
+            <i class="fas fa-image mr-1"></i>匯出圖片
+          </button>
+          <button type="button" class="btn-ghost" id="btnCloseDeckPriceList" style="padding:6px 12px;font-size:11px;">收合</button>
+        </div>
       </div>
       <div class="dpl-scroll">
         <div id="deckPriceListEmpty" class="dpl-empty" style="display:none;"></div>
@@ -1044,6 +1049,7 @@
   </div>
 
   <script src="../plugins/jquery/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script>
     const STORAGE_KEY = "ws-battle-counter-v1";
@@ -2557,6 +2563,55 @@
       }
       if (btnCloseDpl) {
         btnCloseDpl.addEventListener("click", () => setDeckPriceListVisible(false));
+      }
+
+      const btnExportImg = document.getElementById("btnExportDeckPriceImg");
+      if (btnExportImg) {
+        btnExportImg.addEventListener("click", async () => {
+          const grid = document.getElementById("deckPriceListGrid");
+          if (!grid || !grid.children.length) {
+            alert("清單為空，無法匯出。");
+            return;
+          }
+          btnExportImg.disabled = true;
+          const origText = btnExportImg.innerHTML;
+          btnExportImg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>處理中…';
+          try {
+            // 建立包裹容器，加上背景與 padding 再截圖
+            const wrap = document.createElement("div");
+            wrap.style.cssText = "background:#fff;padding:16px;display:inline-block;min-width:600px;";
+            const title = document.createElement("div");
+            title.style.cssText = "font-size:15px;font-weight:700;margin-bottom:12px;color:#0a0a0a;font-family:system-ui,sans-serif;";
+            title.textContent = "牌組行情清單";
+            wrap.appendChild(title);
+            const clone = grid.cloneNode(true);
+            clone.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;";
+            // 強制所有 img 使用 crossOrigin 以利 canvas 擷取
+            clone.querySelectorAll("img").forEach((img) => {
+              img.crossOrigin = "anonymous";
+            });
+            wrap.appendChild(clone);
+            document.body.appendChild(wrap);
+            const canvas = await html2canvas(wrap, {
+              backgroundColor: "#ffffff",
+              useCORS: true,
+              allowTaint: false,
+              scale: 2,
+              logging: false,
+            });
+            document.body.removeChild(wrap);
+            const link = document.createElement("a");
+            const ts = new Date().toISOString().slice(0, 10);
+            link.download = `deck-price-list-${ts}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+          } catch (e) {
+            alert("匯出失敗：" + (e && e.message ? e.message : String(e)));
+          } finally {
+            btnExportImg.disabled = false;
+            btnExportImg.innerHTML = origText;
+          }
+        });
       }
 
       renderCounts();
