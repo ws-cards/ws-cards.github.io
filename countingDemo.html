@@ -2601,25 +2601,14 @@
             });
             document.body.removeChild(wrap);
 
-            // 計算總金額
+            // 計算總金額（直接用現有的 sumDeckAgainstPriceMap，與行情清單顯示邏輯一致）
             let totalPrice = 0;
             let hasAnyPrice = false;
             if (latestByCardPayload && latestByCardPayload.cards && state && state.zones) {
               const deckCards = state.zones.deck || [];
-              const cardsMap = latestByCardPayload.cards;
-              const byNo = new Map();
-              for (const c of deckCards) {
-                const cn = normalizeCardNo(c && c.cardNo);
-                if (!cn) continue;
-                byNo.set(cn, (byNo.get(cn) || 0) + 1);
-              }
-              for (const [cn, qty] of byNo.entries()) {
-                const priceRow = cardsMap[cn];
-                if (priceRow && typeof priceRow.latestPrice === "number") {
-                  totalPrice += priceRow.latestPrice * qty;
-                  hasAnyPrice = true;
-                }
-              }
+              const result = sumDeckAgainstPriceMap(deckCards, latestByCardPayload.cards);
+              totalPrice = result.total;
+              hasAnyPrice = result.total > 0;
             }
 
             // 在 canvas 右下角繪製加總文字
@@ -2667,3 +2656,4 @@
   </script>
 </body>
 </html>
+ 
