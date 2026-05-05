@@ -2600,6 +2600,51 @@
               logging: false,
             });
             document.body.removeChild(wrap);
+
+            // 計算總金額
+            let totalPrice = 0;
+            let hasAnyPrice = false;
+            if (latestByCardPayload && latestByCardPayload.cards && state && state.zones) {
+              const deckCards = state.zones.deck || [];
+              const cardsMap = latestByCardPayload.cards;
+              const byNo = new Map();
+              for (const c of deckCards) {
+                const cn = normalizeCardNo(c && c.cardNo);
+                if (!cn) continue;
+                byNo.set(cn, (byNo.get(cn) || 0) + 1);
+              }
+              for (const [cn, qty] of byNo.entries()) {
+                const priceRow = cardsMap[cn];
+                if (priceRow && typeof priceRow.latestPrice === "number") {
+                  totalPrice += priceRow.latestPrice * qty;
+                  hasAnyPrice = true;
+                }
+              }
+            }
+
+            // 在 canvas 右下角繪製加總文字
+            if (hasAnyPrice) {
+              const ctx = canvas.getContext("2d");
+              const scale = 2;
+              const label = "合計（有報價卡）：¥" + totalPrice.toLocaleString("zh-TW");
+              const fontSize = 15 * scale;
+              ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+              const textW = ctx.measureText(label).width;
+              const padX = 16 * scale;
+              const padY = 14 * scale;
+              const boxW = textW + padX * 2;
+              const boxH = fontSize + padY * 2;
+              const x = canvas.width - boxW - 12 * scale;
+              const y = canvas.height - boxH - 12 * scale;
+              // 背景框
+              ctx.fillStyle = "rgba(0,0,0,0.82)";
+              ctx.beginPath();
+              ctx.roundRect(x, y, boxW, boxH, 8 * scale);
+              ctx.fill();
+              // 文字
+              ctx.fillStyle = "#ffffff";
+              ctx.fillText(label, x + padX, y + padY + fontSize * 0.85);
+            }
             const link = document.createElement("a");
             const ts = new Date().toISOString().slice(0, 10);
             link.download = `deck-price-list-${ts}.png`;
