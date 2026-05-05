@@ -3074,7 +3074,7 @@ function _composeStatsCanvas(info) {
     var HEADER_H = 290;     // 卡圖 + 卡片資訊
     var SUMMARY_H = 120;    // 4格價格摘要
     var CHART_PANEL_H = 360; // 左統計 + 右圖表
-    var FOOTER_H = 42;      // 底部浮水印
+    var FOOTER_H = 28;      // 底部浮水印
     var SECTION_GAP = 14;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + SUMMARY_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
@@ -3390,10 +3390,10 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     ctx.strokeStyle = C_BORDER;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(pad, fy + 8); ctx.lineTo(imgW - pad, fy + 8);
+    ctx.moveTo(pad, fy + 4); ctx.lineTo(imgW - pad, fy + 4);
     ctx.stroke();
 
-    var textY = fy + 30;
+    var textY = fy + 21;
 
     // 左：品牌
     ctx.fillStyle = C_ACCENT;
@@ -3901,4 +3901,5 @@ return {
     switchCompany: switchCompany,
     resetUI: resetUI
 };
+
 })();
