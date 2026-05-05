@@ -2577,20 +2577,104 @@
           const origText = btnExportImg.innerHTML;
           btnExportImg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>處理中…';
           try {
+            // 先計算合計金額
+            let totalPrice = 0;
+            let missingQty = 0;
+            if (latestByCardPayload && latestByCardPayload.cards && state && state.zones) {
+              const result = sumDeckAgainstPriceMap(state.zones.deck || [], latestByCardPayload.cards);
+              totalPrice = result.total;
+              missingQty = result.missingPriceQty;
+            }
+
             // 建立包裹容器，加上背景與 padding 再截圖
+            // 使用固定寬度（900px），確保手機與桌面截出的圖片一致
             const wrap = document.createElement("div");
-            wrap.style.cssText = "background:#fff;padding:16px;display:inline-block;min-width:600px;";
+            wrap.style.cssText = [
+              "background:#fff",
+              "padding:16px 16px 20px",
+              "width:900px",
+              "position:fixed",
+              "top:-99999px",
+              "left:-99999px",
+              "z-index:-1",
+              "font-family:system-ui,-apple-system,sans-serif",
+            ].join(";");
             const title = document.createElement("div");
-            title.style.cssText = "font-size:15px;font-weight:700;margin-bottom:12px;color:#0a0a0a;font-family:system-ui,sans-serif;";
+            title.style.cssText = "font-size:15px;font-weight:700;margin-bottom:12px;color:#0a0a0a;";
             title.textContent = "牌組行情清單";
             wrap.appendChild(title);
             const clone = grid.cloneNode(true);
-            clone.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;";
-            // 強制所有 img 使用 crossOrigin 以利 canvas 擷取
-            clone.querySelectorAll("img").forEach((img) => {
+            // 強制 grid 佈局，固定欄寬，完全不受 viewport 影響
+            clone.style.cssText = [
+              "display:grid",
+              "grid-template-columns:repeat(auto-fill,minmax(240px,1fr))",
+              "gap:12px",
+              "width:100%",
+            ].join(";");
+            // 補上 clone 內每個 item 的 inline 樣式，防止 CSS class 在截圖時失效
+            clone.querySelectorAll(".dpl-item").forEach((item) => {
+              item.style.cssText = "display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid rgba(10,10,10,.22);border-radius:10px;background:rgba(10,10,10,.02);min-width:0;box-sizing:border-box;";
+            });
+            clone.querySelectorAll(".dpl-thumb").forEach((thumb) => {
+              thumb.style.cssText = "flex:0 0 72px;width:72px;border-radius:8px;overflow:hidden;border:1px solid rgba(10,10,10,.82);background:#fff;";
+            });
+            clone.querySelectorAll(".dpl-thumb img").forEach((img) => {
+              img.style.cssText = "display:block;width:100%;height:auto;aspect-ratio:63/88;object-fit:cover;";
               img.crossOrigin = "anonymous";
             });
+            clone.querySelectorAll(".dpl-info").forEach((info) => {
+              info.style.cssText = "flex:1;min-width:0;font-size:12px;line-height:1.4;";
+            });
+            clone.querySelectorAll(".dpl-no").forEach((el) => {
+              el.style.cssText = "font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:12px;word-break:break-all;color:#0a0a0a;";
+            });
+            clone.querySelectorAll(".dpl-name").forEach((el) => {
+              el.style.cssText = "color:rgba(10,10,10,.62);font-size:11px;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;";
+            });
+            clone.querySelectorAll(".dpl-price").forEach((el) => {
+              el.style.cssText = el.classList.contains("muted")
+                ? "margin-top:8px;font-weight:800;font-size:12px;color:rgba(10,10,10,.62);"
+                : "margin-top:8px;font-weight:900;font-size:14px;letter-spacing:.2px;color:#0a0a0a;";
+            });
+            clone.querySelectorAll(".dpl-sub").forEach((el) => {
+              el.style.cssText = "margin-top:4px;font-size:11px;color:rgba(10,10,10,.62);";
+            });
             wrap.appendChild(clone);
+
+            // 加總列（固定在底部右側）
+            const footer = document.createElement("div");
+            footer.style.cssText = [
+              "margin-top:14px",
+              "display:flex",
+              "justify-content:flex-end",
+              "align-items:center",
+              "gap:12px",
+              "font-family:system-ui,sans-serif",
+              "font-size:14px",
+              "color:#444",
+            ].join(";");
+            const totalEl = document.createElement("div");
+            totalEl.style.cssText = [
+              "background:#0a0a0a",
+              "color:#fff",
+              "font-weight:700",
+              "font-size:15px",
+              "padding:8px 18px",
+              "border-radius:8px",
+              "letter-spacing:.3px",
+            ].join(";");
+            totalEl.textContent = totalPrice > 0
+              ? ("合計（有報價卡）：¥" + totalPrice.toLocaleString("zh-TW"))
+              : "合計：無報價資料";
+            if (missingQty > 0) {
+              const noteEl = document.createElement("span");
+              noteEl.style.cssText = "font-size:12px;color:#888;";
+              noteEl.textContent = `（${missingQty} 張無報價未計入）`;
+              footer.appendChild(noteEl);
+            }
+            footer.appendChild(totalEl);
+            wrap.appendChild(footer);
+
             document.body.appendChild(wrap);
             const canvas = await html2canvas(wrap, {
               backgroundColor: "#ffffff",
@@ -2600,42 +2684,6 @@
               logging: false,
             });
             document.body.removeChild(wrap);
-
-            // 計算總金額（直接用現有的 sumDeckAgainstPriceMap，與行情清單顯示邏輯一致）
-            let totalPrice = 0;
-            let hasAnyPrice = false;
-            console.log("hasAnyPrice",hasAnyPrice);
-            if (latestByCardPayload && latestByCardPayload.cards && state && state.zones) {
-              const deckCards = state.zones.deck || [];
-              const result = sumDeckAgainstPriceMap(deckCards, latestByCardPayload.cards);
-              totalPrice = result.total;
-              hasAnyPrice = result.total > 0;
-            }
-
-            // 在 canvas 右下角繪製加總文字
-            if (totalPrice > 0) {
-              console.log("totalPrice", totalPrice);
-              const ctx = canvas.getContext("2d");
-              const scale = 2;
-              const label = "合計（有報價卡）：¥" + totalPrice.toLocaleString("zh-TW");
-              const fontSize = 15 * scale;
-              ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
-              const textW = ctx.measureText(label).width;
-              const padX = 16 * scale;
-              const padY = 14 * scale;
-              const boxW = textW + padX * 2;
-              const boxH = fontSize + padY * 2;
-              const x = canvas.width - boxW - 12 * scale;
-              const y = canvas.height - boxH - 12 * scale;
-              // 背景框
-              ctx.fillStyle = "rgba(0,0,0,0.82)";
-              ctx.beginPath();
-              ctx.roundRect(x, y, boxW, boxH, 8 * scale);
-              ctx.fill();
-              // 文字
-              ctx.fillStyle = "#ffffff";
-              ctx.fillText(label, x + padX, y + padY + fontSize * 0.85);
-            }
             const link = document.createElement("a");
             const ts = new Date().toISOString().slice(0, 10);
             link.download = `deck-price-list-${ts}.png`;
@@ -2658,4 +2706,5 @@
   </script>
 </body>
 </html>
+
  
