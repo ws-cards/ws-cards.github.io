@@ -212,7 +212,9 @@
       }
 
       .tableWrap {
-        overflow-x: auto;
+        overflow: auto;
+        max-height: calc(100vh - 320px);
+        min-height: 220px;
       }
 
       /* 卡圖浮動預覽 */
@@ -239,12 +241,8 @@
 
       /* 手機點擊時卡圖置中放大 */
       @media (hover: none) {
-        #cardTooltip {
-          width: 200px;
-          transform: translateX(-50%);
-        }
         #cardTooltip img {
-          width: 100%;
+          width: 200px;
         }
       }
 
@@ -669,7 +667,15 @@
           const url = cardNoToImageUrl(cardNo);
           if (!url) return;
           tooltipImg.src = url;
-          placeTooltip(x, y);
+          if (isTouch()) {
+            // 手機：固定顯示在畫面上方正中央
+            tooltip.style.left = "50%";
+            tooltip.style.top = "28%";
+            tooltip.style.transform = "translate(-50%, -50%)";
+          } else {
+            tooltip.style.transform = "";
+            placeTooltip(x, y);
+          }
           tooltip.style.display = "block";
           tooltipVisible = true;
         }
