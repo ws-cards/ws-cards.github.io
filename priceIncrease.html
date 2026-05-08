@@ -237,12 +237,30 @@
         width: 180px;
         height: auto;
         border-radius: 8px;
+        background: rgba(255,255,255,0.06);
+        min-height: 252px; /* 維持卡片比例佔位，避免閃爍 */
+      }
+
+      /* 圖片載入中：顯示 shimmer */
+      #cardTooltipImg.loading {
+        animation: shimmer 1.2s infinite linear;
+        background: linear-gradient(90deg,
+          rgba(255,255,255,0.04) 25%,
+          rgba(255,255,255,0.12) 50%,
+          rgba(255,255,255,0.04) 75%);
+        background-size: 400% 100%;
+      }
+
+      @keyframes shimmer {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
       }
 
       /* 手機點擊時卡圖置中放大 */
       @media (hover: none) {
         #cardTooltip img {
           width: 200px;
+          min-height: 280px;
         }
       }
 
@@ -662,32 +680,50 @@
         const tooltip = document.getElementById("cardTooltip");
         const tooltipImg = document.getElementById("cardTooltipImg");
         let tooltipVisible = false;
+        let tooltipCurrentUrl = ""; // 記錄目前已設定的 src，避免重複請求
+
+        // 預載快取（不顯示，純粹讓瀏覽器快取圖片）
+        function preloadImage(url) {
+          if (!url || tooltipCurrentUrl === url) return;
+          const img = new Image();
+          img.src = url;
+        }
+
+        function setTooltipSrc(url) {
+          if (tooltipCurrentUrl === url) {
+            // 已是同一張圖，直接移除 loading 狀態即可（可能已載完）
+            tooltipImg.classList.remove("loading");
+            return;
+          }
+          tooltipCurrentUrl = url;
+          tooltipImg.classList.add("loading");
+          tooltipImg.src = url;
+          tooltipImg.onload = () => tooltipImg.classList.remove("loading");
+          tooltipImg.onerror = () => tooltipImg.classList.remove("loading");
+        }
 
         function showTooltip(cardNo, x, y) {
           const url = cardNoToImageUrl(cardNo);
           if (!url) return;
-          tooltipImg.src = url;
-          if (isTouch()) {
-            // 手機：固定顯示在畫面上方正中央
-            tooltip.style.left = "50%";
-            tooltip.style.top = "28%";
-            tooltip.style.transform = "translate(-50%, -50%)";
-          } else {
-            tooltip.style.transform = "";
-            placeTooltip(x, y);
-          }
+          setTooltipSrc(url);
+          tooltip.style.transform = "";
+          placeTooltip(x, y);
           tooltip.style.display = "block";
           tooltipVisible = true;
         }
 
         function placeTooltip(x, y) {
           const pad = 16;
-          const tw = 192; // approximate tooltip width
-          const th = 280; // approximate tooltip height
+          const tw = 192;
+          const th = 280;
           let left = x + 14;
-          let top = y + 14;
+          let top = y - th - 10; // 預設顯示在游標/列的正上方
+          // 超出上方邊界時改顯示在下方
+          if (top < pad) top = y + 24;
+          // 超出右側邊界時往左移
           if (left + tw + pad > window.innerWidth) left = x - tw - 14;
-          if (top + th + pad > window.innerHeight) top = y - th - 14;
+          // 確保不超出左側
+          if (left < pad) left = pad;
           tooltip.style.left = left + "px";
           tooltip.style.top = top + "px";
         }
@@ -705,14 +741,12 @@
           if (isTouch()) return;
           const td = e.target.closest("td.mono");
           if (!td || td.cellIndex !== 0) return;
-          showTooltip(td.textContent.trim(), e.clientX, e.clientY);
+          const rect = td.getBoundingClientRect();
+          showTooltip(td.textContent.trim(), rect.left + rect.width / 2, rect.top);
         });
 
         document.getElementById("tbody").addEventListener("mousemove", (e) => {
-          if (isTouch() || !tooltipVisible) return;
-          const td = e.target.closest("td.mono");
-          if (!td || td.cellIndex !== 0) return;
-          placeTooltip(e.clientX, e.clientY);
+          // mousemove 僅用於 mouseout 的補償，不再追蹤游標移動位置
         });
 
         document.getElementById("tbody").addEventListener("mouseout", (e) => {
@@ -721,6 +755,13 @@
           if (!td || td.cellIndex !== 0) return;
           hideTooltip();
         });
+
+        // ── 手機：touchstart 提前預載圖片（比 click 早 100~300ms） ──
+        document.getElementById("tbody").addEventListener("touchstart", (e) => {
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          preloadImage(cardNoToImageUrl(td.textContent.trim()));
+        }, { passive: true });
 
         // ── 手機：點擊卡號欄 ──
         document.getElementById("tbody").addEventListener("click", (e) => {
@@ -735,10 +776,11 @@
           if (tooltipVisible) {
             hideTooltip();
           } else {
-            // 顯示在畫面中央
-            const cx = window.innerWidth / 2;
-            const cy = window.innerHeight * 0.35;
-            showTooltip(cardNo, cx, cy);
+            // 取得格子在視窗中的位置，將卡圖顯示在列正上方
+            const rect = td.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top; // 列的頂部 y 座標
+            showTooltip(cardNo, x, y);
             setTimeout(() => {
               document.addEventListener("click", hideTooltip, { once: true });
             }, 0);
