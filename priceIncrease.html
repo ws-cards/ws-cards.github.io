@@ -76,7 +76,7 @@
         border: 1px solid var(--border);
         border-radius: 14px;
         box-shadow: var(--shadow);
-        overflow: hidden;
+        overflow: clip; /* clip 不建立滾動容器，sticky 可正常相對視窗固定 */
       }
 
       .controls {
@@ -235,6 +235,17 @@
         width: 180px;
         height: auto;
         border-radius: 8px;
+      }
+
+      /* 手機點擊時卡圖置中放大 */
+      @media (hover: none) {
+        #cardTooltip {
+          width: 200px;
+          transform: translateX(-50%);
+        }
+        #cardTooltip img {
+          width: 100%;
+        }
       }
 
       table {
@@ -680,24 +691,52 @@
           tooltipVisible = false;
         }
 
+        // 偵測是否為觸控裝置
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        // ── 桌機：hover 顯示 / 隱藏 ──
         document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          if (isTouch()) return;
           const td = e.target.closest("td.mono");
           if (!td || td.cellIndex !== 0) return;
-          const cardNo = td.textContent.trim();
-          showTooltip(cardNo, e.clientX, e.clientY);
+          showTooltip(td.textContent.trim(), e.clientX, e.clientY);
         });
 
         document.getElementById("tbody").addEventListener("mousemove", (e) => {
-          if (!tooltipVisible) return;
+          if (isTouch() || !tooltipVisible) return;
           const td = e.target.closest("td.mono");
           if (!td || td.cellIndex !== 0) return;
           placeTooltip(e.clientX, e.clientY);
         });
 
         document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          if (isTouch()) return;
           const td = e.target.closest("td.mono");
           if (!td || td.cellIndex !== 0) return;
           hideTooltip();
+        });
+
+        // ── 手機：點擊卡號欄 ──
+        document.getElementById("tbody").addEventListener("click", (e) => {
+          if (!isTouch()) return;
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) {
+            hideTooltip();
+            return;
+          }
+          e.stopPropagation();
+          const cardNo = td.textContent.trim();
+          if (tooltipVisible) {
+            hideTooltip();
+          } else {
+            // 顯示在畫面中央
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight * 0.35;
+            showTooltip(cardNo, cx, cy);
+            setTimeout(() => {
+              document.addEventListener("click", hideTooltip, { once: true });
+            }, 0);
+          }
         });
 
         async function fetchJson(url) {
