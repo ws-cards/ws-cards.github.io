@@ -273,9 +273,6 @@
       }
 
       thead th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
         border-bottom: 1px solid var(--border);
         font-size: 12px;
         color: var(--muted);
@@ -283,6 +280,28 @@
         padding: 12px 12px;
         white-space: nowrap;
         background: #0f1628;
+      }
+
+      /* 鏡像固定表頭（JS 動態插入） */
+      #stickyTheadMirror {
+        position: fixed;
+        top: 0;
+        z-index: 50;
+        overflow: hidden;
+        display: none;
+        pointer-events: none;
+        border-bottom: 1px solid var(--border);
+        background: #0f1628;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      }
+      #stickyTheadMirror table {
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: unset;
+        table-layout: fixed;
+      }
+      #stickyTheadMirror thead th {
+        border-bottom: none;
       }
 
       tbody td {
@@ -889,67 +908,68 @@
 
         bind();
 
-        // ── Sticky thead：捲動超過表頭時固定在視窗頂部 ──
-        // 原因：.tableWrap 有 overflow-x:auto 會成為 sticky 的捲動容器，
-        //       導致 position:sticky 只相對於容器而非視窗，故改用 JS 切換 fixed。
+        // ── Sticky thead 鏡像方案 ──
+        // 在 body 建立固定鏡像 div，複製 thead 並同步欄寬與水平捲動，
+        // 避免直接 fixed 原 thead 導致欄寬脫離表格布局的問題。
         (function initStickyThead() {
           const tableWrap = document.querySelector(".tableWrap");
+          const table = tableWrap && tableWrap.querySelector("table");
           const thead = document.getElementById("tableWrapHeader");
-          if (!tableWrap || !thead) return;
+          if (!tableWrap || !table || !thead) return;
 
-          // 佔位元素：thead 變 fixed 後補回其高度，避免頁面跳動
-          const spacer = document.createElement("div");
-          spacer.setAttribute("aria-hidden", "true");
-          spacer.style.cssText = "height:0;pointer-events:none;";
-          tableWrap.parentNode.insertBefore(spacer, tableWrap);
+          // 建立鏡像容器
+          const mirror = document.createElement("div");
+          mirror.id = "stickyTheadMirror";
+          const mirrorTable = document.createElement("table");
+          const mirrorThead = thead.cloneNode(true);
+          mirrorThead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorThead);
+          mirror.appendChild(mirrorTable);
+          document.body.appendChild(mirror);
 
           let pinned = false;
-          let pinnedH = 0;
 
-          function syncH() {
-            if (!pinned) return;
-            const r = tableWrap.getBoundingClientRect();
-            thead.style.left = r.left + "px";
-            thead.style.width = tableWrap.clientWidth + "px";
-            // translateX 讓固定表頭跟著水平捲動
-            thead.style.transform = `translateX(${-tableWrap.scrollLeft}px)`;
+          function syncWidths() {
+            const wrapRect = tableWrap.getBoundingClientRect();
+            mirror.style.left  = wrapRect.left + "px";
+            mirror.style.width = wrapRect.width + "px";
+            // 同步每欄寬度（從真實 th 抓 offsetWidth）
+            const realThs   = thead.querySelectorAll("th");
+            const cloneThs  = mirrorThead.querySelectorAll("th");
+            mirrorTable.style.width = table.offsetWidth + "px";
+            realThs.forEach((th, i) => {
+              if (cloneThs[i]) {
+                cloneThs[i].style.width    = th.offsetWidth + "px";
+                cloneThs[i].style.minWidth = th.offsetWidth + "px";
+              }
+            });
           }
 
-          function pin() {
-            pinnedH = thead.getBoundingClientRect().height;
-            spacer.style.height = pinnedH + "px";
-            thead.style.position = "fixed";
-            thead.style.top = "0";
-            thead.style.overflow = "hidden";
-            thead.style.zIndex = "50";
-            pinned = true;
-            syncH();
-          }
-
-          function unpin() {
-            spacer.style.height = "0";
-            thead.style.position = "";
-            thead.style.top = "";
-            thead.style.left = "";
-            thead.style.width = "";
-            thead.style.overflow = "";
-            thead.style.zIndex = "";
-            thead.style.transform = "";
-            pinned = false;
+          function syncScroll() {
+            mirrorTable.style.transform = `translateX(${-tableWrap.scrollLeft}px)`;
           }
 
           function update() {
-            const rect = tableWrap.getBoundingClientRect();
-            const h = pinned ? pinnedH : thead.getBoundingClientRect().height;
-            const shouldPin = rect.top < 0 && rect.bottom > h + 10;
-            if (shouldPin && !pinned) pin();
-            else if (!shouldPin && pinned) unpin();
-            else if (pinned) syncH();
+            const rect   = tableWrap.getBoundingClientRect();
+            const theadH = thead.getBoundingClientRect().height;
+            const shouldPin = rect.top < 0 && rect.bottom > theadH + 10;
+            if (shouldPin && !pinned) {
+              pinned = true;
+              mirror.style.display = "block";
+              syncWidths();
+              syncScroll();
+            } else if (!shouldPin && pinned) {
+              pinned = false;
+              mirror.style.display = "none";
+            } else if (pinned) {
+              syncWidths();
+              syncScroll();
+            }
           }
 
-          window.addEventListener("scroll", update, { passive: true });
-          tableWrap.addEventListener("scroll", syncH, { passive: true });
-          window.addEventListener("resize", () => { unpin(); update(); }, { passive: true });
+          window.addEventListener("scroll",   update,     { passive: true });
+          tableWrap.addEventListener("scroll", () => { if (pinned) { syncWidths(); syncScroll(); } }, { passive: true });
+          window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
         })();
 
         load();
