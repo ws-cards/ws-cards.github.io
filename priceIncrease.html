@@ -212,7 +212,29 @@
       }
 
       .tableWrap {
-        overflow: auto;
+        overflow-x: auto;
+      }
+
+      /* 卡圖浮動預覽 */
+      #cardTooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        padding: 6px;
+        background: rgba(11, 16, 32, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 14px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(12px);
+        transition: opacity 0.12s ease;
+      }
+
+      #cardTooltip img {
+        display: block;
+        width: 180px;
+        height: auto;
+        border-radius: 8px;
       }
 
       table {
@@ -424,6 +446,8 @@
       </section>
     </div>
 
+    <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
+
     <script>
       (() => {
         const REMOTE_URL =
@@ -598,6 +622,83 @@
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#39;");
         }
+
+        const WS_TCG_CARDLIST_BASE =
+          "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        function cardNoToImageUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          if (series.startsWith("os")) {
+            return (
+              "https://ws-rose.com/wordpress/wp-content/images/cardlist/" +
+              series + "/" + expansion + "/" + series + "_" + expansion + "_" + cardId + ".png"
+            );
+          }
+          let folderSlug = series + "_" + expansion;
+          if (series === "srd" || series === "sks") folderSlug = "sxx_" + expansion;
+          const first = series.charAt(0);
+          return (
+            WS_TCG_CARDLIST_BASE + first + "/" + folderSlug + "/" +
+            series + "_" + expansion + "_" + cardId + ".png"
+          );
+        }
+
+        const tooltip = document.getElementById("cardTooltip");
+        const tooltipImg = document.getElementById("cardTooltipImg");
+        let tooltipVisible = false;
+
+        function showTooltip(cardNo, x, y) {
+          const url = cardNoToImageUrl(cardNo);
+          if (!url) return;
+          tooltipImg.src = url;
+          placeTooltip(x, y);
+          tooltip.style.display = "block";
+          tooltipVisible = true;
+        }
+
+        function placeTooltip(x, y) {
+          const pad = 16;
+          const tw = 192; // approximate tooltip width
+          const th = 280; // approximate tooltip height
+          let left = x + 14;
+          let top = y + 14;
+          if (left + tw + pad > window.innerWidth) left = x - tw - 14;
+          if (top + th + pad > window.innerHeight) top = y - th - 14;
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+          tooltip.style.display = "none";
+          tooltipVisible = false;
+        }
+
+        document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          const cardNo = td.textContent.trim();
+          showTooltip(cardNo, e.clientX, e.clientY);
+        });
+
+        document.getElementById("tbody").addEventListener("mousemove", (e) => {
+          if (!tooltipVisible) return;
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          placeTooltip(e.clientX, e.clientY);
+        });
+
+        document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          hideTooltip();
+        });
 
         async function fetchJson(url) {
           const res = await fetch(url, { cache: "no-store" });
