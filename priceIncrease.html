@@ -888,6 +888,70 @@
         }
 
         bind();
+
+        // ── Sticky thead：捲動超過表頭時固定在視窗頂部 ──
+        // 原因：.tableWrap 有 overflow-x:auto 會成為 sticky 的捲動容器，
+        //       導致 position:sticky 只相對於容器而非視窗，故改用 JS 切換 fixed。
+        (function initStickyThead() {
+          const tableWrap = document.querySelector(".tableWrap");
+          const thead = document.getElementById("tableWrapHeader");
+          if (!tableWrap || !thead) return;
+
+          // 佔位元素：thead 變 fixed 後補回其高度，避免頁面跳動
+          const spacer = document.createElement("div");
+          spacer.setAttribute("aria-hidden", "true");
+          spacer.style.cssText = "height:0;pointer-events:none;";
+          tableWrap.parentNode.insertBefore(spacer, tableWrap);
+
+          let pinned = false;
+          let pinnedH = 0;
+
+          function syncH() {
+            if (!pinned) return;
+            const r = tableWrap.getBoundingClientRect();
+            thead.style.left = r.left + "px";
+            thead.style.width = tableWrap.clientWidth + "px";
+            // translateX 讓固定表頭跟著水平捲動
+            thead.style.transform = `translateX(${-tableWrap.scrollLeft}px)`;
+          }
+
+          function pin() {
+            pinnedH = thead.getBoundingClientRect().height;
+            spacer.style.height = pinnedH + "px";
+            thead.style.position = "fixed";
+            thead.style.top = "0";
+            thead.style.overflow = "hidden";
+            thead.style.zIndex = "50";
+            pinned = true;
+            syncH();
+          }
+
+          function unpin() {
+            spacer.style.height = "0";
+            thead.style.position = "";
+            thead.style.top = "";
+            thead.style.left = "";
+            thead.style.width = "";
+            thead.style.overflow = "";
+            thead.style.zIndex = "";
+            thead.style.transform = "";
+            pinned = false;
+          }
+
+          function update() {
+            const rect = tableWrap.getBoundingClientRect();
+            const h = pinned ? pinnedH : thead.getBoundingClientRect().height;
+            const shouldPin = rect.top < 0 && rect.bottom > h + 10;
+            if (shouldPin && !pinned) pin();
+            else if (!shouldPin && pinned) unpin();
+            else if (pinned) syncH();
+          }
+
+          window.addEventListener("scroll", update, { passive: true });
+          tableWrap.addEventListener("scroll", syncH, { passive: true });
+          window.addEventListener("resize", () => { unpin(); update(); }, { passive: true });
+        })();
+
         load();
       })();
     </script>
