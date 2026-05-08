@@ -297,8 +297,10 @@
       #stickyTheadMirror table {
         border-collapse: separate;
         border-spacing: 0;
-        min-width: unset;
         table-layout: fixed;
+      }
+      #stickyTheadMirror th {
+        box-sizing: border-box; /* 確保 js 寫入 width 等於實際寬度 */
       }
       #stickyTheadMirror thead th {
         border-bottom: none;
@@ -933,20 +935,23 @@
             const wrapRect = tableWrap.getBoundingClientRect();
             mirror.style.left  = wrapRect.left + "px";
             mirror.style.width = wrapRect.width + "px";
-            // 同步每欄寬度（從真實 th 抓 offsetWidth）
+            // 同步每欄寬度（從真實 th 抓 offsetWidth，並於 CSS 配合 box-sizing: border-box）
             const realThs   = thead.querySelectorAll("th");
             const cloneThs  = mirrorThead.querySelectorAll("th");
             mirrorTable.style.width = table.offsetWidth + "px";
             realThs.forEach((th, i) => {
               if (cloneThs[i]) {
-                cloneThs[i].style.width    = th.offsetWidth + "px";
-                cloneThs[i].style.minWidth = th.offsetWidth + "px";
+                const w = th.getBoundingClientRect().width + "px";
+                cloneThs[i].style.width    = w;
+                cloneThs[i].style.minWidth = w;
+                cloneThs[i].style.maxWidth = w;
               }
             });
           }
 
           function syncScroll() {
-            mirrorTable.style.transform = `translateX(${-tableWrap.scrollLeft}px)`;
+            // 放棄 transform，直接讓鏡像 div 跟著 scroll，避免黏滯定位運算錯誤
+            mirror.scrollLeft = tableWrap.scrollLeft;
           }
 
           function update() {
