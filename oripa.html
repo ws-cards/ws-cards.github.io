@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1210" />
+  <title>WS オリパ店｜店內抽選體驗（デモ）</title>
+  <meta name="description" content="日本風オリパ店內體驗：從櫃上選一包、開封揭曉。示範模式，不接金流。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0f0c0a;
+      --wood: #3d2818;
+      --wood-light: #5c3d24;
+      --shelf-shadow: rgba(0,0,0,.55);
+      --neon-pink: #ff4d8d;
+      --neon-cyan: #3ee8ff;
+      --gold: #f0c14b;
+      --gold-dim: #a8842a;
+      --cream: #fff8ee;
+      --glass: rgba(255,248,238,.08);
+      --rarity-n: #9ca3af;
+      --rarity-r: #60a5fa;
+      --rarity-sr: #c084fc;
+      --rarity-ssr: #fbbf24;
+      --rarity-sec: #f43f5e;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: "Noto Sans TC", "Noto Sans JP", "Zen Maru Gothic", system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--cream);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── 店內環境 ── */
+    .store-scene {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255,120,60,.12), transparent 55%),
+        radial-gradient(ellipse 80% 40% at 80% 20%, rgba(62,232,255,.06), transparent 50%),
+        linear-gradient(180deg, #1a1410 0%, #0f0c0a 45%, #120e0c 100%);
+    }
+
+    .store-ceiling {
+      height: 52px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #252018, #1a1410);
+      border-bottom: 2px solid rgba(255,200,120,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      position: relative;
+      z-index: 5;
+    }
+    .fluoro {
+      width: 140px;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, transparent, #fff9e8, #fffef5, #fff9e8, transparent);
+      box-shadow: 0 0 20px rgba(255,250,220,.7), 0 0 40px rgba(255,230,150,.35);
+      animation: flicker 4s ease-in-out infinite;
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: .85; }
+      94% { opacity: 1; }
+      96% { opacity: .9; }
+    }
+
+  .store-sign {
+      position: absolute;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      text-align: center;
+      pointer-events: none;
+    }
+    .store-sign h1 {
+      font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+      font-size: clamp(1.1rem, 4vw, 1.55rem);
+      font-weight: 900;
+      letter-spacing: .12em;
+      background: linear-gradient(180deg, #fff 0%, #ffd89a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 2px 8px rgba(255,180,80,.4));
+    }
+    .store-sign p {
+      font-size: .7rem;
+      color: rgba(255,248,238,.55);
+      margin-top: 2px;
+      letter-spacing: .2em;
+    }
+
+    /* ── 頂部 HUD ── */
+    .hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 10px 14px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      pointer-events: none;
+    }
+    .hud > * { pointer-events: auto; }
+    .coin-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(240,193,75,.35);
+      border-radius: 999px;
+      padding: 6px 14px 6px 10px;
+      backdrop-filter: blur(8px);
+    }
+    .coin-badge .icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffe566, #c9a020);
+      display: grid;
+      place-items: center;
+      font-size: .75rem;
+      font-weight: 900;
+      color: #5c3d00;
+    }
+    .coin-badge .amount {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-size: .95rem;
+      color: var(--gold);
+    }
+    .hud-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-ghost {
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(0,0,0,.45);
+      color: var(--cream);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background .2s, border-color .2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.35); }
+    .btn-ghost:active { transform: scale(.97); }
+
+    /* ── 櫃台層架 ── */
+    .shelf-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 12px 16px;
+      padding-bottom: calc(16px + var(--safe-bottom));
+      position: relative;
+      min-height: 0;
+    }
+
+    .shelf-unit {
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .shelf-label {
+      font-size: .72rem;
+      font-weight: 700;
+      color: rgba(255,248,238,.5);
+      letter-spacing: .15em;
+      margin-bottom: 6px;
+      padding-left: 4px;
+    }
+    .shelf-board {
+      position: relative;
+      background: linear-gradient(180deg, var(--wood-light) 0%, var(--wood) 40%, #2a1a10 100%);
+      border-radius: 4px 4px 2px 2px;
+      padding: 14px 10px 18px;
+      box-shadow:
+        0 8px 24px var(--shelf-shadow),
+        inset 0 1px 0 rgba(255,200,140,.25),
+        inset 0 -4px 12px rgba(0,0,0,.4);
+    }
+    .shelf-board::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: -10px;
+      height: 12px;
+      background: linear-gradient(180deg, #2a1a10, #1a1008);
+      border-radius: 0 0 3px 3px;
+    }
+    .shelf-lip {
+      position: absolute;
+      left: -4px; right: -4px; bottom: -6px;
+      height: 8px;
+      background: linear-gradient(180deg, #4a3020, #352218);
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,.5);
+    }
+
+    .pack-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 4px 2px 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .pack-row::-webkit-scrollbar { display: none; }
+
+    /* ── オリパ盲包 ── */
+    .oripa-pack {
+      flex: 0 0 auto;
+      width: clamp(72px, 18vw, 96px);
+      scroll-snap-align: center;
+      cursor: pointer;
+      perspective: 400px;
+      transition: transform .25s cubic-bezier(.34,1.4,.64,1);
+    }
+    .oripa-pack:hover { transform: translateY(-6px) scale(1.03); }
+    .oripa-pack.selected {
+      transform: translateY(-14px) scale(1.08);
+      filter: drop-shadow(0 12px 20px rgba(255,200,100,.45));
+    }
+    .oripa-pack.dimmed { opacity: .35; pointer-events: none; transform: scale(.95); }
+
+    .pack-body {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      border-radius: 6px 6px 4px 4px;
+      overflow: hidden;
+      box-shadow:
+        0 4px 0 rgba(0,0,0,.35),
+        0 8px 16px rgba(0,0,0,.4),
+        inset 0 1px 0 rgba(255,255,255,.35);
+      transform-style: preserve-3d;
+    }
+    .pack-foil {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+    .pack-shine {
+      position: absolute;
+      inset: -50%;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255,255,255,.35) 48%,
+        rgba(255,255,255,.05) 52%,
+        transparent 60%
+      );
+      animation: shine 3s ease-in-out infinite;
+    }
+    @keyframes shine {
+      0%, 100% { transform: translateX(-60%) rotate(12deg); }
+      50% { transform: translateX(60%) rotate(12deg); }
+    }
+    .pack-seal {
+      position: absolute;
+      top: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      padding: 3px 0;
+      text-align: center;
+      font-size: .55rem;
+      font-weight: 900;
+      letter-spacing: .05em;
+      border-radius: 2px;
+      background: rgba(0,0,0,.5);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .pack-title {
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      padding: 20px 4px 6px;
+      background: linear-gradient(transparent, rgba(0,0,0,.85));
+      font-size: .5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .pack-price-tag {
+      margin-top: 4px;
+      text-align: center;
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .pack-remain {
+      text-align: center;
+      font-size: .58rem;
+      color: rgba(255,248,238,.45);
+      margin-top: 2px;
+    }
+
+    /* ── 底部操作列 ── */
+    .action-bar {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + var(--safe-bottom));
+      background: linear-gradient(0deg, rgba(0,0,0,.85), rgba(0,0,0,.5) 60%, transparent);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+      min-height: 72px;
+      transition: opacity .3s, transform .3s;
+    }
+    .action-bar.hidden {
+      opacity: 0;
+      transform: translateY(100%);
+      pointer-events: none;
+    }
+    .btn-primary {
+      flex: 1;
+      max-width: 280px;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      background: linear-gradient(180deg, #ff6b9d 0%, #e91e63 45%, #c2185b 100%);
+      color: #fff;
+      box-shadow: 0 4px 0 #8e1040, 0 8px 24px rgba(233,30,99,.4);
+      letter-spacing: .08em;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-primary:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn-primary:not(:disabled):active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #8e1040;
+    }
+    .btn-secondary {
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color: var(--cream);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+
+    /* ── 全螢幕覆蓋：詳情 / 開包 ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8,6,5,.92);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .35s, visibility .35s;
+    }
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /* 詳情面板 */
+    .detail-panel {
+      width: min(420px, 92vw);
+      max-height: 85vh;
+      overflow-y: auto;
+      background: linear-gradient(160deg, #2a2220, #1a1412);
+      border: 1px solid rgba(255,200,120,.2);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    }
+    .detail-panel h2 {
+      font-size: 1.15rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+    .detail-meta {
+      font-size: .78rem;
+      color: rgba(255,248,238,.55);
+      margin-bottom: 16px;
+    }
+    .odds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .72rem;
+      margin-bottom: 16px;
+    }
+    .odds-table th, .odds-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      text-align: left;
+    }
+    .odds-table th { color: rgba(255,248,238,.45); font-weight: 600; }
+    .rarity-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: .65rem;
+    }
+    .rarity-pill[data-r="N"] { background: rgba(156,163,175,.25); color: var(--rarity-n); }
+    .rarity-pill[data-r="R"] { background: rgba(96,165,250,.2); color: var(--rarity-r); }
+    .rarity-pill[data-r="SR"] { background: rgba(192,132,252,.2); color: var(--rarity-sr); }
+    .rarity-pill[data-r="SSR"] { background: rgba(251,191,36,.2); color: var(--rarity-ssr); }
+    .rarity-pill[data-r="SEC"] { background: rgba(244,63,94,.25); color: var(--rarity-sec); }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .detail-actions .btn-primary { max-width: none; }
+
+    /* ── 選包：近景櫃面 ── */
+    .pick-scene {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .pick-hint {
+      font-size: .9rem;
+      color: rgba(255,248,238,.7);
+      margin-bottom: 24px;
+      text-align: center;
+      animation: pulse-hint 2s ease-in-out infinite;
+    }
+    @keyframes pulse-hint {
+      0%, 100% { opacity: .7; }
+      50% { opacity: 1; }
+    }
+    .pick-shelf {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      max-width: 520px;
+    }
+    .pick-pack {
+      width: 80px;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+    .pick-pack:hover { transform: translateY(-8px) rotate(-2deg); }
+    .pick-pack .pack-body { animation: pack-idle 2.5s ease-in-out infinite; }
+    .pick-pack:nth-child(odd) .pack-body { animation-delay: -.4s; }
+
+    @keyframes pack-idle {
+      0%, 100% { transform: rotateY(-4deg); }
+      50% { transform: rotateY(4deg); }
+    }
+
+    /* ── 開包動畫 ── */
+    .open-scene {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      perspective: 800px;
+    }
+    .opening-pack {
+      position: relative;
+      width: 160px;
+      height: 240px;
+      transform-style: preserve-3d;
+    }
+    .opening-pack .half {
+      position: absolute;
+      width: 100%;
+      height: 50%;
+      left: 0;
+      overflow: hidden;
+      transition: transform .7s cubic-bezier(.4,0,.2,1);
+      transform-origin: center bottom;
+    }
+    .opening-pack .half.top {
+      top: 0;
+      transform-origin: center bottom;
+      border-radius: 8px 8px 0 0;
+    }
+    .opening-pack .half.bottom {
+      bottom: 0;
+      transform-origin: center top;
+      border-radius: 0 0 8px 8px;
+    }
+    .opening-pack.torn .half.top {
+      transform: rotateX(-95deg) translateY(-20px);
+      opacity: .6;
+    }
+    .opening-pack.torn .half.bottom {
+      transform: rotateX(95deg) translateY(20px);
+      opacity: .6;
+    }
+    .open-flash {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.9) 0%, rgba(255,220,100,.4) 30%, transparent 70%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .open-flash.burst {
+      animation: flash-burst .6s ease-out forwards;
+    }
+    @keyframes flash-burst {
+      0% { opacity: 0; transform: scale(.3); }
+      30% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.8); }
+    }
+    .open-status {
+      margin-top: 32px;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .2em;
+      color: rgba(255,248,238,.6);
+    }
+
+    /* ── 卡牌揭曉 ── */
+    .reveal-scene {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card-stage {
+      position: relative;
+      width: min(260px, 70vw);
+      aspect-ratio: 63 / 88;
+      perspective: 1000px;
+    }
+    .card-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .9s cubic-bezier(.2,.9,.3,1.1);
+    }
+    .card-3d.flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,.55);
+    }
+    .card-face.back {
+      background: linear-gradient(145deg, #1e3a5f, #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255,255,255,.15);
+    }
+    .card-face.back::before {
+      content: "WS";
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: rgba(255,255,255,.12);
+      letter-spacing: .2em;
+    }
+    .card-face.front {
+      transform: rotateY(180deg);
+      background: #111;
+    }
+    .card-face.front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-glow {
+      position: absolute;
+      inset: -30%;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .5s;
+    }
+    .card-glow.show { opacity: 1; animation: glow-pulse 1.5s ease-in-out infinite; }
+    @keyframes glow-pulse {
+      0%, 100% { transform: scale(1); opacity: .6; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    .reveal-info {
+      margin-top: 28px;
+      text-align: center;
+      max-width: 320px;
+    }
+    .reveal-rarity {
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: .15em;
+      margin-bottom: 6px;
+    }
+    .reveal-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .reveal-cardno {
+      font-size: .78rem;
+      color: rgba(255,248,238,.5);
+      font-family: ui-monospace, monospace;
+    }
+    .tap-flip {
+      margin-top: 20px;
+      font-size: .8rem;
+      color: rgba(255,248,238,.45);
+      animation: pulse-hint 2s infinite;
+    }
+
+    /* 結果列 */
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* 歷史側欄 */
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(340px, 90vw);
+      height: 100%;
+      z-index: 60;
+      background: #1a1412;
+      border-left: 1px solid rgba(255,200,120,.15);
+      transform: translateX(100%);
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .drawer-header h3 { font-size: 1rem; font-weight: 800; }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .history-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      margin-bottom: 8px;
+      font-size: .78rem;
+    }
+    .history-item img {
+      width: 40px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #222;
+    }
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgba(0,0,0,.5);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .3s, visibility .3s;
+    }
+    .drawer-backdrop.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .demo-banner {
+      position: fixed;
+      bottom: calc(80px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 12;
+      font-size: .65rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.6);
+      border: 1px solid rgba(255,200,100,.2);
+      color: rgba(255,248,238,.5);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      pointer-events: none;
+      z-index: 100;
+      animation: confetti-fall 1.2s ease-out forwards;
+    }
+    @keyframes confetti-fall {
+      0% { opacity: 1; transform: translateY(0) rotate(0); }
+      100% { opacity: 0; transform: translateY(120px) rotate(720deg); }
+    }
+
+    @media (min-width: 768px) {
+      .shelf-area { padding: 0 32px 24px; }
+      .pack-row { justify-content: center; flex-wrap: wrap; overflow: visible; }
+    }
+
+    .file-proto-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      padding: 12px 16px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      background: linear-gradient(180deg, #7f1d1d, #991b1b);
+      border-bottom: 2px solid #fca5a5;
+      color: #fff;
+      font-size: .8rem;
+      line-height: 1.5;
+      box-shadow: 0 8px 24px rgba(0,0,0,.45);
+    }
+    .file-proto-banner strong { display: block; font-size: .9rem; margin-bottom: 4px; }
+    .file-proto-banner code {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 8px;
+      background: rgba(0,0,0,.35);
+      border-radius: 6px;
+      font-size: .75rem;
+      word-break: break-all;
+    }
+    .file-proto-banner a { color: #fde68a; }
+    body.has-file-banner #app { padding-top: 88px; }
+  </style>
+</head>
+<body>
+  <div class="file-proto-banner" id="fileProtoBanner" hidden>
+    <strong>請勿使用 file:// 或編輯器內建預覽開啟</strong>
+    瀏覽器會阻擋 iframe 下的本機檔案，Console 會出現 <em>Unsafe attempt to load URL file://…</em>，點擊與儲存也可能失效。
+    請在專案資料夾執行後，用瀏覽器開啟 HTTP 網址：
+    <code id="fileProtoCmd">python -m http.server 5500</code>
+    → <a id="fileProtoLink" href="http://127.0.0.1:5500/oripa.html">http://127.0.0.1:5500/oripa.html</a>
+  </div>
+  <div id="app">
+    <div class="store-scene" id="storeScene">
+      <div class="store-ceiling"><div class="fluoro"></div><div class="fluoro"></div><div class="fluoro"></div></div>
+
+      <div class="hud">
+        <div class="coin-badge" title="デモ用ポイント（非課金）">
+          <span class="icon">P</span>
+          <span class="amount" id="coinAmount">—</span>
+        </div>
+        <div class="hud-actions">
+          <button type="button" class="btn-ghost" id="btnHistory">履歴</button>
+          <button type="button" class="btn-ghost" id="btnReset">重置デモ</button>
+        </div>
+      </div>
+
+      <div class="store-sign">
+        <h1>WS オリパ専門店</h1>
+        <p>デモ体験 · 金流未接続</p>
+      </div>
+
+      <div class="shelf-area" id="shelfArea"></div>
+
+      <div class="demo-banner">示範模式 — 點數僅供體驗，非真實交易</div>
+
+      <div class="action-bar" id="actionBar">
+        <button type="button" class="btn-secondary" id="btnBoxDetail" disabled>詳情・確率</button>
+        <button type="button" class="btn-primary" id="btnGoPick" disabled>從櫃上取一包</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 詳情 -->
+  <div class="overlay" id="detailOverlay" aria-hidden="true">
+    <div class="detail-panel" id="detailPanel"></div>
+  </div>
+
+  <!-- 選包 -->
+  <div class="overlay" id="pickOverlay" aria-hidden="true">
+    <div class="pick-scene">
+      <p class="pick-hint">櫃上還剩 <span id="pickRemain">—</span> 包<br>用手指點選您要的那一包</p>
+      <div class="pick-shelf" id="pickShelf"></div>
+      <div class="result-actions" style="margin-top:32px">
+        <button type="button" class="btn-secondary" id="btnPickBack">返回賣場</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 開包 -->
+  <div class="overlay" id="openOverlay" aria-hidden="true">
+    <div class="open-scene">
+      <div class="open-flash" id="openFlash"></div>
+      <div class="opening-pack" id="openingPack">
+        <div class="half top" id="packHalfTop"></div>
+        <div class="half bottom" id="packHalfBottom"></div>
+      </div>
+      <p class="open-status" id="openStatus">正在開封…</p>
+    </div>
+  </div>
+
+  <!-- 揭曉 -->
+  <div class="overlay" id="revealOverlay" aria-hidden="true">
+    <div class="reveal-scene">
+      <div class="card-stage">
+        <div class="card-glow" id="cardGlow"></div>
+        <div class="card-3d" id="card3d">
+          <div class="card-face back"></div>
+          <div class="card-face front">
+            <img id="revealImg" alt="" />
+          </div>
+        </div>
+      </div>
+      <div class="reveal-info">
+        <div class="reveal-rarity" id="revealRarity">—</div>
+        <div class="reveal-name" id="revealName">—</div>
+        <div class="reveal-cardno" id="revealCardNo"></div>
+        <p class="tap-flip" id="tapFlip">點擊卡牌翻面</p>
+      </div>
+      <div class="result-actions" id="resultActions" style="display:none">
+        <button type="button" class="btn-primary" id="btnDrawAgain">再抽一包</button>
+        <button type="button" class="btn-secondary" id="btnBackShop">回賣場</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="historyDrawer" aria-label="抽卡履歴">
+    <div class="drawer-header">
+      <h3>抽選履歴</h3>
+      <button type="button" class="btn-ghost" id="btnCloseDrawer">關閉</button>
+    </div>
+    <div class="drawer-body" id="historyList"></div>
+  </aside>
+
+  <script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "ws_oripa_demo_v1";
+  const INITIAL_COINS = 10000;
+  /** file:// 或 iframe 內建預覽時 localStorage 常失敗，改記憶體 */
+  const demoStorage = (function () {
+    let memoryJson = null;
+    let useMemory = false;
+    function probe() {
+      try {
+        const k = "__ws_oripa_probe__";
+        localStorage.setItem(k, "1");
+        localStorage.removeItem(k);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    useMemory = !probe();
+    return {
+      get: function () {
+        if (useMemory) return memoryJson;
+        try {
+          return localStorage.getItem(STORAGE_KEY);
+        } catch (e) {
+          useMemory = true;
+          return memoryJson;
+        }
+      },
+      set: function (json) {
+        memoryJson = json;
+        if (useMemory) return;
+        try {
+          localStorage.setItem(STORAGE_KEY, json);
+        } catch (e) {
+          useMemory = true;
+        }
+      },
+    };
+  })();
+
+  const WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
+
+  const RARITY_ORDER = ["N", "R", "SR", "SSR", "SEC"];
+  const RARITY_LABEL = { N: "N", R: "R", SR: "SR", SSR: "SSR", SEC: "SEC" };
+
+  function wsImageUrlFromCardNo(cardNo) {
+    const cn = String(cardNo || "").trim();
+    const m = cn.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/);
+    if (!m) return "";
+    const series = m[1].toLowerCase();
+    const setId = m[2].toLowerCase();
+    const num = m[3].toLowerCase();
+    const folder = series + "_" + setId;
+    const alpha = series.slice(0, 1) || "x";
+    return WS_CARD_IMAGE_BASE + "/" + alpha + "/" + folder + "/" + folder + "_" + num + ".png";
+  }
+
+  function placeholderSvg(name) {
+    const t = encodeURIComponent(String(name || "CARD").slice(0, 12));
+    return "data:image/svg+xml," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="252">' +
+      '<rect fill="#1a1a2e" width="100%" height="100%"/>' +
+      '<text x="50%" y="50%" fill="#666" font-size="14" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">' + t + "</text></svg>"
+    );
+  }
+
+  function uid() {
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  /** 各オリパ箱定義 */
+  const BOXES = [
+    {
+      id: "sao-s80",
+      shelf: "刀劍神域 專區",
+      name: "SAO/S80 夢幻オリパ",
+      subtitle: "1包1枚 · ラストワン賞模擬",
+      price: 880,
+      totalPacks: 80,
+      theme: {
+        foil: "linear-gradient(145deg, #0ea5e9 0%, #0369a1 40%, #0c4a6e 100%)",
+        accent: "#38bdf8",
+        seal: "S80 オリパ",
+      },
+      pool: [
+        { rarity: "N", weight: 42, cardNo: "SAO/S80-001", name: "一般角色" },
+        { rarity: "N", weight: 38, cardNo: "SAO/S80-012", name: "イベント" },
+        { rarity: "R", weight: 28, cardNo: "SAO/S80-018", name: "強化キャラ" },
+        { rarity: "SR", weight: 14, cardNo: "SAO/S80-024", name: "キリト SR" },
+        { rarity: "SSR", weight: 5, cardNo: "SAO/S80-050", name: "アスナ SSR" },
+        { rarity: "SEC", weight: 1.2, cardNo: "SAO/S80-079", name: "シンクロ SEC" },
+      ],
+    },
+    {
+      id: "hol-w91",
+      shelf: "ホロライブ 專區",
+      name: "HOL/W91 閃光オリパ",
+      subtitle: "VTuber コラボ · 高レア枠",
+      price: 1200,
+      totalPacks: 60,
+      theme: {
+        foil: "linear-gradient(145deg, #f472b6 0%, #db2777 45%, #831843 100%)",
+        accent: "#f9a8d4",
+        seal: "W91 限定",
+      },
+      pool: [
+        { rarity: "N", weight: 40, cardNo: "HOL/W91-003", name: "メンバー N" },
+        { rarity: "R", weight: 30, cardNo: "HOL/W91-015", name: "サポート R" },
+        { rarity: "SR", weight: 18, cardNo: "HOL/W91-028", name: "衣装 SR" },
+        { rarity: "SSR", weight: 8, cardNo: "HOL/W91-045", name: "ライブ SSR" },
+        { rarity: "SEC", weight: 2, cardNo: "HOL/W91-078", name: "ホロライブ SEC" },
+      ],
+    },
+    {
+      id: "bd-w54",
+      shelf: "BanG Dream! 專區",
+      name: "BD/W54 ライブオリパ",
+      subtitle: "バンドリ · サイン風レア",
+      price: 980,
+      totalPacks: 70,
+      theme: {
+        foil: "linear-gradient(145deg, #fb923c 0%, #ea580c 50%, #7c2d12 100%)",
+        accent: "#fdba74",
+        seal: "W54 オリパ",
+      },
+      pool: [
+        { rarity: "N", weight: 44, cardNo: "BD/W54-002", name: "メンバー" },
+        { rarity: "R", weight: 32, cardNo: "BD/W54-020", name: "ライブ R" },
+        { rarity: "SR", weight: 16, cardNo: "BD/W54-035", name: "リーダー SR" },
+        { rarity: "SSR", weight: 6, cardNo: "BD/W54-052", name: "箔押し SSR" },
+        { rarity: "SEC", weight: 1.5, cardNo: "BD/W54-070", name: "スペシャル SEC" },
+      ],
+    },
+    {
+      id: "osk-s104",
+      shelf: "推しの子 專區",
+      name: "OSK/S104 スターオリパ",
+      subtitle: "話題作 · 1日1回お試し可",
+      price: 1500,
+      totalPacks: 50,
+      theme: {
+        foil: "linear-gradient(145deg, #a78bfa 0%, #7c3aed 50%, #4c1d95 100%)",
+        accent: "#c4b5fd",
+        seal: "S104 プレミアム",
+      },
+      pool: [
+        { rarity: "N", weight: 38, cardNo: "OSK/S104-005", name: "キャラ N" },
+        { rarity: "R", weight: 28, cardNo: "OSK/S104-018", name: "シーン R" },
+        { rarity: "SR", weight: 20, cardNo: "OSK/S104-032", name: "キービジュアル SR" },
+        { rarity: "SSR", weight: 10, cardNo: "OSK/S104-055", name: "ステージ SSR" },
+        { rarity: "SEC", weight: 3, cardNo: "OSK/S104-090", name: "【推し】SEC" },
+      ],
+    },
+  ];
+
+  let state = loadState();
+  let selectedBoxId = null;
+  let currentDraw = null;
+  let flipped = false;
+
+  function defaultState() {
+    const remain = {};
+    BOXES.forEach(function (b) { remain[b.id] = b.totalPacks; });
+    return { coins: INITIAL_COINS, remain: remain, history: [] };
+  }
+
+  function loadState() {
+    try {
+      const raw = demoStorage.get();
+      if (!raw) return defaultState();
+      const s = JSON.parse(raw);
+      if (!s.remain) s.remain = defaultState().remain;
+      BOXES.forEach(function (b) {
+        if (typeof s.remain[b.id] !== "number") s.remain[b.id] = b.totalPacks;
+      });
+      if (typeof s.coins !== "number") s.coins = INITIAL_COINS;
+      if (!Array.isArray(s.history)) s.history = [];
+      return s;
+    } catch {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    demoStorage.set(JSON.stringify(state));
+    renderCoins();
+  }
+
+  function setCardImg(img, card) {
+    const cardNo = card && card.cardNo ? card.cardNo : "";
+    const name = card && card.name ? card.name : "";
+    const primary = String((card && card.imageUrl) || wsImageUrlFromCardNo(cardNo) || "").trim();
+    img.onerror = function () {
+      this.onerror = null;
+      this.src = placeholderSvg(name || cardNo || "CARD");
+    };
+    img.src = primary || placeholderSvg(name || cardNo || "CARD");
+  }
+
+  function warnIfFileProtocol() {
+    if (location.protocol !== "file:") return;
+    const banner = $("fileProtoBanner");
+    if (!banner) return;
+    banner.hidden = false;
+    document.body.classList.add("has-file-banner");
+    const inIframe = (function () {
+      try { return window.self !== window.top; } catch (e) { return true; }
+    })();
+    if (inIframe) {
+      banner.querySelector("strong").textContent =
+        "Cursor / VS Code 內建預覽無法正常運作（file:// + iframe）";
+    }
+  }
+
+  function getBox(id) {
+    return BOXES.find(function (b) { return b.id === id; });
+  }
+
+  function drawFromPool(pool) {
+    const total = pool.reduce(function (s, p) { return s + p.weight; }, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+      r -= pool[i].weight;
+      if (r <= 0) {
+        const item = pool[i];
+        return {
+          rarity: item.rarity,
+          cardNo: item.cardNo,
+          name: item.name,
+          imageUrl: wsImageUrlFromCardNo(item.cardNo),
+        };
+      }
+    }
+    const last = pool[pool.length - 1];
+    return {
+      rarity: last.rarity,
+      cardNo: last.cardNo,
+      name: last.name,
+      imageUrl: wsImageUrlFromCardNo(last.cardNo),
+    };
+  }
+
+  function poolOdds(pool) {
+    const total = pool.reduce(function (s, p) { return s + p.weight; }, 0);
+    const byRarity = {};
+    pool.forEach(function (p) {
+      if (!byRarity[p.rarity]) byRarity[p.rarity] = 0;
+      byRarity[p.rarity] += p.weight;
+    });
+    return RARITY_ORDER.filter(function (r) { return byRarity[r]; }).map(function (r) {
+      return { rarity: r, pct: ((byRarity[r] / total) * 100).toFixed(2) };
+    });
+  }
+
+  function rarityColor(r) {
+    return {
+      N: "var(--rarity-n)",
+      R: "var(--rarity-r)",
+      SR: "var(--rarity-sr)",
+      SSR: "var(--rarity-ssr)",
+      SEC: "var(--rarity-sec)",
+    }[r] || "#fff";
+  }
+
+  /* ── DOM ── */
+  const $ = function (id) { return document.getElementById(id); };
+
+  function renderCoins() {
+    $("coinAmount").textContent = state.coins.toLocaleString() + " P";
+  }
+
+  function buildPackEl(box, opts) {
+    opts = opts || {};
+    const remain = state.remain[box.id] ?? box.totalPacks;
+    const wrap = document.createElement("div");
+    wrap.className = "oripa-pack" + (opts.pickMode ? " pick-pack" : "");
+    wrap.dataset.boxId = box.id;
+    if (selectedBoxId === box.id && !opts.pickMode) wrap.classList.add("selected");
+    if (selectedBoxId && selectedBoxId !== box.id && !opts.pickMode) wrap.classList.add("dimmed");
+
+    const body = document.createElement("div");
+    body.className = "pack-body";
+    const foil = document.createElement("div");
+    foil.className = "pack-foil";
+    foil.style.background = box.theme.foil;
+    const shine = document.createElement("div");
+    shine.className = "pack-shine";
+    const seal = document.createElement("div");
+    seal.className = "pack-seal";
+    seal.textContent = box.theme.seal;
+    const title = document.createElement("div");
+    title.className = "pack-title";
+    title.textContent = box.name.replace(/オリパ/, "").trim();
+    body.appendChild(foil);
+    body.appendChild(shine);
+    body.appendChild(seal);
+    body.appendChild(title);
+
+    wrap.appendChild(body);
+    if (!opts.pickMode) {
+      const price = document.createElement("div");
+      price.className = "pack-price-tag";
+      price.textContent = box.price.toLocaleString() + " P/包";
+      const rem = document.createElement("div");
+      rem.className = "pack-remain";
+      rem.textContent = "残り " + remain + " 包";
+      wrap.appendChild(price);
+      wrap.appendChild(rem);
+    }
+
+    wrap.addEventListener("click", function () {
+      if (opts.pickMode) {
+        startOpenSequence(box);
+        return;
+      }
+      selectBox(box.id);
+    });
+    return wrap;
+  }
+
+  function renderShelf() {
+    const area = $("shelfArea");
+    area.innerHTML = "";
+    const shelves = {};
+    BOXES.forEach(function (box) {
+      if (!shelves[box.shelf]) shelves[box.shelf] = [];
+      shelves[box.shelf].push(box);
+    });
+    Object.keys(shelves).forEach(function (label) {
+      const unit = document.createElement("div");
+      unit.className = "shelf-unit";
+      const lbl = document.createElement("div");
+      lbl.className = "shelf-label";
+      lbl.textContent = "▸ " + label;
+      const board = document.createElement("div");
+      board.className = "shelf-board";
+      const row = document.createElement("div");
+      row.className = "pack-row";
+      shelves[label].forEach(function (box) {
+        row.appendChild(buildPackEl(box));
+      });
+      const lip = document.createElement("div");
+      lip.className = "shelf-lip";
+      board.appendChild(row);
+      board.appendChild(lip);
+      unit.appendChild(lbl);
+      unit.appendChild(board);
+      area.appendChild(unit);
+    });
+    updateActionBar();
+  }
+
+  function selectBox(id) {
+    selectedBoxId = id;
+    renderShelf();
+    updateActionBar();
+  }
+
+  function updateActionBar() {
+    const box = selectedBoxId ? getBox(selectedBoxId) : null;
+    const remain = box ? (state.remain[box.id] ?? box.totalPacks) : 0;
+    const canAfford = box && state.coins >= box.price && remain > 0;
+    $("btnBoxDetail").disabled = !box;
+    $("btnGoPick").disabled = !canAfford;
+    $("btnGoPick").textContent = !box
+      ? "從櫃上取一包"
+      : remain <= 0
+        ? "已售完"
+        : state.coins < box.price
+          ? "ポイント不足"
+          : "從櫃上取一包（" + box.price.toLocaleString() + " P）";
+  }
+
+  function showOverlay(el, show) {
+    el.classList.toggle("active", show);
+    el.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
+  function openDetail() {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+    const remain = state.remain[box.id] ?? box.totalPacks;
+    const odds = poolOdds(box.pool);
+    let rows = odds.map(function (o) {
+      return "<tr><td><span class=\"rarity-pill\" data-r=\"" + o.rarity + "\">" + o.rarity + "</span></td><td>" + o.pct + "%</td></tr>";
+    }).join("");
+    $("detailPanel").innerHTML =
+      "<h2>" + escapeHtml(box.name) + "</h2>" +
+      "<p class=\"detail-meta\">" + escapeHtml(box.subtitle) + "<br>価格 " + box.price.toLocaleString() + " P · 残り " + remain + " / " + box.totalPacks + " 包</p>" +
+      "<table class=\"odds-table\"><thead><tr><th>レア度</th><th>排出率（参考）</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+      "<p style=\"font-size:.68rem;color:rgba(255,248,238,.4);line-height:1.5\">※ 本頁為體驗用模擬概率，與實際商品無關。卡圖來自公開卡表路徑，載入失敗時顯示占位圖。</p>" +
+      "<div class=\"detail-actions\">" +
+      "<button type=\"button\" class=\"btn-secondary\" id=\"detailClose\">閉じる</button>" +
+      "<button type=\"button\" class=\"btn-primary\" id=\"detailPick\">櫃から取る</button>" +
+      "</div>";
+    $("detailClose").onclick = function () { showOverlay($("detailOverlay"), false); };
+    $("detailPick").onclick = function () {
+      showOverlay($("detailOverlay"), false);
+      goPickScene();
+    };
+    showOverlay($("detailOverlay"), true);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function goPickScene() {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+    const remain = state.remain[box.id] ?? box.totalPacks;
+    if (remain <= 0 || state.coins < box.price) return;
+
+    state.coins -= box.price;
+    state.remain[box.id] = remain - 1;
+    currentDraw = { box: box, result: drawFromPool(box.pool), at: Date.now() };
+    saveState();
+
+    $("pickRemain").textContent = String(state.remain[box.id]);
+    const shelf = $("pickShelf");
+    shelf.innerHTML = "";
+    const count = Math.min(12, Math.max(6, remain));
+    for (let i = 0; i < count; i++) {
+      shelf.appendChild(buildPackEl(box, { pickMode: true }));
+    }
+    showOverlay($("pickOverlay"), true);
+  }
+
+  function applyPackVisual(el, box) {
+    const foilStyle = "background:" + box.theme.foil;
+    el.querySelectorAll(".pack-foil, .pack-body").forEach(function (node) {
+      if (node.classList.contains("pack-foil")) node.setAttribute("style", foilStyle);
+      else if (!node.querySelector(".pack-foil")) {
+        const inner = document.createElement("div");
+        inner.className = "pack-foil";
+        inner.setAttribute("style", foilStyle);
+        node.insertBefore(inner, node.firstChild);
+      }
+    });
+  }
+
+  function startOpenSequence(box) {
+    showOverlay($("pickOverlay"), false);
+
+    const top = $("packHalfTop");
+    const bottom = $("packHalfBottom");
+    const pack = $("openingPack");
+    pack.classList.remove("torn");
+    top.innerHTML = "";
+    bottom.innerHTML = "";
+
+    function half(isTop) {
+      const d = document.createElement("div");
+      d.className = "pack-body";
+      d.style.cssText = "height:100%;border-radius:" + (isTop ? "8px 8px 0 0" : "0 0 8px 8px");
+      const foil = document.createElement("div");
+      foil.className = "pack-foil";
+      foil.style.background = box.theme.foil;
+      const seal = document.createElement("div");
+      seal.className = "pack-seal";
+      seal.textContent = box.theme.seal;
+      d.appendChild(foil);
+      d.appendChild(seal);
+      return d;
+    }
+    top.appendChild(half(true));
+    bottom.appendChild(half(false));
+
+    $("openStatus").textContent = "スリットを開けています…";
+    showOverlay($("openOverlay"), true);
+
+    setTimeout(function () {
+      pack.classList.add("torn");
+      $("openFlash").classList.add("burst");
+      $("openStatus").textContent = "カード出現！";
+    }, 600);
+
+    setTimeout(function () {
+      $("openFlash").classList.remove("burst");
+      showOverlay($("openOverlay"), false);
+      showReveal();
+    }, 1600);
+  }
+
+  function showReveal() {
+    const d = currentDraw;
+    if (!d) return;
+    flipped = false;
+    const card = d.result;
+    const img = $("revealImg");
+    img.alt = card.name;
+    setCardImg(img, card);
+
+    $("revealRarity").textContent = RARITY_LABEL[card.rarity] || card.rarity;
+    $("revealRarity").style.color = rarityColor(card.rarity);
+    $("revealName").textContent = card.name;
+    $("revealCardNo").textContent = card.cardNo;
+
+    const glow = $("cardGlow");
+    glow.style.background = "radial-gradient(circle, " + rarityColor(card.rarity) + "55 0%, transparent 70%)";
+    glow.classList.remove("show");
+
+    const card3d = $("card3d");
+    card3d.classList.remove("flipped");
+    $("tapFlip").style.display = "";
+    $("resultActions").style.display = "none";
+
+    showOverlay($("revealOverlay"), true);
+
+    if (card.rarity === "SSR" || card.rarity === "SEC") {
+      spawnConfetti(rarityColor(card.rarity));
+    }
+
+    state.history.unshift({
+      id: uid(),
+      boxName: d.box.name,
+      rarity: card.rarity,
+      name: card.name,
+      cardNo: card.cardNo,
+      imageUrl: card.imageUrl,
+      at: d.at,
+    });
+    if (state.history.length > 50) state.history.length = 50;
+    saveState();
+    renderHistory();
+  }
+
+  function spawnConfetti(color) {
+    for (let i = 0; i < 24; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = (30 + Math.random() * 40) + "%";
+      c.style.top = (35 + Math.random() * 20) + "%";
+      c.style.background = color;
+      c.style.animationDelay = (Math.random() * 0.3) + "s";
+      document.body.appendChild(c);
+      setTimeout(function () { c.remove(); }, 1400);
+    }
+  }
+
+  function flipCard() {
+    if (flipped) return;
+    flipped = true;
+    $("card3d").classList.add("flipped");
+    $("tapFlip").style.display = "none";
+    const r = currentDraw && currentDraw.result.rarity;
+    if (r === "SR" || r === "SSR" || r === "SEC") {
+      $("cardGlow").classList.add("show");
+    }
+    setTimeout(function () {
+      $("resultActions").style.display = "flex";
+    }, 500);
+  }
+
+  function renderHistory() {
+    const list = $("historyList");
+    if (!state.history.length) {
+      list.innerHTML = "<p style=\"font-size:.8rem;color:rgba(255,248,238,.4);padding:8px\">尚無紀錄，快去櫃上選一包吧。</p>";
+      return;
+    }
+    list.innerHTML = state.history.map(function (h) {
+      return (
+        "<div class=\"history-item\">" +
+        "<img alt=\"\" loading=\"lazy\" data-cardno=\"" + escapeHtml(h.cardNo) + "\" data-name=\"" + escapeHtml(h.name) + "\"/>" +
+        "<div><span class=\"rarity-pill\" data-r=\"" + h.rarity + "\">" + h.rarity + "</span> " +
+        escapeHtml(h.name) + "<br><span style=\"opacity:.5\">" + escapeHtml(h.cardNo) + "</span><br>" +
+        "<span style=\"opacity:.4;font-size:.65rem\">" + escapeHtml(h.boxName) + "</span></div></div>"
+      );
+    }).join("");
+    list.querySelectorAll("img").forEach(function (img, i) {
+      const h = state.history[i];
+      if (h) setCardImg(img, h);
+    });
+  }
+
+  function closeAllOverlays() {
+    ["detailOverlay", "pickOverlay", "openOverlay", "revealOverlay"].forEach(function (id) {
+      showOverlay($(id), false);
+    });
+  }
+
+  function resetDemo() {
+    if (!confirm("重置デモデータ？ポイント與剩餘包數將恢復預設。")) return;
+    state = defaultState();
+    selectedBoxId = null;
+    currentDraw = null;
+    saveState();
+    renderShelf();
+    renderHistory();
+    closeAllOverlays();
+  }
+
+  /* ── 事件（DOM 就緒後綁定，避免元素未載入） ── */
+  function bindClick(id, handler) {
+    const el = $(id);
+    if (el) el.addEventListener("click", handler);
+    else console.warn("[oripa] missing #" + id);
+  }
+
+  bindClick("btnBoxDetail", openDetail);
+  bindClick("btnGoPick", goPickScene);
+  bindClick("btnPickBack", function () {
+    showOverlay($("pickOverlay"), false);
+    if (currentDraw) {
+      state.coins += currentDraw.box.price;
+      state.remain[currentDraw.box.id]++;
+      currentDraw = null;
+      saveState();
+      renderShelf();
+    }
+  });
+  bindClick("card3d", flipCard);
+  bindClick("tapFlip", flipCard);
+  bindClick("btnDrawAgain", function () {
+    closeAllOverlays();
+    if (selectedBoxId) goPickScene();
+  });
+  bindClick("btnBackShop", function () {
+    closeAllOverlays();
+    selectedBoxId = null;
+    currentDraw = null;
+    renderShelf();
+  });
+  bindClick("btnHistory", function () {
+    $("historyDrawer").classList.add("open");
+    $("drawerBackdrop").classList.add("show");
+  });
+  function closeDrawer() {
+    $("historyDrawer").classList.remove("open");
+    $("drawerBackdrop").classList.remove("show");
+  }
+  bindClick("btnCloseDrawer", closeDrawer);
+  bindClick("drawerBackdrop", closeDrawer);
+  bindClick("btnReset", resetDemo);
+
+  /* init */
+  function boot() {
+    warnIfFileProtocol();
+    renderCoins();
+    renderShelf();
+    renderHistory();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+  </script>
+</body>
+</html>
