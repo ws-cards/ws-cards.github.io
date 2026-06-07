@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>WS 庫存管理</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #1e293b;
+      --surface: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --nav-h: 60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; border: none; touch-action: manipulation; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      padding-top: max(10px, var(--safe-t));
+      background: var(--bg2);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      z-index: 20;
+    }
+    .topbar h1 { font-size: 1rem; font-weight: 700; }
+    .topbar-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-sm {
+      padding: 7px 11px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: var(--text);
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .btn-sm:active { transform: scale(.97); }
+    .btn-sm.primary { background: var(--accent); color: #0f172a; border-color: transparent; }
+
+    .main { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+    .phase {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: calc(var(--nav-h) + var(--safe-b));
+    }
+    .phase.is-active { display: flex; }
+
+    .phase-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 14px 24px;
+    }
+
+    .phase-title {
+      padding: 4px 0 12px;
+      flex-shrink: 0;
+    }
+    .phase-title h2 { font-size: 1.05rem; font-weight: 700; }
+    .phase-title p { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding-bottom: var(--safe-b);
+      display: flex;
+      background: var(--bg2);
+      border-top: 1px solid rgba(255,255,255,.08);
+      z-index: 30;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: transparent;
+      color: var(--muted);
+      font-size: .65rem;
+      font-weight: 600;
+    }
+    .nav-btn .icon { font-size: 1.25rem; }
+    .nav-btn.is-active { color: var(--accent); }
+
+    /* Form */
+    .form-card {
+      background: var(--bg2);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .form-row { margin-bottom: 14px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-row label {
+      display: block;
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .form-row input,
+    .form-row select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .form-row input:focus,
+    .form-row select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 400px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-main {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0f172a;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+    .btn-sub {
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: var(--text);
+      font-weight: 600;
+      font-size: .85rem;
+    }
+    .card-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .toggle-row input { width: auto; accent-color: var(--accent); }
+    .mode-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .mode-badge.new { background: rgba(52,211,153,.2); color: var(--success); }
+    .mode-badge.edit { background: rgba(56,189,248,.2); color: var(--accent); }
+
+    /* Scan */
+    .scan-area {
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 220px;
+      position: relative;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    #qrReader { width: 100%; }
+    #qrReader video { border-radius: 12px; }
+    .scan-hint {
+      text-align: center;
+      font-size: .78rem;
+      color: var(--muted);
+      margin: 10px 0;
+    }
+    .scan-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .scan-wedge {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+    .scan-result {
+      background: var(--bg2);
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-top: 12px;
+      display: none;
+    }
+    .scan-result.is-visible { display: block; }
+    .scan-result h3 { font-size: .9rem; margin-bottom: 8px; }
+    .scan-result .meta { font-size: .78rem; color: var(--muted); line-height: 1.6; }
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .qty-btn {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .qty-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      min-width: 48px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .scan-log {
+      margin-top: 16px;
+    }
+    .scan-log h4 { font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: .78rem;
+    }
+    .log-item .code { color: var(--accent); font-weight: 600; }
+
+    /* Dashboard */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--bg2);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .stat-card .label { font-size: .7rem; color: var(--muted); }
+    .stat-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-card.warn .value { color: var(--warn); }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 640px) {
+      .charts-row { grid-template-columns: 1fr 1fr; }
+    }
+    .chart-box {
+      background: var(--bg2);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .chart-box h4 { font-size: .75rem; color: var(--muted); margin-bottom: 8px; }
+    .chart-wrap { position: relative; height: 200px; }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .filter-bar input,
+    .filter-bar select {
+      flex: 1;
+      min-width: 120px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: var(--bg2);
+      color: var(--text);
+      font-size: .82rem;
+    }
+
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+    }
+    .stock-table th {
+      text-align: left;
+      padding: 8px 6px;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+    .stock-table td {
+      padding: 10px 6px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      vertical-align: middle;
+    }
+    .stock-table tr { cursor: pointer; }
+    .stock-table tr:active { background: rgba(255,255,255,.04); }
+    .stock-table tr.low-stock td:nth-child(3) { color: var(--warn); font-weight: 700; }
+    .cat-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: .65rem;
+      background: rgba(129,140,248,.2);
+      color: var(--accent2);
+    }
+    .empty-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    #importFile { display: none; }
+
+    #toast {
+      position: fixed;
+      bottom: calc(var(--nav-h) + var(--safe-b) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg2);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      z-index: 100;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #toast.success { border-color: var(--success); }
+    #toast.error { border-color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <h1>WS 庫存管理</h1>
+      <div class="topbar-actions">
+        <button type="button" class="btn-sm" id="btnExport">匯出</button>
+        <button type="button" class="btn-sm" id="btnImport">匯入</button>
+        <input type="file" id="importFile" accept=".json,application/json" />
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- 畫面 1：文字編輯 -->
+      <section class="phase is-active" id="phase-edit" data-phase="edit">
+        <div class="phase-scroll">
+          <div class="phase-title">
+            <h2>商品編輯</h2>
+            <p>輸入或修改商品資料，以編號為唯一識別</p>
+          </div>
+          <div class="form-card">
+            <span class="mode-badge new" id="editModeBadge">新建商品</span>
+            <form id="productForm">
+              <div class="form-row">
+                <label for="fCode">編號 *</label>
+                <input type="text" id="fCode" required placeholder="例：BD/W54-030SSP" autocomplete="off" />
+              </div>
+              <div class="form-row">
+                <label for="fName">名稱 *</label>
+                <input type="text" id="fName" required placeholder="商品名稱" />
+              </div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <label for="fDate">輸入日期</label>
+                  <input type="date" id="fDate" />
+                </div>
+                <div class="form-row">
+                  <label for="fCategory">商品種類</label>
+                  <select id="fCategory">
+                    <option value="卡牌">卡牌</option>
+                    <option value="卡盒">卡盒</option>
+                    <option value="周邊">周邊</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <label for="fPrice">價格</label>
+                  <input type="number" id="fPrice" min="0" step="1" value="0" />
+                </div>
+                <div class="form-row">
+                  <label for="fQty">數量</label>
+                  <input type="number" id="fQty" step="1" value="1" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label for="fLocation">存放地點</label>
+                <input type="text" id="fLocation" placeholder="例：A櫃-2層" />
+              </div>
+              <div id="cardPriceTools" class="card-tools" hidden>
+                <label class="toggle-row">
+                  <input type="checkbox" id="fPriceAuto" checked />
+                  允許 API 自動更新價格
+                </label>
+                <button type="button" class="btn-sub" id="btnFetchPrice">立即取得價格</button>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-main">儲存</button>
+                <button type="button" class="btn-sub" id="btnLookup">依編號載入</button>
+                <button type="button" class="btn-sub" id="btnClearForm">清除</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- 畫面 2：條碼掃描 -->
+      <section class="phase" id="phase-scan" data-phase="scan">
+        <div class="phase-scroll">
+          <div class="phase-title">
+            <h2>條碼掃描</h2>
+            <p>相機掃描或 USB 掃描器輸入（編號 = 條碼內容）</p>
+          </div>
+          <div class="scan-actions">
+            <button type="button" class="btn-main" id="btnStartCam">開啟相機</button>
+            <button type="button" class="btn-sub" id="btnStopCam">停止相機</button>
+          </div>
+          <div class="scan-area">
+            <div id="qrReader"></div>
+          </div>
+          <p class="scan-hint">USB 掃描器：對準此頁面掃描即可（無需點擊輸入框）</p>
+          <input type="text" class="scan-wedge" id="scanInput" autocomplete="off" aria-label="掃描輸入" />
+
+          <div class="scan-result" id="scanResult">
+            <h3 id="scanResultTitle">掃描結果</h3>
+            <div class="meta" id="scanResultMeta"></div>
+            <div class="qty-controls" id="scanQtyControls" hidden>
+              <button type="button" class="qty-btn" data-action="qty-minus">−</button>
+              <span class="qty-val" id="scanQtyVal">0</span>
+              <button type="button" class="qty-btn" data-action="qty-plus">+</button>
+              <button type="button" class="btn-main" data-action="save-qty" style="flex:1">確認數量</button>
+            </div>
+            <div class="form-actions" id="scanNewActions" hidden>
+              <button type="button" class="btn-main" data-action="goto-new">新建商品</button>
+            </div>
+          </div>
+
+          <div class="scan-log">
+            <h4>最近掃描</h4>
+            <div id="scanLogList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 畫面 3：庫存顯示 -->
+      <section class="phase" id="phase-dashboard" data-phase="dashboard">
+        <div class="phase-scroll">
+          <div class="phase-title">
+            <h2>庫存總覽</h2>
+            <p>統計分析與商品列表</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="label">品項數</div>
+              <div class="value" id="statItems">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">總數量</div>
+              <div class="value" id="statQty">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">總庫存價值</div>
+              <div class="value" id="statValue">NT$ 0</div>
+            </div>
+            <div class="stat-card warn">
+              <div class="label">低庫存 (≤2)</div>
+              <div class="value" id="statLow">0</div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <div class="chart-box">
+              <h4>各種類庫存價值</h4>
+              <div class="chart-wrap"><canvas id="chartCategory"></canvas></div>
+            </div>
+            <div class="chart-box">
+              <h4>各地點數量</h4>
+              <div class="chart-wrap"><canvas id="chartLocation"></canvas></div>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <input type="search" id="dashSearch" placeholder="搜尋名稱或編號…" />
+            <select id="dashCatFilter">
+              <option value="">全部種類</option>
+              <option value="卡牌">卡牌</option>
+              <option value="卡盒">卡盒</option>
+              <option value="周邊">周邊</option>
+              <option value="其他">其他</option>
+            </select>
+            <select id="dashLocFilter">
+              <option value="">全部地點</option>
+            </select>
+            <button type="button" class="btn-sm primary" id="btnBatchPrice">批次更新卡牌價格</button>
+          </div>
+
+          <div id="stockListWrap">
+            <table class="stock-table">
+              <thead>
+                <tr>
+                  <th>名稱</th>
+                  <th>價格</th>
+                  <th>數量</th>
+                  <th>地點</th>
+                </tr>
+              </thead>
+              <tbody id="stockTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="bottomNav">
+      <button type="button" class="nav-btn is-active" data-phase="edit">
+        <span class="icon">✏️</span>
+        <span>編輯</span>
+      </button>
+      <button type="button" class="nav-btn" data-phase="scan">
+        <span class="icon">📷</span>
+        <span>掃描</span>
+      </button>
+      <button type="button" class="nav-btn" data-phase="dashboard">
+        <span class="icon">📊</span>
+        <span>庫存</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var STORAGE_KEY = "ws_stock_v1";
+    var PRICE_API = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+    var CARD_API = "https://ws-cards.cloud/json/";
+
+    var phase = "edit";
+    var items = [];
+    var scanSession = null;
+    var scanLog = [];
+    var html5QrCode = null;
+    var camRunning = false;
+    var chartCategory = null;
+    var chartLocation = null;
+    var toastTimer = null;
+
+    var el = {
+      phases: document.querySelectorAll(".phase"),
+      navBtns: document.querySelectorAll(".nav-btn"),
+      toast: document.getElementById("toast"),
+      productForm: document.getElementById("productForm"),
+      editModeBadge: document.getElementById("editModeBadge"),
+      fCode: document.getElementById("fCode"),
+      fName: document.getElementById("fName"),
+      fDate: document.getElementById("fDate"),
+      fCategory: document.getElementById("fCategory"),
+      fPrice: document.getElementById("fPrice"),
+      fQty: document.getElementById("fQty"),
+      fLocation: document.getElementById("fLocation"),
+      fPriceAuto: document.getElementById("fPriceAuto"),
+      cardPriceTools: document.getElementById("cardPriceTools"),
+      btnFetchPrice: document.getElementById("btnFetchPrice"),
+      btnLookup: document.getElementById("btnLookup"),
+      btnClearForm: document.getElementById("btnClearForm"),
+      btnExport: document.getElementById("btnExport"),
+      btnImport: document.getElementById("btnImport"),
+      importFile: document.getElementById("importFile"),
+      scanInput: document.getElementById("scanInput"),
+      btnStartCam: document.getElementById("btnStartCam"),
+      btnStopCam: document.getElementById("btnStopCam"),
+      scanResult: document.getElementById("scanResult"),
+      scanResultTitle: document.getElementById("scanResultTitle"),
+      scanResultMeta: document.getElementById("scanResultMeta"),
+      scanQtyControls: document.getElementById("scanQtyControls"),
+      scanQtyVal: document.getElementById("scanQtyVal"),
+      scanNewActions: document.getElementById("scanNewActions"),
+      scanLogList: document.getElementById("scanLogList"),
+      statItems: document.getElementById("statItems"),
+      statQty: document.getElementById("statQty"),
+      statValue: document.getElementById("statValue"),
+      statLow: document.getElementById("statLow"),
+      dashSearch: document.getElementById("dashSearch"),
+      dashCatFilter: document.getElementById("dashCatFilter"),
+      dashLocFilter: document.getElementById("dashLocFilter"),
+      btnBatchPrice: document.getElementById("btnBatchPrice"),
+      stockTableBody: document.getElementById("stockTableBody")
+    };
+
+    // ── StockStore ──
+    function loadItems() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        var data = JSON.parse(raw);
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveItems() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        toast("儲存失敗：" + e.message, "error");
+      }
+    }
+
+    function findByCode(code) {
+      var c = normalizeCode(code);
+      for (var i = 0; i < items.length; i++) {
+        if (normalizeCode(items[i].code) === c) return items[i];
+      }
+      return null;
+    }
+
+    function upsertItem(item) {
+      var c = normalizeCode(item.code);
+      if (!c) throw new Error("編號不可為空");
+      item.code = c;
+      item.updatedAt = Date.now();
+      var idx = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (normalizeCode(items[i].code) === c) { idx = i; break; }
+      }
+      if (idx >= 0) items[idx] = item;
+      else items.push(item);
+      saveItems();
+      return item;
+    }
+
+    function normalizeCode(code) {
+      return String(code || "").trim();
+    }
+
+    function exportData() {
+      var blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "ws_stock_" + new Date().toISOString().slice(0, 10) + ".json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast("已匯出 JSON", "success");
+    }
+
+    function importData(file, replace) {
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          var data = JSON.parse(ev.target.result);
+          if (!Array.isArray(data)) throw new Error("格式錯誤");
+          if (replace) {
+            items = data;
+          } else {
+            for (var i = 0; i < data.length; i++) {
+              if (data[i] && data[i].code) upsertItem(data[i]);
+            }
+          }
+          if (replace) saveItems();
+          renderDashboard();
+          toast("匯入成功：" + data.length + " 筆", "success");
+        } catch (e) {
+          toast("匯入失敗：" + e.message, "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ── PriceService ──
+    function parseSetCode(code) {
+      var parts = String(code).split("-");
+      if (!parts[0]) return null;
+      return parts[0].replace("/", "_");
+    }
+
+    function fetchCardPriceData(code) {
+      var setCode = parseSetCode(code);
+      if (!setCode) return Promise.reject(new Error("編號格式無法解析"));
+      var url = PRICE_API + setCode + ".json";
+      return fetch(url).then(function (r) {
+        if (!r.ok) throw new Error("價格 API 載入失敗");
+        return r.json();
+      }).then(function (json) {
+        var info = json[code];
+        if (!info || !info.cardPrice || !info.cardPrice.length) {
+          throw new Error("找不到此卡牌的價格資料");
+        }
+        var prices = info.cardPrice;
+        return prices[prices.length - 1];
+      });
+    }
+
+    function fetchCardName(code) {
+      var setCode = parseSetCode(code);
+      if (!setCode) return Promise.resolve(null);
+      var url = CARD_API + setCode + ".json";
+      return fetch(url).then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      }).then(function (data) {
+        if (data && Array.isArray(data.cards)) {
+          var card = data.cards.find(function (c) { return c.id === code; });
+          if (card && card.name) return card.name;
+        }
+        if (data && data[code] && data[code].cardname) return data[code].cardname;
+        return null;
+      }).catch(function () { return null; });
+    }
+
+    function applyCardPrice() {
+      var code = normalizeCode(el.fCode.value);
+      if (!code) { toast("請先輸入編號", "error"); return; }
+      el.btnFetchPrice.disabled = true;
+      el.btnFetchPrice.textContent = "取得中…";
+      Promise.all([fetchCardPriceData(code), fetchCardName(code)]).then(function (res) {
+        el.fPrice.value = res[0];
+        if (res[1] && !el.fName.value.trim()) el.fName.value = res[1];
+        toast("已更新價格：NT$ " + res[0], "success");
+      }).catch(function (e) {
+        toast(e.message, "error");
+      }).finally(function () {
+        el.btnFetchPrice.disabled = false;
+        el.btnFetchPrice.textContent = "立即取得價格";
+      });
+    }
+
+    function batchUpdateCardPrices() {
+      var targets = items.filter(function (it) {
+        return it.category === "卡牌" && it.priceAuto !== false;
+      });
+      if (!targets.length) { toast("沒有可更新的卡牌", "error"); return; }
+      el.btnBatchPrice.disabled = true;
+      el.btnBatchPrice.textContent = "更新中…";
+      var done = 0;
+      var failed = 0;
+      var chain = Promise.resolve();
+      targets.forEach(function (it) {
+        chain = chain.then(function () {
+          return fetchCardPriceData(it.code).then(function (price) {
+            it.price = price;
+            it.updatedAt = Date.now();
+            done++;
+          }).catch(function () { failed++; });
+        });
+      });
+      chain.then(function () {
+        saveItems();
+        renderDashboard();
+        toast("批次完成：成功 " + done + "，失敗 " + failed, done ? "success" : "error");
+      }).finally(function () {
+        el.btnBatchPrice.disabled = false;
+        el.btnBatchPrice.textContent = "批次更新卡牌價格";
+      });
+    }
+
+    // ── Router ──
+    function setPhase(name) {
+      phase = name;
+      el.phases.forEach(function (p) {
+        p.classList.toggle("is-active", p.dataset.phase === name);
+      });
+      el.navBtns.forEach(function (b) {
+        b.classList.toggle("is-active", b.dataset.phase === name);
+      });
+      if (name === "dashboard") renderDashboard();
+      if (name === "scan") {
+        focusScanInput();
+      } else {
+        stopCamera();
+      }
+    }
+
+    function toast(msg, type) {
+      el.toast.textContent = msg;
+      el.toast.className = type ? "is-visible " + type : "is-visible";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        el.toast.className = "";
+      }, 2800);
+    }
+
+    function todayStr() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    // ── Edit screen ──
+    function updateCategoryTools() {
+      var isCard = el.fCategory.value === "卡牌";
+      el.cardPriceTools.hidden = !isCard;
+    }
+
+    function setEditMode(existing) {
+      if (existing) {
+        el.editModeBadge.textContent = "編輯商品";
+        el.editModeBadge.className = "mode-badge edit";
+      } else {
+        el.editModeBadge.textContent = "新建商品";
+        el.editModeBadge.className = "mode-badge new";
+      }
+    }
+
+    function fillForm(item) {
+      if (!item) {
+        clearForm(false);
+        return;
+      }
+      el.fCode.value = item.code || "";
+      el.fName.value = item.name || "";
+      el.fDate.value = item.inputDate || todayStr();
+      el.fCategory.value = item.category || "卡牌";
+      el.fPrice.value = item.price != null ? item.price : 0;
+      el.fQty.value = item.quantity != null ? item.quantity : 1;
+      el.fLocation.value = item.location || "";
+      el.fPriceAuto.checked = item.priceAuto !== false;
+      setEditMode(true);
+      updateCategoryTools();
+    }
+
+    function clearForm(resetCode) {
+      if (resetCode !== false) el.fCode.value = "";
+      el.fName.value = "";
+      el.fDate.value = todayStr();
+      el.fCategory.value = "卡牌";
+      el.fPrice.value = 0;
+      el.fQty.value = 1;
+      el.fLocation.value = "";
+      el.fPriceAuto.checked = true;
+      setEditMode(false);
+      updateCategoryTools();
+    }
+
+    function lookupByCode() {
+      var code = normalizeCode(el.fCode.value);
+      if (!code) { toast("請輸入編號", "error"); return; }
+      var found = findByCode(code);
+      if (found) {
+        fillForm(found);
+        toast("已載入：" + found.name, "success");
+      } else {
+        setEditMode(false);
+        el.fDate.value = todayStr();
+        updateCategoryTools();
+        toast("找不到商品，可新建", "success");
+      }
+    }
+
+    function submitForm(ev) {
+      ev.preventDefault();
+      var code = normalizeCode(el.fCode.value);
+      var name = el.fName.value.trim();
+      if (!code || !name) { toast("編號與名稱為必填", "error"); return; }
+      var item = {
+        code: code,
+        name: name,
+        inputDate: el.fDate.value || todayStr(),
+        category: el.fCategory.value,
+        price: parseFloat(el.fPrice.value) || 0,
+        priceAuto: el.fCategory.value === "卡牌" ? el.fPriceAuto.checked : false,
+        quantity: parseInt(el.fQty.value, 10) || 0,
+        location: el.fLocation.value.trim()
+      };
+      upsertItem(item);
+      setEditMode(true);
+      toast("已儲存：" + name, "success");
+    }
+
+    function openEditWithCode(code, category) {
+      var found = findByCode(code);
+      setPhase("edit");
+      if (found) {
+        fillForm(found);
+      } else {
+        clearForm(false);
+        el.fCode.value = code;
+        el.fCategory.value = category || "卡牌";
+        el.fDate.value = todayStr();
+        updateCategoryTools();
+        setEditMode(false);
+        fetchCardName(code).then(function (name) {
+          if (name) el.fName.value = name;
+        });
+      }
+    }
+
+    // ── Scan screen ──
+    function focusScanInput() {
+      setTimeout(function () { el.scanInput.focus(); }, 100);
+    }
+
+    function refocusScanOnce() {
+      if (phase === "scan" && document.activeElement !== el.scanInput) {
+        el.scanInput.focus();
+      }
+    }
+
+    function onScan(code) {
+      code = normalizeCode(code);
+      if (!code) return;
+      scanSession = { code: code, item: findByCode(code) };
+      addScanLog(code, scanSession.item);
+      renderScanResult();
+      if (!scanSession.item) {
+        toast("新商品：" + code, "success");
+      } else {
+        toast("找到：" + scanSession.item.name, "success");
+      }
+    }
+
+    function addScanLog(code, item) {
+      scanLog.unshift({
+        code: code,
+        name: item ? item.name : "(新建)",
+        at: new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      });
+      if (scanLog.length > 5) scanLog.length = 5;
+      renderScanLog();
+    }
+
+    function renderScanLog() {
+      if (!scanLog.length) {
+        el.scanLogList.innerHTML = '<div class="log-item"><span>尚無紀錄</span></div>';
+        return;
+      }
+      el.scanLogList.innerHTML = scanLog.map(function (l) {
+        return '<div class="log-item"><span><span class="code">' + esc(l.code) + '</span> ' + esc(l.name) + '</span><span>' + l.at + '</span></div>';
+      }).join("");
+    }
+
+    function renderScanResult() {
+      if (!scanSession) {
+        el.scanResult.classList.remove("is-visible");
+        return;
+      }
+      el.scanResult.classList.add("is-visible");
+      var it = scanSession.item;
+      if (it) {
+        el.scanResultTitle.textContent = it.name;
+        el.scanResultMeta.innerHTML =
+          "編號：" + esc(it.code) + "<br>" +
+          "價格：NT$ " + (it.price || 0).toLocaleString() + "<br>" +
+          "地點：" + esc(it.location || "—") + "<br>" +
+          "目前數量：" + it.quantity;
+        scanSession.tempQty = it.quantity;
+        el.scanQtyVal.textContent = it.quantity;
+        el.scanQtyControls.hidden = false;
+        el.scanNewActions.hidden = true;
+      } else {
+        el.scanResultTitle.textContent = "未找到商品";
+        el.scanResultMeta.innerHTML = "編號：<strong>" + esc(scanSession.code) + "</strong><br>請新建商品資料";
+        el.scanQtyControls.hidden = true;
+        el.scanNewActions.hidden = false;
+      }
+    }
+
+    function saveScanQty() {
+      if (!scanSession || !scanSession.item) return;
+      scanSession.item.quantity = scanSession.tempQty;
+      scanSession.item.updatedAt = Date.now();
+      upsertItem(scanSession.item);
+      toast("數量已更新：" + scanSession.tempQty, "success");
+      renderScanResult();
+    }
+
+    function handleWedgeInput(ev) {
+      if (phase !== "scan") return;
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        var code = el.scanInput.value.trim();
+        el.scanInput.value = "";
+        if (code) onScan(code);
+      }
+    }
+
+    function startCamera() {
+      if (camRunning || typeof Html5Qrcode === "undefined") {
+        if (typeof Html5Qrcode === "undefined") toast("掃描函式庫未載入", "error");
+        return;
+      }
+      html5QrCode = new Html5Qrcode("qrReader");
+      Html5Qrcode.getCameras().then(function (cameras) {
+        if (!cameras || !cameras.length) {
+          toast("找不到相機", "error");
+          return;
+        }
+        var camId = cameras[cameras.length - 1].id;
+        return html5QrCode.start(
+          camId,
+          { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.0 },
+          function (decoded) {
+            stopCamera();
+            onScan(decoded);
+          },
+          function () {}
+        );
+      }).then(function () {
+        camRunning = true;
+        toast("相機已開啟", "success");
+      }).catch(function (e) {
+        toast("相機啟動失敗：" + e.message, "error");
+        camRunning = false;
+      });
+    }
+
+    function stopCamera() {
+      if (!html5QrCode || !camRunning) return;
+      html5QrCode.stop().then(function () {
+        html5QrCode.clear();
+        camRunning = false;
+      }).catch(function () { camRunning = false; });
+    }
+
+    // ── Dashboard ──
+    function computeStats(list) {
+      var totalQty = 0;
+      var totalValue = 0;
+      var low = 0;
+      var byCat = {};
+      var byLoc = {};
+      list.forEach(function (it) {
+        var q = it.quantity || 0;
+        var p = it.price || 0;
+        totalQty += q;
+        totalValue += q * p;
+        if (q <= 2) low++;
+        var cat = it.category || "其他";
+        byCat[cat] = (byCat[cat] || 0) + q * p;
+        var loc = it.location || "未設定";
+        byLoc[loc] = (byLoc[loc] || 0) + q;
+      });
+      return { totalQty: totalQty, totalValue: totalValue, low: low, byCat: byCat, byLoc: byLoc };
+    }
+
+    function getFilteredList() {
+      var q = el.dashSearch.value.trim().toLowerCase();
+      var cat = el.dashCatFilter.value;
+      var loc = el.dashLocFilter.value;
+      return items.filter(function (it) {
+        if (cat && it.category !== cat) return false;
+        if (loc && (it.location || "未設定") !== loc) return false;
+        if (q) {
+          var hay = ((it.name || "") + " " + (it.code || "")).toLowerCase();
+          if (hay.indexOf(q) < 0) return false;
+        }
+        return true;
+      });
+    }
+
+    function updateLocFilterOptions() {
+      var locs = {};
+      items.forEach(function (it) {
+        locs[it.location || "未設定"] = true;
+      });
+      var cur = el.dashLocFilter.value;
+      var html = '<option value="">全部地點</option>';
+      Object.keys(locs).sort().forEach(function (l) {
+        html += '<option value="' + escAttr(l) + '">' + esc(l) + '</option>';
+      });
+      el.dashLocFilter.innerHTML = html;
+      if (cur && locs[cur]) el.dashLocFilter.value = cur;
+    }
+
+    function renderCharts(stats) {
+      var catLabels = Object.keys(stats.byCat);
+      var catData = catLabels.map(function (k) { return stats.byCat[k]; });
+      var locLabels = Object.keys(stats.byLoc);
+      var locData = locLabels.map(function (k) { return stats.byLoc[k]; });
+
+      if (chartCategory) chartCategory.destroy();
+      if (chartLocation) chartLocation.destroy();
+
+      var colors = ["#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"];
+      chartCategory = new Chart(document.getElementById("chartCategory"), {
+        type: "pie",
+        data: {
+          labels: catLabels,
+          datasets: [{ data: catData, backgroundColor: colors }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: "#94a3b8", font: { size: 10 } } } }
+        }
+      });
+
+      chartLocation = new Chart(document.getElementById("chartLocation"), {
+        type: "bar",
+        data: {
+          labels: locLabels,
+          datasets: [{ label: "數量", data: locData, backgroundColor: "#38bdf8" }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#94a3b8", font: { size: 9 } }, grid: { color: "rgba(255,255,255,.06)" } },
+            y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,.06)" }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function renderDashboard() {
+      var list = getFilteredList();
+      var stats = computeStats(items);
+      el.statItems.textContent = items.length;
+      el.statQty.textContent = stats.totalQty.toLocaleString();
+      el.statValue.textContent = "NT$ " + Math.round(stats.totalValue).toLocaleString();
+      el.statLow.textContent = stats.low;
+      updateLocFilterOptions();
+      renderCharts(stats);
+
+      if (!list.length) {
+        el.stockTableBody.innerHTML = '<tr><td colspan="4" class="empty-msg">尚無商品資料</td></tr>';
+        return;
+      }
+      el.stockTableBody.innerHTML = list.map(function (it) {
+        var lowClass = (it.quantity || 0) <= 2 ? " low-stock" : "";
+        return '<tr class="' + lowClass + '" data-code="' + escAttr(it.code) + '">' +
+          '<td><strong>' + esc(it.name) + '</strong><br><span style="color:var(--muted);font-size:.68rem">' + esc(it.code) + '</span> <span class="cat-tag">' + esc(it.category) + '</span></td>' +
+          '<td>NT$ ' + (it.price || 0).toLocaleString() + '</td>' +
+          '<td>' + (it.quantity || 0) + '</td>' +
+          '<td>' + esc(it.location || "—") + '</td></tr>';
+      }).join("");
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function escAttr(s) {
+      return esc(s).replace(/'/g, "&#39;");
+    }
+
+    // ── Events ──
+    el.navBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () { setPhase(btn.dataset.phase); });
+    });
+
+    el.productForm.addEventListener("submit", submitForm);
+    el.fCategory.addEventListener("change", updateCategoryTools);
+    el.fCode.addEventListener("blur", function () {
+      var found = findByCode(el.fCode.value);
+      if (found && !el.fName.value.trim()) fillForm(found);
+    });
+    el.btnLookup.addEventListener("click", lookupByCode);
+    el.btnClearForm.addEventListener("click", function () { clearForm(true); });
+    el.btnFetchPrice.addEventListener("click", applyCardPrice);
+    el.btnExport.addEventListener("click", exportData);
+    el.btnImport.addEventListener("click", function () { el.importFile.click(); });
+    el.importFile.addEventListener("change", function (ev) {
+      var file = ev.target.files[0];
+      if (!file) return;
+      var replace = confirm("選「確定」= 全部替換現有資料\n選「取消」= 合併（同編號覆蓋）");
+      importData(file, replace);
+      ev.target.value = "";
+    });
+
+    document.getElementById("phase-scan").addEventListener("click", refocusScanOnce);
+
+    el.btnStartCam.addEventListener("click", startCamera);
+    el.btnStopCam.addEventListener("click", stopCamera);
+    el.scanInput.addEventListener("keydown", handleWedgeInput);
+
+    document.getElementById("phase-scan").addEventListener("click", function (ev) {
+      var action = ev.target.closest("[data-action]");
+      if (!action || !scanSession) return;
+      var a = action.dataset.action;
+      if (a === "qty-plus") {
+        scanSession.tempQty = (scanSession.tempQty || 0) + 1;
+        el.scanQtyVal.textContent = scanSession.tempQty;
+      } else if (a === "qty-minus") {
+        scanSession.tempQty = (scanSession.tempQty || 0) - 1;
+        el.scanQtyVal.textContent = scanSession.tempQty;
+      } else if (a === "save-qty") {
+        saveScanQty();
+      } else if (a === "goto-new") {
+        openEditWithCode(scanSession.code, "卡牌");
+      }
+    });
+
+    el.dashSearch.addEventListener("input", renderDashboard);
+    el.dashCatFilter.addEventListener("change", renderDashboard);
+    el.dashLocFilter.addEventListener("change", renderDashboard);
+    el.btnBatchPrice.addEventListener("click", batchUpdateCardPrices);
+
+    el.stockTableBody.addEventListener("click", function (ev) {
+      var row = ev.target.closest("tr[data-code]");
+      if (!row) return;
+      openEditWithCode(row.dataset.code);
+    });
+
+    // ── Init ──
+    items = loadItems();
+    el.fDate.value = todayStr();
+    updateCategoryTools();
+    renderScanLog();
+    renderDashboard();
+  })();
+  </script>
+</body>
+</html>
