@@ -215,7 +215,7 @@ source:[
 {id:"WS00070", name:"クレヨンしんちゃん",cname:"蠟筆小新 | CS"},
 {id:"WS00071", name:"グリザイアの果実",cname:"灰色的果實 | GRI"},
 {id:"WS00072", name:"マクロスシリーズ",cname:"超時空要塞系列 | Macross | 虛空歌姬 | MF,MDE"},
-{id:"WS00073", name:"ゴブリンスレイヤー",cname:"哥布林殺手 | GBS"},
+{id:"WS00073", name:"ゴブリンスレイヤー",cname:"哥布林殺手 | GBS,GA04"},
 {id:"WS00074", name:"PSYCHO-PASS サイコパス",cname:"心靈判官 | PP"},
 {id:"WS00075", name:"シャイニングシリーズ",cname:"光明與黑暗系列 | SE,SF,SR"},
 {id:"WS00076", name:"STEINS;GATE",cname:"命運石之門 | STG"},
@@ -230,7 +230,7 @@ source:[
 {id:"WS00085", name:"ソードアート・オンライン",cname:"刀劍神域 | SAO | SAO,Gso"},
 {id:"WS00086", name:"ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",cname:"刀劍神域外傳 Gun Gale Online | GGO | GGO,Ggg"},
 {id:"WS00087", name:"探偵オペラ ミルキィホームズ",cname:"偵探歌劇 少女福爾摩斯 | MK,MK2"},
-{id:"WS00117", name:"ダンジョンに出会いを求めるのは間違っているだろうか",cname:"ダンまち | 在地下城尋求邂逅是否搞錯了什麼 | 地錯 | 地城邂逅 | DDM"},
+{id:"WS00117", name:"ダンジョンに出会いを求めるのは間違っているだろうか",cname:"ダンまち | 在地下城尋求邂逅是否搞錯了什麼 | 地錯 | 地城邂逅 | DDM,GA10"},
 {id:"WS00088", name:"ダーリン・イン・ザ・フランキス",cname:"DARLING in the FRANXX | FXX"},
 {id:"WS00089", name:"チェインクロニクル ～ヘクセイタスの閃～",cname:"鎖鏈戰記 ~赫克瑟塔斯之光~ | CC"},
 {id:"WS00090", name:"超爆裂異次元メンコバトル ギガントシューター つかさ",cname:"超爆裂異次元Menko Battle Gigant Shooter Tsukasa | GST"},
@@ -299,7 +299,10 @@ source:[
 {id:"WS00158", name:"Disney",cname:"Disney | 迪士尼 | Dds,MRd"},
 {id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"},
 {id:"WS00160", name:"VIRTUAL GIRL",cname:"虛擬少女@世界終焉 | VRG,BDY"},
-{id:"WS00161", name:"東方Project",cname:"東方Project | THP"}
+{id:"WS00161", name:"東方Project",cname:"東方Project | THP"},
+{id:"WS00162", name:"GA文庫",cname:"GA文庫 | GA01,GA02,GA03,GA04,GA05,GA06,GA07,GA08,GA09,GA10,GA11,GA12,GA13,GA14,GA15,GA16,GA17,GA18,GA19"},
+{id:"WS00163", name:"グランブルーファンタジー",cname:"碧藍幻想 | GBF"},
+{id:"WS00164", name:"ブラウンダスト2",cname:"棕色塵埃2 | 棕塵 | 永遠棕塵 | BRD"}    
 ]
 ,
 minLength:1,          // 最少輸入字數
