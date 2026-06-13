@@ -24,7 +24,14 @@ source:[
 {id:"R000003", name:"HARUKAZE",cname:"春風社 HARUKAZE | OS03"},
 {id:"R000004", name:"異種族レビュアーズ",cname:"異種族風俗娘評鑑指南 | OS04"},
 {id:"R000005", name:"sprite",cname:"雪碧社 精靈社 | OS05"},
-{id:"R000006", name:"枕",cname:"枕 Makura KeroQ | OS06"}
+{id:"R000006", name:"枕",cname:"枕 Makura KeroQ | OS06"},
+{id:"R000007", name:"Lose&Whisp",cname:"Lose&Whisp 愛上火車 | OS07"},
+{id:"R000008", name:"AQUAPLUS",cname:"AQUAPLUS 水瓶社  | OS08"},
+{id:"R000009", name:"アリスソフト",cname:"A社 愛麗絲 | OS09"},
+{id:"R000010", name:"Navel",cname:"Navel | OS10"},
+{id:"R000011", name:"Purple software",cname:"紫社 | OS11"},
+{id:"R000012", name:"ぬきたし THE ANIMATION",cname:"拔作島 | 住在拔作島上的我該如何是好？ | OS12"},
+{id:"R000013", name:"オーガスト",cname:"AUGUST |  八月社 | OS13"}
 ]
 ,
   minLength:1,
