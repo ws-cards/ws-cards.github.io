@@ -690,12 +690,7 @@
     <div id="deckPriceListPanel" class="deck-price-list-panel" style="display:none;" aria-hidden="true">
       <div class="dpl-toolbar">
         <span><i class="fas fa-images mr-1"></i>牌組行情清單（剩餘牌組 · 卡圖與最新價［日幣］）</span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button type="button" class="btn-ghost" id="btnExportDeckPriceImg" style="padding:6px 12px;font-size:11px;" title="將清單匯出為圖片">
-            <i class="fas fa-image mr-1"></i>匯出圖片
-          </button>
-          <button type="button" class="btn-ghost" id="btnCloseDeckPriceList" style="padding:6px 12px;font-size:11px;">收合</button>
-        </div>
+        <button type="button" class="btn-ghost" id="btnCloseDeckPriceList" style="padding:6px 12px;font-size:11px;">收合</button>
       </div>
       <div class="dpl-scroll">
         <div id="deckPriceListEmpty" class="dpl-empty" style="display:none;"></div>
@@ -1021,20 +1016,6 @@
           <div class="minihelp mb-2" style="border-top:1px solid var(--line); padding-top:10px; margin-top:6px;">
             也支援直接貼 <b>DECK LOG</b> 的 XHR 回應 JSON（F12 → Network → <span class="mono">.../system/app/api/view/&lt;代碼&gt;</span> → Copy Response 全文），可以省去人工整理牌表。
           </div>
-          <div class="input-group mb-2" style="border:1px solid var(--line); border-radius: var(--radius); overflow:hidden;">
-            <div class="input-group-prepend">
-              <span class="input-group-text" style="background:var(--alt2); border:none; color:var(--muted); font-size:13px; white-space:nowrap;">
-                <i class="fas fa-cloud-download-alt mr-1"></i>Decklog 代碼
-              </span>
-            </div>
-            <input type="text" class="form-control" id="decklogCodeInput" placeholder="輸入 5 碼代碼，例：564TU" style="border:none; background:transparent; color:var(--ink);" />
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="button" id="btnFetchDecklog" style="font-size:13px;">
-                <i class="fas fa-search mr-1"></i>查詢
-              </button>
-            </div>
-          </div>
-          <div id="decklogFetchStatus" class="minihelp mb-2" style="display:none;"></div>
           <textarea class="form-control" id="deckTextarea" rows="10" placeholder="貼上牌表...（或貼 Deck Log 的 JSON Response）"></textarea>
           <div class="minihelp mt-2">匯入後會直接建立 50 張（或依你輸入的總張數），並重置所有區域。</div>
         </div>
@@ -1049,7 +1030,6 @@
   </div>
 
   <script src="../plugins/jquery/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script>
     const STORAGE_KEY = "ws-battle-counter-v1";
@@ -1260,37 +1240,9 @@
       return cards;
     }
 
-    function looksLikeSimpleDecklogJson(text) {
-      const t = String(text || "").trim();
-      if (!t || t.charAt(0) !== "{") return false;
-      return t.indexOf('"deckCode"') >= 0 && t.indexOf('"cardList"') >= 0;
-    }
-
-    function cardsFromSimpleDecklogPayload(data) {
-      if (!data || typeof data !== "object") throw new Error("非有效的資料格式。");
-      const cardList = data.cardList;
-      if (!cardList || typeof cardList !== "object") throw new Error("找不到 cardList 欄位。");
-      const entries = Object.entries(cardList);
-      if (!entries.length) throw new Error("此牌組沒有任何卡牌。");
-      const cards = [];
-      for (const [cardNo, qtyStr] of entries) {
-        const qty = Math.max(0, parseInt(qtyStr, 10) || 0);
-        if (!qty) continue;
-        const normalized = normalizeCardNo(String(cardNo).replace(/\\/g, "/"));
-        for (let i = 0; i < qty; i++) cards.push(createCard(normalized, normalized, ""));
-      }
-      if (!cards.length) throw new Error("解析後為 0 張。");
-      return cards;
-    }
-
     function resolveDeckCardsFromUserInput(text) {
       const t = String(text || "").trim();
       if (!t) return [];
-      if (looksLikeSimpleDecklogJson(t)) {
-        let j;
-        try { j = JSON.parse(t); } catch (e) { throw new Error("JSON 解析失敗：" + (e && e.message ? e.message : e)); }
-        return cardsFromSimpleDecklogPayload(j);
-      }
       if (looksLikeDecklogJson(t)) {
         let j;
         try { j = JSON.parse(t); } catch (e) { throw new Error("JSON 解析失敗：" + (e && e.message ? e.message : e)); }
@@ -1392,7 +1344,19 @@
     }
 
     /** 當日卡牌行情（與牌組卡號對應後加總） */
-    const LATEST_BY_CARD_JSON_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_20260501.json";
+    const LATEST_BY_CARD_JSON_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_";
+
+    function formatYmdCompact(d) {
+      const dt = d instanceof Date ? d : new Date();
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, "0");
+      const day = String(dt.getDate()).padStart(2, "0");
+      return y + m + day;
+    }
+
+    function buildLatestByCardJsonUrl(forDate) {
+      return LATEST_BY_CARD_JSON_BASE + formatYmdCompact(forDate) + ".json";
+    }
 
     let latestByCardPayload = null;
     let latestByCardError = null;
@@ -1672,7 +1636,7 @@
       latestByCardError = null;
       updateDeckValuationUI();
       try {
-        const r = await fetch(LATEST_BY_CARD_JSON_URL);
+        const r = await fetch(buildLatestByCardJsonUrl());
         if (!r.ok) throw new Error("HTTP " + r.status);
         const j = await r.json();
         const cardsMap = extractCardsMapFromLatestByCardJson(j);
@@ -2491,42 +2455,7 @@
       // 匯入牌組
       document.getElementById("btnImportDeck").addEventListener("click", () => {
         document.getElementById("deckTextarea").value = "";
-        document.getElementById("decklogCodeInput").value = "";
-        const st = document.getElementById("decklogFetchStatus");
-        if (st) { st.style.display = "none"; st.textContent = ""; }
         $("#importDeckModal").modal("show");
-      });
-
-      document.getElementById("btnFetchDecklog").addEventListener("click", async () => {
-        const code = document.getElementById("decklogCodeInput").value.trim();
-        const st = document.getElementById("decklogFetchStatus");
-        if (!code) {
-          st.style.display = "block";
-          st.style.color = "var(--muted)";
-          st.textContent = "請先輸入 Decklog 代碼。";
-          return;
-        }
-        const btn = document.getElementById("btnFetchDecklog");
-        btn.disabled = true;
-        st.style.display = "block";
-        st.style.color = "var(--muted)";
-        st.textContent = "查詢中...";
-        try {
-          const url = `https://selenium-java-service-669727048059.asia-east1.run.app/view/${encodeURIComponent(code)}`;
-          const resp = await fetch(url);
-          if (!resp.ok) throw new Error(`伺服器回應 ${resp.status}：${resp.statusText}`);
-          const json = await resp.json();
-          const text = JSON.stringify(json);
-          document.getElementById("deckTextarea").value = text;
-          const count = json.cardList ? Object.values(json.cardList).reduce((s, v) => s + (parseInt(v, 10) || 0), 0) : 0;
-          st.style.color = "#2e7d32";
-          st.textContent = `✓ 已取得牌組「${json.deckCode || code}」，共 ${count} 張，按「套用牌組」確認匯入。`;
-        } catch (e) {
-          st.style.color = "#c62828";
-          st.textContent = "查詢失敗：" + (e && e.message ? e.message : String(e));
-        } finally {
-          btn.disabled = false;
-        }
       });
       document.getElementById("btnApplyDeck").addEventListener("click", () => {
         const text = document.getElementById("deckTextarea").value;
@@ -2565,139 +2494,6 @@
         btnCloseDpl.addEventListener("click", () => setDeckPriceListVisible(false));
       }
 
-      const btnExportImg = document.getElementById("btnExportDeckPriceImg");
-      if (btnExportImg) {
-        btnExportImg.addEventListener("click", async () => {
-          const grid = document.getElementById("deckPriceListGrid");
-          if (!grid || !grid.children.length) {
-            alert("清單為空，無法匯出。");
-            return;
-          }
-          btnExportImg.disabled = true;
-          const origText = btnExportImg.innerHTML;
-          btnExportImg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>處理中…';
-          try {
-            // 先計算合計金額
-            let totalPrice = 0;
-            let missingQty = 0;
-            if (latestByCardPayload && latestByCardPayload.cards && state && state.zones) {
-              const result = sumDeckAgainstPriceMap(state.zones.deck || [], latestByCardPayload.cards);
-              totalPrice = result.total;
-              missingQty = result.missingPriceQty;
-            }
-
-            // 建立包裹容器，加上背景與 padding 再截圖
-            // 使用固定寬度（900px），確保手機與桌面截出的圖片一致
-            const wrap = document.createElement("div");
-            wrap.style.cssText = [
-              "background:#fff",
-              "padding:16px 16px 20px",
-              "width:900px",
-              "position:fixed",
-              "top:-99999px",
-              "left:-99999px",
-              "z-index:-1",
-              "font-family:system-ui,-apple-system,sans-serif",
-            ].join(";");
-            const title = document.createElement("div");
-            title.style.cssText = "font-size:15px;font-weight:700;margin-bottom:12px;color:#0a0a0a;";
-            title.textContent = "牌組行情清單";
-            wrap.appendChild(title);
-            const clone = grid.cloneNode(true);
-            // 強制 grid 佈局，固定欄寬，完全不受 viewport 影響
-            clone.style.cssText = [
-              "display:grid",
-              "grid-template-columns:repeat(auto-fill,minmax(240px,1fr))",
-              "gap:12px",
-              "width:100%",
-            ].join(";");
-            // 補上 clone 內每個 item 的 inline 樣式，防止 CSS class 在截圖時失效
-            clone.querySelectorAll(".dpl-item").forEach((item) => {
-              item.style.cssText = "display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid rgba(10,10,10,.22);border-radius:10px;background:rgba(10,10,10,.02);min-width:0;box-sizing:border-box;";
-            });
-            clone.querySelectorAll(".dpl-thumb").forEach((thumb) => {
-              thumb.style.cssText = "flex:0 0 72px;width:72px;border-radius:8px;overflow:hidden;border:1px solid rgba(10,10,10,.82);background:#fff;";
-            });
-            clone.querySelectorAll(".dpl-thumb img").forEach((img) => {
-              img.style.cssText = "display:block;width:100%;height:auto;aspect-ratio:63/88;object-fit:cover;";
-              img.crossOrigin = "anonymous";
-            });
-            clone.querySelectorAll(".dpl-info").forEach((info) => {
-              info.style.cssText = "flex:1;min-width:0;font-size:12px;line-height:1.4;";
-            });
-            clone.querySelectorAll(".dpl-no").forEach((el) => {
-              el.style.cssText = "font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:900;font-size:12px;word-break:break-all;color:#0a0a0a;";
-            });
-            clone.querySelectorAll(".dpl-name").forEach((el) => {
-              el.style.cssText = "color:rgba(10,10,10,.62);font-size:11px;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;";
-            });
-            clone.querySelectorAll(".dpl-price").forEach((el) => {
-              el.style.cssText = el.classList.contains("muted")
-                ? "margin-top:8px;font-weight:800;font-size:12px;color:rgba(10,10,10,.62);"
-                : "margin-top:8px;font-weight:900;font-size:14px;letter-spacing:.2px;color:#0a0a0a;";
-            });
-            clone.querySelectorAll(".dpl-sub").forEach((el) => {
-              el.style.cssText = "margin-top:4px;font-size:11px;color:rgba(10,10,10,.62);";
-            });
-            wrap.appendChild(clone);
-
-            // 加總列（固定在底部右側）
-            const footer = document.createElement("div");
-            footer.style.cssText = [
-              "margin-top:14px",
-              "display:flex",
-              "justify-content:flex-end",
-              "align-items:center",
-              "gap:12px",
-              "font-family:system-ui,sans-serif",
-              "font-size:14px",
-              "color:#444",
-            ].join(";");
-            const totalEl = document.createElement("div");
-            totalEl.style.cssText = [
-              "background:#0a0a0a",
-              "color:#fff",
-              "font-weight:700",
-              "font-size:15px",
-              "padding:8px 18px",
-              "border-radius:8px",
-              "letter-spacing:.3px",
-            ].join(";");
-            totalEl.textContent = totalPrice > 0
-              ? ("合計（有報價卡）：¥" + totalPrice.toLocaleString("zh-TW"))
-              : "合計：無報價資料";
-            if (missingQty > 0) {
-              const noteEl = document.createElement("span");
-              noteEl.style.cssText = "font-size:12px;color:#888;";
-              noteEl.textContent = `（${missingQty} 張無報價未計入）`;
-              footer.appendChild(noteEl);
-            }
-            footer.appendChild(totalEl);
-            wrap.appendChild(footer);
-
-            document.body.appendChild(wrap);
-            const canvas = await html2canvas(wrap, {
-              backgroundColor: "#ffffff",
-              useCORS: true,
-              allowTaint: false,
-              scale: 2,
-              logging: false,
-            });
-            document.body.removeChild(wrap);
-            const link = document.createElement("a");
-            const ts = new Date().toISOString().slice(0, 10);
-            link.download = `deck-price-list-${ts}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-          } catch (e) {
-            alert("匯出失敗：" + (e && e.message ? e.message : String(e)));
-          } finally {
-            btnExportImg.disabled = false;
-            btnExportImg.innerHTML = origText;
-          }
-        });
-      }
-
       renderCounts();
       fetchLatestByCardReport();
     }
@@ -2706,5 +2502,3 @@
   </script>
 </body>
 </html>
-
- 
