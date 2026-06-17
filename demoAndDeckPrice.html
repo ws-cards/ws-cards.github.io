@@ -108,6 +108,11 @@
     }
     .btn-ghost:hover{ background: var(--alt); }
     .btn-ghost:active{ transform: translateY(1px); }
+    .btn-ghost:disabled{
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    .btn-ghost:disabled:hover{ background: transparent; }
     .mat{
       padding: 12px;
       background: transparent;
@@ -808,11 +813,8 @@
     <div class="board">
       <div class="board-header">
         <div class="left">
-          <button class="btn-ghost" id="btnReset">
-            <i class="fas fa-rotate-left mr-1"></i>重置（保留隨機牌組）
-          </button>
-          <button class="btn-ghost" id="btnNewDeck">
-            <i class="fas fa-shuffle mr-1"></i>重抽隨機 50 張
+          <button class="btn-ghost" id="btnResetImportedDeck" type="button" disabled title="請先匯入牌組">
+            <i class="fas fa-rotate-left mr-1"></i>重製牌組
           </button>
         </div>
         <div class="right">
@@ -871,7 +873,12 @@
                 <div class="zname"><i class="fas fa-hand-paper"></i>手牌</div>
                 <div class="zcount" id="count-hand">0</div>
               </div>
-              <div class="zbody" id="handZoneBody">點擊查看清單；也可在右下角編輯加入/移動卡。</div>
+              <div class="zbody">
+                <div id="handZoneBody">點擊查看清單；也可在右下角編輯加入/移動卡。</div>
+                <div class="chips">
+                  <div class="chip" id="btnHandMulligan"><i class="fas fa-sync-alt"></i>重抽手牌</div>
+                </div>
+              </div>
             </div>
 
             <div class="zone public" data-zone="stock" role="button" tabindex="0" aria-label="庫存（公開清單）">
@@ -1164,6 +1171,29 @@
     </div>
   </div>
 
+  <!-- Hand Mulligan Modal -->
+  <div class="modal fade" id="handMulliganModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">重抽手牌</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="minihelp mb-2">選擇要重抽的手牌（可多選）。確認後選中的卡會進入休息室，並從牌組補抽相同張數。</div>
+          <div class="minihelp mb-2" id="handMulliganEmpty" style="display:none;">手牌為空。</div>
+          <div id="handMulliganGrid" class="pick-card-grid" aria-label="選取要重抽的手牌"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-outline-warning" id="btnConfirmHandMulligan" disabled>確認重抽</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="../plugins/jquery/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -1436,6 +1466,136 @@
           stageBack2: [],
         }
       };
+    }
+
+    function deckCardsToTemplate(cards) {
+      return (cards || []).map(c => ({
+        name: c.name || "未命名卡",
+        cardNo: normalizeCardNo(c.cardNo),
+        type: String(c.type || "").trim()
+      }));
+    }
+
+    function templateToFreshDeckCards(template) {
+      return (template || []).map(t => createCard(t.name, t.cardNo, t.type));
+    }
+
+    function hasImportedDeckTemplate() {
+      return !!(state && Array.isArray(state.importedDeckTemplate) && state.importedDeckTemplate.length);
+    }
+
+    function updateResetImportedDeckBtn() {
+      const btn = document.getElementById("btnResetImportedDeck");
+      if (!btn) return;
+      const ok = hasImportedDeckTemplate();
+      btn.disabled = !ok;
+      btn.title = ok ? "清空所有區域並還原匯入的牌組" : "請先匯入牌組";
+    }
+
+    function resetImportedDeck() {
+      if (!hasImportedDeckTemplate()) return;
+      if (!confirm("將清空所有區域並還原匯入的牌組，確定？")) return;
+      const template = state.importedDeckTemplate.slice();
+      state = blankState(templateToFreshDeckCards(template));
+      state.importedDeckTemplate = template;
+      renderCounts();
+      rebuildRefCatalogFromDeck();
+      saveState();
+      updateResetImportedDeckBtn();
+    }
+
+    let handMulliganSelected = new Set();
+
+    function updateHandMulliganConfirmBtn() {
+      const btn = document.getElementById("btnConfirmHandMulligan");
+      const n = handMulliganSelected.size;
+      if (!btn) return;
+      btn.disabled = n === 0;
+      btn.textContent = n ? ("確認重抽（" + n + " 張）") : "確認重抽";
+    }
+
+    function rebuildHandMulliganGrid() {
+      const grid = document.getElementById("handMulliganGrid");
+      const empty = document.getElementById("handMulliganEmpty");
+      if (!grid) return;
+      ensureZone("hand");
+      const items = state.zones.hand || [];
+      grid.innerHTML = "";
+      if (empty) empty.style.display = items.length ? "none" : "block";
+
+      for (let i = 0; i < items.length; i++) {
+        const c = items[i];
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "pick-tile";
+        tile.setAttribute("data-card-id", c.id);
+        tile.title = (c.name || "") + (c.cardNo ? (" / " + c.cardNo) : "");
+        if (handMulliganSelected.has(c.id)) tile.classList.add("selected");
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb2";
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const url = String(c.imageUrl || "").trim() || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        };
+        img.src = url || placeholderSvgDataUrl(c.name || c.cardNo || "CARD");
+        thumb.appendChild(img);
+
+        const cap = document.createElement("div");
+        cap.className = "cap mono";
+        const line1 = (i + 1) + ". " + (c.name || "未命名");
+        const line2 = (c.cardNo ? c.cardNo : "（無卡號）") + (c.type ? (" · " + c.type) : "");
+        cap.textContent = line1 + " " + line2;
+
+        tile.appendChild(thumb);
+        tile.appendChild(cap);
+        tile.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (handMulliganSelected.has(c.id)) handMulliganSelected.delete(c.id);
+          else handMulliganSelected.add(c.id);
+          tile.classList.toggle("selected", handMulliganSelected.has(c.id));
+          updateHandMulliganConfirmBtn();
+        });
+
+        grid.appendChild(tile);
+      }
+      updateHandMulliganConfirmBtn();
+    }
+
+    function openHandMulliganModal() {
+      ensureZone("hand");
+      if (!state.zones.hand.length) {
+        alert("手牌為空，無法重抽。");
+        return;
+      }
+      handMulliganSelected = new Set();
+      rebuildHandMulliganGrid();
+      $("#handMulliganModal").modal("show");
+    }
+
+    function applyHandMulligan() {
+      const selectedIds = Array.from(handMulliganSelected);
+      if (!selectedIds.length) return;
+      const deckLeft = zoneCount("deck");
+      if (deckLeft < selectedIds.length) {
+        alert("牌組剩餘張數不足（需要 " + selectedIds.length + " 張，目前 " + deckLeft + " 張）。");
+        return;
+      }
+      for (const id of selectedIds) {
+        moveCard("hand", "waiting", id);
+      }
+      for (let i = 0; i < selectedIds.length; i++) {
+        moveOne("deck", "hand");
+      }
+      handMulliganSelected = new Set();
+      renderCounts();
+      saveSoon();
+      $("#handMulliganModal").modal("hide");
     }
 
     function loadState() {
@@ -2599,6 +2759,9 @@
       document.querySelectorAll(".zone.hidden .chip").forEach((chip) => {
         chip.addEventListener("click", (e) => e.stopPropagation());
       });
+      document.querySelectorAll(".zone.public .chip").forEach((chip) => {
+        chip.addEventListener("click", (e) => e.stopPropagation());
+      });
 
       // 區塊清單彈窗：右上角鉛筆 → 直接開啟編輯器並切到該區
       const zoneListEditBtn = document.getElementById("zoneListEditBtn");
@@ -2726,22 +2889,21 @@
         }
       });
 
-      // 重置（保留 deck）
-      document.getElementById("btnReset").addEventListener("click", () => {
-        const deckKeep = state.zones.deck.slice();
-        state = blankState(deckKeep);
-        renderCounts();
-        rebuildRefCatalogFromDeck();
-        saveState();
-      });
+      // 重製匯入牌組
+      const btnResetImportedDeck = document.getElementById("btnResetImportedDeck");
+      if (btnResetImportedDeck) {
+        btnResetImportedDeck.addEventListener("click", () => resetImportedDeck());
+      }
 
-      // 重抽隨機 deck
-      document.getElementById("btnNewDeck").addEventListener("click", () => {
-        state = blankState(buildRandomDeck(50));
-        renderCounts();
-        rebuildRefCatalogFromDeck();
-        saveState();
-      });
+      const btnHandMulligan = document.getElementById("btnHandMulligan");
+      if (btnHandMulligan) {
+        btnHandMulligan.addEventListener("click", () => openHandMulliganModal());
+      }
+
+      const btnConfirmHandMulligan = document.getElementById("btnConfirmHandMulligan");
+      if (btnConfirmHandMulligan) {
+        btnConfirmHandMulligan.addEventListener("click", () => applyHandMulligan());
+      }
 
       // 匯入牌組
       document.getElementById("btnImportDeck").addEventListener("click", () => {
@@ -2789,8 +2951,14 @@
           const cards = resolveDeckCardsFromUserInput(text);
           const deckCards = cards && cards.length ? cards : buildRandomDeck(50);
           state = blankState(deckCards);
+          if (cards && cards.length) {
+            state.importedDeckTemplate = deckCardsToTemplate(deckCards);
+          } else {
+            delete state.importedDeckTemplate;
+          }
           renderCounts();
           rebuildRefCatalogFromDeck();
+          updateResetImportedDeckBtn();
           saveState();
           $("#importDeckModal").modal("hide");
         } catch (e) {
@@ -2954,6 +3122,7 @@
       }
 
       renderCounts();
+      updateResetImportedDeckBtn();
       fetchLatestByCardReport();
     }
 
