@@ -562,6 +562,108 @@
       font-size: 11px;
     }
 
+    /* 手牌實體 UI（爐石式扇形展開） */
+    body.hand-physical-on .container-page{
+      padding-bottom: 240px;
+    }
+    .zone.zone-hand-physical .zbody{
+      color: var(--ink);
+      font-weight: 700;
+      text-align: center;
+      padding: 14px 10px;
+    }
+    .hand-physical-overlay{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: min(42vh, 280px);
+      z-index: 1040;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 12px 10px;
+      pointer-events: none;
+    }
+    .hand-physical-overlay.active{
+      display: flex;
+      pointer-events: auto;
+    }
+    .hand-physical-overlay::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10,10,10,.10), transparent 72%);
+      pointer-events: none;
+    }
+    .hand-physical-bar{
+      position: relative;
+      z-index: 1;
+      width: min(100%, 920px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .hand-physical-toolbar{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      pointer-events: auto;
+    }
+    .hand-physical-toolbar .hp-count{
+      font-weight: 900;
+      color: var(--ink);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.92);
+    }
+    .hand-physical-fan{
+      position: relative;
+      height: 200px;
+      margin: 0 auto;
+      pointer-events: auto;
+    }
+    .hand-physical-empty{
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      border: 1px dashed var(--hairline);
+      background: rgba(255,255,255,.9);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .hand-physical-card{
+      position: absolute;
+      bottom: 0;
+      width: 88px;
+      transform-origin: bottom center;
+      transform: translateY(0) rotate(var(--rot, 0deg));
+      transition: transform .22s ease, box-shadow .22s ease;
+      cursor: pointer;
+      will-change: transform;
+    }
+    .hand-physical-card img{
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 7px;
+      border: 2px solid rgba(10,10,10,.78);
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(10,10,10,.22);
+    }
+    .hand-physical-card:hover{
+      transform: translateY(-52px) rotate(0deg) scale(1.16);
+      z-index: 300 !important;
+    }
+    .hand-physical-card:hover img{
+      box-shadow: 0 14px 32px rgba(10,10,10,.32);
+      border-color: var(--ink);
+    }
+
     .deck-price-list-panel{
       margin-bottom: 14px;
       border-radius: var(--radius);
@@ -769,7 +871,7 @@
                 <div class="zname"><i class="fas fa-hand-paper"></i>手牌</div>
                 <div class="zcount" id="count-hand">0</div>
               </div>
-              <div class="zbody">點擊查看清單；也可在右下角編輯加入/移動卡。</div>
+              <div class="zbody" id="handZoneBody">點擊查看清單；也可在右下角編輯加入/移動卡。</div>
             </div>
 
             <div class="zone public" data-zone="stock" role="button" tabindex="0" aria-label="庫存（公開清單）">
@@ -876,6 +978,17 @@
     <i class="fas fa-pen"></i>
   </button>
 
+  <!-- 手牌實體 UI（畫面下方扇形展開） -->
+  <div id="handPhysicalOverlay" class="hand-physical-overlay" aria-hidden="true">
+    <div class="hand-physical-bar">
+      <div class="hand-physical-toolbar">
+        <span class="hp-count" id="handPhysicalCount">手牌 0</span>
+        <button type="button" class="btn-ghost" id="btnHandPhysicalOff" style="padding:5px 10px;font-size:11px;">列表UI</button>
+      </div>
+      <div class="hand-physical-fan" id="handPhysicalFan" aria-label="手牌扇形展開"></div>
+    </div>
+  </div>
+
   <!-- Zone List Modal -->
   <div class="modal fade" id="zoneListModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -883,6 +996,9 @@
         <div class="modal-header d-flex align-items-center">
           <h5 class="modal-title mb-0" id="zoneListTitle">區域清單</h5>
           <div class="ml-auto d-flex align-items-center" style="gap: 8px;">
+            <button type="button" class="btn btn-sm btn-outline-light" id="zoneListPhysicalUiBtn" title="切換實體手牌 UI" style="display:none;">
+              實體UI
+            </button>
             <button type="button" class="btn btn-sm btn-outline-light" id="zoneListEditBtn" title="編輯此區卡牌" style="display:none;">
               <i class="fas fa-pen"></i>
             </button>
@@ -1389,15 +1505,128 @@
         if (slot) slot.classList.toggle("empty", zoneCount(k) === 0);
       }
       updateDeckValuationUI();
+      updateHandZoneBodyHint();
+      if (handPhysicalUi) renderHandPhysicalUi();
     }
 
     /** 當日卡牌行情（與牌組卡號對應後加總） */
-    const LATEST_BY_CARD_JSON_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_20260501.json";
+    const LATEST_BY_CARD_JSON_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_";
+
+    function formatYmdCompact(d) {
+      const dt = d instanceof Date ? d : new Date();
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, "0");
+      const day = String(dt.getDate()).padStart(2, "0");
+      return y + m + day;
+    }
+
+    function buildLatestByCardJsonUrl(forDate) {
+      return LATEST_BY_CARD_JSON_BASE + formatYmdCompact(forDate) + ".json";
+    }
 
     let latestByCardPayload = null;
     let latestByCardError = null;
     let latestByCardLoading = false;
     let deckPriceListExpanded = false;
+    let handPhysicalUi = false;
+
+    function setHandPhysicalUi(on) {
+      handPhysicalUi = !!on;
+      renderHandPhysicalUi();
+      updateHandZoneBodyHint();
+    }
+
+    function updateHandZoneBodyHint() {
+      const el = document.getElementById("handZoneBody");
+      if (!el) return;
+      if (handPhysicalUi) {
+        const n = zoneCount("hand");
+        el.textContent = n
+          ? ("實體UI 模式中 · " + n + " 張 · 點擊開啟列表")
+          : "實體UI 模式中 · 手牌為空 · 點擊開啟列表";
+      } else {
+        el.textContent = "點擊查看清單；也可在右下角編輯加入/移動卡。";
+      }
+    }
+
+    function updateZoneListPhysicalUiBtn() {
+      const btn = document.getElementById("zoneListPhysicalUiBtn");
+      if (!btn) return;
+      btn.textContent = handPhysicalUi ? "列表UI" : "實體UI";
+      btn.title = handPhysicalUi ? "切換回列表檢視" : "切換為畫面下方扇形手牌";
+    }
+
+    function renderHandPhysicalUi() {
+      const overlay = document.getElementById("handPhysicalOverlay");
+      const fan = document.getElementById("handPhysicalFan");
+      const countEl = document.getElementById("handPhysicalCount");
+      const handZone = document.querySelector('.zone[data-zone="hand"]');
+      if (!overlay || !fan) return;
+
+      overlay.classList.toggle("active", handPhysicalUi);
+      overlay.setAttribute("aria-hidden", handPhysicalUi ? "false" : "true");
+      document.body.classList.toggle("hand-physical-on", handPhysicalUi);
+      if (handZone) handZone.classList.toggle("zone-hand-physical", handPhysicalUi);
+
+      const n = zoneCount("hand");
+      if (countEl) countEl.textContent = "手牌 " + n;
+
+      fan.innerHTML = "";
+      if (!handPhysicalUi) return;
+
+      ensureZone("hand");
+      const items = state.zones.hand || [];
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "hand-physical-empty";
+        empty.textContent = "（手牌為空）";
+        fan.appendChild(empty);
+        fan.style.width = "";
+        return;
+      }
+
+      const cardW = 88;
+      const overlap = items.length > 1
+        ? Math.min(54, Math.max(26, 520 / items.length))
+        : 0;
+      const totalW = cardW + overlap * (items.length - 1);
+      fan.style.width = totalW + "px";
+
+      const maxRot = Math.min(24, 6 + items.length * 2.2);
+
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const rel = items.length === 1 ? 0 : (i / (items.length - 1)) * 2 - 1;
+        const rot = rel * maxRot;
+
+        const card = document.createElement("div");
+        card.className = "hand-physical-card";
+        card.style.left = (i * overlap) + "px";
+        card.style.setProperty("--rot", rot + "deg");
+        card.style.zIndex = String(i + 1);
+        card.title = (it.name || "未命名卡") + (it.cardNo ? (" · " + it.cardNo) : "");
+
+        const img = document.createElement("img");
+        img.alt = it.name || "";
+        img.decoding = "async";
+        img.loading = "lazy";
+        const tUrl = String(it.imageUrl || "").trim() || (it.cardNo ? wsImageUrlFromCardNo(it.cardNo) : "");
+        img.onerror = function() {
+          try { this.onerror = null; } catch {}
+          this.src = placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+        };
+        img.src = tUrl || placeholderSvgDataUrl(it.name || it.cardNo || "CARD");
+
+        card.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCardImage(it, "hand", i);
+        });
+
+        card.appendChild(img);
+        fan.appendChild(card);
+      }
+    }
 
     function formatReportYmd(ymd) {
       const s = String(ymd || "").trim();
@@ -1672,7 +1901,7 @@
       latestByCardError = null;
       updateDeckValuationUI();
       try {
-        const r = await fetch(LATEST_BY_CARD_JSON_URL);
+        const r = await fetch(buildLatestByCardJsonUrl());
         if (!r.ok) throw new Error("HTTP " + r.status);
         const j = await r.json();
         const cardsMap = extractCardsMapFromLatestByCardJson(j);
@@ -1796,6 +2025,7 @@
       const list = document.getElementById("zoneList");
       const stats = document.getElementById("zoneListStats");
       const editBtn = document.getElementById("zoneListEditBtn");
+      const physicalUiBtn = document.getElementById("zoneListPhysicalUiBtn");
       const zoneDeckVal = document.getElementById("zoneDeckValuation");
       if (zoneDeckVal) {
         zoneDeckVal.style.display = "none";
@@ -1810,6 +2040,11 @@
         editBtn.style.display = hidden ? "none" : "inline-flex";
         editBtn.setAttribute("data-zone-key", zoneKey);
         editBtn.setAttribute("title", hidden ? "此區不支援逐張編輯" : "編輯此區卡牌");
+      }
+      if (physicalUiBtn) {
+        const showPhysical = zoneKey === "hand" && !hidden;
+        physicalUiBtn.style.display = showPhysical ? "inline-flex" : "none";
+        if (showPhysical) updateZoneListPhysicalUiBtn();
       }
 
       if (hidden) {
@@ -2374,6 +2609,26 @@
           if (!key) return;
           $("#zoneListModal").modal("hide");
           setTimeout(() => openEditorForZoneKey(key), 150);
+        });
+      }
+
+      const zoneListPhysicalUiBtn = document.getElementById("zoneListPhysicalUiBtn");
+      if (zoneListPhysicalUiBtn) {
+        zoneListPhysicalUiBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setHandPhysicalUi(!handPhysicalUi);
+          updateZoneListPhysicalUiBtn();
+          $("#zoneListModal").modal("hide");
+        });
+      }
+
+      const btnHandPhysicalOff = document.getElementById("btnHandPhysicalOff");
+      if (btnHandPhysicalOff) {
+        btnHandPhysicalOff.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setHandPhysicalUi(false);
         });
       }
 
