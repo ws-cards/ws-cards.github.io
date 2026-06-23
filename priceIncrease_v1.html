@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>價格漲跌幅觀測</title>
+    <meta name="description" content="依 1/3/7 日漲跌幅排序觀測卡片價格變動" />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.12);
+        --good: #4ade80;
+        --bad: #fb7185;
+        --warn: #fbbf24;
+        --focus: #60a5fa;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: radial-gradient(1200px 700px at 15% 0%, rgba(96, 165, 250, 0.18), transparent 55%),
+          radial-gradient(1000px 700px at 90% 10%, rgba(74, 222, 128, 0.12), transparent 60%),
+          radial-gradient(900px 600px at 50% 100%, rgba(251, 113, 133, 0.10), transparent 65%),
+          var(--bg);
+        color: var(--text);
+        margin: 0;
+        font-family: var(--sans);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 18px 64px;
+      }
+
+      header {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .titleRow {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--panel2), var(--panel));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        overflow: clip; /* clip 不建立滾動容器，sticky 可正常相對視窗固定 */
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      @media (min-width: 900px) {
+        .controls {
+          grid-template-columns: 1.2fr 1fr 1fr;
+          align-items: center;
+        }
+      }
+
+      .controlGroup {
+        display: grid;
+        gap: 6px;
+      }
+
+      .label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      input[type="search"],
+      input[type="number"],
+      select,
+      button {
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 10px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      input[type="search"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      button:focus {
+        border-color: rgba(96, 165, 250, 0.7);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+      }
+
+      input[type="search"] {
+        width: min(520px, 100%);
+      }
+
+      select {
+        padding-right: 28px;
+      }
+
+      button {
+        cursor: pointer;
+        transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.22);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.22);
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .kpiRow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 0 12px 12px;
+        border-top: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .kpi {
+        padding: 10px 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        min-width: 170px;
+      }
+
+      .kpi .k {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .kpi .v {
+        margin-top: 4px;
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .status {
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-top: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.16);
+      }
+
+      .status strong {
+        color: var(--text);
+      }
+
+      .tableWrap {
+        /* overflow-x: auto 保留水平捲動；overflow-y: clip 不建立垂直 scroll 容器，
+           讓 thead th 的 position:sticky 相對於瀏覽器視窗（body）固定 */
+        overflow-x: auto;
+        overflow-y: clip;
+      }
+
+      /* 卡圖浮動預覽 */
+      #cardTooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        padding: 6px;
+        background: rgba(11, 16, 32, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 14px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(12px);
+        transition: opacity 0.12s ease;
+      }
+
+      #cardTooltip img {
+        display: block;
+        width: 180px;
+        height: auto;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.06);
+        min-height: 252px; /* 維持卡片比例佔位，避免閃爍 */
+      }
+
+      /* 圖片載入中：顯示 shimmer */
+      #cardTooltipImg.loading {
+        animation: shimmer 1.2s infinite linear;
+        background: linear-gradient(90deg,
+          rgba(255,255,255,0.04) 25%,
+          rgba(255,255,255,0.12) 50%,
+          rgba(255,255,255,0.04) 75%);
+        background-size: 400% 100%;
+      }
+
+      @keyframes shimmer {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+      }
+
+      /* 手機點擊時卡圖置中放大 */
+      @media (hover: none) {
+        #cardTooltip img {
+          width: 200px;
+          min-height: 280px;
+        }
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 980px;
+      }
+
+      thead th {
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        font-weight: bold;
+        color: var(--text);
+        text-align: left;
+        padding: 18px 12px;
+        white-space: nowrap;
+        background: #0f1628;
+      }
+
+      /* 鏡像固定表頭（JS 動態插入） */
+      #stickyTheadMirror {
+        position: fixed;
+        top: 0;
+        z-index: 50;
+        overflow: hidden;
+        display: none;
+        pointer-events: none;
+        border-bottom: 1px solid var(--border);
+        background: #0f1628;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      }
+      #stickyTheadMirror table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+      #stickyTheadMirror th {
+        box-sizing: border-box; /* 確保 js 寫入 width 等於實際寬度 */
+      }
+      #stickyTheadMirror thead th {
+        border-bottom: none;
+      }
+
+      tbody td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 11px 12px;
+        font-size: 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      /* 固定首兩列（卡號 + 最新價） */
+      thead th:nth-child(1),
+      tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        background: #0f1628;
+      }
+
+      thead th:nth-child(2),
+      tbody td:nth-child(2) {
+        position: sticky;
+        left: 160px;
+        z-index: 1;
+        background: #0f1628;
+        /* 右側分隔線，讓 sticky 欄與後方欄位有明顯區隔 */
+        box-shadow: 2px 0 6px rgba(0, 0, 0, 0.4);
+      }
+
+      thead th:nth-child(1) { z-index: 3; }
+      thead th:nth-child(2) { z-index: 3; }
+
+      tbody tr:hover td:nth-child(1),
+      tbody tr:hover td:nth-child(2) {
+        background: #141c34;
+      }
+
+      tbody tr:hover td {
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .pct {
+        font-variant-numeric: tabular-nums;
+        font-family: var(--mono);
+        font-weight: 650;
+      }
+
+      .pct.good {
+        color: var(--good);
+      }
+
+      .pct.bad {
+        color: var(--bad);
+      }
+
+      .pct.zero {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .tag {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tag b {
+        color: var(--text);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .dangerBox {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(251, 113, 133, 0.35);
+        background: rgba(251, 113, 133, 0.10);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .dangerBox code {
+        font-family: var(--mono);
+      }
+
+      .small {
+        font-size: 12px;
+      }
+
+      .col-hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="titleRow">
+          <div>
+              <h1>價格漲跌幅觀測</h1>
+            <div class="subtitle">
+              依 <span class="mono">change1dPct / change3dPct / change7dPct</span> 排序｜資料來源：遠端 JSON
+            </div>
+          </div>
+          <div class="row">
+            <span class="pill small">
+              <span class="muted">資料時間</span>
+              <strong id="generatedAtText" class="mono">—</strong>
+            </span>
+            <button id="reloadBtn" type="button" title="重新載入資料">重新載入</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="controls">
+          <div class="controlGroup">
+            <div class="label">搜尋卡號</div>
+            <input id="q" type="search" placeholder="例如：AGS/W108-T09" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">排序依據（漲跌幅）</div>
+            <div class="row">
+              <select id="metric">
+                <option value="change1dPct">1日內漲跌幅（change1dPct）</option>
+                <option value="change3dPct" selected>3日內漲跌幅（change3dPct）</option>
+                <option value="change7dPct">1週內漲跌幅（change7dPct）</option>
+              </select>
+              <select id="direction" title="排序方向">
+                <option value="desc" selected>由高到低</option>
+                <option value="asc">由低到高</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">篩選</div>
+            <div class="row">
+              <span class="tag" title="只顯示 |漲跌幅| >= 閾值 (%)（也就是上漲或下跌幅度至少達到門檻）">
+                <b>最低絕對漲跌幅</b>
+                <input id="minAbsPct" type="number" inputmode="decimal" step="0.01" value="0" style="width: 110px" />
+                <span>%</span>
+              </span>
+              <span class="tag" title="只看上漲 / 只看下跌 / 全部">
+                <b>方向</b>
+                <select id="trend" style="padding: 8px 10px">
+                  <option value="all" selected>全部</option>
+                  <option value="up">只看上漲</option>
+                  <option value="down">只看下跌</option>
+                </select>
+              </span>
+              <span class="tag" title="只顯示前 N 筆（0 代表全部）">
+                <b>Top</b>
+                <input id="limit" type="number" inputmode="numeric" step="1" min="0" value="200" style="width: 92px" />
+              </span>
+            </div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">幣別</div>
+            <div class="row">
+              <select id="currency">
+                <option value="JPY" selected>日圓（JPY）</option>
+                <option value="TWD">新台幣（TWD）</option>
+              </select>
+              <span id="exRateInfo" class="muted small" style="display:none"></span>
+            </div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="label">顯示欄位</div>
+            <div class="row">
+              <label class="tag" style="cursor:pointer">
+                <input type="checkbox" id="col1d" checked /> <b>1日</b>
+              </label>
+              <label class="tag" style="cursor:pointer">
+                <input type="checkbox" id="col3d" /> <b>3日</b>
+              </label>
+              <label class="tag" style="cursor:pointer">
+                <input type="checkbox" id="col7d" /> <b>7日</b>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpiRow">
+          <div class="kpi">
+            <div class="k">總卡數</div>
+            <div class="v mono" id="kpiTotal">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">目前顯示</div>
+            <div class="v mono" id="kpiShown">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">最高漲跌幅（依目前排序欄位）</div>
+            <div class="v mono" id="kpiMax">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">最低漲跌幅（依目前排序欄位）</div>
+            <div class="v mono" id="kpiMin">—</div>
+          </div>
+        </div>
+
+        <div class="status">
+          <div>
+            <strong id="statusText">載入中…</strong>
+            <span class="muted" id="statusSub"></span>
+          </div>
+          <div class="muted small mono" id="sourceText"></div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead id="tableWrapHeader">
+              <tr>
+                <th>卡號</th>
+                <th class="right">最新價</th>
+                <th>最新日期</th>
+                <th class="right col-1d">1日漲跌幅</th>
+                <th class="right col-3d">3日漲跌幅</th>
+                <th class="right col-7d">7日漲跌幅</th>
+                <th class="right col-1d">1日基準價</th>
+                <th class="right col-3d">3日基準價</th>
+                <th class="right col-7d">7日基準價</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="errorBox" class="dangerBox" style="display: none"></div>
+      </section>
+    </div>
+
+    <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
+
+    <script>
+      (() => {
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+
+        /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
+        let rawData = null;
+        /** @type {Array<any>} */
+        let cardRows = [];
+        let exRate = 0.22;
+        let exRateFallback = false;
+
+        const els = {
+          generatedAtText: document.getElementById("generatedAtText"),
+          reloadBtn: document.getElementById("reloadBtn"),
+          q: document.getElementById("q"),
+          metric: document.getElementById("metric"),
+          direction: document.getElementById("direction"),
+          minAbsPct: document.getElementById("minAbsPct"),
+          trend: document.getElementById("trend"),
+          limit: document.getElementById("limit"),
+          kpiTotal: document.getElementById("kpiTotal"),
+          kpiShown: document.getElementById("kpiShown"),
+          kpiMax: document.getElementById("kpiMax"),
+          kpiMin: document.getElementById("kpiMin"),
+          statusText: document.getElementById("statusText"),
+          statusSub: document.getElementById("statusSub"),
+          sourceText: document.getElementById("sourceText"),
+          tbody: document.getElementById("tbody"),
+          errorBox: document.getElementById("errorBox"),
+          currency: document.getElementById("currency"),
+          exRateInfo: document.getElementById("exRateInfo"),
+          col1d: document.getElementById("col1d"),
+          col3d: document.getElementById("col3d"),
+          col7d: document.getElementById("col7d"),
+        };
+
+        function fmtDateYmd(yyyymmdd) {
+          if (!yyyymmdd) return "—";
+          const s = String(yyyymmdd);
+          if (s.length !== 8) return s;
+          return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+        }
+
+        function fmtNum(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          return new Intl.NumberFormat("zh-TW").format(Number(n));
+        }
+
+        function fmtPct(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const v = Number(n);
+          const sign = v > 0 ? "+" : "";
+          return `${sign}${v.toFixed(2)}%`;
+        }
+
+        function formatPrice(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const currency = els.currency ? els.currency.value : "JPY";
+          let val = Number(n);
+          if (currency === "TWD") {
+            val = Math.round(val * exRate);
+            return "NT$" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(val);
+          }
+          return "¥" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(Math.round(val));
+        }
+
+        function pctClass(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "zero";
+          if (v > 0) return "good";
+          if (v < 0) return "bad";
+          return "zero";
+        }
+
+        function setStatus(main, sub = "") {
+          els.statusText.textContent = main;
+          els.statusSub.textContent = sub ? `｜${sub}` : "";
+        }
+
+        function showError(html) {
+          els.errorBox.style.display = "block";
+          els.errorBox.innerHTML = html;
+        }
+
+        function clearError() {
+          els.errorBox.style.display = "none";
+          els.errorBox.innerHTML = "";
+        }
+
+        function toRows(data) {
+          const entries = Object.entries((data && data.cards) || {});
+          return entries.map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestDate: c.latestDate,
+            latestPrice: c.latestPrice,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+            base1dDate: c.base1dDate,
+            base1dPrice: c.base1dPrice,
+            base3dDate: c.base3dDate,
+            base3dPrice: c.base3dPrice,
+            base7dDate: c.base7dDate,
+            base7dPrice: c.base7dPrice,
+          }));
+        }
+
+        function sortAndFilterRows(rows) {
+          const q = (els.q.value || "").trim().toLowerCase();
+          const metric = els.metric.value;
+          const dir = els.direction.value; // asc|desc
+          const minAbsPct = Math.max(0, Number(els.minAbsPct.value || 0));
+          const trend = els.trend.value; // all|up|down
+          const limit = Math.max(0, Math.floor(Number(els.limit.value || 0)));
+
+          let out = rows;
+          if (q) {
+            out = out.filter((r) => String(r.cardNo || "").toLowerCase().includes(q));
+          }
+
+          out = out.filter((r) => {
+            const v = Number(r[metric]);
+            if (!Number.isFinite(v)) return false;
+            if (trend === "up" && v <= 0) return false;
+            if (trend === "down" && v >= 0) return false;
+            return Math.abs(v) >= minAbsPct;
+          });
+
+          out = out.slice().sort((a, b) => {
+            const av = Number(a[metric]);
+            const bv = Number(b[metric]);
+            const aSafe = Number.isFinite(av) ? av : -Infinity;
+            const bSafe = Number.isFinite(bv) ? bv : -Infinity;
+            return dir === "asc" ? aSafe - bSafe : bSafe - aSafe;
+          });
+
+          if (limit > 0) out = out.slice(0, limit);
+          return out;
+        }
+
+        function render() {
+          if (!rawData) return;
+          clearError();
+
+          const metric = els.metric.value;
+          const filtered = sortAndFilterRows(cardRows);
+
+          els.kpiTotal.textContent = String(cardRows.length);
+          els.kpiShown.textContent = String(filtered.length);
+          if (filtered.length > 0) {
+            const vals = filtered
+              .map((r) => Number(r[metric]))
+              .filter((v) => Number.isFinite(v));
+            const maxV = vals.length ? Math.max(...vals) : null;
+            const minV = vals.length ? Math.min(...vals) : null;
+            els.kpiMax.textContent = maxV === null ? "—" : fmtPct(maxV);
+            els.kpiMin.textContent = minV === null ? "—" : fmtPct(minV);
+          } else {
+            els.kpiMax.textContent = "—";
+            els.kpiMin.textContent = "—";
+          }
+
+          const frag = document.createDocumentFragment();
+          for (const r of filtered) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="mono">${escapeHtml(String(r.cardNo ?? ""))}</td>
+              <td class="right mono">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              <td class="mono">${escapeHtml(fmtDateYmd(r.latestDate))}</td>
+              <td class="right pct col-1d ${pctClass(r.change1dPct)}">${escapeHtml(fmtPct(r.change1dPct))}</td>
+              <td class="right pct col-3d ${pctClass(r.change3dPct)}">${escapeHtml(fmtPct(r.change3dPct))}</td>
+              <td class="right pct col-7d ${pctClass(r.change7dPct)}">${escapeHtml(fmtPct(r.change7dPct))}</td>
+              <td class="right mono col-1d">${escapeHtml(formatPrice(r.base1dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base1dDate))})</span></td>
+              <td class="right mono col-3d">${escapeHtml(formatPrice(r.base3dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base3dDate))})</span></td>
+              <td class="right mono col-7d">${escapeHtml(formatPrice(r.base7dPrice))} <span class="muted small mono">(${escapeHtml(fmtDateYmd(r.base7dDate))})</span></td>
+            `.trim();
+            frag.appendChild(tr);
+          }
+
+          els.tbody.replaceChildren(frag);
+          setStatus("已載入", `依「${els.metric.selectedOptions[0].text}」排序`);
+          applyColVisibility();
+        }
+
+        function applyColVisibility() {
+          const show1d = els.col1d ? els.col1d.checked : true;
+          const show3d = els.col3d ? els.col3d.checked : false;
+          const show7d = els.col7d ? els.col7d.checked : false;
+          document.querySelectorAll(".col-1d").forEach(el => el.classList.toggle("col-hidden", !show1d));
+          document.querySelectorAll(".col-3d").forEach(el => el.classList.toggle("col-hidden", !show3d));
+          document.querySelectorAll(".col-7d").forEach(el => el.classList.toggle("col-hidden", !show7d));
+        }
+
+        function escapeHtml(s) {
+          return s
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        const WS_TCG_CARDLIST_BASE =
+          "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        function cardNoToImageUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          if (series.startsWith("os")) {
+            return (
+              "https://ws-rose.com/wordpress/wp-content/images/cardlist/" +
+              series + "/" + expansion + "/" + series + "_" + expansion + "_" + cardId + ".png"
+            );
+          }
+          let folderSlug = series + "_" + expansion;
+          if (series === "srd" || series === "sks") folderSlug = "sxx_" + expansion;
+          const first = series.charAt(0);
+          return (
+            WS_TCG_CARDLIST_BASE + first + "/" + folderSlug + "/" +
+            series + "_" + expansion + "_" + cardId + ".png"
+          );
+        }
+
+        function cardNoToDevilFoxUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^\/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          return `https://imgs.devilfox.net/ws/${series}_${expansion}/${series}_${expansion}_${cardId}.png`;
+        }
+
+        const tooltip = document.getElementById("cardTooltip");
+        const tooltipImg = document.getElementById("cardTooltipImg");
+        let tooltipVisible = false;
+        let tooltipCurrentUrl = ""; // 記錄目前已設定的 src，避免重複請求
+
+        // 預載快取（不顯示，純粹讓瀏覽器快取圖片）
+        function preloadImage(url) {
+          if (!url || tooltipCurrentUrl === url) return;
+          const img = new Image();
+          img.src = url;
+        }
+
+        function setTooltipSrc(url, fallbackUrl) {
+          if (tooltipCurrentUrl === url) {
+            // 已是同一張圖，直接移除 loading 狀態即可（可能已載完）
+            tooltipImg.classList.remove("loading");
+            return;
+          }
+          tooltipCurrentUrl = url;
+          tooltipImg.classList.add("loading");
+          tooltipImg.src = url;
+          tooltipImg.onload = () => tooltipImg.classList.remove("loading");
+          tooltipImg.onerror = () => {
+            tooltipImg.classList.remove("loading");
+            if (fallbackUrl && fallbackUrl !== url) {
+              tooltipCurrentUrl = fallbackUrl;
+              tooltipImg.src = fallbackUrl;
+            }
+          };
+        }
+
+        function showTooltip(cardNo, x, y) {
+          const devilUrl = cardNoToDevilFoxUrl(cardNo);
+          const wsUrl = cardNoToImageUrl(cardNo);
+          const url = devilUrl || wsUrl;
+          if (!url) return;
+          setTooltipSrc(url, devilUrl ? wsUrl : "");
+          tooltip.style.transform = "";
+          placeTooltip(x, y);
+          tooltip.style.display = "block";
+          tooltipVisible = true;
+        }
+
+        function placeTooltip(x, y) {
+          const pad = 16;
+          const tw = 192;
+          const th = 280;
+          let left = x + 14;
+          let top = y - th - 10; // 預設顯示在游標/列的正上方
+          // 超出上方邊界時改顯示在下方
+          if (top < pad) top = y + 24;
+          // 超出右側邊界時往左移
+          if (left + tw + pad > window.innerWidth) left = x - tw - 14;
+          // 確保不超出左側
+          if (left < pad) left = pad;
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+          tooltip.style.display = "none";
+          tooltipVisible = false;
+        }
+
+        // 偵測是否為觸控裝置
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        // ── 桌機：hover 顯示 / 隱藏 ──
+        document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          const rect = td.getBoundingClientRect();
+          showTooltip(td.textContent.trim(), rect.left + rect.width / 2, rect.top);
+        });
+
+        document.getElementById("tbody").addEventListener("mousemove", (e) => {
+          // mousemove 僅用於 mouseout 的補償，不再追蹤游標移動位置
+        });
+
+        document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          hideTooltip();
+        });
+
+        // ── 手機：touchstart 提前預載圖片（比 click 早 100~300ms） ──
+        document.getElementById("tbody").addEventListener("touchstart", (e) => {
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) return;
+          const cardNo = td.textContent.trim();
+          preloadImage(cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo));
+        }, { passive: true });
+
+        // ── 手機：點擊卡號欄 ──
+        document.getElementById("tbody").addEventListener("click", (e) => {
+          if (!isTouch()) return;
+          const td = e.target.closest("td.mono");
+          if (!td || td.cellIndex !== 0) {
+            hideTooltip();
+            return;
+          }
+          e.stopPropagation();
+          const cardNo = td.textContent.trim();
+          if (tooltipVisible) {
+            hideTooltip();
+          } else {
+            // 取得格子在視窗中的位置，將卡圖顯示在列正上方
+            const rect = td.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top; // 列的頂部 y 座標
+            showTooltip(cardNo, x, y);
+            setTimeout(() => {
+              document.addEventListener("click", hideTooltip, { once: true });
+            }, 0);
+          }
+        });
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
+
+        async function fetchExchangeRate() {
+          try {
+            const data = await fetchJson("https://api.frankfurter.app/latest?from=JPY&to=TWD");
+            exRate = (data.rates && data.rates.TWD) ? data.rates.TWD : 0.22;
+            exRateFallback = false;
+            if (els.exRateInfo) {
+              els.exRateInfo.textContent = `1 JPY ≈ ${exRate.toFixed(4)} TWD`;
+            }
+          } catch {
+            exRate = 0.22;
+            exRateFallback = true;
+            if (els.exRateInfo) {
+              els.exRateInfo.textContent = `匯率 API 無法連線，使用估算値 1 JPY = 0.22 TWD`;
+            }
+          }
+        }
+
+        function setGeneratedAt(ms) {
+          if (!ms || !Number.isFinite(Number(ms))) {
+            els.generatedAtText.textContent = "—";
+            return;
+          }
+          const d = new Date(Number(ms));
+          const s = new Intl.DateTimeFormat("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }).format(d);
+          els.generatedAtText.textContent = s;
+        }
+
+        async function load() {
+          setStatus("載入中…");
+          clearError();
+          els.sourceText.textContent = "";
+          els.tbody.replaceChildren();
+
+          const [, dataResult] = await Promise.allSettled([
+            fetchExchangeRate(),
+            fetchJson(REMOTE_URL),
+          ]);
+
+          if (dataResult.status === "rejected") {
+            const err1 = dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
+            setStatus("載入失敗", "請確認網路或 JSON 來源是否可用");
+            showError(
+              `遠端資料載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
+                `你可以稍後按右上角「重新載入」重試。`
+            );
+            return;
+          }
+
+          const data = dataResult.value;
+          rawData = data;
+          cardRows = toRows(data);
+          setGeneratedAt(data.generatedAt);
+          els.sourceText.textContent = `source: ${REMOTE_URL}`;
+          render();
+        }
+
+        function bind() {
+          const onChange = () => render();
+          els.q.addEventListener("input", onChange);
+          els.metric.addEventListener("change", onChange);
+          els.direction.addEventListener("change", onChange);
+          els.minAbsPct.addEventListener("input", onChange);
+          els.trend.addEventListener("change", onChange);
+          els.limit.addEventListener("input", onChange);
+          els.currency.addEventListener("change", () => {
+            if (els.exRateInfo) {
+              els.exRateInfo.style.display = els.currency.value === "TWD" ? "" : "none";
+            }
+            render();
+          });
+          els.col1d.addEventListener("change", () => applyColVisibility());
+          els.col3d.addEventListener("change", () => applyColVisibility());
+          els.col7d.addEventListener("change", () => applyColVisibility());
+          els.reloadBtn.addEventListener("click", () => load());
+
+          window.addEventListener("keydown", (ev) => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
+              ev.preventDefault();
+              load();
+            }
+            if (ev.key === "/" && document.activeElement !== els.q) {
+              ev.preventDefault();
+              els.q.focus();
+            }
+          });
+          applyColVisibility();
+        }
+
+        bind();
+
+        // ── Sticky thead 鏡像方案 ──
+        // 在 body 建立固定鏡像 div，複製 thead 並同步欄寬與水平捲動，
+        // 避免直接 fixed 原 thead 導致欄寬脫離表格布局的問題。
+        (function initStickyThead() {
+          const tableWrap = document.querySelector(".tableWrap");
+          const table = tableWrap && tableWrap.querySelector("table");
+          const thead = document.getElementById("tableWrapHeader");
+          if (!tableWrap || !table || !thead) return;
+
+          // 建立鏡像容器
+          const mirror = document.createElement("div");
+          mirror.id = "stickyTheadMirror";
+          const mirrorTable = document.createElement("table");
+          const mirrorThead = thead.cloneNode(true);
+          mirrorThead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorThead);
+          mirror.appendChild(mirrorTable);
+          document.body.appendChild(mirror);
+
+          let pinned = false;
+
+          function syncWidths() {
+            const wrapRect = tableWrap.getBoundingClientRect();
+            mirror.style.left  = wrapRect.left + "px";
+            mirror.style.width = wrapRect.width + "px";
+            // 同步每欄寬度（從真實 th 抓 offsetWidth，並於 CSS 配合 box-sizing: border-box）
+            const realThs   = thead.querySelectorAll("th");
+            const cloneThs  = mirrorThead.querySelectorAll("th");
+            mirrorTable.style.width = table.offsetWidth + "px";
+            realThs.forEach((th, i) => {
+              if (cloneThs[i]) {
+                const w = th.getBoundingClientRect().width + "px";
+                cloneThs[i].style.width    = w;
+                cloneThs[i].style.minWidth = w;
+                cloneThs[i].style.maxWidth = w;
+              }
+            });
+          }
+
+          function syncScroll() {
+            // 放棄 transform，直接讓鏡像 div 跟著 scroll，避免黏滯定位運算錯誤
+            mirror.scrollLeft = tableWrap.scrollLeft;
+          }
+
+          function update() {
+            const rect   = tableWrap.getBoundingClientRect();
+            const theadH = thead.getBoundingClientRect().height;
+            const shouldPin = rect.top < 0 && rect.bottom > theadH + 10;
+            if (shouldPin && !pinned) {
+              pinned = true;
+              mirror.style.display = "block";
+              syncWidths();
+              syncScroll();
+            } else if (!shouldPin && pinned) {
+              pinned = false;
+              mirror.style.display = "none";
+            } else if (pinned) {
+              syncWidths();
+              syncScroll();
+            }
+          }
+
+          window.addEventListener("scroll",   update,     { passive: true });
+          tableWrap.addEventListener("scroll", () => { if (pinned) { syncWidths(); syncScroll(); } }, { passive: true });
+          window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
+        })();
+
+        load();
+      })();
+    </script>
+  </body>
+</html>
