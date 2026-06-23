@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:title" content="WS-Cards | 卡牌資訊一站整合">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
+  <meta property="og:url" content="https://ws-cards.cloud">
+  <title>WS-Cards | 卡牌資訊一站整合</title>
+  <meta name="description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --bg-alt: #f5f5f5;
+      --bg-card: #ffffff;
+      --bg-dark: #0a0a0a;
+      --text: #0a0a0a;
+      --text-muted: #6b6b6b;
+      --text-light: #9a9a9a;
+      --text-on-dark: #ffffff;
+      --text-muted-dark: rgba(255,255,255,0.55);
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --accent-green: #16a34a;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 20px;
+      --radius-xl: 24px;
+      --shadow-soft: 0 8px 40px rgba(0,0,0,0.06);
+      --shadow-card: 0 2px 16px rgba(0,0,0,0.04);
+      --container-max: 1200px;
+      --font-display: 'Instrument Serif', 'Noto Sans TC', serif;
+      --font-body: 'Inter', 'Noto Sans TC', sans-serif;
+      --nav-height: 64px;
+      --banner-height: 40px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ========== ANNOUNCEMENT ========== */
+    .announce {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1001;
+      height: var(--banner-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.8rem;
+      color: var(--text-muted-dark);
+    }
+
+    .announce a {
+      color: var(--text-on-dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .announce__badge {
+      background: rgba(255,255,255,0.12);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* ========== NAVBAR ========== */
+    .navbar {
+      position: fixed;
+      top: var(--banner-height);
+      left: 0; right: 0;
+      z-index: 1000;
+      height: var(--nav-height);
+      display: flex;
+      align-items: center;
+      background: rgba(250,250,250,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .navbar.scrolled {
+      border-color: var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .navbar__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .navbar__logo-icon {
+      width: 32px; height: 32px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 1.1rem;
+    }
+
+    .navbar__links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .navbar__links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .navbar__links a:hover { color: var(--text); }
+
+    .navbar__actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s, background 0.2s, border-color 0.2s;
+      font-family: var(--font-body);
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn--primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .btn--primary:hover { opacity: 0.88; }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .btn--ghost:hover { border-color: var(--text); }
+
+    .btn--white {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    .btn--outline-light {
+      background: transparent;
+      color: var(--text-on-dark);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    .btn--outline-light:hover { border-color: rgba(255,255,255,0.5); }
+
+    .navbar__toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: calc(var(--banner-height) + var(--nav-height) + 60px) 24px 80px;
+      background: var(--bg);
+    }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      background: var(--bg-card);
+    }
+
+    .hero__badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 400;
+      line-height: 1.05;
+      max-width: 900px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero__subtitle {
+      margin-top: 24px;
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .hero__cta {
+      display: flex;
+      gap: 12px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .hero__tags {
+      margin-top: 64px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .hero__tag {
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    /* ========== SECTION COMMON ========== */
+    .section { padding: 100px 0; }
+    .section--alt { background: var(--bg-alt); }
+    .section--white { background: var(--bg-card); }
+
+    .section__eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .section__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .section__subtitle {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .section__header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .section__header .section__subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ========== FEATURE BLOCKS ========== */
+    .feature {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 64px;
+      align-items: center;
+      padding: 80px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feature:last-child { border-bottom: none; }
+
+    .feature--reverse .feature__content { order: 2; }
+    .feature--reverse .feature__visual { order: 1; }
+
+    .feature__content h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .feature__content p {
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+
+    .feature__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+
+    .feature__link:hover { gap: 10px; }
+
+    /* ========== MOCKUP (light theme) ========== */
+    .mockup {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mockup__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-alt);
+    }
+
+    .mockup__dots { display: flex; gap: 6px; }
+    .mockup__dots span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+    .mockup__dots span:first-child { background: #ff6b6b; }
+    .mockup__dots span:nth-child(2) { background: #ffd93d; }
+    .mockup__dots span:nth-child(3) { background: #6bcb77; }
+
+    .mockup__user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .mockup__avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .mockup__body { padding: 24px; }
+
+    .mockup__label {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .mockup__value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin: 4px 0 16px;
+    }
+
+    .mockup__tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #ecfdf5;
+      color: var(--accent-green);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .mockup__tag--warn {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .mockup__chart { margin: 20px 0; height: 80px; }
+    .mockup__chart svg { width: 100%; height: 100%; }
+
+    .mockup__tabs-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .mockup__tabs-row span {
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      color: var(--text-light);
+      border-radius: 4px;
+    }
+    .mockup__tabs-row span.active {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .mockup__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .mockup__table th {
+      text-align: left;
+      padding: 8px 0;
+      color: var(--text-light);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup__table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup__status {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .mockup__status--up { background: #ecfdf5; color: var(--accent-green); }
+    .mockup__status--ok { background: var(--accent-light); color: var(--accent); }
+
+    .mockup__actions { display: flex; gap: 10px; margin-top: 20px; }
+    .mockup__btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      border: none;
+    }
+    .mockup__btn--primary { background: var(--text); color: var(--bg); }
+    .mockup__btn--ghost { background: var(--bg-alt); color: var(--text-muted); }
+
+    .mockup__deck-list { list-style: none; }
+    .mockup__deck-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup__deck-thumb {
+      width: 40px; height: 56px;
+      background: linear-gradient(135deg, #e8e4df, #d4cfc8);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .mockup__deck-name { font-weight: 600; font-size: 0.85rem; }
+    .mockup__deck-meta { font-size: 0.75rem; color: var(--text-light); }
+
+    .mockup__bars { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+    .mockup__bar-row { display: flex; align-items: center; gap: 12px; }
+    .mockup__bar-label { width: 60px; font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+    .mockup__bar-track { flex: 1; height: 8px; background: var(--bg-alt); border-radius: 4px; overflow: hidden; }
+    .mockup__bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+    .mockup__bar-val { width: 40px; font-size: 0.75rem; font-weight: 600; text-align: right; }
+
+    /* ========== MID CTA ========== */
+    .mid-cta {
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      padding: 100px 0;
+      text-align: center;
+    }
+
+    .mid-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .mid-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted-dark);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mid-cta__btn { margin-top: 32px; }
+
+    /* ========== FEATURE GRID ========== */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feat-card {
+      padding: 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .feat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .feat-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+
+    .feat-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 20px;
+    }
+
+    .feat-card__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+
+    .feat-card__link:hover { gap: 8px; }
+
+    /* ========== SETUP ========== */
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .setup__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .setup__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .setup__text {
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    .code-block {
+      background: var(--bg-dark);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .code-block__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .code-block__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+    }
+
+    .code-block__copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: var(--text-on-dark);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: background 0.2s;
+    }
+
+    .code-block__copy:hover { background: rgba(255,255,255,0.12); }
+    .code-block__copy.is-copied { background: rgba(22,163,74,0.2); border-color: rgba(22,163,74,0.4); }
+
+    .code-block__body {
+      padding: 20px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.85);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .code-block__body .comment { color: rgba(255,255,255,0.4); }
+    .code-block__body .url { color: #93c5fd; }
+
+    /* ========== GUIDE ========== */
+    .guide {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .guide-card {
+      padding: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+    }
+
+    .guide-card__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .guide-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .guide-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    /* ========== FINAL CTA ========== */
+    .final-cta {
+      padding: 100px 0;
+      text-align: center;
+    }
+
+    .final-cta__box {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .final-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .final-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .final-cta__buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      padding: 60px 0 40px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+
+    .footer__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 40px;
+    }
+
+    .footer__brand p {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 320px;
+    }
+
+    .footer__col h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .footer__col ul { list-style: none; }
+    .footer__col li { margin-bottom: 10px; }
+
+    .footer__col a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer__col a:hover { color: var(--text); }
+
+    .footer__bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 900px) {
+      .feature,
+      .feature--reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .feature--reverse .feature__content,
+      .feature--reverse .feature__visual { order: unset; }
+
+      .feat-grid { grid-template-columns: repeat(2, 1fr); }
+      .setup { grid-template-columns: 1fr; gap: 40px; }
+      .guide { grid-template-columns: 1fr; }
+      .footer__grid { grid-template-columns: 1fr; gap: 32px; }
+    }
+
+    @media (max-width: 768px) {
+      .navbar__links { display: none; }
+      .navbar__links.is-open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: var(--nav-height);
+        left: 0; right: 0;
+        background: var(--bg);
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        gap: 16px;
+      }
+      .navbar__toggle { display: block; }
+      .navbar__actions .btn--ghost { display: none; }
+
+      .section { padding: 72px 0; }
+      .feature { padding: 56px 0; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .mid-cta { padding: 72px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="announce">
+    <a href="demoAndDeckPrice.html">
+      <span class="announce__badge">NEW</span>
+      牌組總價分析圖表上線，立即體驗 <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="#" class="navbar__logo">
+        <div class="navbar__logo-icon">W</div>
+        <span>WS-Cards</span>
+      </a>
+      <ul class="navbar__links" id="navLinks">
+        <li><a href="#features">功能</a></li>
+        <li><a href="#highlights">特色</a></li>
+        <li><a href="#cta">開始使用</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <a href="searchCard.html" class="btn btn--ghost">開始查卡</a>
+        <a href="index.html" class="btn btn--primary">進入網站</a>
+        <button class="navbar__toggle" id="navToggle" aria-label="選單"><i class="fas fa-bars"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero__badge reveal">
+      <span class="hero__badge-dot"></span>
+      WS 卡牌玩家工具
+    </div>
+    <h1 class="hero__title reveal">終於，卡牌資訊<br>一站整合</h1>
+    <p class="hero__subtitle reveal">查價、牌組、漲幅、庫存一站整合。<br>專為 WS 玩家整理的實用小工具。</p>
+    <div class="hero__cta reveal">
+      <a href="searchCard.html" class="btn btn--primary">開始查卡 <i class="fas fa-search"></i></a>
+      <a href="index.html" class="btn btn--ghost">進入主站 <i class="fas fa-home"></i></a>
+    </div>
+    <div class="hero__tags reveal">
+      <span class="hero__tag">查價</span>
+      <span class="hero__tag">牌組</span>
+      <span class="hero__tag">漲幅</span>
+      <span class="hero__tag">庫存</span>
+      <span class="hero__tag">分析</span>
+    </div>
+  </section>
+
+  <section class="section section--white" id="features">
+    <div class="container">
+
+      <div class="feature reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">多賣場查價</p>
+          <h2>一眼掌握行情</h2>
+          <p>整合多個賣場的報價資料，不用再一個一個網站搜尋。支援卡名、編號查詢，快速找到你想要的價格。</p>
+          <a href="deckPrice.html" class="feature__link">查看價格 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>查價模式</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">BD/W54-070SSP 現價</div>
+              <div class="mockup__value">NT$ 12,800</div>
+              <span class="mockup__tag">較上週 +8.2%</span>
+              <div class="mockup__chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15 L300,80 L0,80 Z" fill="rgba(37,99,235,0.08)"/>
+                </svg>
+              </div>
+              <div class="mockup__tabs-row"><span class="active">1W</span><span>1M</span><span>3M</span><span>1Y</span></div>
+              <table class="mockup__table">
+                <thead><tr><th>賣場</th><th>價格</th><th>日期</th><th>狀態</th></tr></thead>
+                <tbody>
+                  <tr><td>露天</td><td>NT$ 12,800</td><td>6/17</td><td><span class="mockup__status mockup__status--up">最低</span></td></tr>
+                  <tr><td>蝦皮</td><td>NT$ 13,500</td><td>6/16</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
+                  <tr><td>Yahoo</td><td>NT$ 14,200</td><td>6/15</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
+                </tbody>
+              </table>
+              <div class="mockup__actions">
+                <button class="mockup__btn mockup__btn--primary">加入追蹤</button>
+                <button class="mockup__btn mockup__btn--ghost">分享</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature feature--reverse reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">優勝牌組</p>
+          <h2>站在巨人的肩膀上</h2>
+          <p>收錄日本、台灣各大賽事的優勝牌組，參考高手怎麼組牌。按系列、色別、賽事篩選，找到適合你的構築。</p>
+          <a href="championList.html" class="feature__link">看牌組 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>牌組庫</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">近期優勝牌組</div>
+              <div class="mockup__value" style="font-size:1.5rem">1,256 套</div>
+              <ul class="mockup__deck-list">
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">四色燈電 @ 東京大會</div><div class="mockup__deck-meta">BD/W54 · 2026/05</div></div>
+                </li>
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">紅白燒 @ 台灣區域賽</div><div class="mockup__deck-meta">HOL/W91 · 2026/04</div></div>
+                </li>
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">劍道軸 @ Shop Battle</div><div class="mockup__deck-meta">SAO/S80 · 2026/03</div></div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">漲幅追蹤</p>
+          <h2>掌握市場脈動</h2>
+          <p>追蹤卡片價格的漲跌趨勢，及早發現潛力卡與泡沫。按漲幅排序，一眼看出市場熱點。</p>
+          <a href="increase.html" class="feature__link">看漲幅 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>漲幅榜</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">本週漲幅 TOP</div>
+              <div class="mockup__value" style="font-size:1.5rem">+32.4%</div>
+              <span class="mockup__tag">HOL/W91-081SSP</span>
+              <div class="mockup__chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+                  <path d="M0,70 L60,65 L120,50 L180,40 L240,20 L300,10" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+                </svg>
+              </div>
+              <table class="mockup__table">
+                <thead><tr><th>卡片</th><th>漲幅</th><th>現價</th></tr></thead>
+                <tbody>
+                  <tr><td>HOL/W91-081SSP</td><td style="color:var(--accent-green);font-weight:600">+32.4%</td><td>NT$ 8,500</td></tr>
+                  <tr><td>BD/W54-070SSP</td><td style="color:var(--accent-green);font-weight:600">+18.7%</td><td>NT$ 12,800</td></tr>
+                  <tr><td>OSK/S104-045RR</td><td style="color:var(--accent-green);font-weight:600">+12.1%</td><td>NT$ 3,200</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature feature--reverse reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">庫存監控</p>
+          <h2>供需一目了然</h2>
+          <p>觀察賣場上架數量的變化，判斷市場供需。庫存減少往往意味著價格即將波動。</p>
+          <a href="stockCard.html" class="feature__link">查庫存 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>庫存監控</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">BD/W54-070SSP 上架數</div>
+              <div class="mockup__value">23 件</div>
+              <span class="mockup__tag mockup__tag--warn">較上月 -38%</span>
+              <div class="mockup__bars">
+                <div class="mockup__bar-row"><span class="mockup__bar-label">露天</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:45%"></div></div><span class="mockup__bar-val">10</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">蝦皮</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:70%"></div></div><span class="mockup__bar-val">16</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">Yahoo</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:25%"></div></div><span class="mockup__bar-val">6</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="mid-cta">
+    <div class="container">
+      <h2 class="mid-cta__title reveal">卡牌資訊，不再手忙腳亂</h2>
+      <p class="mid-cta__text reveal">觀察真實市場數據，掌握價格變化，讓每次買賣與組牌都更有依據。</p>
+      <div class="mid-cta__btn reveal">
+        <a href="searchCard.html" class="btn btn--white">開始查卡 <i class="fas fa-search"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt" id="highlights">
+    <div class="container">
+      <div class="section__header reveal">
+        <p class="section__eyebrow">深受玩家信賴</p>
+        <h2 class="section__title">卡牌工具，應有盡有</h2>
+        <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat-card reveal">
+          <h3>多賣場整合</h3>
+          <p>露天、蝦皮、Yahoo 等賣場價格一次比對，省去反覆切換網站的時間。</p>
+          <a href="deckPrice.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feat-card reveal">
+          <h3>價格走勢圖</h3>
+          <p>互動式價格走勢圖，支援多時間區間切換，視覺化理解卡片行情。</p>
+          <a href="demoAndDeckPrice.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feat-card reveal">
+          <h3>優勝牌組庫</h3>
+          <p>收錄日本、台灣各大賽事優勝牌組，按系列與色別篩選參考構築。</p>
+          <a href="championList.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feat-card reveal">
+          <h3>漲幅排行</h3>
+          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
+          <a href="increase.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feat-card reveal">
+          <h3>庫存監控</h3>
+          <p>追蹤各賣場上架數量變化，判斷供需關係與價格走勢。</p>
+          <a href="stockCard.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feat-card reveal">
+          <h3>牌組總價分析</h3>
+          <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
+          <a href="demoAndDeckPrice.html" class="feat-card__link">查看功能 <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--white">
+    <div class="container">
+      <div class="setup reveal">
+        <div class="setup__info">
+          <p class="setup__label">快速上手</p>
+          <h2 class="setup__title">為 WS 玩家而生，<br>五分鐘上手</h2>
+          <p class="setup__text">不需要註冊，直接搜尋卡號即可查詢價格與相關資訊。將常用卡片加入書籤，下次查價更快。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-block__header">
+            <span class="code-block__label">快速查卡</span>
+            <button class="code-block__copy" id="copyBtn" type="button">
+              <i class="fas fa-copy"></i> 複製
+            </button>
+          </div>
+          <div class="code-block__body" id="codeContent"><span class="comment"># 在瀏覽器直接開啟以下連結查詢卡片</span>
+<span class="url">https://ws-cards.cloud/searchCard.html?q=BD/W54-070SSP</span>
+
+<span class="comment"># 或從主站首頁搜尋</span>
+1. 開啟 index.html
+2. 輸入卡號 BD/W54-070SSP
+3. 查看多賣場價格、漲幅與庫存</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="guide">
+        <div class="guide-card reveal">
+          <p class="guide-card__label">從主站開始</p>
+          <h3>探索全部功能</h3>
+          <p>主站整合查價、牌組、漲幅、庫存等所有工具。收藏本站，隨時掌握 WS 卡牌市場動態。</p>
+          <a href="index.html" class="btn btn--primary">進入主站 <i class="fas fa-home"></i></a>
+        </div>
+        <div class="guide-card reveal">
+          <p class="guide-card__label">卡片搜尋</p>
+          <h3>立即查詢你關心的卡</h3>
+          <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
+          <a href="searchCard.html" class="btn btn--ghost">開始查卡 <i class="fas fa-search"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" id="cta">
+    <div class="container">
+      <div class="final-cta__box reveal">
+        <h2 class="final-cta__title">WS-Cards 免費開放使用</h2>
+        <p class="final-cta__text">查價、牌組、漲幅、庫存一站整合。現在就開始查詢你關心的卡片。</p>
+        <div class="final-cta__buttons">
+          <a href="searchCard.html" class="btn btn--primary">開始查卡 <i class="fas fa-search"></i></a>
+          <a href="index.html" class="btn btn--ghost">進入主站 <i class="fas fa-home"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="#" class="navbar__logo">
+            <div class="navbar__logo-icon">W</div>
+            <span>WS-Cards</span>
+          </a>
+          <p>一個 WS 玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
+        </div>
+        <div class="footer__col">
+          <h4>功能</h4>
+          <ul>
+            <li><a href="deckPrice.html">價格查詢</a></li>
+            <li><a href="championList.html">優勝牌組</a></li>
+            <li><a href="searchCard.html">卡片搜尋</a></li>
+            <li><a href="increase.html">漲幅記錄</a></li>
+            <li><a href="cardlist.html">系列查詢</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>更多</h4>
+          <ul>
+            <li><a href="index.html">主站首頁</a></li>
+            <li><a href="demoAndDeckPrice.html">牌組分析</a></li>
+            <li><a href="stockCard.html">庫存追蹤</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>&copy; 2026 WS-Cards. All rights reserved.</span>
+        <span>Made with care for WS players</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', function () {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+      }, { passive: true });
+
+      var navToggle = document.getElementById('navToggle');
+      var navLinks = document.getElementById('navLinks');
+      navToggle.addEventListener('click', function () {
+        navLinks.classList.toggle('is-open');
+      });
+      navLinks.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          navLinks.classList.remove('is-open');
+        });
+      });
+
+      var copyBtn = document.getElementById('copyBtn');
+      var codeContent = document.getElementById('codeContent');
+      copyBtn.addEventListener('click', function () {
+        var text = codeContent.innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.classList.add('is-copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> 已複製';
+            setTimeout(function () {
+              copyBtn.classList.remove('is-copied');
+              copyBtn.innerHTML = '<i class="fas fa-copy"></i> 複製';
+            }, 2000);
+          });
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          alert('已複製到剪貼簿');
+        }
+      });
+
+      if (!prefersReduced) {
+        var revealEls = document.querySelectorAll('.reveal');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function (el) { observer.observe(el); });
+      } else {
+        document.querySelectorAll('.reveal').forEach(function (el) {
+          el.classList.add('visible');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

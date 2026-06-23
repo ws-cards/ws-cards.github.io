@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:title" content="WS-Cards | 卡牌資訊一站整合">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
+  <meta property="og:url" content="https://ws-cards.cloud">
+  <title>WS-Cards | 卡牌資訊一站整合</title>
+  <meta name="description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --bg-alt: #f4f4f5;
+      --bg-card: #ffffff;
+      --bg-dark: #090909;
+      --bg-dark-2: #111111;
+      --bg-card-dark: #141414;
+      --text: #090909;
+      --text-muted: #71717a;
+      --text-light: #a1a1aa;
+      --text-on-dark: #fafafa;
+      --text-muted-dark: rgba(250,250,250,0.55);
+      --accent: #fafafa;
+      --accent-green: #22c55e;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.14);
+      --border-dark: rgba(255,255,255,0.1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-soft: 0 24px 80px rgba(0,0,0,0.12);
+      --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
+      --container-max: 1200px;
+      --font-display: 'Instrument Serif', 'Noto Sans TC', serif;
+      --font-body: 'Inter', 'Noto Sans TC', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+      --nav-height: 64px;
+      --banner-height: 40px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ========== DOT GRID ========== */
+    .dot-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
+    }
+
+    .dot-grid--light {
+      background-image: radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px);
+    }
+
+    /* ========== ANNOUNCEMENT ========== */
+    .announce {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1001;
+      height: var(--banner-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 0.78rem;
+      color: var(--text-muted-dark);
+    }
+
+    .announce a {
+      color: var(--text-on-dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .announce__badge {
+      font-family: var(--font-mono);
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    /* ========== NAVBAR ========== */
+    .navbar {
+      position: fixed;
+      top: var(--banner-height);
+      left: 0; right: 0;
+      z-index: 1000;
+      height: var(--nav-height);
+      display: flex;
+      align-items: center;
+      background: rgba(9,9,9,0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .navbar.scrolled {
+      border-color: var(--border-dark);
+      background: rgba(9,9,9,0.92);
+    }
+
+    .navbar__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-on-dark);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+
+    .navbar__logo-icon {
+      width: 28px; height: 28px;
+      background: var(--text-on-dark);
+      color: var(--bg-dark);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1rem;
+    }
+
+    .navbar__links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .navbar__links a {
+      text-decoration: none;
+      color: var(--text-muted-dark);
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .navbar__links a:hover { color: var(--text-on-dark); }
+
+    .navbar__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--border-dark);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--text-muted-dark);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .status-pill__dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px rgba(34,197,94,0.6);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s, background 0.2s, border-color 0.2s;
+      font-family: var(--font-body);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn--primary {
+      background: var(--text-on-dark);
+      color: var(--bg-dark);
+    }
+
+    .btn--primary:hover { opacity: 0.9; }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--text-on-dark);
+      border: 1px solid var(--border-dark);
+    }
+
+    .btn--ghost:hover { border-color: rgba(255,255,255,0.35); }
+
+    .btn--dark {
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+    }
+
+    .btn--dark:hover { opacity: 0.88; }
+
+    .btn--outline-dark {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      text-transform: none;
+    }
+
+    .btn--outline-dark:hover { border-color: var(--text); }
+
+    .btn--white {
+      background: var(--bg-card);
+      color: var(--text);
+      text-transform: none;
+    }
+
+    .navbar__toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-on-dark);
+      cursor: pointer;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: calc(var(--banner-height) + var(--nav-height) + 80px) 24px 60px;
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero__brand {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      margin-bottom: 32px;
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 400;
+      line-height: 1.02;
+      max-width: 920px;
+      letter-spacing: -0.03em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__title em {
+      font-style: italic;
+    }
+
+    .hero__subtitle {
+      margin-top: 28px;
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--text-muted-dark);
+      max-width: 480px;
+      line-height: 1.75;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__cta {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__trust {
+      margin-top: 80px;
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__trust-label {
+      font-size: 0.75rem;
+      color: var(--text-muted-dark);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ========== LOGO MARQUEE ========== */
+    .logo-marquee {
+      overflow: hidden;
+      mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    }
+
+    .logo-marquee__track {
+      display: flex;
+      width: max-content;
+      animation: logoScroll 35s linear infinite;
+    }
+
+    .logo-marquee__track span {
+      flex-shrink: 0;
+      padding: 10px 28px;
+      margin: 0 8px;
+      border: 1px solid var(--border-dark);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted-dark);
+      white-space: nowrap;
+    }
+
+    @keyframes logoScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-marquee__track { animation: none; flex-wrap: wrap; width: 100%; justify-content: center; }
+    }
+
+    /* ========== TEXT MARQUEE ========== */
+    .marquee {
+      background: var(--bg-dark);
+      border-top: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-dark);
+      padding: 24px 0;
+      overflow: hidden;
+    }
+
+    .marquee__track {
+      display: flex;
+      width: max-content;
+      animation: marquee 40s linear infinite;
+    }
+
+    .marquee__track span {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted-dark);
+      white-space: nowrap;
+      padding-right: 0;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .marquee__track { animation: none; }
+    }
+
+    /* ========== SECTION COMMON ========== */
+    .section { padding: 100px 0; }
+    .section--dark { background: var(--bg-dark); color: var(--text-on-dark); }
+    .section--alt { background: var(--bg-alt); }
+    .section--white { background: var(--bg-card); }
+
+    .section__eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .section--dark .section__eyebrow { color: var(--text-muted-dark); }
+
+    .section__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .section__subtitle {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .section--dark .section__subtitle { color: var(--text-muted-dark); }
+
+    .section__header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section__header .section__subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ========== PRODUCT BENTO (Browser Use style) ========== */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .product-card {
+      position: relative;
+      padding: 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+      overflow: hidden;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-card);
+    }
+
+    .product-card__tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 16px;
+    }
+
+    .product-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .product-card p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    .product-card__arrow {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      transition: transform 0.2s, color 0.2s;
+    }
+
+    .product-card:hover .product-card__arrow {
+      transform: translateX(4px);
+      color: var(--text);
+    }
+
+    .product-card--wide {
+      grid-column: span 2;
+    }
+
+    .product-card__preview {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: var(--bg-alt);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .product-card__preview .hl { color: var(--text); font-weight: 500; }
+
+    /* ========== FEATURE BLOCKS ========== */
+    .feature {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 64px;
+      align-items: center;
+      padding: 80px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feature:last-child { border-bottom: none; }
+
+    .feature--reverse .feature__content { order: 2; }
+    .feature--reverse .feature__visual { order: 1; }
+
+    .feature__content h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .feature__content p {
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    .feature__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+
+    .feature__link:hover { gap: 10px; }
+
+    /* ========== MOCKUP ========== */
+    .mockup {
+      background: var(--bg-card-dark);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-dark);
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mockup__bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-dark);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .mockup__dots { display: flex; gap: 6px; }
+    .mockup__dots span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .mockup__dots span:first-child { background: #ff6b6b; }
+    .mockup__dots span:nth-child(2) { background: #ffd93d; }
+    .mockup__dots span:nth-child(3) { background: #6bcb77; }
+
+    .mockup__user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted-dark);
+      letter-spacing: 0.04em;
+    }
+
+    .mockup__avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .mockup__body { padding: 24px; color: var(--text-on-dark); }
+
+    .mockup__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .mockup__value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin: 4px 0 16px;
+    }
+
+    .mockup__tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(34,197,94,0.15);
+      color: var(--accent-green);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .mockup__tag--warn {
+      background: rgba(251,191,36,0.15);
+      color: #fbbf24;
+    }
+
+    .mockup__chart { margin: 20px 0; height: 80px; }
+    .mockup__chart svg { width: 100%; height: 100%; }
+
+    .mockup__tabs-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .mockup__tabs-row span {
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted-dark);
+      border-radius: 4px;
+    }
+    .mockup__tabs-row span.active {
+      background: var(--text-on-dark);
+      color: var(--bg-dark);
+    }
+
+    .mockup__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    .mockup__table th {
+      text-align: left;
+      padding: 8px 0;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted-dark);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-dark);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mockup__table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .mockup__status {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+    }
+    .mockup__status--up { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+    .mockup__status--ok { background: rgba(255,255,255,0.08); color: var(--text-muted-dark); }
+
+    .mockup__actions { display: flex; gap: 10px; margin-top: 20px; }
+    .mockup__btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-align: center;
+      border: none;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .mockup__btn--primary { background: var(--text-on-dark); color: var(--bg-dark); }
+    .mockup__btn--ghost { background: rgba(255,255,255,0.06); color: var(--text-muted-dark); }
+
+    .mockup__deck-list { list-style: none; }
+    .mockup__deck-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-dark);
+    }
+    .mockup__deck-thumb {
+      width: 40px; height: 56px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .mockup__deck-name { font-weight: 600; font-size: 0.85rem; }
+    .mockup__deck-meta { font-size: 0.75rem; color: var(--text-muted-dark); }
+
+    .mockup__bars { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+    .mockup__bar-row { display: flex; align-items: center; gap: 12px; }
+    .mockup__bar-label { width: 60px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted-dark); flex-shrink: 0; }
+    .mockup__bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    .mockup__bar-fill { height: 100%; background: var(--text-on-dark); border-radius: 3px; }
+    .mockup__bar-val { width: 40px; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; text-align: right; }
+
+    /* ========== MID CTA ========== */
+    .mid-cta {
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mid-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 640px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mid-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted-dark);
+      font-size: 1rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mid-cta__btn { margin-top: 32px; position: relative; z-index: 1; }
+
+    /* ========== SETUP ========== */
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .setup__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .setup__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .setup__text {
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-size: 0.95rem;
+    }
+
+    .code-block {
+      background: var(--bg-dark);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-dark);
+    }
+
+    .code-block__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .code-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+    }
+
+    .code-block__copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-dark);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-on-dark);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .code-block__copy:hover { background: rgba(255,255,255,0.08); }
+    .code-block__copy.is-copied { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); }
+
+    .code-block__body {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: rgba(250,250,250,0.8);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .code-block__body .comment { color: rgba(250,250,250,0.35); }
+    .code-block__body .url { color: #93c5fd; }
+
+    /* ========== GUIDE ========== */
+    .guide {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .guide-card {
+      padding: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+    }
+
+    .guide-card__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .guide-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .guide-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    /* ========== FINAL CTA ========== */
+    .final-cta {
+      padding: 120px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+    }
+
+    .final-cta__box {
+      max-width: 640px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .final-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .final-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted-dark);
+      font-size: 1rem;
+    }
+
+    .final-cta__buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      padding: 60px 0 32px;
+      border-top: 1px solid var(--border-dark);
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+    }
+
+    .footer .navbar__logo { margin-bottom: 0; }
+
+    .footer__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer__brand p {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted-dark);
+      line-height: 1.7;
+      max-width: 300px;
+    }
+
+    .footer__col h4 {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      margin-bottom: 16px;
+    }
+
+    .footer__col ul { list-style: none; }
+    .footer__col li { margin-bottom: 10px; }
+
+    .footer__col a {
+      text-decoration: none;
+      color: var(--text-muted-dark);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer__col a:hover { color: var(--text-on-dark); }
+
+    .footer__bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted-dark);
+      flex-wrap: wrap;
+      gap: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .footer__mode {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+    }
+
+    .footer__mode span {
+      padding: 6px 12px;
+    }
+
+    .footer__mode span:first-child {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-on-dark);
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 900px) {
+      .products { grid-template-columns: repeat(2, 1fr); }
+      .product-card--wide { grid-column: span 1; }
+
+      .feature,
+      .feature--reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .feature--reverse .feature__content,
+      .feature--reverse .feature__visual { order: unset; }
+
+      .setup { grid-template-columns: 1fr; gap: 40px; }
+      .guide { grid-template-columns: 1fr; }
+      .footer__grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+
+      .navbar__actions .status-pill { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .navbar__links { display: none; }
+      .navbar__links.is-open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: var(--nav-height);
+        left: 0; right: 0;
+        background: var(--bg-dark);
+        padding: 24px;
+        border-bottom: 1px solid var(--border-dark);
+        gap: 16px;
+      }
+      .navbar__toggle { display: block; }
+      .navbar__actions .btn--ghost { display: none; }
+
+      .section { padding: 72px 0; }
+      .feature { padding: 56px 0; }
+      .products { grid-template-columns: 1fr; }
+      .mid-cta { padding: 72px 0; }
+      .footer__grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="announce">
+    <a href="demoAndDeckPrice.html">
+      <span class="announce__badge">NEW</span>
+      牌組總價分析圖表上線，立即體驗 <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="#" class="navbar__logo">
+        <div class="navbar__logo-icon">W</div>
+        <span>WS-Cards</span>
+      </a>
+      <ul class="navbar__links" id="navLinks">
+        <li><a href="#products">功能</a></li>
+        <li><a href="#features">展示</a></li>
+        <li><a href="#cta">開始使用</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <span class="status-pill"><span class="status-pill__dot"></span>線上運作</span>
+        <a href="searchCard.html" class="btn btn--ghost">查卡</a>
+        <a href="index.html" class="btn btn--primary">進入網站</a>
+        <button class="navbar__toggle" id="navToggle" aria-label="選單"><i class="fas fa-bars"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="dot-grid" aria-hidden="true"></div>
+    <p class="hero__brand reveal">WS-Cards</p>
+    <h1 class="hero__title reveal">卡牌玩家<br><em>查價的新方式</em></h1>
+    <p class="hero__subtitle reveal">查價、牌組、漲幅、庫存一站整合。<br>專為 WS 玩家整理的實用小工具。</p>
+    <div class="hero__cta reveal">
+      <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+      <a href="index.html" class="btn btn--ghost">進入主站</a>
+    </div>
+    <div class="hero__trust reveal">
+      <p class="hero__trust-label">整合多個賣場與賽事資料來源</p>
+      <div class="logo-marquee" aria-hidden="true">
+        <div class="logo-marquee__track">
+          <span>露天拍賣</span><span>蝦皮購物</span><span>Yahoo 拍賣</span><span>日本大會</span><span>台灣區域賽</span><span>Shop Battle</span><span>卡店情報</span><span>價格走勢</span>
+          <span>露天拍賣</span><span>蝦皮購物</span><span>Yahoo 拍賣</span><span>日本大會</span><span>台灣區域賽</span><span>Shop Battle</span><span>卡店情報</span><span>價格走勢</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span>price lookup · deck builder · market trends · stock monitor · champion decks · card search · ws-cards.cloud · </span>
+      <span>price lookup · deck builder · market trends · stock monitor · champion decks · card search · ws-cards.cloud · </span>
+    </div>
+  </div>
+
+  <section class="section section--white" id="products">
+    <div class="container">
+      <div class="section__header reveal">
+        <p class="section__eyebrow">Products</p>
+        <h2 class="section__title">卡牌工具，應有盡有</h2>
+        <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
+      </div>
+      <div class="products">
+        <a href="deckPrice.html" class="product-card reveal">
+          <span class="product-card__tag">price</span>
+          <h3>多賣場查價</h3>
+          <p>整合露天、蝦皮、Yahoo 等賣場報價，支援卡名與編號查詢，一眼掌握行情。</p>
+          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="championList.html" class="product-card reveal">
+          <span class="product-card__tag">decks</span>
+          <h3>優勝牌組庫</h3>
+          <p>收錄日本、台灣各大賽事優勝牌組，按系列與色別篩選參考構築。</p>
+          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="increase.html" class="product-card reveal">
+          <span class="product-card__tag">trends</span>
+          <h3>漲幅排行</h3>
+          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
+          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="stockCard.html" class="product-card product-card--wide reveal">
+          <span class="product-card__tag">inventory</span>
+          <h3>庫存監控</h3>
+          <p>追蹤各賣場上架數量變化，判斷供需關係與價格走勢。</p>
+          <div class="product-card__preview">
+            <span class="hl">BD/W54-070SSP</span> · 上架 23 件 · 較上月 <span class="hl">-38%</span>
+          </div>
+        </a>
+        <a href="demoAndDeckPrice.html" class="product-card reveal">
+          <span class="product-card__tag">analysis</span>
+          <h3>牌組總價分析</h3>
+          <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
+          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="searchCard.html" class="product-card reveal">
+          <span class="product-card__tag">search</span>
+          <h3>卡片搜尋</h3>
+          <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。</p>
+          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt" id="features">
+    <div class="container">
+
+      <div class="feature reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">多賣場查價</p>
+          <h2>一眼掌握行情</h2>
+          <p>整合多個賣場的報價資料，不用再一個一個網站搜尋。支援卡名、編號查詢，快速找到你想要的價格。</p>
+          <a href="deckPrice.html" class="feature__link">查看價格 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>查價模式</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">BD/W54-070SSP 現價</div>
+              <div class="mockup__value">NT$ 12,800</div>
+              <span class="mockup__tag">較上週 +8.2%</span>
+              <div class="mockup__chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15" fill="none" stroke="#fafafa" stroke-width="2"/>
+                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15 L300,80 L0,80 Z" fill="rgba(250,250,250,0.04)"/>
+                </svg>
+              </div>
+              <div class="mockup__tabs-row"><span class="active">1W</span><span>1M</span><span>3M</span><span>1Y</span></div>
+              <table class="mockup__table">
+                <thead><tr><th>賣場</th><th>價格</th><th>日期</th><th>狀態</th></tr></thead>
+                <tbody>
+                  <tr><td>露天</td><td>NT$ 12,800</td><td>6/17</td><td><span class="mockup__status mockup__status--up">最低</span></td></tr>
+                  <tr><td>蝦皮</td><td>NT$ 13,500</td><td>6/16</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
+                  <tr><td>Yahoo</td><td>NT$ 14,200</td><td>6/15</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
+                </tbody>
+              </table>
+              <div class="mockup__actions">
+                <button class="mockup__btn mockup__btn--primary">加入追蹤</button>
+                <button class="mockup__btn mockup__btn--ghost">分享</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature feature--reverse reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">優勝牌組</p>
+          <h2>站在巨人的肩膀上</h2>
+          <p>收錄日本、台灣各大賽事的優勝牌組，參考高手怎麼組牌。按系列、色別、賽事篩選，找到適合你的構築。</p>
+          <a href="championList.html" class="feature__link">看牌組 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>牌組庫</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">近期優勝牌組</div>
+              <div class="mockup__value" style="font-size:1.5rem">1,256 套</div>
+              <ul class="mockup__deck-list">
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">四色燈電 @ 東京大會</div><div class="mockup__deck-meta">BD/W54 · 2026/05</div></div>
+                </li>
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">紅白燒 @ 台灣區域賽</div><div class="mockup__deck-meta">HOL/W91 · 2026/04</div></div>
+                </li>
+                <li class="mockup__deck-item">
+                  <div class="mockup__deck-thumb"></div>
+                  <div><div class="mockup__deck-name">劍道軸 @ Shop Battle</div><div class="mockup__deck-meta">SAO/S80 · 2026/03</div></div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">漲幅追蹤</p>
+          <h2>掌握市場脈動</h2>
+          <p>追蹤卡片價格的漲跌趨勢，及早發現潛力卡與泡沫。按漲幅排序，一眼看出市場熱點。</p>
+          <a href="increase.html" class="feature__link">看漲幅 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>漲幅榜</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">本週漲幅 TOP</div>
+              <div class="mockup__value" style="font-size:1.5rem">+32.4%</div>
+              <span class="mockup__tag">HOL/W91-081SSP</span>
+              <div class="mockup__chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+                  <path d="M0,70 L60,65 L120,50 L180,40 L240,20 L300,10" fill="none" stroke="#22c55e" stroke-width="2"/>
+                </svg>
+              </div>
+              <table class="mockup__table">
+                <thead><tr><th>卡片</th><th>漲幅</th><th>現價</th></tr></thead>
+                <tbody>
+                  <tr><td>HOL/W91-081SSP</td><td style="color:var(--accent-green);font-weight:600">+32.4%</td><td>NT$ 8,500</td></tr>
+                  <tr><td>BD/W54-070SSP</td><td style="color:var(--accent-green);font-weight:600">+18.7%</td><td>NT$ 12,800</td></tr>
+                  <tr><td>OSK/S104-045RR</td><td style="color:var(--accent-green);font-weight:600">+12.1%</td><td>NT$ 3,200</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature feature--reverse reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">庫存監控</p>
+          <h2>供需一目了然</h2>
+          <p>觀察賣場上架數量的變化，判斷市場供需。庫存減少往往意味著價格即將波動。</p>
+          <a href="stockCard.html" class="feature__link">查庫存 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>庫存監控</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">BD/W54-070SSP 上架數</div>
+              <div class="mockup__value">23 件</div>
+              <span class="mockup__tag mockup__tag--warn">較上月 -38%</span>
+              <div class="mockup__bars">
+                <div class="mockup__bar-row"><span class="mockup__bar-label">露天</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:45%"></div></div><span class="mockup__bar-val">10</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">蝦皮</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:70%"></div></div><span class="mockup__bar-val">16</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">Yahoo</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:25%"></div></div><span class="mockup__bar-val">6</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="mid-cta">
+    <div class="dot-grid" aria-hidden="true"></div>
+    <div class="container">
+      <h2 class="mid-cta__title reveal">卡牌資訊，不再手忙腳亂</h2>
+      <p class="mid-cta__text reveal">觀察真實市場數據，掌握價格變化，讓每次買賣與組牌都更有依據。</p>
+      <div class="mid-cta__btn reveal">
+        <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--white">
+    <div class="container">
+      <div class="setup reveal">
+        <div class="setup__info">
+          <p class="setup__label">Quickstart</p>
+          <h2 class="setup__title">為 WS 玩家而生，<br>五分鐘上手</h2>
+          <p class="setup__text">不需要註冊，直接搜尋卡號即可查詢價格與相關資訊。將常用卡片加入書籤，下次查價更快。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-block__header">
+            <span class="code-block__label">quick lookup</span>
+            <button class="code-block__copy" id="copyBtn" type="button">
+              <i class="fas fa-copy"></i> copy
+            </button>
+          </div>
+          <div class="code-block__body" id="codeContent"><span class="comment"># 在瀏覽器直接開啟以下連結查詢卡片</span>
+<span class="url">https://ws-cards.cloud/searchCard.html?q=BD/W54-070SSP</span>
+
+<span class="comment"># 或從主站首頁搜尋</span>
+1. 開啟 index.html
+2. 輸入卡號 BD/W54-070SSP
+3. 查看多賣場價格、漲幅與庫存</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="guide">
+        <div class="guide-card reveal">
+          <p class="guide-card__label">主站</p>
+          <h3>探索全部功能</h3>
+          <p>主站整合查價、牌組、漲幅、庫存等所有工具。收藏本站，隨時掌握 WS 卡牌市場動態。</p>
+          <a href="index.html" class="btn btn--dark">進入主站 <i class="fas fa-home"></i></a>
+        </div>
+        <div class="guide-card reveal">
+          <p class="guide-card__label">搜尋</p>
+          <h3>立即查詢你關心的卡</h3>
+          <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
+          <a href="searchCard.html" class="btn btn--outline-dark">開始查卡 <i class="fas fa-search"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" id="cta">
+    <div class="dot-grid" aria-hidden="true"></div>
+    <div class="container">
+      <div class="final-cta__box reveal">
+        <h2 class="final-cta__title">開始使用。</h2>
+        <p class="final-cta__text">查價、牌組、漲幅、庫存一站整合。現在就開始查詢你關心的卡片。</p>
+        <div class="final-cta__buttons">
+          <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+          <a href="index.html" class="btn btn--ghost">進入主站</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="#" class="navbar__logo">
+            <div class="navbar__logo-icon">W</div>
+            <span>WS-Cards</span>
+          </a>
+          <p>一個 WS 玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
+        </div>
+        <div class="footer__col">
+          <h4>功能</h4>
+          <ul>
+            <li><a href="deckPrice.html">價格查詢</a></li>
+            <li><a href="championList.html">優勝牌組</a></li>
+            <li><a href="searchCard.html">卡片搜尋</a></li>
+            <li><a href="increase.html">漲幅記錄</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>工具</h4>
+          <ul>
+            <li><a href="demoAndDeckPrice.html">牌組分析</a></li>
+            <li><a href="stockCard.html">庫存追蹤</a></li>
+            <li><a href="cardlist.html">系列查詢</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>連結</h4>
+          <ul>
+            <li><a href="index.html">主站首頁</a></li>
+            <li><a href="#products">功能總覽</a></li>
+            <li><a href="#cta">開始使用</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>&copy; 2026 WS-Cards</span>
+        <div class="footer__mode" aria-hidden="true">
+          <span>PLAYER</span>
+          <span>COLLECTOR</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', function () {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+      }, { passive: true });
+
+      var navToggle = document.getElementById('navToggle');
+      var navLinks = document.getElementById('navLinks');
+      navToggle.addEventListener('click', function () {
+        navLinks.classList.toggle('is-open');
+      });
+      navLinks.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          navLinks.classList.remove('is-open');
+        });
+      });
+
+      var copyBtn = document.getElementById('copyBtn');
+      var codeContent = document.getElementById('codeContent');
+      copyBtn.addEventListener('click', function () {
+        var text = codeContent.innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.classList.add('is-copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> copied';
+            setTimeout(function () {
+              copyBtn.classList.remove('is-copied');
+              copyBtn.innerHTML = '<i class="fas fa-copy"></i> copy';
+            }, 2000);
+          });
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          alert('已複製到剪貼簿');
+        }
+      });
+
+      if (!prefersReduced) {
+        var revealEls = document.querySelectorAll('.reveal');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function (el) { observer.observe(el); });
+      } else {
+        document.querySelectorAll('.reveal').forEach(function (el) {
+          el.classList.add('visible');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
