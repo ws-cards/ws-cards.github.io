@@ -3435,7 +3435,7 @@ function _composeStatsCanvas(info) {
     var SECTION_GAP = 14;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
-
+    
     // ── HiDPI：以 2x 解析度繪製，確保輸出清晰 ──
     var DPR = 2;
     var offscreen = document.createElement('canvas');
@@ -3548,7 +3548,8 @@ function _composeStatsCanvas(info) {
     var PC_CARD_W = Math.floor((PC_CARD_COL_W - 8) / 2);
     var PC_CARD_H = 112;
     var PC_GAP = 8;
-    var PC_X0 = hx + hw - PC_CARD_COL_W;
+    var PC_RIGHT_GAP = 24;
+    var PC_X0 = hx + hw - PC_RIGHT_GAP - PC_CARD_COL_W;
     var PC_Y0 = hy + Math.floor((hh - (PC_CARD_H * 2 + PC_GAP)) / 2);
 
     var pcItems = [
@@ -3632,7 +3633,7 @@ function _composeStatsCanvas(info) {
     ctx.textAlign = 'left';
 
     // ── 右欄文字資訊區 ──
-    var TW = RC_W - PC_CARD_COL_W - 10;
+    var TW = RC_W - PC_CARD_COL_W - PC_RIGHT_GAP - 10;
     var TX = RC_X;
     var TY = hy + 16;
 
