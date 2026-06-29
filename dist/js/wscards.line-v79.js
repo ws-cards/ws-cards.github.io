@@ -3426,7 +3426,6 @@ if (cardImgSrc) {
 */
 function _composeStatsCanvas(info) {
     var PAD = 24; // 全域內邊距
-    var HEADER_SIDE_PAD = 32; // Header 專用左右留白
     var IMG_WIDTH = 800;
 
     // 區塊高度
@@ -3494,11 +3493,11 @@ function _composeStatsCanvas(info) {
     // ════════════════════════════════
     // Zone 1: Header（30% 卡圖 | 70% 右欄：文字+table(40%) + 2x2價格卡(30%)）
     // ════════════════════════════════
-    var hx = HEADER_SIDE_PAD, hy = PAD, hw = IMG_WIDTH - HEADER_SIDE_PAD * 2, hh = HEADER_H;
+    var hx = PAD, hy = PAD, hw = IMG_WIDTH - PAD * 2, hh = HEADER_H;
     drawCard(hx, hy, hw, hh);
 
     var LEFT_COL_W = 226;
-    var COL_GAP = 20;
+    var COL_GAP = 0;
 
     // ── 左欄：卡片圖片（放大約20%）──
     var CI_BOX_W = 195, CI_BOX_H = 262;
@@ -3633,7 +3632,7 @@ function _composeStatsCanvas(info) {
     ctx.textAlign = 'left';
 
     // ── 右欄文字資訊區 ──
-    var TW = RC_W - PC_CARD_COL_W - 20;
+    var TW = RC_W - PC_CARD_COL_W - 10;
     var TX = RC_X;
     var TY = hy + 16;
 
