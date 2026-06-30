@@ -3681,6 +3681,7 @@ function _composeStatsCanvas(info) {
 
     // 卡號
     if (info.cardNo) {
+        TY += 6;
         ctx.fillStyle = C_TEXT2;
         ctx.font = '500 13px "Noto Sans TC", sans-serif';
         ctx.textAlign = 'left';
@@ -3691,10 +3692,10 @@ function _composeStatsCanvas(info) {
     // 資訊 Table（收錄補充包 / 首次發售 / 卡片種類 / 特徵）
     TY += 8;
     var tableRows = [
-        { iconColor: '#667eea', iconBg: '#eef0ff', iconChar: '\u25A3', label: '收錄補充包', value: info.cardPack || '--' },
-        { iconColor: '#48bb78', iconBg: '#e6ffed', iconChar: '\u25A6', label: '首次發售',   value: info.cardFirstRelease || '--' },
-        { iconColor: '#ed8936', iconBg: '#fff3e0', iconChar: '\u25C6', label: '卡片種類',   value: info.cardKind || '--' },
-        { iconColor: '#ed64a6', iconBg: '#fce8f3', iconChar: '\u25C9', label: '特徵',       value: info.cardFeatures || '--' }
+        { iconColor: '#667eea', iconBg: '#eef0ff', label: '收錄補充包', value: info.cardPack || '--' },
+        { iconColor: '#48bb78', iconBg: '#e6ffed', label: '首次發售',   value: info.cardFirstRelease || '--' },
+        { iconColor: '#ed8936', iconBg: '#fff3e0', label: '卡片種類',   value: info.cardKind || '--' },
+        { iconColor: '#ed64a6', iconBg: '#fce8f3', label: '特徵',       value: info.cardFeatures || '--' }
     ];
     var ROW_H = 28;
     var TABLE_W = TW;
@@ -3735,10 +3736,6 @@ function _composeStatsCanvas(info) {
         ctx.fillStyle = tr.iconBg;
         roundRect(ctx, TABLE_X + 4, ry + (ROW_H - 16) / 2, 16, 16, 3);
         ctx.fill();
-        ctx.fillStyle = tr.iconColor;
-        ctx.font = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(tr.iconChar, TABLE_X + 12, ry + ROW_H / 2 + 4);
 
         // 標籤
         ctx.fillStyle = C_TEXT3;
