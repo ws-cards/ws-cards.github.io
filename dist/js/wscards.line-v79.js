@@ -3949,7 +3949,7 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     ctx.font = '500 12px "Noto Sans TC", sans-serif';
     var brandX = pad + iconXPad + 12 + iconGap;
     var brandMaxW = Math.max(48, keyX - brandX - 8);
-    ctx.fillText(_truncateText(ctx, '搜尋卡號 / 關鍵字', brandMaxW), brandX, textY);
+    ctx.fillText(_truncateText(ctx, 'WS-Clouds 卡片雲', brandMaxW), brandX, textY);
 
     // 右：來源 + 日期（同一行）
     ctx.fillStyle = C_TEXT3;
