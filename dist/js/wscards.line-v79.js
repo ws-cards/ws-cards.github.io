@@ -3732,10 +3732,10 @@ function _composeStatsCanvas(info) {
             ctx.stroke();
         }
 
-        // 彩色方形圖示
-        ctx.fillStyle = tr.iconBg;
-        roundRect(ctx, TABLE_X + 4, ry + (ROW_H - 16) / 2, 16, 16, 3);
-        ctx.fill();
+        // // 彩色方形圖示
+        // ctx.fillStyle = tr.iconBg;
+        // roundRect(ctx, TABLE_X + 4, ry + (ROW_H - 16) / 2, 16, 16, 3);
+        // ctx.fill();
 
         // 標籤
         ctx.fillStyle = C_TEXT3;
