@@ -3885,14 +3885,28 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     var textY = barY + 14;
     var barRadius = 10;
     var iconXPad = 8;
-    var iconGap = 8;
+    var iconGap = 7;
+    var keyPadR = 6;
+    var keyH = 14;
+    var keyRadius = 5;
+    var keyText = 'Enter';
     var rightGap = 14;
-    var desiredBarW = 230;
+    var desiredBarW = 260;
 
     ctx.font = '12px "Noto Sans TC", sans-serif';
     var rightTextW = ctx.measureText(rightText).width;
     var maxBarW = Math.max(120, imgW - pad * 2 - rightTextW - rightGap);
     var barW = Math.min(desiredBarW, maxBarW);
+
+    // 搜尋框陰影
+    ctx.save();
+    ctx.shadowColor = 'rgba(31, 41, 55, 0.16)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+    roundRect(ctx, pad, barY, barW, barH, barRadius);
+    ctx.fill();
+    ctx.restore();
 
     // 搜尋框底
     ctx.fillStyle = '#f8f9fc';
@@ -3904,17 +3918,38 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     roundRectPath(ctx, pad, barY, barW, barH, barRadius);
     ctx.stroke();
 
-    // 搜尋 icon + 品牌文字
+    // 右側 Enter 鍵帽提示
+    ctx.font = '600 10px "Noto Sans TC", sans-serif';
+    var keyTextW = ctx.measureText(keyText).width;
+    var keyW = Math.max(34, keyTextW + 10);
+    var keyX = pad + barW - keyPadR - keyW;
+    var keyY = barY + (barH - keyH) / 2;
+
+    ctx.fillStyle = '#f1f3f7';
+    roundRect(ctx, keyX, keyY, keyW, keyH, keyRadius);
+    ctx.fill();
+    ctx.strokeStyle = '#d9dde6';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    roundRectPath(ctx, keyX, keyY, keyW, keyH, keyRadius);
+    ctx.stroke();
+
+    ctx.fillStyle = '#7b8194';
+    ctx.textAlign = 'center';
+    ctx.font = '600 10px "Noto Sans TC", sans-serif';
+    ctx.fillText(keyText, keyX + keyW / 2, keyY + 10);
+
+    // 搜尋 icon + placeholder
     ctx.textAlign = 'left';
     ctx.fillStyle = C_TEXT3;
     ctx.font = '12px "Noto Sans TC", sans-serif';
     ctx.fillText('🔍', pad + iconXPad, textY);
 
-    ctx.fillStyle = C_ACCENT;
-    ctx.font = '600 12px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#9aa0b5';
+    ctx.font = '500 12px "Noto Sans TC", sans-serif';
     var brandX = pad + iconXPad + 12 + iconGap;
-    var brandMaxW = Math.max(60, barW - (brandX - pad) - 8);
-    ctx.fillText(_truncateText(ctx, 'WS-Cards 卡片雲', brandMaxW), brandX, textY);
+    var brandMaxW = Math.max(48, keyX - brandX - 8);
+    ctx.fillText(_truncateText(ctx, '搜尋卡號 / 關鍵字', brandMaxW), brandX, textY);
 
     // 右：來源 + 日期（同一行）
     ctx.fillStyle = C_TEXT3;
