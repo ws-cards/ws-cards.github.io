@@ -1468,7 +1468,7 @@ console.log("進入繪圖區:"+cardNum);
                                 display: false
                             },
                             ticks: {
-                                fontColor: '#1e2d5a',
+                                fontColor: '#999',
                                 fontSize: 11,
                                 callback: function(value) {
                                     if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
@@ -3145,7 +3145,7 @@ function _createStatsComboChartBase64() {
             drawBorder: false
         },
         ticks: {
-            fontColor: '#999',
+            fontColor: '#1e2d5a',
             fontSize: 11,
             callback: function(value) {
                 if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
