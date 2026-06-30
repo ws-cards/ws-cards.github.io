@@ -3236,7 +3236,7 @@ function _createStatsComboChartBase64() {
 * 圖片結構：
 *   上方 (460px)：左側卡片資訊+價格摘要，右上角卡片圖片
 *   中間 (460px)：價格 / 庫存組合圖
-*   底部 (60px)：浮水印
+*   底部 (30px)：浮水印
 */
 function generateStatsImage() {
 // 檢查是否有價格圖表
@@ -3431,7 +3431,7 @@ function _composeStatsCanvas(info) {
     // 區塊高度
     var HEADER_H = 330;     // 卡圖 + 卡片資訊 + 2x2 價格卡 + 資訊 table
     var CHART_PANEL_H = 360; // 左統計 + 右圖表
-    var FOOTER_H = 20;      // 底部浮水印
+    var FOOTER_H = 10;      // 底部浮水印
     var SECTION_GAP = 14;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
