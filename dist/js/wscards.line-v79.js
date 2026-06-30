@@ -3875,20 +3875,52 @@ function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
     ctx.moveTo(pad, fy + 2); ctx.lineTo(imgW - pad, fy + 2);
     ctx.stroke();
 
-    var textY = fy + 14;
-
-    // 左：品牌
-    ctx.fillStyle = C_ACCENT;
-    ctx.font = 'bold 13px "Noto Sans TC", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('WS-Cards  ws-cards.cloud', pad, textY);
-
     // 右：來源 + 日期（同一行）
     var dateStr = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    var rightText = '資料來源：遊々亭　製表時間：' + dateStr;
+
+    // 左：品牌（搜尋列樣式）
+    var barH = 20;
+    var barY = fy + 6;
+    var textY = barY + 14;
+    var barRadius = 10;
+    var iconXPad = 8;
+    var iconGap = 8;
+    var rightGap = 14;
+    var desiredBarW = 230;
+
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    var rightTextW = ctx.measureText(rightText).width;
+    var maxBarW = Math.max(120, imgW - pad * 2 - rightTextW - rightGap);
+    var barW = Math.min(desiredBarW, maxBarW);
+
+    // 搜尋框底
+    ctx.fillStyle = '#f8f9fc';
+    roundRect(ctx, pad, barY, barW, barH, barRadius);
+    ctx.fill();
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    roundRectPath(ctx, pad, barY, barW, barH, barRadius);
+    ctx.stroke();
+
+    // 搜尋 icon + 品牌文字
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    ctx.fillText('🔍', pad + iconXPad, textY);
+
+    ctx.fillStyle = C_ACCENT;
+    ctx.font = '600 12px "Noto Sans TC", sans-serif';
+    var brandX = pad + iconXPad + 12 + iconGap;
+    var brandMaxW = Math.max(60, barW - (brandX - pad) - 8);
+    ctx.fillText(_truncateText(ctx, 'WS-Cards 卡片雲', brandMaxW), brandX, textY);
+
+    // 右：來源 + 日期（同一行）
     ctx.fillStyle = C_TEXT3;
     ctx.font = '12px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('資料來源：遊々亭　製表時間：' + dateStr, imgW - pad, textY);
+    ctx.fillText(rightText, imgW - pad, textY);
 }
 
 /**
