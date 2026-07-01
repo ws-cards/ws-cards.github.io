@@ -1,6 +1,13 @@
+<head>
+    <title>這是網頁標題</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="refresh" content="30">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+</head>
+
 <style>
 body {
-   background: #212129;
+   background: #FFF;
 }
 
 ::selection {
@@ -13,7 +20,26 @@ body {
     top:50%;
     left:50%;
 }
-.search-wrapper.active {}
+.search-wrapper .tcg-frame {
+    position: absolute;
+    left: -8px;
+    top: -23px;
+    width: 86px;
+    aspect-ratio: 63 / 88;
+    border: 4px solid rgba(0,0,0,0.28);
+    border-radius: 6px;
+    box-sizing: border-box;
+    transform: none;
+    transition: all 0.3s ease-in-out;
+    pointer-events: none;
+    z-index: 0;
+}
+.search-wrapper.active .tcg-frame {
+    width: 466px;
+    border-radius: 23px;
+    border-color: rgba(0, 0, 0, 0.48);
+    transition: all .5s cubic-bezier(0.000, 0.105, 0.035, 1.570);
+}
 
 .search-wrapper .input-holder {    
     height: 70px;
@@ -22,6 +48,7 @@ body {
     background: rgba(255,255,255,0);
     border-radius:6px;
     position: relative;
+    z-index: 2;
     transition: all 0.3s ease-in-out;
 }
 .search-wrapper.active .input-holder {
@@ -55,6 +82,25 @@ body {
     opacity: 1;
     transform: translate(0, 10px);
 }
+@keyframes searchIconBounce {
+    0%, 71.4% { transform: translateY(0); }
+    73.2%     { transform: translateY(-8px); }
+    75%       { transform: translateY(0); }
+    76.8%     { transform: translateY(-8px); }
+    78.6%     { transform: translateY(0); }
+    80.4%     { transform: translateY(-8px); }
+    82.2%     { transform: translateY(0); }
+    84%       { transform: translateY(-8px); }
+    85.7%     { transform: translateY(0); }
+    87.5%     { transform: translateY(-8px); }
+    89.3%     { transform: translateY(0); }
+    91%       { transform: translateY(-8px); }
+    92.8%     { transform: translateY(0); }
+    94.6%     { transform: translateY(-8px); }
+    96.4%     { transform: translateY(0); }
+    98.2%     { transform: translateY(-8px); }
+    100%      { transform: translateY(0); }
+}
 .search-wrapper .input-holder .search-icon {
     width:70px;
     height:70px;
@@ -68,12 +114,14 @@ body {
     float:right;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
+    animation: searchIconBounce 7s ease-in-out infinite;
 }
 .search-wrapper.active .input-holder .search-icon {
     width: 50px;
     height:50px;
     margin: 10px;
     border-radius: 30px;
+    animation: none;
 }
 .search-wrapper .input-holder .search-icon span {
     width:22px;
@@ -97,7 +145,7 @@ body {
     left: 9px;
     top: 18px;
     border-radius: 2px;
-    background: #FE5F55;
+    background: #000000;
 }
 .search-wrapper .input-holder .search-icon span::after {
     width: 14px;
@@ -105,7 +153,7 @@ body {
     left: 0px;
     top: 0px;
     border-radius: 16px;
-    border: 4px solid #FE5F55;
+    border: 4px solid #000000;
 }
 .search-wrapper .close {
     position: absolute;
@@ -128,7 +176,7 @@ body {
 .search-wrapper .close::before, .search-wrapper .close::after {
     position:absolute;
     content:'';
-    background: #FE5F55;
+    background: #000000;
     border-radius: 2px;
 }
 .search-wrapper .close::before {
@@ -144,8 +192,47 @@ body {
     top: 10px;
 }
 
+/* RWD */
+
+@media (max-width: 400px) {
+    .search-wrapper {
+        width: 15%;
+        box-sizing: border-box;
+        padding: 0 5px;
+    }
+    .search-wrapper .input-holder {
+        height: 56px;
+        width: 56px;
+    }
+    .search-wrapper .tcg-frame {
+        width: 70px;
+    }
+    .search-wrapper.active .tcg-frame {
+        width: calc(100vw - 24px);
+    }
+    .search-wrapper .input-holder .search-icon {
+        width: 56px;
+        height: 56px;
+    }
+    .search-wrapper.active .input-holder {
+        height: 56px;
+        width: calc(100vw - 40px);
+    }
+    .search-wrapper.active .input-holder .search-icon {
+        width: 40px;
+        height: 40px;
+        margin: 8px;
+    }
+    .search-wrapper .input-holder .search-input {
+        font-size: 14px;
+        padding: 0px 60px 0 16px;
+    }
+}
+
 </style>
+
 <div class="search-wrapper">
+    <div class="tcg-frame"></div>
     <div class="input-holder">
         <input type="text" class="search-input" placeholder="Type to search" />
         <button class="search-icon" onclick="searchToggle(this, event);"><span></span></button>
