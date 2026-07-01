@@ -1489,9 +1489,8 @@ console.log("進入繪圖區:"+cardNum);
 
             // 6. 記錄到搜尋歷史 (有變動才寫入)
             if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
-                // 嘗試從卡號解析稀有度 (例如 BD/W54-070SSP -> SSP)
-                var rareMatch = cardNum.match(/[0-9]+([A-Z+]+)$/i);
-                var parsedRare = rareMatch ? rareMatch[1] : '';
+                // 稀有度來源統一使用 cardData.cardrare
+                var historyRare = (cardData && cardData.cardrare) ? String(cardData.cardrare).trim() : '';
                 
                 var cardTitleSelect = document.getElementById('cardTitle');
                 var titleText = (cardTitleSelect && cardTitleSelect.selectedIndex >= 0) 
@@ -1505,7 +1504,7 @@ console.log("進入繪圖區:"+cardNum);
                 SearchHistory.addItem({
                     cardNumber: cardNum,
                     cardName: currentName,
-                    cardRare: parsedRare,
+                    cardRare: historyRare,
                     cardTitle: titleText
                 });
                 
@@ -2751,18 +2750,45 @@ function saveHistory(history) {
 function addItem(item) {
     if (!item || !item.cardNumber) return;
 
+    function normalizeText(value) {
+        if (value === null || value === undefined) return '';
+        var text = String(value).trim();
+        return (text === '-' || text === '?') ? '' : text;
+    }
+
+    var normalizedItem = {
+        cardNumber: normalizeText(item.cardNumber),
+        cardName: normalizeText(item.cardName),
+        cardRare: normalizeText(item.cardRare),
+        cardTitle: normalizeText(item.cardTitle)
+    };
+
+    if (!normalizedItem.cardNumber) return;
+
     var history = getHistory();
+    var existing = null;
 
     // 移除重複項（同一張卡號）
     history = history.filter(function(h) {
-        return h.cardNumber !== item.cardNumber;
+        if (h.cardNumber === normalizedItem.cardNumber) {
+            existing = h;
+            return false;
+        }
+        return true;
     });
 
+    // 避免空值覆蓋：若新資料缺欄位，沿用舊紀錄
+    if (existing) {
+        normalizedItem.cardName = normalizedItem.cardName || normalizeText(existing.cardName);
+        normalizedItem.cardRare = normalizedItem.cardRare || normalizeText(existing.cardRare);
+        normalizedItem.cardTitle = normalizedItem.cardTitle || normalizeText(existing.cardTitle);
+    }
+
     // 加入時間戳
-    item.timestamp = Date.now();
+    normalizedItem.timestamp = Date.now();
 
     // 插入到最前面
-    history.unshift(item);
+    history.unshift(normalizedItem);
 
     // 超過上限就截斷
     if (history.length > MAX_ITEMS) {
@@ -2771,7 +2797,7 @@ function addItem(item) {
 
     saveHistory(history);
     renderHistory();
-    console.log('搜尋歷史已新增:', item.cardNumber);
+    console.log('搜尋歷史已新增:', normalizedItem.cardNumber);
 }
 
 /**
