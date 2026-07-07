@@ -1,0 +1,1322 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>商品拍賣資訊與出價頁</title>
+	<script>
+		// 於首次繪製前決定主題，避免淺色閃爍
+		(function () {
+			try {
+				var saved = localStorage.getItem("bid-theme");
+				var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+				document.documentElement.setAttribute("data-theme", theme);
+			} catch (e) {
+				document.documentElement.setAttribute("data-theme", "dark");
+			}
+		})();
+	</script>
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #0a0a0f;
+			--panel: rgba(22, 22, 32, 0.72);
+			--panel-solid: #14141c;
+			--text: #e8e8f0;
+			--muted: #8b8fa3;
+			--line: rgba(255, 255, 255, 0.09);
+			--primary: #8b5cf6;
+			--primary-soft: rgba(139, 92, 246, 0.15);
+			--accent: rgba(139, 92, 246, 0.12);
+			--danger: #f87171;
+			--success: #34d399;
+			--shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+			--glow: 0 0 24px rgba(139, 92, 246, 0.35);
+
+			/* layout */
+			--body-bg:
+				radial-gradient(circle at 20% -10%, rgba(139, 92, 246, 0.18), transparent 45%),
+				radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.1), transparent 40%),
+				linear-gradient(180deg, #0a0a0f 0%, #06060a 100%);
+			--panel-blur: blur(10px);
+			--nav-bg: rgba(14, 14, 20, 0.85);
+			--nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+			--nav-blur: blur(12px);
+			--nav-link: #c4c6d4;
+			--nav-link-hover-bg: var(--primary-soft);
+			--nav-link-hover-color: #ffffff;
+			--nav-current-color: #ffffff;
+			--nav-current-shadow: var(--glow);
+			--nav-sep: #565a6c;
+
+			/* card / sections */
+			--media-bg: #000000;
+			--media-shadow: inset 0 0 60px rgba(139, 92, 246, 0.12);
+			--top-meta-bg: linear-gradient(180deg, rgba(30, 30, 44, 0.6) 0%, rgba(18, 18, 28, 0.4) 100%);
+			--section-head-bg: rgba(255, 255, 255, 0.03);
+			--section-head-color: #f0f0f6;
+			--price-color: #ffffff;
+			--price-shadow: var(--glow);
+			--ship-color: #a9adbd;
+			--desc-color: #c4c6d4;
+
+			/* table */
+			--th-bg: rgba(255, 255, 255, 0.02);
+			--th-color: var(--muted);
+			--td-color: var(--text);
+
+			/* form */
+			--bid-panel-bg: linear-gradient(180deg, rgba(139, 92, 246, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%);
+			--label-color: #b4b7c6;
+			--input-bg: rgba(255, 255, 255, 0.04);
+			--input-border: var(--line);
+			--placeholder: #6c7085;
+			--focus-border: var(--primary);
+			--focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.25), var(--glow);
+
+			/* button */
+			--btn-bg: linear-gradient(135deg, #8b5cf6 0%, #6d43e0 100%);
+			--btn-color: #ffffff;
+			--btn-shadow: var(--glow);
+			--btn-shadow-hover: 0 0 32px rgba(139, 92, 246, 0.55);
+
+			/* badge / misc */
+			--badge-color: #c4b5fd;
+			--badge-top-bg: rgba(52, 211, 153, 0.15);
+			--badge-top-color: #6ee7b7;
+			--empty-border: rgba(255, 255, 255, 0.15);
+			--empty-bg: rgba(255, 255, 255, 0.02);
+			--card-subtle-bg: rgba(255, 255, 255, 0.03);
+			--card-subtle-border: var(--line);
+
+			/* history trigger */
+			--trigger-bg: transparent;
+			--trigger-color: #c4b5fd;
+			--trigger-border: rgba(139, 92, 246, 0.4);
+			--trigger-hover-bg: var(--primary-soft);
+
+			/* modal */
+			--modal-overlay: rgba(0, 0, 0, 0.75);
+			--modal-blur: blur(4px);
+			--modal-card-bg: var(--panel-solid);
+			--modal-card-border: var(--line);
+			--modal-card-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(139, 92, 246, 0.12);
+			--modal-tags-bg: rgba(255, 255, 255, 0.03);
+			--tag-color: var(--muted);
+			--tag-active-bg: rgba(139, 92, 246, 0.08);
+			--tag-active-color: #c4b5fd;
+			--modal-head-bg: rgba(255, 255, 255, 0.02);
+			--modal-close-bg: transparent;
+			--modal-close-hover-bg: rgba(255, 255, 255, 0.05);
+			--rank-summary-bg: rgba(139, 92, 246, 0.05);
+			--dot-glow: 0 0 12px rgba(52, 211, 153, 0.6);
+			--scrollbar-thumb: rgba(139, 92, 246, 0.5);
+		}
+
+		:root[data-theme="light"] {
+			color-scheme: light;
+			--bg: #efefef;
+			--panel: #ffffff;
+			--panel-solid: #ffffff;
+			--text: #1e1f22;
+			--muted: #6c7178;
+			--line: #d9dde3;
+			--primary: #0b57d0;
+			--primary-soft: #eef3fb;
+			--accent: #f4f8ff;
+			--danger: #c5221f;
+			--success: #0f9d58;
+			--shadow: 0 8px 24px rgba(20, 24, 31, 0.08);
+			--glow: none;
+
+			--body-bg:
+				radial-gradient(circle at 20% -20%, #f8fbff 0%, rgba(248, 251, 255, 0) 48%),
+				linear-gradient(180deg, #f4f4f4 0%, #ececec 100%);
+			--panel-blur: none;
+			--nav-bg: #ffffff;
+			--nav-shadow: 0 4px 12px rgba(20, 24, 31, 0.1);
+			--nav-blur: none;
+			--nav-link: #23303f;
+			--nav-link-hover-bg: #eef3fb;
+			--nav-link-hover-color: #23303f;
+			--nav-current-color: #ffffff;
+			--nav-current-shadow: none;
+			--nav-sep: #9aa3af;
+
+			--media-bg: #1f2328;
+			--media-shadow: none;
+			--top-meta-bg: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
+			--section-head-bg: #f6f7fa;
+			--section-head-color: #1e1f22;
+			--price-color: var(--text);
+			--price-shadow: none;
+			--ship-color: #43474d;
+			--desc-color: #2c3036;
+
+			--th-bg: #fcfcfd;
+			--th-color: #2b2f34;
+			--td-color: #3e4349;
+
+			--bid-panel-bg: linear-gradient(180deg, #fcfdff 0%, #f9fbff 100%);
+			--label-color: #4a5057;
+			--input-bg: #ffffff;
+			--input-border: #c6ccd5;
+			--placeholder: #9aa1ab;
+			--focus-border: #7aa2f8;
+			--focus-ring: 0 0 0 3px rgba(73, 123, 245, 0.14);
+
+			--btn-bg: var(--primary);
+			--btn-color: #ffffff;
+			--btn-shadow: none;
+			--btn-shadow-hover: none;
+
+			--badge-color: #2456b8;
+			--badge-top-bg: #ebfff3;
+			--badge-top-color: #0b7d43;
+			--empty-border: #c8ced8;
+			--empty-bg: #fbfcfe;
+			--card-subtle-bg: #ffffff;
+			--card-subtle-border: #dbe1ea;
+
+			--trigger-bg: #f8f9fb;
+			--trigger-color: #344054;
+			--trigger-border: #cfd5df;
+			--trigger-hover-bg: #f1f4f9;
+
+			--modal-overlay: rgba(20, 24, 31, 0.56);
+			--modal-blur: none;
+			--modal-card-bg: #ffffff;
+			--modal-card-border: #cfd5df;
+			--modal-card-shadow: 0 14px 34px rgba(20, 24, 31, 0.18);
+			--modal-tags-bg: #f4f5f7;
+			--tag-color: #3c4048;
+			--tag-active-bg: #ffffff;
+			--tag-active-color: #0b57d0;
+			--modal-head-bg: #ffffff;
+			--modal-close-bg: #f8f9fb;
+			--modal-close-hover-bg: #f1f4f9;
+			--rank-summary-bg: #fafcff;
+			--dot-glow: none;
+			--scrollbar-thumb: #c8ced8;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		::selection {
+			background: rgba(139, 92, 246, 0.4);
+			color: #ffffff;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+			color: var(--text);
+			background: var(--body-bg);
+			background-attachment: fixed;
+		}
+
+		.page {
+			width: min(100%, 980px);
+			margin: 0 auto;
+			padding: 16px;
+			display: grid;
+			gap: 16px;
+		}
+
+		.auction-nav {
+			position: sticky;
+			top: 0;
+			z-index: 20;
+			width: min(100%, 980px);
+			margin: 0 auto;
+			background: var(--nav-bg);
+			border: 1px solid var(--line);
+			border-top: none;
+			border-radius: 0 0 12px 12px;
+			box-shadow: var(--nav-shadow);
+			backdrop-filter: var(--nav-blur);
+		}
+
+		.auction-nav-list {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 10px 12px;
+			overflow-x: auto;
+		}
+
+		.auction-nav-list li {
+			display: inline-flex;
+			align-items: center;
+			white-space: nowrap;
+		}
+
+		.auction-nav a {
+			display: inline-flex;
+			align-items: center;
+			height: 32px;
+			padding: 0 10px;
+			border-radius: 999px;
+			text-decoration: none;
+			color: var(--nav-link);
+			font-size: 0.89rem;
+			font-weight: 700;
+			transition: background 0.2s ease, color 0.2s ease;
+		}
+
+		.auction-nav a:hover {
+			background: var(--nav-link-hover-bg);
+			color: var(--nav-link-hover-color);
+		}
+
+		.auction-nav .is-current {
+			background: var(--primary);
+			color: var(--nav-current-color);
+			box-shadow: var(--nav-current-shadow);
+		}
+
+		.auction-nav-sep {
+			color: var(--nav-sep);
+			font-size: 0.8rem;
+		}
+
+		.nav-theme-toggle {
+			margin-left: auto;
+		}
+
+		#theme-toggle {
+			height: 34px;
+			width: 34px;
+			padding: 0;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50%;
+			background: transparent;
+			color: var(--nav-link);
+			border: 1px solid var(--line);
+			box-shadow: none;
+			font-size: 1rem;
+			line-height: 1;
+			cursor: pointer;
+			transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+		}
+
+		#theme-toggle:hover {
+			box-shadow: none;
+			border-color: var(--primary);
+			color: var(--primary);
+			background: var(--nav-link-hover-bg);
+		}
+
+		.main-card {
+			background: var(--panel);
+			border-radius: 14px;
+			box-shadow: var(--shadow);
+			overflow: hidden;
+			border: 1px solid var(--line);
+			backdrop-filter: var(--panel-blur);
+		}
+
+		.media {
+			background: var(--media-bg);
+			position: relative;
+			box-shadow: var(--media-shadow);
+		}
+
+		.media img {
+			width: 100%;
+			display: block;
+			object-fit: cover;
+			max-height: 540px;
+		}
+
+		.top-meta {
+			padding: 16px;
+			border-bottom: 1px solid var(--line);
+			background: var(--top-meta-bg);
+		}
+
+		.title {
+			margin: 0 0 8px;
+			font-size: clamp(1.2rem, 2.3vw, 1.45rem);
+			line-height: 1.45;
+			font-weight: 700;
+		}
+
+		.brand {
+			color: var(--primary);
+			font-weight: 600;
+			margin: 0;
+		}
+
+		.price-row {
+			margin-top: 14px;
+			display: flex;
+			gap: 12px;
+			align-items: baseline;
+			flex-wrap: wrap;
+		}
+
+		.price-label {
+			color: var(--muted);
+			font-size: 0.96rem;
+		}
+
+		.price {
+			font-size: clamp(1.7rem, 4vw, 2rem);
+			font-weight: 800;
+			letter-spacing: 0.01em;
+			color: var(--price-color);
+			text-shadow: var(--price-shadow);
+		}
+
+		.ship {
+			margin-top: 10px;
+			color: var(--ship-color);
+		}
+
+		.section {
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 12px;
+			overflow: hidden;
+			box-shadow: var(--shadow);
+			backdrop-filter: var(--panel-blur);
+		}
+
+		.section h2 {
+			margin: 0;
+			padding: 13px 14px;
+			font-size: 1.07rem;
+			border-bottom: 1px solid var(--line);
+			background: var(--section-head-bg);
+			color: var(--section-head-color);
+		}
+
+		.content {
+			padding: 14px;
+		}
+
+		.description {
+			margin: 0;
+			line-height: 1.8;
+			color: var(--desc-color);
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			text-align: left;
+			padding: 11px 8px;
+			border-bottom: 1px solid var(--line);
+			vertical-align: top;
+			font-size: 0.96rem;
+		}
+
+		tr:last-child th,
+		tr:last-child td {
+			border-bottom: none;
+		}
+
+		th {
+			width: 34%;
+			color: var(--th-color);
+			font-weight: 700;
+			background: var(--th-bg);
+		}
+
+		td {
+			color: var(--td-color);
+		}
+
+		.bid-panel {
+			display: grid;
+			gap: 12px;
+			padding: 14px;
+			background: var(--bid-panel-bg);
+		}
+
+		.form-row {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 10px;
+		}
+
+		label {
+			font-size: 0.92rem;
+			color: var(--label-color);
+			font-weight: 600;
+		}
+
+		input {
+			width: 100%;
+			height: 44px;
+			border: 1px solid var(--input-border);
+			border-radius: 10px;
+			padding: 0 12px;
+			font-size: 1rem;
+			outline: none;
+			transition: border-color 0.2s ease, box-shadow 0.2s ease;
+			background: var(--input-bg);
+			color: var(--text);
+		}
+
+		input::placeholder {
+			color: var(--placeholder);
+		}
+
+		input:focus {
+			border-color: var(--focus-border);
+			box-shadow: var(--focus-ring);
+		}
+
+		.actions {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		button {
+			height: 44px;
+			border: none;
+			border-radius: 10px;
+			background: var(--btn-bg);
+			color: var(--btn-color);
+			font-weight: 700;
+			padding: 0 16px;
+			cursor: pointer;
+			box-shadow: var(--btn-shadow);
+			transition: transform 0.08s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+		}
+
+		button:hover {
+			box-shadow: var(--btn-shadow-hover);
+		}
+
+		button:active {
+			transform: translateY(1px);
+		}
+
+		button:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
+		.hint {
+			margin: 0;
+			color: var(--muted);
+			font-size: 0.92rem;
+		}
+
+		.error {
+			margin: 0;
+			color: var(--danger);
+			font-weight: 700;
+			min-height: 1.4em;
+		}
+
+		.ok {
+			margin: 0;
+			color: var(--success);
+			font-weight: 700;
+			min-height: 1.4em;
+		}
+
+		.bid-list {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: grid;
+			gap: 10px;
+		}
+
+		.bid-item {
+			border: 1px solid var(--card-subtle-border);
+			background: var(--card-subtle-bg);
+			border-radius: 10px;
+			padding: 10px 12px;
+			display: grid;
+			gap: 5px;
+		}
+
+		.bid-item-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.badge {
+			font-size: 0.78rem;
+			background: var(--accent);
+			color: var(--badge-color);
+			padding: 3px 8px;
+			border-radius: 999px;
+			font-weight: 700;
+		}
+
+		.badge.top {
+			background: var(--badge-top-bg);
+			color: var(--badge-top-color);
+		}
+
+		.rank-list {
+			margin: 0;
+			padding-left: 18px;
+			display: grid;
+			gap: 6px;
+		}
+
+		.rank-list li {
+			color: var(--text);
+		}
+
+		.empty {
+			margin: 0;
+			color: var(--muted);
+			padding: 10px;
+			border: 1px dashed var(--empty-border);
+			border-radius: 8px;
+			background: var(--empty-bg);
+		}
+
+		.modal-open {
+			overflow: hidden;
+		}
+
+		.row-inline {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.row-note {
+			color: var(--muted);
+			font-size: 0.9rem;
+		}
+
+		.history-trigger {
+			height: 34px;
+			padding: 0 12px;
+			background: var(--trigger-bg);
+			color: var(--trigger-color);
+			border: 1px solid var(--trigger-border);
+			border-radius: 7px;
+			font-size: 0.86rem;
+			font-weight: 600;
+			box-shadow: none;
+		}
+
+		.history-trigger:hover {
+			background: var(--trigger-hover-bg);
+			box-shadow: none;
+		}
+
+		.modal {
+			position: fixed;
+			inset: 0;
+			background: var(--modal-overlay);
+			backdrop-filter: var(--modal-blur);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 18px;
+			z-index: 40;
+		}
+
+		.modal.show {
+			display: flex;
+		}
+
+		.modal-card {
+			width: min(100%, 680px);
+			max-height: min(88vh, 760px);
+			background: var(--modal-card-bg);
+			border-radius: 10px;
+			border: 1px solid var(--modal-card-border);
+			overflow: hidden;
+			display: grid;
+			grid-template-rows: auto auto 1fr;
+			box-shadow: var(--modal-card-shadow);
+		}
+
+		.modal-tags {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			background: var(--modal-tags-bg);
+			border-bottom: 1px solid var(--line);
+		}
+
+		.tag-btn {
+			height: 48px;
+			border: none;
+			background: transparent;
+			color: var(--tag-color);
+			font-size: 1rem;
+			font-weight: 500;
+			border-radius: 0;
+			box-shadow: none;
+		}
+
+		.tag-btn:hover {
+			box-shadow: none;
+		}
+
+		.tag-btn.active {
+			background: var(--tag-active-bg);
+			color: var(--tag-active-color);
+			box-shadow: inset 0 -2px 0 var(--primary);
+		}
+
+		.modal-head {
+			padding: 14px 16px;
+			border-bottom: 1px solid var(--line);
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			background: var(--modal-head-bg);
+		}
+
+		.modal-title-line {
+			margin: 0;
+			font-size: 0.9rem;
+			color: var(--muted);
+		}
+
+		.modal-close {
+			height: 34px;
+			padding: 0 10px;
+			font-size: 0.86rem;
+			font-weight: 600;
+			background: var(--modal-close-bg);
+			border: 1px solid var(--modal-card-border);
+			color: var(--text);
+			box-shadow: none;
+		}
+
+		.modal-close:hover {
+			background: var(--modal-close-hover-bg);
+			box-shadow: none;
+		}
+
+		.modal-body {
+			padding: 0;
+			overflow: auto;
+		}
+
+		.tab-panel {
+			display: none;
+		}
+
+		.tab-panel.active {
+			display: block;
+		}
+
+		.rank-summary {
+			padding: 16px;
+			background: var(--rank-summary-bg);
+			border-bottom: 1px solid var(--line);
+		}
+
+		.rank-title {
+			margin: 0 0 6px;
+			font-size: 1rem;
+			color: var(--text);
+		}
+
+		.rank-top {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: var(--text);
+		}
+
+		.rank-top-dot {
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: var(--success);
+			box-shadow: var(--dot-glow);
+			display: inline-block;
+		}
+
+		#modal-top-detail {
+			margin: 8px 0 0;
+			color: var(--muted);
+			font-size: 0.92rem;
+		}
+
+		.rank-list {
+			padding: 14px 20px 16px;
+			gap: 8px;
+		}
+
+		.history-line {
+			padding: 12px 14px;
+			border-bottom: 1px solid var(--line);
+			font-size: 0.95rem;
+			color: var(--text);
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.history-time {
+			color: var(--muted);
+		}
+
+		.modal-body,
+		.auction-nav-list {
+			scrollbar-width: thin;
+			scrollbar-color: var(--scrollbar-thumb) transparent;
+		}
+
+		.modal-body::-webkit-scrollbar,
+		.auction-nav-list::-webkit-scrollbar {
+			width: 8px;
+			height: 8px;
+		}
+
+		.modal-body::-webkit-scrollbar-thumb,
+		.auction-nav-list::-webkit-scrollbar-thumb {
+			background: var(--scrollbar-thumb);
+			border-radius: 999px;
+		}
+
+		.modal-body::-webkit-scrollbar-track,
+		.auction-nav-list::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		@media (min-width: 900px) {
+			.page {
+				grid-template-columns: 1.05fr 1fr;
+				align-items: start;
+			}
+
+			.auction-nav {
+				grid-column: 1 / -1;
+			}
+
+			.main-card {
+				position: sticky;
+				top: 64px;
+			}
+		}
+
+		@media (max-width: 560px) {
+			.auction-nav {
+				border-radius: 0 0 10px 10px;
+			}
+
+			.auction-nav-list {
+				padding:  10px;
+				gap: 6px;
+			}
+
+			.auction-nav a {
+				height: 30px;
+				padding: 0 9px;
+				font-size: 0.82rem;
+			}
+
+			.modal-card {
+				width: 100%;
+				max-height: 92vh;
+			}
+
+			.modal-title-line {
+				font-size: 0.9rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<nav class="auction-nav" aria-label="頁面導覽">
+		<ul class="auction-nav-list">
+			<li><a href="#" aria-label="返回拍賣列表">返回拍賣列表</a></li>
+			<li class="auction-nav-sep" aria-hidden="true">/</li>
+			<li><a href="#" aria-label="卡牌拍賣分類">卡牌拍賣</a></li>
+		    <li class="auction-nav-sep" aria-hidden="true">/</li>
+			<li><a href="#" class="is-current" aria-current="page">商品資訊與出價</a></li>
+			<li class="nav-theme-toggle">
+				<button type="button" id="theme-toggle" aria-label="切換主題" title="切換主題"></button>
+			</li>
+		</ul>
+	</nav>
+	<main class="page">
+
+
+		<article class="main-card">
+			<div class="media">
+				<img src="ref/test.jpg" alt="拍賣商品主圖">
+			</div>
+			<div class="top-meta">
+				<h1 class="title">ヴァイスシュヴァルツ ブラウンダスト2 セレブリティ・バニー ロエン SR</h1>
+				<p class="brand">品牌：ブシロード</p>
+				<div class="price-row">
+					<span class="price-label">目前最高出價</span>
+					<span class="price" id="hero-price">-</span>
+				</div>
+				<p class="ship">運費：全國一律 180 日圓（含稅）</p>
+			</div>
+		</article>
+
+		<section style="display:grid; gap:16px;">
+			<section class="section">
+				<h2>立即下標</h2>
+				<div class="bid-panel">
+					<div class="form-row">
+						<div>
+							<label for="bidder-name">下標者名稱</label>
+							<input id="bidder-name" type="text" placeholder="例如：User_chen" maxlength="20">
+						</div>
+						<div>
+							<label for="bid-amount">出價金額（日圓）</label>
+							<input id="bid-amount" type="number" inputmode="numeric" min="1" step="1" placeholder="請輸入大於目前最高價的金額">
+						</div>
+					</div>
+					<div class="actions">
+						<button type="button" id="submit-bid">確認下標</button>
+						<p class="hint">規則：出價必須高於目前最高價。</p>
+					</div>
+					<p class="error" id="error-msg"></p>
+					<p class="ok" id="ok-msg"></p>
+				</div>
+			</section>
+                        
+			<section class="section">
+				<h2>商品說明</h2>
+				<div class="content">
+					<p class="description" id="item-description"></p>
+				</div>
+			</section>
+
+			<section class="section">
+				<h2>商品資訊</h2>
+				<div class="content" style="padding-top: 2px;">
+					<table>
+						<tbody>
+							<tr><th>商品狀態</th><td id="item-status"></td></tr>
+							<tr><th>起始價格</th><td id="start-price"></td></tr>
+							<tr><th>商品數量</th><td id="item-quantity"></td></tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="section">
+				<h2>拍賣資訊</h2>
+				<div class="content" style="padding-top: 2px;">
+					<table>
+						<tbody>
+							<tr><th>拍賣 ID</th><td id="auction-id"></td></tr>
+							<tr><th>下標數目</th><td id="bid-count"></td></tr>
+							<tr><th>最高價下標者</th><td id="highest-bidder"></td></tr>
+							<tr><th>開始日期時間</th><td id="start-time"></td></tr>
+							<tr><th>結束日期時間</th><td id="end-time"></td></tr>
+							<tr><th>目前時間</th><td id="current-time"></td></tr>
+							<tr><th>提前結束</th><td id="early-end"></td></tr>
+							<tr><th>自動延長</th><td id="auto-extend"></td></tr>
+							<tr>
+								<th>下標者順位</th>
+								<td>
+									<div class="row-inline">
+										<span class="row-note" id="rank-summary">尚無資料</span>
+										<button type="button" id="open-history" class="history-trigger">查看</button>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th>全部下標清單</th>
+								<td>
+									<span class="row-note" id="history-summary">請點擊上方「查看」按鈕</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</section>
+	</main>
+
+	<div id="history-modal" class="modal" aria-hidden="true">
+		<div class="modal-card" role="dialog" aria-modal="true" aria-label="下標明細">
+			<div class="modal-tags">
+				<button type="button" id="tag-rank" class="tag-btn active">下標者順位</button>
+				<button type="button" id="tag-history" class="tag-btn">すべての入札履歴</button>
+			</div>
+			<div class="modal-head">
+				<p id="modal-page-info" class="modal-title-line">1ページ中1ページ目を表示（入札合計：0件）</p>
+				<button type="button" id="close-history" class="modal-close">關閉</button>
+			</div>
+			<div class="modal-body">
+				<section id="panel-rank" class="tab-panel active">
+					<div class="rank-summary">
+						<p class="rank-title">最高額入札者</p>
+						<div class="rank-top">
+							<span class="rank-top-dot"></span>
+							<span id="modal-top-bidder">尚無</span>
+						</div>
+						<p id="modal-top-detail">-</p>
+					</div>
+					<ol class="rank-list" id="rank-list"></ol>
+				</section>
+				<section id="panel-history" class="tab-panel">
+					<div class="bid-list" id="bid-list"></div>
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const state = {
+			auctionId: "YH-AUC-20260707-0019",
+			itemStatus: "やや傷や汚れあり",
+			itemDescription: "卡片若有摺痕、刮痕、污損，請先以留言詢問。由於部分卡片為二手，為避免爭議，本商品狀態標示為「有些微瑕疵」。完美主義者請審慎下標。",
+			startPrice: 3000,
+			itemQuantity: 1,
+			startTime: "2026-07-07T20:47:00",
+			endTime: "2026-07-09T20:47:00",
+			earlyEnd: "否",
+			autoExtend: "是",
+			bids: [
+				{ bidder: "akira_88", amount: 3200, time: "2026-07-07T20:52:41" },
+				{ bidder: "mio_card", amount: 3500, time: "2026-07-07T21:04:16" }
+			]
+		};
+
+		const el = {
+			itemStatus: document.getElementById("item-status"),
+			itemDescription: document.getElementById("item-description"),
+			startPrice: document.getElementById("start-price"),
+			itemQuantity: document.getElementById("item-quantity"),
+			auctionId: document.getElementById("auction-id"),
+			bidCount: document.getElementById("bid-count"),
+			highestBidder: document.getElementById("highest-bidder"),
+			startTime: document.getElementById("start-time"),
+			endTime: document.getElementById("end-time"),
+			currentTime: document.getElementById("current-time"),
+			earlyEnd: document.getElementById("early-end"),
+			autoExtend: document.getElementById("auto-extend"),
+			rankSummary: document.getElementById("rank-summary"),
+			historySummary: document.getElementById("history-summary"),
+			rankList: document.getElementById("rank-list"),
+			bidList: document.getElementById("bid-list"),
+			openHistory: document.getElementById("open-history"),
+			historyModal: document.getElementById("history-modal"),
+			closeHistory: document.getElementById("close-history"),
+			tagRank: document.getElementById("tag-rank"),
+			tagHistory: document.getElementById("tag-history"),
+			panelRank: document.getElementById("panel-rank"),
+			panelHistory: document.getElementById("panel-history"),
+			modalPageInfo: document.getElementById("modal-page-info"),
+			modalTopBidder: document.getElementById("modal-top-bidder"),
+			modalTopDetail: document.getElementById("modal-top-detail"),
+			heroPrice: document.getElementById("hero-price"),
+			bidderName: document.getElementById("bidder-name"),
+			bidAmount: document.getElementById("bid-amount"),
+			submitBid: document.getElementById("submit-bid"),
+			errorMsg: document.getElementById("error-msg"),
+			okMsg: document.getElementById("ok-msg"),
+			themeToggle: document.getElementById("theme-toggle")
+		};
+
+		function formatYen(value) {
+			return new Intl.NumberFormat("ja-JP").format(value) + " 円";
+		}
+
+		function pad2(n) {
+			return String(n).padStart(2, "0");
+		}
+
+		function formatDateTime(dateLike) {
+			const d = new Date(dateLike);
+			if (Number.isNaN(d.getTime())) {
+				return "-";
+			}
+			const y = d.getFullYear();
+			const m = pad2(d.getMonth() + 1);
+			const day = pad2(d.getDate());
+			const h = pad2(d.getHours());
+			const min = pad2(d.getMinutes());
+			const s = pad2(d.getSeconds());
+			return y + "-" + m + "-" + day + " " + h + ":" + min + ":" + s;
+		}
+
+		function formatBidTime(dateLike) {
+			const d = new Date(dateLike);
+			if (Number.isNaN(d.getTime())) {
+				return "-";
+			}
+			const m = d.getMonth() + 1;
+			const day = d.getDate();
+			const h = d.getHours();
+			const min = pad2(d.getMinutes());
+			return "[" + m + "月" + day + "日 " + h + "時" + min + "分]";
+		}
+
+		function getCurrentHighestBid() {
+			if (state.bids.length === 0) {
+				return null;
+			}
+			return state.bids.reduce((top, bid) => (bid.amount > top.amount ? bid : top), state.bids[0]);
+		}
+
+		function getRankedBidders() {
+			const bestByBidder = new Map();
+
+			state.bids.forEach((bid) => {
+				const existing = bestByBidder.get(bid.bidder);
+				if (!existing) {
+					bestByBidder.set(bid.bidder, { ...bid });
+					return;
+				}
+
+				if (bid.amount > existing.amount) {
+					bestByBidder.set(bid.bidder, { ...bid });
+					return;
+				}
+
+				if (bid.amount === existing.amount && new Date(bid.time) < new Date(existing.time)) {
+					bestByBidder.set(bid.bidder, { ...bid });
+				}
+			});
+
+			return [...bestByBidder.values()].sort((a, b) => {
+				if (b.amount !== a.amount) {
+					return b.amount - a.amount;
+				}
+				return new Date(a.time) - new Date(b.time);
+			});
+		}
+
+		function renderRankList() {
+			const ranked = getRankedBidders();
+			el.rankList.innerHTML = "";
+			el.rankSummary.textContent = "共 " + ranked.length + " 位下標者";
+
+			if (ranked.length > 0) {
+				el.modalTopBidder.textContent = ranked[0].bidder;
+				el.modalTopDetail.textContent = formatYen(ranked[0].amount) + " / 1個 / " + formatDateTime(ranked[0].time);
+			} else {
+				el.modalTopBidder.textContent = "尚無";
+				el.modalTopDetail.textContent = "-";
+			}
+
+			if (ranked.length === 0) {
+				const li = document.createElement("li");
+				li.textContent = "目前尚無下標者";
+				el.rankList.appendChild(li);
+				return;
+			}
+
+			ranked.forEach((item, idx) => {
+				const li = document.createElement("li");
+				li.textContent = (idx + 1) + ". " + item.bidder + " - " + formatYen(item.amount);
+				el.rankList.appendChild(li);
+			});
+		}
+
+		function renderBidList() {
+			el.bidList.innerHTML = "";
+
+			if (state.bids.length === 0) {
+				const p = document.createElement("p");
+				p.className = "empty";
+				p.textContent = "目前尚無任何下標紀錄";
+				el.bidList.appendChild(p);
+				el.historySummary.textContent = "共 0 筆，點擊上方查看明細";
+				el.modalPageInfo.textContent = "1ページ中1ページ目を表示（入札合計：0件）";
+				return;
+			}
+
+			const sortedBids = [...state.bids].sort((a, b) => new Date(b.time) - new Date(a.time));
+			el.historySummary.textContent = "共 " + sortedBids.length + " 筆，點擊上方查看明細";
+			el.modalPageInfo.textContent = "1ページ中1ページ目を表示（入札合計：" + sortedBids.length + "件）";
+
+			sortedBids.forEach((bid) => {
+				const line = document.createElement("div");
+				line.className = "history-line";
+
+				const time = document.createElement("span");
+				time.className = "history-time";
+				time.textContent = formatBidTime(bid.time);
+
+				const text = document.createElement("span");
+				text.textContent = bid.bidder + " 入札・数量：1で " + new Intl.NumberFormat("ja-JP").format(bid.amount);
+
+				line.appendChild(time);
+				line.appendChild(text);
+				el.bidList.appendChild(line);
+			});
+		}
+
+		function setActiveTab(tabName) {
+			const isRank = tabName === "rank";
+			el.tagRank.classList.toggle("active", isRank);
+			el.tagHistory.classList.toggle("active", !isRank);
+			el.panelRank.classList.toggle("active", isRank);
+			el.panelHistory.classList.toggle("active", !isRank);
+		}
+
+		function openHistoryModal(defaultTab) {
+			el.historyModal.classList.add("show");
+			document.body.classList.add("modal-open");
+			el.historyModal.setAttribute("aria-hidden", "false");
+			setActiveTab(defaultTab || "rank");
+		}
+
+		function closeHistoryModal() {
+			el.historyModal.classList.remove("show");
+			document.body.classList.remove("modal-open");
+			el.historyModal.setAttribute("aria-hidden", "true");
+		}
+
+		function renderAuctionInfo() {
+			const top = getCurrentHighestBid();
+			const highestValue = top ? top.amount : state.startPrice;
+
+			el.itemStatus.textContent = state.itemStatus;
+			el.itemDescription.textContent = state.itemDescription;
+			el.startPrice.textContent = formatYen(state.startPrice);
+			el.itemQuantity.textContent = String(state.itemQuantity);
+			el.auctionId.textContent = state.auctionId;
+			el.bidCount.textContent = String(state.bids.length);
+			el.highestBidder.textContent = top ? top.bidder : "尚無";
+			el.startTime.textContent = formatDateTime(state.startTime);
+			el.endTime.textContent = formatDateTime(state.endTime);
+			el.earlyEnd.textContent = state.earlyEnd;
+			el.autoExtend.textContent = state.autoExtend;
+			el.heroPrice.textContent = formatYen(highestValue);
+
+			renderRankList();
+			renderBidList();
+		}
+
+		function setMessage(type, message) {
+			if (type === "error") {
+				el.errorMsg.textContent = message;
+				el.okMsg.textContent = "";
+			} else {
+				el.okMsg.textContent = message;
+				el.errorMsg.textContent = "";
+			}
+		}
+
+		function submitBid() {
+			const bidder = el.bidderName.value.trim();
+			const amount = Number(el.bidAmount.value.trim());
+			const top = getCurrentHighestBid();
+			const threshold = top ? top.amount : state.startPrice;
+
+			if (!bidder) {
+				setMessage("error", "請輸入下標者名稱。");
+				return;
+			}
+
+			if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+				setMessage("error", "請輸入有效整數金額。");
+				return;
+			}
+
+			if (amount <= threshold) {
+				setMessage("error", "出價需高於目前最高價（" + formatYen(threshold) + "）。");
+				return;
+			}
+
+			state.bids.push({
+				bidder,
+				amount,
+				time: new Date().toISOString()
+			});
+
+			renderAuctionInfo();
+			setMessage("ok", "下標成功，已更新下標紀錄與順位。");
+			el.bidAmount.value = "";
+			el.bidAmount.focus();
+		}
+
+		function applyThemeIcon(theme) {
+			const isDark = theme !== "light";
+			// 深色時顯示太陽（點擊切到淺色），淺色時顯示月亮
+			el.themeToggle.textContent = isDark ? "☀" : "🌙";
+			el.themeToggle.setAttribute("aria-label", isDark ? "切換為淺色主題" : "切換為深色主題");
+			el.themeToggle.setAttribute("title", isDark ? "切換為淺色主題" : "切換為深色主題");
+		}
+
+		function toggleTheme() {
+			const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+			const next = current === "light" ? "dark" : "light";
+			document.documentElement.setAttribute("data-theme", next);
+			try {
+				localStorage.setItem("bid-theme", next);
+			} catch (e) {
+				/* localStorage 不可用時仍可切換，只是不記住 */
+			}
+			applyThemeIcon(next);
+		}
+
+		function startClock() {
+			function tick() {
+				el.currentTime.textContent = formatDateTime(new Date().toISOString());
+			}
+			tick();
+			setInterval(tick, 1000);
+		}
+
+		el.themeToggle.addEventListener("click", toggleTheme);
+		el.submitBid.addEventListener("click", submitBid);
+		el.bidAmount.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				submitBid();
+			}
+		});
+		el.bidderName.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				submitBid();
+			}
+		});
+		el.openHistory.addEventListener("click", () => {
+			openHistoryModal("rank");
+		});
+		el.closeHistory.addEventListener("click", closeHistoryModal);
+		el.tagRank.addEventListener("click", () => {
+			setActiveTab("rank");
+		});
+		el.tagHistory.addEventListener("click", () => {
+			setActiveTab("history");
+		});
+		el.historyModal.addEventListener("click", (event) => {
+			if (event.target === el.historyModal) {
+				closeHistoryModal();
+			}
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && el.historyModal.classList.contains("show")) {
+				closeHistoryModal();
+			}
+		});
+
+		applyThemeIcon(document.documentElement.getAttribute("data-theme") || "dark");
+		renderAuctionInfo();
+		startClock();
+	</script>
+</body>
+</html>
