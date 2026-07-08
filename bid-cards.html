@@ -17,6 +17,101 @@
 		})();
 	</script>
 	<style>
+		/* --- 畫廊左右切換箭頭 --- */
+		.gallery-arrow {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			background: rgba(20, 24, 31, 0.6);
+			color: #ffffff;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			z-index: 10;
+			transition: background 0.2s ease, transform 0.2s ease;
+			backdrop-filter: blur(4px);
+		}
+
+		.gallery-arrow:hover {
+			background: var(--primary); /* 滑過時變成主題色 */
+			transform: translateY(-50%) scale(1.1); /* 微微放大 */
+		}
+
+		.gallery-arrow:active {
+			transform: translateY(-50%) scale(0.95); /* 點擊時內縮 */
+		}
+
+		.gallery-prev {
+			left: 14px;
+		}
+
+		.gallery-next {
+			right: 14px;
+		}		
+		/* --- 圖片點擊放大與 Modal 樣式 --- */
+		.gallery-stage img {
+			cursor: zoom-in; /* 提示使用者圖片可點擊放大 */
+			transition: opacity 0.2s ease-in-out;
+		}
+
+		.lightbox-close {
+			position: absolute;
+			top: 20px;
+			right: 20px;
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			background: rgba(0, 0, 0, 0.6);
+			color: #fff;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			font-size: 26px;
+			line-height: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			z-index: 60;
+			transition: background 0.2s ease, transform 0.2s ease;
+		}
+
+		.lightbox-close:hover {
+			background: rgba(0, 0, 0, 0.9);
+			transform: scale(1.05);
+		}
+
+		.lightbox-content {
+			position: relative;
+			max-width: 90vw;
+			max-height: 90vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.lightbox-img-wrap {
+			position: relative;
+			overflow: hidden;
+			border-radius: 12px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+			cursor: crosshair; /* 提示可移動放大 */
+		}
+
+		.lightbox-img-wrap img {
+			display: block;
+			max-width: 90vw;
+			max-height: 90vh;
+			width: auto;
+			height: auto;
+			transform-origin: center center;
+			transition: transform 0.1s ease-out; /* 讓跟隨滑鼠的動作平滑些 */
+		}		
+
 		:root {
 			color-scheme: dark;
 			--bg: #0a0a0f;
@@ -845,7 +940,23 @@
 
 			.product-gallery {
 				position: sticky;
-				top: 64px;
+				top: 72px; /* 稍微加大 top，避開上方導覽列 */
+				max-height: calc(100vh - 88px); /* 限制最大高度為視窗高度減去上下邊距 */
+				display: flex;
+				flex-direction: column;
+			}
+
+			.gallery-stage {
+				flex: 1; /* 讓主圖區域自動填滿剩餘高度 */
+				min-height: 0; /* 關鍵：允許在視窗過矮時強制往內縮小，覆蓋原本 1:1 的限制 */
+			}
+			
+			.gallery-stage img {
+				max-height: 100%; /* 確保圖片縮放時不會超出展示區 */
+			}
+
+			.gallery-thumbs {
+				flex-shrink: 0; /* 確保下方的縮圖列高度固定，不會因為空間不夠而被壓縮 */
 			}
 
 			.product-sidebar {
@@ -927,18 +1038,24 @@
 	<main class="page">
 		<article class="product-gallery" aria-label="商品圖片畫廊">
 			<div class="gallery-stage">
+				<!-- 加入左箭頭 -->
+				<button class="gallery-arrow gallery-prev" aria-label="上一張圖片">&#10094;</button>
+				
 				<img src="ref/test.jpg" alt="拍賣商品主圖">
 				<span class="gallery-count">1 / 3</span>
+				
+				<!-- 加入右箭頭 -->
+				<button class="gallery-arrow gallery-next" aria-label="下一張圖片">&#10095;</button>
 			</div>
 			<div class="gallery-thumbs" aria-label="商品縮圖列表">
 				<button type="button" class="gallery-thumb is-active" aria-label="查看第 1 張圖片" aria-current="true">
-					<img src="ref/test.jpg" alt="商品縮圖 1">
+					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_002.png" alt="商品縮圖 1">
 				</button>
 				<button type="button" class="gallery-thumb" aria-label="查看第 2 張圖片">
-					<img src="ref/test.jpg" alt="商品縮圖 2">
+					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077s.png" alt="商品縮圖 2">
 				</button>
 				<button type="button" class="gallery-thumb" aria-label="查看第 3 張圖片">
-					<img src="ref/test.jpg" alt="商品縮圖 3">
+					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077sec.png" alt="商品縮圖 3">
 				</button>
 			</div>
 		</article>
@@ -1064,7 +1181,15 @@
 			</div>
 		</div>
 	</div>
-
+	<!-- 圖片放大專用 Modal -->
+	<div id="image-modal" class="modal" aria-hidden="true">
+		<button type="button" id="close-image-modal" class="lightbox-close" aria-label="關閉圖片">&times;</button>
+		<div class="lightbox-content">
+			<div class="lightbox-img-wrap" id="lightbox-wrap">
+				<img src="" id="lightbox-img" alt="放大預覽圖">
+			</div>
+		</div>
+	</div>
 	<script>
 		const state = {
 			auctionId: "YH-AUC-20260707-0019",
@@ -1372,6 +1497,134 @@
 		applyThemeIcon(document.documentElement.getAttribute("data-theme") || "dark");
 		renderAuctionInfo();
 		startClock();
+		// --- 圖片放大燈箱與放大鏡功能 ---
+		const galleryMainImg = document.querySelector(".gallery-stage img");
+		const imageModal = document.getElementById("image-modal");
+		const closeImageModal = document.getElementById("close-image-modal");
+		const lightboxWrap = document.getElementById("lightbox-wrap");
+		const lightboxImg = document.getElementById("lightbox-img");
+
+		// 1. 點擊主圖片開啟 Modal
+		galleryMainImg.addEventListener("click", () => {
+			lightboxImg.src = galleryMainImg.src; // 抓取當前主圖的來源
+			imageModal.classList.add("show");
+			document.body.classList.add("modal-open");
+			imageModal.setAttribute("aria-hidden", "false");
+		});
+
+		// 2. 關閉 Modal 的函數
+		function closeImageLightbox() {
+			imageModal.classList.remove("show");
+			imageModal.setAttribute("aria-hidden", "true");
+			
+			// 若拍賣歷史Modal沒開著，才解除body鎖定
+			if (!el.historyModal.classList.contains("show")) {
+				document.body.classList.remove("modal-open");
+			}
+			
+			// 重置放大狀態
+			lightboxImg.style.transform = "scale(1)";
+		}
+
+		closeImageModal.addEventListener("click", closeImageLightbox);
+
+		// 點擊黑色半透明背景也能關閉
+		imageModal.addEventListener("click", (e) => {
+			if (e.target === imageModal || e.target.classList.contains("lightbox-content")) {
+				closeImageLightbox();
+			}
+		});
+
+		// ESC 鍵關閉圖片 Modal
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && imageModal.classList.contains("show")) {
+				closeImageLightbox();
+			}
+		});
+
+		// 3. 滑鼠在 Modal 內的圖片上滑動時，局部放大圖片 (放大鏡效果)
+		lightboxWrap.addEventListener("mousemove", (e) => {
+			// 取得容器的座標與尺寸
+			const rect = lightboxWrap.getBoundingClientRect();
+			
+			// 計算滑鼠在圖片中的 X 與 Y 軸百分比
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			
+			// 設定變形原點（滑鼠指到哪，就以哪裡為中心放大）
+			lightboxImg.style.transformOrigin = `${x}% ${y}%`;
+			lightboxImg.style.transform = "scale(2.5)"; // 放大 2.5 倍
+		});
+
+		// 滑鼠離開圖片範圍時，恢復原始大小
+		lightboxWrap.addEventListener("mouseleave", () => {
+			lightboxImg.style.transform = "scale(1)";
+			setTimeout(() => {
+				lightboxImg.style.transformOrigin = "center center";
+			}, 150); // 等待縮小動畫快結束再重置中心點，避免畫面閃跳
+		});		
+		// --- 畫廊切換功能 (縮圖 + 左右箭頭) ---
+		const galleryThumbs = document.querySelectorAll(".gallery-thumb");
+		const galleryCount = document.querySelector(".gallery-count");
+		const btnPrev = document.querySelector(".gallery-prev");
+		const btnNext = document.querySelector(".gallery-next");
+
+		// 記錄目前顯示第幾張圖 (預設為 0)
+		let currentGalleryIndex = 0; 
+
+		function switchGalleryImage(newIndex) {
+			// 如果超過圖片總數，就回到第一張 (無限循環)
+			if (newIndex >= galleryThumbs.length) {
+				newIndex = 0;
+			}
+			// 如果小於第一張，就跳到最後一張
+			if (newIndex < 0) {
+				newIndex = galleryThumbs.length - 1;
+			}
+			// 如果點擊的是當前顯示的圖，則不動作
+			if (newIndex === currentGalleryIndex) return;
+
+			const targetThumb = galleryThumbs[newIndex];
+
+			// 1. 移除所有 active 狀態
+			galleryThumbs.forEach(t => {
+				t.classList.remove("is-active");
+				t.removeAttribute("aria-current");
+			});
+
+			// 2. 為新的縮圖加上 active
+			targetThumb.classList.add("is-active");
+			targetThumb.setAttribute("aria-current", "true");
+
+			// 3. 取得新圖片網址並執行動畫替換
+			const newSrc = targetThumb.querySelector("img").src;
+			galleryMainImg.style.opacity = 0; 
+			
+			setTimeout(() => {
+				galleryMainImg.src = newSrc;
+				galleryMainImg.style.opacity = 1;
+				galleryCount.textContent = `${newIndex + 1} / ${galleryThumbs.length}`;
+			}, 200);
+
+			// 4. 更新目前的 Index
+			currentGalleryIndex = newIndex;
+		}
+
+		// 綁定縮圖點擊事件
+		galleryThumbs.forEach((thumb, index) => {
+			thumb.addEventListener("click", () => switchGalleryImage(index));
+		});
+
+		// 綁定左右箭頭點擊事件 (停止事件冒泡，避免點到箭頭時觸發放大鏡 Modal)
+		btnPrev.addEventListener("click", (e) => {
+			e.stopPropagation();
+			switchGalleryImage(currentGalleryIndex - 1);
+		});
+
+		btnNext.addEventListener("click", (e) => {
+			e.stopPropagation();
+			switchGalleryImage(currentGalleryIndex + 1);
+		});		
 	</script>
 </body>
 </html>
