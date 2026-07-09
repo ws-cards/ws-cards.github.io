@@ -17,43 +17,43 @@
 		})();
 	</script>
 	<style>
-		/* --- 畫廊左右切換箭頭 --- */
+		/* --- 畫廊左右切換箭頭 (毛玻璃擬物化) --- */
 		.gallery-arrow {
 			position: absolute;
 			top: 50%;
 			transform: translateY(-50%);
-			width: 40px;
-			height: 40px;
+			width: 44px;
+			height: 44px;
 			border-radius: 50%;
-			background: rgba(20, 24, 31, 0.6);
+			background: rgba(255, 255, 255, 0.1);
 			color: #ffffff;
-			border: 1px solid rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
 			font-size: 18px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			cursor: pointer;
 			z-index: 10;
-			transition: background 0.2s ease, transform 0.2s ease;
-			backdrop-filter: blur(4px);
+			transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			opacity: 0.6; /* 平常微透明，降低視覺干擾 */
 		}
 
 		.gallery-arrow:hover {
-			background: var(--primary); /* 滑過時變成主題色 */
-			transform: translateY(-50%) scale(1.1); /* 微微放大 */
+			background: var(--primary);
+			border-color: var(--primary);
+			transform: translateY(-50%) scale(1.1);
+			box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 		}
 
 		.gallery-arrow:active {
-			transform: translateY(-50%) scale(0.95); /* 點擊時內縮 */
+			transform: translateY(-50%) scale(0.95);
 		}
 
-		.gallery-prev {
-			left: 14px;
-		}
+		.gallery-prev { left: 16px; }
+		.gallery-next { right: 16px; }
 
-		.gallery-next {
-			right: 14px;
-		}		
 		/* --- 圖片點擊放大與 Modal 樣式 --- */
 		.gallery-stage img {
 			cursor: zoom-in; /* 提示使用者圖片可點擊放大 */
@@ -100,6 +100,7 @@
 			border-radius: 12px;
 			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 			cursor: crosshair; /* 提示可移動放大 */
+			touch-action: none; /* [新增] 防止觸控按住拖曳時觸發原生網頁捲動 */
 		}
 
 		.lightbox-img-wrap img {
@@ -383,40 +384,60 @@
 			gap: 14px;
 		}
 
+/* --- 畫廊主舞台 (Spotlight 展示台質感) --- */
 		.gallery-stage {
-			background: var(--media-bg);
 			position: relative;
+			/* 營造背後打光的漸層質感 */
+			background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12) 0%, var(--media-bg) 85%);
 			border-radius: 16px;
 			overflow: hidden;
-			box-shadow: var(--media-shadow);
+			box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), var(--media-shadow);
 			aspect-ratio: 1 / 1;
-			display: grid;
-			place-items: center;
-			padding: clamp(16px, 6%, 56px);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 24px;
 		}
 
+		/* 圖片本體：增加懸浮動畫與實體陰影 */
 		.gallery-stage img {
-			max-width: 100%;
-			max-height: 100%;
-			width: auto;
-			height: auto;
-			display: block;
+			width: 100%;
+			height: 100%;
 			object-fit: contain;
-			border-radius: 12px;
+			display: block;
+			border-radius: 8px;
+			cursor: zoom-in;
+			/* 賦予逼真的物理陰影 (特別適合透明去背 PNG 卡牌) */
+			filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45));
+			transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.4s ease;
 		}
-
+		/* 滑鼠移入舞台時，卡牌微微浮起 */
+		.gallery-stage:hover img {
+			transform: translateY(-6px) scale(1.03);
+			filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.6));
+		}
+		/* 只有滑鼠進入舞台區塊時，箭頭才變清晰 */
+		.gallery-stage:hover .gallery-arrow {
+			opacity: 1;
+		}		
+		/* --- 圖片張數計數器 (現代藥丸造型 Pill) --- */
 		.gallery-count {
 			position: absolute;
+			bottom: 16px;
 			left: 50%;
-			bottom: 14px;
 			transform: translateX(-50%);
-			padding: 5px 12px;
+			padding: 6px 16px;
 			border-radius: 999px;
-			background: rgba(20, 24, 31, 0.72);
+			background: rgba(0, 0, 0, 0.55);
 			color: #ffffff;
-			font-size: 0.82rem;
-			font-weight: 700;
-			letter-spacing: 0.02em;
+			font-size: 0.85rem;
+			font-weight: 600;
+			letter-spacing: 0.05em;
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+			pointer-events: none; /* 避免不小心點擊到計數器而無法放大圖片 */
 		}
 
 		.gallery-thumbs {
@@ -946,8 +967,10 @@
 			}
 
 			.gallery-stage {
-				flex: 1; /* 讓主圖區域自動填滿剩餘高度 */
-				min-height: 0; /* 關鍵：允許在視窗過矮時強制往內縮小，覆蓋原本 1:1 的限制 */
+				flex: 1;
+				min-height: 0;
+				aspect-ratio: auto; /* 桌機不限制正方形，讓它自動填滿左側高度 */
+				padding: 40px; /* 桌機版讓邊界寬裕一點 */
 			}
 
 			.gallery-thumbs {
@@ -1538,11 +1561,12 @@
 		});
 
 		// 3. 滑鼠在 Modal 內的圖片上滑動時，局部放大圖片 (放大鏡效果)
-		lightboxWrap.addEventListener("mousemove", (e) => {
+		// [修改] 將 mousemove 改為 pointermove，使其同時完美支援「滑鼠點按拖曳」與「觸控螢幕」
+		lightboxWrap.addEventListener("pointermove", (e) => {
 			// 取得容器的座標與尺寸
 			const rect = lightboxWrap.getBoundingClientRect();
 			
-			// 計算滑鼠在圖片中的 X 與 Y 軸百分比
+			// 計算指標 (滑鼠/手指) 在圖片中的 X 與 Y 軸百分比
 			const x = ((e.clientX - rect.left) / rect.width) * 100;
 			const y = ((e.clientY - rect.top) / rect.height) * 100;
 			
@@ -1551,13 +1575,20 @@
 			lightboxImg.style.transform = "scale(2.5)"; // 放大 2.5 倍
 		});
 
-		// 滑鼠離開圖片範圍時，恢復原始大小
-		lightboxWrap.addEventListener("mouseleave", () => {
+		// 滑鼠或手指離開圖片範圍時，恢復原始大小
+		// [修改] 對應 pointermove，將 mouseleave 改為 pointerleave
+		lightboxWrap.addEventListener("pointerleave", () => {
 			lightboxImg.style.transform = "scale(1)";
 			setTimeout(() => {
 				lightboxImg.style.transformOrigin = "center center";
 			}, 150); // 等待縮小動畫快結束再重置中心點，避免畫面閃跳
 		});		
+
+		// [新增] 阻擋瀏覽器預設的圖片拖曳行為 (Drag & Drop)
+		// 這樣按住滑鼠左鍵並移動時，事件就不會被強制中斷，放大鏡就能流暢跟隨
+		lightboxImg.addEventListener("dragstart", (e) => {
+			e.preventDefault();
+		});	
 		// --- 畫廊切換功能 (縮圖 + 左右箭頭) ---
 		const galleryThumbs = document.querySelectorAll(".gallery-thumb");
 		const galleryCount = document.querySelector(".gallery-count");
