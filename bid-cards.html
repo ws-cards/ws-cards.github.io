@@ -387,7 +387,6 @@
 /* --- 畫廊主舞台 (Spotlight 展示台質感) --- */
 		.gallery-stage {
 			position: relative;
-			/* 營造背後打光的漸層質感 */
 			background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12) 0%, var(--media-bg) 85%);
 			border-radius: 16px;
 			overflow: hidden;
@@ -397,6 +396,7 @@
 			justify-content: center;
 			align-items: center;
 			padding: 24px;
+			touch-action: pan-y; /* [新增] 防止水平滑動觸發瀏覽器原生上一頁/下一頁 */
 		}
 
 		/* 圖片本體：增加懸浮動畫與實體陰影 */
@@ -510,12 +510,6 @@
 			font-size: clamp(1.2rem, 2.3vw, 1.45rem);
 			line-height: 1.45;
 			font-weight: 700;
-		}
-
-		.brand {
-			color: var(--primary);
-			font-weight: 600;
-			margin: 0;
 		}
 
 		.price-row {
@@ -1083,12 +1077,11 @@
 				<p class="summary-kicker">Card Auction</p>
 				<div class="top-meta">
 					<h1 class="title">ヴァイスシュヴァルツ ブラウンダスト2 セレブリティ・バニー ロエン SR</h1>
-					<p class="brand">品牌：ブシロード</p>
 					<div class="price-row">
 						<span class="price-label">目前最高出價</span>
 						<span class="price" id="hero-price">-</span>
 					</div>
-					<p class="ship">運費：全國一律 180 日圓（含稅）</p>
+					<p class="ship">運費規則： 賣貨便 38 台幣 / 交貨便 60 台幣</p>
 				</div>
 			</section>
 
@@ -1589,68 +1582,193 @@
 		lightboxImg.addEventListener("dragstart", (e) => {
 			e.preventDefault();
 		});	
-		// --- 畫廊切換功能 (縮圖 + 左右箭頭) ---
+// --- 畫廊切換功能 (點擊切換 + 手機拖曳實體滑動) ---
 		const galleryThumbs = document.querySelectorAll(".gallery-thumb");
 		const galleryCount = document.querySelector(".gallery-count");
 		const btnPrev = document.querySelector(".gallery-prev");
 		const btnNext = document.querySelector(".gallery-next");
 
-		// 記錄目前顯示第幾張圖 (預設為 0)
 		let currentGalleryIndex = 0; 
 
-		function switchGalleryImage(newIndex) {
-			// 如果超過圖片總數，就回到第一張 (無限循環)
-			if (newIndex >= galleryThumbs.length) {
-				newIndex = 0;
-			}
-			// 如果小於第一張，就跳到最後一張
-			if (newIndex < 0) {
-				newIndex = galleryThumbs.length - 1;
-			}
-			// 如果點擊的是當前顯示的圖，則不動作
+		// 將新圖片滑入的統一函式
+		// isDragged: 如果是手指拖曳放開，不要再播「滑出」動畫（因為手已經把它拉出去了），只要做「滑入」。
+		function switchGalleryImage(newIndex, direction = "left", isDragged = false) {
+			if (newIndex >= galleryThumbs.length) newIndex = 0;
+			if (newIndex < 0) newIndex = galleryThumbs.length - 1;
 			if (newIndex === currentGalleryIndex) return;
 
 			const targetThumb = galleryThumbs[newIndex];
 
-			// 1. 移除所有 active 狀態
+			// 1. 更新縮圖的 active 狀態
 			galleryThumbs.forEach(t => {
 				t.classList.remove("is-active");
 				t.removeAttribute("aria-current");
 			});
-
-			// 2. 為新的縮圖加上 active
 			targetThumb.classList.add("is-active");
 			targetThumb.setAttribute("aria-current", "true");
 
-			// 3. 取得新圖片網址並執行動畫替換
-			const newSrc = targetThumb.querySelector("img").src;
-			galleryMainImg.style.opacity = 0; 
-			
-			setTimeout(() => {
-				galleryMainImg.src = newSrc;
-				galleryMainImg.style.opacity = 1;
-				galleryCount.textContent = `${newIndex + 1} / ${galleryThumbs.length}`;
-			}, 200);
+			// 如果是點擊箭頭或縮圖，執行圖片「飛出」動畫
+			if (!isDragged) {
+				const outX = direction === "left" ? -50 : 50; // 往左或往右飛出
+				galleryMainImg.style.transform = `translateX(${outX}%) scale(0.9)`;
+				galleryMainImg.style.opacity = 0;
+			}
 
-			// 4. 更新目前的 Index
-			currentGalleryIndex = newIndex;
+			// 2. 等待飛出/拖曳離開後，進行圖片替換並滑入
+			setTimeout(() => {
+				const newSrc = targetThumb.querySelector("img").src;
+				galleryMainImg.src = newSrc;
+				galleryCount.textContent = `${newIndex + 1} / ${galleryThumbs.length}`;
+				currentGalleryIndex = newIndex;
+
+				// 瞬間把新圖片放到反方向，準備滑入
+				galleryMainImg.style.transition = "none";
+				const inX = direction === "left" ? 50 : -50;
+				galleryMainImg.style.transform = `translateX(${inX}%) scale(0.9)`;
+
+				// 給瀏覽器一點時間重繪 (Reflow)，再觸發滑回中央的彈性動畫
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						galleryMainImg.style.transition = "transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease, filter 0.4s ease";
+						galleryMainImg.style.transform = "translateX(0) scale(1)";
+						galleryMainImg.style.opacity = 1;
+					});
+				});
+			}, isDragged ? 0 : 200); // 拖曳直接滑入，點擊則等待飛出完成
 		}
 
-		// 綁定縮圖點擊事件
+		// 綁定縮圖點擊
 		galleryThumbs.forEach((thumb, index) => {
-			thumb.addEventListener("click", () => switchGalleryImage(index));
+			thumb.addEventListener("click", () => {
+				// 判斷該往左還是往右飛
+				const direction = index > currentGalleryIndex ? "left" : "right";
+				switchGalleryImage(index, direction);
+			});
 		});
 
-		// 綁定左右箭頭點擊事件 (停止事件冒泡，避免點到箭頭時觸發放大鏡 Modal)
+		// 綁定左右箭頭
 		btnPrev.addEventListener("click", (e) => {
 			e.stopPropagation();
-			switchGalleryImage(currentGalleryIndex - 1);
+			switchGalleryImage(currentGalleryIndex - 1, "right");
 		});
-
 		btnNext.addEventListener("click", (e) => {
 			e.stopPropagation();
-			switchGalleryImage(currentGalleryIndex + 1);
-		});		
+			switchGalleryImage(currentGalleryIndex + 1, "left");
+		});
+
+// --- 實體拖曳 (Drag to Swipe) 核心邏輯 (全面支援滑鼠與觸控) ---
+		const stageForSwipe = document.querySelector(".gallery-stage");
+		let pointerStartX = 0;
+		let pointerStartY = 0;
+		let isDragging = false;
+		let dragDeltaX = 0;
+		let hasMoved = false; // [新增] 紀錄這次按下是否真的有滑動
+
+		// 阻擋桌機瀏覽器原生的「拖曳圖片檔案」行為
+		galleryMainImg.addEventListener("dragstart", (e) => e.preventDefault());
+
+		// 攔截點擊事件 (Capture 階段)：如果是拖曳行為，就阻止原生的「點擊放大」燈箱
+		stageForSwipe.addEventListener("click", (e) => {
+			if (hasMoved) {
+				e.stopPropagation();
+				e.preventDefault();
+			}
+		}, true); 
+
+		stageForSwipe.addEventListener("pointerdown", (e) => {
+			hasMoved = false; // 每次游標按下時，先重置移動狀態
+
+			// 如果點到的是左右箭頭，不執行拖曳，交給原本的點擊事件處理
+			if (e.target.closest('.gallery-arrow')) return;
+			// 如果是滑鼠，只允許「左鍵 (button === 0)」進行拖曳
+			if (e.pointerType === "mouse" && e.button !== 0) return;
+			
+			pointerStartX = e.clientX;
+			pointerStartY = e.clientY;
+			isDragging = true;
+			dragDeltaX = 0;
+
+			// 移除過場動畫，讓圖片零延遲跟隨游標
+			galleryMainImg.style.transition = "none";
+			galleryMainImg.style.cursor = "grabbing"; 
+			
+			// [關鍵修正] 對「圖片本身」設定游標捕捉，而不是外層容器
+			// 這樣放開滑鼠時，click 事件才會正確觸發在圖片上，順利啟動原本的放大燈箱！
+			galleryMainImg.setPointerCapture(e.pointerId);
+		});
+
+		stageForSwipe.addEventListener("pointermove", (e) => {
+			if (!isDragging) return;
+
+			const deltaX = e.clientX - pointerStartX;
+			const deltaY = e.clientY - pointerStartY;
+
+			// 只要移動超過 5px，就判定為正在拖曳 (放開時就不會觸發放大燈箱)
+			if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+				hasMoved = true;
+			}
+
+			// 如果是觸控裝置，且垂直滑動大於水平，判定為網頁上下捲動，立刻中止拖曳
+			if (e.pointerType === "touch" && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(dragDeltaX) < 10) {
+				isDragging = false;
+				resetImagePosition();
+				return;
+			}
+
+			dragDeltaX = deltaX;
+			const moveX = dragDeltaX * 0.7; // 加上 0.7 倍阻力
+			const opacity = Math.max(0.4, 1 - Math.abs(dragDeltaX) / window.innerWidth);
+			
+			galleryMainImg.style.transform = `translateX(${moveX}px) scale(0.95)`;
+			galleryMainImg.style.opacity = opacity;
+		});
+
+		// 彈回中央原位的函式
+		function resetImagePosition() {
+			galleryMainImg.style.transition = "transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease, filter 0.4s ease";
+			galleryMainImg.style.transform = "translateX(0) scale(1)";
+			galleryMainImg.style.opacity = 1;
+			galleryMainImg.style.cursor = "zoom-in";
+		}
+
+		// 統一處理滑鼠放開或觸控離開的行為
+		const onPointerUp = (e) => {
+			if (!isDragging) return;
+			isDragging = false;
+			
+			// 釋放游標捕捉
+			galleryMainImg.releasePointerCapture(e.pointerId);
+
+			const threshold = 60; // 必須滑動超過 60px 才會判定為換頁
+
+			if (dragDeltaX > threshold) {
+				// 往右滑 -> 換上一張
+				galleryMainImg.style.transition = "transform 0.3s ease-out, opacity 0.2s ease";
+				galleryMainImg.style.transform = `translateX(100%) scale(0.9)`;
+				galleryMainImg.style.opacity = 0;
+				
+				setTimeout(() => {
+					switchGalleryImage(currentGalleryIndex - 1, "right", true);
+					galleryMainImg.style.cursor = "zoom-in";
+				}, 150);
+			} else if (dragDeltaX < -threshold) {
+				// 往左滑 -> 換下一張
+				galleryMainImg.style.transition = "transform 0.3s ease-out, opacity 0.2s ease";
+				galleryMainImg.style.transform = `translateX(-100%) scale(0.9)`;
+				galleryMainImg.style.opacity = 0;
+
+				setTimeout(() => {
+					switchGalleryImage(currentGalleryIndex + 1, "left", true);
+					galleryMainImg.style.cursor = "zoom-in";
+				}, 150);
+			} else {
+				// 沒滑夠遠，彈回中央原位
+				resetImagePosition();
+			}
+		};
+
+		stageForSwipe.addEventListener("pointerup", onPointerUp);
+		stageForSwipe.addEventListener("pointercancel", onPointerUp);
 	</script>
 </body>
 </html>
