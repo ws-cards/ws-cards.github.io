@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <meta property="og:title" content="WS-Cards">
+  <meta property="og:type" content="website">  
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">  
+  <meta property="og:url" content="https://ws-cards.cloud">  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">  
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico"> 
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">  
+  <link rel="manifest" href="/manifest.json">	
+  <title>WS卡片雲|WS-Cards(β)</title>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"> 
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v85.css">
+</head>
+<body class="hold-transition sidebar-mini  layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item" style="">
+        <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)"><span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span></a>
+      </li>
+    </ul>
+    <div class="navbar-title-block">
+      <span class="navbar-title-text">各卡號漲幅趨勢</span>
+      <span class="navbar-title-badge">WS</span>
+    </div>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item" style="">
+        <button
+          id="themeToggleBtn"
+          class="theme-toggle-btn"
+          type="button"
+          title="切換為深色模式"
+          aria-label="切換為深色模式"
+          aria-pressed="false"
+        >
+          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Custom Drawer Overlay -->
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <!-- Custom Sidebar Drawer -->
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button class="custom-drawer-close" onclick="toggleCustomDrawer()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line" class="menu-link active">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>			
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>				
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>		  
+        </li>			  		  
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+      <!-- Main content -->
+      <div class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <!-- 輸入 -->
+            <div class="col-lg-12">
+              <div class="card search-card">
+                <div class="card-header">
+                  <h5 class="card-title">
+                    <i class="fas fa-search mr-2"></i>
+                    快速搜尋
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <!-- Search Input with Modern Design -->
+                  <div class="search-container">                
+                      <!-- Input form -->
+                    <div class="input-group">
+                        <input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱、作品代碼或完整卡號 (例如: PRD/W01-001)" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
+                            <div class="input-group-append">
+                          <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="複製" aria-label="複製" data-action-state="copy">
+                            <span class="action-icon-flip" aria-hidden="true">
+                              <i class="fas fa-paste action-icon-face action-icon-front"></i>
+                              <i class="fas fa-search action-icon-face action-icon-back"></i>
+                            </span>
+                                </button>
+                            </div>
+                      </div>
+                      
+                        <div class="search-hint">
+                            <i class="fas fa-lightbulb mr-2"></i>
+                        <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">輸入時按鈕會切換為搜尋，30 秒內可手動點搜尋；若未點擊才會自動查詢。</span></small>
+                        </div>                   
+                  </div>
+                </div>
+              </div>	
+            </div>
+
+            <!-- 搜尋歷史紀錄 -->
+            <div class="col-lg-12">
+              <div id="searchHistoryWrapper" class="search-history-wrapper" style="display:none;">
+                <div class="search-history-header">
+                  <div class="search-history-title">
+                    <i class="fas fa-history mr-2"></i>
+                    <span>最近查看</span>
+                    <span class="history-count" id="historyCount"></span>
+                  </div>
+                  <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部紀錄">
+                    <i class="fas fa-trash-alt mr-1"></i>清除
+                  </button>
+                </div>
+                <div class="search-history-list" id="searchHistoryContainer">
+                  <!-- 歷史紀錄項目由 JS 動態生成 -->
+                </div>
+              </div>
+            </div>
+
+            <!-- 選單 -->
+            <div class="col-lg-12">
+              <div class="card filter-card" id="filter-card-tag">
+                <div class="card-header">
+                  <h5 class="card-title">
+                    <i class="fas fa-filter mr-2"></i>
+                    篩選條件
+                  </h5>
+                </div>              
+                  <div class="card-body">
+                    <div class="filter-container">
+                      <div class="filter-group">
+                        <label class="filter-label">
+                          <i class="fas fa-layer-group mr-2"></i>作品系列
+                        </label>
+                        <select name="cardStandard" id="cardStandard" onclick="removeTitle();" onchange="changeStandard();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;"> 
+                        <optgroup label="ヴァイスサイド" id="Weiss" style="background-color: white">
+                          <option value="000/000-000" id="notuse">選擇作品</option> 
+                        </optgroup>
+                        <optgroup label="シュヴァルツサイド" id="Schwarz" style="background-color: gray">
+                          <option value="000/000-000"></option> 						
+                        </optgroup>
+                        </select>                       
+                      </div>
+                      <div class="filter-group">
+                        <label class="filter-label">
+                          <i class="fas fa-bookmark mr-2"></i>產品
+                        </label>
+                        <select name="cardTitle" id="cardTitle" onchange="changeTitle();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;"> 
+                          <option value="000/000-000">選擇主題</option> 
+                        </select>                       
+                      </div>
+                      <div class="filter-group">
+                        <label class="filter-label">
+                          <i class="fas fa-hashtag mr-2"></i>卡號
+                        </label>
+                        <select name="cardNumber" id="cardNumber" onchange="changeNumber();"  style="font-family: 'Noto Sans TC', sans-serif;"> 
+                          <option value="000/000-000">選擇卡號</option> 
+                        </select> 		
+                      </div>
+                    </div>  
+                  </div>
+              </div>
+            </div>
+            <!-- 左邊欄位 -->
+            <div class="col-lg-6">
+                <div class="card preview-card" id="preview-card-tag">
+                    <div class="card-header">
+                        <h5 style="font-family: 'Noto Sans TC', sans-serif;"  class="card-title">
+                          <i class="fas fa-image mr-2"></i>
+                          卡面預覽
+                        </h5>                      
+                        <div class="card-tools">
+                          <!-- Collapse Button -->
+                          <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                        </div>				
+                    </div>
+
+                    <div class="card-body">
+                        <div class="preview-container" id="displayCardPhoto">
+                                <div class="image-placeholder">
+                                  <i class="fas fa-image"></i>
+                                  <p>請選擇卡片查看預覽</p>
+                                </div>                          
+                                <img id="cardImg" class="img-fluid modern-card-image">
+                        </div>  
+                        <div class="overlay-wrapper" id="overlay-1">
+                                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                        </div>					
+                    </div>  
+                </div>   
+
+                <div class="card info-card">
+                    <div class="card-header">
+                      <h5 class="card-title">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        卡片資訊
+                      </h5>
+                      <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
+                          <i class="fas fa-minus"></i>
+                        </button>
+                      </div>					
+                    </div>
+                    <div class="card-body">
+                        <div class="info-swiper" id="infoSwiper">           
+                            <!-- 無資料遮罩 -->
+                            <div class="info-swiper-mask" id="infoSwiperMask">
+                                <div class="info-swiper-mask-text"><i class="fas fa-exclamation-circle mr-2"></i>無法取得資料</div>
+                            </div>
+                            <!-- 左右控制按鈕 (桌面端) -->
+                            <button class="swiper-btn swiper-prev" id="swiperPrev" aria-label="上一頁"><i class="fas fa-chevron-left"></i></button>
+                            <button class="swiper-btn swiper-next" id="swiperNext" aria-label="下一頁"><i class="fas fa-chevron-right"></i></button>
+
+                            <!-- 滑動內容容器 -->
+                            <!-- 第一頁：混合佈局（兩欄 + 單欄） --> 
+                            <div class="info-items-container" id="infoItemsContainer">
+                                <div class="info-item mixed-layout active">
+                                    <!-- 單欄區域的內容（跨越整個寬度） -->      
+                                    <div class="info-row full-width">
+                                        <i class="fas fa-star mr-2"></i>
+                                        <span>卡號</span>
+                                        <span id="cardno" class="info-value long-text white-space-nowrap">BD/W54-070SSP</span>                     
+                                    </div>      
+                                    <div class="info-row full-width">
+                                        <i class="fas fa-star mr-2"></i>
+                                        <span>卡名</span>
+                                        <span id="cardname" class="info-value long-text white-space-nowrap">“鳥籠の歌姫”湊友希那</span>                     
+                                    </div> 
+
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-star mr-2"></i>
+                                        <span>稀有度</span>
+                                        <span id="cardrare" class="info-value">SSP</span>                     
+                                    </div>
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-palette mr-2"></i>
+                                        <span>顏色</span> 
+                                        <span id="cardcolor" class="info-value" style="display: inline-block; background: #0437F2; color: #fff; padding: 2px 16px; border-radius: 2px;font-family: sans-serif;">藍</span>
+                                    </div>
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-bolt mr-2"></i>
+                                        <span>總類</span>
+                                        <span id="cardkind" class="info-value">角色</span>
+                                    </div>                  
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-bolt mr-2"></i>
+                                        <span>等級</span>
+                                        <span id="cardlevel" class="info-value">3</span>
+                                    </div>
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-heart mr-2"></i>
+                                        <span>魂</span>
+                                        <span id="cardsoul" class="info-value">2</span>
+                                    </div>
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-coins mr-2"></i>
+                                        <span>Cost</span>
+                                        <span id="cardcost" class="info-value">2</span>
+                                    </div>                    
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-shield-alt mr-2"></i>
+                                        <span>Power</span>
+                                        <span id="cardpower" class="info-value">9500</span>
+                                    </div>
+                                
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-magic mr-2"></i>
+                                        <span>サイド</span>
+                                        <span id="cardside" class="info-value">W</span>
+                                    </div>    
+                                    <div class="info-row two-col">
+                                        <i class="fas fa-users mr-2"></i>
+                                        <span>觸發</span>
+                                        <span id="cardtrigger" class="info-value">1</span>
+                                    </div>	                      
+                                    <div class="info-row full-width">
+                                        <i class="fas fa-fire mr-2"></i>
+                                        <span>特徵</span>
+                                        <span id="cardfeatures" class="info-value long-text white-space-nowrap">音楽・Roselia</span>
+                                    </div>                                 
+                            </div>            
+                            <div class="info-item single-column"> 
+                                <div class="info-row">
+                                    <i class="fas fa-users mr-2"></i>
+                                    <span>效果</span>
+                                    <span class="info-value long-text" id="cardtext">【永】 あなたのターン中、他のあなたの《音楽》のキャラ1枚につき、このカードのパワーを＋500。<br>
+                【自】 このカードが手札から舞台に置かれた時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。<br>
+                【自】【CXコンボ】［(3) 手札を2枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたのクライマックス置場に「激しいシャウト」があるなら、あなたはコストを払ってよい。そうしたら、次の行動を2回行う。『相手に2ダメージを与える。』（ダメージキャンセルは発生する）</span>
+                                </div>				  
+                            </div>
+                        </div>
+              
+                        <!-- 滑動指示器 -->
+                        <div class="swipe-indicators" id="swipeIndicators">
+                            <div class="swipe-dot active" data-index="0"></div>
+                            <div class="swipe-dot" data-index="1"></div>
+                        </div>
+                    </div>
+                </div>	  
+            </div>   
+                          
+            <!-- 鑑定卡資訊 -->
+            <div class="card grading-card" id="grading-card-tag">
+                <div class="card-header">
+                  <h5 class="card-title">
+                    <i class="fas fa-solid fa-chart-bar mr-2"></i>
+                    鑑定卡
+                  </h5>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="grading-toggle-group">
+                    <button class="grading-toggle-btn active" data-company="PSA" id="btnPSA">PSA</button>
+                    <button class="grading-toggle-btn" data-company="BGS" id="btnBGS">BGS</button>
+                    <button class="grading-toggle-btn" data-company="ARS" id="btnARS">ARS</button>
+                  </div>
+                  <div id="gradingContent">
+                    <div class="grading-placeholder">
+                      <p>請選擇卡片查看鑑定資訊</p>
+                    </div>
+                  </div>
+                  <div id="gradingTenRate" class="grading-ten-rate" style="display:none;">
+                    <div class="ten-rate-label"><i class="fas fa-gem mr-2"></i>10分率</div>
+                    <div class="ten-rate-value" id="tenRateValue">0%</div>
+                  </div>
+                </div>
+			</div>
+          </div>  <!-- /.col-md-6 -->
+          
+            <!-- 右邊欄位 -->
+            <div class="col-lg-6 d-flex flex-column">
+                <!-- 價格摘要統計卡片 -->
+                <div class="card price-summary-card" id="priceSummaryCard" style="display:none;">
+                  <div class="card-body p-3">
+                    <div class="price-summary-grid">
+                      <div class="price-summary-item current">
+                        <div class="price-summary-icon">
+                          <i class="fas fa-yen-sign"></i>
+                        </div>
+                        <div class="price-summary-content">
+                          <span class="price-summary-label">目前價格</span>
+                          <span class="price-summary-value" id="summaryCurrentPrice">--</span>
+                        </div>
+                      </div>
+                      <div class="price-summary-item highest">
+                        <div class="price-summary-icon">
+                          <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="price-summary-content">
+                          <span class="price-summary-label">當月最高</span>
+                          <span class="price-summary-value" id="summaryHighPrice">--</span>
+                        </div>
+                      </div>
+                      <div class="price-summary-item lowest">
+                        <div class="price-summary-icon">
+                          <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="price-summary-content">
+                          <span class="price-summary-label">當月最低</span>
+                          <span class="price-summary-value" id="summaryLowPrice">--</span>
+                        </div>
+                      </div>
+                      <div class="price-summary-item change">
+                        <div class="price-summary-icon">
+                          <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="price-summary-content">
+                          <span class="price-summary-label">近7天漲跌</span>
+                          <span class="price-summary-value" id="summaryChangePercent">--</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 價格走勢 -->
+                <div class="card">
+                  <div class="card-header">
+                    <h5 style="font-family: 'Noto Sans TC', sans-serif; white-space:nowrap;" class="card-title">
+                      <i class="fas fa-chart-line mr-2"></i>
+                      價格走勢<i class="fas fa-info-circle ml-1 text-muted" data-toggle="tooltip" title="資料來源：-遊々亭-" style="cursor: pointer; font-size: 0.55em;"></i> 
+                      <select class="chart-period" id="priceTimeRange" onchange="applyPriceTimeFilter(this.value)" style="display:inline-block; width:auto; max-width:3.5em; border:none; color:inherit; font:inherit; padding:0 1.1em 0 0; cursor:pointer; field-sizing:content; -webkit-appearance:none; -moz-appearance:none; appearance:none; background:transparent url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%23888' d='M0 0h10L5 7z'/%3E%3C/svg%3E&quot;) no-repeat right center;">
+                        <option value="1">(近一月)</option>
+                        <option value="3">(近三月)</option>
+                        <option value="6">(近半年)</option>
+                        <option value="12" selected>(近一年)</option>
+                      </select>
+                      
+                    </h5>                  
+                    <div class="card-tools">
+                      <!-- Collapse Button -->
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                    </div>					
+                  </div>
+                  <div class="card-body">
+                    <div class="chart">
+                      <div class="chartjs-size-monitor">
+                        <div class="chartjs-size-monitor-expand"></div>
+                        <div class="chartjs-size-monitor-shrink"></div>
+                      </div>
+                      <canvas id="myChart" class="chartjs-render-monitor"></canvas>
+                      
+                    </div>					
+                  </div>
+                  <div class="overlay-wrapper" id="overlay-2">
+                          <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                  </div>				  
+                </div>
+                <!-- 庫存走勢 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 style="font-family: 'Noto Sans TC', sans-serif; white-space:nowrap;" class="card-title">
+                            <i class="fas fa-boxes mr-2"></i>
+                            庫存走勢 <i class="fas fa-info-circle ml-1 text-muted" data-toggle="tooltip" title="資料來源：-遊々亭-" style="cursor: pointer; font-size: 0.55em;"></i> 
+                            <select class="chart-period" id="stockTimeRange" onchange="applyStockTimeFilter(this.value)" style="display:inline-block; width:auto; max-width:5em; border:none; color:inherit; font:inherit; padding:0 1.1em 0 0; cursor:pointer; field-sizing:content; -webkit-appearance:none; -moz-appearance:none; appearance:none; background:transparent url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%23888' d='M0 0h10L5 7z'/%3E%3C/svg%3E&quot;) no-repeat right center;">
+                              <option value="1">(近一月)</option>
+                              <option value="3">(近三月)</option>
+                              <option value="6">(近半年)</option>
+                              <option value="12" selected>(近一年)</option>
+                            </select>
+                        </h5>                
+                        <div class="card-tools">
+
+                            <!-- Collapse Button -->
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                        </div>					
+                    </div>
+                    <div class="card-body">
+                        <div class="chart">
+                            <div class="chartjs-size-monitor">
+                            <div class="chartjs-size-monitor-expand"></div>
+                            <div class="chartjs-size-monitor-shrink"></div>
+                            </div>
+                            <canvas id="myStockChart" class="chartjs-render-monitor"></canvas>
+                        </div>					
+                    </div>
+             
+                    <div class="overlay-wrapper" id="overlay-3">
+                            <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                    </div>				  
+                </div>
+                <!-- 補位改為外部商城搜尋 -->
+                <div class="card flex-grow-1" id="otherInfo">
+                    <div class="card-header">
+                        <h5 style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            外部商城搜尋
+                        </h5>                
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                        </div>					
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted text-sm mb-3">使用目前選擇的卡號前往外部平台搜尋：</p>
+                        <div class="d-flex flex-column" style="gap: 0.75rem;">
+                            <!-- 設定 id 以便 JS 動態更新 href -->
+                            <a href="#" id="linkMercari" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
+                                <i class="fas fa-store mr-2 text-dark"></i> Mercari 搜尋
+                            </a>
+                            <a href="#" id="linkYahoo" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
+                                <i class="fas fa-gavel mr-2 text-dark"></i> Yahoo日拍搜尋
+                            </a>
+                            <a href="#" id="linkYuyu" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
+                                <i class="fas fa-shopping-cart mr-2 text-dark"></i> 遊遊亭 搜尋
+                            </a>
+                            <a href="#" id="linkRuten" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
+                                <i class="fas fa-shopping-cart mr-2 text-dark"></i> 露天 搜尋
+                            </a>                            
+                        </div>
+                    </div>				  
+                </div>                
+                
+                
+                
+                <del></del>
+            <!-- /.grading-card -->	  
+           </div>
+          </div>
+          <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+      </div>
+      <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+  <!-- 在 body 結束標籤前添加浮動按鈕 -->
+  <div id="download-card-tag" style="display: none;">
+    <button type="button" id="downloadStatsBtn" onclick="generateStatsImage()" title="下載統計圖片" aria-label="下載近期紀錄圖片">
+      <i class="fas fa-download"></i>
+    </button>
+  </div>
+
+    <div id="scrollToTopBtn" class="scroll-to-top-btn">
+        <i class="fas fa-chevron-up"></i>
+    </div>
+
+    <!-- Control Sidebar -->
+    <aside class="control-sidebar " id="rightSideBar">
+      <!-- Control sidebar content goes here -->
+      <div class="p-3">
+        <h5><p>服務條款及免責聲明</p></h5>
+      <br>
+          <p>在使用本網站(ws-cards.cloud)前，請先閱讀利用規約及免責聲明</p><br>
+      <button id="annButton"><p>規約及免責聲明</p></button>
+      </div>
+    </aside>
+    <!-- /.control-sidebar -->
+
+    <!-- Main Footer -->
+    <footer class="main-footer site-footer">
+      <div class="site-footer-inner">
+        <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+        <span class="site-footer-sep">·</span>
+        <a href="#" onclick="$('#announceexampleModalCenter').modal('show'); return false;">利用規約及免責聲明</a>
+        <span class="site-footer-sep">·</span>
+        <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+      </div>
+    </footer>
+</div>
+
+<!-- ./wrapper -->
+
+<!-- Announce Modal -->
+<div id="card-modal-announce">
+	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
+			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+		  </div>
+		  <div class="modal-body">
+			<div id="announce-card-popup-modal">
+				<div class="row">
+					<div class="col text">
+					<ul>
+		<li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
+		<li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
+		<li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
+		<li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
+		<li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
+		<br>
+		<p>最終更新日期 2020年12月11日</p>		
+					</ul>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>			  
+					</div>				
+				</div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+</div>
+
+<!-- REQUIRED SCRIPTS -->
+
+<!--chart.js-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0" integrity="sha256-Uv9BNBucvCPipKQ2NS9wYpJmi8DTOEfTA/nH2aoJALw=" crossorigin="anonymous"></script>
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Suggest -->
+<script src="dist/js/suggest/typeahead.js"></script>	
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" integrity="sha256-Tobw4i5HcbW4qsJMYTxmGAameLGvooTQPPatA9PiGgo=" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/scroll-hint@latest/js/scroll-hint.min.js" integrity="sha256-zA/BaZ/r7sIzyuKmkaVF2w+uHXGCdAf0WDHpvM/1TY4=" crossorigin="anonymous"></script>
+	
+<!-- 實際開發位置 -->
+<script src="dist/js/wscards.line-v85.js"></script>
+<script>
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+});
+
+(function() {
+  var THEME_STORAGE_KEY = 'ws-theme';
+
+  function applyTheme(theme, btn, icon) {
+    var resolvedTheme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+
+    if (!btn || !icon) {
+      return;
+    }
+
+    var isDark = resolvedTheme === 'dark';
+    icon.classList.remove('fa-sun', 'fa-moon');
+    icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+
+    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    btn.setAttribute('title', isDark ? '切換為淺色模式' : '切換為深色模式');
+    btn.setAttribute('aria-label', isDark ? '切換為淺色模式' : '切換為深色模式');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeToggleIcon');
+    if (!btn || !icon) {
+      return;
+    }
+
+    var savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    var currentTheme = savedTheme === 'dark' ? 'dark' : 'light';
+    applyTheme(currentTheme, btn, icon);
+
+    btn.addEventListener('click', function() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme, btn, icon);
+      localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+    });
+  });
+})();
+
+document.getElementById('linkMercari').href = `https://jp.mercari.com/search?keyword=${encodeURIComponent('BD/W54-070SSP')}`;
+document.getElementById('linkYahoo').href = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent('BD/W54-070SSP')}`;
+document.getElementById('linkYuyu').href = `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent('BD/W54-070SSP')}`;
+document.getElementById('linkRuten').href = `https://www.ruten.com.tw/find/?q=${encodeURIComponent('BD/W54-070SSP')}`;    
+    // 手機模式預設關閉「外部商城搜尋」區塊 (小於 992px)
+    document.addEventListener("DOMContentLoaded", function() {
+        if (window.innerWidth < 992) {
+            var otherInfo = document.getElementById('otherInfo');
+            if (otherInfo) {
+                // 1. 預設收合
+                otherInfo.classList.add('collapsed-card');
+                var body = otherInfo.querySelector('.card-body');
+                if (body) body.style.display = 'none';
+                var icon = otherInfo.querySelector('[data-card-widget="collapse"] i');
+                if (icon) {
+                    icon.classList.remove('fa-minus');
+                    icon.classList.add('fa-plus');
+                }
+                
+                // 2. 移動到鑑定卡下方
+                var gradingCard = document.getElementById('grading-card-tag');
+                if (gradingCard && gradingCard.parentNode) {
+                    gradingCard.parentNode.insertBefore(otherInfo, gradingCard.nextSibling);
+                }
+            }
+        }
+    });
+
+    // 側邊欄開關邏輯
+    function toggleCustomDrawer(e) {
+        if(e) e.preventDefault();
+        const drawer = document.getElementById('customDrawer');
+        const overlay = document.getElementById('customDrawerOverlay');
+        if (drawer && overlay) {
+            drawer.classList.toggle('open');
+            overlay.classList.toggle('active');
+            const btn = document.getElementById('leftbar');
+            if (btn) {
+                const opened = drawer.classList.contains('open');
+                btn.classList.toggle('is-open', opened);
+                btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+                btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+            }
+        }
+    }
+    // 子選單展開邏輯
+    function toggleSubmenu(element, e) {
+        if(e) e.preventDefault();
+        const parent = element.parentElement;
+        if(parent) {
+            parent.classList.toggle('open');
+            const submenu = parent.querySelector('.submenu');
+            if(submenu) {
+                if(parent.classList.contains('open')) {
+                    submenu.style.display = 'block';
+                } else {
+                    submenu.style.display = 'none';
+                }
+            }
+        }
+    }
+
+			var annButton=document.getElementById('annButton');	
+			annButton.addEventListener("click", function(){
+				$('#announceexampleModalCenter').modal('show');	
+			});	
+
+// 初始化搜尋歷史紀錄
+if (typeof SearchHistory !== 'undefined') {
+    SearchHistory.init();
+}
+//Swal.fire({
+//  icon: 'info',
+//  title: '公告',
+//  text: '4/17 資料已復原可正常查詢'
+//})
+
+// 資訊卡片滑動功能
+class InfoSwiper {  
+   constructor() {
+        this.swiper = document.getElementById('infoSwiper');
+        this.container = document.getElementById('infoItemsContainer');
+        this.items = document.querySelectorAll('.info-item');
+        this.indicators = document.querySelectorAll('.swipe-dot');
+        this.prevBtn = document.getElementById('swiperPrev');
+        this.nextBtn = document.getElementById('swiperNext');
+        
+        this.currentIndex = 0;
+        this.totalItems = this.items.length;
+        
+        this.init();
+    }
+    
+    init() {
+        // 點擊指示器切換
+        this.indicators.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                this.goTo(index);
+                this.markHintAsSeen();
+            });
+        });
+
+        // 左右按鈕切換
+        if (this.prevBtn) {
+            this.prevBtn.addEventListener('click', () => {
+                if (this.currentIndex > 0) {
+                    this.goTo(this.currentIndex - 1);
+                    this.markHintAsSeen();
+                }
+            });
+        }
+
+        if (this.nextBtn) {
+            this.nextBtn.addEventListener('click', () => {
+                if (this.currentIndex < this.totalItems - 1) {
+                    this.goTo(this.currentIndex + 1);
+                    this.markHintAsSeen();
+                }
+            });
+        }
+
+        // 監聽滾動以更新指示器與按鈕
+        this.container.addEventListener('scroll', () => {
+            const scrollLeft = this.container.scrollLeft;
+            const itemWidth = this.container.clientWidth;
+            // 根據滾動位置計算當前索引
+            let newIndex = Math.round(scrollLeft / itemWidth);
+            
+            // 安全邊界處理
+            newIndex = Math.max(0, Math.min(newIndex, this.totalItems - 1));
+            
+            if (this.currentIndex !== newIndex) {
+                this.currentIndex = newIndex;
+                this.updateIndicators();
+                this.updateActiveItem();
+                this.updateButtons();
+                this.markHintAsSeen();
+            }
+        });
+        
+        // 初始化按鈕狀態
+        this.updateButtons();
+
+        // 自動播放提示
+        this.startHintAnimation();
+    }
+    
+    goTo(index) {
+        this.currentIndex = index;
+        const targetScrollLeft = index * this.container.clientWidth;
+        
+        this.container.scrollTo({
+            left: targetScrollLeft,
+            behavior: 'smooth'
+        });
+        
+        this.updateIndicators();
+        this.updateActiveItem();
+        this.updateButtons();
+    }
+    
+    updateButtons() {
+        if (this.prevBtn) {
+            this.prevBtn.disabled = this.currentIndex === 0;
+        }
+        if (this.nextBtn) {
+            this.nextBtn.disabled = this.currentIndex === this.totalItems - 1;
+        }
+    }
+
+    updateIndicators() {
+        this.indicators.forEach((dot, index) => {
+            dot.classList.toggle('active', index === this.currentIndex);
+        });
+    }
+    
+    updateActiveItem() {
+        this.items.forEach((item, index) => {
+            item.classList.toggle('active', index === this.currentIndex);
+        });
+    }
+
+    // 檢查是否已看過提示
+    hasSeenHint() {
+        return localStorage.getItem('infoSwiperHintSeen') === 'true';
+    }
+    
+    // 標記提示為已看過
+    markHintAsSeen() {
+        localStorage.setItem('infoSwiperHintSeen', 'true');
+        this.hideHint();
+    }
+    
+    // 隱藏提示
+    hideHint() {
+        this.swiper.classList.add('hint-hidden');
+    }
+
+    // 提示動畫- 只顯示一次
+    startHintAnimation() {
+        if (this.hasSeenHint()) {
+            this.hideHint();
+            return;
+        }
+        
+        setTimeout(() => {
+            if (!this.hasSeenHint()) {
+                // Hint display logic
+            }
+        }, 2000);
+    }
+    
+    // 響應式處理
+    handleResize() {
+        // 重置當前索引的滾動位置，確保在調整大小時仍對齊
+        this.goTo(this.currentIndex);
+    }
+
+    // 重置提示（開發測試用，可選）
+    resetHint() {
+        localStorage.removeItem('infoSwiperHintSeen');
+        this.swiper.classList.remove('hint-hidden');
+        console.log('滑動提示已重置');
+    }    
+}
+
+// 初始化滑動器
+document.addEventListener('DOMContentLoaded', function() {
+    const infoSwiper = new InfoSwiper();
+
+    // 初始化鑑定卡模組
+    if (typeof GradingModule !== 'undefined') {
+        GradingModule.init();
+    }
+    
+    // 響應式處理
+    window.addEventListener('resize', () => {
+        infoSwiper.handleResize();
+    });
+
+    // 開發者工具：在控制台輸入 resetSwipeHint() 可以重置提示（測試用）
+    window.resetSwipeHint = function() {
+        infoSwiper.resetHint();
+        location.reload();
+    };
+
+});
+
+// 回到頂部按鈕功能
+(function() {
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+  const downloadStatsBtn = document.getElementById('downloadStatsBtn');
+    let isScrolling = false;
+    
+    // 平滑滾動到頂部
+    function scrollToTop() {
+        if (isScrolling) return;
+        
+        isScrolling = true;
+        
+        // 使用原生的平滑滾動
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // 重置滾動狀態
+        setTimeout(() => {
+            isScrolling = false;
+        }, 1000);
+    }
+    
+    // 顯示/隱藏按鈕
+    function toggleScrollButton() {
+        if (window.pageYOffset > 200) {
+            scrollToTopBtn.classList.add('visible');
+      if (downloadStatsBtn) downloadStatsBtn.classList.add('visible');
+        } else {
+            scrollToTopBtn.classList.remove('visible');
+      if (downloadStatsBtn) downloadStatsBtn.classList.remove('visible');
+        }
+    }
+    
+    // 節流函數，避免過度觸發
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        }
+    }
+    
+    // 事件監聽器
+    scrollToTopBtn.addEventListener('click', scrollToTop);
+    window.addEventListener('scroll', throttle(toggleScrollButton, 100));
+    
+    // 鍵盤快捷鍵支援 (可選)
+    document.addEventListener('keydown', function(e) {
+        // 按 Home 鍵回到頂部
+        if (e.key === 'Home' && e.ctrlKey) {
+            e.preventDefault();
+            scrollToTop();
+        }
+    });
+    
+    // 初始化檢查
+    toggleScrollButton();
+})();
+
+// 當搜尋框被 focus 時，篩選卡片變半透明
+(function() {
+    const searchInput = document.getElementById('xxxx');
+    const filterCard = document.getElementById('filter-card-tag');
+    
+    if (searchInput && filterCard) {
+        // 當搜尋框獲得焦點
+        searchInput.addEventListener('focus', function() {
+            filterCard.classList.add('dimmed');
+            console.log('搜尋框被 focus，篩選卡片變半透明');
+        });
+        
+        // 當搜尋框失去焦點
+        searchInput.addEventListener('blur', function() {
+            // 延遲一點再移除效果，避免點擊下拉選項時閃爍
+            setTimeout(() => {
+                filterCard.classList.remove('dimmed');
+                console.log('搜尋框失去 focus，篩選卡片恢復正常');
+            }, 150);
+        });
+    }
+})();
+
+// 依據螢幕寬度移動鑑定卡區塊 (在手機版顯示於最下方)
+(function() {
+    function adjustGradingCardPosition() {
+        const gradingCard = document.getElementById('grading-card-tag');
+        if (!gradingCard) return;
+        
+        const leftCol = document.getElementById('preview-card-tag')?.closest('.col-lg-6');
+        const rightCol = document.getElementById('priceSummaryCard')?.closest('.col-lg-6');
+        
+        if (!leftCol || !rightCol) return;
+        
+        if (window.innerWidth < 992) {
+            // 手機、平板尺寸時(col-lg 斷點以下)，將鑑定卡移到右側欄位的最後面(確保呈現於最下方)
+            if (gradingCard.parentElement !== rightCol) {
+                rightCol.appendChild(gradingCard);
+            }
+        } else {
+            // 桌面尺寸時，移回左側欄位
+            if (gradingCard.parentElement !== leftCol) {
+                leftCol.appendChild(gradingCard);
+            }
+        }
+    }
+    
+    // 綁定 Resize 事件，並於載入完成後執行一次
+    window.addEventListener('resize', adjustGradingCardPosition);
+    adjustGradingCardPosition();
+})();
+
+// 小提示輪替：每 10 秒替換一則（先顯示 10 秒後才開始輪替）
+(function() {
+    var hintEl = document.getElementById('searchHintText');
+    if (!hintEl) return;
+
+    var hints = [
+        '輸入時按鈕會切換為搜尋，30 秒內可手動點搜尋；若未點擊才會自動查詢。',
+        '可直接貼上完整卡號（例如 PRD/W01-001）快速查詢。',
+        '點右上角月亮圖示可切換深色 / 淺色模式。',
+        '使用「篩選條件」依作品系列、產品、卡號逐步縮小查詢範圍。',
+        '價格與庫存走勢圖可切換一月 / 三月 / 半年 / 一年區間。',
+        '在「外部商城搜尋」可一鍵前往 Mercari、Yahoo 拍賣、露天等平台。'
+    ];
+
+    var index = 0;
+    setInterval(function() {
+        // 隨機挑選下一則，避免與目前同一則
+        var next = index;
+        if (hints.length > 1) {
+            while (next === index) {
+                next = Math.floor(Math.random() * hints.length);
+            }
+        }
+        index = next;
+        hintEl.style.opacity = '0';
+        setTimeout(function() {
+            hintEl.textContent = hints[index];
+            hintEl.style.opacity = '1';
+        }, 400);
+    }, 10000);
+})();
+</script>
+
+</body>
+</html>
