@@ -3,6 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    // 首次繪製前套用主題，避免記住暗黑模式時閃白
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <meta property="og:title" content="WS-Cards">
   <meta property="og:type" content="website">  
   <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">  
@@ -645,8 +656,12 @@ $(function () {
 (function() {
   var THEME_STORAGE_KEY = 'ws-theme';
 
+  function resolveTheme(theme) {
+    return theme === 'dark' ? 'dark' : 'light';
+  }
+
   function applyTheme(theme, btn, icon) {
-    var resolvedTheme = theme === 'dark' ? 'dark' : 'light';
+    var resolvedTheme = resolveTheme(theme);
     document.documentElement.setAttribute('data-theme', resolvedTheme);
 
     if (!btn || !icon) {
@@ -669,8 +684,11 @@ $(function () {
       return;
     }
 
-    var savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    var currentTheme = savedTheme === 'dark' ? 'dark' : 'light';
+    // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
+    var currentTheme = resolveTheme(
+      document.documentElement.getAttribute('data-theme') ||
+      localStorage.getItem(THEME_STORAGE_KEY)
+    );
     applyTheme(currentTheme, btn, icon);
 
     btn.addEventListener('click', function() {
