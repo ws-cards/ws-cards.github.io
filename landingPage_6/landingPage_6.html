@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulseGlow { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+@keyframes blinkCursor { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+@keyframes floatY { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-14px); } }
+@keyframes scanMove { 0% { background-position: 0 0; } 100% { background-position: 0 40px; } }
+body { margin:0; background:#05070c; font-family:'Noto Sans TC', system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:#2dd4ff; text-decoration:none; }
+a:hover { color:#8b5cf6; }
+::selection { background:#2dd4ff55; }
+</style>
+</helmet>
+
+<div style="background:#05070c; color:#e8ecf3; min-height:100vh; overflow-x:hidden; position:relative;">
+
+<header style="position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:16px 48px; background:rgba(5,7,12,0.75); backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,0.08);">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div style="width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#2dd4ff,#8b5cf6); display:flex; align-items:center; justify-content:center; font:800 15px 'JetBrains Mono'; color:#05070c;">卡</div>
+    <div style="font:800 19px 'Noto Sans TC'; letter-spacing:0.5px;">卡趨<span style="color:#2dd4ff;">Trend</span></div>
+  </div>
+  <nav style="display:flex; align-items:center; gap:36px;">
+    <a href="#chart" style="font:500 14px 'Noto Sans TC'; color:#c3cbdb;" style-hover="color:#2dd4ff;">價格趨勢</a>
+    <a href="#rank" style="font:500 14px 'Noto Sans TC'; color:#c3cbdb;" style-hover="color:#2dd4ff;">排行榜</a>
+    <a href="#search" style="font:500 14px 'Noto Sans TC'; color:#c3cbdb;" style-hover="color:#2dd4ff;">搜尋工具</a>
+    <a href="#games" style="font:500 14px 'Noto Sans TC'; color:#c3cbdb;" style-hover="color:#2dd4ff;">支援平台</a>
+  </nav>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <a href="#" style="font:500 14px 'Noto Sans TC'; color:#c3cbdb;">登入</a>
+    <a href="#search" style="padding:10px 20px; border-radius:8px; background:linear-gradient(135deg,#2dd4ff,#8b5cf6); color:#05070c; font:700 14px 'Noto Sans TC';">{{ ctaLabel }}</a>
+  </div>
+</header>
+
+<section style="position:relative; padding:88px 48px 100px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:40px; align-items:center; max-width:1440px; margin:0 auto; overflow:hidden;">
+  <div style="position:absolute; top:-140px; left:-120px; width:520px; height:520px; border-radius:50%; background:#2dd4ff; opacity:0.14; filter:blur(120px); pointer-events:none;"></div>
+  <div style="position:absolute; bottom:-160px; right:-80px; width:480px; height:480px; border-radius:50%; background:#8b5cf6; opacity:0.16; filter:blur(130px); pointer-events:none;"></div>
+  <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px); background-size:56px 56px; mask-image:radial-gradient(circle at 30% 40%, black, transparent 70%); pointer-events:none;"></div>
+
+  <div style="position:relative; z-index:2;">
+    <div style="display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px; border:1px solid rgba(45,212,255,0.35); background:rgba(45,212,255,0.08); margin-bottom:24px;">
+      <span style="width:7px; height:7px; border-radius:50%; background:#2ee6a8; animation:pulseGlow 1.6s ease-in-out infinite;"></span>
+      <span style="font:600 12.5px 'JetBrains Mono'; color:#8fe8ff; letter-spacing:0.5px;">LIVE · 即時 TCG 市場情報</span>
+    </div>
+    <h1 style="font:900 54px/1.28 'Noto Sans TC'; margin:0 0 22px; letter-spacing:-0.5px;">
+      掌握每一張卡片的<br>
+      <span style="background:linear-gradient(135deg,#2dd4ff,#8b5cf6); -webkit-background-clip:text; background-clip:text; color:transparent;">價值波動</span>
+    </h1>
+    <p style="font:400 17px/1.75 'Noto Sans TC'; color:#93a0b4; max-width:480px; margin:0 0 36px;">
+      整合寶可夢、遊戲王、MTG 等多款卡牌遊戲的即時行情，用數據幫你抓住買賣時機，不再錯過每一次漲跌。
+    </p>
+    <div style="display:flex; gap:16px; margin-bottom:44px;">
+      <a href="#search" style="padding:15px 28px; border-radius:10px; background:linear-gradient(135deg,#2dd4ff,#8b5cf6); color:#05070c; font:800 15px 'Noto Sans TC'; box-shadow:0 12px 32px -8px rgba(45,212,255,0.5);">{{ ctaLabel }} →</a>
+      <a href="#rank" style="padding:15px 28px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); color:#e8ecf3; font:700 15px 'Noto Sans TC';" style-hover="border-color:#2dd4ff; color:#2dd4ff;">查看排行榜</a>
+    </div>
+    <div style="display:flex; gap:40px;">
+      <div><div style="font:800 26px 'JetBrains Mono'; color:#fff;">44K+</div><div style="font:400 12.5px 'Noto Sans TC'; color:#7c8798; margin-top:4px;">收錄卡片</div></div>
+      <div><div style="font:800 26px 'JetBrains Mono'; color:#fff;">120+</div><div style="font:400 12.5px 'Noto Sans TC'; color:#7c8798; margin-top:4px;">追蹤商店/拍賣</div></div>
+      <div><div style="font:800 26px 'JetBrains Mono'; color:#fff;">5 分鐘</div><div style="font:400 12.5px 'Noto Sans TC'; color:#7c8798; margin-top:4px;">更新頻率</div></div>
+    </div>
+  </div>
+
+  <div style="position:relative; z-index:2; display:flex; justify-content:center;">
+    <div style="animation:floatY 6s ease-in-out infinite;">
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" title="搜尋卡片" dark="{{ true }}" hint-size="300,620">
+        <div style="height:100%; background:#0a0e17; padding:16px 14px; box-sizing:border-box; display:flex; flex-direction:column; gap:14px;">
+          <div style="font:800 16px 'Noto Sans TC'; color:#fff;">搜尋卡片</div>
+          <div style="display:flex; align-items:center; gap:8px; padding:11px 14px; border-radius:10px; background:#131a26; border:1px solid rgba(255,255,255,0.1);">
+            <span style="color:#2dd4ff; font:600 13px 'JetBrains Mono';">⌕</span>
+            <span style="font:500 13.5px 'Noto Sans TC'; color:#e8ecf3;">噴火龍 VMAX</span>
+            <span style="width:2px; height:14px; background:#2dd4ff; animation:blinkCursor 1s step-start infinite;"></span>
+          </div>
+          <div style="display:flex; gap:8px; overflow:hidden;">
+            <span style="padding:6px 12px; border-radius:999px; background:rgba(45,212,255,0.14); color:#2dd4ff; font:600 11.5px 'Noto Sans TC'; white-space:nowrap;">寶可夢</span>
+            <span style="padding:6px 12px; border-radius:999px; background:#131a26; color:#8b96a8; font:600 11.5px 'Noto Sans TC'; white-space:nowrap;">遊戲王</span>
+            <span style="padding:6px 12px; border-radius:999px; background:#131a26; color:#8b96a8; font:600 11.5px 'Noto Sans TC'; white-space:nowrap;">MTG</span>
+          </div>
+          <sc-for list="{{ heroResults }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; background:#0d121c; border:1px solid rgba(255,255,255,0.07);">
+              <div style="width:40px; height:52px; border-radius:6px; background:{{ r.grad }}; flex-shrink:0;"></div>
+              <div style="flex:1; min-width:0;">
+                <div style="font:600 12.5px 'Noto Sans TC'; color:#e8ecf3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.name }}</div>
+                <div style="font:400 10.5px 'Noto Sans TC'; color:#7c8798; margin-top:2px;">{{ r.set }}</div>
+              </div>
+              <div style="text-align:right; flex-shrink:0;">
+                <div style="font:700 12.5px 'JetBrains Mono'; color:#fff;">{{ r.price }}</div>
+                <div style="font:600 11px 'JetBrains Mono'; color:{{ r.color }};">{{ r.change }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+    </div>
+  </div>
+</section>
+
+<sc-if value="{{ showTicker }}" hint-placeholder-val="{{ true }}">
+<section style="border-top:1px solid rgba(255,255,255,0.08); border-bottom:1px solid rgba(255,255,255,0.08); background:#0a0e17; overflow:hidden; padding:16px 0;">
+  <div style="display:flex; width:max-content; animation:marquee 26s linear infinite;">
+    <sc-for list="{{ tickerLoop }}" as="t" hint-placeholder-count="16">
+      <div style="display:flex; align-items:center; gap:9px; padding:0 26px; border-right:1px solid rgba(255,255,255,0.08); white-space:nowrap;">
+        <span style="font:700 13px 'Noto Sans TC'; color:#c3cbdb;">{{ t.name }}</span>
+        <span style="font:700 13px 'JetBrains Mono'; color:#fff;">{{ t.price }}</span>
+        <span style="font:700 12.5px 'JetBrains Mono'; color:{{ t.color }};">{{ t.change }}</span>
+      </div>
+    </sc-for>
+  </div>
+</section>
+</sc-if>
+
+<section id="chart" style="max-width:1440px; margin:0 auto; padding:110px 48px 90px;">
+  <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:44px; flex-wrap:wrap; gap:20px;">
+    <div>
+      <div style="font:700 13px 'JetBrains Mono'; color:#2dd4ff; letter-spacing:1.5px; margin-bottom:10px;">02 / PRICE TREND</div>
+      <h2 style="font:800 34px 'Noto Sans TC'; margin:0;">即時價格趨勢圖表</h2>
+    </div>
+    <p style="font:400 14.5px/1.7 'Noto Sans TC'; color:#7c8798; max-width:420px; margin:0;">選擇卡片查看歷史走勢，掌握每日、每週的市場波動與交易量。</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:220px 1fr; gap:0; border-radius:20px; border:1px solid rgba(255,255,255,0.09); background:#0a0e17; overflow:hidden;">
+    <div style="border-right:1px solid rgba(255,255,255,0.08); padding:10px;">
+      <sc-for list="{{ chartCards }}" as="c" hint-placeholder-count="4">
+        <div onClick="{{ () => selectChart($index) }}" style="padding:14px 16px; border-radius:12px; cursor:pointer; margin-bottom:6px; background:{{ c.active ? 'rgba(45,212,255,0.1)' : 'transparent' }}; border:1px solid {{ c.active ? 'rgba(45,212,255,0.3)' : 'transparent' }};">
+          <div style="font:700 13.5px 'Noto Sans TC'; color:{{ c.active ? '#2dd4ff' : '#e8ecf3' }};">{{ c.name }}</div>
+          <div style="display:flex; justify-content:space-between; margin-top:6px;">
+            <span style="font:600 12px 'JetBrains Mono'; color:#8b96a8;">{{ c.price }}</span>
+            <span style="font:700 12px 'JetBrains Mono'; color:{{ c.color }};">{{ c.change }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding:32px 36px; position:relative;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px;">
+        <div>
+          <div style="font:800 20px 'Noto Sans TC'; color:#fff;">{{ activeChart.name }}</div>
+          <div style="font:400 12.5px 'Noto Sans TC'; color:#7c8798; margin-top:4px;">{{ activeChart.set }}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font:800 24px 'JetBrains Mono'; color:#fff;">{{ activeChart.price }}</div>
+          <div style="font:700 13px 'JetBrains Mono'; color:{{ activeChart.color }};">{{ activeChart.change }}（30 天）</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 640 220" style="width:100%; height:220px; overflow:visible;">
+        <defs>
+          <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="{{ activeChart.color }}" stop-opacity="0.35"></stop>
+            <stop offset="100%" stop-color="{{ activeChart.color }}" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <sc-for list="{{ gridLines }}" as="g" hint-placeholder-count="5">
+          <line x1="0" x2="640" y1="{{ g }}" y2="{{ g }}" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+        </sc-for>
+        <path d="{{ activeChart.areaPath }}" fill="url(#areaFill)"></path>
+        <path d="{{ activeChart.linePath }}" fill="none" stroke="{{ activeChart.color }}" stroke-width="2.5"></path>
+      </svg>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <sc-for list="{{ ranges }}" as="rg" hint-placeholder-count="4">
+          <span style="padding:6px 14px; border-radius:999px; font:600 12px 'JetBrains Mono'; background:{{ rg.active ? '#2dd4ff' : '#131a26' }}; color:{{ rg.active ? '#05070c' : '#8b96a8' }};">{{ rg.label }}</span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rank" style="max-width:1440px; margin:0 auto; padding:20px 48px 100px;">
+  <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:36px; flex-wrap:wrap; gap:20px;">
+    <div>
+      <div style="font:700 13px 'JetBrains Mono'; color:#8b5cf6; letter-spacing:1.5px; margin-bottom:10px;">03 / RANKINGS</div>
+      <h2 style="font:800 34px 'Noto Sans TC'; margin:0;">漲跌幅排行榜</h2>
+    </div>
+    <div style="display:flex; gap:8px; padding:6px; border-radius:12px; background:#0d121c; border:1px solid rgba(255,255,255,0.08);">
+      <sc-for list="{{ rankTabs }}" as="tb" hint-placeholder-count="3">
+        <span onClick="{{ () => selectRankTab(tb.key) }}" style="padding:9px 18px; border-radius:8px; cursor:pointer; font:700 13.5px 'Noto Sans TC'; background:{{ tb.active ? 'linear-gradient(135deg,#2dd4ff,#8b5cf6)' : 'transparent' }}; color:{{ tb.active ? '#05070c' : '#8b96a8' }};">{{ tb.label }}</span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="border-radius:20px; border:1px solid rgba(255,255,255,0.09); background:#0a0e17; overflow:hidden;">
+    <div style="display:grid; grid-template-columns:50px 3fr 1.3fr 1fr 1fr; padding:16px 28px; border-bottom:1px solid rgba(255,255,255,0.08); font:600 12px 'JetBrains Mono'; color:#7c8798;">
+      <div>#</div><div>卡片</div><div>遊戲</div><div style="text-align:right;">價格</div><div style="text-align:right;">漲跌幅</div>
+    </div>
+    <sc-for list="{{ activeRankList }}" as="item" hint-placeholder-count="5">
+      <div style="display:grid; grid-template-columns:50px 3fr 1.3fr 1fr 1fr; align-items:center; padding:16px 28px; border-bottom:1px solid rgba(255,255,255,0.05);" style-hover="background:rgba(255,255,255,0.02);">
+        <div style="font:700 14px 'JetBrains Mono'; color:#4c5768;">{{ item.rank }}</div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:38px; height:50px; border-radius:6px; background:{{ item.grad }};"></div>
+          <div>
+            <div style="font:700 14px 'Noto Sans TC'; color:#fff;">{{ item.name }}</div>
+            <div style="font:400 11.5px 'Noto Sans TC'; color:#7c8798; margin-top:2px;">{{ item.set }}</div>
+          </div>
+        </div>
+        <div style="font:500 12.5px 'Noto Sans TC'; color:#8b96a8;">{{ item.game }}</div>
+        <div style="text-align:right; font:700 14px 'JetBrains Mono'; color:#fff;">{{ item.price }}</div>
+        <div style="text-align:right; font:800 14px 'JetBrains Mono'; color:{{ item.color }};">{{ item.change }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="search" style="position:relative; padding:100px 48px; background:#0a0e17; border-top:1px solid rgba(255,255,255,0.08); border-bottom:1px solid rgba(255,255,255,0.08); overflow:hidden;">
+  <div style="position:absolute; top:20%; right:8%; width:380px; height:380px; border-radius:50%; background:#8b5cf6; opacity:0.13; filter:blur(120px); pointer-events:none;"></div>
+  <div style="max-width:1440px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; position:relative; z-index:1;">
+    <div>
+      <div style="font:700 13px 'JetBrains Mono'; color:#2dd4ff; letter-spacing:1.5px; margin-bottom:10px;">04 / SEARCH TOOL</div>
+      <h2 style="font:800 34px/1.35 'Noto Sans TC'; margin:0 0 20px;">強大的卡片搜尋工具</h2>
+      <p style="font:400 15.5px/1.8 'Noto Sans TC'; color:#8b96a8; margin:0 0 32px; max-width:440px;">用卡名、套組或條碼快速定位卡片，即時比對多平台報價，找到最划算的交易時機。</p>
+      <sc-for list="{{ searchFeatures }}" as="f" hint-placeholder-count="3">
+        <div style="display:flex; gap:14px; margin-bottom:22px;">
+          <div style="width:36px; height:36px; border-radius:9px; background:rgba(45,212,255,0.12); border:1px solid rgba(45,212,255,0.3); display:flex; align-items:center; justify-content:center; font:700 14px 'JetBrains Mono'; color:#2dd4ff; flex-shrink:0;">{{ f.icon }}</div>
+          <div>
+            <div style="font:700 14.5px 'Noto Sans TC'; color:#fff;">{{ f.title }}</div>
+            <div style="font:400 13px 'Noto Sans TC'; color:#7c8798; margin-top:4px;">{{ f.desc }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position:relative; height:420px;">
+      <sc-for list="{{ tiltCards }}" as="tc" hint-placeholder-count="3">
+        <div style="position:absolute; width:190px; height:264px; border-radius:16px; background:{{ tc.grad }}; border:1px solid rgba(255,255,255,0.15); top:{{ tc.top }}; left:{{ tc.left }}; transform:{{ tc.rot }}; box-shadow:0 30px 60px -20px rgba(0,0,0,0.6); padding:18px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;" style-hover="transform:rotate(0deg) scale(1.04); box-shadow:0 40px 70px -15px rgba(45,212,255,0.35);">
+          <div style="font:800 13px 'Noto Sans TC'; color:#fff;">{{ tc.name }}</div>
+          <div>
+            <div style="font:400 10.5px 'Noto Sans TC'; color:rgba(255,255,255,0.7);">{{ tc.set }}</div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:8px;">
+              <span style="font:800 15px 'JetBrains Mono'; color:#fff;">{{ tc.price }}</span>
+              <span style="font:700 12px 'JetBrains Mono'; color:{{ tc.color }};">{{ tc.change }}</span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section id="games" style="max-width:1440px; margin:0 auto; padding:110px 48px;">
+  <div style="text-align:center; margin-bottom:56px;">
+    <div style="font:700 13px 'JetBrains Mono'; color:#8b5cf6; letter-spacing:1.5px; margin-bottom:10px;">05 / COVERAGE</div>
+    <h2 style="font:800 34px 'Noto Sans TC'; margin:0 0 14px;">支援多款熱門卡牌遊戲</h2>
+    <p style="font:400 15px 'Noto Sans TC'; color:#7c8798; margin:0;">持續擴充中，涵蓋全球主要交易市場數據。</p>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px;">
+    <sc-for list="{{ gamesList }}" as="game" hint-placeholder-count="4">
+      <div style="padding:32px 24px; border-radius:16px; background:#0d121c; border:1px solid rgba(255,255,255,0.08); text-align:center;" style-hover="border-color:#2dd4ff;">
+        <div style="width:56px; height:56px; margin:0 auto 18px; border-radius:14px; background:linear-gradient(135deg,#2dd4ff22,#8b5cf622); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font:800 15px 'JetBrains Mono'; color:#2dd4ff;">{{ game.code }}</div>
+        <div style="font:700 15px 'Noto Sans TC'; color:#fff;">{{ game.name }}</div>
+        <div style="font:600 12.5px 'JetBrains Mono'; color:#7c8798; margin-top:6px;">{{ game.count }} 張卡片</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section style="max-width:1440px; margin:0 auto 110px; padding:0 48px;">
+  <div style="border-radius:24px; background:linear-gradient(135deg, #0d1420, #131a2a); border:1px solid rgba(45,212,255,0.25); padding:64px; display:flex; align-items:center; justify-content:space-between; gap:40px; position:relative; overflow:hidden;">
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size:44px 44px; animation:scanMove 3s linear infinite;"></div>
+    <div style="position:relative; z-index:1; max-width:520px;">
+      <div style="font:700 13px 'JetBrains Mono'; color:#2dd4ff; letter-spacing:1.5px; margin-bottom:14px;">06 / STAY UPDATED</div>
+      <h2 style="font:800 30px/1.4 'Noto Sans TC'; margin:0 0 14px; color:#fff;">設定價格提醒，不錯過任何波動</h2>
+      <p style="font:400 14.5px/1.7 'Noto Sans TC'; color:#8b96a8; margin:0;">訂閱你關注的卡片，價格突破設定門檻時立即通知。</p>
+    </div>
+    <div style="position:relative; z-index:1; display:flex; gap:12px; flex-shrink:0;">
+      <input type="email" placeholder="輸入你的 Email" style="padding:15px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#0a0e17; color:#e8ecf3; font:500 14px 'Noto Sans TC'; width:240px;"></input>
+      <a href="#" style="padding:15px 26px; border-radius:10px; background:linear-gradient(135deg,#2dd4ff,#8b5cf6); color:#05070c; font:800 14px 'Noto Sans TC'; white-space:nowrap;">立即訂閱</a>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid rgba(255,255,255,0.08); padding:56px 48px 32px;">
+  <div style="max-width:1440px; margin:0 auto;">
+    <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:40px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+          <div style="width:30px; height:30px; border-radius:7px; background:linear-gradient(135deg,#2dd4ff,#8b5cf6);"></div>
+          <div style="font:800 17px 'Noto Sans TC'; color:#fff;">卡趨 Trend</div>
+        </div>
+        <p style="font:400 13px/1.7 'Noto Sans TC'; color:#7c8798; max-width:260px;">跨遊戲 TCG 價格趨勢與市場情報平台。</p>
+      </div>
+      <div><div style="font:700 13px 'Noto Sans TC'; color:#fff; margin-bottom:14px;">產品</div><div style="display:flex; flex-direction:column; gap:10px;"><a href="#chart" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">價格趨勢</a><a href="#rank" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">排行榜</a><a href="#search" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">搜尋工具</a></div></div>
+      <div><div style="font:700 13px 'Noto Sans TC'; color:#fff; margin-bottom:14px;">資源</div><div style="display:flex; flex-direction:column; gap:10px;"><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">API 文件</a><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">市場報告</a><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">部落格</a></div></div>
+      <div><div style="font:700 13px 'Noto Sans TC'; color:#fff; margin-bottom:14px;">關於</div><div style="display:flex; flex-direction:column; gap:10px;"><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">關於我們</a><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">聯絡我們</a><a href="#" style="font:400 13px 'Noto Sans TC'; color:#8b96a8;">隱私權政策</a></div></div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:24px; font:400 12.5px 'JetBrains Mono'; color:#4c5768;">© 2026 卡趨 Trend. All rights reserved.</div>
+  </div>
+</footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;ctaLabel&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;開始搜尋卡片&quot;, &quot;tsType&quot;: &quot;string&quot;}, &quot;showTickerBar&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;}, &quot;rankDefaultTab&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;gainers&quot;, &quot;options&quot;: [&quot;gainers&quot;, &quot;losers&quot;, &quot;hot&quot;], &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { rankTab: this.props.rankDefaultTab || 'gainers', chartIdx: 0 };
+
+  gainers = [
+    { rank: 1, name: '噴火龍 VMAX', set: '烈焰昂揚 UPR 041', game: '寶可夢', price: 'NT$ 18,500', change: '+24.6%', grad: 'linear-gradient(135deg,#ff9a3c,#ff5470)', color: '#2ee6a8' },
+    { rank: 2, name: '青眼白龍（初版）', set: 'LOB-001', game: '遊戲王', price: 'NT$ 42,000', change: '+18.2%', grad: 'linear-gradient(135deg,#2dd4ff,#3b82f6)', color: '#2ee6a8' },
+    { rank: 3, name: 'Black Lotus', set: 'Alpha', game: 'MTG', price: 'NT$ 980,000', change: '+9.4%', grad: 'linear-gradient(135deg,#8b5cf6,#3b1e6d)', color: '#2ee6a8' },
+    { rank: 4, name: '路飛 SEC', set: 'ROMANCE DAWN', game: '航海王', price: 'NT$ 6,200', change: '+7.8%', grad: 'linear-gradient(135deg,#f43f5e,#7f1d1d)', color: '#2ee6a8' },
+    { rank: 5, name: '皮卡丘 illustrator', set: 'Promo', game: '寶可夢', price: 'NT$ 21,000,000', change: '+6.1%', grad: 'linear-gradient(135deg,#facc15,#f97316)', color: '#2ee6a8' },
+  ];
+  losers = [
+    { rank: 1, name: '黑魔導', set: 'SDY-006', game: '遊戲王', price: 'NT$ 2,400', change: '-12.3%', grad: 'linear-gradient(135deg,#4c1d95,#1e1b4b)', color: '#ff5470' },
+    { rank: 2, name: '超夢 EX', set: '古代咆哮 ANO', game: '寶可夢', price: 'NT$ 3,100', change: '-9.7%', grad: 'linear-gradient(135deg,#a855f7,#6d28d9)', color: '#ff5470' },
+    { rank: 3, name: 'Tarmogoyf', set: 'Future Sight', game: 'MTG', price: 'NT$ 4,600', change: '-8.5%', grad: 'linear-gradient(135deg,#22c55e,#166534)', color: '#ff5470' },
+    { rank: 4, name: '索隆 SEC', set: 'PARAMOUNT WAR', game: '航海王', price: 'NT$ 1,850', change: '-6.9%', grad: 'linear-gradient(135deg,#0ea5e9,#164e63)', color: '#ff5470' },
+    { rank: 5, name: '快龍 GX', set: '衝擊的絕頂 SM', game: '寶可夢', price: 'NT$ 2,050', change: '-4.2%', grad: 'linear-gradient(135deg,#fb7185,#9f1239)', color: '#ff5470' },
+  ];
+  hot = [
+    { rank: 1, name: '噴火龍 VMAX', set: '烈焰昂揚 UPR 041', game: '寶可夢', price: 'NT$ 18,500', change: '+24.6%', grad: 'linear-gradient(135deg,#ff9a3c,#ff5470)', color: '#2ee6a8' },
+    { rank: 2, name: '藍眼白龍 プリズマ', set: 'LDS3', game: '遊戲王', price: 'NT$ 9,800', change: '+3.1%', grad: 'linear-gradient(135deg,#38bdf8,#1e40af)', color: '#2ee6a8' },
+    { rank: 3, name: 'Sol Ring', set: 'Commander', game: 'MTG', price: 'NT$ 850', change: '-1.4%', grad: 'linear-gradient(135deg,#f59e0b,#78350f)', color: '#ff5470' },
+    { rank: 4, name: '喬巴 SEC', set: 'MEMORIAL COLLECTION', game: '航海王', price: 'NT$ 4,300', change: '+2.6%', grad: 'linear-gradient(135deg,#f472b6,#831843)', color: '#2ee6a8' },
+    { rank: 5, name: '皮卡丘 illustrator', set: 'Promo', game: '寶可夢', price: 'NT$ 21,000,000', change: '+6.1%', grad: 'linear-gradient(135deg,#facc15,#f97316)', color: '#2ee6a8' },
+  ];
+
+  chartDefs = [
+    { name: '噴火龍 VMAX', set: '烈焰昂揚 UPR 041', price: 'NT$ 18,500', change: '+24.6%', color: '#2ee6a8',
+      linePath: 'M0,170 L60,160 L120,150 L180,140 L240,120 L300,130 L360,90 L420,80 L480,60 L540,45 L600,40 L640,20',
+      areaPath: 'M0,170 L60,160 L120,150 L180,140 L240,120 L300,130 L360,90 L420,80 L480,60 L540,45 L600,40 L640,20 L640,220 L0,220 Z' },
+    { name: '青眼白龍（初版）', set: 'LOB-001', price: 'NT$ 42,000', change: '+18.2%', color: '#2ee6a8',
+      linePath: 'M0,140 L60,150 L120,130 L180,135 L240,110 L300,100 L360,105 L420,80 L480,70 L540,55 L600,50 L640,30',
+      areaPath: 'M0,140 L60,150 L120,130 L180,135 L240,110 L300,100 L360,105 L420,80 L480,70 L540,55 L600,50 L640,30 L640,220 L0,220 Z' },
+    { name: 'Black Lotus', set: 'Alpha', price: 'NT$ 980,000', change: '+9.4%', color: '#2ee6a8',
+      linePath: 'M0,90 L60,100 L120,85 L180,95 L240,80 L300,90 L360,70 L420,75 L480,60 L540,65 L600,50 L640,45',
+      areaPath: 'M0,90 L60,100 L120,85 L180,95 L240,80 L300,90 L360,70 L420,75 L480,60 L540,65 L600,50 L640,45 L640,220 L0,220 Z' },
+    { name: '黑魔導', set: 'SDY-006', price: 'NT$ 2,400', change: '-12.3%', color: '#ff5470',
+      linePath: 'M0,60 L60,75 L120,70 L180,95 L240,100 L300,120 L360,115 L420,140 L480,150 L540,160 L600,175 L640,185',
+      areaPath: 'M0,60 L60,75 L120,70 L180,95 L240,100 L300,120 L360,115 L420,140 L480,150 L540,160 L600,175 L640,185 L640,220 L0,220 Z' },
+  ];
+
+  heroResults = [
+    { name: '噴火龍 VMAX', set: '烈焰昂揚 UPR 041', price: 'NT$ 18,500', change: '+24.6%', color: '#2ee6a8', grad: 'linear-gradient(135deg,#ff9a3c,#ff5470)' },
+    { name: '噴火龍 GX PSA10', set: '禁斷的光輝 SM', price: 'NT$ 32,000', change: '+11.2%', color: '#2ee6a8', grad: 'linear-gradient(135deg,#f97316,#dc2626)' },
+    { name: '噴火龍 V SAR', set: '拳皇之刃 VSTAR', price: 'NT$ 9,400', change: '-2.3%', color: '#ff5470', grad: 'linear-gradient(135deg,#fb923c,#7c2d12)' },
+  ];
+
+  tickerBase = [
+    { name: '噴火龍 VMAX', price: 'NT$18,500', change: '+24.6%', color: '#2ee6a8' },
+    { name: '青眼白龍', price: 'NT$42,000', change: '+18.2%', color: '#2ee6a8' },
+    { name: 'Black Lotus', price: 'NT$980,000', change: '+9.4%', color: '#2ee6a8' },
+    { name: '黑魔導', price: 'NT$2,400', change: '-12.3%', color: '#ff5470' },
+    { name: '路飛 SEC', price: 'NT$6,200', change: '+7.8%', color: '#2ee6a8' },
+    { name: '超夢 EX', price: 'NT$3,100', change: '-9.7%', color: '#ff5470' },
+    { name: '皮卡丘 illustrator', price: 'NT$21,000,000', change: '+6.1%', color: '#2ee6a8' },
+    { name: 'Sol Ring', price: 'NT$850', change: '-1.4%', color: '#ff5470' },
+  ];
+
+  searchFeatures = [
+    { icon: 'Aa', title: '模糊搜尋', desc: '卡名、套組代碼、條碼皆可快速比對' },
+    { icon: '⇄', title: '跨平台比價', desc: '同步 120+ 商店與拍賣即時報價' },
+    { icon: '⏱', title: '歷史走勢', desc: '一鍵查看任一卡片的長期價格曲線' },
+  ];
+
+  tiltCardsData = [
+    { name: '噴火龍 VMAX', set: 'UPR 041', price: 'NT$18,500', change: '+24.6%', color: '#2ee6a8', grad: 'linear-gradient(160deg,#ff9a3c,#7c2d12)', top: '10px', left: '30px', rot: 'rotate(-8deg)' },
+    { name: '青眼白龍', set: 'LOB-001', price: 'NT$42,000', change: '+18.2%', color: '#2ee6a8', grad: 'linear-gradient(160deg,#38bdf8,#1e3a8a)', top: '60px', left: '160px', rot: 'rotate(5deg)' },
+    { name: 'Black Lotus', set: 'Alpha', price: 'NT$980,000', change: '+9.4%', color: '#2ee6a8', grad: 'linear-gradient(160deg,#a78bfa,#3b1e6d)', top: '0px', left: '290px', rot: 'rotate(-3deg)' },
+  ];
+
+  gamesList = [
+    { code: 'PKM', name: '寶可夢 TCG', count: '12,400+' },
+    { code: 'YGO', name: '遊戲王', count: '9,800+' },
+    { code: 'MTG', name: '魔法風雲會', count: '18,200+' },
+    { code: 'OPT', name: '航海王卡牌', count: '3,600+' },
+  ];
+
+  selectRankTab(key) { this.setState({ rankTab: key }); }
+  selectChart(idx) { this.setState({ chartIdx: idx }); }
+
+  renderVals() {
+    const rankMap = { gainers: this.gainers, losers: this.losers, hot: this.hot };
+    const activeRankList = rankMap[this.state.rankTab];
+    const rankTabs = [
+      { key: 'gainers', label: '漲幅榜', active: this.state.rankTab === 'gainers' },
+      { key: 'losers', label: '跌幅榜', active: this.state.rankTab === 'losers' },
+      { key: 'hot', label: '熱門', active: this.state.rankTab === 'hot' },
+    ];
+    const chartCards = this.chartDefs.map((c, i) => ({ ...c, active: i === this.state.chartIdx }));
+    const activeChart = this.chartDefs[this.state.chartIdx];
+    return {
+      ctaLabel: this.props.ctaLabel ?? '開始搜尋卡片',
+      showTicker: this.props.showTickerBar ?? true,
+      heroResults: this.heroResults,
+      tickerLoop: this.tickerBase.concat(this.tickerBase),
+      chartCards,
+      activeChart,
+      gridLines: [20, 60, 100, 140, 180],
+      ranges: [
+        { label: '7D', active: false }, { label: '30D', active: true },
+        { label: '90D', active: false }, { label: '1Y', active: false },
+      ],
+      rankTabs,
+      activeRankList,
+      searchFeatures: this.searchFeatures,
+      tiltCards: this.tiltCardsData,
+      gamesList: this.gamesList,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
