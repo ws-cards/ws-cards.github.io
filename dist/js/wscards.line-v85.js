@@ -31,6 +31,11 @@ function getChartLineColor() {
     return isDarkTheme() ? CHART_LINE_COLOR_DARK : CHART_LINE_COLOR_LIGHT;
 }
 
+// 同步原生 UI 的 color-scheme（依賴 <head> 內聯腳本已先設好 data-theme）
+function syncDocumentColorScheme() {
+    document.documentElement.style.colorScheme = isDarkTheme() ? 'dark' : 'light';
+}
+
 // 主題切換時，即時更新畫面上圖表的線條顏色
 function refreshChartThemeColors() {
     var color = getChartLineColor();
@@ -48,12 +53,15 @@ function refreshChartThemeColors() {
     });
 }
 
+syncDocumentColorScheme();
+
 // 監看 <html data-theme> 變化，切換深/淺色模式時重新上色
 if (typeof MutationObserver !== 'undefined') {
     (function() {
         var observer = new MutationObserver(function(mutations) {
             for (var i = 0; i < mutations.length; i++) {
                 if (mutations[i].attributeName === 'data-theme') {
+                    syncDocumentColorScheme();
                     refreshChartThemeColors();
                     break;
                 }
