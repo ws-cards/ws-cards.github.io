@@ -3,12 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="WS-Cards | 卡牌資訊一站整合">
+  <meta property="og:title" content="卡片雲 | 卡牌資訊一站整合">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
   <meta property="og:url" content="https://ws-cards.cloud">
-  <title>WS-Cards | 卡牌資訊一站整合</title>
+  <title>卡片雲 | 卡牌資訊一站整合</title>
   <meta name="description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="keywords" content="WS卡牌, 查價, 卡片搜尋, 牌組, 漲幅排行, Weiss Schwarz">
+  <meta name="author" content="ws-cards devilFox">
+  <link rel="canonical" href="https://ws-cards.cloud/">
+  <meta name="language" content="zh-TW">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,19 +29,20 @@
       --bg: #fafafa;
       --bg-alt: #f4f4f5;
       --bg-card: #ffffff;
-      --bg-dark: #090909;
+      --bg-dark: #0a0a0a;
       --bg-dark-2: #111111;
       --bg-card-dark: #141414;
-      --text: #090909;
-      --text-muted: #71717a;
-      --text-light: #a1a1aa;
-      --text-on-dark: #fafafa;
-      --text-muted-dark: rgba(250,250,250,0.55);
-      --accent: #fafafa;
+      --text: #0a0a0a;
+      --text-muted: #52525b;
+      --text-light: #71717a;
+      --text-on-dark: #ffffff;
+      --text-muted-dark: rgba(255,255,255,0.7);
+      --accent: #ffffff;
       --accent-green: #22c55e;
+      --accent-gold: #fbbf24;
       --border: rgba(0,0,0,0.08);
       --border-strong: rgba(0,0,0,0.14);
-      --border-dark: rgba(255,255,255,0.1);
+      --border-dark: rgba(255,255,255,0.12);
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
@@ -507,12 +515,14 @@
       min-height: 200px;
       transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .product-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
       border-color: var(--border-strong);
       box-shadow: var(--shadow-card);
+      background: linear-gradient(135deg, #ffffff 0%, #f9f9fb 100%);
     }
 
     .product-card__tag {
@@ -539,10 +549,51 @@
       color: var(--text-muted);
       line-height: 1.65;
       flex: 1;
+      margin-bottom: 16px;
+    }
+
+    .product-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .product-card__button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s, opacity 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .product-card:hover .product-card__button {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .product-card__button:hover {
+      background: var(--text-muted);
+      transform: translateX(2px);
     }
 
     .product-card__arrow {
-      margin-top: 20px;
       font-size: 0.8rem;
       color: var(--text-light);
       transition: transform 0.2s, color 0.2s;
@@ -916,7 +967,7 @@
     /* ========== GUIDE ========== */
     .guide {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
     }
 
@@ -1072,6 +1123,10 @@
     }
 
     /* ========== RESPONSIVE ========== */
+    @media (max-width: 1024px) {
+      .guide { grid-template-columns: repeat(2, 1fr); }
+    }
+
     @media (max-width: 900px) {
       .products { grid-template-columns: repeat(2, 1fr); }
       .product-card--wide { grid-column: span 1; }
@@ -1112,6 +1167,35 @@
       .products { grid-template-columns: 1fr; }
       .mid-cta { padding: 72px 0; }
       .footer__grid { grid-template-columns: 1fr; }
+      .guide { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 0 16px; }
+
+      .hero { padding: calc(var(--banner-height) + var(--nav-height) + 40px) 16px 40px; }
+      .hero__title { font-size: clamp(1.75rem, 6vw, 2.5rem); }
+      .hero__subtitle { font-size: 0.875rem; }
+
+      .product-card { padding: 20px; min-height: 160px; }
+      .product-card h3 { font-size: 1.1rem; }
+      .product-card__tag { font-size: 0.6rem; }
+
+      .guide-card { padding: 24px; }
+      .guide-card h3 { font-size: 1.25rem; }
+
+      .section__title { font-size: clamp(1.5rem, 4vw, 2rem); }
+      .feature__content h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); }
+
+      .mockup { border-radius: var(--radius-md); }
+      .mockup__body { padding: 16px; }
+      .mockup__value { font-size: 1.5rem; }
+      .mockup__table { font-size: 0.7rem; }
+      .mockup__table th { padding: 6px 0; }
+      .mockup__table td { padding: 8px 0; }
+
+      .footer__grid { gap: 24px; }
+      .footer__col h4 { font-size: 0.6rem; }
     }
   </style>
 </head>
@@ -1127,8 +1211,8 @@
   <nav class="navbar" id="navbar">
     <div class="navbar__inner">
       <a href="#" class="navbar__logo">
-        <div class="navbar__logo-icon">W</div>
-        <span>WS-Cards</span>
+        <div class="navbar__logo-icon">卡</div>
+        <span>卡片雲</span>
       </a>
       <ul class="navbar__links" id="navLinks">
         <li><a href="#products">功能</a></li>
@@ -1138,7 +1222,6 @@
       <div class="navbar__actions">
         <span class="status-pill"><span class="status-pill__dot"></span>線上運作</span>
         <a href="searchCard.html" class="btn btn--ghost">查卡</a>
-        <a href="index.html" class="btn btn--primary">進入網站</a>
         <button class="navbar__toggle" id="navToggle" aria-label="選單"><i class="fas fa-bars"></i></button>
       </div>
     </div>
@@ -1146,12 +1229,11 @@
 
   <section class="hero">
     <div class="dot-grid" aria-hidden="true"></div>
-    <p class="hero__brand reveal">WS-Cards</p>
+    <p class="hero__brand reveal">卡片雲</p>
     <h1 class="hero__title reveal">卡牌玩家<br><em>查價的新方式</em></h1>
     <p class="hero__subtitle reveal">查價、牌組、漲幅、庫存一站整合。<br>專為 WS 玩家整理的實用小工具。</p>
     <div class="hero__cta reveal">
       <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
-      <a href="index.html" class="btn btn--ghost">進入主站</a>
     </div>
     <div class="hero__trust reveal">
       <p class="hero__trust-label">整合多個賣場與賽事資料來源</p>
@@ -1179,44 +1261,51 @@
         <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
       </div>
       <div class="products">
-        <a href="deckPrice.html" class="product-card reveal">
-          <span class="product-card__tag">price</span>
-          <h3>多賣場查價</h3>
-          <p>整合露天、蝦皮、Yahoo 等賣場報價，支援卡名與編號查詢，一眼掌握行情。</p>
-          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
-        </a>
-        <a href="championList.html" class="product-card reveal">
-          <span class="product-card__tag">decks</span>
-          <h3>優勝牌組庫</h3>
-          <p>收錄日本、台灣各大賽事優勝牌組，按系列與色別篩選參考構築。</p>
-          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
-        </a>
-        <a href="increase.html" class="product-card reveal">
+        <div href="line_test_v86.html" class="product-card reveal" data-href="line_test_v86.html">
           <span class="product-card__tag">trends</span>
-          <h3>漲幅排行</h3>
-          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
-          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
-        </a>
-        <a href="stockCard.html" class="product-card product-card--wide reveal">
-          <span class="product-card__tag">inventory</span>
-          <h3>庫存監控</h3>
-          <p>追蹤各賣場上架數量變化，判斷供需關係與價格走勢。</p>
-          <div class="product-card__preview">
-            <span class="hl">BD/W54-070SSP</span> · 上架 23 件 · 較上月 <span class="hl">-38%</span>
+          <h3>各卡號漲幅趨勢</h3>
+          <p>追蹤單張卡片的價格變化趨勢，掌握市場動態與投資機會。</p>
+          <div class="product-card__footer">
+            <button class="product-card__button">查看 <i class="fas fa-arrow-right"></i></button>
+            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
           </div>
-        </a>
-        <a href="demoAndDeckPrice.html" class="product-card reveal">
-          <span class="product-card__tag">analysis</span>
-          <h3>牌組總價分析</h3>
-          <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
-          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
-        </a>
-        <a href="searchCard.html" class="product-card reveal">
+        </div>
+        <div href="searchCard.html" class="product-card reveal" data-href="searchCard.html">
           <span class="product-card__tag">search</span>
           <h3>卡片搜尋</h3>
           <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。</p>
-          <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
-        </a>
+          <div class="product-card__footer">
+            <button class="product-card__button">搜尋 <i class="fas fa-arrow-right"></i></button>
+            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+          </div>
+        </div>
+        <div href="championList.html" class="product-card reveal" data-href="championList.html">
+          <span class="product-card__tag">decks</span>
+          <h3>優勝上位牌組</h3>
+          <p>收錄日本、台灣各大賽事優勝牌組，按系列與色別篩選參考構築。</p>
+          <div class="product-card__footer">
+            <button class="product-card__button">瀏覽 <i class="fas fa-arrow-right"></i></button>
+            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+          </div>
+        </div>
+        <div href="increase.html" class="product-card reveal" data-href="increase.html">
+          <span class="product-card__tag">trends</span>
+          <h3>漲幅排行</h3>
+          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
+          <div class="product-card__footer">
+            <button class="product-card__button">排行 <i class="fas fa-arrow-right"></i></button>
+            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+          </div>
+        </div>
+        <div href="demoAndDeckPrice.html" class="product-card reveal" data-href="demoAndDeckPrice.html">
+          <span class="product-card__tag">analysis</span>
+          <h3>牌組分析</h3>
+          <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
+          <div class="product-card__footer">
+            <button class="product-card__button">分析 <i class="fas fa-arrow-right"></i></button>
+            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1226,21 +1315,21 @@
 
       <div class="feature reveal">
         <div class="feature__content">
-          <p class="section__eyebrow">多賣場查價</p>
-          <h2>一眼掌握行情</h2>
-          <p>整合多個賣場的報價資料，不用再一個一個網站搜尋。支援卡名、編號查詢，快速找到你想要的價格。</p>
-          <a href="deckPrice.html" class="feature__link">查看價格 <i class="fas fa-arrow-right"></i></a>
+          <p class="section__eyebrow">各卡號漲幅趨勢</p>
+          <h2>追蹤單張卡片走勢</h2>
+          <p>深入分析每張卡片的價格變化趨勢，掌握市場動態與投資機會。了解歷史漲跌，預判未來行情。</p>
+          <a href="line_test_v86.html" class="feature__link">查看趨勢 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
           <div class="mockup">
             <div class="mockup__bar">
               <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>查價模式</span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>趨勢分析</span></div>
             </div>
             <div class="mockup__body">
-              <div class="mockup__label">BD/W54-070SSP 現價</div>
+              <div class="mockup__label">BD/W54-070SSP 價格走勢</div>
               <div class="mockup__value">NT$ 12,800</div>
-              <span class="mockup__tag">較上週 +8.2%</span>
+              <span class="mockup__tag">過去30天 +8.2%</span>
               <div class="mockup__chart">
                 <svg viewBox="0 0 300 80" preserveAspectRatio="none">
                   <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15" fill="none" stroke="#fafafa" stroke-width="2"/>
@@ -1248,18 +1337,6 @@
                 </svg>
               </div>
               <div class="mockup__tabs-row"><span class="active">1W</span><span>1M</span><span>3M</span><span>1Y</span></div>
-              <table class="mockup__table">
-                <thead><tr><th>賣場</th><th>價格</th><th>日期</th><th>狀態</th></tr></thead>
-                <tbody>
-                  <tr><td>露天</td><td>NT$ 12,800</td><td>6/17</td><td><span class="mockup__status mockup__status--up">最低</span></td></tr>
-                  <tr><td>蝦皮</td><td>NT$ 13,500</td><td>6/16</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
-                  <tr><td>Yahoo</td><td>NT$ 14,200</td><td>6/15</td><td><span class="mockup__status mockup__status--ok">正常</span></td></tr>
-                </tbody>
-              </table>
-              <div class="mockup__actions">
-                <button class="mockup__btn mockup__btn--primary">加入追蹤</button>
-                <button class="mockup__btn mockup__btn--ghost">分享</button>
-              </div>
             </div>
           </div>
         </div>
@@ -1267,7 +1344,37 @@
 
       <div class="feature feature--reverse reveal">
         <div class="feature__content">
-          <p class="section__eyebrow">優勝牌組</p>
+          <p class="section__eyebrow">卡片搜尋</p>
+          <h2>快速查詢卡片資訊</h2>
+          <p>輸入卡名或編號，立即找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
+          <a href="searchCard.html" class="feature__link">開始搜尋 <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="feature__visual">
+          <div class="mockup">
+            <div class="mockup__bar">
+              <div class="mockup__dots"><span></span><span></span><span></span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>卡片搜尋</span></div>
+            </div>
+            <div class="mockup__body">
+              <div class="mockup__label">搜尋結果</div>
+              <div class="mockup__value" style="font-size:1.25rem">BD/W54-070SSP</div>
+              <span class="mockup__tag">Weiss Schwarz</span>
+              <table class="mockup__table">
+                <thead><tr><th>賣場</th><th>價格</th><th>更新時間</th></tr></thead>
+                <tbody>
+                  <tr><td>露天拍賣</td><td>NT$ 12,800</td><td>今天</td></tr>
+                  <tr><td>蝦皮購物</td><td>NT$ 13,500</td><td>今天</td></tr>
+                  <tr><td>Yahoo拍賣</td><td>NT$ 14,200</td><td>昨天</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature reveal">
+        <div class="feature__content">
+          <p class="section__eyebrow">優勝上位牌組</p>
           <h2>站在巨人的肩膀上</h2>
           <p>收錄日本、台灣各大賽事的優勝牌組，參考高手怎麼組牌。按系列、色別、賽事篩選，找到適合你的構築。</p>
           <a href="championList.html" class="feature__link">看牌組 <i class="fas fa-arrow-right"></i></a>
@@ -1300,11 +1407,11 @@
         </div>
       </div>
 
-      <div class="feature reveal">
+      <div class="feature feature--reverse reveal">
         <div class="feature__content">
-          <p class="section__eyebrow">漲幅追蹤</p>
+          <p class="section__eyebrow">漲幅排行</p>
           <h2>掌握市場脈動</h2>
-          <p>追蹤卡片價格的漲跌趨勢，及早發現潛力卡與泡沫。按漲幅排序，一眼看出市場熱點。</p>
+          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。實時更新排行榜，一眼看出市場焦點。</p>
           <a href="increase.html" class="feature__link">看漲幅 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
@@ -1335,27 +1442,26 @@
         </div>
       </div>
 
-      <div class="feature feature--reverse reveal">
+      <div class="feature reveal">
         <div class="feature__content">
-          <p class="section__eyebrow">庫存監控</p>
-          <h2>供需一目了然</h2>
-          <p>觀察賣場上架數量的變化，判斷市場供需。庫存減少往往意味著價格即將波動。</p>
-          <a href="stockCard.html" class="feature__link">查庫存 <i class="fas fa-arrow-right"></i></a>
+          <p class="section__eyebrow">牌組分析</p>
+          <h2>精準規劃組牌預算</h2>
+          <p>計算牌組總價趨勢，比較市場平均，輔助你的組牌預算規劃。分析單卡成本分佈，優化採購策略。</p>
+          <a href="demoAndDeckPrice.html" class="feature__link">開始分析 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
           <div class="mockup">
             <div class="mockup__bar">
               <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>庫存監控</span></div>
+              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>分析工具</span></div>
             </div>
             <div class="mockup__body">
-              <div class="mockup__label">BD/W54-070SSP 上架數</div>
-              <div class="mockup__value">23 件</div>
-              <span class="mockup__tag mockup__tag--warn">較上月 -38%</span>
+              <div class="mockup__label">牌組總價</div>
+              <div class="mockup__value">NT$ 48,500</div>
+              <span class="mockup__tag">市場平均 NT$ 45,200</span>
               <div class="mockup__bars">
-                <div class="mockup__bar-row"><span class="mockup__bar-label">露天</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:45%"></div></div><span class="mockup__bar-val">10</span></div>
-                <div class="mockup__bar-row"><span class="mockup__bar-label">蝦皮</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:70%"></div></div><span class="mockup__bar-val">16</span></div>
-                <div class="mockup__bar-row"><span class="mockup__bar-label">Yahoo</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:25%"></div></div><span class="mockup__bar-val">6</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">高稀有</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:70%"></div></div><span class="mockup__bar-val">70%</span></div>
+                <div class="mockup__bar-row"><span class="mockup__bar-label">普卡</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:30%"></div></div><span class="mockup__bar-val">30%</span></div>
               </div>
             </div>
           </div>
@@ -1407,16 +1513,22 @@
     <div class="container">
       <div class="guide">
         <div class="guide-card reveal">
-          <p class="guide-card__label">主站</p>
-          <h3>探索全部功能</h3>
-          <p>主站整合查價、牌組、漲幅、庫存等所有工具。收藏本站，隨時掌握 WS 卡牌市場動態。</p>
-          <a href="index.html" class="btn btn--dark">進入主站 <i class="fas fa-home"></i></a>
-        </div>
-        <div class="guide-card reveal">
           <p class="guide-card__label">搜尋</p>
           <h3>立即查詢你關心的卡</h3>
           <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
           <a href="searchCard.html" class="btn btn--outline-dark">開始查卡 <i class="fas fa-search"></i></a>
+        </div>
+        <div class="guide-card reveal">
+          <p class="guide-card__label">構築</p>
+          <h3>參考優勝牌組</h3>
+          <p>站在高手的肩膀上。精選日本、台灣優勝牌組，按色別、系列篩選適合你的構築。</p>
+          <a href="championList.html" class="btn btn--outline-dark">看牌組 <i class="fas fa-trophy"></i></a>
+        </div>
+        <div class="guide-card reveal">
+          <p class="guide-card__label">追蹤</p>
+          <h3>掌握市場漲跌</h3>
+          <p>實時更新單卡漲幅排行，一眼看出市場焦點。及早發現熱點卡與投資機會。</p>
+          <a href="increase.html" class="btn btn--outline-dark">看漲幅 <i class="fas fa-chart-line"></i></a>
         </div>
       </div>
     </div>
@@ -1430,7 +1542,6 @@
         <p class="final-cta__text">查價、牌組、漲幅、庫存一站整合。現在就開始查詢你關心的卡片。</p>
         <div class="final-cta__buttons">
           <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
-          <a href="index.html" class="btn btn--ghost">進入主站</a>
         </div>
       </div>
     </div>
@@ -1441,10 +1552,10 @@
       <div class="footer__grid">
         <div class="footer__brand">
           <a href="#" class="navbar__logo">
-            <div class="navbar__logo-icon">W</div>
-            <span>WS-Cards</span>
+            <div class="navbar__logo-icon">卡</div>
+            <span>卡片雲</span>
           </a>
-          <p>一個 WS 玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
+          <p>一個卡牌玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
         </div>
         <div class="footer__col">
           <h4>功能</h4>
@@ -1473,7 +1584,7 @@
         </div>
       </div>
       <div class="footer__bottom">
-        <span>&copy; 2026 WS-Cards</span>
+        <span>&copy; 2026 卡片雲</span>
         <div class="footer__mode" aria-hidden="true">
           <span>PLAYER</span>
           <span>COLLECTOR</span>
@@ -1501,6 +1612,14 @@
       navLinks.querySelectorAll('a').forEach(function (link) {
         link.addEventListener('click', function () {
           navLinks.classList.remove('is-open');
+        });
+      });
+
+      var productCards = document.querySelectorAll('.product-card');
+      productCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          var href = card.getAttribute('data-href');
+          if (href) window.location.href = href;
         });
       });
 
