@@ -2917,8 +2917,10 @@ colorElement.style.padding = '2px 16px';
 colorElement.style.borderRadius = '2px';
 colorElement.style.display = 'inline-block';
 
-// 更新種類
-document.getElementById('cardkind').textContent = cardData.cardkind || '-' ;
+// 更新種類（0→角色、1→事件、2→名場面）
+document.getElementById('cardkind').textContent = (cardData.cardkind !== undefined && cardData.cardkind !== null && cardData.cardkind !== '')
+    ? getAdvKindLabel(cardData.cardkind)
+    : '-' ;
 
 // 更新等級
 document.getElementById('cardlevel').textContent = cardData.cardlevel || '-' ;
