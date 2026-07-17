@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WS 卡片最高價排行｜巔峰價值指標</title>
-  <meta name="description" content="聚焦 WS 卡片市場成交與稀有度，呈現最高價格排行與收藏級參考指標。" />
+  <title>遊遊亭 WS 卡價排行｜5000 日圓以上頂級逸品</title>
+  <meta name="description" content="記錄日本卡店遊遊亭 WS 卡片卡價排行，僅收錄卡價達 5000 日圓以上之卡牌。" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -150,6 +150,84 @@
     .flip-inner.is-flipped .flip-face--front {
       pointer-events: none;
     }
+
+    /* 稀有度篩選：浮動按鈕（僅排行畫面顯示） */
+    .rarity-fab {
+      position: fixed;
+      right: 18px;
+      top: 50%;
+      z-index: 7900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 9999px;
+      color: #0D0D12;
+      background: linear-gradient(135deg, #e8d5a3, #c9a962);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 10px 30px -6px rgba(201, 169, 98, 0.5), 0 0 0 1px rgba(201, 169, 98, 0.3);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-50%) scale(0.6);
+      transition: transform .45s cubic-bezier(0.65, 0, 0.24, 1), opacity .45s ease, box-shadow .3s ease;
+    }
+    body.ranking-active .rarity-fab { display: flex; opacity: 1; transform: translateY(-50%) scale(1); }
+    .rarity-fab:hover { box-shadow: 0 14px 36px -6px rgba(201, 169, 98, 0.7); }
+    .rarity-fab:active { transform: translateY(-50%) scale(0.94); }
+    .rarity-fab__badge {
+      position: absolute; top: -4px; right: -4px;
+      min-width: 20px; height: 20px; padding: 0 5px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 9999px;
+      background: #16161f; color: #e8d5a3;
+      font-size: 11px; font-weight: 700; line-height: 1;
+      border: 1px solid rgba(201, 169, 98, 0.5);
+    }
+    .rarity-fab__badge.hidden { display: none; }
+
+    /* 稀有度篩選：彈出視窗 */
+    .rarity-modal { position: fixed; inset: 0; z-index: 8800; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .rarity-modal[hidden] { display: none; }
+    .rarity-modal__backdrop { position: absolute; inset: 0; background: rgba(5, 5, 9, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .rarity-modal__panel {
+      position: relative;
+      width: 100%; max-width: 440px;
+      max-height: 82vh; display: flex; flex-direction: column;
+      border-radius: 18px;
+      background: rgba(22, 22, 31, 0.94);
+      border: 1px solid rgba(201, 169, 98, 0.28);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+      animation: rarityIn .35s cubic-bezier(0.65, 0, 0.24, 1);
+    }
+    @keyframes rarityIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: none; } }
+    .rarity-modal__head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 6px; }
+    .rarity-modal__head h3 { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 24px; font-weight: 600; color: #f5f5f4; }
+    .rarity-modal__close { color: #a8a29e; font-size: 26px; line-height: 1; width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; }
+    .rarity-modal__close:hover { color: #e8d5a3; background: rgba(201, 169, 98, 0.12); }
+    .rarity-modal__hint { padding: 0 20px 10px; font-size: 12px; color: #78716c; }
+    .rarity-modal__actions { display: flex; gap: 10px; padding: 0 20px 12px; }
+    .rarity-modal__actions button { font-size: 12px; letter-spacing: .05em; padding: 6px 14px; border-radius: 9999px; border: 1px solid rgba(201, 169, 98, 0.3); color: #e8d5a3; transition: background .2s; }
+    .rarity-modal__actions button:hover { background: rgba(201, 169, 98, 0.12); }
+    .rarity-modal__options { padding: 4px 20px 10px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 9px; align-content: flex-start; }
+    .rarity-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 13px; border-radius: 9999px;
+      font-size: 13px; font-weight: 500;
+      border: 1px solid rgba(201, 169, 98, 0.25);
+      color: #d6d3d1; background: rgba(255, 255, 255, 0.02);
+      cursor: pointer; transition: background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .rarity-chip:hover { border-color: rgba(201, 169, 98, 0.55); }
+    .rarity-chip__count { font-size: 11px; color: #78716c; }
+    .rarity-chip[aria-pressed="true"] {
+      background: linear-gradient(135deg, rgba(232, 213, 163, 0.92), rgba(201, 169, 98, 0.88));
+      border-color: transparent; color: #0D0D12;
+    }
+    .rarity-chip[aria-pressed="true"] .rarity-chip__count { color: rgba(13, 13, 18, 0.6); }
+    .rarity-modal__foot { padding: 12px 20px 18px; border-top: 1px solid rgba(201, 169, 98, 0.12); }
+    .rarity-modal__apply { width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; color: #0D0D12; background: linear-gradient(135deg, #e8d5a3, #c9a962); transition: filter .2s; }
+    .rarity-modal__apply:hover { filter: brightness(1.06); }
   </style>
 </head>
 <body class="bg-void text-stone-200 antialiased selection:bg-champagne/30 selection:text-white overflow-x-hidden">
@@ -201,14 +279,14 @@
       <div class="relative z-10 mx-auto max-w-6xl px-5 pb-24 pt-32 lg:px-8 lg:pt-36">
         <p class="reveal-up mb-4 inline-flex items-center gap-2 rounded-full border border-champagne/25 bg-void-50/60 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-champagne-light/90">
           <iconify-icon icon="mdi:chart-timeline-variant" class="text-base" aria-hidden="true"></iconify-icon>
-          最高價格排行
+          遊遊亭 WS 卡價排行
         </p>
         <h1 class="font-serif text-4xl font-semibold leading-[1.12] text-stone-50 sm:text-5xl lg:text-6xl xl:text-7xl">
-          <span id="heroTitle" class="block">卡牌數據分析</span>
+          <span id="heroTitle" class="block">遊遊亭卡價排行</span>
         </h1>
         <p class="reveal-up mt-6 max-w-xl text-base leading-relaxed text-stone-400 sm:text-lg">
-          以頂級成交紀錄與稀有度為核心，為您呈現市場上最具指標性的 WS 卡牌價值。在優雅的暗色沉浸式介面中，探索專屬於收藏家的榮耀篇章。
-          <span class="mt-3 block text-sm md:text-base font-medium text-champagne/90">※ 提示：本排行僅收錄市場價值達 5000 日圓以上之頂級逸品</span>
+          記錄日本卡店遊遊亭的 WS 卡價排行，僅收錄卡價達 5000 日圓以上之卡牌。在優雅的暗色沉浸式介面中，探索專屬於收藏家的榮耀篇章。
+          <span class="mt-3 block text-sm md:text-base font-medium text-champagne/90">※ 資料來源：日本卡店遊遊亭｜僅收錄 WS 卡價 5000 日圓以上之卡牌</span>
         </p>
         <div class="reveal-up mt-10 flex flex-wrap items-center gap-4">
           <a href="#" data-magnetic data-open-ranking class="btn-cta inline-flex items-center gap-2 rounded-full bg-champagne px-8 py-3.5 text-base font-semibold text-void shadow-xl shadow-champagne/20">
@@ -307,8 +385,8 @@
                 <iconify-icon icon="solar:database-bold" class="text-xl"></iconify-icon>
               </span>
               <div>
-                <h3 class="font-medium text-stone-200">多源數據匯流</h3>
-                <p class="mt-1 text-sm text-stone-500">嚴密整合公開成交紀錄、社群交易與可信賴之市場通路，建構具高公信力、可追溯之價格樣本庫。</p>
+                <h3 class="font-medium text-stone-200">遊遊亭單一來源</h3>
+                <p class="mt-1 text-sm text-stone-500">資料統一取自日本卡店遊遊亭之 WS 卡片牌價，建構具高公信力、可追溯之價格樣本庫。</p>
               </div>
             </li>
             <li class="flex gap-4">
@@ -341,7 +419,7 @@
       <div class="relative z-10 mx-auto max-w-3xl px-5 text-center lg:px-8">
         <p class="text-xs font-medium uppercase tracking-[0.35em] text-champagne/80">APEX · WS CARDS</p>
         <h2 class="mt-4 font-serif text-3xl font-semibold text-white sm:text-4xl lg:text-5xl">準備好領略夢幻逸品了嗎？</h2>
-        <p class="mx-auto mt-5 max-w-lg text-stone-400">立即啟動查詢，沉浸於頂級卡牌的專屬排行榜中。我們精心打造暗黑奢華視覺介面，以此致敬每一位在卡牌市場中探尋極致價值的品味藏家。</p>
+        <p class="mx-auto mt-5 max-w-lg text-stone-400">立即啟動查詢，沉浸於遊遊亭 WS 卡價達 5000 日圓以上的頂級排行榜中。我們精心打造暗黑奢華視覺介面，以此致敬每一位在卡牌市場中探尋極致價值的品味藏家。</p>
         <div class="mt-10 flex flex-wrap justify-center gap-4">
           <a href="#" data-magnetic data-open-ranking class="btn-cta inline-flex items-center gap-2 rounded-full bg-champagne px-10 py-4 text-base font-semibold text-void shadow-xl shadow-champagne/25">
             <iconify-icon icon="solar:bolt-circle-bold" class="text-xl"></iconify-icon>
@@ -380,7 +458,7 @@
               返回首頁
             </button>
             <div class="text-right">
-              <p class="font-serif text-sm text-stone-100 md:text-base">最高價格排行</p>
+              <p class="font-serif text-sm text-stone-100 md:text-base">遊遊亭 WS 卡價排行</p>
               <p class="text-[11px] text-champagne/80 md:text-xs">※ 僅列出 5000 日幣以上</p>
             </div>
           </div>
@@ -392,6 +470,32 @@
           </div>
           <div id="rankingList" class="flex flex-col gap-4" aria-live="polite"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 稀有度篩選：浮動按鈕（僅排行畫面顯示） -->
+  <button id="rarityFabBtn" type="button" class="rarity-fab" aria-label="稀有度篩選" aria-haspopup="dialog" aria-expanded="false" title="稀有度篩選">
+    <iconify-icon icon="solar:filter-bold" class="text-2xl" aria-hidden="true"></iconify-icon>
+    <span id="rarityFabBadge" class="rarity-fab__badge hidden">0</span>
+  </button>
+
+  <!-- 稀有度篩選：彈出視窗 -->
+  <div id="rarityModal" class="rarity-modal" role="dialog" aria-modal="true" aria-labelledby="rarityModalTitle" hidden>
+    <div class="rarity-modal__backdrop" data-rarity-close></div>
+    <div class="rarity-modal__panel">
+      <div class="rarity-modal__head">
+        <h3 id="rarityModalTitle">稀有度篩選</h3>
+        <button type="button" class="rarity-modal__close" data-rarity-close aria-label="關閉">&times;</button>
+      </div>
+      <p class="rarity-modal__hint">選擇欲顯示的稀有度，排行僅呈現所選稀有度之卡牌。</p>
+      <div class="rarity-modal__actions">
+        <button type="button" id="rarityAll">全選</button>
+        <button type="button" id="rarityNone">清除</button>
+      </div>
+      <div id="rarityOptions" class="rarity-modal__options"></div>
+      <div class="rarity-modal__foot">
+        <button type="button" id="rarityApply" class="rarity-modal__apply">套用篩選</button>
       </div>
     </div>
   </div>
@@ -460,6 +564,19 @@
         var num = Number(n);
         if (!isFinite(num)) return '—';
         return new Intl.NumberFormat('ja-JP').format(num) + ' 円';
+      }
+
+      /**
+       * 從卡號解析稀有度碼：取「-」後段末端的大寫字母（忽略平行版小寫尾碼與結尾 '+'）。
+       * 例：W114-049ABR → ABR、W64-T18SP → SP、W131-061A → A、-098Aa → A。
+       * 無可辨識稀有度者（純數字流水號等）歸為「其他」。
+       */
+      function parseRarity(cardNo) {
+        var s = String(cardNo == null ? '' : cardNo);
+        var dash = s.lastIndexOf('-');
+        var id = (dash >= 0 ? s.slice(dash + 1) : s).replace(/\+$/, '');
+        var m = id.match(/([A-Z]+)[a-z]*$/);
+        return m ? m[1] : '其他';
       }
 
       /** 卡號→價格物件：依 JSON 鍵順序取前 limit 筆 */
@@ -597,18 +714,34 @@
         renderVisibleItems(false);
       }
 
-      function initVirtualScroll(cards) {
+      /** 重新渲染列表（用於初次載入與稀有度篩選切換）；會重置捲動位置 */
+      function renderRankingList(cards) {
         vsData = cards;
+        if (typeof gsap !== 'undefined') gsap.killTweensOf('#rankingList .ranking-row');
+        vsRenderedNodes.forEach(function (node) { node.remove(); });
+        vsRenderedNodes.clear();
         rankingList.innerHTML = '';
-        scrollContainer = document.querySelector('.flip-face--back');
-
         rankingList.className = 'relative w-full';
+        if (scrollContainer) scrollContainer.scrollTo(0, 0);
+
+        if (!cards.length) {
+          rankingList.style.height = 'auto';
+          rankingList.innerHTML =
+            '<div class="py-24 text-center text-stone-500">' +
+            '<p class="font-serif text-xl text-stone-400">查無符合的卡牌</p>' +
+            '<p class="mt-2 text-sm">請於稀有度篩選中調整選項。</p></div>';
+          return;
+        }
+
         rankingList.style.height = (cards.length * getVsItemHeight()) + 'px';
-        
+        renderVisibleItems(true); // 渲染最初的幾筆
+      }
+
+      function initVirtualScroll(cards) {
+        scrollContainer = document.querySelector('.flip-face--back');
         scrollContainer.addEventListener('scroll', handleVirtualScroll);
         window.addEventListener('resize', handleResize);
-
-        renderVisibleItems(true); // 渲染最初的幾筆
+        renderRankingList(cards);
       }
 
       function loadRankingData() {
@@ -618,16 +751,132 @@
         });
       }
 
+      /* ===== 稀有度篩選 ===== */
+      var rarityFabBtn = document.getElementById('rarityFabBtn');
+      var rarityFabBadge = document.getElementById('rarityFabBadge');
+      var rarityModal = document.getElementById('rarityModal');
+      var rarityOptions = document.getElementById('rarityOptions');
+      var rankingAllCards = [];      // 完整資料（未篩選）
+      var rarityCounts = {};         // 稀有度碼 → 數量
+      var rarityOrder = [];          // 依數量排序的稀有度碼
+      var activeRarities = null;     // 已套用：null = 全部；否則為 Set
+      var pendingRarities = null;    // 視窗內暫存選取（套用前）
+
+      function buildRarityIndex(cards) {
+        rarityCounts = {};
+        cards.forEach(function (c) {
+          var r = c.rarity || '其他';
+          rarityCounts[r] = (rarityCounts[r] || 0) + 1;
+        });
+        rarityOrder = Object.keys(rarityCounts).sort(function (a, b) {
+          if (rarityCounts[b] !== rarityCounts[a]) return rarityCounts[b] - rarityCounts[a];
+          if (a === '其他') return 1;
+          if (b === '其他') return -1;
+          return a < b ? -1 : 1;
+        });
+      }
+
+      function getFilteredCards() {
+        if (!activeRarities) return rankingAllCards;
+        return rankingAllCards.filter(function (c) {
+          return activeRarities.has(c.rarity || '其他');
+        });
+      }
+
+      function updateRarityFab() {
+        if (!rarityFabBadge) return;
+        if (activeRarities && activeRarities.size !== rarityOrder.length) {
+          rarityFabBadge.textContent = String(activeRarities.size);
+          rarityFabBadge.classList.remove('hidden');
+        } else {
+          rarityFabBadge.classList.add('hidden');
+        }
+      }
+
+      function renderRarityOptions() {
+        if (!rarityOptions) return;
+        rarityOptions.innerHTML = '';
+        rarityOrder.forEach(function (code) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'rarity-chip';
+          btn.setAttribute('data-rarity', code);
+          btn.setAttribute('aria-pressed', pendingRarities.has(code) ? 'true' : 'false');
+          btn.innerHTML = escapeHtml(code) +
+            '<span class="rarity-chip__count">' + rarityCounts[code] + '</span>';
+          btn.addEventListener('click', function () {
+            if (pendingRarities.has(code)) pendingRarities.delete(code);
+            else pendingRarities.add(code);
+            btn.setAttribute('aria-pressed', pendingRarities.has(code) ? 'true' : 'false');
+          });
+          rarityOptions.appendChild(btn);
+        });
+      }
+
+      function openRarityModal() {
+        if (!rarityModal || !rankingAllCards.length) return;
+        pendingRarities = activeRarities ? new Set(activeRarities) : new Set(rarityOrder);
+        renderRarityOptions();
+        rarityModal.hidden = false;
+        if (rarityFabBtn) rarityFabBtn.setAttribute('aria-expanded', 'true');
+      }
+
+      function closeRarityModal() {
+        if (!rarityModal) return;
+        rarityModal.hidden = true;
+        if (rarityFabBtn) rarityFabBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function applyRarityFilter() {
+        activeRarities = (pendingRarities.size === 0 || pendingRarities.size === rarityOrder.length)
+          ? null
+          : new Set(pendingRarities);
+        updateRarityFab();
+        renderRankingList(getFilteredCards());
+        closeRarityModal();
+      }
+
+      if (rarityFabBtn) rarityFabBtn.addEventListener('click', openRarityModal);
+      if (rarityModal) {
+        rarityModal.querySelectorAll('[data-rarity-close]').forEach(function (el) {
+          el.addEventListener('click', closeRarityModal);
+        });
+      }
+      var rarityAllBtn = document.getElementById('rarityAll');
+      var rarityNoneBtn = document.getElementById('rarityNone');
+      var rarityApplyBtn = document.getElementById('rarityApply');
+      if (rarityAllBtn) rarityAllBtn.addEventListener('click', function () {
+        pendingRarities = new Set(rarityOrder);
+        renderRarityOptions();
+      });
+      if (rarityNoneBtn) rarityNoneBtn.addEventListener('click', function () {
+        pendingRarities = new Set();
+        renderRarityOptions();
+      });
+      if (rarityApplyBtn) rarityApplyBtn.addEventListener('click', applyRarityFilter);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && rarityModal && !rarityModal.hidden) closeRarityModal();
+      });
+
+      function resetRarityFilter() {
+        activeRarities = null;
+        pendingRarities = null;
+        closeRarityModal();
+        updateRarityFab();
+      }
+
       function openRanking() {
         if (flipInner.classList.contains('is-flipped')) return;
         rankingList.innerHTML = '';
         showLoading(true);
         flipInner.classList.add('is-flipped');
+        document.body.classList.add('ranking-active');
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
         window.scrollTo(0, 0);
         var backFace = document.querySelector('.flip-face--back');
         if (backFace) backFace.scrollTo(0, 0);
+        resetRarityFilter();
 
         loadRankingData()
           .then(function (data) {
@@ -638,15 +887,25 @@
                   cardNo: row.cardNo,
                   price: row.price,
                   name: row.cardNo,
+                  rarity: parseRarity(row.cardNo),
                 };
               });
             } else if (data && Array.isArray(data.cards)) {
-              cards = data.cards.slice(0, RANKING_DISPLAY_LIMIT);
+              cards = data.cards.slice(0, RANKING_DISPLAY_LIMIT).map(function (c) {
+                if (c && c.rarity == null) c.rarity = parseRarity(c.cardNo);
+                return c;
+              });
             }
+            rankingAllCards = cards;
+            buildRarityIndex(cards);
+            updateRarityFab();
             showLoading(false);
             initVirtualScroll(cards);
           })
           .catch(function () {
+            rankingAllCards = [];
+            buildRarityIndex([]);
+            updateRarityFab();
             showLoading(false);
             initVirtualScroll([]);
           });
@@ -655,8 +914,10 @@
       function closeRanking() {
         if (!flipInner.classList.contains('is-flipped')) return;
         flipInner.classList.remove('is-flipped');
+        document.body.classList.remove('ranking-active');
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
+        closeRarityModal();
         showLoading(false);
         if (typeof gsap !== 'undefined') {
           gsap.killTweensOf('#rankingList .ranking-row');
