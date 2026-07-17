@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    // 首次繪製前套用主題，避免記住暗黑模式時閃白
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <meta property="og:title" content="WS-Cards">
+  <meta property="og:type" content="website">  
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">  
+  <meta property="og:url" content="https://ws-cards.cloud">  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">  
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico"> 
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">  
+  <link rel="manifest" href="/manifest.json">	
+  <title>優勝牌組查詢 | WS-Cards(β)</title>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"> 
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v88.css">
+  <link rel="stylesheet" href="dist/css/navbar-override.css">
+  
+  <style type="text/css">
+    /* ============================================
+       CSS 變數系統 - 根選擇器（淺色模式）
+       ============================================ */
+    :root {
+      /* 梯度背景 */
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      
+      /* 背景色 */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f7fa;
+      
+      /* 文字色 */
+      --text-primary: #2d3748;
+      --text-secondary: #718096;
+      --text-tertiary: #a0aec0;
+      
+      /* 邊框與陰影 */
+      --border-color: rgba(0, 0, 0, 0.1);
+      --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 20px 40px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.2);
+      
+      /* 設計系統 */
+      --border-radius: 20px;
+      --border-radius-small: 12px;
+      
+      /* 毛玻璃效果 */
+      --glass-bg: rgba(255, 255, 255, 0.15);
+      --glass-blur: 24px;
+      --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+      
+      /* Spacing */
+      --spacing-xs: 0.25rem;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+    }
+
+    /* 深色模式變數 */
+    [data-theme="dark"] {
+      /* 梯度背景 */
+      --primary-gradient: linear-gradient(135deg, #c4a672, #a98d58);
+      --secondary-gradient: linear-gradient(135deg, #d4a574, #c9945f);
+      
+      /* 背景色 */
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      
+      /* 文字色 */
+      --text-primary: #e9e7e1;
+      --text-secondary: #9a958b;
+      --text-tertiary: #6d6a63;
+      
+      /* 邊框與陰影 */
+      --border-color: rgba(255, 255, 255, 0.1);
+      --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.3);
+      --shadow-medium: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.5);
+      
+      /* 毛玻璃效果 */
+      --glass-bg: rgba(30, 30, 30, 0.8);
+      --glass-blur: 24px;
+      --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* ============================================
+       基礎樣式覆蓋
+       ============================================ */
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Noto Sans TC', 'Source Sans Pro', sans-serif;
+    }
+
+    /* ============================================
+       導航欄樣式
+       ============================================ */
+    .main-header {
+      background: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: blur(24px) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+      box-shadow: var(--shadow-soft) !important;
+    }
+
+    [data-theme="dark"] .main-header {
+      background: rgba(30, 30, 30, 0.9) !important;
+      backdrop-filter: blur(24px) !important;
+    }
+
+    .navbar-title-block {
+      flex: 1;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .navbar-title-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .navbar-title-badge {
+      display: inline-block;
+      background: var(--primary-gradient);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--border-radius-small);
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    /* 主題切換按鈕 */
+    .theme-toggle-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+      transform: scale(1.1);
+    }
+
+    [data-theme="dark"] .theme-toggle-btn:hover {
+      background: rgba(196, 166, 114, 0.1);
+    }
+
+    /* ============================================
+       自定義 Drawer 樣式
+       ============================================ */
+    .custom-drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .custom-drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .custom-drawer {
+      position: fixed;
+      left: -300px;
+      top: 0;
+      bottom: 0;
+      width: 300px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-color);
+      z-index: 1010;
+      transition: left 0.3s ease;
+      overflow-y: auto;
+      box-shadow: var(--shadow-medium);
+    }
+
+    .custom-drawer.open {
+      left: 0;
+    }
+
+    [data-theme="dark"] .custom-drawer {
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(20px);
+      border-right-color: var(--border-color);
+    }
+
+    .custom-drawer-header {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-drawer-header .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      margin: 0;
+      flex: 1;
+    }
+
+    .custom-drawer-header .brand-image {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .custom-drawer-header .brand-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .custom-drawer-close {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .custom-drawer-close:hover {
+      color: #667eea;
+      transform: rotate(90deg);
+    }
+
+    .custom-drawer-nav {
+      padding: 1rem 0;
+    }
+
+    .custom-drawer-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .custom-drawer-nav .menu-item {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-drawer-nav .menu-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      gap: 0.75rem;
+    }
+
+    .custom-drawer-nav .menu-link:hover {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      padding-left: 2rem;
+    }
+
+    .custom-drawer-nav .menu-link.active {
+      background: rgba(102, 126, 234, 0.15);
+      color: #667eea;
+      border-left: 3px solid #667eea;
+      padding-left: calc(1.5rem - 3px);
+    }
+
+    .custom-drawer-nav .submenu {
+      display: none;
+      background: rgba(0, 0, 0, 0.03);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .custom-drawer-nav .menu-item.open .submenu {
+      display: block;
+    }
+
+    .custom-drawer-nav .submenu .menu-link {
+      padding-left: 2.5rem;
+      font-size: 0.95rem;
+    }
+
+    .custom-drawer-footer {
+      padding: 1.5rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: auto;
+    }
+
+    .custom-drawer-footer span {
+      font-size: 0.75rem;
+      vertical-align: super;
+    }
+
+    /* ============================================
+       漢堡菜單圖示動畫
+       ============================================ */
+    .hamburger {
+      display: inline-block;
+      position: relative;
+      width: 24px;
+      height: 18px;
+    }
+
+    .hamburger span {
+      display: block;
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: var(--text-primary);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .hamburger span:nth-child(1) {
+      top: 0;
+    }
+
+    .hamburger span:nth-child(2) {
+      top: 8px;
+    }
+
+    .hamburger span:nth-child(3) {
+      top: 16px;
+    }
+
+    #leftbar.is-open .hamburger span:nth-child(1) {
+      transform: translateY(8px) rotate(45deg);
+    }
+
+    #leftbar.is-open .hamburger span:nth-child(2) {
+      opacity: 0;
+    }
+
+    #leftbar.is-open .hamburger span:nth-child(3) {
+      transform: translateY(-8px) rotate(-45deg);
+    }
+
+    /* ============================================
+       卡片樣式
+       ============================================ */
+    .card {
+      background: var(--glass-bg) !important;
+      backdrop-filter: blur(20px) !important;
+      border: var(--glass-border) !important;
+      border-radius: var(--border-radius) !important;
+      box-shadow: var(--shadow-soft) !important;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease !important;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg) !important;
+    }
+
+    .card-header {
+      background: transparent !important;
+      border-bottom: 1px solid var(--border-color) !important;
+      padding: 1.25rem;
+    }
+
+    .card-title {
+      color: var(--text-primary);
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-body {
+      color: var(--text-primary);
+      padding: 1.25rem;
+    }
+
+    /* ============================================
+       搜尋相關樣式
+       ============================================ */
+    .search-card {
+      border-radius: var(--border-radius) !important;
+    }
+
+    .search-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .input-group .form-control {
+      background: var(--bg-secondary) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--border-radius-small) 0 0 var(--border-radius-small) !important;
+      padding: 0.75rem;
+    }
+
+    .input-group .form-control:focus {
+      outline: none;
+      border-color: #667eea !important;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    .btn-outline-secondary {
+      background: var(--bg-secondary) !important;
+      border: 1px solid var(--border-color) !important;
+      border-left: none !important;
+      color: var(--text-primary) !important;
+      border-radius: 0 var(--border-radius-small) var(--border-radius-small) 0 !important;
+      transition: all 0.2s ease;
+    }
+
+    .btn-outline-secondary:hover {
+      background: rgba(102, 126, 234, 0.1) !important;
+      border-color: #667eea !important;
+      color: #667eea !important;
+    }
+
+    .search-hint {
+      display: flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .search-hint small {
+      color: var(--text-secondary);
+    }
+
+    .search-history-wrapper {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: var(--glass-border);
+      border-radius: var(--border-radius);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .search-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-history-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .history-count {
+      background: var(--primary-gradient);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--border-radius-small);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .history-clear-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius-small);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .history-clear-btn:hover {
+      background: rgba(220, 38, 38, 0.1);
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .search-history-list {
+      padding: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .history-item {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius-small);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .history-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .history-item-delete {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ============================================
+       濾選卡片樣式
+       ============================================ */
+    .filter-card {
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .form-select,
+    .form-control {
+      background: var(--bg-secondary) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--border-radius-small) !important;
+      padding: 0.75rem;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .form-select:focus,
+    .form-control:focus {
+      outline: none;
+      border-color: #667eea !important;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    [data-theme="dark"] .form-select,
+    [data-theme="dark"] .form-control {
+      background: var(--bg-secondary) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .form-select:focus,
+    [data-theme="dark"] .form-control:focus {
+      border-color: #c4a672 !important;
+      box-shadow: 0 0 0 3px rgba(196, 166, 114, 0.1) !important;
+    }
+
+    [data-theme="dark"] .btn-outline-secondary {
+      background: var(--bg-secondary) !important;
+      border-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+
+    [data-theme="dark"] .btn-outline-secondary:hover {
+      background: rgba(196, 166, 114, 0.1) !important;
+      border-color: #c4a672 !important;
+      color: #c4a672 !important;
+    }
+
+    [data-theme="dark"] .search-hint {
+      color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .search-hint small {
+      color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .filter-label {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .card {
+      background: var(--glass-bg) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .card-header {
+      border-bottom-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .card-title {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .card-body {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .history-clear-btn {
+      border-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .history-clear-btn:hover {
+      background: rgba(220, 38, 38, 0.1);
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    [data-theme="dark"] .history-item {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .custom-drawer-nav .menu-link:hover {
+      background: rgba(196, 166, 114, 0.1);
+      color: #c4a672;
+    }
+
+    [data-theme="dark"] .custom-drawer-nav .menu-link.active {
+      background: rgba(196, 166, 114, 0.15);
+      color: #c4a672;
+      border-left-color: #c4a672;
+    }
+
+    [data-theme="dark"] .custom-drawer-close:hover {
+      color: #c4a672;
+    }
+
+    /* ============================================
+       牌組區塊相關樣式
+       ============================================ */
+    .overlay-wrapper {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: var(--border-radius-small);
+      z-index: 10;
+    }
+
+    .overlay-wrapper.show {
+      display: flex !important;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+    }
+
+    .card-outline {
+      position: relative;
+    }
+
+    .card-text {
+      margin: 0;
+    }
+
+    .img-fluid {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .js-scrollable {
+      position: relative;
+    }
+
+    /* AdminLTE 卡片工具按鈕 */
+    .card-tools {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+
+    .btn-tool {
+      background: transparent !important;
+      border: none !important;
+      color: var(--text-primary) !important;
+      padding: 0 !important;
+      width: 30px !important;
+      height: 30px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .btn-tool:hover {
+      color: #667eea !important;
+      transform: scale(1.1) !important;
+    }
+
+    [data-theme="dark"] .btn-tool:hover {
+      color: #c4a672 !important;
+    }
+
+    /* collapsed-card 樣式 */
+    .collapsed-card {
+      display: none;
+    }
+
+    .collapsed-card.show {
+      display: block;
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)"><span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span></a>
+      </li>
+    </ul>
+    <div class="navbar-title-block">
+      <span class="navbar-title-text">優勝牌組查詢</span>
+      <span class="navbar-title-badge">Beta</span>
+    </div>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button
+          id="themeToggleBtn"
+          class="theme-toggle-btn"
+          type="button"
+          title="切換為深色模式"
+          aria-label="切換為深色模式"
+          aria-pressed="false"
+        >
+          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Custom Drawer Overlay -->
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <!-- Custom Sidebar Drawer -->
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button class="custom-drawer-close" onclick="toggleCustomDrawer()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link active">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Main content -->
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <!-- 快速搜尋卡片 -->
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-search mr-2"></i>
+                  快速搜尋
+                </h5>
+              </div>
+              <div class="card-body">
+                <!-- Search Input with Modern Design -->
+                <div class="search-container">                
+                    <!-- Input form -->
+                  <div class="input-group">
+                      <input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱或是卡號前三碼" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
+                          <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="複製" aria-label="複製" data-action-state="copy">
+                          <span class="action-icon-flip" aria-hidden="true">
+                            <i class="fas fa-paste action-icon-face action-icon-front"></i>
+                            <i class="fas fa-search action-icon-face action-icon-back"></i>
+                          </span>
+                              </button>
+                          </div>
+                    </div>
+                    
+                      <div class="search-hint">
+                          <i class="fas fa-lightbulb mr-2"></i>
+                      <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">輸入內容快速搜尋</span></small>
+                      </div>                   
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 搜尋歷史區塊 -->
+          <div class="col-lg-12">
+            <div id="searchHistoryWrapper" class="search-history-wrapper" style="display:none;">
+              <div class="search-history-header">
+                <div class="search-history-title">
+                  <i class="fas fa-history mr-2"></i>
+                  <span>最近查看</span>
+                  <span class="history-count" id="historyCount"></span>
+                </div>
+                <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部紀錄">
+                  <i class="fas fa-trash-alt mr-1"></i>清除
+                </button>
+              </div>
+              <div class="search-history-list" id="searchHistoryContainer">
+                <!-- 歷史紀錄項目由 JS 動態生成 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 濾選卡片 -->
+          <div class="col-lg-12">
+            <div class="card filter-card" id="filter-card-tag">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-filter mr-2"></i>
+                  篩選條件
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="filter-container">
+                  <div class="filter-group">
+                    <label class="filter-label">
+                      <i class="fas fa-map-marker-alt mr-2"></i>地區
+                    </label>
+                    <select id="select_area" onchange="handleFilterChange();" style="font-family: 'Noto Sans TC', sans-serif; width: 300px;">
+                      <option value="所有地區">所有地區</option>
+                      <option value="日本">日本</option>
+                      <option value="台灣">台灣</option>
+                      <option value="香港">香港</option>
+                      <option value="新加坡">新加坡</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 優勝牌組區塊 -->
+          <div class="col-lg-12">
+            <!-- 主力殺招區塊 -->
+            <div class="card card-outline">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-star mr-2"></i>
+                  主力殺招
+                </h5>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                </div>
+              </div>
+              <div class="card-body js-scrollable" id="coreFlameList">
+                <div class="card-text" id="coreCardImgList">
+                  <img id="cardImg" class="img-fluid" src="https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png">
+                </div>
+              </div>
+              <div class="overlay-wrapper" id="overlay-2" style="display:none;">
+                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+              </div>
+            </div>
+
+            <!-- 優勝牌組清單 -->
+            <div class="card card-outline">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-list mr-2"></i>
+                  優勝牌組清單
+                </h5>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                </div>
+              </div>
+              <div class="card-body" id="deckListCard">
+                <div class="card-text card-outline collapsed-card">
+                  <img id="cardImg" class="img-fluid" src="https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Suggest -->
+<script src="dist/js/suggest/typeahead.js"></script>
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // ============================================
+  // 主題切換功能
+  // ============================================
+  (function() {
+    var THEME_STORAGE_KEY = 'ws-theme';
+
+    function resolveTheme(theme) {
+      return theme === 'dark' ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme, btn, icon) {
+      var resolvedTheme = resolveTheme(theme);
+      document.documentElement.setAttribute('data-theme', resolvedTheme);
+
+      if (!btn || !icon) {
+        return;
+      }
+
+      var isDark = resolvedTheme === 'dark';
+      icon.classList.remove('fa-sun', 'fa-moon');
+      icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      btn.setAttribute('title', isDark ? '切換為淺色模式' : '切換為深色模式');
+      btn.setAttribute('aria-label', isDark ? '切換為淺色模式' : '切換為深色模式');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('themeToggleBtn');
+      var icon = document.getElementById('themeToggleIcon');
+      if (!btn || !icon) {
+        return;
+      }
+
+      // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
+      var currentTheme = resolveTheme(
+        document.documentElement.getAttribute('data-theme') ||
+        localStorage.getItem(THEME_STORAGE_KEY)
+      );
+      applyTheme(currentTheme, btn, icon);
+
+      btn.addEventListener('click', function() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(currentTheme, btn, icon);
+        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+      });
+    });
+  })();
+
+  // ============================================
+  // Drawer 控制邏輯
+  // ============================================
+  function toggleCustomDrawer(e) {
+    if(e) e.preventDefault();
+    const drawer = document.getElementById('customDrawer');
+    const overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      const btn = document.getElementById('leftbar');
+      if (btn) {
+        const opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+
+  function toggleSubmenu(element, e) {
+    if(e) e.preventDefault();
+    const parent = element.parentElement;
+    if(parent) {
+      parent.classList.toggle('open');
+      const submenu = parent.querySelector('.submenu');
+      if(submenu) {
+        if(parent.classList.contains('open')) {
+          submenu.style.display = 'block';
+        } else {
+          submenu.style.display = 'none';
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // 搜尋歷史管理模組
+  // ============================================
+  var SearchHistory = {
+    STORAGE_KEY: 'championList-search-history',
+    MAX_ITEMS: 10,
+
+    init: function() {
+      this.render();
+      this.attachEventListeners();
+    },
+
+    attachEventListeners: function() {
+      var self = this;
+      var searchInput = document.getElementById('xxxx');
+      if (searchInput) {
+        // 搜尋框 focus 時顯示歷史
+        searchInput.addEventListener('focus', function() {
+          self.show();
+        });
+
+        // Enter 鍵或搜尋時記錄
+        searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' && this.value.trim()) {
+            self.add(this.value.trim());
+            self.render();
+          }
+        });
+      }
+
+      // 複製按鈕邏輯
+      var pasteButton = document.getElementById('pasteButton');
+      if (pasteButton) {
+        pasteButton.addEventListener('click', function() {
+          var state = this.getAttribute('data-action-state');
+          if (state === 'copy') {
+            // 複製模式
+            if (navigator.clipboard && searchInput.value) {
+              navigator.clipboard.writeText(searchInput.value).catch(function(err) {
+                console.error('複製失敗:', err);
+              });
+            }
+          } else {
+            // 搜尋模式
+            if (searchInput.value.trim()) {
+              self.add(searchInput.value.trim());
+              self.render();
+              // 觸發搜尋事件
+              handleSearch(searchInput.value.trim());
+            }
+          }
+        });
+      }
+    },
+
+    add: function(item) {
+      if (!item) return;
+      var items = this.getAll();
+      // 移除重複項
+      items = items.filter(function(i) { return i !== item; });
+      // 在最前面加入新項
+      items.unshift(item);
+      // 限制最多 MAX_ITEMS 項
+      items = items.slice(0, this.MAX_ITEMS);
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    },
+
+    getAll: function() {
+      try {
+        var items = localStorage.getItem(this.STORAGE_KEY);
+        return items ? JSON.parse(items) : [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    clearAll: function() {
+      try {
+        localStorage.removeItem(this.STORAGE_KEY);
+        this.render();
+      } catch (e) {
+        console.error('Error clearing localStorage:', e);
+      }
+    },
+
+    remove: function(item) {
+      var items = this.getAll();
+      items = items.filter(function(i) { return i !== item; });
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.error('Error updating localStorage:', e);
+      }
+      this.render();
+    },
+
+    render: function() {
+      var items = this.getAll();
+      var wrapper = document.getElementById('searchHistoryWrapper');
+      var container = document.getElementById('searchHistoryContainer');
+      var countEl = document.getElementById('historyCount');
+
+      if (!wrapper || !container) return;
+
+      // 控制顯示/隱藏
+      if (items.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+      }
+
+      wrapper.style.display = 'block';
+      countEl.textContent = items.length;
+
+      // 清空容器
+      container.innerHTML = '';
+
+      var self = this;
+      items.forEach(function(item) {
+        var itemEl = document.createElement('div');
+        itemEl.className = 'history-item';
+        itemEl.innerHTML = '<span>' + escapeHtml(item) + '</span>';
+
+        // 點擊項目填充搜尋框
+        itemEl.addEventListener('click', function(e) {
+          if (e.target.className !== 'history-item-delete fas fa-times') {
+            var input = document.getElementById('xxxx');
+            if (input) {
+              input.value = item;
+              input.focus();
+              handleSearch(item);
+            }
+          }
+        });
+
+        // 刪除按鈕
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'history-item-delete';
+        deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+        deleteBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          self.remove(item);
+        });
+
+        itemEl.appendChild(deleteBtn);
+        container.appendChild(itemEl);
+      });
+    },
+
+    show: function() {
+      var items = this.getAll();
+      var wrapper = document.getElementById('searchHistoryWrapper');
+      if (wrapper && items.length > 0) {
+        wrapper.style.display = 'block';
+      }
+    }
+  };
+
+  function escapeHtml(text) {
+    var map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+  }
+
+  // ============================================
+  // 核心功能函數
+  // ============================================
+  function handleSearch(query) {
+    console.log('搜尋:', query);
+    // 這裡稍後會連接到 Google Sheets API 邏輯
+  }
+
+  function handleFilterChange() {
+    console.log('篩選條件已變更');
+    var area = document.getElementById('select_area').value;
+    console.log('選中地區:', area);
+  }
+
+  // 頁面加載時初始化
+  document.addEventListener('DOMContentLoaded', function() {
+    SearchHistory.init();
+    
+    // 保留原有的初始化邏輯
+    $('.nav-link').PushMenu('collapse');
+
+    // 初始化 Typeahead（稍後會添加作品列表）
+    $(".typeahead").typeahead({ 
+      source: [],
+      minLength: 1,
+      showHintOnFocus: true,
+      scrollHeight: 0,
+      items: 'all',
+      fitToElement: true,
+      selectOnBlur: false
+    });
+  });
+</script>
+</body>
+</html>
