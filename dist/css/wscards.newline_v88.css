@@ -2678,38 +2678,154 @@ font-size: 0.95rem;
 color: var(--text-primary);
 }
 
-/* ===== AI 分析卡片 ===== */
+/* ===== AI 分析卡片 — Terminal Theme ===== */
 
 .ai-analysis-card {
     position: relative;
+    font-family: 'Courier New', 'Menlo', 'Monaco', 'Consolas', monospace !important;
+    border: 1px solid #30363d !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04) !important;
+    background: #0d1117 !important;
+    overflow: hidden;
+}
+
+.ai-analysis-card:hover {
+    transform: none !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(63,185,80,0.15) !important;
+}
+
+.ai-analysis-card .card-header {
+    background: #161b22 !important;
+    border-bottom: 1px solid #30363d !important;
+    padding: 0.55rem 1rem !important;
+    border-radius: 0 !important;
+}
+
+.ai-analysis-card .card-header .card-title {
+    color: #c9d1d9 !important;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.ai-analysis-card .card-header .card-title i {
+    color: #3fb950;
+}
+
+.ai-analysis-card .card-header .btn-tool {
+    color: #8b949e !important;
+}
+
+.ai-analysis-card .card-header .btn-tool:hover {
+    color: #c9d1d9 !important;
+}
+
+.ai-analysis-card .card-body {
+    background: #0d1117 !important;
+    padding: 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-analysis-card .card-body::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 0, 0, 0.045) 3px,
+        rgba(0, 0, 0, 0.045) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ai-terminal-inner {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 1.25rem;
+}
+
+.ai-terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #21262d;
+}
+
+.ai-terminal-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.ai-terminal-dot.close    { background: #ff5f57; border: 1px solid rgba(0,0,0,0.2); }
+.ai-terminal-dot.minimize { background: #ffbd2e; border: 1px solid rgba(0,0,0,0.2); }
+.ai-terminal-dot.expand   { background: #28c840; border: 1px solid rgba(0,0,0,0.2); }
+
+.ai-terminal-title-text {
+    flex: 1;
+    text-align: center;
+    font-size: 0.72rem;
+    color: #6e7681;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.04em;
+    margin-right: 29px;
 }
 
 .ai-analysis-placeholder {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 2rem 1rem;
-    color: var(--text-secondary);
-    font-family: 'Noto Sans TC', sans-serif;
-    text-align: center;
-    gap: 0.5rem;
+    padding: 0.25rem 0;
+    color: #8b949e;
+    font-family: 'Courier New', monospace;
+    gap: 0;
 }
 
 .ai-analysis-placeholder i {
-    font-size: 2rem;
-    opacity: 0.4;
+    display: none;
 }
 
 .ai-analysis-placeholder p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.ai-analysis-placeholder p::before {
+    content: '$ ';
+    color: #3fb950;
+    font-weight: 700;
+}
+
+.ai-terminal-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 0.9em;
+    background: #3fb950;
+    vertical-align: text-bottom;
+    margin-left: 1px;
+    animation: termBlink 1.1s step-end infinite;
+}
+
+@keyframes termBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
 }
 
 .ai-analysis-section {
-    margin-bottom: 1.25rem;
-    padding-bottom: 1.1rem;
-    border-bottom: 1px solid rgba(102, 126, 234, 0.12);
+    margin-bottom: 1.1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #21262d;
 }
 
 .ai-analysis-section:last-child {
@@ -2719,79 +2835,132 @@ color: var(--text-primary);
 }
 
 .ai-analysis-section-title {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    color: var(--text-secondary);
+    letter-spacing: 0.08em;
+    color: #3fb950;
     text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    padding-left: 0.6rem;
-    border-left: 3px solid #667eea;
-    font-family: 'Noto Sans TC', sans-serif;
+    margin-bottom: 0.65rem;
+    padding-left: 0;
+    border-left: none;
+    font-family: 'Courier New', monospace;
     display: flex;
     align-items: center;
+    gap: 0.4rem;
+}
+
+.ai-analysis-section-title::before {
+    content: '>';
+    color: #f78166;
+    font-weight: 900;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.ai-analysis-section-title i {
+    display: none;
 }
 
 .ai-analysis-body {
-    font-size: 0.9rem;
-    line-height: 1.75;
-    color: var(--text-primary);
-    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.84rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+    font-family: 'Courier New', monospace;
     white-space: pre-wrap;
     word-break: break-word;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    position: relative;
+}
+
+.ai-analysis-body::before {
+    content: '// output';
+    display: block;
+    font-size: 0.7rem;
+    color: #6e7681;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.04em;
 }
 
 .ai-analysis-rules {
     margin: 0;
-    padding-left: 1.4rem;
+    padding: 0;
     list-style: none;
-    font-family: 'Noto Sans TC', sans-serif;
+    font-family: 'Courier New', monospace;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .ai-analysis-rules li {
-    font-size: 0.88rem;
-    line-height: 1.7;
-    color: var(--text-primary);
-    padding: 0.25rem 0;
+    font-size: 0.83rem;
+    line-height: 1.65;
+    color: #79c0ff;
+    padding: 0.45rem 1rem 0.45rem 2.2rem;
     position: relative;
-    padding-left: 1rem;
+    border-bottom: 1px solid #21262d;
+}
+
+.ai-analysis-rules li:last-child {
+    border-bottom: none;
 }
 
 .ai-analysis-rules li::before {
-    content: '';
+    content: '!';
     position: absolute;
-    left: -0.05rem;
-    top: 0.65em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #667eea;
-    flex-shrink: 0;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    color: #ffa657;
+    font-weight: 900;
+    font-size: 0.82rem;
 }
 
 .ai-analysis-updated {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.72rem;
+    color: #6e7681;
+    font-family: 'Courier New', monospace;
     text-align: right;
     margin-top: 0.75rem;
-    opacity: 0.7;
+    opacity: 1;
+    letter-spacing: 0.02em;
 }
 
-/* Dark mode overrides */
+.ai-analysis-updated::before {
+    content: '// ';
+    color: #6e7681;
+}
+
+#overlay-ai .overlay {
+    background: rgba(13, 17, 23, 0.9) !important;
+}
+
+[data-theme="dark"] .ai-analysis-card {
+    border-color: #30363d !important;
+}
+
 [data-theme="dark"] .ai-analysis-section {
-    border-bottom-color: rgba(196, 166, 114, 0.18);
+    border-bottom-color: #21262d;
 }
 
 [data-theme="dark"] .ai-analysis-section-title {
-    border-left-color: #c4a672;
+    border-left: none;
+    color: #3fb950;
 }
 
 [data-theme="dark"] .ai-analysis-rules li::before {
-    background: #c4a672;
+    background: none;
+    color: #ffa657;
 }
 
-/* ===== /AI 分析卡片 ===== */
+/* ===== /AI 分析卡片 — Terminal Theme ===== */
 
 .search-history-title i {
 color: #667eea;
