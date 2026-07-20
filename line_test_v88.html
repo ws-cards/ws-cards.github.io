@@ -1476,6 +1476,11 @@ document.addEventListener('DOMContentLoaded', function() {
       updEl.className = 'ai-analysis-updated ai-reveal';
     }
 
+    // 評估文字：支援字串或字串陣列（多段落，以空行分隔）
+    var evalText = Array.isArray(entry.evaluation)
+      ? entry.evaluation.filter(Boolean).join('\n\n')
+      : (entry.evaluation || '');
+
     // 評估文字先清空，等模組進入畫面才開始打字
     var evalEl = el('aiEvaluation');
     if (evalEl) evalEl.textContent = '';
@@ -1483,7 +1488,7 @@ document.addEventListener('DOMContentLoaded', function() {
     showPlaceholder(false);
 
     // 記錄待播內容，交由 IntersectionObserver 於進入畫面時觸發
-    pending = { evaluation: entry.evaluation || '', done: false };
+    pending = { evaluation: evalText, done: false };
     maybeStartTyping();
   }
 
