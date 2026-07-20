@@ -1426,18 +1426,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (ct) ct.style.display = show ? 'none' : 'block';
   }
 
+  // 保存當前 AI 分析資料（等待進入視口才打字）
+  var _aiCurrentData = null;
+
   // 打字效果函數
   var _aiTypingTimers = [];
-  function typewriteText(element, text, speed) {
-    speed = speed || 30;
-    element.textContent = '';
-    var index = 0;
-
-    // 清除之前的計時器
+  function clearAiTypingTimers() {
     _aiTypingTimers.forEach(function (timer) {
       clearTimeout(timer);
     });
     _aiTypingTimers = [];
+  }
+
+  function typewriteText(element, text, speed) {
+    speed = speed || 30;
+    element.textContent = '';
+    var index = 0;
+    clearAiTypingTimers();
 
     function typeChar() {
       if (index < text.length) {
@@ -1506,40 +1511,34 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function triggerAiTypewriteEffect() {
+    if (!_aiCurrentData) return;
+
     var evalEl = el('aiEvaluation');
     var rulesEl = el('aiRulesList');
     var updEl = el('aiUpdatedAt');
 
     // 實戰評估打字效果
-    if (evalEl && evalEl.textContent) {
-      var evalText = evalEl.textContent;
-      typewriteText(evalEl, evalText, 25);
+    if (evalEl && _aiCurrentData.evaluation) {
+      typewriteText(evalEl, _aiCurrentData.evaluation, 25);
     }
 
     // 規則列表打字效果（延遲後開始）
-    if (rulesEl && rulesEl.childNodes.length > 0) {
+    if (rulesEl && _aiCurrentData.rulesNotes && _aiCurrentData.rulesNotes.length > 0) {
       setTimeout(function () {
-        var items = [];
-        rulesEl.querySelectorAll('li').forEach(function (li) {
-          items.push(li.textContent);
-        });
-        if (items.length) {
-          typewriteList(rulesEl, items, 20);
-        }
-      }, 500); // 延遲 500ms 等評估完成
+        typewriteList(rulesEl, _aiCurrentData.rulesNotes, 20);
+      }, 600); // 延遲 600ms 等評估完成
     }
 
     // 更新時間（最後顯示）
-    if (updEl && updEl.textContent) {
+    if (updEl && _aiCurrentData.updatedAt) {
       setTimeout(function () {
         updEl.style.opacity = '0';
         updEl.style.transition = 'opacity 0.3s ease';
-        var text = updEl.textContent;
-        typewriteText(updEl, text, 30);
+        typewriteText(updEl, '資料更新於 ' + _aiCurrentData.updatedAt, 30);
         setTimeout(function () {
           updEl.style.opacity = '1';
         }, 100);
-      }, 1500); // 延遲 1500ms
+      }, 1800); // 延遲 1800ms
     }
   }
 
@@ -1555,33 +1554,32 @@ document.addEventListener('DOMContentLoaded', function() {
       var ct = el('aiAnalysisContent');
       if (ct) ct.style.display = 'none';
       _aiAnimationTriggered = false; // 重置動畫旗標
+      _aiCurrentData = null;
+      clearAiTypingTimers();
       return;
     }
 
-    // 填充評估文字（先顯示，等進入視口時打字）
+    // 只保存數據，不填充到 DOM（等進入視口才打字）
+    _aiCurrentData = {
+      evaluation: entry.evaluation || '',
+      rulesNotes: Array.isArray(entry.rulesNotes) ? entry.rulesNotes : [],
+      updatedAt: entry.updatedAt || ''
+    };
+
+    // 清空 DOM 元素準備打字
     var evalEl = el('aiEvaluation');
-    if (evalEl) evalEl.textContent = entry.evaluation || '';
+    if (evalEl) evalEl.textContent = '';
 
-    // 填充規則注意點
     var rulesEl = el('aiRulesList');
-    var rulesSection = el('aiRulesSection');
-    var rules = Array.isArray(entry.rulesNotes) ? entry.rulesNotes : [];
-    if (rulesEl) {
-      rulesEl.innerHTML = '';
-      rules.forEach(function (note) {
-        var li = document.createElement('li');
-        li.textContent = note;
-        rulesEl.appendChild(li);
-      });
-    }
-    if (rulesSection) {
-      rulesSection.style.display = rules.length ? 'block' : 'none';
-    }
+    if (rulesEl) rulesEl.innerHTML = '';
 
-    // 填充更新時間
     var updEl = el('aiUpdatedAt');
-    if (updEl) {
-      updEl.textContent = entry.updatedAt ? '資料更新於 ' + entry.updatedAt : '';
+    if (updEl) updEl.textContent = '';
+
+    // 顯示規則區塊
+    var rulesSection = el('aiRulesSection');
+    if (rulesSection) {
+      rulesSection.style.display = _aiCurrentData.rulesNotes.length ? 'block' : 'none';
     }
 
     showPlaceholder(false);
@@ -1610,11 +1608,19 @@ document.addEventListener('DOMContentLoaded', function() {
       if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
       showPlaceholder(true);
       _aiAnimationTriggered = false;
+      _aiCurrentData = null;
+      clearAiTypingTimers();
       return;
     }
 
     var product = productCodeFromCardNo(cardNo);
     setOverlay(true);
+    
+    // 清除之前的打字效果
+    clearAiTypingTimers();
+    _aiCurrentData = null;
+    _aiAnimationTriggered = false;
+
     fetchProduct(product)
       .then(function (json) {
         renderAiAnalysis(cardNo, json);
@@ -1628,6 +1634,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var ct = el('aiAnalysisContent');
         if (ct) ct.style.display = 'none';
         _aiAnimationTriggered = false;
+        _aiCurrentData = null;
+        clearAiTypingTimers();
       })
       .then(function () { setOverlay(false); });
   }
