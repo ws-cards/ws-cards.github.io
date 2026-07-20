@@ -1426,51 +1426,48 @@ document.addEventListener('DOMContentLoaded', function() {
     if (ct) ct.style.display = show ? 'none' : 'block';
   }
 
-  // 保存當前 AI 分析資料（等待進入視口才打字）
+  // 版本控制：每次切卡遞增，防止舊卡的異步操作被執行
+  var _aiDataVersion = 0;
+  var _aiCurrentVersion = -1;
   var _aiCurrentData = null;
 
-  // 打字效果函數
-  var _aiTypingTimers = [];
-  var _aiDelayTimers = []; // 追蹤延遲的 setTimeout（600ms、1800ms 等）
+  // 打字效果計時器統一管理
+  var _aiTimers = [];
   
-  function clearAiTypingTimers() {
-    _aiTypingTimers.forEach(function (timer) {
-      clearTimeout(timer);
-    });
-    _aiTypingTimers = [];
+  function clearAiTimers() {
+    _aiTimers.forEach(function (timer) { clearTimeout(timer); });
+    _aiTimers = [];
   }
   
-  function clearAiDelayTimers() {
-    _aiDelayTimers.forEach(function (timer) {
-      clearTimeout(timer);
-    });
-    _aiDelayTimers = [];
+  function isVersionValid(version) {
+    return version === _aiCurrentVersion;
   }
 
-  function typewriteText(element, text, speed) {
+  function typewriteText(element, text, speed, version) {
     speed = speed || 30;
     element.textContent = '';
     var index = 0;
-    clearAiTypingTimers();
 
     function typeChar() {
+      if (!isVersionValid(version)) return;
       if (index < text.length) {
         element.textContent += text.charAt(index);
         index++;
         var timer = setTimeout(typeChar, speed);
-        _aiTypingTimers.push(timer);
+        _aiTimers.push(timer);
       }
     }
     typeChar();
   }
 
   // 列表打字效果函數
-  function typewriteList(ulElement, items, speed) {
+  function typewriteList(ulElement, items, speed, version) {
     speed = speed || 30;
     ulElement.innerHTML = '';
     var itemIndex = 0;
 
     function addItem() {
+      if (!isVersionValid(version)) return;
       if (itemIndex < items.length) {
         var li = document.createElement('li');
         li.textContent = '';
@@ -1480,11 +1477,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var charIndex = 0;
 
         function typeChar() {
+          if (!isVersionValid(version)) return;
           if (charIndex < text.length) {
             li.textContent += text.charAt(charIndex);
             charIndex++;
             var timer = setTimeout(typeChar, speed);
-            _aiTypingTimers.push(timer);
+            _aiTimers.push(timer);
           } else {
             // 該 item 完成，開始下一個
             itemIndex++;
@@ -1497,30 +1495,34 @@ document.addEventListener('DOMContentLoaded', function() {
     addItem();
   }
 
-  // 觀測器配置
+  // 觀測器配置（每次切卡重新建立，舊 Observer 自動銷毀）
   var _aiObserver = null;
-  var _aiAnimationTriggered = false;
 
-  function initAiIntersectionObserver() {
-    if (_aiObserver) return; // 已初始化
+  function initAiIntersectionObserver(version) {
+    // 銷毀舊 Observer
+    if (_aiObserver) {
+      _aiObserver.disconnect();
+      _aiObserver = null;
+    }
 
     var card = el('ai-analysis-card');
     if (!card) return;
 
+    var hasTriggered = false;
     _aiObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting && !_aiAnimationTriggered) {
-          _aiAnimationTriggered = true;
-          triggerAiTypewriteEffect();
+        if (entry.isIntersecting && !hasTriggered && isVersionValid(version)) {
+          hasTriggered = true;
+          triggerAiTypewriteEffect(version);
         }
       });
-    }, { threshold: 0.3 }); // 30% 可見時觸發
+    }, { threshold: 0.3 });
 
     _aiObserver.observe(card);
   }
 
-  function triggerAiTypewriteEffect() {
-    if (!_aiCurrentData) return;
+  function triggerAiTypewriteEffect(version) {
+    if (!isVersionValid(version) || !_aiCurrentData) return;
 
     var evalEl = el('aiEvaluation');
     var rulesEl = el('aiRulesList');
@@ -1528,35 +1530,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 實戰評估打字效果
     if (evalEl && _aiCurrentData.evaluation) {
-      typewriteText(evalEl, _aiCurrentData.evaluation, 25);
+      typewriteText(evalEl, _aiCurrentData.evaluation, 25, version);
     }
 
     // 規則列表打字效果（延遲後開始）
     if (rulesEl && _aiCurrentData.rulesNotes && _aiCurrentData.rulesNotes.length > 0) {
       var rulesTimer = setTimeout(function () {
-        typewriteList(rulesEl, _aiCurrentData.rulesNotes, 20);
-      }, 600); // 延遲 600ms 等評估完成
-      _aiDelayTimers.push(rulesTimer);
+        if (isVersionValid(version)) {
+          typewriteList(rulesEl, _aiCurrentData.rulesNotes, 20, version);
+        }
+      }, 600);
+      _aiTimers.push(rulesTimer);
     }
 
     // 更新時間（最後顯示）
     if (updEl && _aiCurrentData.updatedAt) {
       var updTimer = setTimeout(function () {
-        updEl.style.opacity = '0';
-        updEl.style.transition = 'opacity 0.3s ease';
-        typewriteText(updEl, '資料更新於 ' + _aiCurrentData.updatedAt, 30);
-        var fadeTimer = setTimeout(function () {
-          updEl.style.opacity = '1';
-        }, 100);
-        _aiDelayTimers.push(fadeTimer);
-      }, 1800); // 延遲 1800ms
-      _aiDelayTimers.push(updTimer);
+        if (isVersionValid(version)) {
+          updEl.style.opacity = '0';
+          updEl.style.transition = 'opacity 0.3s ease';
+          typewriteText(updEl, '資料更新於 ' + _aiCurrentData.updatedAt, 30, version);
+          var fadeTimer = setTimeout(function () {
+            if (isVersionValid(version)) {
+              updEl.style.opacity = '1';
+            }
+          }, 100);
+          _aiTimers.push(fadeTimer);
+        }
+      }, 1800);
+      _aiTimers.push(updTimer);
     }
   }
 
-  function renderAiAnalysis(cardNo, data) {
-    clearAiTypingTimers();
-    clearAiDelayTimers();
+  function renderAiAnalysis(cardNo, data, version) {
+    // 檢查版本是否仍然有效
+    if (!isVersionValid(version)) return;
     
     var entry = data && data[cardNo];
     if (!entry) {
@@ -1568,12 +1576,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       var ct = el('aiAnalysisContent');
       if (ct) ct.style.display = 'none';
-      _aiAnimationTriggered = false; // 重置動畫旗標
       _aiCurrentData = null;
       return;
     }
 
-    // 只保存數據，不填充到 DOM（等進入視口才打字）
+    // 只保存數據，不填充到 DOM
     _aiCurrentData = {
       evaluation: entry.evaluation || '',
       rulesNotes: Array.isArray(entry.rulesNotes) ? entry.rulesNotes : [],
@@ -1598,9 +1605,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     showPlaceholder(false);
 
-    // 重置動畫旗標，準備下次進入視口時觸發
-    _aiAnimationTriggered = false;
-    initAiIntersectionObserver();
+    // 標記版本為當前版本，準備進入視口時觸發打字效果
+    _aiCurrentVersion = version;
+    initAiIntersectionObserver(version);
   }
 
   function fetchProduct(product) {
@@ -1617,31 +1624,35 @@ document.addEventListener('DOMContentLoaded', function() {
     var sel = el('cardNumber');
     if (!sel) return;
     var cardNo = sel.value;
+    
+    // 遞增版本號（使所有舊卡的異步操作失效）
+    _aiDataVersion++;
+    var thisVersion = _aiDataVersion;
+    
     if (!cardNo || cardNo === '000/000-000') {
       var ph = el('aiAnalysisPlaceholder');
       if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
       showPlaceholder(true);
-      _aiAnimationTriggered = false;
       _aiCurrentData = null;
-      clearAiTypingTimers();
-      clearAiDelayTimers();
+      clearAiTimers();
       return;
     }
 
     var product = productCodeFromCardNo(cardNo);
     setOverlay(true);
     
-    // 清除之前的打字效果和所有延遲動作
-    clearAiTypingTimers();
-    clearAiDelayTimers();
+    // 清除所有計時器
+    clearAiTimers();
     _aiCurrentData = null;
-    _aiAnimationTriggered = false;
 
     fetchProduct(product)
       .then(function (json) {
-        renderAiAnalysis(cardNo, json);
+        renderAiAnalysis(cardNo, json, thisVersion);
       })
       .catch(function () {
+        // 檢查版本是否仍然有效
+        if (!isVersionValid(thisVersion)) return;
+        
         var ph = el('aiAnalysisPlaceholder');
         if (ph) {
           ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
@@ -1649,12 +1660,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         var ct = el('aiAnalysisContent');
         if (ct) ct.style.display = 'none';
-        _aiAnimationTriggered = false;
         _aiCurrentData = null;
-        clearAiTypingTimers();
-        clearAiDelayTimers();
       })
-      .then(function () { setOverlay(false); });
+      .then(function () { 
+        if (isVersionValid(thisVersion)) {
+          setOverlay(false);
+        }
+      });
   }
 
   // Hook changeNumber（與 Mercari 模組相同的 wrap 模式）
@@ -1670,9 +1682,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 頁面已有選中卡號時補跑一次
   document.addEventListener('DOMContentLoaded', function () {
-    initAiIntersectionObserver();
     var sel = el('cardNumber');
-    if (sel && sel.value && sel.value !== '000/000-000') loadAiAnalysis();
+    if (sel && sel.value && sel.value !== '000/000-000') {
+      loadAiAnalysis();
+    } else {
+      // 沒有選中卡號時，也要初始化 Observer
+      var v = ++_aiDataVersion;
+      _aiCurrentVersion = v;
+      initAiIntersectionObserver(v);
+    }
   });
 })();
 </script>
