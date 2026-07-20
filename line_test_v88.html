@@ -401,7 +401,7 @@
                             <div class="ai-analysis-section-title">
                                 <i class="fas fa-chess-knight mr-2"></i>實戰評估
                             </div>
-                            <div class="ai-analysis-body" id="aiEvaluation"></div>
+                            <ul class="ai-analysis-rules" id="aiEvaluation"></ul>
                         </div>
                         <!-- 更新時間 -->
                         <div class="ai-analysis-updated" id="aiUpdatedAt"></div>
@@ -1407,12 +1407,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var cache = {};  // productCode -> Promise
 
-  // 打字效果狀態
-  var pending = null;        // { evaluation, done } 待播放的內容
-  var typeToken = 0;         // 用於取消進行中的動畫
-  var typingActive = false;  // 是否正在打字（避免重複觸發時重播）
-  var _observer = null;      // IntersectionObserver 只建立一次
-  var _scrollBound = false;  // 不支援 IO 時的捲動 fallback
+  // 逐條淡入狀態
+  var revealToken = 0;        // 用於取消進行中的淡入序列（切換卡片時遞增）
+  var revealPending = false;  // 有內容待淡入（尚未進入畫面）
+  var revealStarted = false;  // 本次 render 是否已開始淡入（避免捲入捲出重播）
+  var _observer = null;       // IntersectionObserver 只建立一次
+  var _scrollBound = false;   // 不支援 IO 時的捲動 fallback
 
   function el(id) { return document.getElementById(id); }
 
@@ -1434,9 +1434,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function renderAiAnalysis(cardNo, data) {
-    // 取消任何進行中的打字動畫
-    typeToken++;
-    typingActive = false;
+    // 取消任何進行中的淡入序列，並重置本次狀態
+    revealToken++;
+    revealPending = false;
+    revealStarted = false;
 
     var entry = data && data[cardNo];
     if (!entry) {
@@ -1448,7 +1449,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       var ct = el('aiAnalysisContent');
       if (ct) ct.style.display = 'none';
-      pending = null;
       return;
     }
 
@@ -1469,6 +1469,21 @@ document.addEventListener('DOMContentLoaded', function() {
       rulesSection.style.display = rules.length ? 'block' : 'none';
     }
 
+    // 填充實戰評估（條列式）：支援字串或字串陣列；字串視為單一項目
+    var evalEl = el('aiEvaluation');
+    var evalItems = Array.isArray(entry.evaluation)
+      ? entry.evaluation.filter(Boolean)
+      : (entry.evaluation ? [entry.evaluation] : []);
+    if (evalEl) {
+      evalEl.innerHTML = '';
+      evalItems.forEach(function (para) {
+        var li = document.createElement('li');
+        li.textContent = para;
+        li.className = 'ai-reveal';
+        evalEl.appendChild(li);
+      });
+    }
+
     // AI 產生內容免責提示（先隱藏）
     var updEl = el('aiUpdatedAt');
     if (updEl) {
@@ -1476,94 +1491,48 @@ document.addEventListener('DOMContentLoaded', function() {
       updEl.className = 'ai-analysis-updated ai-reveal';
     }
 
-    // 評估文字：支援字串或字串陣列（多段落，以空行分隔）
-    var evalText = Array.isArray(entry.evaluation)
-      ? entry.evaluation.filter(Boolean).join('\n\n')
-      : (entry.evaluation || '');
-
-    // 評估文字先清空，等模組進入畫面才開始打字
-    var evalEl = el('aiEvaluation');
-    if (evalEl) evalEl.textContent = '';
-
     showPlaceholder(false);
 
-    // 記錄待播內容，交由 IntersectionObserver 於進入畫面時觸發
-    pending = { evaluation: evalText, done: false };
-    maybeStartTyping();
+    // 交由 IntersectionObserver 於進入畫面時觸發淡入
+    revealPending = true;
+    maybeStartReveal();
   }
 
-  // 依序淡入規則清單與更新時間
-  function revealRulesAndTime(token) {
-    var rulesEl = el('aiRulesList');
-    var items = rulesEl ? rulesEl.querySelectorAll('li.ai-reveal') : [];
-    var i = 0;
-    (function next() {
-      if (token !== typeToken) return;  // 已被新的動畫取代
-      if (i < items.length) {
-        items[i].classList.add('ai-reveal-in');
-        i++;
-        setTimeout(next, 120);
-      } else {
-        var updEl = el('aiUpdatedAt');
-        if (updEl) updEl.classList.add('ai-reveal-in');
-      }
-    })();
-  }
+  // 依 DOM 順序（規則 → 實戰評估 → 免責提示）逐條淡入
+  function revealSequence() {
+    if (!revealPending || revealStarted) return;
+    revealStarted = true;
+    revealPending = false;
 
-  // 逐字打出實戰評估內容
-  function typeEvaluation() {
-    if (!pending || pending.done || typingActive) return;
-    var evalEl = el('aiEvaluation');
-    if (!evalEl) return;
+    var ct = el('aiAnalysisContent');
+    var items = ct ? ct.querySelectorAll('.ai-reveal') : [];
 
-    var full = pending.evaluation;
-    var token = ++typeToken;
-    typingActive = true;
-
-    // 使用者偏好降低動態效果：直接顯示
+    // 使用者偏好降低動態效果：一次全部顯示，不做 stagger
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      evalEl.textContent = full;
-      pending.done = true;
-      typingActive = false;
-      revealRulesAndTime(token);
+      for (var k = 0; k < items.length; k++) items[k].classList.add('ai-reveal-in');
       return;
     }
 
-    // 用 textNode + 游標 span，避免 innerHTML 造成的 XSS 風險
-    evalEl.innerHTML = '';
-    var textNode = document.createTextNode('');
-    var cursor = document.createElement('span');
-    cursor.className = 'ai-typing-cursor';
-    evalEl.appendChild(textNode);
-    evalEl.appendChild(cursor);
-
-    var len = full.length;
-    var step = Math.max(1, Math.ceil(len / 80));  // 長文加速，總時長約 1.8 秒內
+    var token = revealToken;
     var i = 0;
-    (function tick() {
-      if (token !== typeToken) return;  // 已被新的動畫取代
-      i = Math.min(len, i + step);
-      textNode.nodeValue = full.slice(0, i);
-      if (i < len) {
-        setTimeout(tick, 22);
-      } else {
-        if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
-        pending.done = true;
-        typingActive = false;
-        revealRulesAndTime(token);
-      }
+    (function next() {
+      if (token !== revealToken) return;  // 已被新的 render 取代
+      if (i >= items.length) return;
+      items[i].classList.add('ai-reveal-in');
+      i++;
+      setTimeout(next, 120);
     })();
   }
 
-  // 若模組已在畫面內就立即打字，否則交給觀察器
-  function maybeStartTyping() {
-    if (!pending || pending.done) return;
+  // 若模組已在畫面內就立即淡入，否則交給觀察器
+  function maybeStartReveal() {
+    if (!revealPending) return;
     var card = el('ai-analysis-card');
-    if (!card) { typeEvaluation(); return; }
+    if (!card) { revealSequence(); return; }
     ensureObserver();
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var rect = card.getBoundingClientRect();
-    if (rect.top < vh && rect.bottom > 0) typeEvaluation();
+    if (rect.top < vh && rect.bottom > 0) revealSequence();
   }
 
   // 建立一次性的進入畫面觀察器（含不支援 IO 的 fallback）
@@ -1575,8 +1544,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (_observer) return;
       _observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
-          if (en.isIntersecting && pending && !pending.done) {
-            typeEvaluation();
+          if (en.isIntersecting && revealPending) {
+            revealSequence();
           }
         });
       }, { threshold: 0.1 });
@@ -1584,10 +1553,10 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (!_scrollBound) {
       _scrollBound = true;
       var onScroll = function () {
-        if (!pending || pending.done) return;
+        if (!revealPending) return;
         var vh = window.innerHeight || document.documentElement.clientHeight;
         var rect = card.getBoundingClientRect();
-        if (rect.top < vh && rect.bottom > 0) typeEvaluation();
+        if (rect.top < vh && rect.bottom > 0) revealSequence();
       };
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
