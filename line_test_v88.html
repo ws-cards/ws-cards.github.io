@@ -1431,11 +1431,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 打字效果函數
   var _aiTypingTimers = [];
+  var _aiDelayTimers = []; // 追蹤延遲的 setTimeout（600ms、1800ms 等）
+  
   function clearAiTypingTimers() {
     _aiTypingTimers.forEach(function (timer) {
       clearTimeout(timer);
     });
     _aiTypingTimers = [];
+  }
+  
+  function clearAiDelayTimers() {
+    _aiDelayTimers.forEach(function (timer) {
+      clearTimeout(timer);
+    });
+    _aiDelayTimers = [];
   }
 
   function typewriteText(element, text, speed) {
@@ -1524,25 +1533,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 規則列表打字效果（延遲後開始）
     if (rulesEl && _aiCurrentData.rulesNotes && _aiCurrentData.rulesNotes.length > 0) {
-      setTimeout(function () {
+      var rulesTimer = setTimeout(function () {
         typewriteList(rulesEl, _aiCurrentData.rulesNotes, 20);
       }, 600); // 延遲 600ms 等評估完成
+      _aiDelayTimers.push(rulesTimer);
     }
 
     // 更新時間（最後顯示）
     if (updEl && _aiCurrentData.updatedAt) {
-      setTimeout(function () {
+      var updTimer = setTimeout(function () {
         updEl.style.opacity = '0';
         updEl.style.transition = 'opacity 0.3s ease';
         typewriteText(updEl, '資料更新於 ' + _aiCurrentData.updatedAt, 30);
-        setTimeout(function () {
+        var fadeTimer = setTimeout(function () {
           updEl.style.opacity = '1';
         }, 100);
+        _aiDelayTimers.push(fadeTimer);
       }, 1800); // 延遲 1800ms
+      _aiDelayTimers.push(updTimer);
     }
   }
 
   function renderAiAnalysis(cardNo, data) {
+    clearAiTypingTimers();
+    clearAiDelayTimers();
+    
     var entry = data && data[cardNo];
     if (!entry) {
       // 該卡號無資料
@@ -1555,7 +1570,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (ct) ct.style.display = 'none';
       _aiAnimationTriggered = false; // 重置動畫旗標
       _aiCurrentData = null;
-      clearAiTypingTimers();
       return;
     }
 
@@ -1610,14 +1624,16 @@ document.addEventListener('DOMContentLoaded', function() {
       _aiAnimationTriggered = false;
       _aiCurrentData = null;
       clearAiTypingTimers();
+      clearAiDelayTimers();
       return;
     }
 
     var product = productCodeFromCardNo(cardNo);
     setOverlay(true);
     
-    // 清除之前的打字效果
+    // 清除之前的打字效果和所有延遲動作
     clearAiTypingTimers();
+    clearAiDelayTimers();
     _aiCurrentData = null;
     _aiAnimationTriggered = false;
 
@@ -1636,6 +1652,7 @@ document.addEventListener('DOMContentLoaded', function() {
         _aiAnimationTriggered = false;
         _aiCurrentData = null;
         clearAiTypingTimers();
+        clearAiDelayTimers();
       })
       .then(function () { setOverlay(false); });
   }
