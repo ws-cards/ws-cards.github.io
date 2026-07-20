@@ -371,7 +371,7 @@
             <div class="card ai-analysis-card" id="ai-analysis-card">
                 <div class="card-header">
                     <h5 class="card-title">
-                        <i class="fas fa-terminal mr-2"></i>
+                        <i class="fas fa-robot mr-2"></i>
                         AI 分析
                     </h5>
                     <div class="card-tools">
@@ -381,40 +381,35 @@
                     </div>
                 </div>
                 <div class="card-body" id="aiAnalysisBody">
-                    <div class="ai-terminal-inner">
-                        <!-- macOS 風格視窗標題列 -->
-                        <div class="ai-terminal-bar">
-                            <span class="ai-terminal-dot close"></span>
-                            <span class="ai-terminal-dot minimize"></span>
-                            <span class="ai-terminal-dot expand"></span>
-                            <span class="ai-terminal-title-text">ws-cards@ai: analyze</span>
-                        </div>
+                    <!-- 空狀態 placeholder -->
+                    <div class="ai-analysis-placeholder" id="aiAnalysisPlaceholder">
+                        <i class="fas fa-robot"></i>
+                        <p>請選擇卡片查看 AI 分析</p>
+                    </div>
 
-                        <!-- 空狀態 placeholder -->
-                        <div class="ai-analysis-placeholder" id="aiAnalysisPlaceholder">
-                            <p>請選擇卡片查看 AI 分析<span class="ai-terminal-cursor"></span></p>
-                        </div>
-
-                        <!-- 有資料時的內容 -->
-                        <div id="aiAnalysisContent" style="display:none;">
-                            <!-- 實戰評估 -->
-                            <div class="ai-analysis-section">
-                                <div class="ai-analysis-section-title">實戰評估</div>
-                                <div class="ai-analysis-body" id="aiEvaluation"></div>
+                    <!-- 有資料時的內容 -->
+                    <div id="aiAnalysisContent" style="display:none;">
+                        <!-- 實戰評估 -->
+                        <div class="ai-analysis-section">
+                            <div class="ai-analysis-section-title">
+                                <i class="fas fa-chess-knight mr-2"></i>實戰評估
                             </div>
-                            <!-- 規則注意點 -->
-                            <div class="ai-analysis-section" id="aiRulesSection">
-                                <div class="ai-analysis-section-title">規則注意點</div>
-                                <ul class="ai-analysis-rules" id="aiRulesList"></ul>
-                            </div>
-                            <!-- 更新時間 -->
-                            <div class="ai-analysis-updated" id="aiUpdatedAt"></div>
+                            <div class="ai-analysis-body" id="aiEvaluation"></div>
                         </div>
+                        <!-- 規則注意點 -->
+                        <div class="ai-analysis-section" id="aiRulesSection">
+                            <div class="ai-analysis-section-title">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>規則注意點
+                            </div>
+                            <ul class="ai-analysis-rules" id="aiRulesList"></ul>
+                        </div>
+                        <!-- 更新時間 -->
+                        <div class="ai-analysis-updated" id="aiUpdatedAt"></div>
                     </div>
 
                     <!-- 載入遮罩 -->
                     <div class="overlay-wrapper" id="overlay-ai">
-                        <div class="overlay" style="background:rgba(13,17,23,0.9);"><i class="fas fa-3x fa-sync-alt fa-spin" style="color:#3fb950;"></i><div class="text-bold pt-2" style="color:#3fb950;font-family:'Courier New',monospace;font-size:0.88rem;letter-spacing:0.05em;">loading...</div></div>
+                        <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
                     </div>
                 </div>
             </div>
@@ -1437,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // 該卡號無資料
       var ph = el('aiAnalysisPlaceholder');
       if (ph) {
-        ph.innerHTML = '<p>此卡目前無 AI 分析資料<span class="ai-terminal-cursor"></span></p>';
+        ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
         ph.style.display = 'block';
       }
       var ct = el('aiAnalysisContent');
@@ -1490,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var cardNo = sel.value;
     if (!cardNo || cardNo === '000/000-000') {
       var ph = el('aiAnalysisPlaceholder');
-      if (ph) ph.innerHTML = '<p>請選擇卡片查看 AI 分析<span class="ai-terminal-cursor"></span></p>';
+      if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
       showPlaceholder(true);
       return;
     }
@@ -1504,7 +1499,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(function () {
         var ph = el('aiAnalysisPlaceholder');
         if (ph) {
-          ph.innerHTML = '<p>此卡目前無 AI 分析資料<span class="ai-terminal-cursor"></span></p>';
+          ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
           ph.style.display = 'block';
         }
         var ct = el('aiAnalysisContent');
