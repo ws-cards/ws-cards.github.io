@@ -1426,6 +1426,123 @@ document.addEventListener('DOMContentLoaded', function() {
     if (ct) ct.style.display = show ? 'none' : 'block';
   }
 
+  // 打字效果函數
+  var _aiTypingTimers = [];
+  function typewriteText(element, text, speed) {
+    speed = speed || 30;
+    element.textContent = '';
+    var index = 0;
+
+    // 清除之前的計時器
+    _aiTypingTimers.forEach(function (timer) {
+      clearTimeout(timer);
+    });
+    _aiTypingTimers = [];
+
+    function typeChar() {
+      if (index < text.length) {
+        element.textContent += text.charAt(index);
+        index++;
+        var timer = setTimeout(typeChar, speed);
+        _aiTypingTimers.push(timer);
+      }
+    }
+    typeChar();
+  }
+
+  // 列表打字效果函數
+  function typewriteList(ulElement, items, speed) {
+    speed = speed || 30;
+    ulElement.innerHTML = '';
+    var itemIndex = 0;
+
+    function addItem() {
+      if (itemIndex < items.length) {
+        var li = document.createElement('li');
+        li.textContent = '';
+        ulElement.appendChild(li);
+
+        var text = items[itemIndex];
+        var charIndex = 0;
+
+        function typeChar() {
+          if (charIndex < text.length) {
+            li.textContent += text.charAt(charIndex);
+            charIndex++;
+            var timer = setTimeout(typeChar, speed);
+            _aiTypingTimers.push(timer);
+          } else {
+            // 該 item 完成，開始下一個
+            itemIndex++;
+            addItem();
+          }
+        }
+        typeChar();
+      }
+    }
+    addItem();
+  }
+
+  // 觀測器配置
+  var _aiObserver = null;
+  var _aiAnimationTriggered = false;
+
+  function initAiIntersectionObserver() {
+    if (_aiObserver) return; // 已初始化
+
+    var card = el('ai-analysis-card');
+    if (!card) return;
+
+    _aiObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting && !_aiAnimationTriggered) {
+          _aiAnimationTriggered = true;
+          triggerAiTypewriteEffect();
+        }
+      });
+    }, { threshold: 0.3 }); // 30% 可見時觸發
+
+    _aiObserver.observe(card);
+  }
+
+  function triggerAiTypewriteEffect() {
+    var evalEl = el('aiEvaluation');
+    var rulesEl = el('aiRulesList');
+    var updEl = el('aiUpdatedAt');
+
+    // 實戰評估打字效果
+    if (evalEl && evalEl.textContent) {
+      var evalText = evalEl.textContent;
+      typewriteText(evalEl, evalText, 25);
+    }
+
+    // 規則列表打字效果（延遲後開始）
+    if (rulesEl && rulesEl.childNodes.length > 0) {
+      setTimeout(function () {
+        var items = [];
+        rulesEl.querySelectorAll('li').forEach(function (li) {
+          items.push(li.textContent);
+        });
+        if (items.length) {
+          typewriteList(rulesEl, items, 20);
+        }
+      }, 500); // 延遲 500ms 等評估完成
+    }
+
+    // 更新時間（最後顯示）
+    if (updEl && updEl.textContent) {
+      setTimeout(function () {
+        updEl.style.opacity = '0';
+        updEl.style.transition = 'opacity 0.3s ease';
+        var text = updEl.textContent;
+        typewriteText(updEl, text, 30);
+        setTimeout(function () {
+          updEl.style.opacity = '1';
+        }, 100);
+      }, 1500); // 延遲 1500ms
+    }
+  }
+
   function renderAiAnalysis(cardNo, data) {
     var entry = data && data[cardNo];
     if (!entry) {
@@ -1437,10 +1554,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       var ct = el('aiAnalysisContent');
       if (ct) ct.style.display = 'none';
+      _aiAnimationTriggered = false; // 重置動畫旗標
       return;
     }
 
-    // 填充評估文字
+    // 填充評估文字（先顯示，等進入視口時打字）
     var evalEl = el('aiEvaluation');
     if (evalEl) evalEl.textContent = entry.evaluation || '';
 
@@ -1467,6 +1585,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     showPlaceholder(false);
+
+    // 重置動畫旗標，準備下次進入視口時觸發
+    _aiAnimationTriggered = false;
+    initAiIntersectionObserver();
   }
 
   function fetchProduct(product) {
@@ -1487,6 +1609,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var ph = el('aiAnalysisPlaceholder');
       if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
       showPlaceholder(true);
+      _aiAnimationTriggered = false;
       return;
     }
 
@@ -1504,6 +1627,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         var ct = el('aiAnalysisContent');
         if (ct) ct.style.display = 'none';
+        _aiAnimationTriggered = false;
       })
       .then(function () { setOverlay(false); });
   }
@@ -1521,6 +1645,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 頁面已有選中卡號時補跑一次
   document.addEventListener('DOMContentLoaded', function () {
+    initAiIntersectionObserver();
     var sel = el('cardNumber');
     if (sel && sel.value && sel.value !== '000/000-000') loadAiAnalysis();
   });
