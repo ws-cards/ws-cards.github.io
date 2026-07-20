@@ -366,6 +366,53 @@
                     </div>
                 </div>	  
             </div>   
+
+            <!-- AI 分析 -->
+            <div class="card ai-analysis-card" id="ai-analysis-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-robot mr-2"></i>
+                        AI 分析
+                    </h5>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="aiAnalysisBody">
+                    <!-- 空狀態 placeholder -->
+                    <div class="ai-analysis-placeholder" id="aiAnalysisPlaceholder">
+                        <i class="fas fa-robot"></i>
+                        <p>請選擇卡片查看 AI 分析</p>
+                    </div>
+
+                    <!-- 有資料時的內容 -->
+                    <div id="aiAnalysisContent" style="display:none;">
+                        <!-- 實戰評估 -->
+                        <div class="ai-analysis-section">
+                            <div class="ai-analysis-section-title">
+                                <i class="fas fa-chess-knight mr-2"></i>實戰評估
+                            </div>
+                            <div class="ai-analysis-body" id="aiEvaluation"></div>
+                        </div>
+                        <!-- 規則注意點 -->
+                        <div class="ai-analysis-section" id="aiRulesSection">
+                            <div class="ai-analysis-section-title">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>規則注意點
+                            </div>
+                            <ul class="ai-analysis-rules" id="aiRulesList"></ul>
+                        </div>
+                        <!-- 更新時間 -->
+                        <div class="ai-analysis-updated" id="aiUpdatedAt"></div>
+                    </div>
+
+                    <!-- 載入遮罩 -->
+                    <div class="overlay-wrapper" id="overlay-ai">
+                        <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                    </div>
+                </div>
+            </div>
                           
             <!-- 鑑定卡資訊 -->
             <div class="card grading-card" id="grading-card-tag">
@@ -1349,6 +1396,133 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('DOMContentLoaded', function () {
     var sel = el('cardNumber');
     if (sel && sel.value && sel.value !== '000/000-000') loadMercariTrend();
+  });
+})();
+</script>
+
+<!-- ===== AI 分析模組 — 獨立模組，讀取預備好的 JSON，不直接呼叫 AI API ===== -->
+<script>
+(function () {
+  var AI_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/aiAnalysis/';
+
+  var cache = {};  // productCode -> Promise
+
+  function el(id) { return document.getElementById(id); }
+
+  // "BD/W54-070SSP" -> "BD_W54"
+  function productCodeFromCardNo(v) {
+    return (String(v || '').split('-')[0] || '').replace(/\//g, '_');
+  }
+
+  function setOverlay(show) {
+    var o = el('overlay-ai');
+    if (o) o.style.display = show ? 'block' : 'none';
+  }
+
+  function showPlaceholder(show) {
+    var ph = el('aiAnalysisPlaceholder');
+    var ct = el('aiAnalysisContent');
+    if (ph) ph.style.display = show ? 'block' : 'none';
+    if (ct) ct.style.display = show ? 'none' : 'block';
+  }
+
+  function renderAiAnalysis(cardNo, data) {
+    var entry = data && data[cardNo];
+    if (!entry) {
+      // 該卡號無資料
+      var ph = el('aiAnalysisPlaceholder');
+      if (ph) {
+        ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
+        ph.style.display = 'block';
+      }
+      var ct = el('aiAnalysisContent');
+      if (ct) ct.style.display = 'none';
+      return;
+    }
+
+    // 填充評估文字
+    var evalEl = el('aiEvaluation');
+    if (evalEl) evalEl.textContent = entry.evaluation || '';
+
+    // 填充規則注意點
+    var rulesEl = el('aiRulesList');
+    var rulesSection = el('aiRulesSection');
+    var rules = Array.isArray(entry.rulesNotes) ? entry.rulesNotes : [];
+    if (rulesEl) {
+      rulesEl.innerHTML = '';
+      rules.forEach(function (note) {
+        var li = document.createElement('li');
+        li.textContent = note;
+        rulesEl.appendChild(li);
+      });
+    }
+    if (rulesSection) {
+      rulesSection.style.display = rules.length ? 'block' : 'none';
+    }
+
+    // 填充更新時間
+    var updEl = el('aiUpdatedAt');
+    if (updEl) {
+      updEl.textContent = entry.updatedAt ? '資料更新於 ' + entry.updatedAt : '';
+    }
+
+    showPlaceholder(false);
+  }
+
+  function fetchProduct(product) {
+    if (cache[product]) return cache[product];
+    var url = AI_BASE + product + '.json';
+    cache[product] = fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('ai json ' + r.status);
+      return r.json();
+    });
+    return cache[product];
+  }
+
+  function loadAiAnalysis() {
+    var sel = el('cardNumber');
+    if (!sel) return;
+    var cardNo = sel.value;
+    if (!cardNo || cardNo === '000/000-000') {
+      var ph = el('aiAnalysisPlaceholder');
+      if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
+      showPlaceholder(true);
+      return;
+    }
+
+    var product = productCodeFromCardNo(cardNo);
+    setOverlay(true);
+    fetchProduct(product)
+      .then(function (json) {
+        renderAiAnalysis(cardNo, json);
+      })
+      .catch(function () {
+        var ph = el('aiAnalysisPlaceholder');
+        if (ph) {
+          ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
+          ph.style.display = 'block';
+        }
+        var ct = el('aiAnalysisContent');
+        if (ct) ct.style.display = 'none';
+      })
+      .then(function () { setOverlay(false); });
+  }
+
+  // Hook changeNumber（與 Mercari 模組相同的 wrap 模式）
+  var _origChangeNumber = window.changeNumber;
+  window.changeNumber = function () {
+    var ret;
+    if (typeof _origChangeNumber === 'function') {
+      ret = _origChangeNumber.apply(this, arguments);
+    }
+    try { loadAiAnalysis(); } catch (e) { console.error('[ai] 載入失敗', e); }
+    return ret;
+  };
+
+  // 頁面已有選中卡號時補跑一次
+  document.addEventListener('DOMContentLoaded', function () {
+    var sel = el('cardNumber');
+    if (sel && sel.value && sel.value !== '000/000-000') loadAiAnalysis();
   });
 })();
 </script>
