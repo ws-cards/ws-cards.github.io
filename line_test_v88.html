@@ -367,8 +367,8 @@
                 </div>	  
             </div>   
 
-            <!-- AI 分析 -->
-            <div class="card ai-analysis-card" id="ai-analysis-card">
+            <!-- AI 分析（暫時隱藏） -->
+            <div class="card ai-analysis-card" id="ai-analysis-card" style="display:none;">
                 <div class="card-header">
                     <h5 class="card-title">
                         <i class="fas fa-robot mr-2"></i>
@@ -1392,10 +1392,15 @@ document.addEventListener('DOMContentLoaded', function() {
     return ret;
   };
 
-  // 若載入頁面時已有選中的型番，補畫一次
+  // 若載入頁面時已有選中的型番，補畫一次；否則關閉遮罩並顯示空狀態
   document.addEventListener('DOMContentLoaded', function () {
     var sel = el('cardNumber');
-    if (sel && sel.value && sel.value !== '000/000-000') loadMercariTrend();
+    if (sel && sel.value && sel.value !== '000/000-000') {
+      loadMercariTrend();
+    } else {
+      setOverlay(false);
+      showEmpty(true);
+    }
   });
 })();
 </script>
@@ -1613,10 +1618,15 @@ document.addEventListener('DOMContentLoaded', function() {
     return ret;
   };
 
-  // 頁面已有選中卡號時補跑一次
+  // 頁面已有選中卡號時補跑一次；否則關閉遮罩並顯示 placeholder
   document.addEventListener('DOMContentLoaded', function () {
     var sel = el('cardNumber');
-    if (sel && sel.value && sel.value !== '000/000-000') loadAiAnalysis();
+    if (sel && sel.value && sel.value !== '000/000-000') {
+      loadAiAnalysis();
+    } else {
+      setOverlay(false);
+      showPlaceholder(true);
+    }
   });
 })();
 </script>
