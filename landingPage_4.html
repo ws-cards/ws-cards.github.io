@@ -621,6 +621,34 @@
 
     .product-card__preview .hl { color: var(--text); font-weight: 500; }
 
+    .product-card--coming-soon {
+      opacity: 0.6;
+    }
+
+    .product-card--coming-soon::after {
+      content: 'Coming soon';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: var(--radius-lg);
+      font-family: var(--font-body);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.918);
+      letter-spacing: -0.01em;
+      z-index: 10;
+    }
+
+    .product-card--coming-soon:hover {
+      transform: none;
+      box-shadow: none;
+      background: var(--bg-card);
+      border-color: var(--border);
+    }
+
     /* ========== FEATURE BLOCKS ========== */
     .feature {
       display: grid;
@@ -838,6 +866,52 @@
     .mockup__bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
     .mockup__bar-fill { height: 100%; background: var(--text-on-dark); border-radius: 3px; }
     .mockup__bar-val { width: 40px; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; text-align: right; }
+
+    /* ========== FEATURE VIDEO ========== */
+    .feature__video {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      background: var(--bg-card-dark);
+      border: 1px solid var(--border-dark);
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .feature__video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      background: var(--bg-card-dark);
+      border: 1px solid var(--border-dark);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .feature__video-wrapper video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .feature__video-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card-dark);
+      color: var(--text-muted-dark);
+      font-size: 0.9rem;
+      border-radius: var(--radius-xl);
+    }
 
     /* ========== MID CTA ========== */
     .mid-cta {
@@ -1220,8 +1294,6 @@
         <li><a href="#cta">開始使用</a></li>
       </ul>
       <div class="navbar__actions">
-        <span class="status-pill"><span class="status-pill__dot"></span>線上運作</span>
-        <a href="searchCard.html" class="btn btn--ghost">查卡</a>
         <button class="navbar__toggle" id="navToggle" aria-label="選單"><i class="fas fa-bars"></i></button>
       </div>
     </div>
@@ -1263,14 +1335,14 @@
       <div class="products">
         <div href="line_test_v86.html" class="product-card reveal" data-href="line_test_v86.html">
           <span class="product-card__tag">trends</span>
-          <h3>各卡號漲幅趨勢</h3>
+          <h3>庫存價格漲幅趨勢</h3>
           <p>追蹤單張卡片的價格變化趨勢，掌握市場動態與投資機會。</p>
           <div class="product-card__footer">
             <button class="product-card__button">查看 <i class="fas fa-arrow-right"></i></button>
             <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
           </div>
         </div>
-        <div href="searchCard.html" class="product-card reveal" data-href="searchCard.html">
+        <div href="searchCard.html" class="product-card product-card--coming-soon reveal" data-href="searchCard.html">
           <span class="product-card__tag">search</span>
           <h3>卡片搜尋</h3>
           <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。</p>
@@ -1288,7 +1360,7 @@
             <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
           </div>
         </div>
-        <div href="increase.html" class="product-card reveal" data-href="increase.html">
+        <div href="increase.html" class="product-card product-card--coming-soon reveal" data-href="increase.html">
           <span class="product-card__tag">trends</span>
           <h3>漲幅排行</h3>
           <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
@@ -1297,7 +1369,7 @@
             <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
           </div>
         </div>
-        <div href="demoAndDeckPrice.html" class="product-card reveal" data-href="demoAndDeckPrice.html">
+        <div href="demoAndDeckPrice.html" class="product-card product-card--coming-soon reveal" data-href="demoAndDeckPrice.html">
           <span class="product-card__tag">analysis</span>
           <h3>牌組分析</h3>
           <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
@@ -1321,23 +1393,11 @@
           <a href="line_test_v86.html" class="feature__link">查看趨勢 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
-          <div class="mockup">
-            <div class="mockup__bar">
-              <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>趨勢分析</span></div>
-            </div>
-            <div class="mockup__body">
-              <div class="mockup__label">BD/W54-070SSP 價格走勢</div>
-              <div class="mockup__value">NT$ 12,800</div>
-              <span class="mockup__tag">過去30天 +8.2%</span>
-              <div class="mockup__chart">
-                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
-                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15" fill="none" stroke="#fafafa" stroke-width="2"/>
-                  <path d="M0,60 L50,55 L100,45 L150,50 L200,30 L250,25 L300,15 L300,80 L0,80 Z" fill="rgba(250,250,250,0.04)"/>
-                </svg>
-              </div>
-              <div class="mockup__tabs-row"><span class="active">1W</span><span>1M</span><span>3M</span><span>1Y</span></div>
-            </div>
+          <div class="feature__video-wrapper">
+            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-trends.jpg">
+              <source src="./assets/demo-trends.mp4" type="video/mp4">
+              <img src="./assets/demo-trends.jpg" alt="價格走勢demo">
+            </video>
           </div>
         </div>
       </div>
@@ -1350,24 +1410,11 @@
           <a href="searchCard.html" class="feature__link">開始搜尋 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
-          <div class="mockup">
-            <div class="mockup__bar">
-              <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>卡片搜尋</span></div>
-            </div>
-            <div class="mockup__body">
-              <div class="mockup__label">搜尋結果</div>
-              <div class="mockup__value" style="font-size:1.25rem">BD/W54-070SSP</div>
-              <span class="mockup__tag">Weiss Schwarz</span>
-              <table class="mockup__table">
-                <thead><tr><th>賣場</th><th>價格</th><th>更新時間</th></tr></thead>
-                <tbody>
-                  <tr><td>露天拍賣</td><td>NT$ 12,800</td><td>今天</td></tr>
-                  <tr><td>蝦皮購物</td><td>NT$ 13,500</td><td>今天</td></tr>
-                  <tr><td>Yahoo拍賣</td><td>NT$ 14,200</td><td>昨天</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="feature__video-wrapper">
+            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-search.jpg">
+              <source src="./assets/demo-search.mp4" type="video/mp4">
+              <img src="./assets/demo-search.jpg" alt="卡片搜尋demo">
+            </video>
           </div>
         </div>
       </div>
@@ -1380,29 +1427,11 @@
           <a href="championList.html" class="feature__link">看牌組 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
-          <div class="mockup">
-            <div class="mockup__bar">
-              <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>牌組庫</span></div>
-            </div>
-            <div class="mockup__body">
-              <div class="mockup__label">近期優勝牌組</div>
-              <div class="mockup__value" style="font-size:1.5rem">1,256 套</div>
-              <ul class="mockup__deck-list">
-                <li class="mockup__deck-item">
-                  <div class="mockup__deck-thumb"></div>
-                  <div><div class="mockup__deck-name">四色燈電 @ 東京大會</div><div class="mockup__deck-meta">BD/W54 · 2026/05</div></div>
-                </li>
-                <li class="mockup__deck-item">
-                  <div class="mockup__deck-thumb"></div>
-                  <div><div class="mockup__deck-name">紅白燒 @ 台灣區域賽</div><div class="mockup__deck-meta">HOL/W91 · 2026/04</div></div>
-                </li>
-                <li class="mockup__deck-item">
-                  <div class="mockup__deck-thumb"></div>
-                  <div><div class="mockup__deck-name">劍道軸 @ Shop Battle</div><div class="mockup__deck-meta">SAO/S80 · 2026/03</div></div>
-                </li>
-              </ul>
-            </div>
+          <div class="feature__video-wrapper">
+            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-decks.jpg">
+              <source src="./assets/demo-decks.mp4" type="video/mp4">
+              <img src="./assets/demo-decks.jpg" alt="優勝牌組demo">
+            </video>
           </div>
         </div>
       </div>
@@ -1415,29 +1444,11 @@
           <a href="increase.html" class="feature__link">看漲幅 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
-          <div class="mockup">
-            <div class="mockup__bar">
-              <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>漲幅榜</span></div>
-            </div>
-            <div class="mockup__body">
-              <div class="mockup__label">本週漲幅 TOP</div>
-              <div class="mockup__value" style="font-size:1.5rem">+32.4%</div>
-              <span class="mockup__tag">HOL/W91-081SSP</span>
-              <div class="mockup__chart">
-                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
-                  <path d="M0,70 L60,65 L120,50 L180,40 L240,20 L300,10" fill="none" stroke="#22c55e" stroke-width="2"/>
-                </svg>
-              </div>
-              <table class="mockup__table">
-                <thead><tr><th>卡片</th><th>漲幅</th><th>現價</th></tr></thead>
-                <tbody>
-                  <tr><td>HOL/W91-081SSP</td><td style="color:var(--accent-green);font-weight:600">+32.4%</td><td>NT$ 8,500</td></tr>
-                  <tr><td>BD/W54-070SSP</td><td style="color:var(--accent-green);font-weight:600">+18.7%</td><td>NT$ 12,800</td></tr>
-                  <tr><td>OSK/S104-045RR</td><td style="color:var(--accent-green);font-weight:600">+12.1%</td><td>NT$ 3,200</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="feature__video-wrapper">
+            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-ranking.jpg">
+              <source src="./assets/demo-ranking.mp4" type="video/mp4">
+              <img src="./assets/demo-ranking.jpg" alt="漲幅排行demo">
+            </video>
           </div>
         </div>
       </div>
@@ -1450,20 +1461,11 @@
           <a href="demoAndDeckPrice.html" class="feature__link">開始分析 <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature__visual">
-          <div class="mockup">
-            <div class="mockup__bar">
-              <div class="mockup__dots"><span></span><span></span><span></span></div>
-              <div class="mockup__user"><div class="mockup__avatar">WS</div><span>分析工具</span></div>
-            </div>
-            <div class="mockup__body">
-              <div class="mockup__label">牌組總價</div>
-              <div class="mockup__value">NT$ 48,500</div>
-              <span class="mockup__tag">市場平均 NT$ 45,200</span>
-              <div class="mockup__bars">
-                <div class="mockup__bar-row"><span class="mockup__bar-label">高稀有</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:70%"></div></div><span class="mockup__bar-val">70%</span></div>
-                <div class="mockup__bar-row"><span class="mockup__bar-label">普卡</span><div class="mockup__bar-track"><div class="mockup__bar-fill" style="width:30%"></div></div><span class="mockup__bar-val">30%</span></div>
-              </div>
-            </div>
+          <div class="feature__video-wrapper">
+            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-analysis.jpg">
+              <source src="./assets/demo-analysis.mp4" type="video/mp4">
+              <img src="./assets/demo-analysis.jpg" alt="牌組分析demo">
+            </video>
           </div>
         </div>
       </div>
@@ -1618,6 +1620,9 @@
       var productCards = document.querySelectorAll('.product-card');
       productCards.forEach(function (card) {
         card.addEventListener('click', function () {
+          if (card.classList.contains('product-card--coming-soon')) {
+            return; // 阻止導航
+          }
           var href = card.getAttribute('data-href');
           if (href) window.location.href = href;
         });
