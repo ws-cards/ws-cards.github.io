@@ -3,10 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:site_name" content="卡片雲">
+  <meta property="og:locale" content="zh_TW">
   <meta property="og:title" content="卡片雲 | 卡牌資訊一站整合">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
+  <meta property="og:description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="卡片雲 — 卡牌玩家查價的新方式">
   <meta property="og:url" content="https://ws-cards.cloud">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="卡片雲 | 卡牌資訊一站整合">
+  <meta name="twitter:description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  <meta name="twitter:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta name="twitter:image:alt" content="卡片雲 — 卡牌玩家查價的新方式">
   <title>卡片雲 | 卡牌資訊一站整合</title>
   <meta name="description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
   
@@ -15,12 +27,71 @@
   <meta name="keywords" content="WS卡牌, 查價, 卡片搜尋, 牌組, 漲幅排行, Weiss Schwarz">
   <meta name="author" content="ws-cards devilFox">
   <link rel="canonical" href="https://ws-cards.cloud/">
+  <link rel="icon" href="favicon.ico" sizes="any">
   <meta name="language" content="zh-TW">
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "卡片雲",
+      "url": "https://ws-cards.cloud/",
+      "description": "查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://ws-cards.cloud/searchCard.html?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "卡片雲",
+      "url": "https://ws-cards.cloud/",
+      "logo": "https://ws-cards.cloud/dist/img/logo.png",
+      "sameAs": [
+        "https://ws-cards.cloud/index.html"
+      ]
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "首頁",
+          "item": "https://ws-cards.cloud/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "功能總覽",
+          "item": "https://ws-cards.cloud/#products"
+        }
+      ]
+    }
+  </script>
+
+  <script>
+    // Bump WS_BANNER_ID whenever the announcement text changes so people who
+    // dismissed the previous one still see the new one. Runs before first paint
+    // so a dismissed bar never flashes and then collapses.
+    window.WS_BANNER_ID = 'deck-total-calculator';
+    try {
+      if (localStorage.getItem('ws_cards_banner_dismissed') === window.WS_BANNER_ID) {
+        document.documentElement.classList.add('is-banner-hidden');
+      }
+    } catch (err) { /* storage unavailable; show the banner */ }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,34 +101,43 @@
       --bg-alt: #f4f4f5;
       --bg-card: #ffffff;
       --bg-dark: #0a0a0a;
-      --bg-dark-2: #111111;
-      --bg-card-dark: #141414;
       --text: #0a0a0a;
       --text-muted: #52525b;
       --text-light: #71717a;
       --text-on-dark: #ffffff;
       --text-muted-dark: rgba(255,255,255,0.7);
-      --accent: #ffffff;
       --accent-green: #22c55e;
       --accent-gold: #fbbf24;
       --border: rgba(0,0,0,0.08);
       --border-strong: rgba(0,0,0,0.14);
       --border-dark: rgba(255,255,255,0.12);
       --radius-sm: 8px;
-      --radius-md: 12px;
       --radius-lg: 16px;
       --radius-xl: 20px;
       --shadow-soft: 0 24px 80px rgba(0,0,0,0.12);
       --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
       --container-max: 1200px;
-      --font-display: 'Instrument Serif', 'Noto Sans TC', serif;
-      --font-body: 'Inter', 'Noto Sans TC', sans-serif;
-      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+      /* System CJK fonts sit before Noto Sans TC so Chinese text paints without
+         waiting on a webfont download. Noto stays as the fallback for platforms
+         that ship neither PingFang nor JhengHei. */
+      --font-cjk: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC';
+      --font-display: 'Instrument Serif', var(--font-cjk), serif;
+      --font-body: 'Inter', var(--font-cjk), sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', var(--font-cjk), monospace;
       --nav-height: 64px;
       --banner-height: 40px;
     }
 
     html { scroll-behavior: smooth; }
+
+    #products,
+    #features,
+    #cta {
+      scroll-margin-top: calc(var(--banner-height) + var(--nav-height) + 20px);
+    }
+
+    /* Skip-link target only; never reached by tabbing, so no ring needed. */
+    #main:focus { outline: none; }
 
     body {
       font-family: var(--font-body);
@@ -83,6 +163,65 @@
       padding: 0 24px;
     }
 
+    /* ========== FOCUS ========== */
+    /* The page alternates light and dark surfaces, so the ring flips colour
+       rather than relying on one that only reads on half of them. */
+    :focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
+    }
+
+    .announce :focus-visible,
+    .navbar :focus-visible,
+    .hero :focus-visible,
+    .mid-cta :focus-visible,
+    .final-cta :focus-visible,
+    .footer :focus-visible,
+    .code-block :focus-visible {
+      outline-color: var(--text-on-dark);
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -100px;
+      z-index: 1002;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus {
+      top: calc(var(--banner-height) + 12px);
+    }
+
+    /* ========== ICONS ========== */
+    /* Inline sprite replaces Font Awesome: 7 glyphs instead of a 59 KB
+       render-blocking stylesheet plus a 78 KB webfont. */
+    .ico-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .ico {
+      width: 1em;
+      height: 1em;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vertical-align: -0.125em;
+    }
+
     /* ========== DOT GRID ========== */
     .dot-grid {
       position: absolute;
@@ -92,10 +231,6 @@
       background-size: 24px 24px;
       mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
       -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
-    }
-
-    .dot-grid--light {
-      background-image: radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px);
     }
 
     /* ========== ANNOUNCEMENT ========== */
@@ -119,9 +254,38 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
+    }
+
+    /* Every offset below is calc'd from --banner-height, so zeroing the variable
+       is all it takes to reclaim the space the bar occupied. */
+    html.is-banner-hidden { --banner-height: 0px; }
+    .is-banner-hidden .announce { display: none; }
+
+    .announce__close {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      padding: 7px;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      color: var(--text-muted-dark);
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .announce__close:hover {
+      color: var(--text-on-dark);
+      background: rgba(255,255,255,0.08);
     }
 
     .announce__badge {
+      flex-shrink: 0;
       font-family: var(--font-mono);
       background: rgba(255,255,255,0.1);
       padding: 2px 8px;
@@ -208,28 +372,6 @@
       gap: 10px;
     }
 
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border: 1px solid var(--border-dark);
-      border-radius: 100px;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      font-weight: 500;
-      color: var(--text-muted-dark);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .status-pill__dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px rgba(34,197,94,0.6);
-    }
-
     .btn {
       display: inline-flex;
       align-items: center;
@@ -256,36 +398,6 @@
 
     .btn--primary:hover { opacity: 0.9; }
 
-    .btn--ghost {
-      background: transparent;
-      color: var(--text-on-dark);
-      border: 1px solid var(--border-dark);
-    }
-
-    .btn--ghost:hover { border-color: rgba(255,255,255,0.35); }
-
-    .btn--dark {
-      background: var(--bg-dark);
-      color: var(--text-on-dark);
-    }
-
-    .btn--dark:hover { opacity: 0.88; }
-
-    .btn--outline-dark {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border-strong);
-      text-transform: none;
-    }
-
-    .btn--outline-dark:hover { border-color: var(--text); }
-
-    .btn--white {
-      background: var(--bg-card);
-      color: var(--text);
-      text-transform: none;
-    }
-
     .navbar__toggle {
       display: none;
       background: none;
@@ -298,6 +410,8 @@
     /* ========== HERO ========== */
     .hero {
       min-height: 100vh;
+      /* dvh excludes mobile browser chrome, which 100vh does not. */
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -353,6 +467,35 @@
       justify-content: center;
       position: relative;
       z-index: 1;
+    }
+
+    .hero__subnav {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__subnav a {
+      color: var(--text-on-dark);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      transition: border-color 0.2s, opacity 0.2s;
+      opacity: 0.85;
+    }
+
+    .hero__subnav a:hover {
+      opacity: 1;
+      border-color: rgba(255,255,255,0.85);
     }
 
     .hero__trust {
@@ -434,13 +577,18 @@
       100% { transform: translateX(-50%); }
     }
 
+    /* Both marquees loop forever; parking them offscreen keeps mobile CPU idle. */
+    .marquee__track.is-paused,
+    .logo-marquee__track.is-paused {
+      animation-play-state: paused;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .marquee__track { animation: none; }
     }
 
     /* ========== SECTION COMMON ========== */
     .section { padding: 100px 0; }
-    .section--dark { background: var(--bg-dark); color: var(--text-on-dark); }
     .section--alt { background: var(--bg-alt); }
     .section--white { background: var(--bg-card); }
 
@@ -453,8 +601,6 @@
       color: var(--text-muted);
       margin-bottom: 16px;
     }
-
-    .section--dark .section__eyebrow { color: var(--text-muted-dark); }
 
     .section__title {
       font-family: var(--font-display);
@@ -471,8 +617,6 @@
       max-width: 520px;
       line-height: 1.7;
     }
-
-    .section--dark .section__subtitle { color: var(--text-muted-dark); }
 
     .section__header {
       text-align: center;
@@ -583,9 +727,18 @@
       transform: translateY(8px);
     }
 
-    .product-card:hover .product-card__button {
+    .product-card:hover .product-card__button,
+    .product-card:focus-visible .product-card__button {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    /* Touch devices never hover, so the button would otherwise stay invisible. */
+    @media (hover: none) {
+      .product-card__button {
+        opacity: 1;
+        transform: none;
+      }
     }
 
     .product-card__button:hover {
@@ -594,6 +747,7 @@
     }
 
     .product-card__arrow {
+      display: inline-flex;
       font-size: 0.8rem;
       color: var(--text-light);
       transition: transform 0.2s, color 0.2s;
@@ -606,47 +760,6 @@
 
     .product-card--wide {
       grid-column: span 2;
-    }
-
-    .product-card__preview {
-      margin-top: 16px;
-      padding: 12px 14px;
-      background: var(--bg-alt);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    .product-card__preview .hl { color: var(--text); font-weight: 500; }
-
-    .product-card--coming-soon {
-      opacity: 0.6;
-    }
-
-    .product-card--coming-soon::after {
-      content: 'Coming soon';
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.65);
-      border-radius: var(--radius-lg);
-      font-family: var(--font-body);
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.918);
-      letter-spacing: -0.01em;
-      z-index: 10;
-    }
-
-    .product-card--coming-soon:hover {
-      transform: none;
-      box-shadow: none;
-      background: var(--bg-card);
-      border-color: var(--border);
     }
 
     /* ========== FEATURE BLOCKS ========== */
@@ -696,221 +809,180 @@
 
     .feature__link:hover { gap: 10px; }
 
-    /* ========== MOCKUP ========== */
-    .mockup {
-      background: var(--bg-card-dark);
-      border-radius: var(--radius-xl);
-      border: 1px solid var(--border-dark);
-      overflow: hidden;
-      box-shadow: var(--shadow-soft);
+    /* ========== FEATURE MEDIA ========== */
+    .feature__visual {
+      content-visibility: auto;
+      contain-intrinsic-size: 1px 380px;
     }
 
-    .mockup__bar {
+    .feature__media {
+      position: relative;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-dark);
+      box-shadow: var(--shadow-soft);
+      min-height: 340px;
+      padding: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      color: var(--text-on-dark);
+      background: linear-gradient(145deg, #141414 0%, #090909 55%, #161616 100%);
+    }
+
+    .feature__media::before {
+      content: '';
+      position: absolute;
+      inset: -30% auto auto -20%;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+
+    .feature__rows {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .feature__rows li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border-dark);
-      background: rgba(255,255,255,0.02);
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      font-size: 0.76rem;
     }
 
-    .mockup__dots { display: flex; gap: 6px; }
-    .mockup__dots span {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.12);
-    }
-    .mockup__dots span:first-child { background: #ff6b6b; }
-    .mockup__dots span:nth-child(2) { background: #ffd93d; }
-    .mockup__dots span:nth-child(3) { background: #6bcb77; }
-
-    .mockup__user {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .feature__rows strong {
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--text-muted-dark);
-      letter-spacing: 0.04em;
-    }
-
-    .mockup__avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.08);
-      color: var(--text-on-dark);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      font-weight: 700;
-    }
-
-    .mockup__body { padding: 24px; color: var(--text-on-dark); }
-
-    .mockup__label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--text-muted-dark);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .mockup__value {
-      font-family: var(--font-display);
-      font-size: 2rem;
-      margin: 4px 0 16px;
-    }
-
-    .mockup__tag {
-      display: inline-block;
-      padding: 4px 10px;
-      background: rgba(34,197,94,0.15);
-      color: var(--accent-green);
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
       font-weight: 500;
-    }
-
-    .mockup__tag--warn {
-      background: rgba(251,191,36,0.15);
-      color: #fbbf24;
-    }
-
-    .mockup__chart { margin: 20px 0; height: 80px; }
-    .mockup__chart svg { width: 100%; height: 100%; }
-
-    .mockup__tabs-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    .mockup__tabs-row span {
-      padding: 4px 10px;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--text-muted-dark);
-      border-radius: 4px;
-    }
-    .mockup__tabs-row span.active {
-      background: var(--text-on-dark);
-      color: var(--bg-dark);
-    }
-
-    .mockup__table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.78rem;
-    }
-
-    .mockup__table th {
-      text-align: left;
-      padding: 8px 0;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--text-muted-dark);
-      font-weight: 500;
-      border-bottom: 1px solid var(--border-dark);
+      font-size: 0.68rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      color: var(--text-muted-dark);
     }
 
-    .mockup__table td {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-dark);
+    .feature__rows em {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 0.82rem;
     }
 
-    .mockup__status {
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      font-weight: 500;
-    }
-    .mockup__status--up { background: rgba(34,197,94,0.15); color: var(--accent-green); }
-    .mockup__status--ok { background: rgba(255,255,255,0.08); color: var(--text-muted-dark); }
+    .feature__rows .is-up { color: var(--accent-green); }
+    .feature__rows .is-hot { color: var(--accent-gold); }
 
-    .mockup__actions { display: flex; gap: 10px; margin-top: 20px; }
-    .mockup__btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 500;
-      text-align: center;
-      border: none;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .mockup__btn--primary { background: var(--text-on-dark); color: var(--bg-dark); }
-    .mockup__btn--ghost { background: rgba(255,255,255,0.06); color: var(--text-muted-dark); }
-
-    .mockup__deck-list { list-style: none; }
-    .mockup__deck-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-dark);
-    }
-    .mockup__deck-thumb {
-      width: 40px; height: 56px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-    .mockup__deck-name { font-weight: 600; font-size: 0.85rem; }
-    .mockup__deck-meta { font-size: 0.75rem; color: var(--text-muted-dark); }
-
-    .mockup__bars { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
-    .mockup__bar-row { display: flex; align-items: center; gap: 12px; }
-    .mockup__bar-label { width: 60px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted-dark); flex-shrink: 0; }
-    .mockup__bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-    .mockup__bar-fill { height: 100%; background: var(--text-on-dark); border-radius: 3px; }
-    .mockup__bar-val { width: 40px; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; text-align: right; }
-
-    /* ========== FEATURE VIDEO ========== */
-    .feature__video {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-soft);
-      background: var(--bg-card-dark);
-      border: 1px solid var(--border-dark);
-      object-fit: cover;
-      object-position: center;
-    }
-
-    .feature__video-wrapper {
-      position: relative;
-      width: 100%;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
-      height: 0;
-      overflow: hidden;
-      border-radius: var(--radius-xl);
-      background: var(--bg-card-dark);
-      border: 1px solid var(--border-dark);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .feature__video-wrapper video {
+    /* These two panels hold placeholder figures rather than a real screenshot,
+       so they say so instead of passing themselves off as live data. */
+    .feature__mock-tag {
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 18px;
+      right: 18px;
+      padding: 4px 10px;
+      border: 1px solid var(--border-dark);
+      border-radius: 100px;
+      background: rgba(255,255,255,0.06);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--text-muted-dark);
+      pointer-events: none;
+    }
+
+    .feature__media[data-theme="search"] {
+      background: linear-gradient(145deg, #101317 0%, #08090b 55%, #141a21 100%);
+    }
+
+    .feature__media[data-theme="decks"] {
+      background: linear-gradient(145deg, #17120b 0%, #0b0906 52%, #18140d 100%);
+    }
+
+    .feature__media[data-theme="ranking"] {
+      background: linear-gradient(145deg, #111313 0%, #090a0a 52%, #141717 100%);
+    }
+
+    .feature__media[data-theme="analysis"] {
+      background: linear-gradient(145deg, #120f15 0%, #08070a 55%, #191320 100%);
+    }
+
+    .feature__media--shot {
+      padding: 0;
+      justify-content: flex-end;
+      background: #0b0b0b;
+      isolation: isolate;
+    }
+
+    .feature__shot {
+      position: absolute;
+      inset: 0;
+      display: block;
+      background: #111;
+    }
+
+    .feature__shot-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
+      display: block;
+      transform: scale(1.01);
+      transition: transform 0.45s ease, filter 0.45s ease;
+      filter: contrast(1.06) saturate(1.05) brightness(1.03);
     }
 
-    .feature__video-fallback {
+    .feature__shot::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.06) 48%, rgba(0,0,0,0.42) 100%);
+      pointer-events: none;
+    }
+
+    .feature__media--shot:hover .feature__shot-img {
+      transform: scale(1.025);
+    }
+
+    .feature__shot-fallback {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--bg-card-dark);
+      padding: 24px;
+      text-align: center;
+      font-size: 0.85rem;
       color: var(--text-muted-dark);
-      font-size: 0.9rem;
-      border-radius: var(--radius-xl);
+      background: linear-gradient(145deg, #131313 0%, #090909 52%, #171717 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .feature__shot.is-broken + .feature__shot-fallback {
+      opacity: 1;
+    }
+
+    .feature__media--shot[data-theme="trends"] .feature__shot-img {
+      object-position: center 14%;
+      filter: contrast(1.08) saturate(1.07) brightness(1.05);
+    }
+
+    .feature__media--shot[data-theme="search"] .feature__shot-img {
+      object-position: center 18%;
+      filter: contrast(1.06) saturate(1.03) brightness(1.04);
+    }
+
+    .feature__media--shot[data-theme="decks"] .feature__shot-img {
+      object-position: center 20%;
+      filter: contrast(1.09) saturate(1.06) brightness(1.02);
     }
 
     /* ========== MID CTA ========== */
@@ -1038,44 +1110,6 @@
     .code-block__body .comment { color: rgba(250,250,250,0.35); }
     .code-block__body .url { color: #93c5fd; }
 
-    /* ========== GUIDE ========== */
-    .guide {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .guide-card {
-      padding: 36px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      background: var(--bg-card);
-    }
-
-    .guide-card__label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-
-    .guide-card h3 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 400;
-      margin-bottom: 12px;
-    }
-
-    .guide-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-
     /* ========== FINAL CTA ========== */
     .final-cta {
       padding: 120px 0;
@@ -1197,10 +1231,6 @@
     }
 
     /* ========== RESPONSIVE ========== */
-    @media (max-width: 1024px) {
-      .guide { grid-template-columns: repeat(2, 1fr); }
-    }
-
     @media (max-width: 900px) {
       .products { grid-template-columns: repeat(2, 1fr); }
       .product-card--wide { grid-column: span 1; }
@@ -1214,10 +1244,7 @@
       .feature--reverse .feature__visual { order: unset; }
 
       .setup { grid-template-columns: 1fr; gap: 40px; }
-      .guide { grid-template-columns: 1fr; }
       .footer__grid { grid-template-columns: 1fr 1fr; gap: 32px; }
-
-      .navbar__actions .status-pill { display: none; }
     }
 
     @media (max-width: 768px) {
@@ -1233,19 +1260,27 @@
         border-bottom: 1px solid var(--border-dark);
         gap: 16px;
       }
-      .navbar__toggle { display: block; }
-      .navbar__actions .btn--ghost { display: none; }
+      .navbar__toggle { display: inline-flex; align-items: center; }
 
       .section { padding: 72px 0; }
       .feature { padding: 56px 0; }
       .products { grid-template-columns: 1fr; }
       .mid-cta { padding: 72px 0; }
       .footer__grid { grid-template-columns: 1fr; }
-      .guide { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
       .container { padding: 0 16px; }
+
+      /* --banner-height is a fixed 40px, so the text has to truncate rather than
+         wrap out of the bar. Right padding keeps it clear of the close button. */
+      .announce { font-size: 0.7rem; padding: 0 42px 0 12px; }
+      .announce a { gap: 6px; }
+      .announce__text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
       .hero { padding: calc(var(--banner-height) + var(--nav-height) + 40px) 16px 40px; }
       .hero__title { font-size: clamp(1.75rem, 6vw, 2.5rem); }
@@ -1255,18 +1290,10 @@
       .product-card h3 { font-size: 1.1rem; }
       .product-card__tag { font-size: 0.6rem; }
 
-      .guide-card { padding: 24px; }
-      .guide-card h3 { font-size: 1.25rem; }
-
       .section__title { font-size: clamp(1.5rem, 4vw, 2rem); }
       .feature__content h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); }
-
-      .mockup { border-radius: var(--radius-md); }
-      .mockup__body { padding: 16px; }
-      .mockup__value { font-size: 1.5rem; }
-      .mockup__table { font-size: 0.7rem; }
-      .mockup__table th { padding: 6px 0; }
-      .mockup__table td { padding: 8px 0; }
+      .feature__media { min-height: 280px; padding: 18px; }
+      .feature__media--shot { min-height: 280px; padding: 0; }
 
       .footer__grid { gap: 24px; }
       .footer__col h4 { font-size: 0.6rem; }
@@ -1275,17 +1302,43 @@
 </head>
 <body>
 
-  <div class="announce">
-    <a href="demoAndDeckPrice.html">
+  <svg class="ico-sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24">
+        <path d="M4 12h15M13 5l7 7-7 7"/>
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M4 12.5l5 5L20 6.5"/>
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <a class="skip-link" href="#main">跳到主要內容</a>
+
+  <div class="announce" id="announce">
+    <a href="deckPrice.html">
       <span class="announce__badge">NEW</span>
-      牌組總價分析圖表上線，立即體驗 <i class="fas fa-arrow-right"></i>
+      <span class="announce__text">牌組總額計算機上線，立即體驗</span>
+      <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg>
     </a>
+    <button class="announce__close" id="announceClose" type="button" aria-label="關閉公告">
+      <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-close"/></svg>
+    </button>
   </div>
 
   <nav class="navbar" id="navbar">
     <div class="navbar__inner">
-      <a href="#" class="navbar__logo">
-        <div class="navbar__logo-icon">卡</div>
+      <a href="index.html" class="navbar__logo">
+        <div class="navbar__logo-icon" aria-hidden="true">卡</div>
         <span>卡片雲</span>
       </a>
       <ul class="navbar__links" id="navLinks">
@@ -1294,19 +1347,25 @@
         <li><a href="#cta">開始使用</a></li>
       </ul>
       <div class="navbar__actions">
-        <button class="navbar__toggle" id="navToggle" aria-label="選單"><i class="fas fa-bars"></i></button>
+        <button class="navbar__toggle" id="navToggle" type="button" aria-label="選單"
+                aria-controls="navLinks" aria-expanded="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg></button>
       </div>
     </div>
   </nav>
 
-  <section class="hero">
+  <section class="hero" id="main" tabindex="-1">
     <div class="dot-grid" aria-hidden="true"></div>
     <p class="hero__brand reveal">卡片雲</p>
     <h1 class="hero__title reveal">卡牌玩家<br><em>查價的新方式</em></h1>
     <p class="hero__subtitle reveal">查價、牌組、漲幅、庫存一站整合。<br>專為 WS 玩家整理的實用小工具。</p>
     <div class="hero__cta reveal">
-      <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+      <a href="searchCard.html" class="btn btn--primary" data-track="hero_primary_cta">開始查卡</a>
     </div>
+    <p class="hero__subnav reveal">
+      <a href="championList.html" data-track="hero_secondary_decks">看牌組</a>
+      <span aria-hidden="true">·</span>
+      <a href="increase.html" data-track="hero_secondary_ranking">看漲幅</a>
+    </p>
     <div class="hero__trust reveal">
       <p class="hero__trust-label">整合多個賣場與賽事資料來源</p>
       <div class="logo-marquee" aria-hidden="true">
@@ -1333,51 +1392,51 @@
         <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
       </div>
       <div class="products">
-        <div href="line_test_v86.html" class="product-card reveal" data-href="line_test_v86.html">
+        <a class="product-card reveal" href="line_test_v88.html" data-track="product_card_trends" aria-labelledby="pc-trends">
           <span class="product-card__tag">trends</span>
-          <h3>庫存價格漲幅趨勢</h3>
+          <h3 id="pc-trends">庫存價格漲幅趨勢</h3>
           <p>追蹤單張卡片的價格變化趨勢，掌握市場動態與投資機會。</p>
           <div class="product-card__footer">
-            <button class="product-card__button">查看 <i class="fas fa-arrow-right"></i></button>
-            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="product-card__button">查看 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+            <span class="product-card__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </div>
-        </div>
-        <div href="searchCard.html" class="product-card product-card--coming-soon reveal" data-href="searchCard.html">
+        </a>
+        <a class="product-card reveal" href="searchCard.html" data-track="product_card_search" aria-labelledby="pc-search">
           <span class="product-card__tag">search</span>
-          <h3>卡片搜尋</h3>
+          <h3 id="pc-search">卡片搜尋</h3>
           <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。</p>
           <div class="product-card__footer">
-            <button class="product-card__button">搜尋 <i class="fas fa-arrow-right"></i></button>
-            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="product-card__button">搜尋 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+            <span class="product-card__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </div>
-        </div>
-        <div href="championList.html" class="product-card reveal" data-href="championList.html">
+        </a>
+        <a class="product-card reveal" href="championList.html" data-track="product_card_decks" aria-labelledby="pc-decks">
           <span class="product-card__tag">decks</span>
-          <h3>優勝上位牌組</h3>
+          <h3 id="pc-decks">優勝上位牌組</h3>
           <p>收錄日本、台灣各大賽事優勝牌組，按系列與色別篩選參考構築。</p>
           <div class="product-card__footer">
-            <button class="product-card__button">瀏覽 <i class="fas fa-arrow-right"></i></button>
-            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="product-card__button">瀏覽 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+            <span class="product-card__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </div>
-        </div>
-        <div href="increase.html" class="product-card product-card--coming-soon reveal" data-href="increase.html">
+        </a>
+        <a class="product-card reveal" href="increase.html" data-track="product_card_ranking" aria-labelledby="pc-ranking">
           <span class="product-card__tag">trends</span>
-          <h3>漲幅排行</h3>
+          <h3 id="pc-ranking">漲幅排行</h3>
           <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。</p>
           <div class="product-card__footer">
-            <button class="product-card__button">排行 <i class="fas fa-arrow-right"></i></button>
-            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="product-card__button">排行 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+            <span class="product-card__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </div>
-        </div>
-        <div href="demoAndDeckPrice.html" class="product-card product-card--coming-soon reveal" data-href="demoAndDeckPrice.html">
+        </a>
+        <a class="product-card product-card--wide reveal" href="deckPrice.html" data-track="product_card_analysis" aria-labelledby="pc-analysis">
           <span class="product-card__tag">analysis</span>
-          <h3>牌組分析</h3>
+          <h3 id="pc-analysis">牌組分析</h3>
           <p>計算牌組總價趨勢，比較市場平均，輔助組牌預算規劃。</p>
           <div class="product-card__footer">
-            <button class="product-card__button">分析 <i class="fas fa-arrow-right"></i></button>
-            <span class="product-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            <span class="product-card__button">分析 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+            <span class="product-card__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </div>
-        </div>
+        </a>
       </div>
     </div>
   </section>
@@ -1390,14 +1449,15 @@
           <p class="section__eyebrow">各卡號漲幅趨勢</p>
           <h2>追蹤單張卡片走勢</h2>
           <p>深入分析每張卡片的價格變化趨勢，掌握市場動態與投資機會。了解歷史漲跌，預判未來行情。</p>
-          <a href="line_test_v86.html" class="feature__link">查看趨勢 <i class="fas fa-arrow-right"></i></a>
+          <a href="line_test_v88.html" class="feature__link" data-track="feature_trends_link">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual">
-          <div class="feature__video-wrapper">
-            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-trends.jpg">
-              <source src="./assets/demo-trends.mp4" type="video/mp4">
-              <img src="./assets/demo-trends.jpg" alt="價格走勢demo">
-            </video>
+          <div class="feature__media feature__media--shot" data-theme="trends" aria-label="價格走勢實際畫面">
+            <picture class="feature__shot">
+              <source srcset="./assets/feature-trends.webp" type="image/webp">
+              <img class="feature__shot-img" src="./assets/feature-trends.png" alt="庫存價格漲幅趨勢實際畫面" width="1512" height="864" loading="lazy" decoding="async" onerror="this.closest('.feature__shot').classList.add('is-broken');">
+            </picture>
+            <div class="feature__shot-fallback">價格走勢畫面預覽</div>
           </div>
         </div>
       </div>
@@ -1407,14 +1467,15 @@
           <p class="section__eyebrow">卡片搜尋</p>
           <h2>快速查詢卡片資訊</h2>
           <p>輸入卡名或編號，立即找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
-          <a href="searchCard.html" class="feature__link">開始搜尋 <i class="fas fa-arrow-right"></i></a>
+          <a href="searchCard.html" class="feature__link" data-track="feature_search_link">開始搜尋 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual">
-          <div class="feature__video-wrapper">
-            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-search.jpg">
-              <source src="./assets/demo-search.mp4" type="video/mp4">
-              <img src="./assets/demo-search.jpg" alt="卡片搜尋demo">
-            </video>
+          <div class="feature__media feature__media--shot" data-theme="search" aria-label="卡片搜尋實際畫面">
+            <picture class="feature__shot">
+              <source srcset="./assets/feature-search.webp" type="image/webp">
+              <img class="feature__shot-img" src="./assets/feature-search.png" alt="卡片搜尋實際畫面" width="1920" height="947" loading="lazy" decoding="async" onerror="this.closest('.feature__shot').classList.add('is-broken');">
+            </picture>
+            <div class="feature__shot-fallback">卡片搜尋畫面預覽</div>
           </div>
         </div>
       </div>
@@ -1424,14 +1485,15 @@
           <p class="section__eyebrow">優勝上位牌組</p>
           <h2>站在巨人的肩膀上</h2>
           <p>收錄日本、台灣各大賽事的優勝牌組，參考高手怎麼組牌。按系列、色別、賽事篩選，找到適合你的構築。</p>
-          <a href="championList.html" class="feature__link">看牌組 <i class="fas fa-arrow-right"></i></a>
+          <a href="championList.html" class="feature__link" data-track="feature_decks_link">看牌組 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual">
-          <div class="feature__video-wrapper">
-            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-decks.jpg">
-              <source src="./assets/demo-decks.mp4" type="video/mp4">
-              <img src="./assets/demo-decks.jpg" alt="優勝牌組demo">
-            </video>
+          <div class="feature__media feature__media--shot" data-theme="decks" aria-label="優勝牌組實際畫面">
+            <picture class="feature__shot">
+              <source srcset="./assets/feature-decks.webp" type="image/webp">
+              <img class="feature__shot-img" src="./assets/feature-decks.png" alt="優勝牌組實際畫面" width="1920" height="947" loading="lazy" decoding="async" onerror="this.closest('.feature__shot').classList.add('is-broken');">
+            </picture>
+            <div class="feature__shot-fallback">優勝牌組畫面預覽</div>
           </div>
         </div>
       </div>
@@ -1440,15 +1502,17 @@
         <div class="feature__content">
           <p class="section__eyebrow">漲幅排行</p>
           <h2>掌握市場脈動</h2>
-          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。實時更新排行榜，一眼看出市場焦點。</p>
-          <a href="increase.html" class="feature__link">看漲幅 <i class="fas fa-arrow-right"></i></a>
+          <p>按漲跌幅排序，及早發現市場熱點卡片與潛在泡沫。即時更新排行榜，一眼看出市場焦點。</p>
+          <a href="increase.html" class="feature__link" data-track="feature_ranking_link">看漲幅 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual">
-          <div class="feature__video-wrapper">
-            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-ranking.jpg">
-              <source src="./assets/demo-ranking.mp4" type="video/mp4">
-              <img src="./assets/demo-ranking.jpg" alt="漲幅排行demo">
-            </video>
+          <div class="feature__media" data-theme="ranking" aria-label="漲幅排行示意">
+            <span class="feature__mock-tag">示意</span>
+            <ul class="feature__rows">
+              <li><strong>#1</strong><em class="is-up">+31.4%</em></li>
+              <li><strong>#2</strong><em class="is-up">+25.2%</em></li>
+              <li><strong>#3</strong><em class="is-up">+19.8%</em></li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1458,14 +1522,16 @@
           <p class="section__eyebrow">牌組分析</p>
           <h2>精準規劃組牌預算</h2>
           <p>計算牌組總價趨勢，比較市場平均，輔助你的組牌預算規劃。分析單卡成本分佈，優化採購策略。</p>
-          <a href="demoAndDeckPrice.html" class="feature__link">開始分析 <i class="fas fa-arrow-right"></i></a>
+          <a href="deckPrice.html" class="feature__link" data-track="feature_analysis_link">開始分析 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual">
-          <div class="feature__video-wrapper">
-            <video class="feature__video" autoplay muted loop playsinline poster="./assets/demo-analysis.jpg">
-              <source src="./assets/demo-analysis.mp4" type="video/mp4">
-              <img src="./assets/demo-analysis.jpg" alt="牌組分析demo">
-            </video>
+          <div class="feature__media" data-theme="analysis" aria-label="牌組分析示意">
+            <span class="feature__mock-tag">示意</span>
+            <ul class="feature__rows">
+              <li><strong>牌組總價</strong><em>NT$ 18,340</em></li>
+              <li><strong>市場均價</strong><em>NT$ 16,920</em></li>
+              <li><strong>預算偏差</strong><em class="is-hot">+8.4%</em></li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1479,7 +1545,7 @@
       <h2 class="mid-cta__title reveal">卡牌資訊，不再手忙腳亂</h2>
       <p class="mid-cta__text reveal">觀察真實市場數據，掌握價格變化，讓每次買賣與組牌都更有依據。</p>
       <div class="mid-cta__btn reveal">
-        <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+        <a href="searchCard.html" class="btn btn--primary" data-track="mid_cta_primary">開始查卡</a>
       </div>
     </div>
   </section>
@@ -1495,8 +1561,9 @@
         <div class="code-block">
           <div class="code-block__header">
             <span class="code-block__label">quick lookup</span>
-            <button class="code-block__copy" id="copyBtn" type="button">
-              <i class="fas fa-copy"></i> copy
+            <button class="code-block__copy" id="copyBtn" type="button"
+                    data-copy="https://ws-cards.cloud/searchCard.html?q=BD/W54-070SSP">
+              <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"/></svg> copy
             </button>
           </div>
           <div class="code-block__body" id="codeContent"><span class="comment"># 在瀏覽器直接開啟以下連結查詢卡片</span>
@@ -1511,31 +1578,6 @@
     </div>
   </section>
 
-  <section class="section section--alt">
-    <div class="container">
-      <div class="guide">
-        <div class="guide-card reveal">
-          <p class="guide-card__label">搜尋</p>
-          <h3>立即查詢你關心的卡</h3>
-          <p>輸入卡名或編號，快速找到價格走勢、相關牌組與市場資訊。擺攤、比賽現場都能即時使用。</p>
-          <a href="searchCard.html" class="btn btn--outline-dark">開始查卡 <i class="fas fa-search"></i></a>
-        </div>
-        <div class="guide-card reveal">
-          <p class="guide-card__label">構築</p>
-          <h3>參考優勝牌組</h3>
-          <p>站在高手的肩膀上。精選日本、台灣優勝牌組，按色別、系列篩選適合你的構築。</p>
-          <a href="championList.html" class="btn btn--outline-dark">看牌組 <i class="fas fa-trophy"></i></a>
-        </div>
-        <div class="guide-card reveal">
-          <p class="guide-card__label">追蹤</p>
-          <h3>掌握市場漲跌</h3>
-          <p>實時更新單卡漲幅排行，一眼看出市場焦點。及早發現熱點卡與投資機會。</p>
-          <a href="increase.html" class="btn btn--outline-dark">看漲幅 <i class="fas fa-chart-line"></i></a>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="final-cta" id="cta">
     <div class="dot-grid" aria-hidden="true"></div>
     <div class="container">
@@ -1543,7 +1585,7 @@
         <h2 class="final-cta__title">開始使用。</h2>
         <p class="final-cta__text">查價、牌組、漲幅、庫存一站整合。現在就開始查詢你關心的卡片。</p>
         <div class="final-cta__buttons">
-          <a href="searchCard.html" class="btn btn--primary">開始查卡</a>
+          <a href="searchCard.html" class="btn btn--primary" data-track="final_cta_primary">開始查卡</a>
         </div>
       </div>
     </div>
@@ -1553,8 +1595,8 @@
     <div class="container">
       <div class="footer__grid">
         <div class="footer__brand">
-          <a href="#" class="navbar__logo">
-            <div class="navbar__logo-icon">卡</div>
+          <a href="index.html" class="navbar__logo">
+            <div class="navbar__logo-icon" aria-hidden="true">卡</div>
             <span>卡片雲</span>
           </a>
           <p>一個卡牌玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
@@ -1571,15 +1613,15 @@
         <div class="footer__col">
           <h4>工具</h4>
           <ul>
-            <li><a href="demoAndDeckPrice.html">牌組分析</a></li>
-            <li><a href="stockCard.html">庫存追蹤</a></li>
+            <li><a href="deckPrice.html" data-track="footer_analysis_link">牌組分析</a></li>
+            <li><a href="line_test_v88.html" data-track="footer_stock_link">庫存追蹤</a></li>
             <li><a href="cardlist.html">系列查詢</a></li>
           </ul>
         </div>
         <div class="footer__col">
           <h4>連結</h4>
           <ul>
-            <li><a href="index.html">主站首頁</a></li>
+            <li><a href="index.html" data-track="footer_home_link">主站首頁</a></li>
             <li><a href="#products">功能總覽</a></li>
             <li><a href="#cta">開始使用</a></li>
           </ul>
@@ -1599,6 +1641,97 @@
     (function () {
       'use strict';
 
+      // Point this at a collector to make clicks survive the navigation that
+      // follows them. Left empty, tracking stays dataLayer/GTM-only and no
+      // beacon is queued or sent.
+      var TRACK_ENDPOINT = '';
+
+      var dataLayer = window.dataLayer = window.dataLayer || [];
+      var pendingEvents = [];
+
+      // localStorage throws, not returns null, in some privacy modes.
+      function readStored(key) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function writeStored(key, value) {
+        try {
+          if (value === null) {
+            window.localStorage.removeItem(key);
+          } else {
+            window.localStorage.setItem(key, value);
+          }
+        } catch (err) {
+          /* storage unavailable — tracking still works, it just won't persist */
+        }
+      }
+
+      var isTrackDebug = /[?&]debugTrack=1(?:&|$)/.test(window.location.search) ||
+        readStored('ws_cards_track_debug') === '1';
+
+      function flushEvents() {
+        if (!TRACK_ENDPOINT || !pendingEvents.length || !navigator.sendBeacon) {
+          return;
+        }
+        var batch = pendingEvents.splice(0, pendingEvents.length);
+        var blob = new Blob([JSON.stringify(batch)], { type: 'application/json' });
+        if (!navigator.sendBeacon(TRACK_ENDPOINT, blob)) {
+          // Queue is full or the payload was rejected; keep them for a later flush.
+          pendingEvents = batch.concat(pendingEvents);
+        }
+      }
+
+      function trackEvent(name, payload) {
+        var eventPayload = Object.assign({
+          event: name,
+          page: 'landingPage_4',
+          timestamp: Date.now()
+        }, payload || {});
+        dataLayer.push(eventPayload);
+        if (TRACK_ENDPOINT) {
+          pendingEvents.push(eventPayload);
+        }
+        if (isTrackDebug) {
+          // Debug mode helps verify event payloads without external analytics tools.
+          console.log('[ws-cards-track]', eventPayload);
+        }
+      }
+
+      // A click that navigates away cancels in-flight requests, so these two
+      // events are the last reliable point to hand the batch to the browser.
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+          flushEvents();
+        }
+      });
+      window.addEventListener('pagehide', flushEvents);
+
+      window.wsCardsTrackDebug = {
+        enable: function () {
+          writeStored('ws_cards_track_debug', '1');
+          console.log('[ws-cards-track] debug enabled');
+        },
+        disable: function () {
+          writeStored('ws_cards_track_debug', null);
+          console.log('[ws-cards-track] debug disabled');
+        },
+        pending: function () {
+          return pendingEvents.slice();
+        },
+        flush: flushEvents
+      };
+
+      var announceClose = document.getElementById('announceClose');
+      announceClose.addEventListener('click', function () {
+        document.documentElement.classList.add('is-banner-hidden');
+        writeStored('ws_cards_banner_dismissed', window.WS_BANNER_ID);
+        trackEvent('announce_dismiss', { target: window.WS_BANNER_ID });
+      });
+
       var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var navbar = document.getElementById('navbar');
@@ -1608,49 +1741,110 @@
 
       var navToggle = document.getElementById('navToggle');
       var navLinks = document.getElementById('navLinks');
+
+      function setNavOpen(open) {
+        navLinks.classList.toggle('is-open', open);
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
       navToggle.addEventListener('click', function () {
-        navLinks.classList.toggle('is-open');
+        setNavOpen(!navLinks.classList.contains('is-open'));
       });
+
       navLinks.querySelectorAll('a').forEach(function (link) {
         link.addEventListener('click', function () {
-          navLinks.classList.remove('is-open');
+          setNavOpen(false);
         });
       });
 
-      var productCards = document.querySelectorAll('.product-card');
-      productCards.forEach(function (card) {
-        card.addEventListener('click', function () {
-          if (card.classList.contains('product-card--coming-soon')) {
-            return; // 阻止導航
-          }
-          var href = card.getAttribute('data-href');
-          if (href) window.location.href = href;
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && navLinks.classList.contains('is-open')) {
+          setNavOpen(false);
+          navToggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!navLinks.classList.contains('is-open')) {
+          return;
+        }
+        if (!navLinks.contains(event.target) && !navToggle.contains(event.target)) {
+          setNavOpen(false);
+        }
+      });
+
+      // Product cards are real anchors now, so navigation is the browser's job —
+      // this only records the click and keeps the original event names.
+      document.querySelectorAll('[data-track]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          trackEvent(el.classList.contains('product-card') ? 'product_card_click' : 'cta_click', {
+            target: el.getAttribute('data-track'),
+            href: el.getAttribute('href') || ''
+          });
         });
       });
 
       var copyBtn = document.getElementById('copyBtn');
       var codeContent = document.getElementById('codeContent');
+
+      function showCopied() {
+        copyBtn.classList.add('is-copied');
+        copyBtn.innerHTML = '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-check"/></svg> copied';
+        setTimeout(function () {
+          copyBtn.classList.remove('is-copied');
+          copyBtn.innerHTML = '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"/></svg> copy';
+        }, 2000);
+      }
+
+      function legacyCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var copied = false;
+        try {
+          copied = document.execCommand('copy');
+        } catch (err) {
+          copied = false;
+        }
+        document.body.removeChild(ta);
+        return copied;
+      }
+
       copyBtn.addEventListener('click', function () {
-        var text = codeContent.innerText;
+        var text = copyBtn.getAttribute('data-copy') || codeContent.innerText;
+        function fallback() {
+          if (legacyCopy(text)) {
+            showCopied();
+          } else {
+            window.prompt('請手動複製以下連結', text);
+          }
+        }
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            copyBtn.classList.add('is-copied');
-            copyBtn.innerHTML = '<i class="fas fa-check"></i> copied';
-            setTimeout(function () {
-              copyBtn.classList.remove('is-copied');
-              copyBtn.innerHTML = '<i class="fas fa-copy"></i> copy';
-            }, 2000);
-          });
+          // Clipboard API rejects on insecure origins and when permission is denied.
+          navigator.clipboard.writeText(text).then(showCopied, fallback);
         } else {
-          var ta = document.createElement('textarea');
-          ta.value = text;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-          alert('已複製到剪貼簿');
+          fallback();
         }
       });
+
+      if (!prefersReduced && 'IntersectionObserver' in window) {
+        var marqueeObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            var track = entry.target.querySelector('.marquee__track, .logo-marquee__track');
+            if (track) {
+              track.classList.toggle('is-paused', !entry.isIntersecting);
+            }
+          });
+        });
+        document.querySelectorAll('.marquee, .logo-marquee').forEach(function (section) {
+          marqueeObserver.observe(section);
+        });
+      }
 
       if (!prefersReduced) {
         var revealEls = document.querySelectorAll('.reveal');
