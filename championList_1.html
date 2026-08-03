@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <meta property="og:title" content="WS-Cards">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
+  <meta property="og:url" content="https://ws-cards.cloud">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <title>優勝牌組查詢 | WS-Cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/scroll-hint@latest/css/scroll-hint.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v86.css">
+  <link rel="stylesheet" href="dist/css/wscards.championList.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed champ-page">
+<div class="champ-atmosphere-boost" aria-hidden="true"></div>
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)">
+          <span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span>
+        </a>
+      </li>
+    </ul>
+    <div class="navbar-title-block">
+      <span class="navbar-title-text">優勝牌組查詢</span>
+      <span class="navbar-title-badge">Beta</span>
+    </div>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button
+          id="themeToggleBtn"
+          class="theme-toggle-btn"
+          type="button"
+          title="切換為深色模式"
+          aria-label="切換為深色模式"
+          aria-pressed="false"
+        >
+          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button class="custom-drawer-close" type="button" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu" style="display:none;">
+            <li>
+              <a href="line" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link active">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+
+          <div class="col-lg-12">
+            <div class="champ-status-strip" role="status">
+              <i class="fas fa-pause-circle" aria-hidden="true"></i>
+              <div>
+                <strong>暫停更新</strong>
+                <span>目前優勝牌組搜尋暫時停更，復更時間待定。</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 搜尋 -->
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <div class="champ-section-head">
+                  <h5 class="card-title">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    作品搜尋
+                  </h5>
+                  <span class="champ-section-meta">Find Title</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="search-container">
+                  <form onsubmit="return false;">
+                    <input
+                      id="xxxx"
+                      type="text"
+                      name="pattern"
+                      placeholder="請輸入作品名稱或是卡號前三碼"
+                      value=""
+                      autocomplete="off"
+                      class="form-control typeahead"
+                      list="mylist"
+                    >
+                  </form>
+                  <div class="search-hint">
+                    <i class="fas fa-lightbulb mr-1" aria-hidden="true"></i>
+                    <small>小提示：輸入作品中文／日文名稱，或卡號前綴（例如 BD、HOL）即可篩選優勝紀錄。</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 篩選 -->
+          <div class="col-lg-12">
+            <div class="card filter-card" id="filter-card-tag">
+              <div class="card-header">
+                <div class="champ-section-head">
+                  <h5 class="card-title">
+                    <i class="fas fa-filter" aria-hidden="true"></i>
+                    篩選條件
+                  </h5>
+                  <span class="champ-section-meta">Region</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="filter-container">
+                  <div class="filter-group">
+                    <label class="filter-label" for="select_area">
+                      <i class="fas fa-globe-asia mr-2" aria-hidden="true"></i>比賽地區
+                    </label>
+                    <select class="form-select" id="select_area">
+                      <option id="defaultArea">所有地區</option>
+                      <option>台灣</option>
+                      <option>日本</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="overlay-wrapper" id="overlay-1" style="display:none;">
+                  <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 主力殺招 -->
+          <div class="col-lg-12">
+            <div class="card core-rail-card">
+              <div class="card-header">
+                <div class="champ-section-head">
+                  <h5 class="card-title">
+                    <i class="fas fa-fire" aria-hidden="true"></i>
+                    主力殺招
+                  </h5>
+                  <span class="champ-section-meta">Core Flames</span>
+                </div>
+              </div>
+              <div class="card-body js-scrollable" id="coreFlameList">
+                <div class="card-text" id="coreCardImgList">
+                  <img id="cardImg" class="img-fluid" src="https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png" alt="主力殺招預覽">
+                </div>
+              </div>
+              <div class="overlay-wrapper" id="overlay-2" style="display:none;">
+                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 優勝牌組清單 -->
+          <div class="col-lg-12">
+            <div class="card deck-list-card card-outline">
+              <div class="card-header">
+                <div class="champ-section-head">
+                  <h5 class="card-title">
+                    <i class="fas fa-trophy" aria-hidden="true"></i>
+                    優勝牌組清單
+                  </h5>
+                  <span class="champ-section-meta">Champions</span>
+                </div>
+              </div>
+              <div class="card-body" id="deckListCard">
+                <div class="card-text card-outline collapsed-card">
+                  <img id="cardImg" class="img-fluid" src="https://1.bp.blogspot.com/-0LJSR56tXL8/VVGVS2PQRsI/AAAAAAAAtkA/9EI2ZHrT5w8/s550/text_sankasya_bosyu.png" alt="優勝牌組預覽">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scrollToTopBtn" class="scroll-to-top-btn" title="回到頂部" aria-label="回到頂部">
+    <i class="fas fa-chevron-up"></i>
+  </div>
+
+  <aside class="control-sidebar" id="rightSideBar">
+    <div class="p-3">
+      <h5><p>服務條款及免責聲明</p></h5>
+      <br>
+      <p>在使用本網站(ws-cards.cloud)前，請先閱讀利用規約及免責聲明</p><br>
+      <button id="annButton" type="button"><p>規約及免責聲明</p></button>
+    </div>
+  </aside>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <a href="#" onclick="$('#announceexampleModalCenter').modal('show'); return false;">利用規約及免責聲明</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<!-- Announce Modal -->
+<div id="card-modal-announce">
+  <div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
+          <button type="button" class="close" aria-label="Close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="announce-card-popup-modal">
+            <div class="row">
+              <div class="col text">
+                <ul>
+                  <li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
+                  <li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
+                  <li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
+                  <li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
+                  <li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
+                  <br>
+                  <p>最終更新日期 2020年12月11日</p>
+                </ul>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card Modal -->
+<div id="card-modal">
+  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle"></h5>
+          <button type="button" class="close" aria-label="Close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="card-popup-modal">
+            <div class="row">
+              <div class="col text-center">
+                <div id="snsContent"></div>
+              </div>
+              <div class="col text-center" id="modal-body-bottom"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="dist/js/adminlte.min.js"></script>
+<script src="dist/js/suggest/typeahead.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" integrity="sha256-Tobw4i5HcbW4qsJMYTxmGAameLGvooTQPPatA9PiGgo=" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/scroll-hint@latest/js/scroll-hint.min.js" integrity="sha256-zA/BaZ/r7sIzyuKmkaVF2w+uHXGCdAf0WDHpvM/1TY4=" crossorigin="anonymous"></script>
+<script src="dist/js/wscards.championList.js"></script>
+<script>
+(function() {
+  var THEME_STORAGE_KEY = 'ws-theme';
+
+  function resolveTheme(theme) {
+    return theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function applyTheme(theme, btn, icon) {
+    var resolvedTheme = resolveTheme(theme);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+    if (!btn || !icon) return;
+    var isDark = resolvedTheme === 'dark';
+    icon.classList.remove('fa-sun', 'fa-moon');
+    icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    btn.setAttribute('title', isDark ? '切換為淺色模式' : '切換為深色模式');
+    btn.setAttribute('aria-label', isDark ? '切換為淺色模式' : '切換為深色模式');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeToggleIcon');
+    if (!btn || !icon) return;
+    var currentTheme = resolveTheme(
+      document.documentElement.getAttribute('data-theme') ||
+      localStorage.getItem(THEME_STORAGE_KEY)
+    );
+    applyTheme(currentTheme, btn, icon);
+    btn.addEventListener('click', function() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme, btn, icon);
+      localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+    });
+  });
+})();
+
+function toggleCustomDrawer(e) {
+  if (e) e.preventDefault();
+  var drawer = document.getElementById('customDrawer');
+  var overlay = document.getElementById('customDrawerOverlay');
+  if (drawer && overlay) {
+    drawer.classList.toggle('open');
+    overlay.classList.toggle('active');
+    var btn = document.getElementById('leftbar');
+    if (btn) {
+      var opened = drawer.classList.contains('open');
+      btn.classList.toggle('is-open', opened);
+      btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+      btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+    }
+  }
+}
+
+function toggleSubmenu(element, e) {
+  if (e) e.preventDefault();
+  var parent = element.parentElement;
+  if (parent) {
+    parent.classList.toggle('open');
+    var submenu = parent.querySelector('.submenu');
+    if (submenu) {
+      submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  }
+}
+
+(function() {
+  var annButton = document.getElementById('annButton');
+  if (annButton) {
+    annButton.addEventListener('click', function() {
+      $('#announceexampleModalCenter').modal('show');
+    });
+  }
+})();
+
+Swal.fire({
+  icon: 'info',
+  title: '暫停更新',
+  text: '目前此優勝牌組搜尋暫時停更，復更時間不確定'
+});
+
+new ScrollHint('.js-scrollable', {
+  suggestiveShadow: true
+});
+
+(function() {
+  var scrollToTopBtn = document.getElementById('scrollToTopBtn');
+  if (!scrollToTopBtn) return;
+  var isScrolling = false;
+
+  function scrollToTop() {
+    if (isScrolling) return;
+    isScrolling = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(function() { isScrolling = false; }, 1000);
+  }
+
+  function toggleScrollButton() {
+    if (window.pageYOffset > 200) {
+      scrollToTopBtn.classList.add('visible');
+    } else {
+      scrollToTopBtn.classList.remove('visible');
+    }
+  }
+
+  function throttle(func, limit) {
+    var inThrottle;
+    return function() {
+      if (!inThrottle) {
+        func.apply(this, arguments);
+        inThrottle = true;
+        setTimeout(function() { inThrottle = false; }, limit);
+      }
+    };
+  }
+
+  scrollToTopBtn.addEventListener('click', scrollToTop);
+  window.addEventListener('scroll', throttle(toggleScrollButton, 100));
+  toggleScrollButton();
+})();
+
+(function() {
+  var searchInput = document.getElementById('xxxx');
+  if (!searchInput) return;
+  searchInput.addEventListener('focus', function() {
+    document.body.classList.add('search-focused');
+  });
+  searchInput.addEventListener('blur', function() {
+    setTimeout(function() {
+      document.body.classList.remove('search-focused');
+    }, 150);
+  });
+})();
+</script>
+</body>
+</html>
