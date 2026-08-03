@@ -1,0 +1,450 @@
+/* ============================================================
+   championList — Tournament Editorial
+   Distinct from line_test_v86 (no purple glass dashboard look)
+   ============================================================ */
+
+:root {
+  --champ-ink: #0f2a1f;
+  --champ-pine: #1a3a2a;
+  --champ-moss: #2d5a45;
+  --champ-mist: #e8f0eb;
+  --champ-paper: #f4f7f5;
+  --champ-gold: #c9a227;
+  --champ-gold-soft: rgba(201, 162, 39, 0.18);
+  --champ-gold-line: rgba(201, 162, 39, 0.45);
+  --champ-text: #14261c;
+  --champ-muted: #5a6f63;
+  --champ-surface: #ffffff;
+  --champ-border: rgba(15, 42, 31, 0.1);
+  --champ-shadow: 0 12px 40px rgba(15, 42, 31, 0.08);
+  --champ-radius: 14px;
+  --champ-font-display: "Syne", "Noto Sans TC", sans-serif;
+  --champ-font-body: "Noto Sans TC", "Source Sans Pro", sans-serif;
+}
+
+[data-theme="dark"] {
+  --champ-ink: #071510;
+  --champ-pine: #0c1f16;
+  --champ-moss: #1e3d2e;
+  --champ-mist: #152820;
+  --champ-paper: #0a1611;
+  --champ-gold: #d4b84a;
+  --champ-gold-soft: rgba(212, 184, 74, 0.16);
+  --champ-gold-line: rgba(212, 184, 74, 0.4);
+  --champ-text: #e6efe9;
+  --champ-muted: #8aa396;
+  --champ-surface: #12241b;
+  --champ-border: rgba(232, 240, 235, 0.1);
+  --champ-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* Atmosphere — soft pine mist + dot grain */
+body.champ-page {
+  font-family: var(--champ-font-body);
+  color: var(--champ-text);
+  background:
+    radial-gradient(ellipse 90% 55% at 12% -8%, rgba(45, 90, 69, 0.22), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 92% 8%, rgba(201, 162, 39, 0.12), transparent 50%),
+    radial-gradient(circle, rgba(15, 42, 31, 0.035) 1px, transparent 1px),
+    var(--champ-paper);
+  background-size: auto, auto, 26px 26px, auto;
+  background-attachment: fixed;
+}
+
+[data-theme="dark"] body.champ-page {
+  background:
+    radial-gradient(ellipse 90% 55% at 10% -10%, rgba(45, 90, 69, 0.35), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 95% 5%, rgba(201, 162, 39, 0.08), transparent 48%),
+    radial-gradient(circle, rgba(232, 240, 235, 0.03) 1px, transparent 1px),
+    var(--champ-paper);
+  background-size: auto, auto, 26px 26px, auto;
+  background-attachment: fixed;
+}
+
+body.champ-page .content-wrapper {
+  background: transparent !important;
+}
+
+/* Navbar badge — gold instead of v86 blue/purple */
+body.champ-page .navbar-title-badge {
+  background: var(--champ-gold-soft);
+  color: var(--champ-pine);
+  border: 1px solid var(--champ-gold-line);
+  font-family: var(--champ-font-display);
+  letter-spacing: 0.06em;
+}
+
+[data-theme="dark"] body.champ-page .navbar-title-badge {
+  color: var(--champ-gold);
+}
+
+body.champ-page .navbar-title-text {
+  font-family: var(--champ-font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Cards — editorial surfaces */
+body.champ-page .card {
+  background: var(--champ-surface);
+  border: 1px solid var(--champ-border);
+  border-radius: var(--champ-radius);
+  box-shadow: var(--champ-shadow);
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+body.champ-page .card:hover {
+  box-shadow: 0 18px 48px rgba(15, 42, 31, 0.12);
+}
+
+[data-theme="dark"] body.champ-page .card:hover {
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+body.champ-page .card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--champ-border);
+  padding: 1rem 1.25rem 0.85rem;
+}
+
+body.champ-page .card-body {
+  padding: 1.15rem 1.25rem 1.35rem;
+}
+
+body.champ-page .card-title {
+  font-family: var(--champ-font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--champ-ink);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+[data-theme="dark"] body.champ-page .card-title {
+  color: var(--champ-text);
+}
+
+body.champ-page .card-title i {
+  color: var(--champ-gold);
+}
+
+/* Asymmetric section meta */
+.champ-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.champ-section-meta {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--champ-muted);
+  font-family: var(--champ-font-display);
+  font-weight: 600;
+  padding-bottom: 0.15rem;
+  border-bottom: 2px solid var(--champ-gold);
+  white-space: nowrap;
+}
+
+/* Status strip — pause notice as editorial banner */
+.champ-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: linear-gradient(105deg, var(--champ-gold-soft), transparent 70%);
+  border: 1px solid var(--champ-gold-line);
+  color: var(--champ-text);
+  font-size: 0.88rem;
+  animation: champFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.champ-status-strip i {
+  color: var(--champ-gold);
+  font-size: 1.1rem;
+}
+
+.champ-status-strip strong {
+  font-family: var(--champ-font-display);
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+
+/* Search */
+body.champ-page .search-card {
+  position: relative;
+  z-index: 10;
+  animation: champFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+body.champ-page .search-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--champ-gold), var(--champ-moss));
+  opacity: 0.85;
+}
+
+body.champ-page .search-container .form-control {
+  border: 1.5px solid var(--champ-border);
+  border-radius: 10px;
+  min-height: 48px;
+  font-family: var(--champ-font-body);
+  background: var(--champ-surface);
+  color: var(--champ-text);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+body.champ-page .search-container .form-control:focus {
+  border-color: var(--champ-gold);
+  box-shadow: 0 0 0 3px var(--champ-gold-soft);
+  background: var(--champ-mist);
+}
+
+[data-theme="dark"] body.champ-page .search-container .form-control:focus {
+  background: var(--champ-pine);
+}
+
+body.champ-page .search-hint {
+  margin-top: 0.65rem;
+  color: var(--champ-muted);
+  font-size: 0.82rem;
+}
+
+body.champ-page .search-hint i {
+  color: var(--champ-gold);
+}
+
+body.champ-page.search-focused .champ-atmosphere-boost {
+  opacity: 1;
+}
+
+.champ-atmosphere-boost {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  background: radial-gradient(ellipse 60% 40% at 50% 12%, rgba(201, 162, 39, 0.08), transparent 70%);
+}
+
+/* Filter */
+body.champ-page .filter-card {
+  animation: champFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+body.champ-page .filter-card .form-select,
+body.champ-page #select_area {
+  border: 1.5px solid var(--champ-border);
+  border-radius: 10px;
+  min-height: 42px;
+  padding: 0.4rem 0.85rem;
+  background: var(--champ-surface);
+  color: var(--champ-text);
+  font-family: var(--champ-font-body);
+  max-width: 280px;
+  width: 100%;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.champ-page #select_area:focus {
+  outline: none;
+  border-color: var(--champ-gold);
+  box-shadow: 0 0 0 3px var(--champ-gold-soft);
+}
+
+body.champ-page .filter-label {
+  color: var(--champ-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+body.champ-page .filter-label i {
+  color: var(--champ-moss);
+}
+
+[data-theme="dark"] body.champ-page .filter-label i {
+  color: var(--champ-gold);
+}
+
+/* Core flames rail — editorial scroll strip */
+body.champ-page .core-rail-card {
+  animation: champFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+#coreFlameList.js-scrollable,
+#coreCardImgList {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+}
+
+#coreCardImgList {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+#coreCardImgList img,
+#coreCardImgList #cardImg {
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid var(--champ-border);
+  box-shadow: 0 6px 18px rgba(15, 42, 31, 0.1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+#coreCardImgList img:hover,
+#coreCardImgList #cardImg:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 14px 28px rgba(15, 42, 31, 0.16);
+  border-color: var(--champ-gold-line);
+}
+
+/* Deck list */
+body.champ-page .deck-list-card {
+  animation: champFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+#deckListCard img,
+#deckListCard #cardImg {
+  border-radius: 8px;
+  border: 1px solid var(--champ-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#deckListCard img:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(15, 42, 31, 0.14);
+}
+
+/* Responsive card widths for core / deck images */
+@media screen and (min-width: 992px) {
+  #coreCardImgList #cardImg,
+  #coreCardImgList img {
+    max-width: 19%;
+    height: auto;
+  }
+}
+@media screen and (min-width: 721px) and (max-width: 991px) {
+  #coreCardImgList #cardImg,
+  #coreCardImgList img {
+    max-width: 26%;
+    height: auto;
+  }
+}
+@media screen and (min-width: 471px) and (max-width: 720px) {
+  #coreCardImgList #cardImg,
+  #coreCardImgList img {
+    max-width: 35%;
+    height: auto;
+  }
+}
+@media screen and (max-width: 470px) {
+  #coreCardImgList #cardImg,
+  #coreCardImgList img {
+    max-width: 40%;
+    height: auto;
+  }
+}
+
+/* Typeahead */
+ul.typeahead.dropdown-menu {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9999 !important;
+  border: 1px solid var(--champ-border);
+  border-radius: 10px;
+  box-shadow: var(--champ-shadow);
+}
+
+body.champ-page .pointer {
+  cursor: pointer;
+}
+
+/* Drawer active accent for champion page */
+body.champ-page .custom-drawer .menu-link.active {
+  color: var(--champ-gold);
+}
+
+body.champ-page .custom-drawer .menu-link.active .main-icon {
+  color: var(--champ-gold);
+}
+
+/* Modal polish */
+body.champ-page .modal-content {
+  border-radius: var(--champ-radius);
+  border: 1px solid var(--champ-border);
+  overflow: hidden;
+}
+
+body.champ-page .modal-header {
+  border-bottom-color: var(--champ-border);
+  background: linear-gradient(90deg, var(--champ-gold-soft), transparent);
+}
+
+body.champ-page .modal-title {
+  font-family: var(--champ-font-display);
+  font-weight: 700;
+}
+
+/* Motion */
+@keyframes champFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.champ-page .card,
+  body.champ-page .champ-status-strip,
+  #coreCardImgList img,
+  #deckListCard img {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  #coreCardImgList img:hover,
+  #deckListCard img:hover {
+    transform: none;
+  }
+}
+
+/* Mobile spacing */
+@media (max-width: 767.98px) {
+  body.champ-page .content-wrapper {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .champ-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .champ-section-meta {
+    font-size: 0.65rem;
+  }
+}
