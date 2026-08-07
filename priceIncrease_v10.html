@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>價格漲跌幅觀測</title>
+    <meta name="description" content="依 1/3/7 日漲跌幅排序觀測卡片價格變動" />
+    
+    <!-- 引入 FontAwesome 6 免費圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    
+    <style>
+      :root {
+        /*經典淺色配色 */
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-soft: #f1f5f9;
+        --surface-sticky: #ffffff;
+        --surface-hover: #f8fafc;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --good: #16c784; /*  經典綠 */
+        --bad: #ea3943;  /*  經典紅 */
+        --warn: #eab308;
+        --primary: #8cc351; /* 標誌綠 */
+        --primary-hover: #7bb240;
+        --sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      }
+
+      body[data-theme="dark"] {
+        /* 深度黑化配色：近乎純黑的底色搭配高對比灰色 */
+        --bg: #030303; 
+        --surface: #030303; 
+        --surface-soft: #16161a;
+        --surface-sticky: #030303;
+        --surface-hover: #1c1c22;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #1e1e24;
+        --border-strong: #2d2d39;
+        --good: #10b981;
+        --bad: #ef4444;
+        --warn: #eab308;
+        --primary: #8cc351;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background-color: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* 頂部全站數據列 (Global Stats Bar) */
+      .global-stats-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+        padding: 8px 18px;
+        white-space: nowrap;
+        overflow-x: auto;
+      }
+
+      .global-stats-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .global-stats-item strong {
+        color: var(--text);
+        font-family: var(--mono);
+      }
+
+      .global-stats-item .green { color: var(--good); }
+      .global-stats-item .red { color: var(--bad); }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 18px 80px;
+      }
+
+      header {
+        margin-bottom: 24px;
+      }
+
+      .titleRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .logo-area {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .logo-badge {
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 3px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .subtitle {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .topActions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      /* 扁平風格 KPI 卡片區 */
+      .marketSummary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .summaryItem {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .summaryItem .k {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .summaryItem .v {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      /* 控制面板區 */
+      .controls-section {
+        background: var(--surface);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      @media (min-width: 980px) {
+        .controls {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+
+      /* 搜尋框設計 */
+      .search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 360px;
+      }
+
+      input[type="search"] {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 12px 8px 34px;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.15s ease;
+      }
+
+      input[type="search"]:focus {
+        border-color: var(--primary);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+        font-size: 12px;
+      }
+
+      /* 水平頁籤篩選器 (Filter Tabs) */
+      .filter-tabs {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .tab-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--muted);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.12s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tab-btn:hover {
+        background: var(--surface-soft);
+        color: var(--text);
+      }
+
+      .tab-btn.active {
+        background: var(--surface-soft);
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      /* 幣別切換按鈕組 (Segmented Controls) */
+      .segment-control {
+        display: inline-flex;
+        background: var(--bg);
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+
+      .segment-btn {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.1s ease;
+      }
+
+      .segment-btn.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      }
+
+      /* 操作按鈕 */
+      button.action-btn {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.12s ease;
+      }
+
+      button.action-btn:hover {
+        background: var(--surface-soft);
+        border-color: var(--border-strong);
+      }
+
+      /* 自訂追蹤星星 */
+      .watchlist-star {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 15px;
+        user-select: none;
+        transition: color 0.12s ease, transform 0.1s ease;
+        display: inline-block;
+      }
+      .watchlist-star:hover {
+        color: var(--warn);
+        transform: scale(1.15);
+      }
+      .watchlist-star.active {
+        color: var(--warn);
+      }
+
+      /* 分頁列 */
+      .pagerRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--surface-soft);
+        border-top: 1px solid var(--border);
+      }
+
+      .pagerButtons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .pagerButtons button {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .pagerButtons button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* 狀態列 */
+      .status {
+        padding: 10px 16px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      /* 表格本體 */
+      .tableWrap {
+        overflow-x: auto;
+        background: var(--surface);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 900px;
+      }
+
+      thead th {
+        border-bottom: 2px solid var(--border);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-align: left;
+        padding: 14px 12px;
+        white-space: nowrap;
+        background: var(--surface-soft);
+      }
+
+      thead th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      thead th.sortable::after {
+        content: " ↕";
+        color: var(--muted);
+        opacity: 0.5;
+      }
+
+      thead th.sortable[data-sort-dir="asc"]::after {
+        content: " ▲";
+        color: var(--primary);
+        opacity: 1;
+      }
+
+      thead th.sortable[data-sort-dir="desc"]::after {
+        content: " ▼";
+        color: var(--primary);
+        opacity: 1;
+      }
+
+      /* 兩欄粘滯定位 (Sticky Cols)：星星、卡號 */
+      thead th:nth-child(1), tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        width: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        text-align: center;
+        background: var(--surface-soft);
+      }
+      thead th:nth-child(2), tbody td:nth-child(2) {
+        position: sticky;
+        left: 36px;
+        z-index: 10;
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+        background: var(--surface-soft);
+      }
+
+      tbody td:nth-child(1), tbody td:nth-child(2) {
+        background: var(--surface-sticky);
+      }
+
+      tbody td {
+        border-bottom: 1px solid var(--border);
+        padding: 12px;
+        font-size: 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+        background: var(--surface);
+      }
+
+      tbody tr:hover td {
+        background: var(--surface-hover);
+      }
+      tbody tr:hover td:nth-child(1),
+      tbody tr:hover td:nth-child(2) {
+        background: var(--surface-hover);
+      }
+
+      /* 鏡像表頭固定 */
+      #stickyTheadMirror {
+        position: fixed;
+        top: 0;
+        z-index: 50;
+        overflow: hidden;
+        display: none;
+        pointer-events: auto;
+        border-bottom: 2px solid var(--border-strong);
+        background: var(--surface-soft);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+      #stickyTheadMirror table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+      #stickyTheadMirror th {
+        box-sizing: border-box;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .center-align {
+        text-align: center;
+      }
+
+      .pct {
+        font-variant-numeric: tabular-nums;
+        font-family: var(--mono);
+        font-weight: 600;
+      }
+
+      .pct.good { color: var(--good); }
+      .pct.bad { color: var(--bad); }
+      .pct.zero { color: var(--muted); }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .font-semibold {
+        font-weight: 600;
+      }
+
+      /* Sparklines 走勢圖 */
+      .sparklineCell {
+        width: 140px;
+        min-width: 140px;
+        padding: 8px 12px;
+      }
+
+      .sparkline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 128px;
+        height: 30px;
+      }
+
+      .sparkline.up { color: var(--good); }
+      .sparkline.down { color: var(--bad); }
+      .sparkline svg {
+        display: block;
+        width: 128px;
+        height: 30px;
+      }
+
+      .sparkline-na {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .sparklineSkeleton {
+        display: inline-block;
+        width: 128px;
+        height: 30px;
+        border-radius: 4px;
+        background: var(--surface-soft);
+      }
+
+      /* 工具提示卡預覽 */
+      #cardTooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        padding: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      #cardTooltip img {
+        display: block;
+        width: 180px;
+        height: auto;
+        border-radius: 6px;
+        min-height: 252px;
+      }
+
+      /* 錯誤訊息框 */
+      .dangerBox {
+        margin: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--bad);
+        background: rgba(234, 57, 67, 0.1);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .dangerBox code {
+        font-family: var(--mono);
+        background: rgba(0,0,0,0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 全局統計數據列 -->
+    <div class="global-stats-bar">
+      <div class="global-stats-container">
+        <div class="global-stats-item">追蹤卡片: <strong id="global-total">—</strong></div>
+        <div class="global-stats-item">24h 上漲: <strong id="global-gainers" class="green">—</strong></div>
+        <div class="global-stats-item">24h 下跌: <strong id="global-losers" class="red">—</strong></div>
+        <div class="global-stats-item">自訂追蹤: <strong id="global-watchlist">—</strong></div>
+        <div class="global-stats-item">目前匯率: <strong id="global-rate">—</strong></div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <header>
+        <div class="titleRow">
+          <div>
+            <div class="logo-area">
+              <h1>價格漲跌幅觀測</h1>
+            </div>
+          </div>
+          <div class="topActions">
+            <button id="themeToggleBtn" type="button" class="action-btn" title="切換淺色/深色主題">
+              <i class="fa-regular fa-moon"></i> 深色
+            </button>
+            <button id="reloadBtn" type="button" class="action-btn" style="border-color: var(--primary); color: var(--primary);" title="重新載入資料">
+              <i class="fa-solid fa-arrows-rotate"></i> 重新整理
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- KPI 指標區 -->
+      <section class="marketSummary">
+        <div class="summaryItem">
+          <div class="k">目前總共顯示</div>
+          <div class="v mono" id="kpiShown">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMaxLabel">最高值</div>
+          <div class="v mono text-green" id="kpiMax">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMinLabel">最低值</div>
+          <div class="v mono text-red" id="kpiMin">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k">數據生成時間</div>
+          <div class="v" id="generatedAtText" style="font-size: 13px; font-weight: 600;">—</div>
+        </div>
+      </section>
+
+      <!-- 控制與篩選面板 -->
+      <section class="controls-section">
+        <div class="controls">
+          <!-- 篩選分頁籤 (Tabs) -->
+          <div class="filter-tabs" id="filterTabs">
+            <button type="button" class="tab-btn active" data-trend="all">
+              <i class="fa-solid fa-layer-group"></i> 全部卡片
+            </button>
+            <button type="button" class="tab-btn" data-trend="up">
+              <i class="fa-solid fa-arrow-trend-up" style="color: var(--good)"></i> 只看上漲
+            </button>
+            <button type="button" class="tab-btn" data-trend="down">
+              <i class="fa-solid fa-arrow-trend-down" style="color: var(--bad)"></i> 只看下跌
+            </button>
+            <button type="button" class="tab-btn" data-trend="watchlist">
+              <i class="fa-solid fa-star" style="color: var(--warn)"></i> 自訂清單
+            </button>
+          </div>
+
+          <!-- 搜尋與幣別 -->
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper">
+              <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+              <input id="q" type="search" placeholder="搜尋卡號..." autocomplete="off" spellcheck="false" />
+            </div>
+
+            <!-- 幣別 Segment -->
+            <div class="segment-control" id="currencySegment">
+              <button type="button" class="segment-btn active" data-currency="JPY">JPY (¥)</button>
+              <button type="button" class="segment-btn" data-currency="TWD">TWD (NT$)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分頁控制 -->
+        <div class="pagerRow">
+          <span class="mono font-semibold" id="pageInfo" style="font-size: 12px; color: var(--muted);">第 1 / 1 頁</span>
+          <div class="pagerButtons">
+            <button id="prevPageBtn" type="button" title="上一頁">
+              <i class="fa-solid fa-chevron-left"></i> 上一頁
+            </button>
+            <button id="nextPageBtn" type="button" title="下一頁">
+              下一頁 <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <span class="mono" id="pageStatsText" style="font-size: 12px; color: var(--muted);">顯示 0 / 0</span>
+        </div>
+
+        <!-- 數據表格 -->
+        <div class="tableWrap">
+          <table>
+            <thead id="tableWrapHeader">
+              <tr>
+                <th style="width: 36px; min-width: 36px;"></th>
+                <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡號</th>
+                <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
+                <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1日漲跌幅</th>
+                <th class="right col-3d sortable" data-sort-key="change3dPct" title="點擊排序">3日漲跌幅</th>
+                <th class="right col-7d sortable" data-sort-key="change7dPct" title="點擊排序">7日漲跌幅</th>
+                <th class="right col-7d" style="width: 140px; min-width: 140px;">走勢</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="errorBox" class="dangerBox" style="display: none"></div>
+      </section>
+    </div>
+
+    <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
+
+    <script>
+      (() => {
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+        const CARD_DATA_BASE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+        const SPARKLINE_CONCURRENCY = 6;
+        const THEME_STORAGE_KEY = "priceIncreaseTheme";
+        const WATCHLIST_STORAGE_KEY = "cardWatchlist";
+
+        /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
+        let rawData = null;
+        /** @type {Array<any>} */
+        let cardRows = [];
+        let exRate = 0.22;
+        let exRateFallback = false;
+        let renderVersion = 0;
+        let activeSortKey = "change1dPct";
+        let activeSortDirection = "desc";
+        const pageSize = 200;
+        let currentPage = 1;
+        let stickyHeaderMirror = null;
+        const productDataPromiseCache = new Map();
+        const cardSeriesPromiseCache = new Map();
+
+        // 追蹤清單設定 (Watchlist Setup)
+        const watchlist = new Set(JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]"));
+        let activeTrendFilter = "all";
+        let activeCurrency = "JPY";
+
+        const els = {
+          generatedAtText: document.getElementById("generatedAtText"),
+          reloadBtn: document.getElementById("reloadBtn"),
+          themeToggleBtn: document.getElementById("themeToggleBtn"),
+          q: document.getElementById("q"),
+          pageInfo: document.getElementById("pageInfo"),
+          prevPageBtn: document.getElementById("prevPageBtn"),
+          nextPageBtn: document.getElementById("nextPageBtn"),
+          pageStatsText: document.getElementById("pageStatsText"),
+          kpiShown: document.getElementById("kpiShown"),
+          kpiMaxLabel: document.getElementById("kpiMaxLabel"),
+          kpiMinLabel: document.getElementById("kpiMinLabel"),
+          kpiMax: document.getElementById("kpiMax"),
+          kpiMin: document.getElementById("kpiMin"),
+          statusText: document.getElementById("statusText"),
+          statusSub: document.getElementById("statusSub"),
+          sourceText: document.getElementById("sourceText"),
+          tbody: document.getElementById("tbody"),
+          errorBox: document.getElementById("errorBox"),
+        };
+
+        function resolveInitialTheme() {
+          const saved = localStorage.getItem(THEME_STORAGE_KEY);
+          if (saved === "light" || saved === "dark") return saved;
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyTheme(theme) {
+          document.body.setAttribute("data-theme", theme);
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+          if (els.themeToggleBtn) {
+            const isDark = theme === "dark";
+            els.themeToggleBtn.innerHTML = isDark 
+              ? `<i class="fa-regular fa-sun"></i> 淺色` 
+              : `<i class="fa-regular fa-moon"></i> 深色`;
+          }
+        }
+
+        function toggleTheme() {
+          const now = document.body.getAttribute("data-theme") || "light";
+          applyTheme(now === "dark" ? "light" : "dark");
+        }
+
+        function fmtNum(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          return new Intl.NumberFormat("zh-TW").format(Number(n));
+        }
+
+        function cardNoToProductCode(cardNo) {
+          return (String(cardNo || "").split("-")[0] || "").replace(/\//g, "_");
+        }
+
+        function normalizePriceSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => Number(v)).filter((v) => Number.isFinite(v));
+        }
+
+        function normalizeDateKey(v) {
+          const s = String(v ?? "").replace(/\D/g, "");
+          return s.length === 8 ? s : "";
+        }
+
+        function normalizeDateSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => normalizeDateKey(v));
+        }
+
+        function findCardEntry(data, cardNo) {
+          if (!data || !cardNo) return null;
+          if (data[cardNo]) return data[cardNo];
+          const lower = String(cardNo).toLowerCase();
+          for (const [k, v] of Object.entries(data)) {
+            if (String(k).toLowerCase() === lower) return v;
+          }
+          return null;
+        }
+
+        function sparklineSvg(prices) {
+          const values = normalizePriceSeries(prices);
+          if (values.length < 2) {
+            return '<span class="sparkline-na">N/A</span>';
+          }
+          const width = 128;
+          const height = 30;
+          const pad = 2;
+          const chartW = width - pad * 2;
+          const chartH = height - pad * 2;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const range = max - min || 1;
+          const points = values.map((v, i) => {
+            const x = pad + (i / (values.length - 1)) * chartW;
+            const y = pad + (1 - (v - min) / range) * chartH;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+          });
+          const trendClass = values[values.length - 1] >= values[0] ? "up" : "down";
+          return `
+            <span class="sparkline ${trendClass}" title="${escapeHtml(values[0] + " -> " + values[values.length - 1])}">
+              <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="${points.join(" ")}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              </svg>
+            </span>
+          `.trim();
+        }
+
+        async function getProductData(productCode) {
+          if (!productCode) return null;
+          if (!productDataPromiseCache.has(productCode)) {
+            const url = `${CARD_DATA_BASE_URL}${productCode}.json`;
+            productDataPromiseCache.set(
+              productCode,
+              fetchJson(url).catch(() => null)
+            );
+          }
+          return await productDataPromiseCache.get(productCode);
+        }
+
+        async function getCardSeries(cardNo) {
+          const key = String(cardNo || "");
+          if (!key) return { prices: [], dates: [] };
+          if (!cardSeriesPromiseCache.has(key)) {
+            cardSeriesPromiseCache.set(key, (async () => {
+              const productCode = cardNoToProductCode(key);
+              const data = await getProductData(productCode);
+              const cardEntry = findCardEntry(data, key);
+              if (!cardEntry) return { prices: [], dates: [] };
+              const prices = normalizePriceSeries(cardEntry.cardPrice);
+              const rawDates = cardEntry.upddate ?? cardEntry.update ?? [];
+              const dates = normalizeDateSeries(rawDates);
+              return { prices, dates };
+            })());
+          }
+          return await cardSeriesPromiseCache.get(key);
+        }
+
+        async function runWithConcurrency(items, limit, worker) {
+          if (!items.length) return;
+          const cap = Math.max(1, Math.min(limit, items.length));
+          let cursor = 0;
+          const runners = Array.from({ length: cap }, async () => {
+            while (cursor < items.length) {
+              const idx = cursor++;
+              await worker(items[idx], idx);
+            }
+          });
+          await Promise.all(runners);
+        }
+
+        function renderSparklines(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".sparklineCell[data-sparkline-key]"));
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) return;
+            const key = cell.getAttribute("data-sparkline-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const series = await getCardSeries(cardNo);
+            const prices = normalizePriceSeries(series && series.prices);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            cell.innerHTML = sparklineSvg(prices);
+          }).catch(() => {});
+        }
+
+        function fmtPct(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const v = Number(n);
+          const sign = v > 0 ? "+" : "";
+          return `${sign}${v.toFixed(2)}%`;
+        }
+
+        function formatPrice(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          let val = Number(n);
+          if (activeCurrency === "TWD") {
+            val = Math.round(val * exRate);
+            return "NT$" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(val);
+          }
+          return "¥" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(Math.round(val));
+        }
+
+        function pctClass(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "zero";
+          if (v > 0) return "good";
+          if (v < 0) return "bad";
+          return "zero";
+        }
+
+        function setStatus(main, sub = "") {
+          els.statusText.textContent = main;
+          els.statusSub.textContent = sub ? `｜${sub}` : "";
+        }
+
+        function showError(html) {
+          els.errorBox.style.display = "block";
+          els.errorBox.innerHTML = html;
+        }
+
+        function clearError() {
+          els.errorBox.style.display = "none";
+          els.errorBox.innerHTML = "";
+        }
+
+        function toRows(data) {
+          const entries = Object.entries((data && data.cards) || {});
+          return entries.map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestPrice: c.latestPrice,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+            base1dDate: c.base1dDate,
+            base1dPrice: c.base1dPrice,
+            base3dDate: c.base3dDate,
+            base3dPrice: c.base3dPrice,
+            base7dDate: c.base7dDate,
+            base7dPrice: c.base7dPrice,
+          }));
+        }
+
+        function compareRows(a, b, sortKey) {
+          if (sortKey === "cardNo") {
+            return String(a.cardNo || "").localeCompare(String(b.cardNo || ""), "zh-Hant", {
+              numeric: true,
+              sensitivity: "base",
+            });
+          }
+
+          const av = Number(a[sortKey]);
+          const bv = Number(b[sortKey]);
+          const aSafe = Number.isFinite(av) ? av : -Infinity;
+          const bSafe = Number.isFinite(bv) ? bv : -Infinity;
+          return aSafe - bSafe;
+        }
+
+        function sortLabel(sortKey) {
+          switch (sortKey) {
+            case "cardNo":
+              return "卡號";
+            case "latestPrice":
+              return "最新價";
+            case "change1dPct":
+              return "1日漲跌幅";
+            case "change3dPct":
+              return "3日漲跌幅";
+            case "change7dPct":
+              return "7日漲跌幅";
+            default:
+              return sortKey;
+          }
+        }
+
+        function formatSortValue(sortKey, row) {
+          if (!row) return "—";
+          if (sortKey === "cardNo") return row.cardNo || "—";
+          if (sortKey === "latestPrice") return formatPrice(row.latestPrice);
+          return fmtPct(row[sortKey]);
+        }
+
+        function updateHeaderSortState() {
+          const roots = [document.getElementById("tableWrapHeader")];
+          if (stickyHeaderMirror) {
+            const mirrorHead = stickyHeaderMirror.querySelector("thead");
+            if (mirrorHead) roots.push(mirrorHead);
+          }
+
+          for (const root of roots) {
+            if (!root) continue;
+            root.querySelectorAll("th.sortable").forEach((th) => {
+              const sortKey = th.getAttribute("data-sort-key") || "";
+              const isActive = sortKey === activeSortKey;
+              if (isActive) {
+                th.setAttribute("data-sort-dir", activeSortDirection);
+                th.setAttribute("aria-sort", "none");
+              } else {
+                th.removeAttribute("data-sort-dir");
+                th.setAttribute("aria-sort", "none");
+              }
+            });
+          }
+        }
+
+        function applySort(sortKey, toggleIfSame = false) {
+          if (!sortKey) return;
+
+          if (toggleIfSame && activeSortKey === sortKey) {
+            activeSortDirection = activeSortDirection === "desc" ? "asc" : "desc";
+          } else {
+            activeSortKey = sortKey;
+            activeSortDirection = sortKey === "cardNo" ? "asc" : "desc";
+          }
+
+          render();
+        }
+
+        function handleHeaderSortClick(event) {
+          const th = event.target.closest("th.sortable[data-sort-key]");
+          if (!th) return;
+          applySort(th.getAttribute("data-sort-key"), true);
+        }
+
+        function sortAndFilterRows(rows) {
+          const q = (els.q.value || "").trim().toLowerCase();
+
+          let out = rows;
+          if (q) {
+            out = out.filter((r) => String(r.cardNo || "").toLowerCase().includes(q));
+          }
+
+          // 頁籤篩選邏輯
+          if (activeTrendFilter === "watchlist") {
+            out = out.filter((r) => watchlist.has(r.cardNo));
+          } else if (activeTrendFilter === "up") {
+            out = out.filter((r) => {
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v > 0;
+            });
+          } else if (activeTrendFilter === "down") {
+            out = out.filter((r) => {
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v < 0;
+            });
+          }
+
+          out = out.slice().sort((a, b) => {
+            const cmp = compareRows(a, b, activeSortKey);
+            return activeSortDirection === "asc" ? cmp : -cmp;
+          });
+          return out;
+        }
+
+        function clampPage(totalItems) {
+          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+          currentPage = Math.min(Math.max(1, currentPage), totalPages);
+          return totalPages;
+        }
+
+        function updatePaginationUi(totalItems, pageItemsLength, totalPages, pageStartIndex) {
+          const pageEndIndex = pageItemsLength > 0 ? pageStartIndex + pageItemsLength : 0;
+          const displayStart = pageItemsLength > 0 ? pageStartIndex + 1 : 0;
+
+          els.pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
+          els.pageStatsText.textContent = `顯示 ${displayStart}-${pageEndIndex} / ${totalItems}`;
+          els.prevPageBtn.disabled = currentPage <= 1;
+          els.nextPageBtn.disabled = currentPage >= totalPages || totalItems === 0;
+        }
+
+        // 全站統計板更新 (Global Stats)
+        function updateGlobalStats() {
+          const total = cardRows.length;
+          const gainers = cardRows.filter(r => Number(r.change1dPct) > 0).length;
+          const losers = cardRows.filter(r => Number(r.change1dPct) < 0).length;
+
+          document.getElementById("global-total").textContent = fmtNum(total);
+          document.getElementById("global-gainers").textContent = fmtNum(gainers);
+          document.getElementById("global-losers").textContent = fmtNum(losers);
+          document.getElementById("global-watchlist").textContent = fmtNum(watchlist.size);
+          document.getElementById("global-rate").textContent = exRate ? `1 JPY ≈ ${exRate.toFixed(4)} TWD` : "—";
+        }
+
+        function render() {
+          if (!rawData) return;
+          const renderToken = ++renderVersion;
+          clearError();
+
+          const filtered = sortAndFilterRows(cardRows);
+          const totalPages = clampPage(filtered.length);
+          const startIdx = (currentPage - 1) * pageSize;
+          const pageRows = filtered.slice(startIdx, startIdx + pageSize);
+          
+          const sortedAsc = filtered.slice().sort((a, b) => compareRows(a, b, activeSortKey));
+          const minRow = sortedAsc[0] || null;
+          const maxRow = sortedAsc[sortedAsc.length - 1] || null;
+
+          updateHeaderSortState();
+          els.kpiMaxLabel.textContent = `最高值（${sortLabel(activeSortKey)}）`;
+          els.kpiMinLabel.textContent = `最低值（${sortLabel(activeSortKey)}）`;
+
+          els.kpiShown.textContent = String(filtered.length);
+          updatePaginationUi(filtered.length, pageRows.length, totalPages, startIdx);
+          
+          if (filtered.length > 0) {
+            els.kpiMax.textContent = formatSortValue(activeSortKey, maxRow);
+            els.kpiMin.textContent = formatSortValue(activeSortKey, minRow);
+          } else {
+            els.kpiMax.textContent = "—";
+            els.kpiMin.textContent = "—";
+          }
+
+          const frag = document.createDocumentFragment();
+          pageRows.forEach((r) => {
+            const tr = document.createElement("tr");
+            const cardNo = String(r.cardNo ?? "");
+            const isFavorite = watchlist.has(cardNo);
+
+            // 使用 FontAwesome 圖示取代原生的 ★ 與 ☆ 字元
+            const starHtml = isFavorite
+              ? `<span class="watchlist-star active" data-card="${encodeURIComponent(cardNo)}" title="自清單移除"><i class="fa-solid fa-star"></i></span>`
+              : `<span class="watchlist-star" data-card="${encodeURIComponent(cardNo)}" title="加入清單"><i class="fa-regular fa-star"></i></span>`;
+
+            tr.innerHTML = `
+              <td class="center-align">${starHtml}</td>
+              <td class="mono card-no-col">${escapeHtml(cardNo)}</td>
+              <td class="right mono font-semibold">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              <td class="right pct col-1d ${pctClass(r.change1dPct)}">${escapeHtml(fmtPct(r.change1dPct))}</td>
+              <td class="right pct col-3d ${pctClass(r.change3dPct)}">${escapeHtml(fmtPct(r.change3dPct))}</td>
+              <td class="right pct col-7d ${pctClass(r.change7dPct)}">${escapeHtml(fmtPct(r.change7dPct))}</td>
+              <td class="right col-7d sparklineCell" data-sparkline-key="${encodeURIComponent(cardNo)}"><span class="sparklineSkeleton" aria-hidden="true"></span></td>
+            `.trim();
+            frag.appendChild(tr);
+          });
+
+          els.tbody.replaceChildren(frag);
+          setStatus("已載入", `依「${sortLabel(activeSortKey)}」${activeSortDirection === "asc" ? "由低到高" : "由高到低"}排序｜第 ${currentPage}/${totalPages} 頁`);
+          renderSparklines(renderToken);
+          updateGlobalStats();
+        }
+
+        function escapeHtml(s) {
+          return s
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        const WS_TCG_CARDLIST_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        function cardNoToImageUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          if (series.startsWith("os")) {
+            return (
+              "https://ws-rose.com/wordpress/wp-content/images/cardlist/" +
+              series + "/" + expansion + "/" + series + "_" + expansion + "_" + cardId + ".png"
+            );
+          }
+          let folderSlug = series + "_" + expansion;
+          if (series === "srd" || series === "sks") folderSlug = "sxx_" + expansion;
+          const first = series.charAt(0);
+          return (
+            WS_TCG_CARDLIST_BASE + first + "/" + folderSlug + "/" +
+            series + "_" + expansion + "_" + cardId + ".png"
+          );
+        }
+
+        function cardNoToDevilFoxUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^\/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          return `https://imgs.devilfox.net/ws/${series}_${expansion}/${series}_${expansion}_${cardId}.png`;
+        }
+
+        const tooltip = document.getElementById("cardTooltip");
+        const tooltipImg = document.getElementById("cardTooltipImg");
+        let tooltipVisible = false;
+        let tooltipCurrentUrl = "";
+
+        function preloadImage(url) {
+          if (!url || tooltipCurrentUrl === url) return;
+          const img = new Image();
+          img.src = url;
+        }
+
+        function setTooltipSrc(url, fallbackUrl) {
+          if (tooltipCurrentUrl === url) {
+            tooltipImg.classList.remove("loading");
+            return;
+          }
+          tooltipCurrentUrl = url;
+          tooltipImg.classList.add("loading");
+          tooltipImg.src = url;
+          tooltipImg.onload = () => tooltipImg.classList.remove("loading");
+          tooltipImg.onerror = () => {
+            tooltipImg.classList.remove("loading");
+            if (fallbackUrl && fallbackUrl !== url) {
+              tooltipCurrentUrl = fallbackUrl;
+              tooltipImg.src = fallbackUrl;
+            }
+          };
+        }
+
+        function showTooltip(cardNo, x, y) {
+          const devilUrl = cardNoToDevilFoxUrl(cardNo);
+          const wsUrl = cardNoToImageUrl(cardNo);
+          const url = devilUrl || wsUrl;
+          if (!url) return;
+          setTooltipSrc(url, devilUrl ? wsUrl : "");
+          tooltip.style.transform = "";
+          placeTooltip(x, y);
+          tooltip.style.display = "block";
+          tooltipVisible = true;
+        }
+
+        function placeTooltip(x, y) {
+          const pad = 16;
+          const tw = 192;
+          const th = 280;
+          let left = x + 14;
+          let top = y - th - 10;
+          if (top < pad) top = y + 24;
+          if (left + tw + pad > window.innerWidth) left = x - tw - 14;
+          if (left < pad) left = pad;
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+          tooltip.style.display = "none";
+          tooltipVisible = false;
+        }
+
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        // 桌機預覽
+        document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const rect = td.getBoundingClientRect();
+          showTooltip(td.textContent.trim(), rect.left + rect.width / 2, rect.top);
+        });
+
+        document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          hideTooltip();
+        });
+
+        // 行動版預載
+        document.getElementById("tbody").addEventListener("touchstart", (e) => {
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const cardNo = td.textContent.trim();
+          preloadImage(cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo));
+        }, { passive: true });
+
+        // 行動版點擊
+        document.getElementById("tbody").addEventListener("click", (e) => {
+          if (!isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) {
+            hideTooltip();
+            return;
+          }
+          e.stopPropagation();
+          const cardNo = td.textContent.trim();
+          if (tooltipVisible) {
+            hideTooltip();
+          } else {
+            const rect = td.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            showTooltip(cardNo, x, y);
+            setTimeout(() => {
+              document.addEventListener("click", hideTooltip, { once: true });
+            }, 0);
+          }
+        });
+
+        // 監聽星星點擊行為 (Watchlist Click Event)
+        els.tbody.addEventListener("click", (e) => {
+          const star = e.target.closest(".watchlist-star");
+          if (!star) return;
+          e.stopPropagation();
+          const cardNo = decodeURIComponent(star.getAttribute("data-card"));
+          if (watchlist.has(cardNo)) {
+            watchlist.delete(cardNo);
+            star.innerHTML = '<i class="fa-regular fa-star"></i>';
+            star.classList.remove("active");
+          } else {
+            watchlist.add(cardNo);
+            star.innerHTML = '<i class="fa-solid fa-star"></i>';
+            star.classList.add("active");
+          }
+          localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([...watchlist]));
+          updateGlobalStats();
+        });
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
+
+        async function fetchExchangeRate() {
+          try {
+            const data = await fetchJson("https://api.frankfurter.app/latest?from=JPY&to=TWD");
+            exRate = (data.rates && data.rates.TWD) ? data.rates.TWD : 0.22;
+            exRateFallback = false;
+          } catch {
+            exRate = 0.22;
+            exRateFallback = true;
+          }
+        }
+
+        function setGeneratedAt(ms) {
+          if (!ms || !Number.isFinite(Number(ms))) {
+            els.generatedAtText.textContent = "—";
+            return;
+          }
+          const d = new Date(Number(ms));
+          const s = new Intl.DateTimeFormat("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }).format(d);
+          els.generatedAtText.textContent = s;
+        }
+
+        async function load() {
+          renderVersion += 1;
+          productDataPromiseCache.clear();
+          cardSeriesPromiseCache.clear();
+          setStatus("載入中…");
+          clearError();
+          els.sourceText.textContent = "";
+          els.tbody.replaceChildren();
+
+          const [, dataResult] = await Promise.allSettled([
+            fetchExchangeRate(),
+            fetchJson(REMOTE_URL),
+          ]);
+
+          if (dataResult.status === "rejected") {
+            const err1 = dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
+            setStatus("載入失敗", "請確認網路或 JSON 來源是否可用");
+            showError(
+              `遠端資料載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
+                `你可以稍後按右上角「重新載入」重試。`
+            );
+            return;
+          }
+
+          const data = dataResult.value;
+          rawData = data;
+          cardRows = toRows(data);
+          setGeneratedAt(data.generatedAt);
+          els.sourceText.textContent = `source: ${REMOTE_URL}`;
+          render();
+        }
+
+        function bind() {
+          const onChange = () => {
+            currentPage = 1;
+            render();
+          };
+
+          els.q.addEventListener("input", onChange);
+
+          // 頁籤篩選點擊 (Filter Tab Clicks)
+          document.getElementById("filterTabs").addEventListener("click", (e) => {
+            const btn = e.target.closest(".tab-btn");
+            if (!btn) return;
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeTrendFilter = btn.getAttribute("data-trend");
+            onChange();
+          });
+
+          // 幣別 Segment 控制器 (Currency Segment Clicks)
+          document.getElementById("currencySegment").addEventListener("click", (e) => {
+            const btn = e.target.closest(".segment-btn");
+            if (!btn) return;
+            document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeCurrency = btn.getAttribute("data-currency");
+            render();
+          });
+
+          els.prevPageBtn.addEventListener("click", () => {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            render();
+          });
+          els.nextPageBtn.addEventListener("click", () => {
+            currentPage += 1;
+            render();
+          });
+
+          document.getElementById("tableWrapHeader").addEventListener("click", handleHeaderSortClick);
+          els.reloadBtn.addEventListener("click", () => load());
+          if (els.themeToggleBtn) {
+            els.themeToggleBtn.addEventListener("click", toggleTheme);
+          }
+
+          window.addEventListener("keydown", (ev) => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
+              ev.preventDefault();
+              load();
+            }
+            if (ev.key === "/" && document.activeElement !== els.q) {
+              ev.preventDefault();
+              els.q.focus();
+            }
+          });
+        }
+        applyTheme(resolveInitialTheme());
+        bind();
+
+        // ── Sticky thead 鏡像方案 ──
+        (function initStickyThead() {
+          const tableWrap = document.querySelector(".tableWrap");
+          const table = tableWrap && tableWrap.querySelector("table");
+          const thead = document.getElementById("tableWrapHeader");
+          if (!tableWrap || !table || !thead) return;
+
+          const mirror = document.createElement("div");
+          mirror.id = "stickyTheadMirror";
+          const mirrorTable = document.createElement("table");
+          const mirrorThead = thead.cloneNode(true);
+          mirrorThead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorThead);
+          mirror.appendChild(mirrorTable);
+          document.body.appendChild(mirror);
+          stickyHeaderMirror = mirror;
+          mirror.addEventListener("click", handleHeaderSortClick);
+          updateHeaderSortState();
+
+          let pinned = false;
+
+          function syncWidths() {
+            const wrapRect = tableWrap.getBoundingClientRect();
+            mirror.style.left  = wrapRect.left + "px";
+            mirror.style.width = wrapRect.width + "px";
+            const realThs   = thead.querySelectorAll("th");
+            const cloneThs  = mirrorThead.querySelectorAll("th");
+            mirrorTable.style.width = table.offsetWidth + "px";
+            realThs.forEach((th, i) => {
+              if (cloneThs[i]) {
+                const w = th.getBoundingClientRect().width + "px";
+                cloneThs[i].style.width    = w;
+                cloneThs[i].style.minWidth = w;
+                cloneThs[i].style.maxWidth = w;
+              }
+            });
+          }
+
+          function syncScroll() {
+            mirror.scrollLeft = tableWrap.scrollLeft;
+          }
+
+          function update() {
+            const rect   = tableWrap.getBoundingClientRect();
+            const theadH = thead.getBoundingClientRect().height;
+            const shouldPin = rect.top < 0 && rect.bottom > theadH + 10;
+            if (shouldPin && !pinned) {
+              pinned = true;
+              mirror.style.display = "block";
+              syncWidths();
+              syncScroll();
+            } else if (!shouldPin && pinned) {
+              pinned = false;
+              mirror.style.display = "none";
+            } else if (pinned) {
+              syncWidths();
+              syncScroll();
+            }
+          }
+
+          window.addEventListener("scroll",   update,     { passive: true });
+          tableWrap.addEventListener("scroll", () => { if (pinned) { syncWidths(); syncScroll(); } }, { passive: true });
+          window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
+        })();
+
+        load();
+      })();
+    </script>
+  </body>
+</html>
