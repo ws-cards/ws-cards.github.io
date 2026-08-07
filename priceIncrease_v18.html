@@ -1,0 +1,2310 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>價格觀測 · WS</title>
+    <meta name="description" content="Weiss Schwarz 卡片價格變動觀測：分布形狀、系列動能、1/3/7 日漲跌幅" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    />
+
+    <style>
+      /* ═══════════════════════════════════════════════════════════
+         白黑 — Ink & Bone
+
+         Weiss Schwarz 的名字就是「白／黑」，所以整頁走近乎無彩色，
+         把「亮」當成重點色，而不是靠螢光色去搶注意力。漲跌只用低
+         飽和的印刷墨綠與朱紅；品牌綠 --mark 全頁只出現在字標一處，
+         絕不與資料的綠色相鄰。
+         ═══════════════════════════════════════════════════════════ */
+      :root {
+        --bg: #f8f7f4;
+        --surface: #ffffff;
+        --raise: #f1efea;
+        --rule: #e2dfd7;
+        --rule2: #cdc9be;
+        --fg: #191b21;
+        --dim: #6e727e;
+        --rise: #237a56;
+        --fall: #b33f3b;
+        --mark: #6f9f3a;
+
+        --disp: "Martian Mono", ui-monospace, monospace;
+        --num: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        --ui: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei",
+          "PingFang TC", "Noto Sans TC", sans-serif;
+
+        --shell: 1180px;
+        --gut: 20px;
+      }
+
+      body[data-theme="dark"] {
+        --bg: #14161c;
+        --surface: #191c23;
+        --raise: #20242e;
+        --rule: #2a2f3b;
+        --rule2: #3a404f;
+        --fg: #ede8dc;
+        --dim: #878d9c;
+        --rise: #57b98c;
+        --fall: #d9615c;
+        --mark: #8cc351;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--bg);
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--ui);
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--fg);
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--fg);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      .shell {
+        max-width: var(--shell);
+        margin: 0 auto;
+        padding: 0 var(--gut);
+      }
+
+      .u-num {
+        font-family: var(--num);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .u-nw {
+        white-space: nowrap;
+      }
+
+      .u-eyebrow {
+        margin: 0;
+        font-family: var(--ui);
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.14em;
+        color: var(--dim);
+      }
+
+      .u-sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* ── 頂部細軌 ─────────────────────────────────────────── */
+      .rail {
+        border-bottom: 1px solid var(--rule);
+        background: var(--bg);
+      }
+
+      .rail__in {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 46px;
+      }
+
+      .rail__mark {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: -0.04em;
+        white-space: nowrap;
+      }
+
+      .rail__mark i {
+        font-style: normal;
+        color: var(--mark);
+      }
+
+      .rail__rate {
+        min-width: 0;
+        font-size: 11px;
+        color: var(--dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .rail__end {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      /* ── 分段控制（幣別） ─────────────────────────────────── */
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .seg__b {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--dim);
+        font-family: var(--num);
+        font-size: 11px;
+        font-weight: 500;
+        padding: 5px 9px;
+      }
+
+      .seg__b + .seg__b {
+        border-left: 1px solid var(--rule);
+      }
+
+      .seg__b:hover {
+        color: var(--fg);
+      }
+
+      .seg__b[aria-pressed="true"] {
+        background: var(--fg);
+        color: var(--bg);
+      }
+
+      /* ── 圖示按鈕 ─────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        background: transparent;
+        color: var(--fg);
+        font-size: 12px;
+        padding: 6px;
+      }
+
+      .btn:hover {
+        border-color: var(--rule2);
+        background: var(--raise);
+      }
+
+      .btn svg {
+        width: 13px;
+        height: 13px;
+        flex: none;
+      }
+
+      /* ── 招牌：變動分布 ───────────────────────────────────── */
+      .ov {
+        padding: 34px 0 30px;
+      }
+
+      .ov__lede {
+        max-width: 64ch;
+        margin: 0 0 26px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--dim);
+      }
+
+      .ov__lede b {
+        font-family: var(--num);
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        color: var(--fg);
+      }
+
+      .ridge {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      /* 還沒有資料時不要留下空圖框與孤零零的破折號 */
+      body:not([data-state="ready"]) .ridge,
+      body:not([data-state="ready"]) .mv {
+        display: none;
+      }
+
+      body:not([data-state="ready"]) .ov {
+        padding-bottom: 8px;
+      }
+
+      .ridge__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .ridge__side {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        white-space: nowrap;
+      }
+
+      .ridge__side--fall {
+        color: var(--fall);
+      }
+
+      .ridge__side--rise {
+        color: var(--rise);
+      }
+
+      .ridge__n {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 21px;
+        letter-spacing: -0.045em;
+      }
+
+      .ridge__nlabel {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        color: var(--dim);
+      }
+
+      .ridge__plot {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        gap: 1px;
+        height: 132px;
+        border-bottom: 1px solid var(--rule2);
+      }
+
+      /* 0% 中線：整張圖唯一一道亮線 */
+      .ridge__zero {
+        position: absolute;
+        left: 50%;
+        top: -8px;
+        bottom: 0;
+        /* 疊在長條之上：0% 那格最高，被蓋住就看不到界線在哪 */
+        z-index: 1;
+        width: 1px;
+        background: var(--fg);
+        opacity: 0.62;
+        pointer-events: none;
+      }
+
+      .ridge__zero[hidden] {
+        display: none;
+      }
+
+      .ridge__bin {
+        position: relative;
+        flex: 1 1 0;
+        min-width: 0;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .ridge__bin::after {
+        content: "";
+        display: block;
+        width: 100%;
+        height: calc(var(--h, 0) * 1%);
+        background: currentColor;
+        transform-origin: bottom;
+      }
+
+      .ridge__bin[data-empty="1"]::after {
+        height: 1px;
+        background: var(--rule);
+      }
+
+      .ridge__bin--fall {
+        color: var(--fall);
+      }
+
+      .ridge__bin--rise {
+        color: var(--rise);
+      }
+
+      .ridge__bin--flat {
+        color: var(--dim);
+      }
+
+      /* 0% 兩側各讓開一點，中線才有地方站。
+         擠在 1px 的縫裡會被最高的那格完全蓋掉，
+         整張圖就看不出「跌｜漲」是從哪裡分開的 */
+      .ridge__bin--gutL {
+        margin-right: 4px;
+      }
+
+      .ridge__bin--gutR {
+        margin-left: 4px;
+      }
+
+      .ridge__bin:not([disabled]):hover::after,
+      .ridge__bin:focus-visible::after,
+      .ridge__bin[aria-pressed="true"]::after {
+        background: var(--fg);
+      }
+
+      .ridge__bin[disabled] {
+        cursor: default;
+      }
+
+      /* 刻度用絕對定位對準真正的比例位置。
+         用 flex 均分的話，5 個標籤的中心會落在 10/30/50/70/90%，
+         而不是 0/25/50/75/100%，-10% 就會歪掉將近 60px */
+      .ridge__axis {
+        position: relative;
+        height: 15px;
+        font-family: var(--num);
+        font-size: 10px;
+        color: var(--dim);
+      }
+
+      .ridge__axis span {
+        position: absolute;
+        top: 0;
+        left: calc(var(--at) * 1%);
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+
+      .ridge__axis span[data-edge="start"] {
+        transform: none;
+      }
+
+      .ridge__axis span[data-edge="end"] {
+        transform: translateX(-100%);
+      }
+
+      /* 已選區間 */
+      .band {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 4px 6px 4px 10px;
+        border: 1px solid var(--rule2);
+        border-radius: 3px;
+        font-family: var(--num);
+        font-size: 11px;
+      }
+
+      .band[hidden] {
+        display: none;
+      }
+
+      .band__x {
+        border: 0;
+        border-radius: 2px;
+        background: transparent;
+        color: var(--dim);
+        display: inline-flex;
+        padding: 2px;
+      }
+
+      .band__x:hover {
+        color: var(--fg);
+      }
+
+      .band__x svg {
+        width: 11px;
+        height: 11px;
+      }
+
+      /* ── 系列動能 ─────────────────────────────────────────── */
+      .mv {
+        padding-bottom: 30px;
+      }
+
+      .mv__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .mv__note {
+        font-size: 11px;
+        color: var(--dim);
+        text-align: right;
+      }
+
+      .mv__grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .mv__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        text-align: left;
+        padding: 14px 16px 15px;
+        border: 0;
+        border-right: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .mv__cell:last-child {
+        border-right: 0;
+      }
+
+      .mv__cell:hover {
+        background: var(--raise);
+      }
+
+      .mv__code {
+        font-family: var(--disp);
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: -0.03em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mv__pct {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 22px;
+        line-height: 1.15;
+        letter-spacing: -0.05em;
+      }
+
+      .mv__pct--rise {
+        color: var(--rise);
+      }
+
+      .mv__pct--fall {
+        color: var(--fall);
+      }
+
+      .mv__pct--flat {
+        color: var(--dim);
+      }
+
+      .mv__sub {
+        font-family: var(--num);
+        font-size: 11px;
+        color: var(--dim);
+      }
+
+      .mv__empty {
+        grid-column: 1 / -1;
+        margin: 0;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--dim);
+      }
+
+      /* ── 資料台 ───────────────────────────────────────────── */
+      .dk {
+        padding-bottom: 90px;
+      }
+
+      .dk__bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tabs__b {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        color: var(--dim);
+        font-size: 12.5px;
+        padding: 5px 10px 6px;
+        white-space: nowrap;
+      }
+
+      .tabs__b:hover {
+        color: var(--fg);
+      }
+
+      .tabs__b[aria-pressed="true"] {
+        color: var(--fg);
+        border-bottom-color: var(--fg);
+      }
+
+      .find {
+        position: relative;
+        margin-left: auto;
+        flex: 0 1 250px;
+      }
+
+      .find svg {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        color: var(--dim);
+        pointer-events: none;
+      }
+
+      .find input {
+        width: 100%;
+        font-family: var(--num);
+        font-size: 12px;
+        color: var(--fg);
+        background: transparent;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        padding: 6px 9px 6px 26px;
+      }
+
+      .find input::placeholder {
+        color: var(--dim);
+      }
+
+      .find input:focus-visible {
+        outline: 2px solid var(--fg);
+        outline-offset: -1px;
+        border-color: transparent;
+      }
+
+      .grid__scroll {
+        overflow-x: auto;
+      }
+
+      .grid {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 780px;
+      }
+
+      .grid th {
+        font-family: var(--ui);
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.06em;
+        color: var(--dim);
+        text-align: left;
+        white-space: nowrap;
+        padding: 11px 10px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--rule2);
+      }
+
+      .grid th.is-sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .grid th.is-sortable:hover {
+        color: var(--fg);
+      }
+
+      .grid th .caret {
+        font-family: var(--num);
+        opacity: 0;
+      }
+
+      .grid th[data-dir] {
+        color: var(--fg);
+      }
+
+      .grid th[data-dir] .caret {
+        opacity: 1;
+      }
+
+      .grid td {
+        padding: 9px 10px;
+        white-space: nowrap;
+        vertical-align: middle;
+        background: var(--bg);
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .grid tbody tr:hover td {
+        background: var(--raise);
+      }
+
+      /* 要用 .grid 前綴把權重墊高：單獨的 .c-r 會輸給 .grid th，
+         表頭就會悄悄變回左對齊，跟底下的數字對不上 */
+      .grid .c-r {
+        text-align: right;
+      }
+
+      .grid .c-c {
+        text-align: center;
+      }
+
+      /* 前兩欄黏住：星號 + 卡號 */
+      .grid th:nth-child(1),
+      .grid td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        width: 34px;
+        min-width: 34px;
+        padding-left: 0;
+        padding-right: 0;
+        text-align: center;
+      }
+
+      .grid th:nth-child(2),
+      .grid td:nth-child(2) {
+        position: sticky;
+        left: 34px;
+        z-index: 2;
+        min-width: 148px;
+      }
+
+      .code {
+        font-family: var(--num);
+        font-size: 12.5px;
+        cursor: help;
+      }
+
+      .price {
+        font-family: var(--num);
+        font-size: 12.5px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* 漲跌欄：數字右對齊，底下一道等比長度的量條 */
+      .move {
+        position: relative;
+        font-family: var(--num);
+        font-size: 12.5px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .move--rise {
+        color: var(--rise);
+      }
+
+      .move--fall {
+        color: var(--fall);
+      }
+
+      .move--flat {
+        color: var(--dim);
+      }
+
+      .move__bar {
+        position: absolute;
+        right: 10px;
+        bottom: 4px;
+        height: 2px;
+        width: calc(var(--m, 0) * 62px);
+        background: currentColor;
+        opacity: 0.45;
+      }
+
+      .spark {
+        display: block;
+        width: 116px;
+        height: 26px;
+      }
+
+      .spark--rise {
+        color: var(--rise);
+      }
+
+      .spark--fall {
+        color: var(--fall);
+      }
+
+      .spark__cell {
+        width: 126px;
+        min-width: 126px;
+      }
+
+      .spark__wait {
+        display: block;
+        width: 116px;
+        height: 26px;
+        border-radius: 2px;
+        background: var(--raise);
+      }
+
+      .spark__na {
+        font-family: var(--num);
+        font-size: 10px;
+        color: var(--dim);
+      }
+
+      .star {
+        display: inline-flex;
+        padding: 4px;
+        border: 0;
+        border-radius: 3px;
+        background: transparent;
+        color: var(--rule2);
+      }
+
+      .star svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .star:hover {
+        color: var(--fg);
+      }
+
+      .star[aria-pressed="true"] {
+        color: var(--fg);
+      }
+
+      /* ── 空狀態、錯誤、分頁 ───────────────────────────────── */
+      .note {
+        margin: 0;
+        padding: 30px 10px;
+        font-size: 13px;
+        color: var(--dim);
+      }
+
+      .note[hidden] {
+        display: none;
+      }
+
+      .alert {
+        margin: 16px 0 0;
+        padding: 12px 14px;
+        border: 1px solid var(--fall);
+        border-left-width: 3px;
+        border-radius: 2px;
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+
+      .alert[hidden] {
+        display: none;
+      }
+
+      .alert code {
+        font-family: var(--num);
+        color: var(--fall);
+      }
+
+      .pager {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 14px;
+        font-family: var(--num);
+        font-size: 11px;
+        color: var(--dim);
+      }
+
+      .pager__b {
+        display: flex;
+        gap: 6px;
+      }
+
+      .pager__b button {
+        display: inline-flex;
+        padding: 5px 8px;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        background: transparent;
+        color: var(--fg);
+      }
+
+      .pager__b svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .pager__b button:hover:not(:disabled) {
+        background: var(--raise);
+        border-color: var(--rule2);
+      }
+
+      .pager__b button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      /* ── 卡圖預覽、置頂、固定表頭 ─────────────────────────── */
+      .peek {
+        position: fixed;
+        z-index: 90;
+        display: none;
+        padding: 4px;
+        border: 1px solid var(--rule2);
+        border-radius: 3px;
+        background: var(--surface);
+        box-shadow: 0 12px 32px rgb(0 0 0 / 0.28);
+        pointer-events: none;
+      }
+
+      .peek img {
+        display: block;
+        width: 172px;
+        height: auto;
+        min-height: 240px;
+        border-radius: 2px;
+      }
+
+      .totop {
+        position: fixed;
+        right: 20px;
+        bottom: 24px;
+        z-index: 80;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--rule2);
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--fg);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+      }
+
+      .totop svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .totop.is-on {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+
+      #pin {
+        position: fixed;
+        top: 0;
+        z-index: 70;
+        display: none;
+        overflow: hidden;
+        background: var(--bg);
+        border-bottom: 1px solid var(--rule2);
+        box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+      }
+
+      #pin table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+
+      /* ── 唯一的動態：分布圖自 0% 向兩側長出 ───────────────── */
+      @keyframes ridge-grow {
+        from {
+          transform: scaleY(0);
+        }
+        to {
+          transform: scaleY(1);
+        }
+      }
+
+      .ridge__plot.is-drawing .ridge__bin::after {
+        animation: ridge-grow 0.42s cubic-bezier(0.22, 0.9, 0.3, 1) backwards;
+        animation-delay: calc(var(--d, 0) * 14ms);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          /* 延遲也要歸零：分布圖的出場動畫是 fill backwards，
+             只縮短時間的話長條還是會依序空白等上 266ms 才出現 */
+          animation-delay: 0s !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* ── 窄螢幕 ───────────────────────────────────────────── */
+      @media (max-width: 900px) {
+        .mv__grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mv__cell:nth-child(2n) {
+          border-right: 0;
+        }
+      }
+
+      @media (max-width: 720px) {
+        :root {
+          --gut: 14px;
+        }
+
+        .ov {
+          padding: 24px 0 22px;
+        }
+
+        .ov__lede {
+          margin-bottom: 20px;
+          font-size: 13.5px;
+        }
+
+        .ridge__head {
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        /* 直式堆疊時把數字放回標籤前面，不然會讀成「張上漲 211」 */
+        .ridge__side--rise {
+          flex-direction: row-reverse;
+          justify-content: flex-end;
+        }
+
+        .ridge__plot {
+          height: 104px;
+        }
+
+        .ridge__n {
+          font-size: 19px;
+        }
+
+        .rail__rate {
+          display: none;
+        }
+
+        .mv__head {
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .mv__note {
+          text-align: left;
+        }
+
+        .find {
+          flex: 1 1 100%;
+          margin-left: 0;
+        }
+
+        /* 表格改為每列一張卡，手機不必再左右拖 */
+        .grid__scroll {
+          overflow-x: visible;
+        }
+
+        .grid,
+        .grid tbody,
+        .grid tr,
+        .grid td {
+          display: block;
+          min-width: 0;
+        }
+
+        .grid thead {
+          display: none;
+        }
+
+        .grid tr {
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px 10px;
+          padding: 12px 34px 12px 0;
+          border-bottom: 1px solid var(--rule);
+        }
+
+        .grid td {
+          padding: 0;
+          border: 0;
+          background: transparent;
+        }
+
+        .grid tbody tr:hover td {
+          background: transparent;
+        }
+
+        .grid td:nth-child(1),
+        .grid td:nth-child(2) {
+          position: static;
+          width: auto;
+          min-width: 0;
+        }
+
+        /* 星號移到右上角。必須把桌機版黏欄的 left:0 解掉，
+           否則 left 與 right 同時成立，格子會撐滿整列寬度，
+           星號就被 text-align:center 推到列的正中間 */
+        .grid td:nth-child(1) {
+          position: absolute;
+          top: 8px;
+          left: auto;
+          right: 0;
+          width: auto;
+        }
+
+        /* 第一行：卡號 + 最新價 */
+        .grid td:nth-child(2) {
+          grid-column: 1 / 3;
+        }
+
+        .grid td:nth-child(3) {
+          grid-column: 3 / 4;
+          text-align: right;
+        }
+
+        /* 第二行：1 / 3 / 7 日各一欄，補上小標 */
+        .grid td:nth-child(4),
+        .grid td:nth-child(5),
+        .grid td:nth-child(6) {
+          text-align: left;
+        }
+
+        .grid td[data-label]::before {
+          content: attr(data-label);
+          display: block;
+          font-family: var(--ui);
+          font-size: 10px;
+          letter-spacing: 0.06em;
+          color: var(--dim);
+        }
+
+        .grid td:nth-child(3)[data-label]::before {
+          display: none;
+        }
+
+        .move__bar {
+          right: auto;
+          left: 0;
+          bottom: -4px;
+        }
+
+        /* 第三行：走勢圖橫跨整列收尾 */
+        .grid td:nth-child(7) {
+          grid-column: 1 / 4;
+          width: auto;
+          min-width: 0;
+          padding-top: 4px;
+        }
+
+        .spark,
+        .spark__wait {
+          width: 100%;
+        }
+
+        #pin {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ══ 頂部細軌 ══════════════════════════════════════════ -->
+    <header class="rail">
+      <div class="shell rail__in">
+        <span class="rail__mark">WS<i>·</i>價格觀測</span>
+        <span class="rail__rate u-num" id="rateText">匯率載入中</span>
+
+        <div class="rail__end">
+          <div class="seg" id="curSeg" role="group" aria-label="顯示幣別">
+            <button type="button" class="seg__b" data-cur="JPY" aria-pressed="true">¥ JPY</button>
+            <button type="button" class="seg__b" data-cur="TWD" aria-pressed="false">NT$ TWD</button>
+          </div>
+
+          <button type="button" class="btn" id="reloadBtn" title="重新整理資料" aria-label="重新整理資料">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" />
+            </svg>
+          </button>
+
+          <button type="button" class="btn" id="themeBtn" title="切換深色" aria-label="切換深色">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" id="themeIcon"></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- ══ 招牌：變動分布 ══════════════════════════════════ -->
+      <section class="shell ov" aria-labelledby="ovHead">
+        <h1 class="u-sr" id="ovHead">價格變動分布</h1>
+
+        <p class="ov__lede" id="lede">正在讀取遠端資料。</p>
+
+        <div class="ridge">
+          <div class="ridge__head">
+            <span class="ridge__side ridge__side--fall">
+              <span class="ridge__n" id="nFall">—</span>
+              <span class="ridge__nlabel" id="nFallLabel">張下跌</span>
+            </span>
+            <span class="ridge__side ridge__side--rise">
+              <span class="ridge__nlabel" id="nRiseLabel">張上漲</span>
+              <span class="ridge__n" id="nRise">—</span>
+            </span>
+          </div>
+
+          <div class="ridge__plot" id="ridgePlot">
+            <span class="ridge__zero" id="ridgeZero" hidden></span>
+          </div>
+
+          <div class="ridge__axis" id="ridgeAxis"></div>
+        </div>
+
+        <span class="band" id="band" hidden>
+          <span id="bandText"></span>
+          <button type="button" class="band__x" id="bandClear" aria-label="清除區間篩選">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <path d="M5 5l14 14M19 5L5 19" />
+            </svg>
+          </button>
+        </span>
+      </section>
+
+      <!-- ══ 系列動能 ════════════════════════════════════════ -->
+      <section class="shell mv" aria-labelledby="mvHead">
+        <div class="mv__head">
+          <h2 class="u-eyebrow" id="mvHead">系列動能</h2>
+          <span class="mv__note" id="mvNote">同一系列的卡片通常一起動</span>
+        </div>
+        <div class="mv__grid" id="mvGrid"></div>
+      </section>
+
+      <!-- ══ 資料台 ══════════════════════════════════════════ -->
+      <section class="shell dk" aria-labelledby="dkHead">
+        <h2 class="u-sr" id="dkHead">卡片列表</h2>
+
+        <div class="dk__bar">
+          <div class="tabs" id="tabs" role="group" aria-label="篩選卡片">
+            <button type="button" class="tabs__b" data-view="all" aria-pressed="true">全部</button>
+            <button type="button" class="tabs__b" data-view="up" aria-pressed="false">上漲</button>
+            <button type="button" class="tabs__b" data-view="down" aria-pressed="false">下跌</button>
+            <button type="button" class="tabs__b" data-view="star" aria-pressed="false">我的清單</button>
+          </div>
+
+          <div class="find">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" /><path d="M16.5 16.5L21 21" />
+            </svg>
+            <label class="u-sr" for="q">搜尋卡號</label>
+            <input id="q" type="search" placeholder="搜尋卡號，按 / 跳到這裡" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="grid__scroll" id="gridScroll">
+          <table class="grid">
+            <thead id="head">
+              <tr>
+                <th><span class="u-sr">加入清單</span></th>
+                <th class="is-sortable" data-key="cardNo">卡號 <span class="caret">↕</span></th>
+                <th class="c-r is-sortable" data-key="latestPrice">最新價 <span class="caret">↕</span></th>
+                <th class="c-r is-sortable" data-key="change1dPct">1 日 <span class="caret">↕</span></th>
+                <th class="c-r is-sortable" data-key="change3dPct">3 日 <span class="caret">↕</span></th>
+                <th class="c-r is-sortable" data-key="change7dPct">7 日 <span class="caret">↕</span></th>
+                <th class="c-r spark__cell">走勢</th>
+              </tr>
+            </thead>
+            <tbody id="body"></tbody>
+          </table>
+        </div>
+
+        <p class="note" id="empty" hidden></p>
+        <div class="alert" id="alert" hidden></div>
+
+        <div class="pager">
+          <span id="pageInfo">—</span>
+          <span class="pager__b">
+            <button type="button" id="prevBtn" aria-label="上一頁">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+            </button>
+            <button type="button" id="nextBtn" aria-label="下一頁">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </span>
+          <span id="pageRange">—</span>
+        </div>
+      </section>
+    </main>
+
+    <div class="peek" id="peek"><img id="peekImg" src="#" alt="" /></div>
+
+    <button type="button" class="totop" id="topBtn" aria-label="回到頂端">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 15l7-7 7 7" /></svg>
+    </button>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+        const CARD_DATA_BASE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+        const WS_TCG_CARDLIST_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        const SPARK_CONCURRENCY = 6;
+        const THEME_KEY = "priceIncreaseTheme";
+        const WATCH_KEY = "cardWatchlist";
+        const PAGE_SIZE = 200;
+
+        /* 分布圖：定義域 ±20%，每格 1%，超出的落在最外一格 */
+        const RIDGE_BINS = 20;
+        /* 價格模式的格數 */
+        const PRICE_BINS = 40;
+        /* 表格量條的固定基準：換頁換篩選都還能互相比較 */
+        const BAR_REF = 20;
+        /* 系列動能至少要這麼多張卡才算一個系列 */
+        const SERIES_MIN = 8;
+
+        const el = (id) => document.getElementById(id);
+        const els = {
+          rateText: el("rateText"),
+          curSeg: el("curSeg"),
+          reloadBtn: el("reloadBtn"),
+          themeBtn: el("themeBtn"),
+          themeIcon: el("themeIcon"),
+          lede: el("lede"),
+          nFall: el("nFall"),
+          nFallLabel: el("nFallLabel"),
+          nRise: el("nRise"),
+          nRiseLabel: el("nRiseLabel"),
+          ridgePlot: el("ridgePlot"),
+          ridgeZero: el("ridgeZero"),
+          ridgeAxis: el("ridgeAxis"),
+          band: el("band"),
+          bandText: el("bandText"),
+          bandClear: el("bandClear"),
+          mvGrid: el("mvGrid"),
+          mvNote: el("mvNote"),
+          tabs: el("tabs"),
+          q: el("q"),
+          gridScroll: el("gridScroll"),
+          head: el("head"),
+          body: el("body"),
+          empty: el("empty"),
+          alert: el("alert"),
+          pageInfo: el("pageInfo"),
+          pageRange: el("pageRange"),
+          prevBtn: el("prevBtn"),
+          nextBtn: el("nextBtn"),
+          peek: el("peek"),
+          peekImg: el("peekImg"),
+          topBtn: el("topBtn"),
+        };
+
+        /* ── 狀態 ───────────────────────────────────────────── */
+        let raw = null;
+        let rows = [];
+        let exRate = 0.22;
+        let exRateIsFallback = false;
+        let renderToken = 0;
+        let sortKey = "change1dPct";
+        let sortDir = "desc";
+        let page = 1;
+        let view = "all";
+        let currency = "JPY";
+        let band = null; // { key, label, lo, hi, statKey }
+        let pinMirror = null;
+        let firstPaint = true;
+
+        const watch = new Set(readWatchlist());
+        const productCache = new Map();
+        const seriesCache = new Map();
+
+        function readWatchlist() {
+          try {
+            const v = JSON.parse(localStorage.getItem(WATCH_KEY) || "[]");
+            return Array.isArray(v) ? v : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function saveWatchlist() {
+          try {
+            localStorage.setItem(WATCH_KEY, JSON.stringify([...watch]));
+          } catch {
+            /* 無痕模式寫不進去，不影響瀏覽 */
+          }
+        }
+
+        /* ── 圖示 ───────────────────────────────────────────── */
+        const STAR_PATH =
+          "M12 3.6l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.8l5.9-.8z";
+        const STAR_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="${STAR_PATH}"/></svg>`;
+        const STAR_ON = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${STAR_PATH}"/></svg>`;
+        const ICON_MOON = "M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z";
+        const ICON_SUN =
+          "M12 4V2m0 20v-2m8-8h2M2 12h2m13.7-5.7l1.4-1.4M4.9 19.1l1.4-1.4m11.4 0l1.4 1.4M4.9 4.9l1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z";
+
+        /* ── 格式化 ─────────────────────────────────────────── */
+        function esc(s) {
+          return String(s)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        function num(n) {
+          const v = Number(n);
+          return Number.isFinite(v) ? new Intl.NumberFormat("zh-TW").format(v) : "—";
+        }
+
+        function pct(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "—";
+          return `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+        }
+
+        function money(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "—";
+          const fmt = new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 });
+          return currency === "TWD"
+            ? "NT$" + fmt.format(Math.round(v * exRate))
+            : "¥" + fmt.format(Math.round(v));
+        }
+
+        function tone(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v) || v === 0) return "flat";
+          return v > 0 ? "rise" : "fall";
+        }
+
+        const KEY_LABELS = {
+          cardNo: "卡號",
+          latestPrice: "最新價",
+          change1dPct: "1 日",
+          change3dPct: "3 日",
+          change7dPct: "7 日",
+        };
+
+        function keyLabel(k) {
+          return KEY_LABELS[k] || k;
+        }
+
+        /* 以卡號排序時沒有數值可畫，分布圖退回 1 日漲跌幅 */
+        function statKey() {
+          return sortKey === "cardNo" ? "change1dPct" : sortKey;
+        }
+
+        function seriesOf(cardNo) {
+          return String(cardNo || "").split("-")[0] || "";
+        }
+
+        /* ══ 分布圖 ═══════════════════════════════════════════
+           漲跌幅模式會把「平盤」單獨抽出來，剩下的才進圖。
+           不抽的話，兩萬多張沒動的卡會把中央那格拉爆，尾巴全看不見，
+           而尾巴才是要找的東西。
+           ═══════════════════════════════════════════════════ */
+
+        function buildPctRidge(values) {
+          const fallBins = Array.from({ length: RIDGE_BINS }, (_, i) => ({
+            side: "fall",
+            lo: i === RIDGE_BINS - 1 ? -Infinity : -(i + 1),
+            hi: -i,
+            count: 0,
+            label:
+              i === RIDGE_BINS - 1
+                ? `≤ -${RIDGE_BINS - 1}%`
+                : `-${i + 1}% ~ ${i === 0 ? "0" : `-${i}`}%`,
+          }));
+          const riseBins = Array.from({ length: RIDGE_BINS }, (_, i) => ({
+            side: "rise",
+            lo: i,
+            hi: i === RIDGE_BINS - 1 ? Infinity : i + 1,
+            count: 0,
+            label: i === RIDGE_BINS - 1 ? `≥ +${RIDGE_BINS - 1}%` : `+${i}% ~ +${i + 1}%`,
+          }));
+
+          let flat = 0;
+          let rise = 0;
+          let fall = 0;
+
+          for (const v of values) {
+            if (v === 0) {
+              flat += 1;
+              continue;
+            }
+            const i = Math.min(Math.floor(Math.abs(v)), RIDGE_BINS - 1);
+            if (v > 0) {
+              rise += 1;
+              riseBins[i].count += 1;
+            } else {
+              fall += 1;
+              fallBins[i].count += 1;
+            }
+          }
+
+          return {
+            isPct: true,
+            bins: [...fallBins.slice().reverse(), ...riseBins],
+            flat,
+            rise,
+            fall,
+            axis: [
+              { label: `-${RIDGE_BINS}%`, at: 0 },
+              { label: "-10%", at: 25 },
+              { label: "0", at: 50 },
+              { label: "+10%", at: 75 },
+              { label: `+${RIDGE_BINS}%`, at: 100 },
+            ],
+          };
+        }
+
+        function buildPriceRidge(values) {
+          if (!values.length) return { isPct: false, bins: [], flat: 0, rise: 0, fall: 0, axis: [] };
+
+          const min = values[0];
+          const max = values[values.length - 1];
+          const step = (max - min) / PRICE_BINS || 1;
+          const bins = Array.from({ length: PRICE_BINS }, (_, i) => {
+            const lo = min + step * i;
+            const last = i === PRICE_BINS - 1;
+            const hi = last ? Infinity : min + step * (i + 1);
+            return {
+              side: "flat",
+              lo,
+              hi,
+              count: 0,
+              label: `${money(lo)} ~ ${money(last ? max : hi)}`,
+            };
+          });
+
+          for (const v of values) {
+            bins[Math.min(Math.floor((v - min) / step), PRICE_BINS - 1)].count += 1;
+          }
+
+          return {
+            isPct: false,
+            bins,
+            flat: 0,
+            rise: 0,
+            fall: 0,
+            axis: [
+              { label: money(min), at: 0 },
+              { label: money(min + (max - min) / 2), at: 50 },
+              { label: money(max), at: 100 },
+            ],
+          };
+        }
+
+        function paintRidge(model) {
+          const { bins, isPct } = model;
+          const peak = bins.reduce((m, b) => Math.max(m, b.count), 0);
+          const mid = bins.length / 2;
+
+          els.ridgeZero.hidden = !isPct;
+
+          const html = bins
+            .map((b, i) => {
+              // 非空的格子至少留 3%，讓只有一兩張卡的尾巴不會消失
+              const h = b.count && peak ? Math.max(3, (b.count / peak) * 100) : 0;
+              // 動畫延遲：由 0% 往兩側依序長出
+              const delay = isPct ? Math.abs(i < mid ? mid - 1 - i : i - mid) : i * 0.5;
+              const on = band && band.key === b.label;
+              const desc = `${b.label}，${num(b.count)} 張`;
+              const gut = !isPct ? "" : i === mid - 1 ? " ridge__bin--gutL" : i === mid ? " ridge__bin--gutR" : "";
+              return `<button type="button" class="ridge__bin ridge__bin--${b.side}${gut}"
+                style="--h:${h.toFixed(2)};--d:${delay.toFixed(1)}"
+                data-empty="${b.count ? 0 : 1}"
+                data-lo="${b.lo}" data-hi="${b.hi}" data-label="${esc(b.label)}"
+                aria-pressed="${on ? "true" : "false"}"
+                ${b.count ? "" : "disabled"} title="${esc(desc)}"><span class="u-sr">${esc(desc)}</span></button>`;
+            })
+            .join("");
+
+          els.ridgePlot.querySelectorAll(".ridge__bin").forEach((n) => n.remove());
+          els.ridgePlot.insertAdjacentHTML("beforeend", html);
+
+          // 只在第一次繪製時跑出場動畫，跑完就把 class 拿掉：
+          // 長條的靜止狀態不該依賴動畫有沒有跑完（動畫沒跑到就會停在 scaleY(0)）
+          els.ridgePlot.classList.toggle("is-drawing", firstPaint);
+          if (firstPaint) {
+            firstPaint = false;
+            setTimeout(() => els.ridgePlot.classList.remove("is-drawing"), 900);
+          }
+
+          const lastAxis = model.axis.length - 1;
+          els.ridgeAxis.innerHTML = model.axis
+            .map((a, i) => {
+              const edge = i === 0 ? ' data-edge="start"' : i === lastAxis ? ' data-edge="end"' : "";
+              return `<span style="--at:${a.at}"${edge}>${esc(a.label)}</span>`;
+            })
+            .join("");
+        }
+
+        /* ── 系列動能 ─────────────────────────────────────────
+           WS 的價格是整個系列一起動的：新番開播、補刷、比賽結果，
+           都是一次影響一整個系列。所以分組看比看兩萬張的平均有用。
+           ─────────────────────────────────────────────────── */
+
+        function paintMovers() {
+          const key = statKey() === "latestPrice" ? "change1dPct" : statKey();
+          const groups = new Map();
+
+          for (const r of rows) {
+            const v = Number(r[key]);
+            if (!Number.isFinite(v)) continue;
+            const s = seriesOf(r.cardNo);
+            if (!s) continue;
+            const g = groups.get(s) || { sum: 0, n: 0 };
+            g.sum += v;
+            g.n += 1;
+            groups.set(s, g);
+          }
+
+          const ranked = [...groups.entries()]
+            .filter(([, g]) => g.n >= SERIES_MIN)
+            .map(([code, g]) => ({ code, mean: g.sum / g.n, n: g.n }))
+            .sort((a, b) => Math.abs(b.mean) - Math.abs(a.mean))
+            .slice(0, 4);
+
+          els.mvNote.textContent = `依 ${keyLabel(key)}漲跌幅平均值排序，每個系列至少 ${SERIES_MIN} 張`;
+
+          if (!ranked.length) {
+            els.mvGrid.innerHTML = `<p class="mv__empty">還沒有足夠資料的系列。</p>`;
+            return;
+          }
+
+          els.mvGrid.innerHTML = ranked
+            .map(
+              (s) => `<button type="button" class="mv__cell" data-series="${esc(s.code)}"
+                title="${esc(`只看 ${s.code} 的卡片`)}">
+                <span class="mv__code">${esc(s.code)}</span>
+                <span class="mv__pct mv__pct--${tone(s.mean)}">${esc(pct(s.mean))}</span>
+                <span class="mv__sub">${esc(`${num(s.n)} 張`)}</span>
+              </button>`
+            )
+            .join("");
+        }
+
+        /* ── 走勢圖 ─────────────────────────────────────────── */
+
+        function sparkSvg(series) {
+          const vals = (Array.isArray(series) ? series : []).map(Number).filter(Number.isFinite);
+          if (vals.length < 2) return '<span class="spark__na">無紀錄</span>';
+
+          const w = 116;
+          const h = 26;
+          const pad = 2;
+          const min = Math.min(...vals);
+          const max = Math.max(...vals);
+          const range = max - min || 1;
+          const pts = vals
+            .map((v, i) => {
+              const x = pad + (i / (vals.length - 1)) * (w - pad * 2);
+              const y = pad + (1 - (v - min) / range) * (h - pad * 2);
+              return `${x.toFixed(1)},${y.toFixed(1)}`;
+            })
+            .join(" ");
+          const dir = vals[vals.length - 1] >= vals[0] ? "rise" : "fall";
+
+          return `<svg class="spark spark--${dir}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"
+            role="img" aria-label="${esc(`${vals[0]} 到 ${vals[vals.length - 1]}`)}">
+            <polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.4"
+              stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          </svg>`;
+        }
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        }
+
+        function productCodeOf(cardNo) {
+          return seriesOf(cardNo).replace(/\//g, "_");
+        }
+
+        async function getProduct(code) {
+          if (!code) return null;
+          if (!productCache.has(code)) {
+            productCache.set(code, fetchJson(`${CARD_DATA_BASE_URL}${code}.json`).catch(() => null));
+          }
+          return productCache.get(code);
+        }
+
+        function findEntry(data, cardNo) {
+          if (!data || !cardNo) return null;
+          if (data[cardNo]) return data[cardNo];
+          const lower = String(cardNo).toLowerCase();
+          for (const [k, v] of Object.entries(data)) {
+            if (String(k).toLowerCase() === lower) return v;
+          }
+          return null;
+        }
+
+        async function getSeries(cardNo) {
+          const key = String(cardNo || "");
+          if (!key) return [];
+          if (!seriesCache.has(key)) {
+            seriesCache.set(
+              key,
+              (async () => {
+                const entry = findEntry(await getProduct(productCodeOf(key)), key);
+                return entry ? entry.cardPrice : [];
+              })()
+            );
+          }
+          return seriesCache.get(key);
+        }
+
+        async function withLimit(items, limit, work) {
+          if (!items.length) return;
+          let cursor = 0;
+          const cap = Math.max(1, Math.min(limit, items.length));
+          await Promise.all(
+            Array.from({ length: cap }, async () => {
+              while (cursor < items.length) {
+                await work(items[cursor++]);
+              }
+            })
+          );
+        }
+
+        function paintSparks(token) {
+          const cells = [...els.body.querySelectorAll("[data-spark]")];
+          withLimit(cells, SPARK_CONCURRENCY, async (cell) => {
+            if (token !== renderToken) return;
+            let cardNo = cell.getAttribute("data-spark");
+            try {
+              cardNo = decodeURIComponent(cardNo);
+            } catch {
+              /* 解不開就用原字串 */
+            }
+            const prices = await getSeries(cardNo);
+            if (token !== renderToken || !cell.isConnected) return;
+            cell.innerHTML = sparkSvg(prices);
+          }).catch(() => {});
+        }
+
+        /* ── 卡圖預覽 ───────────────────────────────────────── */
+
+        function imageUrls(cardNo) {
+          const m = String(cardNo || "")
+            .trim()
+            .match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return [];
+          const s = m[1].toLowerCase();
+          const e = m[2].toLowerCase();
+          const id = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!s || !e || !id) return [];
+
+          const devil = `https://imgs.devilfox.net/ws/${s}_${e}/${s}_${e}_${id}.png`;
+          if (s.startsWith("os")) {
+            return [devil, `https://ws-rose.com/wordpress/wp-content/images/cardlist/${s}/${e}/${s}_${e}_${id}.png`];
+          }
+          const folder = s === "srd" || s === "sks" ? `sxx_${e}` : `${s}_${e}`;
+          return [devil, `${WS_TCG_CARDLIST_BASE}${s.charAt(0)}/${folder}/${s}_${e}_${id}.png`];
+        }
+
+        let peekOn = false;
+        let peekUrl = "";
+
+        function showPeek(cardNo, x, y) {
+          const [primary, fallback] = imageUrls(cardNo);
+          if (!primary) return;
+          if (peekUrl !== primary) {
+            peekUrl = primary;
+            els.peekImg.alt = `${cardNo} 卡圖`;
+            els.peekImg.onerror = () => {
+              if (fallback && els.peekImg.src !== fallback) els.peekImg.src = fallback;
+            };
+            els.peekImg.src = primary;
+          }
+          const w = 182;
+          const h = 260;
+          let left = x + 14;
+          let top = y - h - 8;
+          if (top < 16) top = y + 26;
+          if (left + w + 16 > window.innerWidth) left = x - w - 14;
+          els.peek.style.left = Math.max(16, left) + "px";
+          els.peek.style.top = top + "px";
+          els.peek.style.display = "block";
+          peekOn = true;
+        }
+
+        function hidePeek() {
+          els.peek.style.display = "none";
+          peekOn = false;
+        }
+
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        /* ── 篩選與排序 ─────────────────────────────────────── */
+
+        function filterRows(withBand) {
+          const q = els.q.value.trim().toLowerCase();
+          let out = rows;
+
+          if (q) out = out.filter((r) => String(r.cardNo).toLowerCase().includes(q));
+
+          if (view === "star") out = out.filter((r) => watch.has(r.cardNo));
+          else if (view === "up") out = out.filter((r) => Number(r.change3dPct) > 0);
+          else if (view === "down") out = out.filter((r) => Number(r.change3dPct) < 0);
+
+          if (withBand && band) {
+            out = out.filter((r) => {
+              const v = Number(r[band.statKey]);
+              if (!Number.isFinite(v)) return false;
+              // 漲跌幅的分布圖不把平盤畫進任何一格，篩選也要跟著排除，
+              // 否則點「+0% ~ +1%」會把兩萬張沒動的卡一起撈進來
+              if (band.isPct && v === 0) return false;
+              return v >= band.lo && v < band.hi;
+            });
+          }
+
+          return out;
+        }
+
+        function sortRows(list) {
+          return list.slice().sort((a, b) => {
+            let cmp;
+            if (sortKey === "cardNo") {
+              cmp = String(a.cardNo).localeCompare(String(b.cardNo), "zh-Hant", {
+                numeric: true,
+                sensitivity: "base",
+              });
+            } else {
+              const av = Number(a[sortKey]);
+              const bv = Number(b[sortKey]);
+              cmp = (Number.isFinite(av) ? av : -Infinity) - (Number.isFinite(bv) ? bv : -Infinity);
+            }
+            return sortDir === "asc" ? cmp : -cmp;
+          });
+        }
+
+        function paintSortState() {
+          const heads = [els.head];
+          if (pinMirror) heads.push(pinMirror.querySelector("thead"));
+
+          for (const root of heads) {
+            if (!root) continue;
+            root.querySelectorAll("th.is-sortable").forEach((th) => {
+              const k = th.getAttribute("data-key");
+              const caret = th.querySelector(".caret");
+              if (k === sortKey) {
+                th.setAttribute("data-dir", sortDir);
+                th.setAttribute("aria-sort", sortDir === "asc" ? "ascending" : "descending");
+                if (caret) caret.textContent = sortDir === "asc" ? "↑" : "↓";
+              } else {
+                th.removeAttribute("data-dir");
+                th.removeAttribute("aria-sort");
+                if (caret) caret.textContent = "↕";
+              }
+            });
+          }
+        }
+
+        function moveCell(v, label) {
+          const mag = Number.isFinite(Number(v)) ? Math.min(1, Math.abs(Number(v)) / BAR_REF) : 0;
+          return `<td class="c-r move move--${tone(v)}" data-label="${esc(label)}">${esc(pct(v))}<span class="move__bar" style="--m:${mag.toFixed(3)}"></span></td>`;
+        }
+
+        function paintRows(list, token) {
+          const frag = document.createDocumentFragment();
+
+          for (const r of list) {
+            const cardNo = String(r.cardNo ?? "");
+            const on = watch.has(cardNo);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="c-c"><button type="button" class="star" data-card="${encodeURIComponent(cardNo)}"
+                aria-pressed="${on}" aria-label="${esc(on ? `把 ${cardNo} 移出清單` : `把 ${cardNo} 加入清單`)}"
+                >${on ? STAR_ON : STAR_OFF}</button></td>
+              <td class="code" data-code>${esc(cardNo)}</td>
+              <td class="c-r price" data-label="最新價">${esc(money(r.latestPrice))}</td>
+              ${moveCell(r.change1dPct, "1 日")}
+              ${moveCell(r.change3dPct, "3 日")}
+              ${moveCell(r.change7dPct, "7 日")}
+              <td class="c-r spark__cell" data-spark="${encodeURIComponent(cardNo)}"><span class="spark__wait"></span></td>`;
+            frag.appendChild(tr);
+          }
+
+          els.body.replaceChildren(frag);
+          paintSparks(token);
+        }
+
+        function emptyMessage() {
+          if (els.q.value.trim()) return "沒有符合這個卡號的卡片。換個關鍵字再找。";
+          if (view === "star") return "清單還是空的。點卡號左邊的星號，把卡片加進來。";
+          if (band) return "這個區間沒有卡片。點其他長條，或清除區間篩選。";
+          return "沒有符合的卡片。";
+        }
+
+        /* ── 主繪製 ─────────────────────────────────────────── */
+
+        function render() {
+          if (!raw) return;
+          const token = ++renderToken;
+
+          /* 分布圖用「不含區間篩選」的母體，不然點了長條之後
+             圖上就只剩自己那一格，等於把梯子踢掉 */
+          const pool = filterRows(false);
+          const list = sortRows(filterRows(true));
+
+          const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+          page = Math.min(Math.max(1, page), pages);
+          const start = (page - 1) * PAGE_SIZE;
+          const slice = list.slice(start, start + PAGE_SIZE);
+
+          paintSortState();
+
+          const k = statKey();
+          const isPct = k !== "latestPrice";
+          const values = pool
+            .map((r) => Number(r[k]))
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+
+          const model = isPct ? buildPctRidge(values) : buildPriceRidge(values);
+          paintRidge(model);
+
+          els.band.hidden = !band;
+          if (band) els.bandText.textContent = `只顯示 ${band.label}`;
+
+          // 數字和單位要綁在一起，不然「846」會留在行尾、「張平盤」被推到下一行
+          const nw = (n, unit) => `<span class="u-nw"><b>${num(n)}</b> ${unit}</span>`;
+          // 沒有任何篩選時就不要多講一句「這個條件下有 N 張」，那是同一個數字
+          const scope =
+            pool.length === rows.length
+              ? `追蹤 ${nw(rows.length, "張卡片")}`
+              : `追蹤 ${nw(rows.length, "張卡片")}，這個條件下有 ${nw(pool.length, "張")}`;
+
+          if (isPct) {
+            els.nFall.textContent = num(model.fall);
+            els.nRise.textContent = num(model.rise);
+            els.nFallLabel.textContent = "張下跌";
+            els.nRiseLabel.textContent = "張上漲";
+            els.lede.innerHTML =
+              `${scope}。其中 ${nw(model.rise + model.fall, "張")}在 ${esc(keyLabel(k))}內動過價，` +
+              `${nw(model.flat, "張")}平盤。下圖只畫有動的那些，點長條可以只看那個區間。`;
+          } else {
+            els.nFall.textContent = values.length ? money(values[0]) : "—";
+            els.nRise.textContent = values.length ? money(values[values.length - 1]) : "—";
+            els.nFallLabel.textContent = "最低";
+            els.nRiseLabel.textContent = "最高";
+            els.lede.innerHTML =
+              `${scope}，依最新價分成 ${PRICE_BINS} 個等寬區間。點長條可以只看那個價位帶。`;
+          }
+
+          paintMovers();
+
+          els.empty.hidden = list.length > 0;
+          if (!list.length) els.empty.textContent = emptyMessage();
+
+          paintRows(slice, token);
+
+          els.pageInfo.textContent = `第 ${page} / ${pages} 頁`;
+          els.pageRange.textContent = slice.length
+            ? `${num(start + 1)}–${num(start + slice.length)} / ${num(list.length)}`
+            : `0 / ${num(list.length)}`;
+          els.prevBtn.disabled = page <= 1;
+          els.nextBtn.disabled = page >= pages;
+        }
+
+        function reset() {
+          page = 1;
+          render();
+        }
+
+        /* ── 主題 ───────────────────────────────────────────── */
+
+        function applyTheme(t) {
+          document.body.setAttribute("data-theme", t);
+          try {
+            localStorage.setItem(THEME_KEY, t);
+          } catch {
+            /* 存不進去就只影響這一次 */
+          }
+          const next = t === "dark" ? "切換淺色" : "切換深色";
+          els.themeIcon.innerHTML = `<path d="${t === "dark" ? ICON_SUN : ICON_MOON}" />`;
+          els.themeBtn.title = next;
+          els.themeBtn.setAttribute("aria-label", next);
+        }
+
+        function initialTheme() {
+          let saved = null;
+          try {
+            saved = localStorage.getItem(THEME_KEY);
+          } catch {
+            /* 讀不到就用系統偏好 */
+          }
+          if (saved === "light" || saved === "dark") return saved;
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        /* ── 匯率 ───────────────────────────────────────────── */
+
+        const RATE_SOURCES = [
+          {
+            url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json",
+            pick: (d) => d && d.jpy && d.jpy.twd,
+          },
+          { url: "https://open.er-api.com/v6/latest/JPY", pick: (d) => d && d.rates && d.rates.TWD },
+          { url: "https://api.frankfurter.app/latest?from=JPY&to=TWD", pick: (d) => d && d.rates && d.rates.TWD },
+        ];
+
+        async function loadRate() {
+          for (const src of RATE_SOURCES) {
+            try {
+              const rate = Number(src.pick(await fetchJson(src.url)));
+              // 合理範圍檢查：來源回壞資料時不要讓全站價格跟著錯
+              if (!Number.isFinite(rate) || rate <= 0.05 || rate >= 1) continue;
+              exRate = rate;
+              exRateIsFallback = false;
+              return;
+            } catch {
+              /* 換下一個來源 */
+            }
+          }
+          exRate = 0.22;
+          exRateIsFallback = true;
+        }
+
+        function paintRate() {
+          els.rateText.textContent = `1 JPY = ${exRate.toFixed(4)} TWD${exRateIsFallback ? "（預設值）" : ""}`;
+        }
+
+        function paintStamp(ms) {
+          const v = Number(ms);
+          if (!Number.isFinite(v)) return;
+          const s = new Intl.DateTimeFormat("zh-TW", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(new Date(v));
+          const label = `重新整理資料（資料時間 ${s}）`;
+          els.reloadBtn.title = label;
+          els.reloadBtn.setAttribute("aria-label", label);
+        }
+
+        /* ── 載入 ───────────────────────────────────────────── */
+
+        function toRows(data) {
+          const cards = (data && data.cards) || {};
+          return Object.entries(cards).map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestPrice: c.latestPrice,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+          }));
+        }
+
+        function setState(s) {
+          document.body.setAttribute("data-state", s);
+        }
+
+        async function load() {
+          renderToken += 1;
+          productCache.clear();
+          seriesCache.clear();
+          setState("loading");
+          els.alert.hidden = true;
+          els.empty.hidden = true;
+          els.body.replaceChildren();
+          els.lede.textContent = "正在讀取遠端資料。";
+
+          const [, dataResult] = await Promise.allSettled([loadRate(), fetchJson(REMOTE_URL)]);
+          paintRate();
+
+          if (dataResult.status === "rejected") {
+            const why =
+              dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
+            setState("error");
+            els.lede.textContent = "讀不到遠端資料。";
+            els.alert.hidden = false;
+            els.alert.innerHTML = `讀不到價格資料：<code>${esc(why)}</code><br />按右上角的重新整理再試一次。`;
+            return;
+          }
+
+          raw = dataResult.value;
+          rows = toRows(raw);
+          paintStamp(raw && raw.generatedAt);
+          setState("ready");
+          render();
+        }
+
+        /* ── 事件 ───────────────────────────────────────────── */
+
+        function sortBy(key, toggle) {
+          if (!key) return;
+          if (toggle && sortKey === key) {
+            sortDir = sortDir === "desc" ? "asc" : "desc";
+          } else {
+            sortKey = key;
+            sortDir = key === "cardNo" ? "asc" : "desc";
+          }
+          // 換了統計欄位，舊的區間對不上新的分布圖
+          band = null;
+          render();
+        }
+
+        function onHeadClick(e) {
+          const th = e.target.closest("th.is-sortable[data-key]");
+          if (th) sortBy(th.getAttribute("data-key"), true);
+        }
+
+        function pressOnly(container, selector, target) {
+          container.querySelectorAll(selector).forEach((n) => n.setAttribute("aria-pressed", "false"));
+          target.setAttribute("aria-pressed", "true");
+        }
+
+        function bind() {
+          els.q.addEventListener("input", reset);
+
+          els.tabs.addEventListener("click", (e) => {
+            const b = e.target.closest(".tabs__b");
+            if (!b) return;
+            pressOnly(els.tabs, ".tabs__b", b);
+            view = b.getAttribute("data-view");
+            reset();
+          });
+
+          els.curSeg.addEventListener("click", (e) => {
+            const b = e.target.closest(".seg__b");
+            if (!b) return;
+            pressOnly(els.curSeg, ".seg__b", b);
+            currency = b.getAttribute("data-cur");
+            render();
+          });
+
+          // 點分布圖的長條 → 把表格收斂到那個區間
+          els.ridgePlot.addEventListener("click", (e) => {
+            const b = e.target.closest(".ridge__bin");
+            if (!b || b.disabled) return;
+            const label = b.getAttribute("data-label");
+            band =
+              band && band.key === label
+                ? null
+                : {
+                    key: label,
+                    label,
+                    lo: Number(b.getAttribute("data-lo")),
+                    hi: Number(b.getAttribute("data-hi")),
+                    statKey: statKey(),
+                    isPct: statKey() !== "latestPrice",
+                  };
+            reset();
+          });
+
+          els.bandClear.addEventListener("click", () => {
+            band = null;
+            reset();
+          });
+
+          // 點系列動能 → 用系列代號當搜尋條件
+          els.mvGrid.addEventListener("click", (e) => {
+            const b = e.target.closest(".mv__cell");
+            if (!b) return;
+            els.q.value = b.getAttribute("data-series");
+            reset();
+            els.gridScroll.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+
+          els.head.addEventListener("click", onHeadClick);
+
+          els.body.addEventListener("click", (e) => {
+            const star = e.target.closest(".star");
+            if (star) {
+              e.stopPropagation();
+              const cardNo = decodeURIComponent(star.getAttribute("data-card"));
+              const on = !watch.has(cardNo);
+              if (on) watch.add(cardNo);
+              else watch.delete(cardNo);
+              star.innerHTML = on ? STAR_ON : STAR_OFF;
+              star.setAttribute("aria-pressed", String(on));
+              star.setAttribute("aria-label", on ? `把 ${cardNo} 移出清單` : `把 ${cardNo} 加入清單`);
+              saveWatchlist();
+              // 正在看清單時，移掉的那張要立刻消失
+              if (view === "star") render();
+              return;
+            }
+
+            if (!isTouch()) return;
+            const code = e.target.closest("[data-code]");
+            if (!code) {
+              hidePeek();
+              return;
+            }
+            e.stopPropagation();
+            if (peekOn) {
+              hidePeek();
+              return;
+            }
+            const rect = code.getBoundingClientRect();
+            showPeek(code.textContent.trim(), rect.left + rect.width / 2, rect.top);
+            setTimeout(() => document.addEventListener("click", hidePeek, { once: true }), 0);
+          });
+
+          els.body.addEventListener("mouseover", (e) => {
+            if (isTouch()) return;
+            const code = e.target.closest("[data-code]");
+            if (!code) return;
+            const rect = code.getBoundingClientRect();
+            showPeek(code.textContent.trim(), rect.left + rect.width / 2, rect.top);
+          });
+
+          els.body.addEventListener("mouseout", (e) => {
+            if (!isTouch() && e.target.closest("[data-code]")) hidePeek();
+          });
+
+          const toTableTop = () => {
+            const top = els.gridScroll.getBoundingClientRect().top + window.pageYOffset - 12;
+            window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+          };
+
+          els.prevBtn.addEventListener("click", () => {
+            if (page <= 1) return;
+            page -= 1;
+            render();
+            toTableTop();
+          });
+
+          els.nextBtn.addEventListener("click", () => {
+            page += 1;
+            render();
+            toTableTop();
+          });
+
+          els.reloadBtn.addEventListener("click", load);
+
+          els.themeBtn.addEventListener("click", () => {
+            applyTheme(document.body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+          });
+
+          window.addEventListener("keydown", (e) => {
+            if (e.key === "/" && document.activeElement !== els.q) {
+              e.preventDefault();
+              els.q.focus();
+            }
+            if (e.key === "Escape" && band) {
+              band = null;
+              reset();
+            }
+          });
+
+          els.topBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+          window.addEventListener(
+            "scroll",
+            () => els.topBtn.classList.toggle("is-on", window.pageYOffset > 300),
+            { passive: true }
+          );
+        }
+
+        /* ── 捲動時固定表頭（鏡像法） ───────────────────────── */
+
+        function initPin() {
+          const table = els.gridScroll.querySelector("table");
+          if (!table) return;
+
+          const pin = document.createElement("div");
+          pin.id = "pin";
+          const mirrorTable = document.createElement("table");
+          mirrorTable.className = "grid";
+          const mirrorHead = els.head.cloneNode(true);
+          mirrorHead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorHead);
+          pin.appendChild(mirrorTable);
+          document.body.appendChild(pin);
+          pinMirror = pin;
+          pin.addEventListener("click", onHeadClick);
+          paintSortState();
+
+          let pinned = false;
+
+          const syncWidths = () => {
+            const rect = els.gridScroll.getBoundingClientRect();
+            pin.style.left = rect.left + "px";
+            pin.style.width = rect.width + "px";
+            mirrorTable.style.width = table.offsetWidth + "px";
+            const real = els.head.querySelectorAll("th");
+            const clone = mirrorHead.querySelectorAll("th");
+            real.forEach((th, i) => {
+              if (!clone[i]) return;
+              const w = th.getBoundingClientRect().width + "px";
+              clone[i].style.width = w;
+              clone[i].style.minWidth = w;
+              clone[i].style.maxWidth = w;
+            });
+            pin.scrollLeft = els.gridScroll.scrollLeft;
+          };
+
+          const update = () => {
+            const rect = els.gridScroll.getBoundingClientRect();
+            const headH = els.head.getBoundingClientRect().height;
+            const should = rect.top < 0 && rect.bottom > headH + 10;
+            if (should !== pinned) {
+              pinned = should;
+              pin.style.display = should ? "block" : "none";
+            }
+            if (pinned) syncWidths();
+          };
+
+          window.addEventListener("scroll", update, { passive: true });
+          window.addEventListener("resize", update, { passive: true });
+          els.gridScroll.addEventListener("scroll", () => {
+            if (pinned) syncWidths();
+          }, { passive: true });
+        }
+
+        /* ── 啟動 ───────────────────────────────────────────── */
+
+        applyTheme(initialTheme());
+        bind();
+        initPin();
+        load();
+      })();
+    </script>
+  </body>
+</html>
