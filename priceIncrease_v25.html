@@ -1,0 +1,2874 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!-- 標題與分享資訊由下方 SHOP 設定填入，這裡放的是沒有 JS 時的保底值 -->
+    <title>單卡行情與本店報價</title>
+    <meta name="description" content="威夏單卡的本店售價、收購價與市場行情走勢" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" id="ogTitle" content="單卡行情與本店報價" />
+    <meta property="og:description" id="ogDesc" content="威夏單卡的本店售價、收購價與市場行情走勢" />
+    <meta property="og:image" content="https://ws-cards.cloud/assets/og-price.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.ico" />
+
+    <!-- 引入 FontAwesome 6 免費圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    
+    <style>
+      :root {
+        /*經典淺色配色 */
+        --bg: #f8f7f4;
+        --surface: #ffffff;
+        --surface-soft: #f1efea;
+        --surface-sticky: #f8f7f4;
+        --surface-hover: #f3f1ec;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2dfd7;
+        --border-strong: #cdc9be;
+        --good: #16c784; /*  經典綠 */
+        --bad: #ea3943;  /*  經典紅 */
+        --warn: #eab308;
+        --primary: #8cc351; /* 標誌綠 */
+        --primary-hover: #7bb240;
+        --disp: "Martian Mono", ui-monospace, monospace;
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        --sans: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei",
+          "PingFang TC", "Noto Sans TC", sans-serif;
+      }
+
+      body[data-theme="dark"] {
+        /* 深度黑化配色：近乎純黑的底色搭配高對比灰色 */
+        --bg: #030303; 
+        --surface: #030303; 
+        --surface-soft: #16161a;
+        --surface-sticky: #030303;
+        --surface-hover: #1c1c22;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #1e1e24;
+        --border-strong: #2d2d39;
+        --good: #10b981;
+        --bad: #ef4444;
+        --warn: #eab308;
+        --primary: #8cc351;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background-color: var(--bg);
+        -webkit-font-smoothing: antialiased;
+        touch-action: manipulation;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* 頂部全站數據列 (Global Stats Bar) */
+      .global-stats-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+        padding: 8px 18px;
+        white-space: nowrap;
+        overflow-x: auto;
+        /* 手指橫向滑到底時不把捲動傳給整頁，避免視窗被拉出可視範圍看到溢出內容 */
+        overscroll-behavior-x: contain;
+      }
+
+      .global-stats-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .global-stats-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      .global-stats-actions .segment-control {
+        padding: 2px;
+        border-radius: 6px;
+      }
+
+      .global-stats-actions .segment-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 4px;
+      }
+
+      .global-stats-actions .action-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+
+      .global-stats-item strong {
+        color: var(--text);
+        font-family: var(--mono);
+      }
+
+      .global-stats-item .green { color: var(--good); }
+      .global-stats-item .red { color: var(--bad); }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 5px 80px;
+      }
+
+      header {
+        margin-bottom: 24px;
+      }
+
+      .titleRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .logo-area {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .logo-badge {
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 3px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--disp);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .subtitle {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* 扁平風格 KPI 卡片區 */
+      .marketSummary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .distSummary {
+        margin-bottom: 24px;
+      }
+
+      .summaryItem {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .summaryItem .k {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .summaryItem .v {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .summaryItem .sub {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* 分布區間卡片（橫跨整列） */
+      .summaryItem--wide {
+        grid-column: 1 / -1;
+      }
+
+      /* 手機版：KPI 卡片改為單列橫向滑動 */
+      @media (max-width: 640px) {
+        .marketSummary {
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 10px;
+          /* 避免負邊距造成整頁水平溢位 */
+          margin-left: 0;
+          margin-right: 0;
+          padding: 2px 0 8px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x proximity;
+          scroll-padding-left: 0;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          scrollbar-width: none;
+        }
+
+        .marketSummary::-webkit-scrollbar {
+          display: none;
+        }
+
+        .marketSummary .summaryItem {
+          flex: 0 0 auto;
+          width: 58vw;
+          max-width: 220px;
+          padding: 12px 14px;
+          scroll-snap-align: start;
+        }
+
+        .summaryItem .v {
+          font-size: 17px;
+        }
+      }
+
+      .distBar {
+        display: flex;
+        height: 10px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--surface-hover);
+        border: 1px solid var(--border);
+        margin-top: 2px;
+      }
+
+      .distSeg {
+        display: block;
+        min-width: 3px;
+      }
+
+      .distSeg--good { background: var(--good); }
+      .distSeg--bad { background: var(--bad); }
+      .distSeg--zero { background: var(--muted); }
+      .distSeg--price { background: var(--primary); }
+
+      .distLegend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .distLegendItem {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .distLegendItem.isEmpty {
+        opacity: 0.45;
+      }
+
+      .distLegendItem b {
+        color: var(--text);
+        font-family: var(--mono);
+        font-weight: 600;
+      }
+
+      .distLegendLabel {
+        min-width: 0;
+      }
+
+      .distLegendVal {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .distLegendShare {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .distLegendEmpty {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .distDot {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        flex: none;
+      }
+
+      /* 手機版分布區間：圖例改為條列式，數值靠右對齊成一欄 */
+      @media (max-width: 640px) {
+        .distSummary {
+          margin-bottom: 16px;
+        }
+
+        .distSummary .summaryItem {
+          padding: 12px 14px;
+          gap: 10px;
+        }
+
+        .distBar {
+          height: 12px;
+        }
+
+        .distLegend {
+          display: block;
+          gap: 0;
+          margin-top: 0;
+        }
+
+        .distLegendItem {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          gap: 8px;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .distLegendItem:last-child {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .distLegendLabel {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .distLegendVal {
+          display: grid;
+          grid-template-columns: auto 48px;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .distLegendVal b {
+          min-width: 34px;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .distLegendShare {
+          text-align: right;
+        }
+      }
+
+      /* 控制面板區 */
+      .controls-section {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      @media (min-width: 980px) {
+        .controls {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+
+      /* 搜尋框設計 */
+      .search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 360px;
+      }
+
+      input[type="search"] {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 12px 8px 34px;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.15s ease;
+      }
+
+      input[type="search"]:focus {
+        border-color: var(--primary);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+        font-size: 12px;
+      }
+
+      /* 水平頁籤篩選器 (Filter Tabs) */
+      .filter-tabs {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding-bottom: 2px;
+      }
+
+      .tab-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--muted);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.12s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tab-btn:hover {
+        background: var(--surface-soft);
+        color: var(--text);
+      }
+
+      .tab-btn.active {
+        background: var(--surface-soft);
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      /* 幣別切換按鈕組 (Segmented Controls) */
+      .segment-control {
+        display: inline-flex;
+        background: var(--bg);
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+
+      .segment-btn {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.1s ease;
+      }
+
+      .segment-btn.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      }
+
+      /* 操作按鈕 */
+      button.action-btn {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.12s ease;
+      }
+
+      button.action-btn:hover {
+        background: var(--surface-soft);
+        border-color: var(--border-strong);
+      }
+
+      /* 自訂追蹤星星 */
+      .watchlist-star {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 15px;
+        user-select: none;
+        transition: color 0.12s ease, transform 0.1s ease;
+        display: inline-block;
+      }
+      .watchlist-star:hover {
+        color: var(--warn);
+        transform: scale(1.15);
+      }
+      .watchlist-star.active {
+        color: var(--warn);
+      }
+
+      /* 分頁列 */
+      .pagerRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--surface-soft);
+        border-top: 1px solid var(--border);
+      }
+
+      .pagerButtons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .pagerButtons button {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .pagerButtons button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* 狀態列 */
+      .status {
+        padding: 10px 16px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      /* 表格本體 — 編輯感紙媒 */
+      @keyframes row-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes move-bar-in {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+
+      .tableWrap {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        background: transparent;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        /* fixed layout：欄寬只由 thead 決定。auto layout 會把多出來的寬度平均攤給
+           每一欄，導致卡片欄拿不到它需要的空間、卡名壓到隔壁欄位上。 */
+        table-layout: fixed;
+        min-width: 1120px;
+      }
+
+      thead th {
+        border-bottom: 1px solid var(--border-strong);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        text-align: left;
+        padding: 11px 10px;
+        white-space: nowrap;
+        background: var(--bg);
+      }
+
+      thead th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      thead th.sortable:hover {
+        color: var(--text);
+      }
+
+      thead th.sortable::after {
+        content: " ↕";
+        font-family: var(--mono);
+        color: var(--muted);
+        opacity: 0;
+      }
+
+      thead th.sortable:hover::after {
+        opacity: 0.4;
+      }
+
+      thead th.sortable[data-sort-dir="asc"]::after {
+        content: " ▲";
+        color: var(--text);
+        opacity: 1;
+      }
+
+      thead th.sortable[data-sort-dir="desc"]::after {
+        content: " ▼";
+        color: var(--text);
+        opacity: 1;
+      }
+
+      /* 兩欄粘滯定位 (Sticky Cols)：星星、卡號 */
+      thead th:nth-child(1), tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        width: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        text-align: center;
+        background: var(--bg);
+      }
+      thead th:nth-child(2), tbody td:nth-child(2) {
+        position: sticky;
+        left: 36px;
+        z-index: 10;
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+        background: var(--bg);
+      }
+
+      tbody td:nth-child(1), tbody td:nth-child(2) {
+        background: var(--surface-sticky);
+      }
+
+      tbody tr {
+        animation: row-in 0.28s ease backwards;
+      }
+
+      tbody td {
+        border-bottom: 1px solid var(--border);
+        padding: 10px;
+        font-size: 13px;
+        vertical-align: middle;
+        white-space: nowrap;
+        background: var(--bg);
+      }
+
+      tbody tr:hover td {
+        background: var(--surface-hover);
+      }
+      tbody tr:hover td:nth-child(1),
+      tbody tr:hover td:nth-child(2) {
+        background: var(--surface-hover);
+      }
+
+      /* 鏡像表頭固定 */
+      #stickyTheadMirror {
+        position: fixed;
+        top: 0;
+        z-index: 50;
+        overflow: hidden;
+        display: none;
+        pointer-events: auto;
+        border-bottom: 1px solid var(--border-strong);
+        background: var(--bg);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      }
+      #stickyTheadMirror table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+      #stickyTheadMirror th {
+        box-sizing: border-box;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .center-align {
+        text-align: center;
+      }
+
+      .card-no-col {
+        font-size: 12.5px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+      }
+
+      .price-cell {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pct {
+        position: relative;
+        font-variant-numeric: tabular-nums;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-weight: 500;
+        padding-bottom: 12px;
+      }
+
+      .pct.good { color: var(--good); }
+      .pct.bad { color: var(--bad); }
+      .pct.zero { color: var(--muted); }
+
+      .move-bar {
+        position: absolute;
+        right: 10px;
+        bottom: 4px;
+        height: 2px;
+        width: calc(var(--m, 0) * 62px);
+        background: currentColor;
+        opacity: 0.45;
+        transform-origin: right center;
+        animation: move-bar-in 0.35s cubic-bezier(0.22, 0.9, 0.3, 1) backwards;
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .font-semibold {
+        font-weight: 600;
+      }
+
+      /* Sparklines 走勢圖 */
+      .sparklineCell {
+        width: 140px;
+        min-width: 140px;
+        padding: 8px 10px;
+      }
+
+      .sparkline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 128px;
+        height: 28px;
+      }
+
+      .sparkline.up { color: var(--good); }
+      .sparkline.down { color: var(--bad); }
+      .sparkline svg {
+        display: block;
+        width: 128px;
+        height: 28px;
+      }
+
+      .sparkline-na {
+        color: var(--muted);
+        font-size: 11px;
+        font-family: var(--mono);
+      }
+
+      .sparklineSkeleton {
+        display: inline-block;
+        width: 128px;
+        height: 28px;
+        border-radius: 2px;
+        background: var(--surface-soft);
+      }
+
+      .stockCell {
+        width: 72px;
+        min-width: 72px;
+        padding: 8px 6px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stockSkeleton {
+        display: inline-block;
+        width: 44px;
+        height: 14px;
+        border-radius: 2px;
+        background: var(--surface-soft);
+      }
+
+      /* 工具提示卡預覽 */
+      #cardTooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        padding: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      #cardTooltip img {
+        display: block;
+        width: 180px;
+        height: auto;
+        border-radius: 6px;
+        min-height: 252px;
+      }
+
+      /* 錯誤訊息框 */
+      .dangerBox {
+        margin: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--bad);
+        background: rgba(234, 57, 67, 0.1);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .dangerBox code {
+        font-family: var(--mono);
+        background: rgba(0,0,0,0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+
+      /* 右側浮動置頂按鈕 */
+      #backToTopBtn {
+        position: fixed;
+        right: 24px;
+        bottom: 32px;
+        z-index: 60;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease,
+          background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      }
+
+      #backToTopBtn.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      #backToTopBtn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+      }
+
+      #backToTopBtn:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      /* 深色模式：白色加粗外框，讓按鈕從近黑底色浮出來 */
+      body[data-theme="dark"] #backToTopBtn {
+        border-width: 3px;
+        border-color: #ffffff;
+      }
+
+      body[data-theme="dark"] #backToTopBtn:hover {
+        border-color: #ffffff;
+      }
+
+      @media (max-width: 640px) {
+        #backToTopBtn {
+          right: 14px;
+          bottom: 20px;
+          width: 40px;
+          height: 40px;
+          font-size: 14px;
+        }
+      }
+
+      /* ══ 店家身份 ══════════════════════════════════════════ */
+      .shopMark {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .shopMark .shopName {
+        font-family: var(--disp);
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      .shopMark .shopDot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary);
+        align-self: center;
+      }
+      .shopMark .shopTagline {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      header h1 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+      /* 資料新鮮度：價格頁沒有時間戳就沒有可信度，所以放在標題正下方 */
+      .freshness {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .freshness .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--good);
+        flex: 0 0 auto;
+      }
+      .freshness[data-state="loading"] .dot {
+        background: var(--warn);
+      }
+      .freshness[data-state="error"] .dot {
+        background: var(--bad);
+      }
+      .freshness .mono {
+        font-family: var(--mono);
+        color: var(--text);
+      }
+      .freshness .sep {
+        color: var(--border-strong);
+      }
+
+      /* ══ 卡片欄：縮圖 + 卡名 + 卡號 + 作品名 ═══════════════ */
+      /* ── 欄寬表 ──────────────────────────────────────────────
+         table-layout: fixed 只看 thead 的 th。寬度一律用百分比並且每一組加總
+         剛好 100%：fixed layout 會把「沒被指定的剩餘寬度」平均攤給所有欄位，
+         留白就等於卡片欄拿不到空間。border-box 讓百分比不被 padding 推寬。
+         兩組是因為有／沒有本店報價時可見欄位不同。 */
+      thead th,
+      tbody td {
+        box-sizing: border-box;
+      }
+
+      /* 有本店報價：☆ 卡片 售價 收購 現貨 市場 1日 3日 7日 走勢 */
+      body[data-shop-prices="on"] .col-star { width: 3%; }
+      body[data-shop-prices="on"] .cardCol { width: 33%; }
+      body[data-shop-prices="on"] .col-sell { width: 9.5%; }
+      body[data-shop-prices="on"] .col-buy { width: 8%; }
+      body[data-shop-prices="on"] .col-stock { width: 7%; }
+      body[data-shop-prices="on"] .col-market { width: 8.5%; }
+      body[data-shop-prices="on"] .col-pct { width: 6.5%; }
+      body[data-shop-prices="on"] .col-spark { width: 11.5%; }
+
+      /* 沒有本店報價：☆ 卡片 市場 1日 3日 7日 行情庫存 走勢 */
+      body:not([data-shop-prices="on"]) .col-star { width: 3%; }
+      body:not([data-shop-prices="on"]) .cardCol { width: 43%; }
+      body:not([data-shop-prices="on"]) .col-market { width: 11%; }
+      body:not([data-shop-prices="on"]) .col-pct { width: 8%; }
+      body:not([data-shop-prices="on"]) .col-marketStock { width: 7%; }
+      body:not([data-shop-prices="on"]) .col-spark { width: 12%; }
+
+      .cardCell {
+        padding: 7px 10px;
+      }
+      .cardIdent {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .cardThumb {
+        flex: 0 0 auto;
+        width: 30px;
+        height: 42px;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        object-fit: cover;
+        object-position: top center;
+      }
+      .cardIdentText {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+      }
+      .cardName {
+        font-size: 13px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta {
+        font-size: 11px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta .no {
+        font-family: var(--mono);
+        letter-spacing: 0.01em;
+      }
+
+      /* ══ 本店報價欄 ════════════════════════════════════════ */
+      .shopCell {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .shopCell .spread {
+        display: block;
+        margin-top: 2px;
+        font-size: 10.5px;
+        font-weight: 400;
+        color: var(--muted);
+        letter-spacing: 0;
+      }
+      .buyCell {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+      .buyCell.has-value {
+        color: var(--text);
+      }
+      /* 本店現貨的有無是客人最先掃的資訊，所以做成標籤而不是數字 */
+      .stockTag {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-family: var(--mono);
+        font-size: 11px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .stockTag.in {
+        border-color: color-mix(in srgb, var(--good) 45%, transparent);
+        color: var(--good);
+      }
+      .stockTag.out {
+        border-color: var(--border);
+        color: var(--muted);
+      }
+      /* 沒有店家報價資料時，這三欄整欄收起來 */
+      body:not([data-shop-prices="on"]) .shop-col {
+        display: none;
+      }
+      /* 有本店現貨可看時，參考通販的庫存就是雜訊，收起來讓卡片欄有空間 */
+      body[data-shop-prices="on"] .marketStock-col {
+        display: none;
+      }
+
+      /* ══ 頁尾：店家資訊與免責聲明 ══════════════════════════ */
+      .siteFoot {
+        border-top: 1px solid var(--border);
+        margin-top: 40px;
+        padding: 28px 5px 48px;
+      }
+      .siteFootInner {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+        gap: 32px;
+      }
+      .footCol h2 {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: 0 0 10px;
+      }
+      .footCol p,
+      .footCol li {
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin: 0;
+      }
+      .footCol ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .footCol .footShop {
+        font-family: var(--disp);
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+      .footCol a:hover {
+        color: var(--primary);
+      }
+      .disclaimer {
+        font-size: 12px;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      .disclaimer strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .footSource {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        word-break: break-all;
+      }
+
+      @media (max-width: 900px) {
+        .siteFootInner {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .shopMark .shopName {
+          font-size: 17px;
+        }
+        .shopMark .shopTagline {
+          font-size: 12px;
+        }
+        /* 手機的第一屏只有約 375px。卡片欄收窄，讓「本店售價」跟卡名並排看得到，
+           不必先橫向滑動才知道多少錢；多的寬度交給最後的走勢欄。 */
+        table {
+          min-width: 1000px;
+        }
+        body[data-shop-prices="on"] .col-star { width: 3.4%; }
+        body[data-shop-prices="on"] .cardCol { width: 17.2%; }
+        body[data-shop-prices="on"] .col-sell { width: 10.4%; }
+        body[data-shop-prices="on"] .col-buy { width: 8.8%; }
+        body[data-shop-prices="on"] .col-stock { width: 8%; }
+        body[data-shop-prices="on"] .col-market { width: 9.2%; }
+        body[data-shop-prices="on"] .col-pct { width: 7.8%; }
+        body[data-shop-prices="on"] .col-spark { width: 19.6%; }
+
+        body:not([data-shop-prices="on"]) .cardCol { width: 19%; }
+        body:not([data-shop-prices="on"]) .col-market { width: 11%; }
+        body:not([data-shop-prices="on"]) .col-pct { width: 8%; }
+        body:not([data-shop-prices="on"]) .col-marketStock { width: 7.6%; }
+        body:not([data-shop-prices="on"]) .col-spark { width: 35%; }
+        .cardThumb {
+          width: 26px;
+          height: 36px;
+        }
+        .cardIdent {
+          gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 全局統計數據列 -->
+    <div class="global-stats-bar">
+      <div class="global-stats-container">
+        <div class="global-stats-item">收錄卡片: <strong id="global-total">—</strong></div>
+        <div class="global-stats-item"><span id="global-gainers-label">1 日上漲</span>: <strong id="global-gainers" class="green">—</strong></div>
+        <div class="global-stats-item"><span id="global-losers-label">1 日下跌</span>: <strong id="global-losers" class="red">—</strong></div>
+        <div class="global-stats-item">我的追蹤: <strong id="global-watchlist">—</strong></div>
+        <div class="global-stats-item">結帳匯率: <strong id="global-rate">—</strong></div>
+        <div class="global-stats-actions">
+          <div class="segment-control" id="currencySegment">
+            <button type="button" class="segment-btn active" data-currency="TWD">TWD (NT$)</button>
+            <button type="button" class="segment-btn" data-currency="JPY">JPY (¥)</button>
+          </div>
+          <button id="reloadBtn" type="button" class="action-btn" title="重新載入資料">
+            <i class="fa-solid fa-arrows-rotate"></i> 重新整理
+          </button>
+          <button id="themeToggleBtn" type="button" class="action-btn" title="切換淺色/深色主題">
+            <i class="fa-regular fa-moon"></i> 深色
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <header>
+        <div class="titleRow">
+          <div>
+            <div class="logo-area">
+              <div class="shopMark">
+                <span class="shopName" id="shopName">—</span>
+                <span class="shopDot" aria-hidden="true"></span>
+                <span class="shopTagline" id="shopTagline"></span>
+              </div>
+            </div>
+            <h1>單卡行情與本店報價</h1>
+            <div class="freshness" id="freshness" data-state="loading">
+              <span class="dot" aria-hidden="true"></span>
+              <span id="statusText">載入中…</span>
+              <span id="statusSub"></span>
+              <span class="sep" aria-hidden="true">｜</span>
+              <span>行情更新於 <span class="mono" id="generatedAtText">—</span></span>
+              <span class="sep" id="shopQuoteSep" aria-hidden="true" hidden>｜</span>
+              <span id="shopQuoteAt" hidden>本店報價更新於 <span class="mono" id="shopQuoteAtText">—</span></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- KPI 指標區 -->
+      <section class="marketSummary">
+        <div class="summaryItem">
+          <div class="k">目前總共顯示</div>
+          <div class="v mono" id="kpiShown">—</div>
+          <div class="sub mono" id="kpiShownSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiAvgLabel">平均值</div>
+          <div class="v mono" id="kpiAvg">—</div>
+          <div class="sub" id="kpiAvgSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMedianLabel">中位數</div>
+          <div class="v mono" id="kpiMedian">—</div>
+          <div class="sub" id="kpiMedianSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMaxLabel">最高值</div>
+          <div class="v mono" id="kpiMax">—</div>
+          <div class="sub mono" id="kpiMaxCard" title="">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMinLabel">最低值</div>
+          <div class="v mono" id="kpiMin">—</div>
+          <div class="sub mono" id="kpiMinCard" title="">—</div>
+        </div>
+      </section>
+
+      <!-- 分布區間（獨立整列，不參與手機橫向滑動） -->
+      <section class="distSummary">
+        <div class="summaryItem summaryItem--wide">
+          <div class="k" id="kpiDistLabel">分布區間</div>
+          <div class="distBar" id="kpiDistBar"></div>
+          <div class="distLegend" id="kpiDistLegend"></div>
+        </div>
+      </section>
+
+      <!-- 控制與篩選面板 -->
+      <section class="controls-section">
+        <div class="controls">
+          <!-- 篩選分頁籤 (Tabs) -->
+          <div class="filter-tabs" id="filterTabs">
+            <button type="button" class="tab-btn active" data-trend="all">
+              <i class="fa-solid fa-layer-group"></i> 全部卡片
+            </button>
+            <button type="button" class="tab-btn" data-trend="up">
+              <i class="fa-solid fa-arrow-trend-up" style="color: var(--good)"></i> 只看上漲
+            </button>
+            <button type="button" class="tab-btn" data-trend="down">
+              <i class="fa-solid fa-arrow-trend-down" style="color: var(--bad)"></i> 只看下跌
+            </button>
+            <button type="button" class="tab-btn" data-trend="watchlist">
+              <i class="fa-solid fa-star" style="color: var(--warn)"></i> 自訂清單
+            </button>
+          </div>
+
+          <!-- 搜尋 -->
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper">
+              <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+              <input id="q" type="search" placeholder="搜尋卡名、卡號或作品…" autocomplete="off" spellcheck="false" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 數據表格 -->
+        <div class="tableWrap">
+          <table>
+            <thead id="tableWrapHeader">
+              <tr>
+                <th class="col-star"></th>
+                <th class="sortable cardCol" data-sort-key="cardNo" title="點擊排序">卡片</th>
+                <th class="right sortable shop-col col-sell" data-sort-key="shopSell" title="點擊排序">本店售價</th>
+                <th class="right sortable shop-col col-buy" data-sort-key="shopBuy" title="點擊排序">本店收購</th>
+                <th class="right shop-col col-stock">本店現貨</th>
+                <th class="right sortable col-market" data-sort-key="latestPrice" title="點擊排序">市場行情</th>
+                <th class="right sortable col-pct" data-sort-key="change1dPct" title="點擊排序">1 日</th>
+                <th class="right sortable col-pct" data-sort-key="change3dPct" title="點擊排序">3 日</th>
+                <th class="right sortable col-pct" data-sort-key="change7dPct" title="點擊排序">7 日</th>
+                <th class="right marketStock-col col-marketStock">行情庫存</th>
+                <th class="right col-spark">走勢</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- 分頁控制 -->
+        <div class="pagerRow">
+          <span class="mono font-semibold" id="pageInfo" style="font-size: 12px; color: var(--muted);">第 1 / 1 頁</span>
+          <div class="pagerButtons">
+            <button id="prevPageBtn" type="button" title="上一頁">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="nextPageBtn" type="button" title="下一頁">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <span class="mono" id="pageStatsText" style="font-size: 12px; color: var(--muted);">顯示 0 / 0</span>
+        </div>
+
+        <div id="errorBox" class="dangerBox" style="display: none"></div>
+      </section>
+    </div>
+
+    <footer class="siteFoot">
+      <div class="siteFootInner">
+        <div class="footCol">
+          <div class="footShop" id="footShopName">—</div>
+          <ul id="footContact"></ul>
+        </div>
+        <div class="footCol">
+          <h2>怎麼看這一頁</h2>
+          <p>
+            本店售價與收購價以新台幣計，是店內實際掛牌價。市場行情是日本通販的參考成交價，
+            換算成台幣後才能跟本店價比較，所以幣別預設顯示台幣。
+          </p>
+        </div>
+        <div class="footCol">
+          <h2>價格說明</h2>
+          <p class="disclaimer">
+            <strong>本頁價格為參考資訊，實際成交價以店內現場報價為準。</strong>
+            市場行情取自公開通販資料，每日更新一次，卡況、版本與供貨狀況都會影響實際價格。
+            收購價需經店員驗卡後確認，破損、彎折、非日版卡不適用掛牌收購價。
+          </p>
+          <div class="footSource">
+            <span id="sourceText"></span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
+
+    <!-- 浮動置頂按鈕 -->
+    <button id="backToTopBtn" type="button" title="回到頂端" aria-label="回到頂端">
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <script>
+      (() => {
+        // ═══════════════════════════════════════════════════════════════
+        // 店家設定：整頁只有這一區需要換成實際店家資料
+        // ═══════════════════════════════════════════════════════════════
+        const SHOP = {
+          name: "○○卡舖",              // 店名，出現在頁首、頁尾、瀏覽器標題與分享卡片
+          tagline: "台北・威夏單卡專門",  // 一句話說明你是誰、在哪
+          // 聯絡方式：留空字串的項目不會顯示，不用刪掉整行
+          line: "",                     // LINE 官方帳號 ID，例：@abc1234
+          phone: "",                    // 例：02-1234-5678
+          address: "",                  // 例：台北市中正區○○路 1 號 2 樓
+          hours: "",                    // 例：週二～週日 13:00–21:00（週一休）
+          // 店內結帳用的日圓匯率加成。1 = 直接用市場匯率；1.08 = 市場匯率 +8% 手續費。
+          // 這個值會套在「市場行情」的台幣換算上，讓頁面數字跟櫃檯算法一致。
+          fxMarkup: 1,
+        };
+
+        // 本店報價來源。檔案不存在時，本店售價／收購／現貨三欄會自動整欄收起，
+        // 頁面退回純市場行情模式，不會壞掉。格式：
+        //   {
+        //     "updatedAt": 1770000000000,          // 毫秒時間戳，或 "2026-08-10 14:00" 字串
+        //     "currency": "TWD",                   // 目前只支援 TWD
+        //     "cards": {
+        //       "KC/S42-010C": { "sell": 120, "buy": 60, "stock": 3 },
+        //       "HOL/W91-050C": { "sell": 80,  "buy": 35, "stock": 0 }
+        //     }
+        //   }
+        // sell/buy/stock 都可以省略：省略 sell 就顯示「—」，省略 stock 視為未提供。
+        const SHOP_PRICE_URL = "json/shopPrice.json";
+
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+        const CARD_DATA_BASE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+        // 卡名與作品名都已經在 repo 裡，不需要新資料來源
+        const CARD_DICTIONARY_URL = "json/cardDictionary.json";
+        const CARD_TITLE_URL = "json/cardTitle.json";
+        const SPARKLINE_CONCURRENCY = 6;
+        const THEME_STORAGE_KEY = "priceIncreaseTheme";
+        const WATCHLIST_STORAGE_KEY = "cardWatchlist";
+
+        /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
+        let rawData = null;
+        /** @type {Array<any>} */
+        let cardRows = [];
+        let exRate = 0.22;
+        let exRateFallback = false;
+        let renderVersion = 0;
+        let activeSortKey = "change1dPct";
+        let activeSortDirection = "desc";
+        const pageSize = 200;
+        let currentPage = 1;
+        let stickyHeaderMirror = null;
+        const productDataPromiseCache = new Map();
+        const cardSeriesPromiseCache = new Map();
+
+        // 卡名／作品名／本店報價查詢表。都在背景載入，載完再補進已經畫好的列。
+        /** @type {Map<string, string>} 卡號 → 卡名 */
+        const cardNameMap = new Map();
+        /** @type {Map<string, string>} 系列代號 → 作品名 */
+        const seriesTitleMap = new Map();
+        /** @type {Map<string, {sell: number|null, buy: number|null, stock: number|null}>} */
+        const shopPriceMap = new Map();
+        let hasShopPrices = false;
+
+        // 追蹤清單設定 (Watchlist Setup)
+        const watchlist = new Set(JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]"));
+        let activeTrendFilter = "all";
+        // 台灣卡店結帳用台幣，所以台幣是預設值、日圓是參考值
+        let activeCurrency = "TWD";
+
+        const els = {
+          generatedAtText: document.getElementById("generatedAtText"),
+          reloadBtn: document.getElementById("reloadBtn"),
+          themeToggleBtn: document.getElementById("themeToggleBtn"),
+          q: document.getElementById("q"),
+          pageInfo: document.getElementById("pageInfo"),
+          prevPageBtn: document.getElementById("prevPageBtn"),
+          nextPageBtn: document.getElementById("nextPageBtn"),
+          pageStatsText: document.getElementById("pageStatsText"),
+          kpiShown: document.getElementById("kpiShown"),
+          kpiShownSub: document.getElementById("kpiShownSub"),
+          kpiAvgLabel: document.getElementById("kpiAvgLabel"),
+          kpiAvg: document.getElementById("kpiAvg"),
+          kpiAvgSub: document.getElementById("kpiAvgSub"),
+          kpiMedianLabel: document.getElementById("kpiMedianLabel"),
+          kpiMedian: document.getElementById("kpiMedian"),
+          kpiMedianSub: document.getElementById("kpiMedianSub"),
+          kpiMaxLabel: document.getElementById("kpiMaxLabel"),
+          kpiMinLabel: document.getElementById("kpiMinLabel"),
+          kpiMax: document.getElementById("kpiMax"),
+          kpiMin: document.getElementById("kpiMin"),
+          kpiMaxCard: document.getElementById("kpiMaxCard"),
+          kpiMinCard: document.getElementById("kpiMinCard"),
+          kpiDistLabel: document.getElementById("kpiDistLabel"),
+          kpiDistBar: document.getElementById("kpiDistBar"),
+          kpiDistLegend: document.getElementById("kpiDistLegend"),
+          statusText: document.getElementById("statusText"),
+          statusSub: document.getElementById("statusSub"),
+          sourceText: document.getElementById("sourceText"),
+          tbody: document.getElementById("tbody"),
+          errorBox: document.getElementById("errorBox"),
+        };
+
+        function resolveInitialTheme() {
+          const saved = localStorage.getItem(THEME_STORAGE_KEY);
+          if (saved === "light" || saved === "dark") return saved;
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyTheme(theme) {
+          document.body.setAttribute("data-theme", theme);
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+          if (els.themeToggleBtn) {
+            const isDark = theme === "dark";
+            els.themeToggleBtn.innerHTML = isDark 
+              ? `<i class="fa-regular fa-sun"></i> 淺色` 
+              : `<i class="fa-regular fa-moon"></i> 深色`;
+          }
+        }
+
+        function toggleTheme() {
+          const now = document.body.getAttribute("data-theme") || "light";
+          applyTheme(now === "dark" ? "light" : "dark");
+        }
+
+        function fmtNum(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          return new Intl.NumberFormat("zh-TW").format(Number(n));
+        }
+
+        function cardNoToProductCode(cardNo) {
+          return (String(cardNo || "").split("-")[0] || "").replace(/\//g, "_");
+        }
+
+        function normalizePriceSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => Number(v)).filter((v) => Number.isFinite(v));
+        }
+
+        function normalizeDateKey(v) {
+          const s = String(v ?? "").replace(/\D/g, "");
+          return s.length === 8 ? s : "";
+        }
+
+        function normalizeDateSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => normalizeDateKey(v));
+        }
+
+        function findCardEntry(data, cardNo) {
+          if (!data || !cardNo) return null;
+          if (data[cardNo]) return data[cardNo];
+          const lower = String(cardNo).toLowerCase();
+          for (const [k, v] of Object.entries(data)) {
+            if (String(k).toLowerCase() === lower) return v;
+          }
+          return null;
+        }
+
+        function sparklineSvg(prices) {
+          const values = normalizePriceSeries(prices);
+          if (values.length < 2) {
+            return '<span class="sparkline-na">N/A</span>';
+          }
+          const width = 128;
+          const height = 30;
+          const pad = 2;
+          const chartW = width - pad * 2;
+          const chartH = height - pad * 2;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const range = max - min || 1;
+          const points = values.map((v, i) => {
+            const x = pad + (i / (values.length - 1)) * chartW;
+            const y = pad + (1 - (v - min) / range) * chartH;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+          });
+          const trendClass = values[values.length - 1] >= values[0] ? "up" : "down";
+          return `
+            <span class="sparkline ${trendClass}" title="${escapeHtml(values[0] + " -> " + values[values.length - 1])}">
+              <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="${points.join(" ")}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              </svg>
+            </span>
+          `.trim();
+        }
+
+        async function getProductData(productCode) {
+          if (!productCode) return null;
+          if (!productDataPromiseCache.has(productCode)) {
+            const url = `${CARD_DATA_BASE_URL}${productCode}.json`;
+            productDataPromiseCache.set(
+              productCode,
+              fetchJson(url).catch(() => null)
+            );
+          }
+          return await productDataPromiseCache.get(productCode);
+        }
+
+        async function getCardSeries(cardNo) {
+          const key = String(cardNo || "");
+          if (!key) return { prices: [], dates: [] };
+          if (!cardSeriesPromiseCache.has(key)) {
+            cardSeriesPromiseCache.set(key, (async () => {
+              const productCode = cardNoToProductCode(key);
+              const data = await getProductData(productCode);
+              const cardEntry = findCardEntry(data, key);
+              if (!cardEntry) return { prices: [], dates: [] };
+              const prices = normalizePriceSeries(cardEntry.cardPrice);
+              const rawDates = cardEntry.upddate ?? cardEntry.update ?? [];
+              const dates = normalizeDateSeries(rawDates);
+              return { prices, dates };
+            })());
+          }
+          return await cardSeriesPromiseCache.get(key);
+        }
+
+        function getLatestStockValue(cardNo) {
+          const cardEntry = findCardEntry((rawData && rawData.cards) || {}, cardNo);
+          const latestStock = Number(cardEntry && cardEntry.latestStock);
+          return Number.isFinite(latestStock) ? latestStock : null;
+        }
+
+        async function runWithConcurrency(items, limit, worker) {
+          if (!items.length) return;
+          const cap = Math.max(1, Math.min(limit, items.length));
+          let cursor = 0;
+          const runners = Array.from({ length: cap }, async () => {
+            while (cursor < items.length) {
+              const idx = cursor++;
+              await worker(items[idx], idx);
+            }
+          });
+          await Promise.all(runners);
+        }
+
+        function renderSparklines(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".sparklineCell[data-sparkline-key]"));
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) return;
+            const key = cell.getAttribute("data-sparkline-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const series = await getCardSeries(cardNo);
+            const prices = normalizePriceSeries(series && series.prices);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            cell.innerHTML = sparklineSvg(prices);
+          }).catch(() => {});
+        }
+
+        function renderStockCells(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".stockCell[data-stock-key]"));
+          let successCount = 0;
+          let failCount = 0;
+          let staleCount = 0;
+
+          console.log(`[stock] render start: total=${cells.length}`);
+
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) {
+              staleCount += 1;
+              return;
+            }
+            const key = cell.getAttribute("data-stock-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const latestStock = getLatestStockValue(cardNo);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            if (latestStock > 0) {
+              successCount += 1;
+              cell.textContent = "◯";
+            } else {
+              failCount += 1;
+              cell.textContent = "售罄";
+            }
+          }).then(() => {
+            if (renderToken === renderVersion) {
+              console.log(
+                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`
+              );
+            }
+          }).catch((error) => {
+            console.log(
+              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`,
+              error
+            );
+          });
+        }
+
+        function fmtPct(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const v = Number(n);
+          const sign = v > 0 ? "+" : "";
+          return `${sign}${v.toFixed(2)}%`;
+        }
+
+        const NUM_TW = new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 });
+
+        // 店內結帳匯率 = 市場匯率 × 加成。頁面上的台幣數字要跟櫃檯算法一致。
+        function checkoutRate() {
+          const markup = Number(SHOP.fxMarkup);
+          return exRate * (Number.isFinite(markup) && markup > 0 ? markup : 1);
+        }
+
+        // 日圓行情換成台幣，供價差計算與顯示共用
+        function jpyToTwd(n) {
+          const v = Number(n);
+          return Number.isFinite(v) ? v * checkoutRate() : null;
+        }
+
+        function formatPrice(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const val = Number(n);
+          if (activeCurrency === "TWD") {
+            return "NT$" + NUM_TW.format(Math.round(val * checkoutRate()));
+          }
+          return "¥" + NUM_TW.format(Math.round(val));
+        }
+
+        // 本店報價本來就是台幣，不隨幣別切換換算，但一律標上 NT$ 避免跟日圓混讀。
+        // null/"" 要先擋掉：Number(null) 是 0，會把「沒報價」印成 NT$0。
+        function formatTwd(n) {
+          if (n === null || n === undefined || n === "") return "—";
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "—";
+          return "NT$" + NUM_TW.format(Math.round(v));
+        }
+
+        function pctClass(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "zero";
+          if (v > 0) return "good";
+          if (v < 0) return "bad";
+          return "zero";
+        }
+
+        const BAR_REF = 20;
+
+        function moveCell(v, colClass) {
+          const mag = Number.isFinite(Number(v)) ? Math.min(1, Math.abs(Number(v)) / BAR_REF) : 0;
+          return `<td class="right pct ${colClass} ${pctClass(v)}">${escapeHtml(fmtPct(v))}<span class="move-bar" style="--m:${mag.toFixed(3)}"></span></td>`;
+        }
+
+        function setStatus(main, sub = "", state = "ok") {
+          if (els.statusText) {
+            els.statusText.textContent = main;
+          }
+          if (els.statusSub) {
+            els.statusSub.textContent = sub ? `｜${sub}` : "";
+          }
+          const freshness = document.getElementById("freshness");
+          if (freshness) freshness.setAttribute("data-state", state);
+        }
+
+        function showError(html) {
+          els.errorBox.style.display = "block";
+          els.errorBox.innerHTML = html;
+        }
+
+        function clearError() {
+          els.errorBox.style.display = "none";
+          els.errorBox.innerHTML = "";
+        }
+
+        function toRows(data) {
+          const entries = Object.entries((data && data.cards) || {});
+          return entries.map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestPrice: c.latestPrice,
+            latestStock: c.latestStock,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+            base1dDate: c.base1dDate,
+            base1dPrice: c.base1dPrice,
+            base3dDate: c.base3dDate,
+            base3dPrice: c.base3dPrice,
+            base7dDate: c.base7dDate,
+            base7dPrice: c.base7dPrice,
+          }));
+        }
+
+        // 把本店報價攤平到 row 上，排序、KPI 與分布區間就能直接吃這些欄位
+        function applyShopQuotesToRows() {
+          for (const row of cardRows) {
+            const quote = shopPriceMap.get(String(row.cardNo || ""));
+            row.shopSell = quote && quote.sell !== null ? quote.sell : null;
+            row.shopBuy = quote && quote.buy !== null ? quote.buy : null;
+            row.shopStock = quote && quote.stock !== null ? quote.stock : null;
+          }
+        }
+
+        function compareRows(a, b, sortKey) {
+          if (sortKey === "cardNo") {
+            return String(a.cardNo || "").localeCompare(String(b.cardNo || ""), "zh-Hant", {
+              numeric: true,
+              sensitivity: "base",
+            });
+          }
+
+          const av = Number(a[sortKey]);
+          const bv = Number(b[sortKey]);
+          const aSafe = Number.isFinite(av) ? av : -Infinity;
+          const bSafe = Number.isFinite(bv) ? bv : -Infinity;
+          return aSafe - bSafe;
+        }
+
+        function sortLabel(sortKey) {
+          switch (sortKey) {
+            case "cardNo":
+              return "卡片";
+            case "shopSell":
+              return "本店售價";
+            case "shopBuy":
+              return "本店收購";
+            case "latestPrice":
+              return "市場行情";
+            case "change1dPct":
+              return "1日漲跌幅";
+            case "change3dPct":
+              return "3日漲跌幅";
+            case "change7dPct":
+              return "7日漲跌幅";
+            default:
+              return sortKey;
+          }
+        }
+
+        // 這三個欄位是金額，其餘是百分比；格式化與級距都靠這個判斷分流
+        const PRICE_KEYS = new Set(["latestPrice", "shopSell", "shopBuy"]);
+        const isPriceKey = (key) => PRICE_KEYS.has(key);
+
+        // 本店報價已經是台幣，市場行情才需要換算
+        function formatKeyValue(key, v) {
+          if (!Number.isFinite(Number(v))) return "—";
+          if (key === "latestPrice") return formatPrice(v);
+          if (isPriceKey(key)) return formatTwd(v);
+          return fmtPct(v);
+        }
+
+        function formatSortValue(sortKey, row) {
+          if (!row) return "—";
+          if (sortKey === "cardNo") return row.cardNo || "—";
+          return formatKeyValue(sortKey, row[sortKey]);
+        }
+
+        /* ---------- KPI 統計 ---------- */
+
+        // 以卡號排序時無數值可統計，退回 1 日漲跌幅
+        function statKeyForKpi() {
+          return activeSortKey === "cardNo" ? "change1dPct" : activeSortKey;
+        }
+
+        // 漲跌篩選與表頭家數共用的欄位：排序中的漲跌欄位優先，否則回到 1 日
+        function activeChangeKey() {
+          return /^change\ddPct$/.test(activeSortKey) ? activeSortKey : "change1dPct";
+        }
+
+        function formatStatValue(statKey, v) {
+          return formatKeyValue(statKey, v);
+        }
+
+        // values 需已由小到大排序
+        function medianOf(values) {
+          const n = values.length;
+          if (!n) return NaN;
+          const mid = n >> 1;
+          return n % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+        }
+
+        function setKpiTone(el, v, enabled) {
+          if (!el) return;
+          el.className = enabled && Number.isFinite(v) ? `v mono pct ${pctClass(v)}` : "v mono";
+        }
+
+        // 漲跌幅用固定級距，價格用等寬 5 段動態級距
+        const PCT_BUCKETS = [
+          { label: "≥ +10%", tone: "good", strength: 1, test: (v) => v >= 10 },
+          { label: "+5 ~ +10%", tone: "good", strength: 0.62, test: (v) => v >= 5 && v < 10 },
+          { label: "0 ~ +5%", tone: "good", strength: 0.32, test: (v) => v > 0 && v < 5 },
+          { label: "平盤", tone: "zero", strength: 0.8, test: (v) => v === 0 },
+          { label: "-5 ~ 0%", tone: "bad", strength: 0.32, test: (v) => v < 0 && v > -5 },
+          { label: "-10 ~ -5%", tone: "bad", strength: 0.62, test: (v) => v <= -5 && v > -10 },
+          { label: "≤ -10%", tone: "bad", strength: 1, test: (v) => v <= -10 },
+        ];
+
+        function buildBuckets(statKey, values) {
+          if (!isPriceKey(statKey)) {
+            return PCT_BUCKETS.map((b) => ({ ...b, count: 0 }));
+          }
+          if (!values.length) return [];
+
+          const fmt = (v) => formatKeyValue(statKey, v);
+          const min = values[0];
+          const max = values[values.length - 1];
+          const segments = 5;
+          const step = (max - min) / segments;
+          if (!(step > 0)) {
+            return [{ label: fmt(min), tone: "price", strength: 1, count: 0, test: () => true }];
+          }
+
+          const out = [];
+          for (let i = 0; i < segments; i++) {
+            const lo = min + step * i;
+            const isLast = i === segments - 1;
+            const hi = isLast ? Infinity : min + step * (i + 1);
+            out.push({
+              label: `${fmt(lo)} ~ ${fmt(isLast ? max : hi)}`,
+              tone: "price",
+              strength: 0.35 + (0.65 * i) / (segments - 1),
+              count: 0,
+              test: (v) => v >= lo && v < hi,
+            });
+          }
+          return out;
+        }
+
+        function renderDistribution(buckets, total) {
+          if (!els.kpiDistBar || !els.kpiDistLegend) return;
+
+          if (!total || !buckets.length) {
+            els.kpiDistBar.innerHTML = "";
+            els.kpiDistLegend.innerHTML = `<span class="distLegendEmpty">無可統計的資料</span>`;
+            return;
+          }
+
+          els.kpiDistBar.innerHTML = buckets
+            .filter((b) => b.count > 0)
+            .map((b) => {
+              const share = (b.count / total) * 100;
+              const tip = `${b.label}：${fmtNum(b.count)} 筆（${share.toFixed(1)}%）`;
+              return `<span class="distSeg distSeg--${b.tone}" style="flex: ${b.count} 0 auto; opacity: ${b.strength};" title="${escapeHtml(tip)}"></span>`;
+            })
+            .join("");
+
+          els.kpiDistLegend.innerHTML = buckets
+            .map((b) => {
+              const share = (b.count / total) * 100;
+              return `<span class="distLegendItem${b.count ? "" : " isEmpty"}" title="${escapeHtml(`${b.label}：${fmtNum(b.count)} 筆（${share.toFixed(1)}%）`)}"><span class="distDot distSeg--${b.tone}" style="opacity: ${b.strength};"></span><span class="distLegendLabel">${escapeHtml(b.label)}</span><span class="distLegendVal"><b>${fmtNum(b.count)}</b><span class="distLegendShare">${share.toFixed(1)}%</span></span></span>`;
+            })
+            .join("");
+        }
+
+        function updateKpi(filtered) {
+          const statKey = statKeyForKpi();
+          const label = sortLabel(statKey);
+          const isPct = !isPriceKey(statKey);
+
+          const rows = filtered
+            .filter((r) => Number.isFinite(Number(r[statKey])))
+            .sort((a, b) => Number(a[statKey]) - Number(b[statKey]));
+          const values = rows.map((r) => Number(r[statKey]));
+          const n = values.length;
+
+          els.kpiAvgLabel.textContent = `平均${label}`;
+          els.kpiMedianLabel.textContent = `中位數${label}`;
+          els.kpiMaxLabel.textContent = `最高${label}`;
+          els.kpiMinLabel.textContent = `最低${label}`;
+          els.kpiDistLabel.textContent = `${label} 分布區間`;
+
+          els.kpiShown.textContent = fmtNum(filtered.length);
+          els.kpiShownSub.textContent = `／ 全部 ${fmtNum(cardRows.length)} 筆`;
+
+          const avg = n ? values.reduce((s, v) => s + v, 0) / n : NaN;
+          const med = medianOf(values);
+          const minRow = rows[0] || null;
+          const maxRow = rows[n - 1] || null;
+
+          els.kpiAvg.textContent = formatStatValue(statKey, avg);
+          els.kpiMedian.textContent = formatStatValue(statKey, med);
+          els.kpiMax.textContent = maxRow ? formatStatValue(statKey, Number(maxRow[statKey])) : "—";
+          els.kpiMin.textContent = minRow ? formatStatValue(statKey, Number(minRow[statKey])) : "—";
+
+          setKpiTone(els.kpiAvg, avg, isPct);
+          setKpiTone(els.kpiMedian, med, isPct);
+          setKpiTone(els.kpiMax, maxRow ? Number(maxRow[statKey]) : NaN, isPct);
+          setKpiTone(els.kpiMin, minRow ? Number(minRow[statKey]) : NaN, isPct);
+
+          const maxCardNo = maxRow ? String(maxRow.cardNo || "—") : "—";
+          const minCardNo = minRow ? String(minRow.cardNo || "—") : "—";
+          els.kpiMaxCard.textContent = maxCardNo;
+          els.kpiMaxCard.title = maxCardNo;
+          els.kpiMinCard.textContent = minCardNo;
+          els.kpiMinCard.title = minCardNo;
+
+          els.kpiAvgSub.textContent = n ? `有效樣本 ${fmtNum(n)} 筆` : "無有效樣本";
+          if (isPct) {
+            const up = values.filter((v) => v > 0).length;
+            const down = values.filter((v) => v < 0).length;
+            els.kpiMedianSub.textContent = `上漲 ${fmtNum(up)} ／ 下跌 ${fmtNum(down)}`;
+          } else if (statKey === "latestPrice") {
+            els.kpiMedianSub.textContent = `幣別 ${activeCurrency === "TWD" ? "NT$" : "¥"}`;
+          } else {
+            els.kpiMedianSub.textContent = "本店掛牌價（NT$）";
+          }
+
+          const buckets = buildBuckets(statKey, values);
+          for (const v of values) {
+            const hit = buckets.find((b) => b.test(v));
+            if (hit) hit.count++;
+          }
+          renderDistribution(buckets, n);
+        }
+
+        function updateHeaderSortState() {
+          const roots = [document.getElementById("tableWrapHeader")];
+          if (stickyHeaderMirror) {
+            const mirrorHead = stickyHeaderMirror.querySelector("thead");
+            if (mirrorHead) roots.push(mirrorHead);
+          }
+
+          for (const root of roots) {
+            if (!root) continue;
+            root.querySelectorAll("th.sortable").forEach((th) => {
+              const sortKey = th.getAttribute("data-sort-key") || "";
+              const isActive = sortKey === activeSortKey;
+              if (isActive) {
+                th.setAttribute("data-sort-dir", activeSortDirection);
+                th.setAttribute("aria-sort", "none");
+              } else {
+                th.removeAttribute("data-sort-dir");
+                th.setAttribute("aria-sort", "none");
+              }
+            });
+          }
+        }
+
+        function applySort(sortKey, toggleIfSame = false) {
+          if (!sortKey) return;
+
+          if (toggleIfSame && activeSortKey === sortKey) {
+            activeSortDirection = activeSortDirection === "desc" ? "asc" : "desc";
+          } else {
+            activeSortKey = sortKey;
+            activeSortDirection = sortKey === "cardNo" ? "asc" : "desc";
+          }
+
+          render();
+        }
+
+        function handleHeaderSortClick(event) {
+          const th = event.target.closest("th.sortable[data-sort-key]");
+          if (!th) return;
+          applySort(th.getAttribute("data-sort-key"), true);
+        }
+
+        function sortAndFilterRows(rows) {
+          const q = (els.q.value || "").trim().toLowerCase();
+
+          let out = rows;
+          if (q) {
+            // 客人記得的是卡名或作品名，不是卡號，所以三個都要能搜
+            out = out.filter((r) => {
+              const no = String(r.cardNo || "");
+              if (no.toLowerCase().includes(q)) return true;
+              if (cardName(no).toLowerCase().includes(q)) return true;
+              return seriesTitle(no).toLowerCase().includes(q);
+            });
+          }
+
+          // 頁籤篩選邏輯：跟著目前排序的漲跌欄位走，才不會跟表頭的漲跌家數對不起來
+          const trendKey = activeChangeKey();
+          if (activeTrendFilter === "watchlist") {
+            out = out.filter((r) => watchlist.has(r.cardNo));
+          } else if (activeTrendFilter === "up") {
+            out = out.filter((r) => {
+              const v = Number(r[trendKey]);
+              return Number.isFinite(v) && v > 0;
+            });
+          } else if (activeTrendFilter === "down") {
+            out = out.filter((r) => {
+              const v = Number(r[trendKey]);
+              return Number.isFinite(v) && v < 0;
+            });
+          }
+
+          out = out.slice().sort((a, b) => {
+            const cmp = compareRows(a, b, activeSortKey);
+            return activeSortDirection === "asc" ? cmp : -cmp;
+          });
+          return out;
+        }
+
+        function clampPage(totalItems) {
+          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+          currentPage = Math.min(Math.max(1, currentPage), totalPages);
+          return totalPages;
+        }
+
+        function updatePaginationUi(totalItems, pageItemsLength, totalPages, pageStartIndex) {
+          const pageEndIndex = pageItemsLength > 0 ? pageStartIndex + pageItemsLength : 0;
+          const displayStart = pageItemsLength > 0 ? pageStartIndex + 1 : 0;
+
+          els.pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
+          els.pageStatsText.textContent = `顯示 ${displayStart}-${pageEndIndex} / ${totalItems}`;
+          els.prevPageBtn.disabled = currentPage <= 1;
+          els.nextPageBtn.disabled = currentPage >= totalPages || totalItems === 0;
+        }
+
+        // 全站統計板更新 (Global Stats)
+        function updateGlobalStats() {
+          const total = cardRows.length;
+          // 家數用跟篩選同一個欄位計算，兩邊的數字才會對得起來
+          const trendKey = activeChangeKey();
+          const gainers = cardRows.filter(r => Number(r[trendKey]) > 0).length;
+          const losers = cardRows.filter(r => Number(r[trendKey]) < 0).length;
+          const trendDays = trendKey.replace(/\D/g, "") || "1";
+
+          document.getElementById("global-total").textContent = fmtNum(total);
+          document.getElementById("global-gainers").textContent = fmtNum(gainers);
+          document.getElementById("global-losers").textContent = fmtNum(losers);
+          document.getElementById("global-watchlist").textContent = fmtNum(watchlist.size);
+          const gainersLabel = document.getElementById("global-gainers-label");
+          const losersLabel = document.getElementById("global-losers-label");
+          if (gainersLabel) gainersLabel.textContent = `${trendDays} 日上漲`;
+          if (losersLabel) losersLabel.textContent = `${trendDays} 日下跌`;
+          document.getElementById("global-rate").textContent = exRate
+            ? `1 JPY ≈ ${checkoutRate().toFixed(4)} TWD${exRateFallback ? "（預設值）" : ""}${Number(SHOP.fxMarkup) !== 1 ? "（含結帳加成）" : ""}`
+            : "—";
+        }
+
+        function render() {
+          if (!rawData) return;
+          const renderToken = ++renderVersion;
+          clearError();
+
+          const filtered = sortAndFilterRows(cardRows);
+          const totalPages = clampPage(filtered.length);
+          const startIdx = (currentPage - 1) * pageSize;
+          const pageRows = filtered.slice(startIdx, startIdx + pageSize);
+
+          updateHeaderSortState();
+          updateKpi(filtered);
+          updatePaginationUi(filtered.length, pageRows.length, totalPages, startIdx);
+
+          const frag = document.createDocumentFragment();
+          pageRows.forEach((r) => {
+            const tr = document.createElement("tr");
+            const cardNo = String(r.cardNo ?? "");
+            const isFavorite = watchlist.has(cardNo);
+
+            // 使用 FontAwesome 圖示取代原生的 ★ 與 ☆ 字元
+            const starHtml = isFavorite
+              ? `<span class="watchlist-star active" data-card="${encodeURIComponent(cardNo)}" title="自清單移除"><i class="fa-solid fa-star"></i></span>`
+              : `<span class="watchlist-star" data-card="${encodeURIComponent(cardNo)}" title="加入清單"><i class="fa-regular fa-star"></i></span>`;
+
+            tr.innerHTML = `
+              <td class="center-align">${starHtml}</td>
+              ${cardIdentCell(cardNo)}
+              ${shopQuoteCells(cardNo, r.latestPrice)}
+              <td class="right price-cell">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              ${moveCell(r.change1dPct, "col-1d")}
+              ${moveCell(r.change3dPct, "col-3d")}
+              ${moveCell(r.change7dPct, "col-7d")}
+              <td class="right stockCell marketStock-col" data-stock-key="${encodeURIComponent(cardNo)}"><span class="stockSkeleton" aria-hidden="true"></span></td>
+              <td class="right col-7d sparklineCell" data-sparkline-key="${encodeURIComponent(cardNo)}"><span class="sparklineSkeleton" aria-hidden="true"></span></td>
+            `.trim();
+            frag.appendChild(tr);
+          });
+
+          els.tbody.replaceChildren(frag);
+          // 客人要的答案是「這個價格是不是最新的」，不是排序方式與頁碼，
+          // 那兩件事表頭跟分頁列已經講過了
+          setStatus(hasShopPrices ? "報價為最新" : "行情為最新");
+          renderStockCells(renderToken);
+          renderSparklines(renderToken);
+          updateGlobalStats();
+        }
+
+        // 卡片欄：縮圖 + 卡名，卡號與作品名收在下面一行。
+        // cardNo 一律放在 data-card-no，因為卡圖預覽的事件是靠這個屬性取卡號，
+        // 不能再讀整格的 textContent（現在裡面有卡名了）。
+        function cardIdentCell(cardNo) {
+          const name = cardName(cardNo);
+          const title = seriesTitle(cardNo);
+          const thumb = cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo);
+          const primary = name || cardNo;
+          const metaParts = [`<span class="no">${escapeHtml(cardNo)}</span>`];
+          if (title) metaParts.push(escapeHtml(title));
+
+          const img = thumb
+            ? `<img class="cardThumb" src="${escapeHtml(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'" />`
+            : `<span class="cardThumb" aria-hidden="true"></span>`;
+
+          return `
+            <td class="cardCell card-no-col" data-card-no="${escapeHtml(cardNo)}">
+              <div class="cardIdent">
+                ${img}
+                <div class="cardIdentText">
+                  <span class="cardName" title="${escapeHtml(primary)}">${escapeHtml(primary)}</span>
+                  <span class="cardMeta">${metaParts.join(" · ")}</span>
+                </div>
+              </div>
+            </td>`;
+        }
+
+        // 本店售價／收購／現貨。沒有報價檔時這三格仍會輸出，但由 CSS 整欄收起，
+        // 這樣表頭與表身的欄位數永遠一致，sticky 表頭鏡像才不會錯位。
+        function shopQuoteCells(cardNo, marketJpy) {
+          const quote = shopPriceMap.get(cardNo) || null;
+          const sell = quote && quote.sell !== null ? quote.sell : null;
+          const buy = quote && quote.buy !== null ? quote.buy : null;
+          const stock = quote && quote.stock !== null ? quote.stock : null;
+
+          let spread = "";
+          const marketTwd = jpyToTwd(marketJpy);
+          if (sell !== null && marketTwd !== null && marketTwd > 0) {
+            const diff = ((sell - marketTwd) / marketTwd) * 100;
+            const label =
+              diff <= -0.5
+                ? `較行情便宜 ${Math.abs(diff).toFixed(0)}%`
+                : diff >= 0.5
+                ? `較行情高 ${diff.toFixed(0)}%`
+                : "與行情相當";
+            spread = `<span class="spread">${label}</span>`;
+          }
+
+          let stockCell = `<span class="stockTag">—</span>`;
+          if (stock !== null) {
+            stockCell =
+              stock > 0
+                ? `<span class="stockTag in">現貨 ${stock}</span>`
+                : `<span class="stockTag out">補貨中</span>`;
+          }
+
+          return `
+            <td class="right shopCell shop-col">${escapeHtml(formatTwd(sell))}${spread}</td>
+            <td class="right buyCell shop-col${buy !== null ? " has-value" : ""}">${escapeHtml(formatTwd(buy))}</td>
+            <td class="right shop-col">${stockCell}</td>`;
+        }
+
+        function escapeHtml(s) {
+          return String(s ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        const WS_TCG_CARDLIST_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        function cardNoToImageUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          if (series.startsWith("os")) {
+            return (
+              "https://ws-rose.com/wordpress/wp-content/images/cardlist/" +
+              series + "/" + expansion + "/" + series + "_" + expansion + "_" + cardId + ".png"
+            );
+          }
+          let folderSlug = series + "_" + expansion;
+          if (series === "srd" || series === "sks") folderSlug = "sxx_" + expansion;
+          const first = series.charAt(0);
+          return (
+            WS_TCG_CARDLIST_BASE + first + "/" + folderSlug + "/" +
+            series + "_" + expansion + "_" + cardId + ".png"
+          );
+        }
+
+        function cardNoToDevilFoxUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^\/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          return `https://imgs.devilfox.net/ws/${series}_${expansion}/${series}_${expansion}_${cardId}.png`;
+        }
+
+        const tooltip = document.getElementById("cardTooltip");
+        const tooltipImg = document.getElementById("cardTooltipImg");
+        let tooltipVisible = false;
+        let tooltipCurrentUrl = "";
+
+        function preloadImage(url) {
+          if (!url || tooltipCurrentUrl === url) return;
+          const img = new Image();
+          img.src = url;
+        }
+
+        function setTooltipSrc(url, fallbackUrl) {
+          if (tooltipCurrentUrl === url) {
+            tooltipImg.classList.remove("loading");
+            return;
+          }
+          tooltipCurrentUrl = url;
+          tooltipImg.classList.add("loading");
+          tooltipImg.src = url;
+          tooltipImg.onload = () => tooltipImg.classList.remove("loading");
+          tooltipImg.onerror = () => {
+            tooltipImg.classList.remove("loading");
+            if (fallbackUrl && fallbackUrl !== url) {
+              tooltipCurrentUrl = fallbackUrl;
+              tooltipImg.src = fallbackUrl;
+            }
+          };
+        }
+
+        function showTooltip(cardNo, x, y) {
+          const devilUrl = cardNoToDevilFoxUrl(cardNo);
+          const wsUrl = cardNoToImageUrl(cardNo);
+          const url = devilUrl || wsUrl;
+          if (!url) return;
+          setTooltipSrc(url, devilUrl ? wsUrl : "");
+          tooltip.style.transform = "";
+          placeTooltip(x, y);
+          tooltip.style.display = "block";
+          tooltipVisible = true;
+        }
+
+        function placeTooltip(x, y) {
+          const pad = 16;
+          const tw = 192;
+          const th = 280;
+          let left = x + 14;
+          let top = y - th - 10;
+          if (top < pad) top = y + 24;
+          if (left + tw + pad > window.innerWidth) left = x - tw - 14;
+          if (left < pad) left = pad;
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+          tooltip.style.display = "none";
+          tooltipVisible = false;
+        }
+
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        // 卡片格裡現在有卡名與作品名，所以卡號一律從 data-card-no 讀，不再讀 textContent
+        const cardNoFromCell = (td) => (td && td.getAttribute("data-card-no")) || "";
+
+        // 桌機預覽
+        document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const rect = td.getBoundingClientRect();
+          showTooltip(cardNoFromCell(td), rect.left + rect.width / 2, rect.top);
+        });
+
+        document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          hideTooltip();
+        });
+
+        // 行動版預載
+        document.getElementById("tbody").addEventListener("touchstart", (e) => {
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const cardNo = cardNoFromCell(td);
+          preloadImage(cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo));
+        }, { passive: true });
+
+        // 行動版點擊
+        document.getElementById("tbody").addEventListener("click", (e) => {
+          if (!isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) {
+            hideTooltip();
+            return;
+          }
+          e.stopPropagation();
+          const cardNo = cardNoFromCell(td);
+          if (tooltipVisible) {
+            hideTooltip();
+          } else {
+            const rect = td.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            showTooltip(cardNo, x, y);
+            setTimeout(() => {
+              document.addEventListener("click", hideTooltip, { once: true });
+            }, 0);
+          }
+        });
+
+        // 監聽星星點擊行為 (Watchlist Click Event)
+        els.tbody.addEventListener("click", (e) => {
+          const star = e.target.closest(".watchlist-star");
+          if (!star) return;
+          e.stopPropagation();
+          const cardNo = decodeURIComponent(star.getAttribute("data-card"));
+          if (watchlist.has(cardNo)) {
+            watchlist.delete(cardNo);
+            star.innerHTML = '<i class="fa-regular fa-star"></i>';
+            star.classList.remove("active");
+          } else {
+            watchlist.add(cardNo);
+            star.innerHTML = '<i class="fa-solid fa-star"></i>';
+            star.classList.add("active");
+          }
+          localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([...watchlist]));
+          updateGlobalStats();
+        });
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
+
+        // ── 店家身份：頁首、頁尾、瀏覽器標題與分享卡片都從 SHOP 取值 ──
+        function renderShopIdentity() {
+          const name = SHOP.name || "";
+          const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+          };
+          setText("shopName", name);
+          setText("shopTagline", SHOP.tagline || "");
+          setText("footShopName", name);
+
+          const pageTitle = name ? `${name}｜單卡行情與本店報價` : "單卡行情與本店報價";
+          document.title = pageTitle;
+          const desc = name
+            ? `${name}的威夏單卡售價、收購價與市場行情走勢，每日更新。`
+            : "威夏單卡的本店售價、收購價與市場行情走勢";
+          const ogTitle = document.getElementById("ogTitle");
+          const ogDesc = document.getElementById("ogDesc");
+          if (ogTitle) ogTitle.setAttribute("content", pageTitle);
+          if (ogDesc) ogDesc.setAttribute("content", desc);
+
+          const contact = document.getElementById("footContact");
+          if (!contact) return;
+          const rows = [];
+          if (SHOP.address) rows.push({ icon: "fa-solid fa-location-dot", text: SHOP.address });
+          if (SHOP.hours) rows.push({ icon: "fa-regular fa-clock", text: SHOP.hours });
+          if (SHOP.phone) {
+            rows.push({
+              icon: "fa-solid fa-phone",
+              text: SHOP.phone,
+              href: `tel:${String(SHOP.phone).replace(/[^\d+]/g, "")}`,
+            });
+          }
+          if (SHOP.line) {
+            rows.push({
+              icon: "fa-brands fa-line",
+              text: `LINE ${SHOP.line}`,
+              href: `https://line.me/R/ti/p/${encodeURIComponent(SHOP.line)}`,
+            });
+          }
+          contact.innerHTML = rows.length
+            ? rows
+                .map((r) => {
+                  const label = escapeHtml(r.text);
+                  const body = r.href
+                    ? `<a href="${escapeHtml(r.href)}">${label}</a>`
+                    : label;
+                  return `<li><i class="${r.icon}" aria-hidden="true"></i> ${body}</li>`;
+                })
+                .join("")
+            : `<li>把店名、地址、營業時間與 LINE 填進 SHOP 設定，這一區就會自動出現。</li>`;
+        }
+
+        // ── 卡名與作品名 ──
+        // 兩份檔案都在同源 repo 裡。先讓表格畫出來，載完再把名字補上去，
+        // 所以 cardDictionary.json 的體積不會擋住首次渲染。
+        let cardNamesLoaded = false;
+        async function loadCardNames() {
+          // 字典是靜態的，按重新整理不需要再抓一次
+          if (cardNamesLoaded) return;
+          cardNamesLoaded = true;
+          try {
+            const [dict, titles] = await Promise.allSettled([
+              fetchJson(CARD_DICTIONARY_URL),
+              fetchJson(CARD_TITLE_URL),
+            ]);
+            if (dict.status === "fulfilled" && Array.isArray(dict.value)) {
+              for (const pair of dict.value) {
+                if (Array.isArray(pair) && pair[0]) cardNameMap.set(String(pair[0]), String(pair[1] ?? ""));
+              }
+            }
+            if (titles.status === "fulfilled" && titles.value && typeof titles.value === "object") {
+              for (const [code, title] of Object.entries(titles.value)) {
+                seriesTitleMap.set(code, String(title ?? ""));
+              }
+            }
+          } catch {
+            /* 沒有名字也不影響價格，維持只顯示卡號 */
+          }
+        }
+
+        function cardName(cardNo) {
+          return cardNameMap.get(String(cardNo || "")) || "";
+        }
+
+        // 作品名以系列代號查（KC/S42-010C → KC/S42）。cardTitle.json 的值常帶括號
+        // 後綴標明代號，這裡去掉，因為卡號本來就顯示在旁邊了。
+        function seriesTitle(cardNo) {
+          const code = String(cardNo || "").split("-")[0];
+          if (!code) return "";
+          const raw = seriesTitleMap.get(code);
+          if (!raw) return "";
+          return raw.replace(/\s*[（(]\s*[A-Za-z0-9/]+\s*[)）]\s*$/, "").trim();
+        }
+
+        // ── 本店報價 ──
+        function normalizeQuote(entry) {
+          if (!entry || typeof entry !== "object") return null;
+          const num = (v) => {
+            const n = Number(v);
+            return Number.isFinite(n) && n >= 0 ? n : null;
+          };
+          const sell = num(entry.sell);
+          const buy = num(entry.buy);
+          const stock = entry.stock === undefined || entry.stock === null ? null : num(entry.stock);
+          if (sell === null && buy === null && stock === null) return null;
+          return { sell, buy, stock };
+        }
+
+        async function loadShopPrices() {
+          let data = null;
+          try {
+            data = await fetchJson(SHOP_PRICE_URL);
+          } catch {
+            // 還沒有報價檔就安靜地退回純行情模式
+            return;
+          }
+          const cards = data && data.cards;
+          if (!cards || typeof cards !== "object") return;
+
+          shopPriceMap.clear();
+          for (const [cardNo, entry] of Object.entries(cards)) {
+            const quote = normalizeQuote(entry);
+            if (quote) shopPriceMap.set(String(cardNo), quote);
+          }
+          hasShopPrices = shopPriceMap.size > 0;
+          document.body.setAttribute("data-shop-prices", hasShopPrices ? "on" : "off");
+
+          setShopQuoteAt(data.updatedAt);
+        }
+
+        function setShopQuoteAt(value) {
+          const wrap = document.getElementById("shopQuoteAt");
+          const sep = document.getElementById("shopQuoteSep");
+          const text = document.getElementById("shopQuoteAtText");
+          if (!wrap || !text) return;
+          const stamp = parseTimestamp(value);
+          if (!hasShopPrices || stamp === null) {
+            wrap.hidden = true;
+            if (sep) sep.hidden = true;
+            return;
+          }
+          text.textContent = formatTimestamp(stamp);
+          wrap.hidden = false;
+          if (sep) sep.hidden = false;
+        }
+
+        // 報價檔的時間戳允許毫秒數字或 "2026-08-10 14:00" 這種人手填的字串
+        function parseTimestamp(value) {
+          if (value === null || value === undefined || value === "") return null;
+          const asNumber = Number(value);
+          if (Number.isFinite(asNumber) && asNumber > 0) return asNumber;
+          const parsed = Date.parse(String(value).replace(" ", "T"));
+          return Number.isFinite(parsed) ? parsed : null;
+        }
+
+        function formatTimestamp(ms) {
+          return new Intl.DateTimeFormat("zh-TW", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(new Date(ms));
+        }
+
+        // 匯率來源依序嘗試，全部都支援 CORS；任一來源失敗就換下一個
+        const EX_RATE_SOURCES = [
+          {
+            name: "jsdelivr currency-api",
+            url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json",
+            pick: (d) => d && d.jpy && d.jpy.twd,
+          },
+          {
+            name: "open.er-api",
+            url: "https://open.er-api.com/v6/latest/JPY",
+            pick: (d) => d && d.rates && d.rates.TWD,
+          },
+          {
+            name: "frankfurter",
+            url: "https://api.frankfurter.app/latest?from=JPY&to=TWD",
+            pick: (d) => d && d.rates && d.rates.TWD,
+          },
+        ];
+
+        async function fetchExchangeRate() {
+          for (const source of EX_RATE_SOURCES) {
+            try {
+              const rate = Number(source.pick(await fetchJson(source.url)));
+              // 合理範圍檢查，避免來源回傳壞資料造成價格全錯
+              if (!Number.isFinite(rate) || rate <= 0.05 || rate >= 1) continue;
+              exRate = rate;
+              exRateFallback = false;
+              return;
+            } catch {
+              /* 換下一個來源 */
+            }
+          }
+          exRate = 0.22;
+          exRateFallback = true;
+        }
+
+        function setGeneratedAt(ms) {
+          if (!els.generatedAtText) return;
+          const stamp = parseTimestamp(ms);
+          if (stamp === null) {
+            els.generatedAtText.textContent = "—";
+            return;
+          }
+          els.generatedAtText.textContent = new Intl.DateTimeFormat("zh-TW", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(new Date(stamp));
+        }
+
+        async function load() {
+          renderVersion += 1;
+          productDataPromiseCache.clear();
+          cardSeriesPromiseCache.clear();
+          setStatus("載入中…", "", "loading");
+          clearError();
+          if (els.sourceText) {
+            els.sourceText.textContent = "";
+          }
+          els.tbody.replaceChildren();
+
+          // 本店報價要在第一次繪製前就到位，否則欄位會先閃一次空值。
+          // 卡名字典體積大，改成畫完再補，不擋首屏。
+          const [, , dataResult] = await Promise.allSettled([
+            fetchExchangeRate(),
+            loadShopPrices(),
+            fetchJson(REMOTE_URL),
+          ]);
+
+          if (dataResult.status === "rejected") {
+            const err1 = dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
+            setStatus("行情載入失敗", "請確認網路連線，或稍後按「重新整理」重試", "error");
+            showError(
+              `市場行情載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
+                `本店掛牌價仍以店內公告為準，歡迎直接來店或用 LINE 詢問。`
+            );
+            return;
+          }
+
+          const data = dataResult.value;
+          rawData = data;
+          cardRows = toRows(data);
+          applyShopQuotesToRows();
+          setGeneratedAt(data.generatedAt);
+          if (els.sourceText) {
+            els.sourceText.textContent = `行情資料來源：${REMOTE_URL}`;
+          }
+          render();
+
+          // 名字補完後重畫一次，讓已經在畫面上的列換成卡名
+          loadCardNames().then(() => {
+            if (rawData) render();
+          });
+        }
+
+        function bind() {
+          const onChange = () => {
+            currentPage = 1;
+            render();
+          };
+
+          els.q.addEventListener("input", onChange);
+
+          // 頁籤篩選點擊 (Filter Tab Clicks)
+          document.getElementById("filterTabs").addEventListener("click", (e) => {
+            const btn = e.target.closest(".tab-btn");
+            if (!btn) return;
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeTrendFilter = btn.getAttribute("data-trend");
+            onChange();
+          });
+
+          // 幣別 Segment 控制器 (Currency Segment Clicks)
+          document.getElementById("currencySegment").addEventListener("click", (e) => {
+            const btn = e.target.closest(".segment-btn");
+            if (!btn) return;
+            document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeCurrency = btn.getAttribute("data-currency");
+            render();
+          });
+
+          // 換頁後把畫面捲回數據表格最上方
+          const scrollToTableTop = () => {
+            const tableWrap = document.querySelector(".tableWrap");
+            if (!tableWrap) return;
+            const top = tableWrap.getBoundingClientRect().top + window.pageYOffset - 12;
+            window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+          };
+
+          els.prevPageBtn.addEventListener("click", () => {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            render();
+            scrollToTableTop();
+          });
+          els.nextPageBtn.addEventListener("click", () => {
+            currentPage += 1;
+            render();
+            scrollToTableTop();
+          });
+
+          document.getElementById("tableWrapHeader").addEventListener("click", handleHeaderSortClick);
+          els.reloadBtn.addEventListener("click", () => load());
+          if (els.themeToggleBtn) {
+            els.themeToggleBtn.addEventListener("click", toggleTheme);
+          }
+
+          window.addEventListener("keydown", (ev) => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
+              ev.preventDefault();
+              load();
+            }
+            if (ev.key === "/" && document.activeElement !== els.q) {
+              ev.preventDefault();
+              els.q.focus();
+            }
+          });
+        }
+        applyTheme(resolveInitialTheme());
+        renderShopIdentity();
+        bind();
+
+        // ── Sticky thead 鏡像方案 ──
+        (function initStickyThead() {
+          const tableWrap = document.querySelector(".tableWrap");
+          const table = tableWrap && tableWrap.querySelector("table");
+          const thead = document.getElementById("tableWrapHeader");
+          if (!tableWrap || !table || !thead) return;
+
+          const mirror = document.createElement("div");
+          mirror.id = "stickyTheadMirror";
+          const mirrorTable = document.createElement("table");
+          const mirrorThead = thead.cloneNode(true);
+          mirrorThead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorThead);
+          mirror.appendChild(mirrorTable);
+          document.body.appendChild(mirror);
+          stickyHeaderMirror = mirror;
+          mirror.addEventListener("click", handleHeaderSortClick);
+          updateHeaderSortState();
+
+          let pinned = false;
+
+          function syncWidths() {
+            const wrapRect = tableWrap.getBoundingClientRect();
+            mirror.style.left  = wrapRect.left + "px";
+            mirror.style.width = wrapRect.width + "px";
+            const realThs   = thead.querySelectorAll("th");
+            const cloneThs  = mirrorThead.querySelectorAll("th");
+            mirrorTable.style.width = table.offsetWidth + "px";
+            realThs.forEach((th, i) => {
+              if (cloneThs[i]) {
+                const w = th.getBoundingClientRect().width + "px";
+                cloneThs[i].style.width    = w;
+                cloneThs[i].style.minWidth = w;
+                cloneThs[i].style.maxWidth = w;
+              }
+            });
+          }
+
+          function syncScroll() {
+            mirror.scrollLeft = tableWrap.scrollLeft;
+          }
+
+          function update() {
+            const rect   = tableWrap.getBoundingClientRect();
+            const theadH = thead.getBoundingClientRect().height;
+            const shouldPin = rect.top < 0 && rect.bottom > theadH + 10;
+            if (shouldPin && !pinned) {
+              pinned = true;
+              mirror.style.display = "block";
+              syncWidths();
+              syncScroll();
+            } else if (!shouldPin && pinned) {
+              pinned = false;
+              mirror.style.display = "none";
+            } else if (pinned) {
+              syncWidths();
+              syncScroll();
+            }
+          }
+
+          window.addEventListener("scroll",   update,     { passive: true });
+          tableWrap.addEventListener("scroll", () => { if (pinned) { syncWidths(); syncScroll(); } }, { passive: true });
+          window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
+        })();
+
+        // ── 右側浮動置頂按鈕 ──
+        (function initBackToTop() {
+          const btn = document.getElementById("backToTopBtn");
+          if (!btn) return;
+          const SHOW_AFTER = 240;
+
+          const update = () => {
+            btn.classList.toggle("visible", window.pageYOffset > SHOW_AFTER);
+          };
+
+          btn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+          window.addEventListener("scroll", update, { passive: true });
+          update();
+        })();
+
+        load();
+      })();
+    </script>
+  </body>
+</html>
