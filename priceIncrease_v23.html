@@ -1085,8 +1085,6 @@
           "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
         const CARD_DATA_BASE_URL =
           "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
-        const STOCK_DATA_BASE_URL =
-          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/";
         const SPARKLINE_CONCURRENCY = 6;
         const THEME_STORAGE_KEY = "priceIncreaseTheme";
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
@@ -1104,7 +1102,6 @@
         let currentPage = 1;
         let stickyHeaderMirror = null;
         const productDataPromiseCache = new Map();
-        const stockDataPromiseCache = new Map();
         const cardSeriesPromiseCache = new Map();
 
         // 追蹤清單設定 (Watchlist Setup)
@@ -1229,20 +1226,6 @@
           `.trim();
         }
 
-        async function getStockData(cardNo) {
-          const key = String(cardNo || "");
-          if (!key) return null;
-          if (!stockDataPromiseCache.has(key)) {
-            const productCode = cardNoToProductCode(key);
-            const url = `${STOCK_DATA_BASE_URL}${productCode}.json`;
-            stockDataPromiseCache.set(
-              key,
-              fetchJson(url).catch(() => null)
-            );
-          }
-          return await stockDataPromiseCache.get(key);
-        }
-
         async function getProductData(productCode) {
           if (!productCode) return null;
           if (!productDataPromiseCache.has(productCode)) {
@@ -1273,17 +1256,10 @@
           return await cardSeriesPromiseCache.get(key);
         }
 
-        function getLatestCardPrice(cardEntry) {
-          if (!cardEntry) return null;
-          const values = normalizePriceSeries(cardEntry.cardPrice);
-          if (!values.length) return null;
-          return values[values.length - 1];
-        }
-
-        function extractLatestStockValue(stockData, cardNo) {
-          if (!stockData) return null;
-          const cardEntry = findCardEntry(stockData, cardNo);
-          return getLatestCardPrice(cardEntry);
+        function getLatestStockValue(cardNo) {
+          const cardEntry = findCardEntry((rawData && rawData.cards) || {}, cardNo);
+          const latestStock = Number(cardEntry && cardEntry.latestStock);
+          return Number.isFinite(latestStock) ? latestStock : null;
         }
 
         async function runWithConcurrency(items, limit, worker) {
@@ -1337,10 +1313,9 @@
             } catch {
               cardNo = key;
             }
-            const stockData = await getStockData(cardNo);
-            const latestStock = extractLatestStockValue(stockData, cardNo);
+            const latestStock = getLatestStockValue(cardNo);
             if (renderToken !== renderVersion || !cell.isConnected) return;
-            if (Number.isFinite(Number(latestStock))) {
+            if (latestStock > 0) {
               successCount += 1;
               cell.textContent = "◯";
             } else {
@@ -1350,12 +1325,12 @@
           }).then(() => {
             if (renderToken === renderVersion) {
               console.log(
-                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=cardPrice[-1]`
+                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`
               );
             }
           }).catch((error) => {
             console.log(
-              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=cardPrice[-1]`,
+              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`,
               error
             );
           });
@@ -1417,6 +1392,7 @@
           return entries.map(([cardNo, c]) => ({
             cardNo: c.cardNo || cardNo,
             latestPrice: c.latestPrice,
+            latestStock: c.latestStock,
             change1dPct: c.change1dPct,
             change3dPct: c.change3dPct,
             change7dPct: c.change7dPct,
@@ -2005,7 +1981,6 @@
         async function load() {
           renderVersion += 1;
           productDataPromiseCache.clear();
-          stockDataPromiseCache.clear();
           cardSeriesPromiseCache.clear();
           setStatus("載入中…");
           clearError();
