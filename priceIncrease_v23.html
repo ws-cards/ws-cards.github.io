@@ -1273,13 +1273,17 @@
           return await cardSeriesPromiseCache.get(key);
         }
 
-        function extractLatestStockValue(stockData, cardNo) {
-          if (!stockData) return null;
-          const cardEntry = findCardEntry(stockData, cardNo);
+        function getLatestCardPrice(cardEntry) {
           if (!cardEntry) return null;
           const values = normalizePriceSeries(cardEntry.cardPrice);
           if (!values.length) return null;
           return values[values.length - 1];
+        }
+
+        function extractLatestStockValue(stockData, cardNo) {
+          if (!stockData) return null;
+          const cardEntry = findCardEntry(stockData, cardNo);
+          return getLatestCardPrice(cardEntry);
         }
 
         async function runWithConcurrency(items, limit, worker) {
@@ -1346,12 +1350,12 @@
           }).then(() => {
             if (renderToken === renderVersion) {
               console.log(
-                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}`
+                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=cardPrice[-1]`
               );
             }
           }).catch((error) => {
             console.log(
-              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}`,
+              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=cardPrice[-1]`,
               error
             );
           });
