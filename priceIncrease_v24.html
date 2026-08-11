@@ -389,8 +389,8 @@
       /* 控制面板區 */
       .controls-section {
         background: var(--bg);
-        border: none;
-        border-radius: 0;
+        border: 1px solid var(--border);
+        border-radius: 6px;
         margin-bottom: 16px;
         overflow: hidden;
       }
@@ -615,11 +615,11 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        min-width: 900px;
+        /* 卡片欄加寬後，900px 會把價格與漲跌欄擠掉，一起往上調 */
+        min-width: 980px;
       }
 
       thead th {
-        border: none;
         border-bottom: 1px solid var(--border-strong);
         font-size: 11px;
         font-weight: 500;
@@ -663,7 +663,7 @@
         opacity: 1;
       }
 
-      /* 兩欄粘滯定位 (Sticky Cols)：星星、卡號 — 不設直向邊線 */
+      /* 兩欄粘滯定位 (Sticky Cols)：星星、卡片 */
       thead th:nth-child(1), tbody td:nth-child(1) {
         position: sticky;
         left: 0;
@@ -673,21 +673,18 @@
         max-width: 36px;
         text-align: center;
         background: var(--bg);
-        border-left: none;
-        border-right: none;
-        box-shadow: none;
       }
+      /* 卡片欄要放兩行（卡名 + 卡號），150px 只夠一組卡號，所以加寬。
+         表格是 auto layout，超寬的內容會把整欄撐開，所以真正的截斷靠
+         .cardIdentText 的 max-width，這裡的寬度才守得住。 */
       thead th:nth-child(2), tbody td:nth-child(2) {
         position: sticky;
         left: 36px;
         z-index: 10;
-        width: 150px;
-        min-width: 150px;
-        max-width: 150px;
+        width: 224px;
+        min-width: 224px;
+        max-width: 224px;
         background: var(--bg);
-        border-left: none;
-        border-right: none;
-        box-shadow: none;
       }
 
       tbody td:nth-child(1), tbody td:nth-child(2) {
@@ -699,7 +696,6 @@
       }
 
       tbody td {
-        border: none;
         border-bottom: 1px solid var(--border);
         padding: 10px;
         font-size: 13px;
@@ -735,11 +731,6 @@
       }
       #stickyTheadMirror th {
         box-sizing: border-box;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        border-bottom: 1px solid var(--border-strong);
-        box-shadow: none;
       }
 
       .right {
@@ -750,9 +741,55 @@
         text-align: center;
       }
 
+      /* ══ 卡片欄：縮圖 + 上為卡名、下為卡號（＋作品名） ═══════════ */
       .card-no-col {
         font-size: 12.5px;
         font-weight: 500;
+        letter-spacing: 0.01em;
+        padding: 7px 10px;
+      }
+      .cardIdent {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      /* 卡圖是直式的，用 3:4.2 的框加 object-fit 取上緣，讓卡名那一帶露出來。
+         圖還沒到或抓不到時這個框仍占位，列高才不會跳動。 */
+      .cardThumb {
+        flex: 0 0 auto;
+        width: 30px;
+        height: 42px;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        object-fit: cover;
+        object-position: top center;
+      }
+      .cardIdentText {
+        min-width: 0;
+        max-width: 184px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+      }
+      .cardName {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta {
+        font-size: 11px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta .no {
+        font-family: var(--mono);
         letter-spacing: 0.01em;
       }
 
@@ -950,6 +987,22 @@
           height: 40px;
           font-size: 14px;
         }
+        /* 手機第一屏只有約 375px。卡片欄收窄，讓「最新價」還能跟卡名並排看到 */
+        thead th:nth-child(2), tbody td:nth-child(2) {
+          width: 176px;
+          min-width: 176px;
+          max-width: 176px;
+        }
+        .cardThumb {
+          width: 26px;
+          height: 36px;
+        }
+        .cardIdent {
+          gap: 8px;
+        }
+        .cardIdentText {
+          max-width: 142px;
+        }
       }
     </style>
   </head>
@@ -1049,7 +1102,7 @@
           <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <div class="search-wrapper">
               <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-              <input id="q" type="search" placeholder="搜尋卡號..." autocomplete="off" spellcheck="false" />
+              <input id="q" type="search" placeholder="搜尋卡名、卡號或作品…" autocomplete="off" spellcheck="false" />
             </div>
           </div>
         </div>
@@ -1060,7 +1113,7 @@
             <thead id="tableWrapHeader">
               <tr>
                 <th style="width: 36px; min-width: 36px;"></th>
-                <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡號</th>
+                <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡片</th>
                 <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
                 <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1 日</th>
                 <th class="right col-3d sortable" data-sort-key="change3dPct" title="點擊排序">3 日</th>
@@ -1104,6 +1157,9 @@
           "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
         const CARD_DATA_BASE_URL =
           "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+        // 卡名與作品名都已經在 repo 裡，不需要新資料來源
+        const CARD_DICTIONARY_URL = "json/cardDictionary.json";
+        const CARD_TITLE_URL = "json/cardTitle.json";
         const SPARKLINE_CONCURRENCY = 6;
         const THEME_STORAGE_KEY = "priceIncreaseTheme";
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
@@ -1122,6 +1178,12 @@
         let stickyHeaderMirror = null;
         const productDataPromiseCache = new Map();
         const cardSeriesPromiseCache = new Map();
+
+        // 卡名／作品名查詢表。都在背景載入，載完再補進已經畫好的列。
+        /** @type {Map<string, string>} 卡號 → 卡名 */
+        const cardNameMap = new Map();
+        /** @type {Map<string, string>} 系列代號 → 作品名 */
+        const seriesTitleMap = new Map();
 
         // 追蹤清單設定 (Watchlist Setup)
         const watchlist = new Set(JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]"));
@@ -1661,7 +1723,13 @@
 
           let out = rows;
           if (q) {
-            out = out.filter((r) => String(r.cardNo || "").toLowerCase().includes(q));
+            // 客人記得的是卡名或作品名，不是卡號，所以三個都要能搜
+            out = out.filter((r) => {
+              const no = String(r.cardNo || "");
+              if (no.toLowerCase().includes(q)) return true;
+              if (cardName(no).toLowerCase().includes(q)) return true;
+              return seriesTitle(no).toLowerCase().includes(q);
+            });
           }
 
           // 頁籤篩選邏輯
@@ -1744,7 +1812,7 @@
 
             tr.innerHTML = `
               <td class="center-align">${starHtml}</td>
-              <td class="mono card-no-col">${escapeHtml(cardNo)}</td>
+              ${cardIdentCell(cardNo)}
               <td class="right price-cell">${escapeHtml(formatPrice(r.latestPrice))}</td>
               ${moveCell(r.change1dPct, "col-1d")}
               ${moveCell(r.change3dPct, "col-3d")}
@@ -1762,8 +1830,83 @@
           updateGlobalStats();
         }
 
+        // 卡片欄：縮圖 + 上為卡名，下為卡號（有作品名時接在卡號後面）。
+        // cardNo 一律放在 data-card-no，因為卡圖預覽的事件是靠這個屬性取卡號，
+        // 不能再讀整格的 textContent（現在裡面有卡名了）。
+        function cardIdentCell(cardNo) {
+          const name = cardName(cardNo);
+          const title = seriesTitle(cardNo);
+          // 字典還沒載完（或查不到）時，卡號就是主要標題，下面那行不重複顯示
+          const primary = name || cardNo;
+          const metaParts = name ? [`<span class="no">${escapeHtml(cardNo)}</span>`] : [];
+          if (title) metaParts.push(escapeHtml(title));
+
+          // 縮圖跟滑鼠移入的大圖走同一組來源：devilfox 先試，抓不到再退回官方
+          // cardlist（見 tbody 的 error 監聽）。兩邊都沒有就留空框，不留破圖。
+          const primarySrc = cardNoToDevilFoxUrl(cardNo);
+          const fallbackSrc = cardNoToImageUrl(cardNo);
+          const src = primarySrc || fallbackSrc;
+          const spare = primarySrc && fallbackSrc !== primarySrc ? fallbackSrc : "";
+          const img = src
+            ? `<img class="cardThumb" src="${escapeHtml(src)}" data-fallback="${escapeHtml(spare)}" alt="" loading="lazy" decoding="async" />`
+            : `<span class="cardThumb" aria-hidden="true"></span>`;
+
+          return `
+            <td class="card-no-col" data-card-no="${escapeHtml(cardNo)}">
+              <div class="cardIdent">
+                ${img}
+                <div class="cardIdentText">
+                  <span class="cardName" title="${escapeHtml(primary)}">${escapeHtml(primary)}</span>
+                  <span class="cardMeta">${metaParts.join(" · ")}</span>
+                </div>
+              </div>
+            </td>`;
+        }
+
+        // ── 卡名與作品名 ──
+        // 兩份檔案都在同源 repo 裡。先讓表格畫出來，載完再把名字補上去，
+        // 所以 cardDictionary.json 的體積不會擋住首次渲染。
+        let cardNamesLoaded = false;
+        async function loadCardNames() {
+          // 字典是靜態的，按重新整理不需要再抓一次
+          if (cardNamesLoaded) return;
+          cardNamesLoaded = true;
+          try {
+            const [dict, titles] = await Promise.allSettled([
+              fetchJson(CARD_DICTIONARY_URL),
+              fetchJson(CARD_TITLE_URL),
+            ]);
+            if (dict.status === "fulfilled" && Array.isArray(dict.value)) {
+              for (const pair of dict.value) {
+                if (Array.isArray(pair) && pair[0]) cardNameMap.set(String(pair[0]), String(pair[1] ?? ""));
+              }
+            }
+            if (titles.status === "fulfilled" && titles.value && typeof titles.value === "object") {
+              for (const [code, title] of Object.entries(titles.value)) {
+                seriesTitleMap.set(code, String(title ?? ""));
+              }
+            }
+          } catch {
+            /* 沒有名字也不影響價格，維持只顯示卡號 */
+          }
+        }
+
+        function cardName(cardNo) {
+          return cardNameMap.get(String(cardNo || "")) || "";
+        }
+
+        // 作品名以系列代號查（KC/S42-010C → KC/S42）。cardTitle.json 的值常帶括號
+        // 後綴標明代號，這裡去掉，因為卡號本來就顯示在旁邊了。
+        function seriesTitle(cardNo) {
+          const code = String(cardNo || "").split("-")[0];
+          if (!code) return "";
+          const raw = seriesTitleMap.get(code);
+          if (!raw) return "";
+          return raw.replace(/\s*[（(]\s*[A-Za-z0-9/]+\s*[)）]\s*$/, "").trim();
+        }
+
         function escapeHtml(s) {
-          return s
+          return String(s ?? "")
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
@@ -1870,13 +2013,34 @@
 
         const isTouch = () => window.matchMedia("(hover: none)").matches;
 
+        // 卡片格裡現在有卡名（可能還有作品名），所以卡號一律從 data-card-no 讀
+        const cardNoOf = (td) => (td.getAttribute("data-card-no") || "").trim();
+
+        // 縮圖抓不到時先換備援來源，再不行就把圖藏起來（框還在，列高不會跳）。
+        // error 事件不冒泡，所以要用捕獲階段掛在 tbody 上，才不必逐張圖綁監聽。
+        els.tbody.addEventListener(
+          "error",
+          (e) => {
+            const img = e.target;
+            if (!(img instanceof HTMLImageElement) || !img.classList.contains("cardThumb")) return;
+            const spare = img.dataset.fallback || "";
+            if (spare) {
+              img.dataset.fallback = "";
+              img.src = spare;
+            } else {
+              img.style.visibility = "hidden";
+            }
+          },
+          true
+        );
+
         // 桌機預覽
         document.getElementById("tbody").addEventListener("mouseover", (e) => {
           if (isTouch()) return;
           const td = e.target.closest("td.card-no-col");
           if (!td) return;
           const rect = td.getBoundingClientRect();
-          showTooltip(td.textContent.trim(), rect.left + rect.width / 2, rect.top);
+          showTooltip(cardNoOf(td), rect.left + rect.width / 2, rect.top);
         });
 
         document.getElementById("tbody").addEventListener("mouseout", (e) => {
@@ -1890,7 +2054,7 @@
         document.getElementById("tbody").addEventListener("touchstart", (e) => {
           const td = e.target.closest("td.card-no-col");
           if (!td) return;
-          const cardNo = td.textContent.trim();
+          const cardNo = cardNoOf(td);
           preloadImage(cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo));
         }, { passive: true });
 
@@ -1903,7 +2067,7 @@
             return;
           }
           e.stopPropagation();
-          const cardNo = td.textContent.trim();
+          const cardNo = cardNoOf(td);
           if (tooltipVisible) {
             hideTooltip();
           } else {
@@ -2031,6 +2195,11 @@
             els.sourceText.textContent = `source: ${REMOTE_URL}`;
           }
           render();
+
+          // 名字補完後重畫一次，讓已經在畫面上的列換成卡名
+          loadCardNames().then(() => {
+            if (rawData) render();
+          });
         }
 
         function bind() {
