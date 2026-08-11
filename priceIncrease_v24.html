@@ -639,25 +639,44 @@
         color: var(--text);
       }
 
-      thead th.sortable::after {
-        content: " ↕";
+      /* 排序指示器 (Sort Indicator)
+         靠右對齊的欄，箭頭一定要放在標題「左邊」（::before）。放右邊時就算
+         opacity:0 看不見，那一格字寬照樣占位，量出來會把標題從資料的右緣
+         往左推 14px；而且排序切換時箭頭一顯示，標題又會跳一次。
+         箭頭放左邊時，整行是右對齊的，行內容往左長，標題右緣就固定在
+         內容框右緣，跟數字對齊。靠左的卡片欄則相反，箭頭放右邊。 */
+      thead th.sortable:not(.right)::after,
+      thead th.right.sortable::before {
         font-family: var(--mono);
         color: var(--muted);
         opacity: 0;
       }
 
-      thead th.sortable:hover::after {
+      thead th.sortable:not(.right)::after {
+        content: "↕";
+        margin-left: 4px;
+      }
+
+      thead th.right.sortable::before {
+        content: "↕";
+        margin-right: 4px;
+      }
+
+      thead th.sortable:hover:not(.right)::after,
+      thead th.right.sortable:hover::before {
         opacity: 0.4;
       }
 
-      thead th.sortable[data-sort-dir="asc"]::after {
-        content: " ▲";
+      thead th.sortable[data-sort-dir="asc"]:not(.right)::after,
+      thead th.right.sortable[data-sort-dir="asc"]::before {
+        content: "▲";
         color: var(--text);
         opacity: 1;
       }
 
-      thead th.sortable[data-sort-dir="desc"]::after {
-        content: " ▼";
+      thead th.sortable[data-sort-dir="desc"]:not(.right)::after,
+      thead th.right.sortable[data-sort-dir="desc"]::before {
+        content: "▼";
         color: var(--text);
         opacity: 1;
       }
@@ -678,7 +697,9 @@
          .cardIdentText 的 max-width，這裡的寬度才守得住。 */
       thead th:nth-child(2), tbody td:nth-child(2) {
         position: sticky;
-        left: 36px;
+        /* 星星欄是 36px 內容寬 + 左右各 10px padding = 56px（content-box）。
+           這裡寫 36px 的話，橫向捲動時卡片欄會壓到星星上面 20px。 */
+        left: 56px;
         z-index: 10;
         width: 224px;
         min-width: 224px;
@@ -872,7 +893,9 @@
       .stockCell {
         width: 72px;
         min-width: 72px;
-        padding: 8px 6px;
+        /* 左右留白要跟 thead th 的 10px 一致，不然「庫存」標題會比下面的
+           值往左 4px。欄寬不變：72 + 10 + 10 = th 原本就撐出來的 92px */
+        padding: 8px 10px;
         font-family: var(--mono);
         font-size: 12.5px;
         font-variant-numeric: tabular-nums;
