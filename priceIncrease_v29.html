@@ -979,13 +979,9 @@
         position: sticky;
         left: 0;
         z-index: 10;
-        width: 22px;
-        min-width: 22px;
-        max-width: 22px;
-        /* 星星本身只有約 14px 寬，左右各 10px 的 padding 讓它離卡片欄太遠，
-           收成 5px。改這裡就要一起改下面卡片欄的 left。 */
-        padding-left: 5px;
-        padding-right: 5px;
+        width: 36px;
+        min-width: 36px;
+        max-width: 36px;
         text-align: center;
         background: var(--bg);
       }
@@ -994,9 +990,10 @@
          .cardIdentText 的 max-width，這裡的寬度才守得住。 */
       thead th:nth-child(2), tbody td:nth-child(2) {
         position: sticky;
-        /* 星星欄是 22px 內容寬 + 左右各 5px padding = 32px（content-box）。
-           這裡寫 22px 的話，橫向捲動時卡片欄會壓到星星上面 10px。 */
-        left: 32px;
+        /* 星星欄是 36px 內容寬 + 左右各 10px padding = 56px（content-box）。
+           這裡寫 36px 的話，橫向捲動時卡片欄會壓到星星上面 20px。
+           手機版星星欄收窄，這個值在 @media (max-width: 640px) 裡跟著改。 */
+        left: 56px;
         z-index: 10;
         width: 224px;
         min-width: 224px;
@@ -1333,8 +1330,21 @@
         input[type="search"] {
           padding-right: 12px;
         }
+        /* 手機第一屏只有約 375px，橫向空間要省。星星本身只有約 17px 寬，
+           桌機版 36px 內容寬 + 左右各 10px padding = 56px 太浪費，收成
+           22px + 各 5px = 32px，替卡片欄多讓出 24px。 */
+        thead th:nth-child(1), tbody td:nth-child(1) {
+          width: 22px;
+          min-width: 22px;
+          max-width: 22px;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
         /* 手機第一屏只有約 375px。卡片欄收窄，讓「最新價」還能跟卡名並排看到 */
         thead th:nth-child(2), tbody td:nth-child(2) {
+          /* 星星欄收成 32px，sticky 的 left 要跟著改，否則捲動時卡片欄
+             會蓋掉星星 24px。 */
+          left: 32px;
           width: 176px;
           min-width: 176px;
           max-width: 176px;
@@ -1474,7 +1484,9 @@
           <table>
             <thead id="tableWrapHeader">
               <tr>
-                <th style="width: 22px; min-width: 22px;"></th>
+                <!-- 寬度由 CSS 的 thead th:nth-child(1) 控制。這裡不要寫 inline
+                     style，否則手機版的 @media 收窄規則會被 inline 蓋掉。 -->
+                <th></th>
                 <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡片</th>
                 <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
                 <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1 日</th>
