@@ -869,7 +869,8 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .distSeg {
+        .distSeg,
+        .buyModalPanel {
           animation: none;
         }
 
@@ -878,6 +879,8 @@
         .segment-btn,
         .pagerButtons button,
         button.action-btn,
+        button.buy-btn,
+        button.buyModalGo,
         input[type="search"],
         .search-kbd,
         #backToTopBtn {
@@ -1224,6 +1227,173 @@
         min-height: 252px;
       }
 
+      /* ══ Buy 欄 + 購買通路彈窗 ══════════════════════════════════ */
+      /* 欄位只放一顆按鈕，寬度給到剛好裝下按鈕 + 左右 padding。 */
+      .buy-col {
+        width: 62px;
+        min-width: 62px;
+      }
+      .buyCell {
+        padding: 6px 10px;
+      }
+      button.buy-btn {
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 4px 9px;
+        font-family: var(--disp);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      button.buy-btn:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      /* 遮罩鋪滿視窗，面板置中。z-index 要壓過卡圖預覽（9999）。 */
+      #buyModal {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.45);
+      }
+      #buyModal.open {
+        display: flex;
+      }
+      body[data-theme="dark"] #buyModal {
+        background: rgba(0, 0, 0, 0.66);
+      }
+
+      .buyModalPanel {
+        width: 100%;
+        max-width: 340px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+        /* 不要用 fill-mode: backwards。動畫沒跑到（背景分頁、節流）時，
+           backwards 會把面板永久壓在 opacity:0，開了窗卻看不到東西。 */
+        animation: buy-panel-in 0.18s cubic-bezier(0.22, 0.9, 0.3, 1);
+      }
+
+      /* 起點不從 opacity:0 開始：動畫時間軸沒推進時（節流分頁、虛擬時間）
+         面板會停在起點那一格，0 的話就是開了窗但整片看不到。0.45 起跳，
+         最壞情況仍然讀得到內容，而 0.18s 的觀感幾乎沒有差別。 */
+      @keyframes buy-panel-in {
+        from { opacity: 0.45; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      .buyModalHead {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .buyModalTitle {
+        font-family: var(--disp);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      /* 卡號可能很長（含 SP／SSP 尾綴），允許折行，不要把面板撐開 */
+      .buyModalCardNo {
+        display: block;
+        margin-top: 3px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        word-break: break-all;
+      }
+      .buyModalClose {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--muted);
+        border-radius: var(--r);
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .buyModalClose:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .buyModalList {
+        padding: 4px 0;
+      }
+      .buyModalRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 14px;
+      }
+      .buyModalRow + .buyModalRow {
+        border-top: 1px solid var(--border);
+      }
+      .buyModalShop {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .buyModalShop small {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      button.buyModalGo {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 5px 12px;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      button.buyModalGo:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      button.buy-btn:focus-visible,
+      .buyModalClose:focus-visible,
+      button.buyModalGo:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
       /* 錯誤訊息框 */
       .dangerBox {
         margin: 16px;
@@ -1489,6 +1659,8 @@
                 <th></th>
                 <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡片</th>
                 <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
+                <!-- 購買通路：沒有可排序的值，所以不掛 data-sort-key -->
+                <th class="center-align buy-col">Buy</th>
                 <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1 日</th>
                 <th class="right col-3d sortable" data-sort-key="change3dPct" title="點擊排序">3 日</th>
                 <th class="right col-7d sortable" data-sort-key="change7dPct" title="點擊排序">7 日</th>
@@ -1520,6 +1692,22 @@
 
     <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
 
+    <!-- 購買通路彈窗：三個通路都用卡號當關鍵字，另開分頁查詢 -->
+    <div id="buyModal" role="dialog" aria-modal="true" aria-labelledby="buyModalTitle">
+      <div class="buyModalPanel" role="document">
+        <div class="buyModalHead">
+          <div>
+            <span class="buyModalTitle" id="buyModalTitle">前往購買</span>
+            <span class="buyModalCardNo" id="buyModalCardNo">—</span>
+          </div>
+          <button type="button" class="buyModalClose" id="buyModalClose" title="關閉" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="buyModalList" id="buyModalList"></div>
+      </div>
+    </div>
+
     <!-- 浮動置頂按鈕 -->
     <button id="backToTopBtn" type="button" title="回到頂端" aria-label="回到頂端">
       <i class="fa-solid fa-chevron-up"></i>
@@ -1537,6 +1725,14 @@
         const SPARKLINE_CONCURRENCY = 6;
         const THEME_STORAGE_KEY = "priceIncreaseTheme";
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
+
+        // 購買通路：卡號直接當關鍵字接在 search 後面。三個站的查詢參數不同名，
+        // 所以連結格式各自留在這裡，不要合成一條通用規則。
+        const BUY_CHANNELS = [
+          { name: "遊遊亭", note: "yuyu-tei.jp", url: (kw) => `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent(kw)}` },
+          { name: "Mercari", note: "jp.mercari.com", url: (kw) => `https://jp.mercari.com/search?keyword=${encodeURIComponent(kw)}` },
+          { name: "露天", note: "ruten.com.tw", url: (kw) => `https://www.ruten.com.tw/find/?q=${encodeURIComponent(kw)}` },
+        ];
 
         /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
         let rawData = null;
@@ -2198,6 +2394,9 @@
               <td class="center-align">${starHtml}</td>
               ${cardIdentCell(cardNo)}
               <td class="right price-cell">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              <td class="center-align buyCell">
+                <button type="button" class="buy-btn" data-buy-card="${encodeURIComponent(cardNo)}" title="查看購買通路">Buy</button>
+              </td>
               ${moveCell(r.change1dPct, "col-1d")}
               ${moveCell(r.change3dPct, "col-3d")}
               ${moveCell(r.change7dPct, "col-7d")}
@@ -2483,6 +2682,77 @@
           localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([...watchlist]));
           updateGlobalStats();
         });
+
+        // ── 購買通路彈窗 ──
+        // 三行通路的 DOM 只建一次，開窗時換掉卡號跟每個「前往」按鈕的連結。
+        (function initBuyModal() {
+          const modal = document.getElementById("buyModal");
+          const list = document.getElementById("buyModalList");
+          const cardNoEl = document.getElementById("buyModalCardNo");
+          const closeBtn = document.getElementById("buyModalClose");
+          if (!modal || !list || !cardNoEl || !closeBtn) return;
+
+          // 記住開窗前的焦點，關窗後還回去，鍵盤操作才不會跳回頁面頂端
+          let lastFocused = null;
+
+          const rows = BUY_CHANNELS.map((channel) => {
+            const row = document.createElement("div");
+            row.className = "buyModalRow";
+
+            const shop = document.createElement("div");
+            shop.className = "buyModalShop";
+            shop.textContent = channel.name;
+            const note = document.createElement("small");
+            note.textContent = channel.note;
+            shop.appendChild(note);
+
+            const go = document.createElement("button");
+            go.type = "button";
+            go.className = "buyModalGo";
+            go.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> 前往';
+            go.addEventListener("click", () => {
+              const kw = cardNoEl.dataset.cardNo || "";
+              if (!kw) return;
+              window.open(channel.url(kw), "_blank", "noopener,noreferrer");
+            });
+
+            row.append(shop, go);
+            list.appendChild(row);
+            return { go };
+          });
+
+          function openBuyModal(cardNo) {
+            lastFocused = document.activeElement;
+            cardNoEl.textContent = cardNo || "—";
+            cardNoEl.dataset.cardNo = cardNo || "";
+            modal.classList.add("open");
+            if (rows[0]) rows[0].go.focus();
+          }
+
+          function closeBuyModal() {
+            if (!modal.classList.contains("open")) return;
+            modal.classList.remove("open");
+            if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+            lastFocused = null;
+          }
+
+          els.tbody.addEventListener("click", (e) => {
+            const btn = e.target.closest(".buy-btn");
+            if (!btn) return;
+            // 同一格的點擊不要再往上冒泡去觸發卡圖預覽的開關
+            e.stopPropagation();
+            openBuyModal(decodeURIComponent(btn.getAttribute("data-buy-card") || ""));
+          });
+
+          closeBtn.addEventListener("click", closeBuyModal);
+          // 點遮罩（面板以外）就關窗
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeBuyModal();
+          });
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeBuyModal();
+          });
+        })();
 
         async function fetchJson(url) {
           const res = await fetch(url, { cache: "no-store" });
