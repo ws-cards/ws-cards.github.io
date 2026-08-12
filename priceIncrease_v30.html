@@ -41,10 +41,17 @@
            刻意比常見的 #d4af37 更深更偏紅：一是要跟三欄外的 --warn(#eab308)
            收藏星分得開，二是 SP 箔章本來就比獎盃金紅。
            金色一律當底、不當字：#d3a038 印在 #f8f7f4 上只有 2.21:1。 */
-        --gold: #d3a038;      /* 籌碼底色 */
-        --gold-edge: #8a5f14; /* 壓印邊，對淺底 5.26:1，負責可辨識的邊界 */
-        --gold-lift: #efc65c; /* hover 的箔面反光 */
-        --gold-ink: #231a08;  /* 金底上的字，7.24:1 */
+        /* 鮮豔的 --gold 只能當填色，不能當字：印在 #f8f7f4 上只有 2.21:1。
+           藥丸的框線跟字走 --gold-line 這支深金（5.26:1），
+           再用一層淡金底把「金」的色相補回來，才不會讀成咖啡色。 */
+        --gold: #d3a038;      /* 填色用：彈窗頂緣那條金線 */
+        --gold-line: #8a5f14; /* 藥丸的框線與字，對淺底 5.26:1 */
+        /* hover 把淡金底加濃，底色會往金的方向靠，深金字的對比反而會掉
+           （0.3 的濃度量到 4.20:1，不及格）。所以字跟框要往「離底色更遠」
+           的方向走：淺色主題往更深壓，深色主題往更亮提。 */
+        --gold-line-hover: #6b4910;
+        --gold-wash: rgba(211, 160, 56, 0.14);        /* 淡金底 */
+        --gold-wash-strong: rgba(211, 160, 56, 0.28); /* hover 的淡金底 */
         /* 圓角一律 3px。表格是靠細線分欄的，8px 的卡片圓角跟它不是同一種語言 */
         --r: 3px;
         /* 版面左右內縮，刻意等於 thead th / tbody td 的 10px 留白：
@@ -77,10 +84,14 @@
         --primary: #8cc351;
         /* 近黑底把中間調的金壓成濁色，往上提一階。邊色在這裡不是對著頁面
            底色作用（金底本身對 #030303 就有 10:1），是壓在金上當斜邊。 */
+        /* 近黑底不需要拆墨色：#deae45 對 #030303 有 10.07:1，
+           框線跟字直接吃鮮豔的那支金。 */
         --gold: #deae45;
-        --gold-edge: #7a5412;
-        --gold-lift: #f2cd63;
-        --gold-ink: #1a1305;
+        --gold-line: #deae45;
+        /* 近黑底加濃淡金底是「變亮」，所以這裡的字要往更亮走，方向跟淺色相反 */
+        --gold-line-hover: #f0c667;
+        --gold-wash: rgba(222, 174, 69, 0.13);
+        --gold-wash-strong: rgba(222, 174, 69, 0.26);
       }
 
       html,
@@ -1251,31 +1262,36 @@
       .buyCell {
         padding: 6px 10px;
       }
-      /* 燙金籌碼。金色當底、深墨當字，不是反過來——金字印在頁底只有 2.21:1。 */
+      /* 幽靈藥丸：淡金底 + 金框 + 金字，不是實心色塊。 */
       button.buy-btn {
-        border: 1px solid var(--gold-edge);
-        background: var(--gold);
-        color: var(--gold-ink);
-        border-radius: var(--r);
-        padding: 4px 9px;
-        font-family: var(--disp);
-        font-size: 10.5px;
+        border: 1px solid var(--gold-line);
+        /* 用 background-color 而不是 background 簡寫：簡寫帶 var() 時
+           瀏覽器會留成待代入值，長寫屬性一律讀回空字串，量測工具會看不到它。 */
+        background-color: var(--gold-wash);
+        color: var(--gold-line);
+        /* 全站圓角一律 3px，這一顆刻意做滿圓。表格裡唯一的圓形，
+           不用看第二眼就知道它是可以按的，而不是一格資料。 */
+        border-radius: 999px;
+        padding: 3px 10px;
+        /* 跟頁面其他按鈕同一套字（--sans），不是 Martian Mono。
+           等寬字加寬字距是「印章」的語言，藥丸要的是安靜的標籤。 */
+        font-family: inherit;
+        font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.01em;
+        line-height: 1.45;
         cursor: pointer;
-        /* 上緣一道內光就是壓印的斜邊。有它才像一枚燙金章，
-           沒有它就只是一塊黃色方塊。 */
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
         transition: background-color 0.14s ease, border-color 0.14s ease,
           color 0.14s ease;
       }
-      /* hover 往亮走（箔面吃到光），不往暗走。往暗走字的對比會掉，
-         往亮走反而從 7.24:1 升到 10.54:1。 */
+      /* hover 加濃淡金底，同時把框線與字往離底色更遠的方向推。
+         只加濃底色的話字會被底色追上去，量到 4.20:1 是不及格的。 */
       button.buy-btn:hover {
-        background: var(--gold-lift);
-        border-color: var(--gold);
+        background-color: var(--gold-wash-strong);
+        border-color: var(--gold-line-hover);
+        color: var(--gold-line-hover);
       }
-      /* 全站的 focus 環是 --primary 那支綠，壓在金底上兩色互相糊掉。
+      /* 全站的 focus 環是 --primary 那支綠，壓在金線旁邊兩色互相糊掉。
          這一顆換成墨色，2px/offset 2px 的形狀維持跟其他控件一致。 */
       button.buy-btn:focus-visible {
         outline: 2px solid var(--text);
