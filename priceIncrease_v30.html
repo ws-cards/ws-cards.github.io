@@ -2,11 +2,9 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <!-- maximum-scale / user-scalable 已移除：這是手機優先的頁面，11px 標籤與
-         12.5px 數字更需要雙指縮放，關掉它是實質的無障礙損失 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>今天誰在漲？｜WS 單卡報價</title>
-    <meta name="description" content="威夏（Weiss Schwarz）單卡報價與 1／3／7 日漲跌幅，附台幣換算，資料來自遊遊亭。" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>價格漲跌幅觀測</title>
+    <meta name="description" content="依 1/3/7 日漲跌幅排序觀測卡片價格變動" />
     
     <!-- 引入 FontAwesome 6 免費圖示庫 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -28,19 +26,25 @@
         --border-strong: #cdc9be;
         --good: #16c784; /*  經典綠 */
         --bad: #ea3943;  /*  經典紅 */
-        /* 印字用的墨色版本。規則沒有例外：**填色區塊**（分布色帶、圖例色點、
-           頁籤底線、頁籤圖示）用上面兩支鮮豔的原色，凡是印在 #f8f7f4 上的
-           「字」與「線」一律用這裡的墨色。
-           #16c784 在淺色底量到 2.04:1、#ea3943 是 3.79:1，兩支都不到 AA 的
-           4.5:1。v29 把資料表格豁免掉，但表格的 .pct 是 12.5px——全頁用到這支
-           綠的最小字級，2.04:1 在那裡是最糟而不是最好，豁免下錯了對象。
-           走勢線是 1.5px 的圖形物件，同樣吃墨色（圖形需 3:1）。 */
+        /* 印字用的墨色版本。填色區塊（分布色塊、圖例色點、頁籤圖示）留著上面
+           兩支鮮豔的原色，但印在 #f8f7f4 上的「字」跟細線改用這裡的墨色：
+           #16c784 在淺色底只有 2.06:1，字級一放大就更不能用。
+           資料表格照舊吃 --good / --bad，這兩支只給表格以外的版面。 */
         --good-ink: #0a7d52;
         --bad-ink: #d0202c;
         --muted-ink: #5a6779;
         --warn: #eab308;
         --primary: #8cc351; /* 標誌綠 */
         --primary-hover: #7bb240;
+        /* 箔金：整頁唯一的金屬色，只出現在「買」這個動作上。
+           SP／SSP 是燙金卡，金色是卡本身的材質，不是外加的裝飾色。
+           刻意比常見的 #d4af37 更深更偏紅：一是要跟三欄外的 --warn(#eab308)
+           收藏星分得開，二是 SP 箔章本來就比獎盃金紅。
+           金色一律當底、不當字：#d3a038 印在 #f8f7f4 上只有 2.21:1。 */
+        --gold: #d3a038;      /* 籌碼底色 */
+        --gold-edge: #8a5f14; /* 壓印邊，對淺底 5.26:1，負責可辨識的邊界 */
+        --gold-lift: #efc65c; /* hover 的箔面反光 */
+        --gold-ink: #231a08;  /* 金底上的字，7.24:1 */
         /* 圓角一律 3px。表格是靠細線分欄的，8px 的卡片圓角跟它不是同一種語言 */
         --r: 3px;
         /* 版面左右內縮，刻意等於 thead th / tbody td 的 10px 留白：
@@ -71,6 +75,12 @@
         --muted-ink: #9ca3af;
         --warn: #eab308;
         --primary: #8cc351;
+        /* 近黑底把中間調的金壓成濁色，往上提一階。邊色在這裡不是對著頁面
+           底色作用（金底本身對 #030303 就有 10:1），是壓在金上當斜邊。 */
+        --gold: #deae45;
+        --gold-edge: #7a5412;
+        --gold-lift: #f2cd63;
+        --gold-ink: #1a1305;
       }
 
       html,
@@ -578,25 +588,10 @@
         }
       }
 
-      /* 搜尋框 ＋ 幣別開關同一排。幣別從頁面最頂端搬下來的理由很簡單：
-         它要改的東西（價格）在表格裡，兩者原本隔了半個螢幕。 */
-      .controlsRight {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        min-width: 0;
-      }
-
+      /* 搜尋框 */
       .search-wrapper {
         position: relative;
-        flex: 1 1 240px;
-        min-width: 0;
-      }
-
-      @media (min-width: 980px) {
-        .search-wrapper {
-          flex: 0 1 340px;
-        }
+        flex: 0 1 340px;
       }
 
       input[type="search"] {
@@ -728,9 +723,6 @@
       /* 幣別切換按鈕組：選中的一格直接反白，不再是白底加淡陰影 */
       .segment-control {
         display: inline-flex;
-        /* flex: none + nowrap：搬到搜尋列之後它會被 flex 壓縮，
-           「JPY (¥)」會斷成兩行 */
-        flex: none;
         background: var(--bg);
         padding: 2px;
         border-radius: var(--r);
@@ -747,7 +739,6 @@
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.01em;
-        white-space: nowrap;
         cursor: pointer;
         transition: background-color 0.14s ease, color 0.14s ease;
       }
@@ -794,38 +785,21 @@
         outline-offset: 2px;
       }
 
-      /* 自訂追蹤星星。是 <button aria-pressed>，不是 <span>：v29 的 span 加
-         click handler 讓鍵盤與讀屏使用者完全用不到自訂清單。狀態只掛在
-         aria-pressed 上，沒有第二套 .active class 可以跟它走散。
-         整格都是點擊區（width:100% + min-height），手指不必瞄準 15px 的字。 */
-      button.watchlist-star {
-        appearance: none;
-        background: transparent;
-        border: 0;
-        border-radius: 2px;
-        padding: 0;
-        width: 100%;
-        min-height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+      /* 自訂追蹤星星 */
+      .watchlist-star {
         cursor: pointer;
         color: var(--muted);
         font-size: 15px;
-        line-height: 1;
         user-select: none;
         transition: color 0.12s ease, transform 0.1s ease;
+        display: inline-block;
       }
-      button.watchlist-star:hover {
+      .watchlist-star:hover {
         color: var(--warn);
         transform: scale(1.15);
       }
-      button.watchlist-star[aria-pressed="true"] {
+      .watchlist-star.active {
         color: var(--warn);
-      }
-      button.watchlist-star:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: -1px;
       }
 
       /* 分頁列 */
@@ -909,106 +883,9 @@
         letter-spacing: 0.05em;
       }
 
-      /* 狀態列右緣本來是空的（space-between 只有一個子元素）。清單類的出口
-         動作放這裡：跟它作用的對象同一條線上，不必另外開一排按鈕。 */
-      .statusActions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex: none;
-      }
-
-      /* 期間切換器：桌機版由表頭負責，這裡不出現，免得同一件事有兩個控制項 */
-      .periodSegment {
-        display: none;
-      }
-
-      .periodSegment .segment-btn {
-        padding: 4px 7px;
-        font-size: 10.5px;
-      }
-
-      @media (max-width: 640px) {
-        .periodSegment {
-          display: inline-flex;
-        }
-      }
-
-      button.statusAction {
-        appearance: none;
-        background: transparent;
-        border: 0;
-        border-bottom: 1px solid var(--border-strong);
-        border-radius: 0;
-        padding: 1px 0 2px;
-        color: var(--muted-ink);
-        font-family: inherit;
-        font-size: 11.5px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        cursor: pointer;
-        transition: color 0.14s ease, border-color 0.14s ease;
-      }
-
-      button.statusAction:hover {
-        color: var(--text);
-        border-color: var(--text);
-      }
-
-      button.statusAction:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
-      }
-
-      /* 空狀態列：橫跨整個表格寬度的一句話，附一個出口動作。
-         v29 在這裡什麼都不印，第一次造訪點開「自訂清單」就是一片空白。 */
-      /* 選擇器必須是 tbody tr.emptyRow td（0,2,2），不能只寫 .emptyRow td
-         （0,1,1）：空狀態那一格是它那一列的第一個 td，會被
-         `tbody td:nth-child(1)`（0,2,1）抓去當星星欄——連 text-align:center、
-         max-width:36px 跟 position:sticky 一起繼承過來。第一次改完就是這樣，
-         字全部跑到頁面正中央。 */
-      tbody tr.emptyRow td {
-        position: static;
-        width: auto;
-        min-width: 0;
-        max-width: none;
-        padding: 34px var(--inset) 38px;
-        white-space: normal;
-        text-align: left;
-        background: var(--bg);
-      }
-
-      .emptyTitle {
-        display: block;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text);
-        letter-spacing: 0.01em;
-      }
-
-      .emptyBody {
-        display: block;
-        margin-top: 7px;
-        max-width: 46ch;
-        font-size: 12.5px;
-        line-height: 1.6;
-        color: var(--muted-ink);
-      }
-
-      .emptyBody .star {
-        color: var(--warn);
-      }
-
-      .emptyActions {
-        margin-top: 12px;
-      }
-
       @media (prefers-reduced-motion: reduce) {
-        /* v29 只關了 .distSeg，漏掉列淡入與幅度尺——每次搜尋輸入都會重播一次，
-           對這條偏好設定的人來說整個表格會一直在閃。 */
         .distSeg,
-        tbody tr,
-        .move-bar {
+        .buyModalPanel {
           animation: none;
         }
 
@@ -1017,6 +894,8 @@
         .segment-btn,
         .pagerButtons button,
         button.action-btn,
+        button.buy-btn,
+        button.buyModalGo,
         input[type="search"],
         .search-kbd,
         #backToTopBtn {
@@ -1069,36 +948,6 @@
 
       thead th.sortable:hover {
         color: var(--text);
-      }
-
-      /* 排序表頭現在是鍵盤可達的（tabindex + Enter／Space），所以要有焦點框。
-         沿用其他控制項的 --primary 外框，往內縮 2px 免得被 sticky 的鄰欄切掉。 */
-      thead th.sortable:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: -2px;
-        color: var(--text);
-      }
-
-      /* 表頭裡的期間註記（例如「走勢 全期」）：說明性質，不搶標題的重量 */
-      .thNote {
-        margin-left: 5px;
-        font-weight: 400;
-        font-size: 10px;
-        letter-spacing: 0.04em;
-        color: var(--muted);
-      }
-
-      /* 只給讀屏的文字。星星欄沒有可見標題，但它不能是一個無名的欄。 */
-      .srOnly {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-        border: 0;
       }
 
       /* 排序指示器 (Sort Indicator)
@@ -1292,11 +1141,9 @@
         padding-bottom: 12px;
       }
 
-      /* 深色模式的 --good-ink / --bad-ink 直接對映回原色（8.4:1 / 5.5:1），
-         所以這三行在兩個主題下都成立，不需要各寫一次 */
-      .pct.good { color: var(--good-ink); }
-      .pct.bad { color: var(--bad-ink); }
-      .pct.zero { color: var(--muted-ink); }
+      .pct.good { color: var(--good); }
+      .pct.bad { color: var(--bad); }
+      .pct.zero { color: var(--muted); }
 
       .move-bar {
         position: absolute;
@@ -1318,21 +1165,10 @@
         font-weight: 600;
       }
 
-      /* 欄寬一律走 CSS class，不寫在 th 的 inline style 上——inline 會蓋掉
-         手機版的 @media 收窄規則，這是 v29 的 th 註解已經記下的教訓，
-         但「庫存」與「走勢」那兩欄自己還留著 inline width。 */
-      .col-stock {
-        width: 72px;
-        min-width: 72px;
-      }
-
-      .col-spark {
-        width: 140px;
-        min-width: 140px;
-      }
-
       /* Sparklines 走勢圖 */
       .sparklineCell {
+        width: 140px;
+        min-width: 140px;
         padding: 8px 10px;
       }
 
@@ -1344,8 +1180,8 @@
         height: 28px;
       }
 
-      .sparkline.up { color: var(--good-ink); }
-      .sparkline.down { color: var(--bad-ink); }
+      .sparkline.up { color: var(--good); }
+      .sparkline.down { color: var(--bad); }
       .sparkline svg {
         display: block;
         width: 128px;
@@ -1367,21 +1203,22 @@
       }
 
       .stockCell {
+        width: 72px;
+        min-width: 72px;
         /* 左右留白要跟 thead th 的 10px 一致，不然「庫存」標題會比下面的
            值往左 4px。欄寬不變：72 + 10 + 10 = th 原本就撐出來的 92px */
         padding: 8px 10px;
-        font-size: 12.5px;
-      }
-
-      /* 庫存是三態，不是兩態。「不知道」必須看得出來是不知道：
-         沒有這一欄資料時印 —，並且用比售罄更輕的墨色，不會被讀成一個答案。 */
-      .stockCell.isUnknown {
-        color: var(--muted-ink);
         font-family: var(--mono);
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
       }
 
-      .stockCell.isOut {
-        color: var(--muted-ink);
+      .stockSkeleton {
+        display: inline-block;
+        width: 44px;
+        height: 14px;
+        border-radius: 2px;
+        background: var(--surface-soft);
       }
 
       /* 工具提示卡預覽 */
@@ -1403,6 +1240,188 @@
         height: auto;
         border-radius: 6px;
         min-height: 252px;
+      }
+
+      /* ══ Buy 欄 + 購買通路彈窗 ══════════════════════════════════ */
+      /* 欄位只放一顆按鈕，寬度給到剛好裝下按鈕 + 左右 padding。 */
+      .buy-col {
+        width: 62px;
+        min-width: 62px;
+      }
+      .buyCell {
+        padding: 6px 10px;
+      }
+      /* 燙金籌碼。金色當底、深墨當字，不是反過來——金字印在頁底只有 2.21:1。 */
+      button.buy-btn {
+        border: 1px solid var(--gold-edge);
+        background: var(--gold);
+        color: var(--gold-ink);
+        border-radius: var(--r);
+        padding: 4px 9px;
+        font-family: var(--disp);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        /* 上緣一道內光就是壓印的斜邊。有它才像一枚燙金章，
+           沒有它就只是一塊黃色方塊。 */
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      /* hover 往亮走（箔面吃到光），不往暗走。往暗走字的對比會掉，
+         往亮走反而從 7.24:1 升到 10.54:1。 */
+      button.buy-btn:hover {
+        background: var(--gold-lift);
+        border-color: var(--gold);
+      }
+      /* 全站的 focus 環是 --primary 那支綠，壓在金底上兩色互相糊掉。
+         這一顆換成墨色，2px/offset 2px 的形狀維持跟其他控件一致。 */
+      button.buy-btn:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+
+      /* 遮罩鋪滿視窗，面板置中。z-index 要壓過卡圖預覽（9999）。 */
+      #buyModal {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.45);
+      }
+      #buyModal.open {
+        display: flex;
+      }
+      body[data-theme="dark"] #buyModal {
+        background: rgba(0, 0, 0, 0.66);
+      }
+
+      .buyModalPanel {
+        width: 100%;
+        max-width: 340px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        /* 唯一的第二處金色：一條 2px 的金邊，把面板接回開它的那顆金籌碼。
+           面板裡的「前往」刻意留墨色外框——金色再多一處就不叫重點色了。 */
+        border-top: 2px solid var(--gold);
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+        /* 不要用 fill-mode: backwards。動畫沒跑到（背景分頁、節流）時，
+           backwards 會把面板永久壓在 opacity:0，開了窗卻看不到東西。 */
+        animation: buy-panel-in 0.18s cubic-bezier(0.22, 0.9, 0.3, 1);
+      }
+
+      /* 起點不從 opacity:0 開始：動畫時間軸沒推進時（節流分頁、虛擬時間）
+         面板會停在起點那一格，0 的話就是開了窗但整片看不到。0.45 起跳，
+         最壞情況仍然讀得到內容，而 0.18s 的觀感幾乎沒有差別。 */
+      @keyframes buy-panel-in {
+        from { opacity: 0.45; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      .buyModalHead {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .buyModalTitle {
+        font-family: var(--disp);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      /* 卡號可能很長（含 SP／SSP 尾綴），允許折行，不要把面板撐開 */
+      .buyModalCardNo {
+        display: block;
+        margin-top: 3px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        word-break: break-all;
+      }
+      .buyModalClose {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--muted);
+        border-radius: var(--r);
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .buyModalClose:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .buyModalList {
+        padding: 4px 0;
+      }
+      .buyModalRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 14px;
+      }
+      .buyModalRow + .buyModalRow {
+        border-top: 1px solid var(--border);
+      }
+      .buyModalShop {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .buyModalShop small {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      button.buyModalGo {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 5px 12px;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      button.buyModalGo:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      /* .buy-btn 不在這組裡：它的 focus 環在上面自己定義成墨色。
+         寫在這裡的話選擇器權重相同、位置在後，會蓋掉上面那條。 */
+      .buyModalClose:focus-visible,
+      button.buyModalGo:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
       }
 
       /* 錯誤訊息框 */
@@ -1521,101 +1540,15 @@
           padding-left: 5px;
           padding-right: 5px;
         }
-
-        /* ══ 手機版不再橫向捲 ═══════════════════════════════════════════
-           v29 在 375px 上只看得到「卡片」與「最新價」：1／3／7 日三欄整個在
-           畫面右邊外，而 .tableWrap 沒有邊緣漸層或任何提示說這裡可以滑。
-           也就是說 H1 承諾的東西在主要裝置上看不到。
-           改法不是再收窄卡片欄（v29 已經從 176 收到 143 了，還是不夠），
-           是**只留當前排序期間的那一欄**：期間由 render() 寫進
-           body[data-period]，另外兩欄收起來，走勢也收起來，表格的
-           min-width 歸零——整張表就進得去 375px，一個字都不必橫向找。
-
-           table-layout: fixed 是這裡的關鍵，不是順手加的。auto layout 下，
-           卡名那一格是 white-space:nowrap，它對欄寬的最小貢獻就是整串字的
-           寬度——「碇真嗣式的超長卡名測試用卡片名稱」會把卡片欄撐開，把右邊
-           所有欄推出畫面（第一次改完就是這樣壞的）。fixed layout 下欄寬由
-           下面這幾條規則說了算，超長的字交給 .cardName 的 ellipsis 收掉。 */
-        table {
-          min-width: 0;
-          table-layout: fixed;
-        }
-
-        /* 沒有橫向溢出就不需要粘滯欄了；留著反而在內容偏長時互相疊到 */
-        thead th:nth-child(1), tbody td:nth-child(1),
+        /* 手機第一屏只有約 375px。卡片欄收窄，讓「最新價」還能跟卡名並排看到 */
         thead th:nth-child(2), tbody td:nth-child(2) {
-          position: static;
+          /* 星星欄收成 32px，sticky 的 left 要跟著改，否則捲動時卡片欄
+             會蓋掉星星 24px。 */
+          left: 32px;
+          width: 143px;
+          min-width: 143px;
+          max-width: 143px;
         }
-
-        /* 卡片欄改成吃剩下的所有寬度，不再是固定的 143px */
-        thead th:nth-child(2), tbody td:nth-child(2) {
-          width: auto;
-          min-width: 0;
-          max-width: none;
-        }
-
-        thead th, tbody td {
-          padding-left: 6px;
-          padding-right: 6px;
-        }
-
-        /* 縮圖在 375px 收掉。量出來的帳：可用的表格寬只有 355px，固定欄
-           （星星 40 ＋ 最新價 80 ＋ 漲跌 66 ＋ 庫存 42）吃掉 228，卡片欄剩 127，
-           扣掉留白只有 115px 給文字——縮圖再拿走 34px，卡號就只剩 45px、
-           被截成「HOL/W9…」。26×36 的縮圖本來就認不出是哪張卡，而卡號是
-           這個讀者在櫃台前真正拿來對照的東西。小圖讓位給完整卡號。 */
-        .cardThumb {
-          display: none;
-        }
-
-        .col-spark {
-          display: none;
-        }
-
-        body[data-period="1d"] .col-3d,
-        body[data-period="1d"] .col-7d,
-        body[data-period="3d"] .col-1d,
-        body[data-period="3d"] .col-7d,
-        body[data-period="7d"] .col-1d,
-        body[data-period="7d"] .col-3d {
-          display: none;
-        }
-
-        /* 375px 的欄寬預算：星星 30 ＋ 最新價 66 ＋ 漲跌 62 ＋ 庫存 44 = 202，
-           卡片欄拿走剩下的 173（扣掉縮圖 26、間距 8、左右留白 14 後還有
-           125px 給卡名／卡號，夠一行不至於只剩三個字）。 */
-        thead th:nth-child(1), tbody td:nth-child(1) {
-          width: 30px;
-          min-width: 30px;
-          max-width: 30px;
-        }
-
-        .col-price {
-          width: 66px;
-          min-width: 0;
-        }
-
-        .col-1d, .col-3d, .col-7d {
-          width: 54px;
-          min-width: 0;
-        }
-
-        .col-stock {
-          width: 30px;
-          min-width: 0;
-        }
-
-        .price-cell,
-        .pct {
-          font-size: 12px;
-        }
-
-        /* 幅度尺的右緣要跟著收窄後的留白走 */
-        .move-bar {
-          right: 6px;
-          width: calc(var(--m, 0) * 40px);
-        }
-
         .cardThumb {
           width: 26px;
           height: 36px;
@@ -1623,13 +1556,8 @@
         .cardIdent {
           gap: 8px;
         }
-        /* 欄寬改成 auto 之後截斷交給格子本身，這裡不再壓死上限 */
         .cardIdentText {
-          max-width: none;
-        }
-
-        tbody tr.emptyRow td {
-          padding: 26px 7px 30px;
+          max-width: 142px;
         }
       }
     </style>
@@ -1643,10 +1571,11 @@
         <div class="global-stats-item">24h 下跌 <i class="fa-solid fa-caret-down tick down" aria-hidden="true"></i> <strong id="global-losers" class="red">—</strong></div>
         <div class="global-stats-item">自訂追蹤 <strong id="global-watchlist">—</strong></div>
         <div class="global-stats-item">目前匯率 <strong id="global-rate">—</strong></div>
-        <!-- 幣別開關已移到搜尋列（見 .controls）。它原本是這條橫向溢出列的
-             最後一格，在 375px 上完全在畫面外，而「換成台幣」正是這個讀者
-             最主要的需求；現在它跟價格在同一個視野裡。 -->
         <div class="global-stats-actions">
+          <div class="segment-control" id="currencySegment">
+            <button type="button" class="segment-btn active" data-currency="JPY">JPY (¥)</button>
+            <button type="button" class="segment-btn" data-currency="TWD">TWD (NT$)</button>
+          </div>
           <button id="reloadBtn" type="button" class="action-btn" title="重新載入資料">
             <i class="fa-solid fa-arrows-rotate"></i> 重新整理
           </button>
@@ -1718,53 +1647,35 @@
       <section class="controls-section">
         <div class="controls">
           <!-- 篩選分頁籤 (Tabs) -->
-          <div class="filter-tabs" id="filterTabs" role="group" aria-label="篩選卡片">
-            <button type="button" class="tab-btn active" data-trend="all" aria-pressed="true">
-              <i class="fa-solid fa-layer-group" aria-hidden="true"></i> 全部卡片
+          <div class="filter-tabs" id="filterTabs">
+            <button type="button" class="tab-btn active" data-trend="all">
+              <i class="fa-solid fa-layer-group"></i> 全部卡片
             </button>
-            <button type="button" class="tab-btn" data-trend="up" aria-pressed="false">
-              <i class="fa-solid fa-arrow-trend-up" style="color: var(--good)" aria-hidden="true"></i> 只看上漲
+            <button type="button" class="tab-btn" data-trend="up">
+              <i class="fa-solid fa-arrow-trend-up" style="color: var(--good)"></i> 只看上漲
             </button>
-            <button type="button" class="tab-btn" data-trend="down" aria-pressed="false">
-              <i class="fa-solid fa-arrow-trend-down" style="color: var(--bad)" aria-hidden="true"></i> 只看下跌
+            <button type="button" class="tab-btn" data-trend="down">
+              <i class="fa-solid fa-arrow-trend-down" style="color: var(--bad)"></i> 只看下跌
             </button>
-            <button type="button" class="tab-btn" data-trend="watchlist" aria-pressed="false">
-              <i class="fa-solid fa-star" style="color: var(--warn)" aria-hidden="true"></i> 自訂清單
+            <button type="button" class="tab-btn" data-trend="watchlist">
+              <i class="fa-solid fa-star" style="color: var(--warn)"></i> 自訂清單
             </button>
           </div>
 
-          <!-- 搜尋與幣別 -->
-          <div class="controlsRight">
+          <!-- 搜尋 -->
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <div class="search-wrapper">
               <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
               <input id="q" type="search" placeholder="搜尋卡名、卡號或作品…" autocomplete="off" spellcheck="false" />
               <span class="search-kbd" aria-hidden="true">/</span>
             </div>
-            <div class="segment-control" id="currencySegment" role="group" aria-label="價格幣別">
-              <button type="button" class="segment-btn active" data-currency="JPY" aria-pressed="true">JPY (¥)</button>
-              <button type="button" class="segment-btn" data-currency="TWD" aria-pressed="false">TWD (NT$)</button>
-            </div>
           </div>
         </div>
 
-        <!-- 狀態列：載入狀態、目前生效的篩選期間與排序依據。
-             右緣本來是空的，清單類的出口動作放那裡。 -->
+        <!-- 狀態列：載入狀態與目前的排序依據 -->
         <div class="status">
           <span class="statusLine">
             <span id="statusText">載入中…</span><span id="statusSub"></span>
-          </span>
-          <span class="statusActions">
-            <!-- 手機版只留當前期間那一欄，所以 3 日／7 日的表頭在那裡是隱藏的，
-                 期間就沒有地方可以換了（v29 是靠橫向捲到那一欄的表頭去點）。
-                 這個切換器只在 ≤640px 出現，桌機版本來就用表頭排序。 -->
-            <span class="segment-control periodSegment" id="periodSegment" role="group" aria-label="漲跌期間">
-              <button type="button" class="segment-btn active" data-period-key="change1dPct" aria-pressed="true">1 日</button>
-              <button type="button" class="segment-btn" data-period-key="change3dPct" aria-pressed="false">3 日</button>
-              <button type="button" class="segment-btn" data-period-key="change7dPct" aria-pressed="false">7 日</button>
-            </span>
-            <button id="clearWatchlistBtn" type="button" class="statusAction" style="display: none">
-              清空清單
-            </button>
           </span>
         </div>
 
@@ -1774,20 +1685,17 @@
             <thead id="tableWrapHeader">
               <tr>
                 <!-- 寬度由 CSS 的 thead th:nth-child(1) 控制。這裡不要寫 inline
-                     style，否則手機版的 @media 收窄規則會被 inline 蓋掉。
-                     「庫存」「走勢」原本的 inline width 已經搬進 .col-stock /
-                     .col-spark，就是因為手機版要能收窄它們。
-                     可排序的 th 帶 tabindex，並在 JS 裡接 Enter／Space——
-                     v29 只有滑鼠點得動排序。 -->
-                <th><span class="srOnly">自訂清單</span></th>
-                <th class="sortable" data-sort-key="cardNo" tabindex="0" title="點擊或按 Enter 排序">卡片</th>
-                <th class="right col-price sortable" data-sort-key="latestPrice" tabindex="0" title="點擊或按 Enter 排序">最新價</th>
-                <th class="right col-1d sortable" data-sort-key="change1dPct" tabindex="0" title="點擊或按 Enter 排序">1 日</th>
-                <th class="right col-3d sortable" data-sort-key="change3dPct" tabindex="0" title="點擊或按 Enter 排序">3 日</th>
-                <th class="right col-7d sortable" data-sort-key="change7dPct" tabindex="0" title="點擊或按 Enter 排序">7 日</th>
-                <th class="right col-stock">庫存</th>
-                <!-- 走勢跟左邊三欄不是同一個期間，所以標題要自己說清楚 -->
-                <th class="right col-spark">走勢<span class="thNote">全期</span></th>
+                     style，否則手機版的 @media 收窄規則會被 inline 蓋掉。 -->
+                <th></th>
+                <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡片</th>
+                <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
+                <!-- 購買通路：沒有可排序的值，所以不掛 data-sort-key -->
+                <th class="center-align buy-col">Buy</th>
+                <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1 日</th>
+                <th class="right col-3d sortable" data-sort-key="change3dPct" title="點擊排序">3 日</th>
+                <th class="right col-7d sortable" data-sort-key="change7dPct" title="點擊排序">7 日</th>
+                <th class="right stock-col" style="width: 72px; min-width: 72px;">庫存</th>
+                <th class="right col-7d" style="width: 140px; min-width: 140px;">走勢</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -1814,6 +1722,22 @@
 
     <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
 
+    <!-- 購買通路彈窗：三個通路都用卡號當關鍵字，另開分頁查詢 -->
+    <div id="buyModal" role="dialog" aria-modal="true" aria-labelledby="buyModalTitle">
+      <div class="buyModalPanel" role="document">
+        <div class="buyModalHead">
+          <div>
+            <span class="buyModalTitle" id="buyModalTitle">前往購買</span>
+            <span class="buyModalCardNo" id="buyModalCardNo">—</span>
+          </div>
+          <button type="button" class="buyModalClose" id="buyModalClose" title="關閉" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="buyModalList" id="buyModalList"></div>
+      </div>
+    </div>
+
     <!-- 浮動置頂按鈕 -->
     <button id="backToTopBtn" type="button" title="回到頂端" aria-label="回到頂端">
       <i class="fa-solid fa-chevron-up"></i>
@@ -1831,6 +1755,14 @@
         const SPARKLINE_CONCURRENCY = 6;
         const THEME_STORAGE_KEY = "priceIncreaseTheme";
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
+
+        // 購買通路：卡號直接當關鍵字接在 search 後面。三個站的查詢參數不同名，
+        // 所以連結格式各自留在這裡，不要合成一條通用規則。
+        const BUY_CHANNELS = [
+          { name: "遊遊亭", note: "yuyu-tei.jp", url: (kw) => `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent(kw)}` },
+          { name: "Mercari", note: "jp.mercari.com", url: (kw) => `https://jp.mercari.com/search?keyword=${encodeURIComponent(kw)}` },
+          { name: "露天", note: "ruten.com.tw", url: (kw) => `https://www.ruten.com.tw/find/?q=${encodeURIComponent(kw)}` },
+        ];
 
         /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
         let rawData = null;
@@ -1886,7 +1818,6 @@
           kpiDistLegend: document.getElementById("kpiDistLegend"),
           statusText: document.getElementById("statusText"),
           statusSub: document.getElementById("statusSub"),
-          clearWatchlistBtn: document.getElementById("clearWatchlistBtn"),
           sourceText: document.getElementById("sourceText"),
           tbody: document.getElementById("tbody"),
           errorBox: document.getElementById("errorBox"),
@@ -1948,18 +1879,8 @@
           return null;
         }
 
-        function fmtDateKey(key) {
-          const s = String(key || "");
-          return s.length === 8 ? `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}` : "";
-        }
-
-        // 走勢線畫的是「全期」，跟左邊三欄的 1／3／7 日不是同一個期間，所以同一列
-        // 出現「三個綠色百分比 + 一條紅色下跌線」是可能且正確的。v29 沒有任何地方
-        // 說明這件事，讀者只會讀成畫面在自相矛盾。表頭補了「全期」，每一格再把
-        // 實際的起訖日與起訖價寫進 aria-label／title。
-        function sparklineSvg(prices, dates) {
+        function sparklineSvg(prices) {
           const values = normalizePriceSeries(prices);
-          const stamps = Array.isArray(dates) ? dates : [];
           if (values.length < 2) {
             return '<span class="sparkline-na">N/A</span>';
           }
@@ -1976,18 +1897,9 @@
             const y = pad + (1 - (v - min) / range) * chartH;
             return `${x.toFixed(2)},${y.toFixed(2)}`;
           });
-          const first = values[0];
-          const last = values[values.length - 1];
-          const trendClass = last >= first ? "up" : "down";
-          const from = fmtDateKey(stamps[0]);
-          const to = fmtDateKey(stamps[stamps.length - 1]);
-          const span =
-            stamps.length === values.length && from && to
-              ? `${from} → ${to}`
-              : `共 ${values.length} 筆收錄`;
-          const label = `全期走勢（${span}）：${formatPrice(first)} → ${formatPrice(last)}`;
+          const trendClass = values[values.length - 1] >= values[0] ? "up" : "down";
           return `
-            <span class="sparkline ${trendClass}" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+            <span class="sparkline ${trendClass}" title="${escapeHtml(values[0] + " -> " + values[values.length - 1])}">
               <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
                 <polyline points="${points.join(" ")}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
               </svg>
@@ -2007,18 +1919,6 @@
           return await productDataPromiseCache.get(productCode);
         }
 
-        // cardPrice 的排列順序沒有任何契約保證，而走勢線的紅綠是用「第一點 vs
-        // 最後一點」判定的——順序反了整欄顏色就全反，而且畫面上看不出來。
-        // upddate 本來就抓下來了（v29 算完 dates 就丟掉沒用），拿它排時序。
-        // 日期缺一個就整組放棄排序，維持原順序，並讓 dates 為空好讓 UI 改印筆數。
-        function orderChronologically(prices, dates) {
-          if (dates.length !== prices.length || dates.some((d) => !d)) {
-            return { prices, dates: [] };
-          }
-          const order = prices.map((_, i) => i).sort((a, b) => dates[a].localeCompare(dates[b]));
-          return { prices: order.map((i) => prices[i]), dates: order.map((i) => dates[i]) };
-        }
-
         async function getCardSeries(cardNo) {
           const key = String(cardNo || "");
           if (!key) return { prices: [], dates: [] };
@@ -2031,24 +1931,16 @@
               const prices = normalizePriceSeries(cardEntry.cardPrice);
               const rawDates = cardEntry.upddate ?? cardEntry.update ?? [];
               const dates = normalizeDateSeries(rawDates);
-              return orderChronologically(prices, dates);
+              return { prices, dates };
             })());
           }
           return await cardSeriesPromiseCache.get(key);
         }
 
-        // 庫存是三態：有貨 / 售罄 / 不知道。
-        // v29 寫 `latestStock > 0 ? "◯" : "售罄"`，而查不到時 latestStock 是 null，
-        // `null > 0` 為 false，於是「缺欄位、卡號對不上、這張沒被收錄」全部被印成
-        // 一句很有把握的「售罄」——把沒有答案講成一個答案，直接違反這個專案自己
-        // 的原則 4。◯ 也一起換掉：那是拿 Unicode 字元當圖示，而且沒人教過它。
-        function stockCell(raw) {
-          const n = Number(raw);
-          if (!Number.isFinite(n)) {
-            return `<td class="right stockCell col-stock isUnknown" title="這張卡沒有庫存資料">—</td>`;
-          }
-          if (n > 0) return `<td class="right stockCell col-stock">有貨</td>`;
-          return `<td class="right stockCell col-stock isOut">售罄</td>`;
+        function getLatestStockValue(cardNo) {
+          const cardEntry = findCardEntry((rawData && rawData.cards) || {}, cardNo);
+          const latestStock = Number(cardEntry && cardEntry.latestStock);
+          return Number.isFinite(latestStock) ? latestStock : null;
         }
 
         async function runWithConcurrency(items, limit, worker) {
@@ -2077,17 +1969,53 @@
             }
             const series = await getCardSeries(cardNo);
             const prices = normalizePriceSeries(series && series.prices);
-            const dates = (series && series.dates) || [];
             if (renderToken !== renderVersion || !cell.isConnected) return;
-            cell.innerHTML = sparklineSvg(prices, dates);
+            cell.innerHTML = sparklineSvg(prices);
           }).catch(() => {});
         }
 
-        /* renderStockCells 整個拿掉了。庫存值在 toRows() 就已經在每一列的
-           r.latestStock 上，v29 卻用骨架屏 + 併發佇列 + 三個計數器 + 兩支
-           console.log 再去 rawData 查一次同一個值——那是一套假的非同步，
-           每次 render（含每一次搜尋按鍵）都要跑 200 格。現在直接在列樣板裡
-           用 stockCell(r.latestStock) 印出來。 */
+        function renderStockCells(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".stockCell[data-stock-key]"));
+          let successCount = 0;
+          let failCount = 0;
+          let staleCount = 0;
+
+          console.log(`[stock] render start: total=${cells.length}`);
+
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) {
+              staleCount += 1;
+              return;
+            }
+            const key = cell.getAttribute("data-stock-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const latestStock = getLatestStockValue(cardNo);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            if (latestStock > 0) {
+              successCount += 1;
+              cell.textContent = "◯";
+            } else {
+              failCount += 1;
+              cell.textContent = "售罄";
+            }
+          }).then(() => {
+            if (renderToken === renderVersion) {
+              console.log(
+                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`
+              );
+            }
+          }).catch((error) => {
+            console.log(
+              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`,
+              error
+            );
+          });
+        }
 
         function fmtPct(n) {
           if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
@@ -2096,23 +2024,12 @@
           return `${sign}${v.toFixed(2)}%`;
         }
 
-        // 匯率三個來源全掛掉時會退回 0.22。v29 只在最頂列的匯率那格加了
-        // 「（預設值）」——捲兩下就不在畫面上了，而表格裡每一格 NT$ 都是用那個
-        // 數字換算出來的。改成就地標記：估算值前面加 ≈，並帶上原因當 title。
-        function isEstimatedPrice() {
-          return activeCurrency === "TWD" && exRateFallback;
-        }
-
-        const ESTIMATE_NOTE = "匯率來源皆無回應，以預設 0.22 換算，僅供參考";
-
-        // marked=false 給級距標籤用：一段區間的兩端各加一個 ≈ 只是雜訊
-        function formatPrice(n, marked = true) {
+        function formatPrice(n) {
           if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
           let val = Number(n);
           if (activeCurrency === "TWD") {
             val = Math.round(val * exRate);
-            const mark = marked && isEstimatedPrice() ? "≈" : "";
-            return mark + "NT$" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(val);
+            return "NT$" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(val);
           }
           return "¥" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(Math.round(val));
         }
@@ -2201,40 +2118,6 @@
           }
         }
 
-        /* ── 篩選與統計共用同一個期間 ──────────────────────────────────
-           v29 的「只看上漲／只看下跌」寫死吃 change3dPct，而排序、KPI、分布圖、
-           頂列的「24h 上漲／下跌」、H1 的「今天」全都是 1 日。結果是同一個視窗
-           裡頁籤亮著「只看上漲」，它下面的 KPI 印「上漲 47 ／ 下跌 39」、最低
-           1 日漲跌幅 −31.44%。這不是體驗瑕疵，是可信度歸零。
-           期間現在只有一個來源：目前排序的那一欄。排卡號或價格時退回 1 日，
-           並且由狀態列把「依 X 日」明講出來。 */
-        function trendKey() {
-          return String(activeSortKey).startsWith("change") ? activeSortKey : "change1dPct";
-        }
-
-        function trendPeriodLabel() {
-          const k = trendKey();
-          return k === "change3dPct" ? "3 日" : k === "change7dPct" ? "7 日" : "1 日";
-        }
-
-        // 手機版只留當前期間的漲跌欄，用 body[data-period] 選（見 @media 640）
-        function trendPeriodSlug() {
-          const k = trendKey();
-          return k === "change3dPct" ? "3d" : k === "change7dPct" ? "7d" : "1d";
-        }
-
-        // 頁籤狀態集中在這裡：空狀態的「看全部卡片」也要能把頁籤切回去，
-        // 不然按鈕做了事、頁籤還亮在別的地方。
-        function setTrendFilter(next) {
-          activeTrendFilter = next;
-          document.querySelectorAll(".tab-btn").forEach((b) => {
-            const on = b.getAttribute("data-trend") === next;
-            b.classList.toggle("active", on);
-            b.setAttribute("aria-pressed", on ? "true" : "false");
-          });
-          resetClearWatchlistBtn();
-        }
-
         function formatSortValue(sortKey, row) {
           if (!row) return "—";
           if (sortKey === "cardNo") return row.cardNo || "—";
@@ -2299,7 +2182,7 @@
           const segments = 5;
           const step = (max - min) / segments;
           if (!(step > 0)) {
-            return [{ label: formatPrice(min, false), tone: "price", strength: 1, count: 0, test: () => true }];
+            return [{ label: formatPrice(min), tone: "price", strength: 1, count: 0, test: () => true }];
           }
 
           const out = [];
@@ -2308,7 +2191,7 @@
             const isLast = i === segments - 1;
             const hi = isLast ? Infinity : min + step * (i + 1);
             out.push({
-              label: `${formatPrice(lo, false)} ~ ${formatPrice(isLast ? max : hi, false)}`,
+              label: `${formatPrice(lo)} ~ ${formatPrice(isLast ? max : hi)}`,
               tone: "price",
               strength: 0.35 + (0.65 * i) / (segments - 1),
               count: 0,
@@ -2415,11 +2298,9 @@
             root.querySelectorAll("th.sortable").forEach((th) => {
               const sortKey = th.getAttribute("data-sort-key") || "";
               const isActive = sortKey === activeSortKey;
-              // v29 兩個分支都寫 "none"，所以讀屏永遠不知道目前依哪一欄、
-              // 哪個方向排序——視覺上的 ▲▼ 對它們不存在。
               if (isActive) {
                 th.setAttribute("data-sort-dir", activeSortDirection);
-                th.setAttribute("aria-sort", activeSortDirection === "asc" ? "ascending" : "descending");
+                th.setAttribute("aria-sort", "none");
               } else {
                 th.removeAttribute("data-sort-dir");
                 th.setAttribute("aria-sort", "none");
@@ -2447,15 +2328,6 @@
           applySort(th.getAttribute("data-sort-key"), true);
         }
 
-        // v29 的排序只有滑鼠點得動：th 是純 <th>，沒有 tabindex、沒有鍵盤事件。
-        function handleHeaderSortKeydown(event) {
-          if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
-          const th = event.target.closest("th.sortable[data-sort-key]");
-          if (!th) return;
-          event.preventDefault();
-          applySort(th.getAttribute("data-sort-key"), true);
-        }
-
         function sortAndFilterRows(rows) {
           const q = (els.q.value || "").trim().toLowerCase();
 
@@ -2470,16 +2342,18 @@
             });
           }
 
-          // 頁籤篩選邏輯。上漲／下跌吃 trendKey()，也就是排序中的那一欄，
-          // 所以「只看上漲」之後 KPI 的下跌筆數必定是 0，分布圖必定全綠。
+          // 頁籤篩選邏輯
           if (activeTrendFilter === "watchlist") {
             out = out.filter((r) => watchlist.has(r.cardNo));
-          } else if (activeTrendFilter === "up" || activeTrendFilter === "down") {
-            const key = trendKey();
-            const wantUp = activeTrendFilter === "up";
+          } else if (activeTrendFilter === "up") {
             out = out.filter((r) => {
-              const v = Number(r[key]);
-              return Number.isFinite(v) && (wantUp ? v > 0 : v < 0);
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v > 0;
+            });
+          } else if (activeTrendFilter === "down") {
+            out = out.filter((r) => {
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v < 0;
             });
           }
 
@@ -2535,132 +2409,38 @@
           updateKpi(filtered);
           updatePaginationUi(filtered.length, pageRows.length, totalPages, startIdx);
 
-          // 手機版靠這個屬性決定留下哪一欄漲跌幅（見 @media max-width: 640）
-          document.body.setAttribute("data-period", trendPeriodSlug());
-
-          const priceTitle = isEstimatedPrice() ? ` title="${escapeHtml(ESTIMATE_NOTE)}"` : "";
-
           const frag = document.createDocumentFragment();
           pageRows.forEach((r) => {
             const tr = document.createElement("tr");
             const cardNo = String(r.cardNo ?? "");
             const isFavorite = watchlist.has(cardNo);
 
-            // <button aria-pressed>，不是 <span>：v29 的星星不可聚焦、沒有角色、
-            // 沒有狀態，鍵盤與讀屏使用者完全用不到自訂清單這個功能。
-            const starLabel = `${isFavorite ? "自清單移除" : "加入清單"}：${cardName(cardNo) || cardNo}`;
-            const starHtml =
-              `<button type="button" class="watchlist-star" data-card="${encodeURIComponent(cardNo)}"` +
-              ` aria-pressed="${isFavorite ? "true" : "false"}" aria-label="${escapeHtml(starLabel)}"` +
-              ` title="${escapeHtml(starLabel)}">` +
-              `<i class="fa-${isFavorite ? "solid" : "regular"} fa-star" aria-hidden="true"></i></button>`;
+            // 使用 FontAwesome 圖示取代原生的 ★ 與 ☆ 字元
+            const starHtml = isFavorite
+              ? `<span class="watchlist-star active" data-card="${encodeURIComponent(cardNo)}" title="自清單移除"><i class="fa-solid fa-star"></i></span>`
+              : `<span class="watchlist-star" data-card="${encodeURIComponent(cardNo)}" title="加入清單"><i class="fa-regular fa-star"></i></span>`;
 
             tr.innerHTML = `
               <td class="center-align">${starHtml}</td>
               ${cardIdentCell(cardNo)}
-              <td class="right price-cell col-price"${priceTitle}>${escapeHtml(formatPrice(r.latestPrice))}</td>
+              <td class="right price-cell">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              <td class="center-align buyCell">
+                <button type="button" class="buy-btn" data-buy-card="${encodeURIComponent(cardNo)}" title="查看購買通路">Buy</button>
+              </td>
               ${moveCell(r.change1dPct, "col-1d")}
               ${moveCell(r.change3dPct, "col-3d")}
               ${moveCell(r.change7dPct, "col-7d")}
-              ${stockCell(r.latestStock)}
-              <td class="right col-spark sparklineCell" data-sparkline-key="${encodeURIComponent(cardNo)}"><span class="sparklineSkeleton" aria-hidden="true"></span></td>
+              <td class="right stockCell" data-stock-key="${encodeURIComponent(cardNo)}"><span class="stockSkeleton" aria-hidden="true"></span></td>
+              <td class="right col-7d sparklineCell" data-sparkline-key="${encodeURIComponent(cardNo)}"><span class="sparklineSkeleton" aria-hidden="true"></span></td>
             `.trim();
             frag.appendChild(tr);
           });
 
-          // v29 在零結果時只留下一排表頭跟一句「顯示 0-0 / 0」。第一次造訪點開
-          // 「自訂清單」保證是空的，那是新訪客最可能按的一個頁籤。
-          if (!pageRows.length) frag.appendChild(emptyStateRow());
-
           els.tbody.replaceChildren(frag);
-
-          const statusParts = [];
-          const filterNote = trendFilterNote();
-          if (filterNote) statusParts.push(filterNote);
-          statusParts.push(
-            `依「${sortLabel(activeSortKey)}」${activeSortDirection === "asc" ? "由低到高" : "由高到低"}排序`
-          );
-          statusParts.push(`第 ${currentPage}/${totalPages} 頁`);
-          setStatus("已載入", statusParts.join("｜"));
-
-          updateWatchlistAction();
-          updatePeriodSegment();
+          setStatus("已載入", `依「${sortLabel(activeSortKey)}」${activeSortDirection === "asc" ? "由低到高" : "由高到低"}排序｜第 ${currentPage}/${totalPages} 頁`);
+          renderStockCells(renderToken);
           renderSparklines(renderToken);
           updateGlobalStats();
-        }
-
-        // 期間切換器要反映 trendKey()，不是 activeSortKey：排序在「最新價」時
-        // 畫面上生效的漲跌期間是退回的 1 日，切換器就該亮在 1 日。
-        function updatePeriodSegment() {
-          const key = trendKey();
-          document.querySelectorAll("#periodSegment .segment-btn").forEach((b) => {
-            const on = b.getAttribute("data-period-key") === key;
-            b.classList.toggle("active", on);
-            b.setAttribute("aria-pressed", on ? "true" : "false");
-          });
-        }
-
-        // 篩選中的期間要講出來。排序在「最新價」而篩選退回 1 日時，這是畫面上
-        // 唯一說得出「依 1 日」的地方。
-        function trendFilterNote() {
-          if (activeTrendFilter === "up") return `只看上漲（依 ${trendPeriodLabel()}）`;
-          if (activeTrendFilter === "down") return `只看下跌（依 ${trendPeriodLabel()}）`;
-          if (activeTrendFilter === "watchlist") return `自訂清單 ${watchlist.size} 張`;
-          return "";
-        }
-
-        function emptyStateRow() {
-          const q = (els.q.value || "").trim();
-          const tr = document.createElement("tr");
-          tr.className = "emptyRow";
-          const td = document.createElement("td");
-          td.colSpan = 8;
-
-          let title = "沒有可顯示的卡片";
-          let body = "資料來源可能還沒更新，按右上角「重新整理」再試一次。";
-          let action = "";
-
-          if (q) {
-            title = `找不到符合「${escapeHtml(q)}」的卡片`;
-            body =
-              `可以只打卡號的前半段（例如 <span class="mono">KC/S42</span>），` +
-              `或改用卡名、作品名搜尋。`;
-            action = `<button type="button" class="statusAction" data-empty-action="clearQuery">清除搜尋</button>`;
-          } else if (activeTrendFilter === "watchlist") {
-            title = "自訂清單還是空的";
-            body =
-              `在任何一列左邊按 <i class="fa-solid fa-star star" aria-hidden="true"></i>，` +
-              `那張卡就會收進這裡。清單只存在這台裝置上，換裝置不會跟著走。`;
-            action = `<button type="button" class="statusAction" data-empty-action="showAll">先看全部卡片</button>`;
-          } else if (activeTrendFilter === "up" || activeTrendFilter === "down") {
-            title = `目前沒有${activeTrendFilter === "up" ? "上漲" : "下跌"}的卡片（依 ${trendPeriodLabel()}）`;
-            body = "換一個期間看看：點表頭的「1 日」「3 日」「7 日」就會一起換。";
-            action = `<button type="button" class="statusAction" data-empty-action="showAll">看全部卡片</button>`;
-          }
-
-          td.innerHTML =
-            `<span class="emptyTitle">${title}</span>` +
-            `<span class="emptyBody">${body}</span>` +
-            (action ? `<div class="emptyActions">${action}</div>` : "");
-          tr.appendChild(td);
-          return tr;
-        }
-
-        // 清空清單是破壞性動作，所以要按兩次：第一次把按鈕變成確認，
-        // 第二次才真的清掉。不用原生 confirm()，那個對話框跟這頁沒有關係。
-        let clearWatchlistArmed = false;
-
-        function resetClearWatchlistBtn() {
-          clearWatchlistArmed = false;
-          if (els.clearWatchlistBtn) els.clearWatchlistBtn.textContent = "清空清單";
-        }
-
-        function updateWatchlistAction() {
-          const btn = els.clearWatchlistBtn;
-          if (!btn) return;
-          const show = activeTrendFilter === "watchlist" && watchlist.size > 0;
-          btn.style.display = show ? "" : "none";
-          if (!show) resetClearWatchlistBtn();
         }
 
         // 卡片欄：縮圖 + 上為卡名，下為卡號（有作品名時接在卡號後面）。
@@ -2920,39 +2700,89 @@
           if (!star) return;
           e.stopPropagation();
           const cardNo = decodeURIComponent(star.getAttribute("data-card"));
-          const nowOn = !watchlist.has(cardNo);
-          if (nowOn) {
-            watchlist.add(cardNo);
-          } else {
+          if (watchlist.has(cardNo)) {
             watchlist.delete(cardNo);
+            star.innerHTML = '<i class="fa-regular fa-star"></i>';
+            star.classList.remove("active");
+          } else {
+            watchlist.add(cardNo);
+            star.innerHTML = '<i class="fa-solid fa-star"></i>';
+            star.classList.add("active");
           }
-          // 狀態只有 aria-pressed 一個來源，圖示跟著它換
-          star.setAttribute("aria-pressed", nowOn ? "true" : "false");
-          star.innerHTML = `<i class="fa-${nowOn ? "solid" : "regular"} fa-star" aria-hidden="true"></i>`;
-          const label = `${nowOn ? "自清單移除" : "加入清單"}：${cardName(cardNo) || cardNo}`;
-          star.setAttribute("aria-label", label);
-          star.setAttribute("title", label);
           localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([...watchlist]));
           updateGlobalStats();
-          updateWatchlistAction();
-          // 正在看自訂清單時取消收藏，那一列要當場離開清單
-          if (activeTrendFilter === "watchlist" && !nowOn) render();
         });
 
-        // 空狀態裡的出口動作
-        els.tbody.addEventListener("click", (e) => {
-          const btn = e.target.closest("[data-empty-action]");
-          if (!btn) return;
-          const kind = btn.getAttribute("data-empty-action");
-          if (kind === "clearQuery") {
-            els.q.value = "";
-            els.q.focus();
-          } else if (kind === "showAll") {
-            setTrendFilter("all");
+        // ── 購買通路彈窗 ──
+        // 三行通路的 DOM 只建一次，開窗時換掉卡號跟每個「前往」按鈕的連結。
+        (function initBuyModal() {
+          const modal = document.getElementById("buyModal");
+          const list = document.getElementById("buyModalList");
+          const cardNoEl = document.getElementById("buyModalCardNo");
+          const closeBtn = document.getElementById("buyModalClose");
+          if (!modal || !list || !cardNoEl || !closeBtn) return;
+
+          // 記住開窗前的焦點，關窗後還回去，鍵盤操作才不會跳回頁面頂端
+          let lastFocused = null;
+
+          const rows = BUY_CHANNELS.map((channel) => {
+            const row = document.createElement("div");
+            row.className = "buyModalRow";
+
+            const shop = document.createElement("div");
+            shop.className = "buyModalShop";
+            shop.textContent = channel.name;
+            const note = document.createElement("small");
+            note.textContent = channel.note;
+            shop.appendChild(note);
+
+            const go = document.createElement("button");
+            go.type = "button";
+            go.className = "buyModalGo";
+            go.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> 前往';
+            go.addEventListener("click", () => {
+              const kw = cardNoEl.dataset.cardNo || "";
+              if (!kw) return;
+              window.open(channel.url(kw), "_blank", "noopener,noreferrer");
+            });
+
+            row.append(shop, go);
+            list.appendChild(row);
+            return { go };
+          });
+
+          function openBuyModal(cardNo) {
+            lastFocused = document.activeElement;
+            cardNoEl.textContent = cardNo || "—";
+            cardNoEl.dataset.cardNo = cardNo || "";
+            modal.classList.add("open");
+            if (rows[0]) rows[0].go.focus();
           }
-          currentPage = 1;
-          render();
-        });
+
+          function closeBuyModal() {
+            if (!modal.classList.contains("open")) return;
+            modal.classList.remove("open");
+            if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+            lastFocused = null;
+          }
+
+          els.tbody.addEventListener("click", (e) => {
+            const btn = e.target.closest(".buy-btn");
+            if (!btn) return;
+            // 同一格的點擊不要再往上冒泡去觸發卡圖預覽的開關
+            e.stopPropagation();
+            openBuyModal(decodeURIComponent(btn.getAttribute("data-buy-card") || ""));
+          });
+
+          closeBtn.addEventListener("click", closeBuyModal);
+          // 點遮罩（面板以外）就關窗
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeBuyModal();
+          });
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeBuyModal();
+          });
+        })();
 
         async function fetchJson(url) {
           const res = await fetch(url, { cache: "no-store" });
@@ -3034,10 +2864,9 @@
           if (dataResult.status === "rejected") {
             const err1 = dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
             setStatus("載入失敗", "請確認網路或 JSON 來源是否可用");
-            // 按鈕上寫的是「重新整理」。v29 的這句話指向一個不存在的按鈕名稱。
             showError(
               `遠端資料載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
-                `你可以稍後按右上角「重新整理」重試。`
+                `你可以稍後按右上角「重新載入」重試。`
             );
             return;
           }
@@ -3069,7 +2898,9 @@
           document.getElementById("filterTabs").addEventListener("click", (e) => {
             const btn = e.target.closest(".tab-btn");
             if (!btn) return;
-            setTrendFilter(btn.getAttribute("data-trend"));
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeTrendFilter = btn.getAttribute("data-trend");
             onChange();
           });
 
@@ -3077,39 +2908,11 @@
           document.getElementById("currencySegment").addEventListener("click", (e) => {
             const btn = e.target.closest(".segment-btn");
             if (!btn) return;
-            document.querySelectorAll(".segment-btn").forEach((b) => {
-              const on = b === btn;
-              b.classList.toggle("active", on);
-              b.setAttribute("aria-pressed", on ? "true" : "false");
-            });
+            document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
             activeCurrency = btn.getAttribute("data-currency");
             render();
           });
-
-          // 期間切換（手機版）。等同於去點那一欄的表頭排序，所以直接走 applySort。
-          document.getElementById("periodSegment").addEventListener("click", (e) => {
-            const btn = e.target.closest(".segment-btn");
-            if (!btn) return;
-            applySort(btn.getAttribute("data-period-key"));
-          });
-
-          // 清空清單：按兩次才生效
-          if (els.clearWatchlistBtn) {
-            els.clearWatchlistBtn.addEventListener("click", () => {
-              if (!clearWatchlistArmed) {
-                clearWatchlistArmed = true;
-                els.clearWatchlistBtn.textContent = `確定清空 ${watchlist.size} 張？`;
-                return;
-              }
-              watchlist.clear();
-              localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([]));
-              resetClearWatchlistBtn();
-              currentPage = 1;
-              render();
-            });
-            // 手指或焦點移開就解除待確認狀態，不留一個半按下的按鈕
-            els.clearWatchlistBtn.addEventListener("blur", resetClearWatchlistBtn);
-          }
 
           // 換頁後把畫面捲回數據表格最上方
           const scrollToTableTop = () => {
@@ -3131,9 +2934,7 @@
             scrollToTableTop();
           });
 
-          const mainHeader = document.getElementById("tableWrapHeader");
-          mainHeader.addEventListener("click", handleHeaderSortClick);
-          mainHeader.addEventListener("keydown", handleHeaderSortKeydown);
+          document.getElementById("tableWrapHeader").addEventListener("click", handleHeaderSortClick);
           els.reloadBtn.addEventListener("click", () => load());
           if (els.themeToggleBtn) {
             els.themeToggleBtn.addEventListener("click", toggleTheme);
@@ -3162,15 +2963,9 @@
 
           const mirror = document.createElement("div");
           mirror.id = "stickyTheadMirror";
-          // 鏡像對讀屏是重複的一份表頭，也不該多出一組 Tab 停留點：
-          // 整塊 aria-hidden，複製出來的 th 一律 tabindex="-1"。
-          mirror.setAttribute("aria-hidden", "true");
           const mirrorTable = document.createElement("table");
           const mirrorThead = thead.cloneNode(true);
           mirrorThead.removeAttribute("id");
-          mirrorThead.querySelectorAll("th[tabindex]").forEach((th) => {
-            th.setAttribute("tabindex", "-1");
-          });
           mirrorTable.appendChild(mirrorThead);
           mirror.appendChild(mirrorTable);
           document.body.appendChild(mirror);
