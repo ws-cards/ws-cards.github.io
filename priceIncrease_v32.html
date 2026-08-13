@@ -1638,9 +1638,17 @@
       /* 欄位只放一顆按鈕，寬度給到剛好裝下按鈕 + 左右 padding。
          內容靠右（HTML 上掛 .right）：按鈕要貼在最新價那一欄的邊上，
          置中的話按鈕會退回欄位中線，跟價格中間再多一段空白。 */
+      /* 標頭的 Buy 要跟按鈕上的 Buy 對字，不是對框。
+         .right 只把按鈕的「外框」右緣拉到欄位內緣，按鈕自己還有 1px 邊框
+         ＋ 10px 右內距，字比外框又縮進 11px；其他右對齊欄位量出來的
+         th/td 文字右緣差都是 0.0，只有這欄標頭往右偏 11px（看得出來歪）。
+         把這 11px 補進 th 的右內距，width 同步減 11px，欄位總寬維持
+         82px，旁邊那組調好的欄寬不受影響。這兩個數字跟下面
+         button.buy-btn 的 padding／border 綁在一起，改一邊要改兩邊。 */
       .buy-col {
-        width: 62px;
-        min-width: 62px;
+        width: 51px;
+        min-width: 51px;
+        padding-right: 21px;
       }
       .buyCell {
         padding: 6px 10px;
