@@ -1,0 +1,3572 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>價格漲跌幅觀測</title>
+    <meta name="description" content="依 1/3/7 日漲跌幅排序觀測卡片價格變動" />
+    
+    <!-- 引入 FontAwesome 6 免費圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    
+    <style>
+      :root {
+        /*經典淺色配色 */
+        --bg: #f8f7f4;
+        --surface: #ffffff;
+        --surface-soft: #f1efea;
+        --surface-sticky: #f8f7f4;
+        --surface-hover: #f3f1ec;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2dfd7;
+        --border-strong: #cdc9be;
+        --good: #16c784; /*  經典綠 */
+        --bad: #ea3943;  /*  經典紅 */
+        /* 印字用的墨色版本。填色區塊（分布色塊、圖例色點、頁籤圖示）留著上面
+           兩支鮮豔的原色，但印在 #f8f7f4 上的「字」跟細線改用這裡的墨色：
+           #16c784 在淺色底只有 2.06:1，字級一放大就更不能用。
+           資料表格照舊吃 --good / --bad，這兩支只給表格以外的版面。 */
+        --good-ink: #0a7d52;
+        --bad-ink: #d0202c;
+        --muted-ink: #5a6779;
+        --warn: #eab308;
+        --primary: #8cc351; /* 標誌綠 */
+        --primary-hover: #7bb240;
+        /* 箔金：整頁唯一的金屬色，只出現在「買」這個動作上。
+           SP／SSP 是燙金卡，金色是卡本身的材質，不是外加的裝飾色。
+           刻意比常見的 #d4af37 更深更偏紅：一是要跟三欄外的 --warn(#eab308)
+           收藏星分得開，二是 SP 箔章本來就比獎盃金紅。
+           金色一律當底、不當字：#d3a038 印在 #f8f7f4 上只有 2.21:1。 */
+        /* 鮮豔的 --gold 只能當填色，不能當字：印在 #f8f7f4 上只有 2.21:1。
+           藥丸的框線跟字走 --gold-line 這支深金（5.26:1），
+           再用一層淡金底把「金」的色相補回來，才不會讀成咖啡色。 */
+        --gold: #d3a038;      /* 填色用：彈窗頂緣那條金線 */
+        --gold-line: #8a5f14; /* 藥丸的框線與字，對淺底 5.26:1 */
+        /* hover 把淡金底加濃，底色會往金的方向靠，深金字的對比反而會掉
+           （0.3 的濃度量到 4.20:1，不及格）。所以字跟框要往「離底色更遠」
+           的方向走：淺色主題往更深壓，深色主題往更亮提。 */
+        --gold-line-hover: #6b4910;
+        --gold-wash: rgba(211, 160, 56, 0.14);        /* 淡金底 */
+        --gold-wash-strong: rgba(211, 160, 56, 0.28); /* hover 的淡金底 */
+        /* 圓角一律 3px。表格是靠細線分欄的，8px 的卡片圓角跟它不是同一種語言 */
+        --r: 3px;
+        /* 頂部導覽列高度。導覽列是 fixed，所以這個值同時要被 body 的
+           padding-top 跟 #stickyTheadMirror 的 top 吃到，三處不能各寫一份。
+           手機版在下面的 @media 收窄，JS 量的是元素實際高度，不讀這支變數。 */
+        --nav-h: 52px;
+        /* 版面左右內縮，刻意等於 thead th / tbody td 的 10px 留白：
+           標題、KPI 標籤、狀態列的文字左緣會跟表格第一欄的文字落在同一條線上 */
+        --inset: 10px;
+        --disp: "Martian Mono", ui-monospace, monospace;
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        --sans: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei",
+          "PingFang TC", "Noto Sans TC", sans-serif;
+      }
+
+      body[data-theme="dark"] {
+        /* 深度黑化配色：近乎純黑的底色搭配高對比灰色 */
+        --bg: #030303; 
+        --surface: #030303; 
+        --surface-soft: #16161a;
+        --surface-sticky: #030303;
+        --surface-hover: #1c1c22;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #1e1e24;
+        --border-strong: #2d2d39;
+        --good: #10b981;
+        --bad: #ef4444;
+        /* 近黑底不需要拆墨色：#10b981 有 8.13:1、#ef4444 有 5.48:1，直接對映 */
+        --good-ink: #10b981;
+        --bad-ink: #ef4444;
+        --muted-ink: #9ca3af;
+        --warn: #eab308;
+        --primary: #8cc351;
+        /* 近黑底把中間調的金壓成濁色，往上提一階。邊色在這裡不是對著頁面
+           底色作用（金底本身對 #030303 就有 10:1），是壓在金上當斜邊。 */
+        /* 近黑底不需要拆墨色：#deae45 對 #030303 有 10.07:1，
+           框線跟字直接吃鮮豔的那支金。 */
+        --gold: #deae45;
+        --gold-line: #deae45;
+        /* 近黑底加濃淡金底是「變亮」，所以這裡的字要往更亮走，方向跟淺色相反 */
+        --gold-line-hover: #f0c667;
+        --gold-wash: rgba(222, 174, 69, 0.13);
+        --gold-wash-strong: rgba(222, 174, 69, 0.26);
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background-color: var(--bg);
+        -webkit-font-smoothing: antialiased;
+        touch-action: manipulation;
+        overflow-x: hidden;
+      }
+
+      /* 瀏覽器自己畫的那幾樣東西也要吃這套色：選取色、捲軸、游標、焦點框。
+         .tableWrap 的橫向捲軸另外還原成系統預設，數據表格維持原樣。 */
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+      }
+
+      .tableWrap {
+        scrollbar-color: auto;
+      }
+
+      ::selection {
+        background: rgba(140, 195, 81, 0.32);
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* ── 頂部導覽列 (Site Nav) ──
+         結構照 line_test_v86.html 的 .main-header：左邊漢堡開抽屜、中間頁名
+         加 WS 標記、右邊主題切換。外觀沒有照抄：那邊是毛玻璃 + 16px 圓角 +
+         大陰影，跟本頁靠細線分區的紙媒語彙不是同一種東西，所以一律改吃這頁
+         的變數（3px 圓角、hairline 邊、hover 反白），只留版面骨架。 */
+      body {
+        padding-top: var(--nav-h);
+      }
+
+      .siteNav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        /* 要壓過 #stickyTheadMirror(50) 與置頂按鈕(60)，但要低於抽屜(1050)、
+           卡圖預覽(9999) 與購買彈窗(10000) */
+        z-index: 900;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border-strong);
+        padding: 0 14px;
+        /* 高度含底線一起等於 --nav-h。不含的話整條會是 53px，body 的
+           padding-top 跟鏡像表頭的 top 都只讓 52px，底線會被下一條蓋掉 1px。 */
+        box-sizing: border-box;
+        height: var(--nav-h);
+      }
+
+      .siteNavInner {
+        max-width: 1280px;
+        margin: 0 auto;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* 漢堡鈕。方框 + 細線 + hover 反白，跟 .action-btn 同一組手勢 */
+      .navIconBtn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background: transparent;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--r);
+        color: var(--text);
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+
+      .navIconBtn:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .navIconBtn:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      .hamburger {
+        position: relative;
+        display: block;
+        width: 16px;
+        height: 12px;
+      }
+
+      .hamburger span {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: currentColor;
+        transition: transform 0.22s ease, opacity 0.16s ease, top 0.22s ease;
+      }
+
+      .hamburger span:nth-child(1) { top: 0; }
+      .hamburger span:nth-child(2) { top: 5px; }
+      .hamburger span:nth-child(3) { top: 10px; }
+
+      /* 抽屜開著時三條線收成叉，跟抽屜自己的關閉鈕是同一個狀態的兩個出口 */
+      .navIconBtn.is-open .hamburger span:nth-child(1) {
+        top: 5px;
+        transform: rotate(45deg);
+      }
+      .navIconBtn.is-open .hamburger span:nth-child(2) {
+        opacity: 0;
+      }
+      .navIconBtn.is-open .hamburger span:nth-child(3) {
+        top: 5px;
+        transform: rotate(-45deg);
+      }
+
+      .navTitleBlock {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .navTitleText {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* WS 標記用等寬體加字距，跟行情列的標籤同一種讀法：註記，不是標題 */
+      .navTitleBadge {
+        flex-shrink: 0;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border: 1px solid var(--border-strong);
+        border-radius: 2px;
+        color: var(--muted-ink);
+        line-height: 1.4;
+      }
+
+      .navActions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        padding-left: 12px;
+      }
+
+      /* ── 側邊抽屜 (Drawer) ── */
+      .drawerOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1049;
+        background: rgba(15, 23, 42, 0.34);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.24s ease, visibility 0.24s ease;
+      }
+
+      body[data-theme="dark"] .drawerOverlay {
+        background: rgba(0, 0, 0, 0.62);
+      }
+
+      .drawerOverlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 292px;
+        max-width: 86vw;
+        height: 100%;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-right: 1px solid var(--border-strong);
+        overflow-y: auto;
+        transform: translateX(-100%);
+        /* visibility 一起收，關著的時候裡面的連結就不會被 Tab 走到 */
+        visibility: hidden;
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 0.28s linear;
+      }
+
+      .drawer.open {
+        transform: none;
+        visibility: visible;
+      }
+
+      .drawerHeader {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 14px;
+        /* 高度（含底線）跟導覽列一樣，抽屜開著時兩條底線才會接成同一條水平線 */
+        height: var(--nav-h);
+        box-sizing: border-box;
+        border-bottom: 1px solid var(--border-strong);
+      }
+
+      .drawerBrand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .drawerBrandImg {
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        object-fit: cover;
+        border-radius: var(--r);
+        border: 1px solid var(--border);
+      }
+
+      .drawerNav {
+        flex: 1;
+        padding: 8px 0;
+      }
+
+      .drawerNav ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .menuLink {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        cursor: pointer;
+        transition: background-color 0.14s ease, color 0.14s ease;
+      }
+
+      .menuLink:hover {
+        background: var(--surface-hover);
+      }
+
+      .menuLink:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
+      }
+
+      /* 目前這一頁直接反白，跟幣別 .segment-btn.active 同一個作法。
+         標誌綠在整頁只保留刊頭那一段校色線，選單不再多一處綠。 */
+      .menuLink.active {
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      .menuLink.active:hover {
+        background: var(--text);
+      }
+
+      .mainIcon {
+        width: 16px;
+        text-align: center;
+        font-size: 12px;
+        opacity: 0.78;
+      }
+
+      .rightIcon {
+        margin-left: auto;
+        font-size: 11px;
+        opacity: 0.6;
+        transition: transform 0.22s ease;
+      }
+
+      .menuItem.open > .menuLink .rightIcon {
+        transform: rotate(-90deg);
+      }
+
+      .submenu {
+        display: none;
+        margin: 2px 0 6px 26px;
+        padding-left: 12px;
+        border-left: 1px solid var(--border);
+      }
+
+      .menuItem.open > .submenu {
+        display: block;
+      }
+
+      .submenu .menuLink {
+        padding: 8px 12px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--muted-ink);
+      }
+
+      .submenu .menuLink:hover {
+        color: var(--text);
+      }
+
+      .submenu .menuLink.active {
+        color: var(--bg);
+      }
+
+      .drawerFooter {
+        flex-shrink: 0;
+        padding: 12px 14px;
+        border-top: 1px solid var(--border-strong);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--muted-ink);
+      }
+
+      .drawerFooter span {
+        margin-left: 4px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 640px) {
+        :root {
+          --nav-h: 48px;
+        }
+
+        .siteNav {
+          padding: 0 10px;
+        }
+
+        .navTitleText {
+          font-size: 13px;
+          max-width: 42vw;
+        }
+
+        .navActions {
+          padding-left: 8px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .navIconBtn,
+        .hamburger span,
+        .drawer,
+        .drawerOverlay,
+        .menuLink,
+        .rightIcon {
+          transition: none;
+        }
+      }
+
+      /* 頂部全站數據列 (Global Stats Bar) — 行情列。
+         每一欄用細線隔開、標籤縮到 11px 加字距、數字用等寬體加粗，
+         跟表格同一種讀法：標籤是註記，數字才是內容。 */
+      .global-stats-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border-strong);
+        font-size: 12px;
+        color: var(--muted-ink);
+        padding: 0 14px;
+        white-space: nowrap;
+        overflow-x: auto;
+        /* 手指橫向滑到底時不把捲動傳給整頁，避免視窗被拉出可視範圍看到溢出內容 */
+        overscroll-behavior-x: contain;
+      }
+
+      .global-stats-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        gap: 0;
+        align-items: stretch;
+        min-height: 42px;
+      }
+
+      .global-stats-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 15px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        border-left: 1px solid var(--border);
+      }
+
+      .global-stats-item:first-child {
+        padding-left: 0;
+        border-left: 0;
+      }
+
+      .global-stats-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        padding-left: 18px;
+      }
+
+      .global-stats-item strong {
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .global-stats-item .green { color: var(--good-ink); }
+      .global-stats-item .red { color: var(--bad-ink); }
+
+      .global-stats-item .tick {
+        font-size: 11px;
+        margin-right: -3px;
+      }
+
+      .global-stats-item .tick.up { color: var(--good-ink); }
+      .global-stats-item .tick.down { color: var(--bad-ink); }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 5px 88px;
+      }
+
+      /* 刊頭。細線橫跨整個版面寬度（跟表頭底線一樣是結構線），
+         文字則內縮到 --inset，跟表格第一欄對齊。 */
+      header {
+        position: relative;
+        padding-top: 30px;
+        margin-bottom: 26px;
+        border-bottom: 1px solid var(--border-strong);
+      }
+
+      /* 標誌綠在整頁只出現在這一小段結構線上，當作印刷校色標記 */
+      header::after {
+        content: "";
+        position: absolute;
+        left: var(--inset);
+        bottom: -1px;
+        width: 64px;
+        height: 2px;
+        background: var(--primary);
+      }
+
+      .titleRow {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px 28px;
+        flex-wrap: wrap;
+        padding: 0 var(--inset) 16px;
+      }
+
+      /* 標題是中文，Martian Mono 沒有漢字，所以顯示體在這裡起不了作用，
+         份量交給字級、字重、行高跟下面那條硬線。顯示體真正上場的地方是
+         數字（KPI 數值、資料時間），那才是它有字符的地方。 */
+      h1 {
+        margin: 0;
+        font-size: clamp(29px, 6.4vw, 46px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 0.98;
+      }
+
+      .subtitle {
+        margin-top: 9px;
+        max-width: 46ch;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted-ink);
+      }
+
+      .mastMeta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding-bottom: 3px;
+      }
+
+      /* 沒有換行時貼齊右緣，標籤與時間才不會是參差的右邊 */
+      @media (min-width: 760px) {
+        .mastMeta {
+          align-items: flex-end;
+          text-align: right;
+        }
+      }
+
+      .mastMetaK {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: var(--muted-ink);
+      }
+
+      .mastMetaV {
+        font-family: var(--disp);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* KPI 統計條：一整片，欄與欄之間用細線分隔——跟表格分欄的方式一樣，
+         不再是五張各自帶框的卡片。數值改用顯示體放大，統計條自己就是版面
+         上第二大的東西，不用再靠卡片框來宣告存在。 */
+      .marketSummary {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .distSummary {
+        margin-bottom: 26px;
+      }
+
+      .summaryItem {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+        padding: 15px var(--inset) 14px;
+      }
+
+      .marketSummary > .summaryItem {
+        border-left: 1px solid var(--border);
+      }
+
+      .marketSummary > .summaryItem:first-child {
+        border-left: 0;
+      }
+
+      .distSummary .summaryItem {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 16px var(--inset) 4px;
+      }
+
+      /* 中文標籤不吃 uppercase，份量交給字重跟字距 */
+      .summaryItem .k {
+        color: var(--muted-ink);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* setKpiTone() 每次都整個蓋掉 .v 的 className，所以顏色一律從祖先選到，
+         不能掛在 .v 自己身上。padding-bottom 也要顯式歸零：帶色時它會拿到
+         表格 .pct 的 12px，五欄就對不齊了。 */
+      .summaryItem .v {
+        font-family: var(--disp);
+        font-size: clamp(21px, 2.5vw, 30px);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        padding-bottom: 0;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .summaryItem .v.good { color: var(--good-ink); }
+      .summaryItem .v.bad { color: var(--bad-ink); }
+      .summaryItem .v.zero { color: var(--muted-ink); }
+
+      /* 幅度尺：跟表格 .move-bar 借同一個裝置與同一組刻度（BAR_REF = 20），
+         讓統計數字看起來跟表格出自同一隻手。用 transition 而不是 animation，
+         重新排序時長度會跟著跑，而且動畫沒跑到時也不會留下看不見的東西。 */
+      .kpiBar {
+        position: relative;
+        height: 2px;
+        background: var(--border);
+        color: var(--muted-ink);
+      }
+
+      .kpiBar::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 2px;
+        width: calc(var(--m, 0) * 100%);
+        background: currentColor;
+        transition: width 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .kpiBar.good { color: var(--good-ink); }
+      .kpiBar.bad { color: var(--bad-ink); }
+      .kpiBar.zero { color: var(--muted-ink); }
+
+      /* 靠 margin-top:auto 把五欄的註記行壓到底部對齊，
+         沒有幅度尺的第一欄才不會自己矮一截 */
+      .summaryItem .sub {
+        margin-top: auto;
+        padding-top: 6px;
+        font-size: 11px;
+        color: var(--muted-ink);
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* 分布區間卡片（橫跨整列） */
+      .summaryItem--wide {
+        grid-column: 1 / -1;
+      }
+
+      /* 平板與手機：KPI 改為單列橫向滑動的紙帶，分隔線照舊，
+         整片框留在原地，是紙帶在框裡捲。
+         斷點從 640 拉到 900：五欄擠在 900px 以下時放不下放大後的數字。 */
+      @media (max-width: 900px) {
+        .marketSummary {
+          display: flex;
+          flex-wrap: nowrap;
+          /* 避免負邊距造成整頁水平溢位 */
+          margin-left: 0;
+          margin-right: 0;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x proximity;
+          scroll-padding-left: 0;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          scrollbar-width: none;
+        }
+
+        .marketSummary::-webkit-scrollbar {
+          display: none;
+        }
+
+        .marketSummary > .summaryItem {
+          flex: 0 0 auto;
+          width: 47vw;
+          min-width: 152px;
+          max-width: 210px;
+          scroll-snap-align: start;
+        }
+      }
+
+      /* 分布圖是這一頁唯一真正的圖形，從 10px 的細藥丸放大成 26px 的實體色帶，
+         圓角收到 2px、色塊之間留 1px 讓每一段各自站得住 */
+      .distBar {
+        display: flex;
+        height: 26px;
+        border-radius: 2px;
+        overflow: hidden;
+        background: var(--surface-hover);
+        box-shadow: inset 0 0 0 1px var(--border);
+        margin-top: 4px;
+      }
+
+      @keyframes dist-seg-in {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+
+      .distSeg {
+        display: block;
+        min-width: 3px;
+        border-right: 1px solid var(--surface);
+        transform-origin: left center;
+        /* 不加 backwards：動畫沒跑到時色塊維持在原尺寸，不會整條消失 */
+        animation: dist-seg-in 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: filter 0.15s ease;
+      }
+
+      .distSeg:last-child {
+        border-right: 0;
+      }
+
+      .distSeg:hover {
+        filter: brightness(1.14) saturate(1.15);
+      }
+
+      .distSeg--good { background: var(--good); }
+      .distSeg--bad { background: var(--bad); }
+      .distSeg--zero { background: var(--muted); }
+      .distSeg--price { background: var(--primary); }
+
+      /* 圖例是一張帳表，不是一串標籤：每格自己帶上緣細線，同一列的線會連成
+         一條；數字靠右切成固定寬度的一欄，七格的筆數與佔比都對得齊。 */
+      /* 用 grid 而不是 flex：七格換行時（例如 6 + 1）flex 會讓落單的那一格
+         grow 成整列寬，數字被推到最右邊，看起來像壞掉。grid 的軌道寬度固定，
+         落單的一格仍然只有一格寬。 */
+      .distLegend {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(174px, 1fr));
+        gap: 0;
+        margin-top: 14px;
+        font-size: 11.5px;
+        color: var(--muted-ink);
+      }
+
+      /* 一格 178px 要塞下色點、級距、筆數、佔比，留白給得剛好夠級距
+         不被截字（「+5 ~ +10%」約 52px），再多一點就要換行成兩列 */
+      .distLegendItem {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 9px 8px 9px 0;
+        border-top: 1px solid var(--border);
+        white-space: nowrap;
+      }
+
+      .distLegendItem.isEmpty {
+        opacity: 0.42;
+      }
+
+      /* 筆數給固定寬度，佔比那一欄才會在七格之間對齊成一直線 */
+      .distLegendItem b {
+        min-width: 38px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+
+      .distLegendLabel {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        letter-spacing: 0.01em;
+      }
+
+      .distLegendVal {
+        display: grid;
+        grid-template-columns: auto 40px;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .distLegendShare {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+
+      .distLegendEmpty {
+        font-size: 12px;
+        color: var(--muted-ink);
+        padding: 10px 0 6px;
+      }
+
+      /* 色點改成從色帶上削下來的一小片，而不是通用的圓角方塊 */
+      .distDot {
+        width: 4px;
+        height: 14px;
+        border-radius: 1px;
+        flex: none;
+      }
+
+      /* 手機版分布區間：圖例攤成單欄條列，色帶再壓低一點 */
+      @media (max-width: 640px) {
+        .distSummary {
+          margin-bottom: 20px;
+        }
+
+        .distSummary .summaryItem {
+          padding: 14px var(--inset) 2px;
+          gap: 8px;
+        }
+
+        .distBar {
+          height: 20px;
+        }
+
+        .distLegend {
+          display: block;
+          margin-top: 10px;
+        }
+
+        .distLegendItem {
+          padding: 10px 0;
+        }
+
+        .distLegendVal {
+          grid-template-columns: auto 48px;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .distLegendVal b {
+          min-width: 36px;
+        }
+      }
+
+      /* 控制面板區。原本的 overflow:hidden 會切掉焦點框，拿掉；
+         表格自己有 .tableWrap 在捲，不需要外層再夾一層。 */
+      .controls-section {
+        background: var(--bg);
+        margin-bottom: 16px;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 8px var(--inset) 10px;
+        border-bottom: 1px solid var(--border-strong);
+      }
+
+      @media (min-width: 980px) {
+        .controls {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
+      }
+
+      /* 搜尋框 */
+      .search-wrapper {
+        position: relative;
+        flex: 0 1 340px;
+      }
+
+      input[type="search"] {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 9px 50px 9px 31px;
+        outline: none;
+        font-size: 14px;
+        font-family: inherit;
+        caret-color: var(--primary);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      input[type="search"]::placeholder {
+        color: var(--muted-ink);
+      }
+
+      input[type="search"]:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(140, 195, 81, 0.2);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-ink);
+        pointer-events: none;
+        font-size: 12px;
+      }
+
+      /* 按 / 就跳到搜尋框，這個快捷鍵本來就綁好了，只是沒地方說 */
+      .search-kbd {
+        position: absolute;
+        right: 7px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 2px 6px 3px;
+        border: 1px solid var(--border);
+        border-radius: 2px;
+        background: var(--bg);
+        color: var(--muted-ink);
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.2;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+      }
+
+      input[type="search"]:focus ~ .search-kbd,
+      input[type="search"]:not(:placeholder-shown) ~ .search-kbd {
+        opacity: 0;
+      }
+
+      /* 篩選頁籤：底線式。選中的那條線吃該頁籤自己的意義色——
+         上漲綠、下跌紅、自訂清單黃、全部用標誌綠，沒有新色。 */
+      .filter-tabs {
+        display: flex;
+        gap: 2px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+
+      .filter-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab-btn {
+        position: relative;
+        background: transparent;
+        border: 0;
+        color: var(--muted-ink);
+        padding: 9px 13px 11px;
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 0.14s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .tab-btn::after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        right: 13px;
+        bottom: 2px;
+        height: 2px;
+        background: currentColor;
+        opacity: 0;
+        transform: scaleX(0.35);
+        transition: opacity 0.16s ease, transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .tab-btn:hover {
+        color: var(--text);
+      }
+
+      .tab-btn:hover::after {
+        opacity: 0.3;
+        transform: scaleX(1);
+      }
+
+      .tab-btn.active {
+        color: var(--text);
+      }
+
+      .tab-btn.active::after {
+        opacity: 1;
+        transform: scaleX(1);
+        background: var(--primary);
+      }
+
+      .tab-btn.active[data-trend="up"]::after { background: var(--good); }
+      .tab-btn.active[data-trend="down"]::after { background: var(--bad); }
+      .tab-btn.active[data-trend="watchlist"]::after { background: var(--warn); }
+
+      /* 幣別切換按鈕組：選中的一格直接反白，不再是白底加淡陰影 */
+      .segment-control {
+        display: inline-flex;
+        background: var(--bg);
+        padding: 2px;
+        border-radius: var(--r);
+        border: 1px solid var(--border-strong);
+      }
+
+      .segment-btn {
+        background: transparent;
+        border: none;
+        color: var(--muted-ink);
+        padding: 5px 9px;
+        border-radius: 2px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: background-color 0.14s ease, color 0.14s ease;
+      }
+
+      .segment-btn:hover {
+        color: var(--text);
+      }
+
+      .segment-btn.active {
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      /* 操作按鈕 */
+      button.action-btn {
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 6px 10px;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+
+      button.action-btn:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .tab-btn:focus-visible,
+      .segment-btn:focus-visible,
+      button.action-btn:focus-visible,
+      .pagerButtons button:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      /* 自訂追蹤星星 */
+      .watchlist-star {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 15px;
+        user-select: none;
+        transition: color 0.12s ease, transform 0.1s ease;
+        display: inline-block;
+      }
+      .watchlist-star:hover {
+        color: var(--warn);
+        transform: scale(1.15);
+      }
+      .watchlist-star.active {
+        color: var(--warn);
+      }
+
+      /* 分頁列 */
+      .pagerRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px var(--inset);
+        background: transparent;
+        border-top: 1px solid var(--border-strong);
+      }
+
+      .pagerMeta {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--muted-ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pagerButtons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .pagerButtons button {
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        min-width: 36px;
+        height: 30px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+
+      .pagerButtons button:not(:disabled):hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .pagerButtons button:disabled {
+        opacity: 0.34;
+        cursor: not-allowed;
+      }
+
+      /* 狀態列：載入狀態與「目前依哪一欄、哪個方向排序」。
+         這兩段字 setStatus() 本來就算好了，只是先前沒有地方印出來。 */
+      .status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 9px var(--inset);
+        font-size: 11.5px;
+        color: var(--muted-ink);
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      .statusLine {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .statusLine #statusText {
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .distSeg,
+        .buyModalPanel {
+          animation: none;
+        }
+
+        .kpiBar::after,
+        .tab-btn::after,
+        .segment-btn,
+        .pagerButtons button,
+        button.action-btn,
+        button.buy-btn,
+        button.buyModalGo,
+        input[type="search"],
+        .search-kbd,
+        #backToTopBtn {
+          transition: none;
+        }
+      }
+
+      /* 表格本體 — 編輯感紙媒 */
+      @keyframes row-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes move-bar-in {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+
+      .tableWrap {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        background: transparent;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        /* 卡片欄加寬後，900px 會把價格與漲跌欄擠掉，一起往上調 */
+        min-width: 980px;
+      }
+
+      thead th {
+        border-bottom: 1px solid var(--border-strong);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        text-align: left;
+        padding: 11px 10px;
+        white-space: nowrap;
+        background: var(--bg);
+      }
+
+      thead th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      thead th.sortable:hover {
+        color: var(--text);
+      }
+
+      /* 排序指示器 (Sort Indicator)
+         靠右對齊的欄，箭頭一定要放在標題「左邊」（::before）。放右邊時就算
+         opacity:0 看不見，那一格字寬照樣占位，量出來會把標題從資料的右緣
+         往左推 14px；而且排序切換時箭頭一顯示，標題又會跳一次。
+         箭頭放左邊時，整行是右對齊的，行內容往左長，標題右緣就固定在
+         內容框右緣，跟數字對齊。靠左的卡片欄則相反，箭頭放右邊。 */
+      thead th.sortable:not(.right)::after,
+      thead th.right.sortable::before {
+        font-family: var(--mono);
+        color: var(--muted);
+        opacity: 0;
+      }
+
+      thead th.sortable:not(.right)::after {
+        content: "↕";
+        margin-left: 4px;
+      }
+
+      thead th.right.sortable::before {
+        content: "↕";
+        margin-right: 4px;
+      }
+
+      thead th.sortable:hover:not(.right)::after,
+      thead th.right.sortable:hover::before {
+        opacity: 0.4;
+      }
+
+      thead th.sortable[data-sort-dir="asc"]:not(.right)::after,
+      thead th.right.sortable[data-sort-dir="asc"]::before {
+        content: "▲";
+        color: var(--text);
+        opacity: 1;
+      }
+
+      thead th.sortable[data-sort-dir="desc"]:not(.right)::after,
+      thead th.right.sortable[data-sort-dir="desc"]::before {
+        content: "▼";
+        color: var(--text);
+        opacity: 1;
+      }
+
+      /* 兩欄粘滯定位 (Sticky Cols)：星星、卡片 */
+      thead th:nth-child(1), tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        width: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        text-align: center;
+        background: var(--bg);
+      }
+      /* 卡片欄要放兩行（卡名 + 卡號），150px 只夠一組卡號，所以加寬。
+         表格是 auto layout，超寬的內容會把整欄撐開，所以真正的截斷靠
+         .cardIdentText 的 max-width，這裡的寬度才守得住。
+         這一欄刻意不釘 width：表格是 width:100%，版面比欄寬總和寬出來的
+         那段留白要有地方去。全欄都釘死的話瀏覽器會把留白平均塞進每一欄，
+         最新價那欄一被吹寬，右對齊的數字就離 Buy 有 100px 以上。留白交給
+         卡片欄吸收，數字群才會靠在一起。 */
+      thead th:nth-child(2), tbody td:nth-child(2) {
+        position: sticky;
+        /* 星星欄是 36px 內容寬 + 左右各 10px padding = 56px（content-box）。
+           這裡寫 36px 的話，橫向捲動時卡片欄會壓到星星上面 20px。
+           手機版星星欄收窄，這個值在 @media (max-width: 640px) 裡跟著改。 */
+        left: 56px;
+        z-index: 10;
+        min-width: 224px;
+        background: var(--bg);
+      }
+
+      /* 最新價與三個漲跌欄：寬度給到剛好裝下內容（含 .move-bar 的 62px）。
+         值要放在 .buy-col / 走勢欄那些寬度旁邊一起讀，改一個要看整排。 */
+      thead th:nth-child(4), tbody td:nth-child(4) {
+        width: 86px;
+        min-width: 86px;
+      }
+      thead th:nth-child(5), tbody td:nth-child(5),
+      thead th:nth-child(6), tbody td:nth-child(6),
+      thead th:nth-child(7), tbody td:nth-child(7) {
+        width: 82px;
+        min-width: 82px;
+      }
+
+      tbody td:nth-child(1), tbody td:nth-child(2) {
+        background: var(--surface-sticky);
+      }
+
+      tbody tr {
+        animation: row-in 0.28s ease backwards;
+      }
+
+      tbody td {
+        border-bottom: 1px solid var(--border);
+        padding: 10px;
+        font-size: 13px;
+        vertical-align: middle;
+        white-space: nowrap;
+        background: var(--bg);
+      }
+
+      tbody tr:hover td {
+        background: var(--surface-hover);
+      }
+      tbody tr:hover td:nth-child(1),
+      tbody tr:hover td:nth-child(2) {
+        background: var(--surface-hover);
+      }
+
+      /* 鏡像表頭固定。導覽列是 fixed 佔住畫面最上緣，所以鏡像表頭要往下讓
+         一個導覽列的高度，否則會被壓在導覽列底下。JS 的釘住判斷也用同一個
+         位移量（那邊量的是元素實際高度，手機版變矮不用改這裡）。 */
+      #stickyTheadMirror {
+        position: fixed;
+        top: var(--nav-h);
+        z-index: 50;
+        overflow: hidden;
+        display: none;
+        pointer-events: auto;
+        border-bottom: 1px solid var(--border-strong);
+        background: var(--bg);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      }
+      #stickyTheadMirror table {
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+      #stickyTheadMirror th {
+        box-sizing: border-box;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .center-align {
+        text-align: center;
+      }
+
+      /* ══ 卡片欄：縮圖 + 上為卡名、下為卡號（＋作品名） ═══════════ */
+      .card-no-col {
+        font-size: 12.5px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        padding: 7px 10px;
+      }
+      .cardIdent {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      /* 卡圖是直式的，用 3:4.2 的框加 object-fit 取上緣，讓卡名那一帶露出來。
+         圖還沒到或抓不到時這個框仍占位，列高才不會跳動。 */
+      .cardThumb {
+        flex: 0 0 auto;
+        width: 30px;
+        height: 42px;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        object-fit: cover;
+        object-position: top center;
+      }
+      .cardIdentText {
+        min-width: 0;
+        max-width: 184px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+      }
+      .cardName {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta {
+        font-size: 11px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cardMeta .no {
+        font-family: var(--mono);
+        letter-spacing: 0.01em;
+      }
+
+      .price-cell {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pct {
+        position: relative;
+        font-variant-numeric: tabular-nums;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-weight: 500;
+        padding-bottom: 12px;
+      }
+
+      .pct.good { color: var(--good); }
+      .pct.bad { color: var(--bad); }
+      .pct.zero { color: var(--muted); }
+
+      .move-bar {
+        position: absolute;
+        right: 10px;
+        bottom: 4px;
+        height: 2px;
+        width: calc(var(--m, 0) * 62px);
+        background: currentColor;
+        opacity: 0.45;
+        transform-origin: right center;
+        animation: move-bar-in 0.35s cubic-bezier(0.22, 0.9, 0.3, 1) backwards;
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .font-semibold {
+        font-weight: 600;
+      }
+
+      /* Sparklines 走勢圖 */
+      .sparklineCell {
+        width: 140px;
+        min-width: 140px;
+        padding: 8px 10px;
+      }
+
+      .sparkline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 128px;
+        height: 28px;
+      }
+
+      .sparkline.up { color: var(--good); }
+      .sparkline.down { color: var(--bad); }
+      .sparkline svg {
+        display: block;
+        width: 128px;
+        height: 28px;
+      }
+
+      .sparkline-na {
+        color: var(--muted);
+        font-size: 11px;
+        font-family: var(--mono);
+      }
+
+      .sparklineSkeleton {
+        display: inline-block;
+        width: 128px;
+        height: 28px;
+        border-radius: 2px;
+        background: var(--surface-soft);
+      }
+
+      .stockCell {
+        width: 72px;
+        min-width: 72px;
+        /* 左右留白要跟 thead th 的 10px 一致，不然「庫存」標題會比下面的
+           值往左 4px。欄寬不變：72 + 10 + 10 = th 原本就撐出來的 92px */
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stockSkeleton {
+        display: inline-block;
+        width: 44px;
+        height: 14px;
+        border-radius: 2px;
+        background: var(--surface-soft);
+      }
+
+      /* 工具提示卡預覽 */
+      #cardTooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        padding: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      #cardTooltip img {
+        display: block;
+        width: 180px;
+        height: auto;
+        border-radius: 6px;
+        min-height: 252px;
+      }
+
+      /* ══ Buy 欄 + 購買通路彈窗 ══════════════════════════════════ */
+      /* 欄位只放一顆按鈕，寬度給到剛好裝下按鈕 + 左右 padding。
+         內容靠右（HTML 上掛 .right）：按鈕要貼在最新價那一欄的邊上，
+         置中的話按鈕會退回欄位中線，跟價格中間再多一段空白。 */
+      .buy-col {
+        width: 62px;
+        min-width: 62px;
+      }
+      .buyCell {
+        padding: 6px 10px;
+      }
+      /* 幽靈藥丸：淡金底 + 金框 + 金字，不是實心色塊。 */
+      button.buy-btn {
+        border: 1px solid var(--gold-line);
+        /* 用 background-color 而不是 background 簡寫：簡寫帶 var() 時
+           瀏覽器會留成待代入值，長寫屬性一律讀回空字串，量測工具會看不到它。 */
+        background-color: var(--gold-wash);
+        color: var(--gold-line);
+        /* 全站圓角一律 3px，這一顆刻意做滿圓。表格裡唯一的圓形，
+           不用看第二眼就知道它是可以按的，而不是一格資料。 */
+        border-radius: 999px;
+        padding: 3px 10px;
+        /* 跟頁面其他按鈕同一套字（--sans），不是 Martian Mono。
+           等寬字加寬字距是「印章」的語言，藥丸要的是安靜的標籤。 */
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        line-height: 1.45;
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      /* hover 加濃淡金底，同時把框線與字往離底色更遠的方向推。
+         只加濃底色的話字會被底色追上去，量到 4.20:1 是不及格的。 */
+      button.buy-btn:hover {
+        background-color: var(--gold-wash-strong);
+        border-color: var(--gold-line-hover);
+        color: var(--gold-line-hover);
+      }
+      /* 全站的 focus 環是 --primary 那支綠，壓在金線旁邊兩色互相糊掉。
+         這一顆換成墨色，2px/offset 2px 的形狀維持跟其他控件一致。 */
+      button.buy-btn:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+
+      /* 遮罩鋪滿視窗，面板置中。z-index 要壓過卡圖預覽（9999）。 */
+      #buyModal {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.45);
+      }
+      #buyModal.open {
+        display: flex;
+      }
+      body[data-theme="dark"] #buyModal {
+        background: rgba(0, 0, 0, 0.66);
+      }
+
+      .buyModalPanel {
+        width: 100%;
+        max-width: 340px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        /* 唯一的第二處金色：一條 2px 的金邊，把面板接回開它的那顆金籌碼。
+           面板裡的「前往」刻意留墨色外框——金色再多一處就不叫重點色了。 */
+        border-top: 2px solid var(--gold);
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+        /* 不要用 fill-mode: backwards。動畫沒跑到（背景分頁、節流）時，
+           backwards 會把面板永久壓在 opacity:0，開了窗卻看不到東西。 */
+        animation: buy-panel-in 0.18s cubic-bezier(0.22, 0.9, 0.3, 1);
+      }
+
+      /* 起點不從 opacity:0 開始：動畫時間軸沒推進時（節流分頁、虛擬時間）
+         面板會停在起點那一格，0 的話就是開了窗但整片看不到。0.45 起跳，
+         最壞情況仍然讀得到內容，而 0.18s 的觀感幾乎沒有差別。 */
+      @keyframes buy-panel-in {
+        from { opacity: 0.45; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      .buyModalHead {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .buyModalTitle {
+        font-family: var(--disp);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      /* 卡號可能很長（含 SP／SSP 尾綴），允許折行，不要把面板撐開 */
+      .buyModalCardNo {
+        display: block;
+        margin-top: 3px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        word-break: break-all;
+      }
+      .buyModalClose {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--muted);
+        border-radius: var(--r);
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .buyModalClose:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .buyModalList {
+        padding: 4px 0;
+      }
+      .buyModalRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 14px;
+      }
+      .buyModalRow + .buyModalRow {
+        border-top: 1px solid var(--border);
+      }
+      .buyModalShop {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .buyModalShop small {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      button.buyModalGo {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: var(--r);
+        padding: 5px 12px;
+        font-family: inherit;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      button.buyModalGo:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      /* .buy-btn 不在這組裡：它的 focus 環在上面自己定義成墨色。
+         寫在這裡的話選擇器權重相同、位置在後，會蓋掉上面那條。 */
+      .buyModalClose:focus-visible,
+      button.buyModalGo:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      /* 錯誤訊息框 */
+      .dangerBox {
+        margin: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--bad);
+        background: rgba(234, 57, 67, 0.1);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .dangerBox code {
+        font-family: var(--mono);
+        background: rgba(0,0,0,0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+
+      /* 右側浮動置頂按鈕 */
+      #backToTopBtn {
+        position: fixed;
+        right: 24px;
+        bottom: 32px;
+        z-index: 60;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: var(--r);
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease,
+          background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      }
+
+      #backToTopBtn.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      #backToTopBtn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+      }
+
+      #backToTopBtn:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      /* 深色模式：白色加粗外框，讓按鈕從近黑底色浮出來 */
+      body[data-theme="dark"] #backToTopBtn {
+        border-width: 3px;
+        border-color: #ffffff;
+      }
+
+      body[data-theme="dark"] #backToTopBtn:hover {
+        border-color: #ffffff;
+      }
+
+      @media (max-width: 640px) {
+        #backToTopBtn {
+          right: 14px;
+          bottom: 20px;
+          width: 40px;
+          height: 40px;
+          font-size: 14px;
+        }
+
+        /* 375px 的第一屏要一次看到四個頁籤，不然第四個會被切一半，
+           看起來像壞版而不是可以左右滑。圖示收掉最省位置（四個共 80px），
+           顏色的意思本來就由選中時的底線在說了。 */
+        .tab-btn {
+          font-size: 13px;
+          padding: 9px 10px 11px;
+          gap: 0;
+        }
+
+        .tab-btn i {
+          display: none;
+        }
+
+        .tab-btn::after {
+          left: 10px;
+          right: 10px;
+        }
+
+        /* 手機沒有實體鍵盤，「/」的提示沒有意義，右邊的留白也一起還回去 */
+        .search-kbd {
+          display: none;
+        }
+
+        input[type="search"] {
+          padding-right: 12px;
+        }
+        /* 手機第一屏只有約 375px，橫向空間要省。星星本身只有約 17px 寬，
+           桌機版 36px 內容寬 + 左右各 10px padding = 56px 太浪費，收成
+           22px + 各 5px = 32px，替卡片欄多讓出 24px。 */
+        thead th:nth-child(1), tbody td:nth-child(1) {
+          width: 22px;
+          min-width: 22px;
+          max-width: 22px;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+        /* 手機第一屏只有約 375px。卡片欄收窄，讓「最新價」還能跟卡名並排看到 */
+        thead th:nth-child(2), tbody td:nth-child(2) {
+          /* 星星欄收成 32px，sticky 的 left 要跟著改，否則捲動時卡片欄
+             會蓋掉星星 24px。 */
+          left: 32px;
+          width: 143px;
+          min-width: 143px;
+          max-width: 143px;
+        }
+        .cardThumb {
+          width: 26px;
+          height: 36px;
+        }
+        .cardIdent {
+          gap: 8px;
+        }
+        .cardIdentText {
+          max-width: 142px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 頂部導覽列（結構參照 line_test_v86.html 的 .main-header） -->
+    <nav class="siteNav" id="siteNav">
+      <div class="siteNavInner">
+        <button
+          type="button"
+          class="navIconBtn"
+          id="drawerToggle"
+          aria-label="開啟選單"
+          aria-expanded="false"
+          aria-controls="siteDrawer"
+        >
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+        <div class="navTitleBlock">
+          <span class="navTitleText">價格漲跌幅觀測</span>
+          <span class="navTitleBadge">WS</span>
+        </div>
+        <div class="navActions">
+          <!-- 主題切換從行情列搬上來：導覽列右側就是 v86 放它的位置，
+               留在行情列會變成同一頁兩顆同功能的按鈕 -->
+          <button id="themeToggleBtn" type="button" class="action-btn" title="切換淺色/深色主題">
+            <i class="fa-regular fa-moon"></i> 深色
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 抽屜遮罩 -->
+    <div class="drawerOverlay" id="drawerOverlay"></div>
+
+    <!-- 側邊抽屜選單 -->
+    <aside class="drawer" id="siteDrawer" aria-label="網站選單" aria-hidden="true">
+      <div class="drawerHeader">
+        <a href="./" class="drawerBrand">
+          <img src="dist/img/logo.png" alt="" class="drawerBrandImg" />
+          <span>WS-Cards</span>
+        </a>
+        <button type="button" class="navIconBtn" id="drawerClose" aria-label="關閉選單">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <nav class="drawerNav">
+        <ul>
+          <li class="menuItem open">
+            <a href="#" class="menuLink drawerSubToggle" aria-expanded="true">
+              <i class="fa-solid fa-gauge-high mainIcon"></i>
+              <span>遊遊亭價格查詢</span>
+              <i class="fa-solid fa-angle-left rightIcon"></i>
+            </a>
+            <ul class="submenu">
+              <li>
+                <a href="line" class="menuLink">
+                  <i class="fa-solid fa-chart-line mainIcon"></i>
+                  <span>各卡號漲幅趨勢(WS)</span>
+                </a>
+              </li>
+              <li>
+                <a href="lineWSR" class="menuLink">
+                  <i class="fa-solid fa-chart-line mainIcon"></i>
+                  <span>各卡號漲幅趨勢(WSR)</span>
+                </a>
+              </li>
+              <li>
+                <a href="deckPrice" class="menuLink">
+                  <i class="fa-solid fa-magnifying-glass-dollar mainIcon"></i>
+                  <span>牌組總額查詢計算機</span>
+                </a>
+              </li>
+              <li>
+                <a href="./priceIncrease_v31.html" class="menuLink active" aria-current="page">
+                  <i class="fa-solid fa-arrow-trend-up mainIcon"></i>
+                  <span>價格漲跌幅觀測</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menuItem">
+            <a href="championList" class="menuLink">
+              <i class="fa-solid fa-trophy mainIcon"></i>
+              <span>優勝牌組查詢 (Beta)</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="drawerFooter">WS-Cards<span>β</span></div>
+    </aside>
+
+    <!-- 全局統計數據列 -->
+    <div class="global-stats-bar">
+      <div class="global-stats-container">
+        <div class="global-stats-item">追蹤卡片 <strong id="global-total">—</strong></div>
+        <div class="global-stats-item">24h 上漲 <i class="fa-solid fa-caret-up tick up" aria-hidden="true"></i> <strong id="global-gainers" class="green">—</strong></div>
+        <div class="global-stats-item">24h 下跌 <i class="fa-solid fa-caret-down tick down" aria-hidden="true"></i> <strong id="global-losers" class="red">—</strong></div>
+        <div class="global-stats-item">自訂追蹤 <strong id="global-watchlist">—</strong></div>
+        <div class="global-stats-item">目前匯率 <strong id="global-rate">—</strong></div>
+        <div class="global-stats-actions">
+          <div class="segment-control" id="currencySegment">
+            <button type="button" class="segment-btn active" data-currency="JPY">JPY (¥)</button>
+            <button type="button" class="segment-btn" data-currency="TWD">TWD (NT$)</button>
+          </div>
+          <button id="reloadBtn" type="button" class="action-btn" title="重新載入資料">
+            <i class="fa-solid fa-arrows-rotate"></i> 重新整理
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <header>
+        <div class="titleRow">
+          <div>
+            <h1>今天誰在漲？</h1>
+            <p class="subtitle">WS 單卡報價 / 按 ☆ 收進自訂清單 / 目前收錄遊遊亭報價。</p>
+          </div>
+          <!-- 資料時間 setGeneratedAt() 一直都算好了，先前沒有元素接它 -->
+          <div class="mastMeta">
+            <span class="mastMetaK">資料時間</span>
+            <span class="mastMetaV" id="generatedAtText">—</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- KPI 指標區 -->
+      <section class="marketSummary">
+        <div class="summaryItem">
+          <div class="k">目前總共顯示</div>
+          <div class="v mono" id="kpiShown">—</div>
+          <div class="sub mono" id="kpiShownSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiAvgLabel">平均值</div>
+          <div class="v mono" id="kpiAvg">—</div>
+          <span class="kpiBar" aria-hidden="true"></span>
+          <div class="sub" id="kpiAvgSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMedianLabel">中位數</div>
+          <div class="v mono" id="kpiMedian">—</div>
+          <span class="kpiBar" aria-hidden="true"></span>
+          <div class="sub" id="kpiMedianSub">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMaxLabel">最高值</div>
+          <div class="v mono" id="kpiMax">—</div>
+          <span class="kpiBar" aria-hidden="true"></span>
+          <div class="sub mono" id="kpiMaxCard" title="">—</div>
+        </div>
+        <div class="summaryItem">
+          <div class="k" id="kpiMinLabel">最低值</div>
+          <div class="v mono" id="kpiMin">—</div>
+          <span class="kpiBar" aria-hidden="true"></span>
+          <div class="sub mono" id="kpiMinCard" title="">—</div>
+        </div>
+      </section>
+
+      <!-- 分布區間（獨立整列，不參與手機橫向滑動） -->
+      <section class="distSummary">
+        <div class="summaryItem summaryItem--wide">
+          <div class="k" id="kpiDistLabel">分布區間</div>
+          <div class="distBar" id="kpiDistBar"></div>
+          <div class="distLegend" id="kpiDistLegend"></div>
+        </div>
+      </section>
+
+      <!-- 控制與篩選面板 -->
+      <section class="controls-section">
+        <div class="controls">
+          <!-- 篩選分頁籤 (Tabs) -->
+          <div class="filter-tabs" id="filterTabs">
+            <button type="button" class="tab-btn active" data-trend="all">
+              <i class="fa-solid fa-layer-group"></i> 全部卡片
+            </button>
+            <button type="button" class="tab-btn" data-trend="up">
+              <i class="fa-solid fa-arrow-trend-up" style="color: var(--good)"></i> 只看上漲
+            </button>
+            <button type="button" class="tab-btn" data-trend="down">
+              <i class="fa-solid fa-arrow-trend-down" style="color: var(--bad)"></i> 只看下跌
+            </button>
+            <button type="button" class="tab-btn" data-trend="watchlist">
+              <i class="fa-solid fa-star" style="color: var(--warn)"></i> 自訂清單
+            </button>
+          </div>
+
+          <!-- 搜尋 -->
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="search-wrapper">
+              <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+              <input id="q" type="search" placeholder="搜尋卡名、卡號或作品…" autocomplete="off" spellcheck="false" />
+              <span class="search-kbd" aria-hidden="true">/</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 狀態列：載入狀態與目前的排序依據 -->
+        <div class="status">
+          <span class="statusLine">
+            <span id="statusText">載入中…</span><span id="statusSub"></span>
+          </span>
+        </div>
+
+        <!-- 數據表格 -->
+        <div class="tableWrap">
+          <table>
+            <thead id="tableWrapHeader">
+              <tr>
+                <!-- 寬度由 CSS 的 thead th:nth-child(1) 控制。這裡不要寫 inline
+                     style，否則手機版的 @media 收窄規則會被 inline 蓋掉。 -->
+                <th></th>
+                <th class="sortable" data-sort-key="cardNo" title="點擊排序">卡片</th>
+                <!-- 購買通路：沒有可排序的值，所以不掛 data-sort-key -->
+                <th class="right buy-col">Buy</th>
+                <th class="right sortable" data-sort-key="latestPrice" title="點擊排序">最新價</th>
+                <th class="right col-1d sortable" data-sort-key="change1dPct" title="點擊排序">1 日</th>
+                <th class="right col-3d sortable" data-sort-key="change3dPct" title="點擊排序">3 日</th>
+                <th class="right col-7d sortable" data-sort-key="change7dPct" title="點擊排序">7 日</th>
+                <th class="right stock-col" style="width: 72px; min-width: 72px;">庫存</th>
+                <th class="right col-7d" style="width: 140px; min-width: 140px;">走勢</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- 分頁控制 -->
+        <div class="pagerRow">
+          <span class="pagerMeta" id="pageInfo">第 1 / 1 頁</span>
+          <div class="pagerButtons">
+            <button id="prevPageBtn" type="button" title="上一頁">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="nextPageBtn" type="button" title="下一頁">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <span class="pagerMeta" id="pageStatsText">顯示 0 / 0</span>
+        </div>
+
+        <div id="errorBox" class="dangerBox" style="display: none"></div>
+      </section>
+    </div>
+
+    <div id="cardTooltip"><img id="cardTooltipImg" src="#" alt="卡圖預覽" /></div>
+
+    <!-- 購買通路彈窗：三個通路都用卡號當關鍵字，另開分頁查詢 -->
+    <div id="buyModal" role="dialog" aria-modal="true" aria-labelledby="buyModalTitle">
+      <div class="buyModalPanel" role="document">
+        <div class="buyModalHead">
+          <div>
+            <span class="buyModalTitle" id="buyModalTitle">前往購買</span>
+            <span class="buyModalCardNo" id="buyModalCardNo">—</span>
+          </div>
+          <button type="button" class="buyModalClose" id="buyModalClose" title="關閉" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="buyModalList" id="buyModalList"></div>
+      </div>
+    </div>
+
+    <!-- 浮動置頂按鈕 -->
+    <button id="backToTopBtn" type="button" title="回到頂端" aria-label="回到頂端">
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <script>
+      (() => {
+        const REMOTE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/priceChange.json";
+        const CARD_DATA_BASE_URL =
+          "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/";
+        // 卡名與作品名都已經在 repo 裡，不需要新資料來源
+        const CARD_DICTIONARY_URL = "json/cardDictionary.json";
+        const CARD_TITLE_URL = "json/cardTitle.json";
+        const SPARKLINE_CONCURRENCY = 6;
+        const THEME_STORAGE_KEY = "priceIncreaseTheme";
+        const WATCHLIST_STORAGE_KEY = "cardWatchlist";
+
+        // 購買通路：卡號直接當關鍵字接在 search 後面。三個站的查詢參數不同名，
+        // 所以連結格式各自留在這裡，不要合成一條通用規則。
+        const BUY_CHANNELS = [
+          { name: "遊遊亭", note: "yuyu-tei.jp", url: (kw) => `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent(kw)}` },
+          { name: "Mercari", note: "jp.mercari.com", url: (kw) => `https://jp.mercari.com/search?keyword=${encodeURIComponent(kw)}` },
+          { name: "露天", note: "ruten.com.tw", url: (kw) => `https://www.ruten.com.tw/find/?q=${encodeURIComponent(kw)}` },
+        ];
+
+        /** @type {null | { generatedAt: number, cards: Record<string, any>}} */
+        let rawData = null;
+        /** @type {Array<any>} */
+        let cardRows = [];
+        let exRate = 0.22;
+        let exRateFallback = false;
+        let renderVersion = 0;
+        let activeSortKey = "change1dPct";
+        let activeSortDirection = "desc";
+        const pageSize = 200;
+        let currentPage = 1;
+        let stickyHeaderMirror = null;
+        const productDataPromiseCache = new Map();
+        const cardSeriesPromiseCache = new Map();
+
+        // 卡名／作品名查詢表。都在背景載入，載完再補進已經畫好的列。
+        /** @type {Map<string, string>} 卡號 → 卡名 */
+        const cardNameMap = new Map();
+        /** @type {Map<string, string>} 系列代號 → 作品名 */
+        const seriesTitleMap = new Map();
+
+        // 追蹤清單設定 (Watchlist Setup)
+        const watchlist = new Set(JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]"));
+        let activeTrendFilter = "all";
+        let activeCurrency = "JPY";
+
+        const els = {
+          generatedAtText: document.getElementById("generatedAtText"),
+          reloadBtn: document.getElementById("reloadBtn"),
+          themeToggleBtn: document.getElementById("themeToggleBtn"),
+          q: document.getElementById("q"),
+          pageInfo: document.getElementById("pageInfo"),
+          prevPageBtn: document.getElementById("prevPageBtn"),
+          nextPageBtn: document.getElementById("nextPageBtn"),
+          pageStatsText: document.getElementById("pageStatsText"),
+          kpiShown: document.getElementById("kpiShown"),
+          kpiShownSub: document.getElementById("kpiShownSub"),
+          kpiAvgLabel: document.getElementById("kpiAvgLabel"),
+          kpiAvg: document.getElementById("kpiAvg"),
+          kpiAvgSub: document.getElementById("kpiAvgSub"),
+          kpiMedianLabel: document.getElementById("kpiMedianLabel"),
+          kpiMedian: document.getElementById("kpiMedian"),
+          kpiMedianSub: document.getElementById("kpiMedianSub"),
+          kpiMaxLabel: document.getElementById("kpiMaxLabel"),
+          kpiMinLabel: document.getElementById("kpiMinLabel"),
+          kpiMax: document.getElementById("kpiMax"),
+          kpiMin: document.getElementById("kpiMin"),
+          kpiMaxCard: document.getElementById("kpiMaxCard"),
+          kpiMinCard: document.getElementById("kpiMinCard"),
+          kpiDistLabel: document.getElementById("kpiDistLabel"),
+          kpiDistBar: document.getElementById("kpiDistBar"),
+          kpiDistLegend: document.getElementById("kpiDistLegend"),
+          statusText: document.getElementById("statusText"),
+          statusSub: document.getElementById("statusSub"),
+          sourceText: document.getElementById("sourceText"),
+          tbody: document.getElementById("tbody"),
+          errorBox: document.getElementById("errorBox"),
+        };
+
+        function resolveInitialTheme() {
+          const saved = localStorage.getItem(THEME_STORAGE_KEY);
+          if (saved === "light" || saved === "dark") return saved;
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyTheme(theme) {
+          document.body.setAttribute("data-theme", theme);
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+          if (els.themeToggleBtn) {
+            const isDark = theme === "dark";
+            els.themeToggleBtn.innerHTML = isDark 
+              ? `<i class="fa-regular fa-sun"></i> 淺色` 
+              : `<i class="fa-regular fa-moon"></i> 深色`;
+          }
+        }
+
+        function toggleTheme() {
+          const now = document.body.getAttribute("data-theme") || "light";
+          applyTheme(now === "dark" ? "light" : "dark");
+        }
+
+        /* 導覽列是 fixed 蓋在畫面最上緣，所以「捲到某處」跟「釘在上緣」這兩類
+           計算都要先扣掉它。量元素實際高度而不讀 --nav-h，手機版收窄後照樣對。 */
+        function navOffset() {
+          const nav = document.getElementById("siteNav");
+          return nav ? nav.getBoundingClientRect().height : 0;
+        }
+
+        function fmtNum(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          return new Intl.NumberFormat("zh-TW").format(Number(n));
+        }
+
+        function cardNoToProductCode(cardNo) {
+          return (String(cardNo || "").split("-")[0] || "").replace(/\//g, "_");
+        }
+
+        function normalizePriceSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => Number(v)).filter((v) => Number.isFinite(v));
+        }
+
+        function normalizeDateKey(v) {
+          const s = String(v ?? "").replace(/\D/g, "");
+          return s.length === 8 ? s : "";
+        }
+
+        function normalizeDateSeries(series) {
+          if (!Array.isArray(series)) return [];
+          return series.map((v) => normalizeDateKey(v));
+        }
+
+        function findCardEntry(data, cardNo) {
+          if (!data || !cardNo) return null;
+          if (data[cardNo]) return data[cardNo];
+          const lower = String(cardNo).toLowerCase();
+          for (const [k, v] of Object.entries(data)) {
+            if (String(k).toLowerCase() === lower) return v;
+          }
+          return null;
+        }
+
+        function sparklineSvg(prices) {
+          const values = normalizePriceSeries(prices);
+          if (values.length < 2) {
+            return '<span class="sparkline-na">N/A</span>';
+          }
+          const width = 128;
+          const height = 30;
+          const pad = 2;
+          const chartW = width - pad * 2;
+          const chartH = height - pad * 2;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const range = max - min || 1;
+          const points = values.map((v, i) => {
+            const x = pad + (i / (values.length - 1)) * chartW;
+            const y = pad + (1 - (v - min) / range) * chartH;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+          });
+          const trendClass = values[values.length - 1] >= values[0] ? "up" : "down";
+          return `
+            <span class="sparkline ${trendClass}" title="${escapeHtml(values[0] + " -> " + values[values.length - 1])}">
+              <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="${points.join(" ")}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              </svg>
+            </span>
+          `.trim();
+        }
+
+        async function getProductData(productCode) {
+          if (!productCode) return null;
+          if (!productDataPromiseCache.has(productCode)) {
+            const url = `${CARD_DATA_BASE_URL}${productCode}.json`;
+            productDataPromiseCache.set(
+              productCode,
+              fetchJson(url).catch(() => null)
+            );
+          }
+          return await productDataPromiseCache.get(productCode);
+        }
+
+        async function getCardSeries(cardNo) {
+          const key = String(cardNo || "");
+          if (!key) return { prices: [], dates: [] };
+          if (!cardSeriesPromiseCache.has(key)) {
+            cardSeriesPromiseCache.set(key, (async () => {
+              const productCode = cardNoToProductCode(key);
+              const data = await getProductData(productCode);
+              const cardEntry = findCardEntry(data, key);
+              if (!cardEntry) return { prices: [], dates: [] };
+              const prices = normalizePriceSeries(cardEntry.cardPrice);
+              const rawDates = cardEntry.upddate ?? cardEntry.update ?? [];
+              const dates = normalizeDateSeries(rawDates);
+              return { prices, dates };
+            })());
+          }
+          return await cardSeriesPromiseCache.get(key);
+        }
+
+        function getLatestStockValue(cardNo) {
+          const cardEntry = findCardEntry((rawData && rawData.cards) || {}, cardNo);
+          const latestStock = Number(cardEntry && cardEntry.latestStock);
+          return Number.isFinite(latestStock) ? latestStock : null;
+        }
+
+        async function runWithConcurrency(items, limit, worker) {
+          if (!items.length) return;
+          const cap = Math.max(1, Math.min(limit, items.length));
+          let cursor = 0;
+          const runners = Array.from({ length: cap }, async () => {
+            while (cursor < items.length) {
+              const idx = cursor++;
+              await worker(items[idx], idx);
+            }
+          });
+          await Promise.all(runners);
+        }
+
+        function renderSparklines(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".sparklineCell[data-sparkline-key]"));
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) return;
+            const key = cell.getAttribute("data-sparkline-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const series = await getCardSeries(cardNo);
+            const prices = normalizePriceSeries(series && series.prices);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            cell.innerHTML = sparklineSvg(prices);
+          }).catch(() => {});
+        }
+
+        function renderStockCells(renderToken) {
+          const cells = Array.from(els.tbody.querySelectorAll(".stockCell[data-stock-key]"));
+          let successCount = 0;
+          let failCount = 0;
+          let staleCount = 0;
+
+          console.log(`[stock] render start: total=${cells.length}`);
+
+          runWithConcurrency(cells, SPARKLINE_CONCURRENCY, async (cell) => {
+            if (renderToken !== renderVersion) {
+              staleCount += 1;
+              return;
+            }
+            const key = cell.getAttribute("data-stock-key") || "";
+            let cardNo = "";
+            try {
+              cardNo = decodeURIComponent(key);
+            } catch {
+              cardNo = key;
+            }
+            const latestStock = getLatestStockValue(cardNo);
+            if (renderToken !== renderVersion || !cell.isConnected) return;
+            if (latestStock > 0) {
+              successCount += 1;
+              cell.textContent = "◯";
+            } else {
+              failCount += 1;
+              cell.textContent = "售罄";
+            }
+          }).then(() => {
+            if (renderToken === renderVersion) {
+              console.log(
+                `[stock] render done: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`
+              );
+            }
+          }).catch((error) => {
+            console.log(
+              `[stock] render error: total=${cells.length}, success=${successCount}, fail=${failCount}, stale=${staleCount}, source=priceChange.latestStock`,
+              error
+            );
+          });
+        }
+
+        function fmtPct(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          const v = Number(n);
+          const sign = v > 0 ? "+" : "";
+          return `${sign}${v.toFixed(2)}%`;
+        }
+
+        function formatPrice(n) {
+          if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+          let val = Number(n);
+          if (activeCurrency === "TWD") {
+            val = Math.round(val * exRate);
+            return "NT$" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(val);
+          }
+          return "¥" + new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 }).format(Math.round(val));
+        }
+
+        function pctClass(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "zero";
+          if (v > 0) return "good";
+          if (v < 0) return "bad";
+          return "zero";
+        }
+
+        const BAR_REF = 20;
+
+        function moveCell(v, colClass) {
+          const mag = Number.isFinite(Number(v)) ? Math.min(1, Math.abs(Number(v)) / BAR_REF) : 0;
+          return `<td class="right pct ${colClass} ${pctClass(v)}">${escapeHtml(fmtPct(v))}<span class="move-bar" style="--m:${mag.toFixed(3)}"></span></td>`;
+        }
+
+        function setStatus(main, sub = "") {
+          if (els.statusText) {
+            els.statusText.textContent = main;
+          }
+          if (els.statusSub) {
+            els.statusSub.textContent = sub ? `｜${sub}` : "";
+          }
+        }
+
+        function showError(html) {
+          els.errorBox.style.display = "block";
+          els.errorBox.innerHTML = html;
+        }
+
+        function clearError() {
+          els.errorBox.style.display = "none";
+          els.errorBox.innerHTML = "";
+        }
+
+        function toRows(data) {
+          const entries = Object.entries((data && data.cards) || {});
+          return entries.map(([cardNo, c]) => ({
+            cardNo: c.cardNo || cardNo,
+            latestPrice: c.latestPrice,
+            latestStock: c.latestStock,
+            change1dPct: c.change1dPct,
+            change3dPct: c.change3dPct,
+            change7dPct: c.change7dPct,
+            base1dDate: c.base1dDate,
+            base1dPrice: c.base1dPrice,
+            base3dDate: c.base3dDate,
+            base3dPrice: c.base3dPrice,
+            base7dDate: c.base7dDate,
+            base7dPrice: c.base7dPrice,
+          }));
+        }
+
+        function compareRows(a, b, sortKey) {
+          if (sortKey === "cardNo") {
+            return String(a.cardNo || "").localeCompare(String(b.cardNo || ""), "zh-Hant", {
+              numeric: true,
+              sensitivity: "base",
+            });
+          }
+
+          const av = Number(a[sortKey]);
+          const bv = Number(b[sortKey]);
+          const aSafe = Number.isFinite(av) ? av : -Infinity;
+          const bSafe = Number.isFinite(bv) ? bv : -Infinity;
+          return aSafe - bSafe;
+        }
+
+        function sortLabel(sortKey) {
+          switch (sortKey) {
+            case "cardNo":
+              return "卡號";
+            case "latestPrice":
+              return "最新價";
+            case "change1dPct":
+              return "1日漲跌幅";
+            case "change3dPct":
+              return "3日漲跌幅";
+            case "change7dPct":
+              return "7日漲跌幅";
+            default:
+              return sortKey;
+          }
+        }
+
+        function formatSortValue(sortKey, row) {
+          if (!row) return "—";
+          if (sortKey === "cardNo") return row.cardNo || "—";
+          if (sortKey === "latestPrice") return formatPrice(row.latestPrice);
+          return fmtPct(row[sortKey]);
+        }
+
+        /* ---------- KPI 統計 ---------- */
+
+        // 以卡號排序時無數值可統計，退回 1 日漲跌幅
+        function statKeyForKpi() {
+          return activeSortKey === "cardNo" ? "change1dPct" : activeSortKey;
+        }
+
+        function formatStatValue(statKey, v) {
+          if (!Number.isFinite(v)) return "—";
+          return statKey === "latestPrice" ? formatPrice(v) : fmtPct(v);
+        }
+
+        // values 需已由小到大排序
+        function medianOf(values) {
+          const n = values.length;
+          if (!n) return NaN;
+          const mid = n >> 1;
+          return n % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+        }
+
+        function setKpiTone(el, v, enabled) {
+          if (!el) return;
+          const tone = enabled && Number.isFinite(v) ? pctClass(v) : "";
+          // className 整個覆寫，所以樣式不能掛在 .v 上，一律從 .summaryItem 選下來
+          el.className = tone ? `v mono pct ${tone}` : "v mono";
+
+          // 幅度尺跟表格的 .move-bar 共用 BAR_REF 這組刻度。是元素的兄弟節點，
+          // 因為 el.textContent 每次都會清掉 .v 底下的子節點。
+          const bar = el.parentElement && el.parentElement.querySelector(".kpiBar");
+          if (!bar) return;
+          bar.className = tone ? `kpiBar ${tone}` : "kpiBar";
+          const mag = tone ? Math.min(1, Math.abs(v) / BAR_REF) : 0;
+          bar.style.setProperty("--m", mag.toFixed(3));
+        }
+
+        // 漲跌幅用固定級距，價格用等寬 5 段動態級距
+        const PCT_BUCKETS = [
+          { label: "≥ +10%", tone: "good", strength: 1, test: (v) => v >= 10 },
+          { label: "+5 ~ +10%", tone: "good", strength: 0.62, test: (v) => v >= 5 && v < 10 },
+          { label: "0 ~ +5%", tone: "good", strength: 0.32, test: (v) => v > 0 && v < 5 },
+          { label: "平盤", tone: "zero", strength: 0.8, test: (v) => v === 0 },
+          { label: "-5 ~ 0%", tone: "bad", strength: 0.32, test: (v) => v < 0 && v > -5 },
+          { label: "-10 ~ -5%", tone: "bad", strength: 0.62, test: (v) => v <= -5 && v > -10 },
+          { label: "≤ -10%", tone: "bad", strength: 1, test: (v) => v <= -10 },
+        ];
+
+        function buildBuckets(statKey, values) {
+          if (statKey !== "latestPrice") {
+            return PCT_BUCKETS.map((b) => ({ ...b, count: 0 }));
+          }
+          if (!values.length) return [];
+
+          const min = values[0];
+          const max = values[values.length - 1];
+          const segments = 5;
+          const step = (max - min) / segments;
+          if (!(step > 0)) {
+            return [{ label: formatPrice(min), tone: "price", strength: 1, count: 0, test: () => true }];
+          }
+
+          const out = [];
+          for (let i = 0; i < segments; i++) {
+            const lo = min + step * i;
+            const isLast = i === segments - 1;
+            const hi = isLast ? Infinity : min + step * (i + 1);
+            out.push({
+              label: `${formatPrice(lo)} ~ ${formatPrice(isLast ? max : hi)}`,
+              tone: "price",
+              strength: 0.35 + (0.65 * i) / (segments - 1),
+              count: 0,
+              test: (v) => v >= lo && v < hi,
+            });
+          }
+          return out;
+        }
+
+        function renderDistribution(buckets, total) {
+          if (!els.kpiDistBar || !els.kpiDistLegend) return;
+
+          if (!total || !buckets.length) {
+            els.kpiDistBar.innerHTML = "";
+            els.kpiDistLegend.innerHTML = `<span class="distLegendEmpty">無可統計的資料</span>`;
+            return;
+          }
+
+          els.kpiDistBar.innerHTML = buckets
+            .filter((b) => b.count > 0)
+            .map((b) => {
+              const share = (b.count / total) * 100;
+              const tip = `${b.label}：${fmtNum(b.count)} 筆（${share.toFixed(1)}%）`;
+              return `<span class="distSeg distSeg--${b.tone}" style="flex: ${b.count} 0 auto; opacity: ${b.strength};" title="${escapeHtml(tip)}"></span>`;
+            })
+            .join("");
+
+          els.kpiDistLegend.innerHTML = buckets
+            .map((b) => {
+              const share = (b.count / total) * 100;
+              return `<span class="distLegendItem${b.count ? "" : " isEmpty"}" title="${escapeHtml(`${b.label}：${fmtNum(b.count)} 筆（${share.toFixed(1)}%）`)}"><span class="distDot distSeg--${b.tone}" style="opacity: ${b.strength};"></span><span class="distLegendLabel">${escapeHtml(b.label)}</span><span class="distLegendVal"><b>${fmtNum(b.count)}</b><span class="distLegendShare">${share.toFixed(1)}%</span></span></span>`;
+            })
+            .join("");
+        }
+
+        function updateKpi(filtered) {
+          const statKey = statKeyForKpi();
+          const label = sortLabel(statKey);
+          const isPct = statKey !== "latestPrice";
+
+          const rows = filtered
+            .filter((r) => Number.isFinite(Number(r[statKey])))
+            .sort((a, b) => Number(a[statKey]) - Number(b[statKey]));
+          const values = rows.map((r) => Number(r[statKey]));
+          const n = values.length;
+
+          els.kpiAvgLabel.textContent = `平均${label}`;
+          els.kpiMedianLabel.textContent = `中位數${label}`;
+          els.kpiMaxLabel.textContent = `最高${label}`;
+          els.kpiMinLabel.textContent = `最低${label}`;
+          els.kpiDistLabel.textContent = `${label} 分布區間`;
+
+          els.kpiShown.textContent = fmtNum(filtered.length);
+          els.kpiShownSub.textContent = `／ 全部 ${fmtNum(cardRows.length)} 筆`;
+
+          const avg = n ? values.reduce((s, v) => s + v, 0) / n : NaN;
+          const med = medianOf(values);
+          const minRow = rows[0] || null;
+          const maxRow = rows[n - 1] || null;
+
+          els.kpiAvg.textContent = formatStatValue(statKey, avg);
+          els.kpiMedian.textContent = formatStatValue(statKey, med);
+          els.kpiMax.textContent = maxRow ? formatStatValue(statKey, Number(maxRow[statKey])) : "—";
+          els.kpiMin.textContent = minRow ? formatStatValue(statKey, Number(minRow[statKey])) : "—";
+
+          setKpiTone(els.kpiAvg, avg, isPct);
+          setKpiTone(els.kpiMedian, med, isPct);
+          setKpiTone(els.kpiMax, maxRow ? Number(maxRow[statKey]) : NaN, isPct);
+          setKpiTone(els.kpiMin, minRow ? Number(minRow[statKey]) : NaN, isPct);
+
+          const maxCardNo = maxRow ? String(maxRow.cardNo || "—") : "—";
+          const minCardNo = minRow ? String(minRow.cardNo || "—") : "—";
+          els.kpiMaxCard.textContent = maxCardNo;
+          els.kpiMaxCard.title = maxCardNo;
+          els.kpiMinCard.textContent = minCardNo;
+          els.kpiMinCard.title = minCardNo;
+
+          els.kpiAvgSub.textContent = n ? `有效樣本 ${fmtNum(n)} 筆` : "無有效樣本";
+          if (isPct) {
+            const up = values.filter((v) => v > 0).length;
+            const down = values.filter((v) => v < 0).length;
+            els.kpiMedianSub.textContent = `上漲 ${fmtNum(up)} ／ 下跌 ${fmtNum(down)}`;
+          } else {
+            els.kpiMedianSub.textContent = `幣別 ${activeCurrency === "TWD" ? "NT$" : "¥"}`;
+          }
+
+          const buckets = buildBuckets(statKey, values);
+          for (const v of values) {
+            const hit = buckets.find((b) => b.test(v));
+            if (hit) hit.count++;
+          }
+          renderDistribution(buckets, n);
+        }
+
+        function updateHeaderSortState() {
+          const roots = [document.getElementById("tableWrapHeader")];
+          if (stickyHeaderMirror) {
+            const mirrorHead = stickyHeaderMirror.querySelector("thead");
+            if (mirrorHead) roots.push(mirrorHead);
+          }
+
+          for (const root of roots) {
+            if (!root) continue;
+            root.querySelectorAll("th.sortable").forEach((th) => {
+              const sortKey = th.getAttribute("data-sort-key") || "";
+              const isActive = sortKey === activeSortKey;
+              if (isActive) {
+                th.setAttribute("data-sort-dir", activeSortDirection);
+                th.setAttribute("aria-sort", "none");
+              } else {
+                th.removeAttribute("data-sort-dir");
+                th.setAttribute("aria-sort", "none");
+              }
+            });
+          }
+        }
+
+        function applySort(sortKey, toggleIfSame = false) {
+          if (!sortKey) return;
+
+          if (toggleIfSame && activeSortKey === sortKey) {
+            activeSortDirection = activeSortDirection === "desc" ? "asc" : "desc";
+          } else {
+            activeSortKey = sortKey;
+            activeSortDirection = sortKey === "cardNo" ? "asc" : "desc";
+          }
+
+          render();
+        }
+
+        function handleHeaderSortClick(event) {
+          const th = event.target.closest("th.sortable[data-sort-key]");
+          if (!th) return;
+          applySort(th.getAttribute("data-sort-key"), true);
+        }
+
+        function sortAndFilterRows(rows) {
+          const q = (els.q.value || "").trim().toLowerCase();
+
+          let out = rows;
+          if (q) {
+            // 客人記得的是卡名或作品名，不是卡號，所以三個都要能搜
+            out = out.filter((r) => {
+              const no = String(r.cardNo || "");
+              if (no.toLowerCase().includes(q)) return true;
+              if (cardName(no).toLowerCase().includes(q)) return true;
+              return seriesTitle(no).toLowerCase().includes(q);
+            });
+          }
+
+          // 頁籤篩選邏輯
+          if (activeTrendFilter === "watchlist") {
+            out = out.filter((r) => watchlist.has(r.cardNo));
+          } else if (activeTrendFilter === "up") {
+            out = out.filter((r) => {
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v > 0;
+            });
+          } else if (activeTrendFilter === "down") {
+            out = out.filter((r) => {
+              const v = Number(r.change3dPct);
+              return Number.isFinite(v) && v < 0;
+            });
+          }
+
+          out = out.slice().sort((a, b) => {
+            const cmp = compareRows(a, b, activeSortKey);
+            return activeSortDirection === "asc" ? cmp : -cmp;
+          });
+          return out;
+        }
+
+        function clampPage(totalItems) {
+          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+          currentPage = Math.min(Math.max(1, currentPage), totalPages);
+          return totalPages;
+        }
+
+        function updatePaginationUi(totalItems, pageItemsLength, totalPages, pageStartIndex) {
+          const pageEndIndex = pageItemsLength > 0 ? pageStartIndex + pageItemsLength : 0;
+          const displayStart = pageItemsLength > 0 ? pageStartIndex + 1 : 0;
+
+          els.pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
+          els.pageStatsText.textContent = `顯示 ${displayStart}-${pageEndIndex} / ${totalItems}`;
+          els.prevPageBtn.disabled = currentPage <= 1;
+          els.nextPageBtn.disabled = currentPage >= totalPages || totalItems === 0;
+        }
+
+        // 全站統計板更新 (Global Stats)
+        function updateGlobalStats() {
+          const total = cardRows.length;
+          const gainers = cardRows.filter(r => Number(r.change1dPct) > 0).length;
+          const losers = cardRows.filter(r => Number(r.change1dPct) < 0).length;
+
+          document.getElementById("global-total").textContent = fmtNum(total);
+          document.getElementById("global-gainers").textContent = fmtNum(gainers);
+          document.getElementById("global-losers").textContent = fmtNum(losers);
+          document.getElementById("global-watchlist").textContent = fmtNum(watchlist.size);
+          document.getElementById("global-rate").textContent = exRate
+            ? `1 JPY ≈ ${exRate.toFixed(4)} TWD${exRateFallback ? "（預設值）" : ""}`
+            : "—";
+        }
+
+        function render() {
+          if (!rawData) return;
+          const renderToken = ++renderVersion;
+          clearError();
+
+          const filtered = sortAndFilterRows(cardRows);
+          const totalPages = clampPage(filtered.length);
+          const startIdx = (currentPage - 1) * pageSize;
+          const pageRows = filtered.slice(startIdx, startIdx + pageSize);
+
+          updateHeaderSortState();
+          updateKpi(filtered);
+          updatePaginationUi(filtered.length, pageRows.length, totalPages, startIdx);
+
+          const frag = document.createDocumentFragment();
+          pageRows.forEach((r) => {
+            const tr = document.createElement("tr");
+            const cardNo = String(r.cardNo ?? "");
+            const isFavorite = watchlist.has(cardNo);
+
+            // 使用 FontAwesome 圖示取代原生的 ★ 與 ☆ 字元
+            const starHtml = isFavorite
+              ? `<span class="watchlist-star active" data-card="${encodeURIComponent(cardNo)}" title="自清單移除"><i class="fa-solid fa-star"></i></span>`
+              : `<span class="watchlist-star" data-card="${encodeURIComponent(cardNo)}" title="加入清單"><i class="fa-regular fa-star"></i></span>`;
+
+            tr.innerHTML = `
+              <td class="center-align">${starHtml}</td>
+              ${cardIdentCell(cardNo)}
+              <td class="right buyCell">
+                <button type="button" class="buy-btn" data-buy-card="${encodeURIComponent(cardNo)}" title="查看購買通路">Buy</button>
+              </td>
+              <td class="right price-cell">${escapeHtml(formatPrice(r.latestPrice))}</td>
+              ${moveCell(r.change1dPct, "col-1d")}
+              ${moveCell(r.change3dPct, "col-3d")}
+              ${moveCell(r.change7dPct, "col-7d")}
+              <td class="right stockCell" data-stock-key="${encodeURIComponent(cardNo)}"><span class="stockSkeleton" aria-hidden="true"></span></td>
+              <td class="right col-7d sparklineCell" data-sparkline-key="${encodeURIComponent(cardNo)}"><span class="sparklineSkeleton" aria-hidden="true"></span></td>
+            `.trim();
+            frag.appendChild(tr);
+          });
+
+          els.tbody.replaceChildren(frag);
+          setStatus("已載入", `依「${sortLabel(activeSortKey)}」${activeSortDirection === "asc" ? "由低到高" : "由高到低"}排序｜第 ${currentPage}/${totalPages} 頁`);
+          renderStockCells(renderToken);
+          renderSparklines(renderToken);
+          updateGlobalStats();
+        }
+
+        // 卡片欄：縮圖 + 上為卡名，下為卡號（有作品名時接在卡號後面）。
+        // cardNo 一律放在 data-card-no，因為卡圖預覽的事件是靠這個屬性取卡號，
+        // 不能再讀整格的 textContent（現在裡面有卡名了）。
+        function cardIdentCell(cardNo) {
+          const name = cardName(cardNo);
+          const title = seriesTitle(cardNo);
+          // 字典還沒載完（或查不到）時，卡號就是主要標題，下面那行不重複顯示
+          const primary = name || cardNo;
+          const metaParts = name ? [`<span class="no">${escapeHtml(cardNo)}</span>`] : [];
+          if (title) metaParts.push(escapeHtml(title));
+
+          // 縮圖跟滑鼠移入的大圖走同一組來源：devilfox 先試，抓不到再退回官方
+          // cardlist（見 tbody 的 error 監聽）。兩邊都沒有就留空框，不留破圖。
+          const primarySrc = cardNoToDevilFoxUrl(cardNo);
+          const fallbackSrc = cardNoToImageUrl(cardNo);
+          const src = primarySrc || fallbackSrc;
+          const spare = primarySrc && fallbackSrc !== primarySrc ? fallbackSrc : "";
+          const img = src
+            ? `<img class="cardThumb" src="${escapeHtml(src)}" data-fallback="${escapeHtml(spare)}" alt="" loading="lazy" decoding="async" />`
+            : `<span class="cardThumb" aria-hidden="true"></span>`;
+
+          return `
+            <td class="card-no-col" data-card-no="${escapeHtml(cardNo)}">
+              <div class="cardIdent">
+                ${img}
+                <div class="cardIdentText">
+                  <span class="cardName" title="${escapeHtml(primary)}">${escapeHtml(primary)}</span>
+                  <span class="cardMeta">${metaParts.join(" · ")}</span>
+                </div>
+              </div>
+            </td>`;
+        }
+
+        // ── 卡名與作品名 ──
+        // 兩份檔案都在同源 repo 裡。先讓表格畫出來，載完再把名字補上去，
+        // 所以 cardDictionary.json 的體積不會擋住首次渲染。
+        let cardNamesLoaded = false;
+        async function loadCardNames() {
+          // 字典是靜態的，按重新整理不需要再抓一次
+          if (cardNamesLoaded) return;
+          cardNamesLoaded = true;
+          try {
+            const [dict, titles] = await Promise.allSettled([
+              fetchJson(CARD_DICTIONARY_URL),
+              fetchJson(CARD_TITLE_URL),
+            ]);
+            if (dict.status === "fulfilled" && Array.isArray(dict.value)) {
+              for (const pair of dict.value) {
+                if (Array.isArray(pair) && pair[0]) cardNameMap.set(String(pair[0]), String(pair[1] ?? ""));
+              }
+            }
+            if (titles.status === "fulfilled" && titles.value && typeof titles.value === "object") {
+              for (const [code, title] of Object.entries(titles.value)) {
+                seriesTitleMap.set(code, String(title ?? ""));
+              }
+            }
+          } catch {
+            /* 沒有名字也不影響價格，維持只顯示卡號 */
+          }
+        }
+
+        function cardName(cardNo) {
+          return cardNameMap.get(String(cardNo || "")) || "";
+        }
+
+        // 作品名以系列代號查（KC/S42-010C → KC/S42）。cardTitle.json 的值常帶括號
+        // 後綴標明代號，這裡去掉，因為卡號本來就顯示在旁邊了。
+        function seriesTitle(cardNo) {
+          const code = String(cardNo || "").split("-")[0];
+          if (!code) return "";
+          const raw = seriesTitleMap.get(code);
+          if (!raw) return "";
+          return raw.replace(/\s*[（(]\s*[A-Za-z0-9/]+\s*[)）]\s*$/, "").trim();
+        }
+
+        function escapeHtml(s) {
+          return String(s ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+        }
+
+        const WS_TCG_CARDLIST_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist/";
+
+        function cardNoToImageUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          if (series.startsWith("os")) {
+            return (
+              "https://ws-rose.com/wordpress/wp-content/images/cardlist/" +
+              series + "/" + expansion + "/" + series + "_" + expansion + "_" + cardId + ".png"
+            );
+          }
+          let folderSlug = series + "_" + expansion;
+          if (series === "srd" || series === "sks") folderSlug = "sxx_" + expansion;
+          const first = series.charAt(0);
+          return (
+            WS_TCG_CARDLIST_BASE + first + "/" + folderSlug + "/" +
+            series + "_" + expansion + "_" + cardId + ".png"
+          );
+        }
+
+        function cardNoToDevilFoxUrl(cardNo) {
+          if (!cardNo) return "";
+          const s = String(cardNo).trim();
+          const m = s.match(/^([^\/]+)\/([^-]+)-(.+)$/);
+          if (!m) return "";
+          const series = m[1].toLowerCase();
+          const expansion = m[2].toLowerCase();
+          const cardId = m[3].replace(/\s+/g, "").toLowerCase();
+          if (!series || !expansion || !cardId) return "";
+          return `https://imgs.devilfox.net/ws/${series}_${expansion}/${series}_${expansion}_${cardId}.png`;
+        }
+
+        const tooltip = document.getElementById("cardTooltip");
+        const tooltipImg = document.getElementById("cardTooltipImg");
+        let tooltipVisible = false;
+        let tooltipCurrentUrl = "";
+
+        function preloadImage(url) {
+          if (!url || tooltipCurrentUrl === url) return;
+          const img = new Image();
+          img.src = url;
+        }
+
+        function setTooltipSrc(url, fallbackUrl) {
+          if (tooltipCurrentUrl === url) {
+            tooltipImg.classList.remove("loading");
+            return;
+          }
+          tooltipCurrentUrl = url;
+          tooltipImg.classList.add("loading");
+          tooltipImg.src = url;
+          tooltipImg.onload = () => tooltipImg.classList.remove("loading");
+          tooltipImg.onerror = () => {
+            tooltipImg.classList.remove("loading");
+            if (fallbackUrl && fallbackUrl !== url) {
+              tooltipCurrentUrl = fallbackUrl;
+              tooltipImg.src = fallbackUrl;
+            }
+          };
+        }
+
+        function showTooltip(cardNo, x, y) {
+          const devilUrl = cardNoToDevilFoxUrl(cardNo);
+          const wsUrl = cardNoToImageUrl(cardNo);
+          const url = devilUrl || wsUrl;
+          if (!url) return;
+          setTooltipSrc(url, devilUrl ? wsUrl : "");
+          tooltip.style.transform = "";
+          placeTooltip(x, y);
+          tooltip.style.display = "block";
+          tooltipVisible = true;
+        }
+
+        function placeTooltip(x, y) {
+          const pad = 16;
+          const tw = 192;
+          const th = 280;
+          let left = x + 14;
+          let top = y - th - 10;
+          if (top < pad) top = y + 24;
+          if (left + tw + pad > window.innerWidth) left = x - tw - 14;
+          if (left < pad) left = pad;
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+        }
+
+        function hideTooltip() {
+          tooltip.style.display = "none";
+          tooltipVisible = false;
+        }
+
+        const isTouch = () => window.matchMedia("(hover: none)").matches;
+
+        // 卡片格裡現在有卡名（可能還有作品名），所以卡號一律從 data-card-no 讀
+        const cardNoOf = (td) => (td.getAttribute("data-card-no") || "").trim();
+
+        // 縮圖抓不到時先換備援來源，再不行就把圖藏起來（框還在，列高不會跳）。
+        // error 事件不冒泡，所以要用捕獲階段掛在 tbody 上，才不必逐張圖綁監聽。
+        els.tbody.addEventListener(
+          "error",
+          (e) => {
+            const img = e.target;
+            if (!(img instanceof HTMLImageElement) || !img.classList.contains("cardThumb")) return;
+            const spare = img.dataset.fallback || "";
+            if (spare) {
+              img.dataset.fallback = "";
+              img.src = spare;
+            } else {
+              img.style.visibility = "hidden";
+            }
+          },
+          true
+        );
+
+        // 桌機預覽
+        document.getElementById("tbody").addEventListener("mouseover", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const rect = td.getBoundingClientRect();
+          showTooltip(cardNoOf(td), rect.left + rect.width / 2, rect.top);
+        });
+
+        document.getElementById("tbody").addEventListener("mouseout", (e) => {
+          if (isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          hideTooltip();
+        });
+
+        // 行動版預載
+        document.getElementById("tbody").addEventListener("touchstart", (e) => {
+          const td = e.target.closest("td.card-no-col");
+          if (!td) return;
+          const cardNo = cardNoOf(td);
+          preloadImage(cardNoToDevilFoxUrl(cardNo) || cardNoToImageUrl(cardNo));
+        }, { passive: true });
+
+        // 行動版點擊
+        document.getElementById("tbody").addEventListener("click", (e) => {
+          if (!isTouch()) return;
+          const td = e.target.closest("td.card-no-col");
+          if (!td) {
+            hideTooltip();
+            return;
+          }
+          e.stopPropagation();
+          const cardNo = cardNoOf(td);
+          if (tooltipVisible) {
+            hideTooltip();
+          } else {
+            const rect = td.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            showTooltip(cardNo, x, y);
+            setTimeout(() => {
+              document.addEventListener("click", hideTooltip, { once: true });
+            }, 0);
+          }
+        });
+
+        // 監聽星星點擊行為 (Watchlist Click Event)
+        els.tbody.addEventListener("click", (e) => {
+          const star = e.target.closest(".watchlist-star");
+          if (!star) return;
+          e.stopPropagation();
+          const cardNo = decodeURIComponent(star.getAttribute("data-card"));
+          if (watchlist.has(cardNo)) {
+            watchlist.delete(cardNo);
+            star.innerHTML = '<i class="fa-regular fa-star"></i>';
+            star.classList.remove("active");
+          } else {
+            watchlist.add(cardNo);
+            star.innerHTML = '<i class="fa-solid fa-star"></i>';
+            star.classList.add("active");
+          }
+          localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([...watchlist]));
+          updateGlobalStats();
+        });
+
+        // ── 購買通路彈窗 ──
+        // 三行通路的 DOM 只建一次，開窗時換掉卡號跟每個「前往」按鈕的連結。
+        (function initBuyModal() {
+          const modal = document.getElementById("buyModal");
+          const list = document.getElementById("buyModalList");
+          const cardNoEl = document.getElementById("buyModalCardNo");
+          const closeBtn = document.getElementById("buyModalClose");
+          if (!modal || !list || !cardNoEl || !closeBtn) return;
+
+          // 記住開窗前的焦點，關窗後還回去，鍵盤操作才不會跳回頁面頂端
+          let lastFocused = null;
+
+          const rows = BUY_CHANNELS.map((channel) => {
+            const row = document.createElement("div");
+            row.className = "buyModalRow";
+
+            const shop = document.createElement("div");
+            shop.className = "buyModalShop";
+            shop.textContent = channel.name;
+            const note = document.createElement("small");
+            note.textContent = channel.note;
+            shop.appendChild(note);
+
+            const go = document.createElement("button");
+            go.type = "button";
+            go.className = "buyModalGo";
+            go.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> 前往';
+            go.addEventListener("click", () => {
+              const kw = cardNoEl.dataset.cardNo || "";
+              if (!kw) return;
+              window.open(channel.url(kw), "_blank", "noopener,noreferrer");
+            });
+
+            row.append(shop, go);
+            list.appendChild(row);
+            return { go };
+          });
+
+          function openBuyModal(cardNo) {
+            lastFocused = document.activeElement;
+            cardNoEl.textContent = cardNo || "—";
+            cardNoEl.dataset.cardNo = cardNo || "";
+            modal.classList.add("open");
+            if (rows[0]) rows[0].go.focus();
+          }
+
+          function closeBuyModal() {
+            if (!modal.classList.contains("open")) return;
+            modal.classList.remove("open");
+            if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+            lastFocused = null;
+          }
+
+          els.tbody.addEventListener("click", (e) => {
+            const btn = e.target.closest(".buy-btn");
+            if (!btn) return;
+            // 同一格的點擊不要再往上冒泡去觸發卡圖預覽的開關
+            e.stopPropagation();
+            openBuyModal(decodeURIComponent(btn.getAttribute("data-buy-card") || ""));
+          });
+
+          closeBtn.addEventListener("click", closeBuyModal);
+          // 點遮罩（面板以外）就關窗
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeBuyModal();
+          });
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeBuyModal();
+          });
+        })();
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        }
+
+        // 匯率來源依序嘗試，全部都支援 CORS；任一來源失敗就換下一個
+        const EX_RATE_SOURCES = [
+          {
+            name: "jsdelivr currency-api",
+            url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json",
+            pick: (d) => d && d.jpy && d.jpy.twd,
+          },
+          {
+            name: "open.er-api",
+            url: "https://open.er-api.com/v6/latest/JPY",
+            pick: (d) => d && d.rates && d.rates.TWD,
+          },
+          {
+            name: "frankfurter",
+            url: "https://api.frankfurter.app/latest?from=JPY&to=TWD",
+            pick: (d) => d && d.rates && d.rates.TWD,
+          },
+        ];
+
+        async function fetchExchangeRate() {
+          for (const source of EX_RATE_SOURCES) {
+            try {
+              const rate = Number(source.pick(await fetchJson(source.url)));
+              // 合理範圍檢查，避免來源回傳壞資料造成價格全錯
+              if (!Number.isFinite(rate) || rate <= 0.05 || rate >= 1) continue;
+              exRate = rate;
+              exRateFallback = false;
+              return;
+            } catch {
+              /* 換下一個來源 */
+            }
+          }
+          exRate = 0.22;
+          exRateFallback = true;
+        }
+
+        function setGeneratedAt(ms) {
+          if (!els.generatedAtText) return;
+          if (!ms || !Number.isFinite(Number(ms))) {
+            els.generatedAtText.textContent = "—";
+            return;
+          }
+          const d = new Date(Number(ms));
+          const s = new Intl.DateTimeFormat("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }).format(d);
+          els.generatedAtText.textContent = s;
+        }
+
+        async function load() {
+          renderVersion += 1;
+          productDataPromiseCache.clear();
+          cardSeriesPromiseCache.clear();
+          setStatus("載入中…");
+          clearError();
+          if (els.sourceText) {
+            els.sourceText.textContent = "";
+          }
+          els.tbody.replaceChildren();
+
+          const [, dataResult] = await Promise.allSettled([
+            fetchExchangeRate(),
+            fetchJson(REMOTE_URL),
+          ]);
+
+          if (dataResult.status === "rejected") {
+            const err1 = dataResult.reason instanceof Error ? dataResult.reason.message : String(dataResult.reason);
+            setStatus("載入失敗", "請確認網路或 JSON 來源是否可用");
+            showError(
+              `遠端資料載入失敗：<code>${escapeHtml(err1)}</code><br/>` +
+                `你可以稍後按右上角「重新載入」重試。`
+            );
+            return;
+          }
+
+          const data = dataResult.value;
+          rawData = data;
+          cardRows = toRows(data);
+          setGeneratedAt(data.generatedAt);
+          if (els.sourceText) {
+            els.sourceText.textContent = `source: ${REMOTE_URL}`;
+          }
+          render();
+
+          // 名字補完後重畫一次，讓已經在畫面上的列換成卡名
+          loadCardNames().then(() => {
+            if (rawData) render();
+          });
+        }
+
+        function bind() {
+          const onChange = () => {
+            currentPage = 1;
+            render();
+          };
+
+          els.q.addEventListener("input", onChange);
+
+          // 頁籤篩選點擊 (Filter Tab Clicks)
+          document.getElementById("filterTabs").addEventListener("click", (e) => {
+            const btn = e.target.closest(".tab-btn");
+            if (!btn) return;
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeTrendFilter = btn.getAttribute("data-trend");
+            onChange();
+          });
+
+          // 幣別 Segment 控制器 (Currency Segment Clicks)
+          document.getElementById("currencySegment").addEventListener("click", (e) => {
+            const btn = e.target.closest(".segment-btn");
+            if (!btn) return;
+            document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeCurrency = btn.getAttribute("data-currency");
+            render();
+          });
+
+          // 換頁後把畫面捲回數據表格最上方
+          const scrollToTableTop = () => {
+            const tableWrap = document.querySelector(".tableWrap");
+            if (!tableWrap) return;
+            const top =
+              tableWrap.getBoundingClientRect().top + window.pageYOffset - navOffset() - 12;
+            window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+          };
+
+          els.prevPageBtn.addEventListener("click", () => {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            render();
+            scrollToTableTop();
+          });
+          els.nextPageBtn.addEventListener("click", () => {
+            currentPage += 1;
+            render();
+            scrollToTableTop();
+          });
+
+          document.getElementById("tableWrapHeader").addEventListener("click", handleHeaderSortClick);
+          els.reloadBtn.addEventListener("click", () => load());
+          if (els.themeToggleBtn) {
+            els.themeToggleBtn.addEventListener("click", toggleTheme);
+          }
+
+          window.addEventListener("keydown", (ev) => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
+              ev.preventDefault();
+              load();
+            }
+            if (ev.key === "/" && document.activeElement !== els.q) {
+              ev.preventDefault();
+              els.q.focus();
+            }
+          });
+        }
+        applyTheme(resolveInitialTheme());
+        bind();
+
+        // ── Sticky thead 鏡像方案 ──
+        (function initStickyThead() {
+          const tableWrap = document.querySelector(".tableWrap");
+          const table = tableWrap && tableWrap.querySelector("table");
+          const thead = document.getElementById("tableWrapHeader");
+          if (!tableWrap || !table || !thead) return;
+
+          const mirror = document.createElement("div");
+          mirror.id = "stickyTheadMirror";
+          const mirrorTable = document.createElement("table");
+          const mirrorThead = thead.cloneNode(true);
+          mirrorThead.removeAttribute("id");
+          mirrorTable.appendChild(mirrorThead);
+          mirror.appendChild(mirrorTable);
+          document.body.appendChild(mirror);
+          stickyHeaderMirror = mirror;
+          mirror.addEventListener("click", handleHeaderSortClick);
+          updateHeaderSortState();
+
+          let pinned = false;
+
+          function syncWidths() {
+            const wrapRect = tableWrap.getBoundingClientRect();
+            mirror.style.left  = wrapRect.left + "px";
+            mirror.style.width = wrapRect.width + "px";
+            const realThs   = thead.querySelectorAll("th");
+            const cloneThs  = mirrorThead.querySelectorAll("th");
+            mirrorTable.style.width = table.offsetWidth + "px";
+            realThs.forEach((th, i) => {
+              if (cloneThs[i]) {
+                const w = th.getBoundingClientRect().width + "px";
+                cloneThs[i].style.width    = w;
+                cloneThs[i].style.minWidth = w;
+                cloneThs[i].style.maxWidth = w;
+              }
+            });
+          }
+
+          function syncScroll() {
+            mirror.scrollLeft = tableWrap.scrollLeft;
+          }
+
+          function update() {
+            const rect   = tableWrap.getBoundingClientRect();
+            const theadH = thead.getBoundingClientRect().height;
+            // 鏡像表頭停在導覽列底下（CSS 的 top: var(--nav-h)），
+            // 所以要在表格上緣被導覽列蓋到時就接手，不是捲過畫面上緣才接手
+            const navH = navOffset();
+            const shouldPin = rect.top < navH && rect.bottom > navH + theadH + 10;
+            if (shouldPin && !pinned) {
+              pinned = true;
+              mirror.style.display = "block";
+              syncWidths();
+              syncScroll();
+            } else if (!shouldPin && pinned) {
+              pinned = false;
+              mirror.style.display = "none";
+            } else if (pinned) {
+              syncWidths();
+              syncScroll();
+            }
+          }
+
+          window.addEventListener("scroll",   update,     { passive: true });
+          tableWrap.addEventListener("scroll", () => { if (pinned) { syncWidths(); syncScroll(); } }, { passive: true });
+          window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
+        })();
+
+        // ── 側邊抽屜選單（行為照 line_test_v86.html 的 toggleCustomDrawer /
+        //    toggleSubmenu，但改成事件綁定，子選單只切 class 不寫 inline style）──
+        (function initDrawer() {
+          const drawer = document.getElementById("siteDrawer");
+          const overlay = document.getElementById("drawerOverlay");
+          const toggleBtn = document.getElementById("drawerToggle");
+          if (!drawer || !overlay || !toggleBtn) return;
+
+          function setDrawer(open) {
+            drawer.classList.toggle("open", open);
+            overlay.classList.toggle("active", open);
+            drawer.setAttribute("aria-hidden", open ? "false" : "true");
+            toggleBtn.classList.toggle("is-open", open);
+            toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+            toggleBtn.setAttribute("aria-label", open ? "關閉選單" : "開啟選單");
+          }
+
+          const isOpen = () => drawer.classList.contains("open");
+
+          toggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            setDrawer(!isOpen());
+          });
+          overlay.addEventListener("click", () => setDrawer(false));
+          document.getElementById("drawerClose").addEventListener("click", () => setDrawer(false));
+
+          // 子選單展開
+          drawer.querySelectorAll(".drawerSubToggle").forEach((link) => {
+            link.addEventListener("click", (e) => {
+              e.preventDefault();
+              const item = link.parentElement;
+              if (!item) return;
+              const open = item.classList.toggle("open");
+              link.setAttribute("aria-expanded", open ? "true" : "false");
+            });
+          });
+
+          // Esc 關閉。抽屜開著時把焦點還給漢堡鈕，鍵盤不會掉在關掉的面板裡
+          window.addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape" && isOpen()) {
+              setDrawer(false);
+              toggleBtn.focus();
+            }
+          });
+        })();
+
+        // ── 右側浮動置頂按鈕 ──
+        (function initBackToTop() {
+          const btn = document.getElementById("backToTopBtn");
+          if (!btn) return;
+          const SHOW_AFTER = 240;
+
+          const update = () => {
+            btn.classList.toggle("visible", window.pageYOffset > SHOW_AFTER);
+          };
+
+          btn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+          window.addEventListener("scroll", update, { passive: true });
+          update();
+        })();
+
+        load();
+      })();
+    </script>
+  </body>
+</html>
