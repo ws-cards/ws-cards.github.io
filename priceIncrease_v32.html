@@ -3,6 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <script>
+      // 首次繪製前套用主題，避免記住暗黑模式時閃白。
+      // 這段跟 line_test_v86.html 完全一致：同一把 'ws-theme' 鑰匙、同樣掛在 <html> 上，
+      // 兩頁才會共用同一份深淺色設定。
+      (function () {
+        try {
+          var saved = localStorage.getItem('ws-theme');
+          document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
     <title>價格漲跌幅觀測</title>
     <meta name="description" content="依 1/3/7 日漲跌幅排序觀測卡片價格變動" />
     
@@ -67,7 +80,7 @@
           "PingFang TC", "Noto Sans TC", sans-serif;
       }
 
-      body[data-theme="dark"] {
+      [data-theme="dark"] {
         /* 深度黑化配色：近乎純黑的底色搭配高對比灰色 */
         --bg: #030303; 
         --surface: #030303; 
@@ -279,7 +292,7 @@
         transition: opacity 0.24s ease, visibility 0.24s ease;
       }
 
-      body[data-theme="dark"] .drawerOverlay {
+      [data-theme="dark"] .drawerOverlay {
         background: rgba(0, 0, 0, 0.62);
       }
 
@@ -1682,7 +1695,7 @@
       #buyModal.open {
         display: flex;
       }
-      body[data-theme="dark"] #buyModal {
+      [data-theme="dark"] #buyModal {
         background: rgba(0, 0, 0, 0.66);
       }
 
@@ -1872,12 +1885,12 @@
       }
 
       /* 深色模式：白色加粗外框，讓按鈕從近黑底色浮出來 */
-      body[data-theme="dark"] #backToTopBtn {
+      [data-theme="dark"] #backToTopBtn {
         border-width: 3px;
         border-color: #ffffff;
       }
 
-      body[data-theme="dark"] #backToTopBtn:hover {
+      [data-theme="dark"] #backToTopBtn:hover {
         border-color: #ffffff;
       }
 
@@ -1970,7 +1983,7 @@
           <!-- 主題切換從行情列搬上來：導覽列右側就是 v86 放它的位置，
                留在行情列會變成同一頁兩顆同功能的按鈕 -->
           <button id="themeToggleBtn" type="button" class="action-btn" title="切換淺色/深色主題">
-            <i class="fa-regular fa-moon"></i> 深色
+            <i class="fa-regular fa-moon"></i>
           </button>
         </div>
       </div>
@@ -2225,7 +2238,8 @@
         const CARD_DICTIONARY_URL = "json/cardDictionary.json";
         const CARD_TITLE_URL = "json/cardTitle.json";
         const SPARKLINE_CONCURRENCY = 6;
-        const THEME_STORAGE_KEY = "priceIncreaseTheme";
+        // 與 line_test_v86.html 共用同一把鑰匙，兩頁的深淺色設定才會互通
+        const THEME_STORAGE_KEY = "ws-theme";
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
 
         // 購買通路：卡號直接當關鍵字接在 search 後面。三個站的查詢參數不同名，
@@ -2295,26 +2309,42 @@
           errorBox: document.getElementById("errorBox"),
         };
 
+        /* 只認 'dark' 與 'light' 兩個值，其餘（null、系統偏好、舊資料）一律當淺色。
+           跟 line_test_v86.html 同一套規則：不看 prefers-color-scheme，
+           否則系統深色的使用者在沒手動切換過時，兩頁會各自算出不同結果。 */
+        function resolveTheme(theme) {
+          return theme === "dark" ? "dark" : "light";
+        }
+
         function resolveInitialTheme() {
-          const saved = localStorage.getItem(THEME_STORAGE_KEY);
-          if (saved === "light" || saved === "dark") return saved;
-          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
+          return resolveTheme(
+            document.documentElement.getAttribute("data-theme") ||
+            localStorage.getItem(THEME_STORAGE_KEY)
+          );
         }
 
         function applyTheme(theme) {
-          document.body.setAttribute("data-theme", theme);
-          localStorage.setItem(THEME_STORAGE_KEY, theme);
+          const resolved = resolveTheme(theme);
+          document.documentElement.setAttribute("data-theme", resolved);
           if (els.themeToggleBtn) {
-            const isDark = theme === "dark";
-            els.themeToggleBtn.innerHTML = isDark 
-              ? `<i class="fa-regular fa-sun"></i> 淺色` 
-              : `<i class="fa-regular fa-moon"></i> 深色`;
+            const isDark = resolved === "dark";
+            els.themeToggleBtn.innerHTML = isDark
+              ? `<i class="fa-regular fa-sun"></i> `
+              : `<i class="fa-regular fa-moon"></i> `;
           }
         }
 
+        /* 只有使用者親手切換才寫入 localStorage。初始化不寫，
+           免得這頁把自己推算出的預設值蓋到共用的 'ws-theme' 上。 */
         function toggleTheme() {
-          const now = document.body.getAttribute("data-theme") || "light";
-          applyTheme(now === "dark" ? "light" : "dark");
+          const next = resolveInitialTheme() === "dark" ? "light" : "dark";
+          applyTheme(next);
+          try {
+            localStorage.setItem(THEME_STORAGE_KEY, next);
+          } catch (e) {
+            /* 無痕模式寫不進去也不該擋住切換 */
+          }
         }
 
         /* 導覽列是 fixed 蓋在畫面最上緣，所以「捲到某處」跟「釘在上緣」這兩類
