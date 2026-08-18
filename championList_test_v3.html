@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    // 首次繪製前套用主題，避免記住暗黑模式時閃白
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <meta property="og:title" content="WS-Cards">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">
+  <meta property="og:url" content="https://ws-cards.cloud">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <title>優勝牌組查詢 | WS-Cards(β)</title>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v88.css">
+
+  <style type="text/css">
+    /* ============================================
+       本頁專屬樣式
+       ------------------------------------------------
+       navbar、側邊欄 drawer、卡片、篩選、搜尋歷史、
+       深淺色主題等外觀一律沿用 wscards.newline_v86.css，
+       此處只補「優勝牌組」內容區塊需要、共用樣式沒有的部分。
+       ============================================ */
+
+    /* 牌組內容面板
+       淺色模式由卡片本身當容器（與 line 頁一致，不再多包一層框）；
+       深色模式的 .card 會融入底色（透明、無邊框無陰影），依 v86「僅內層面板
+       浮起」的規則，此時改由這層面板承載結構。 */
+    .deck-panel {
+        border-radius: var(--border-radius-small);
+    }
+
+    [data-theme="dark"] .deck-panel {
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* 主力殺招：橫向卡圖列（沿用搜尋歷史列的捲軸樣式） */
+    .core-strip {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        padding: 0.25rem 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .core-strip::-webkit-scrollbar { height: 4px; }
+    .core-strip::-webkit-scrollbar-track { background: transparent; }
+    .core-strip::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.3);
+        border-radius: 2px;
+    }
+
+    [data-theme="dark"] .core-strip { scrollbar-color: rgba(191, 160, 106, 0.4) transparent; }
+    [data-theme="dark"] .core-strip::-webkit-scrollbar-thumb { background: rgba(191, 160, 106, 0.4); }
+
+    .core-strip img {
+        flex-shrink: 0;
+        width: 120px;
+        height: auto;
+        border-radius: var(--border-radius-small);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .core-card-tile {
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .core-card-tile:hover,
+    .core-card-tile.is-selected {
+      transform: translateY(-2px);
+      border-color: rgba(102,126,234,0.65) !important;
+      background: rgba(102,126,234,0.18) !important;
+    }
+
+    .core-card-tile.is-selected {
+      box-shadow: 0 0 0 2px rgba(102,126,234,0.24), var(--shadow-soft);
+    }
+
+    /* 尚無資料時的空狀態 */
+    .deck-empty {
+        padding: 2rem 1rem;
+        text-align: center;
+        color: var(--text-secondary);
+    }
+
+    .deck-empty i {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-size: 2.5rem;
+        opacity: 0.4;
+    }
+
+    .deck-empty p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* 空狀態在橫向卡圖列裡要撐滿才能居中 */
+    .core-strip .deck-empty {
+        flex: 1;
+    }
+
+    /* 載入遮罩：填滿整張卡片（AdminLTE 的 .card 為 position: relative），
+       遮罩底色與圖示由 adminlte + v86 的 .overlay 規則提供。 */
+    .overlay-wrapper {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 20;
+    }
+
+    .overlay-wrapper.show {
+        display: block;
+    }
+
+    .overlay-wrapper .overlay {
+        border-radius: var(--border-radius);
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)"><span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span></a>
+      </li>
+    </ul>
+    <div class="navbar-title-block">
+      <span class="navbar-title-text">優勝牌組查詢</span>
+      <span class="navbar-title-badge">Beta</span>
+    </div>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button
+          id="themeToggleBtn"
+          class="theme-toggle-btn"
+          type="button"
+          title="切換為深色模式"
+          aria-label="切換為深色模式"
+          aria-pressed="false"
+        >
+          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Custom Drawer Overlay -->
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <!-- Custom Sidebar Drawer -->
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button class="custom-drawer-close" onclick="toggleCustomDrawer()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link active">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Main content -->
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <!-- 快速搜尋 -->
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-search mr-2"></i>
+                  快速搜尋
+                </h5>
+              </div>
+              <div class="card-body">
+                <!-- Search Input with Modern Design -->
+                <div class="search-container">
+                    <!-- Input form -->
+                  <div class="input-group">
+                      <input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱或是卡號前三碼 (例如: BD)" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
+                          <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="複製" aria-label="複製" data-action-state="copy">
+                          <span class="action-icon-flip" aria-hidden="true">
+                            <i class="fas fa-paste action-icon-face action-icon-front"></i>
+                            <i class="fas fa-search action-icon-face action-icon-back"></i>
+                          </span>
+                              </button>
+                          </div>
+                    </div>
+
+                      <div class="search-hint">
+                          <i class="fas fa-lightbulb mr-2"></i>
+                      <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">搜尋後可用上方地區條件，只看該地區的優勝紀錄。</span></small>
+                      </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 搜尋歷史紀錄 -->
+          <div class="col-lg-12">
+            <div id="searchHistoryWrapper" class="search-history-wrapper" style="display:none;">
+              <div class="search-history-header">
+                <div class="search-history-title">
+                  <i class="fas fa-history mr-2"></i>
+                  <span>最近查看</span>
+                  <span class="history-count" id="historyCount"></span>
+                </div>
+                <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部紀錄">
+                  <i class="fas fa-trash-alt mr-1"></i>清除
+                </button>
+              </div>
+              <div class="search-history-list" id="searchHistoryContainer">
+                <!-- 歷史紀錄項目由 JS 動態生成 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 選單 -->
+          <div class="col-lg-12">
+            <div class="card filter-card" id="filter-card-tag">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-filter mr-2"></i>
+                  篩選條件
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="filter-container">
+                  <div class="filter-group">
+                    <label class="filter-label" for="select_area">
+                      <i class="fas fa-map-marker-alt mr-2"></i>地區
+                    </label>
+                    <select id="select_area" onchange="handleFilterChange();" style="font-family: 'Noto Sans TC', sans-serif; width: 300px;">
+                      <option value="所有地區">所有地區</option>
+                      <option value="日本">日本</option>
+                      <option value="台灣">台灣</option>
+                      <option value="香港">香港</option>
+                      <option value="新加坡">新加坡</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 優勝牌組 -->
+          <div class="col-lg-12">
+            <!-- 主力殺招 -->
+            <div class="card" id="core-card-tag">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-star mr-2"></i>
+                  主力殺招
+                </h5>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                </div>
+              </div>
+              <div class="card-body" id="coreFlameList">
+                <div class="deck-panel">
+                  <div class="core-strip js-scrollable" id="coreCardImgList">
+                    <div class="deck-empty">
+                      <i class="fas fa-bolt"></i>
+                      <p>搜尋作品或選擇地區，這裡會列出最常出場的殺招卡。</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="overlay-wrapper" id="overlay-2">
+                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+              </div>
+            </div>
+
+            <!-- 優勝牌組清單 -->
+            <div class="card" id="deck-card-tag">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-list mr-2"></i>
+                  優勝牌組清單
+                </h5>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                </div>
+              </div>
+              <div class="card-body" id="deckListCard">
+                <div class="deck-panel">
+                  <div class="deck-empty">
+                    <i class="fas fa-trophy"></i>
+                    <p>還沒有牌組。輸入作品名稱或卡號前三碼開始查詢。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="overlay-wrapper" id="overlay-3">
+                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <div id="scrollToTopBtn" class="scroll-to-top-btn">
+      <i class="fas fa-chevron-up"></i>
+  </div>
+
+  <!-- Main Footer -->
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <a href="#" onclick="$('#announceexampleModalCenter').modal('show'); return false;">利用規約及免責聲明</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- Announce Modal -->
+<div id="card-modal-announce">
+	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
+			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+		  </div>
+		  <div class="modal-body">
+			<div id="announce-card-popup-modal">
+				<div class="row">
+					<div class="col text">
+					<ul>
+		<li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
+		<li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
+		<li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
+		<li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
+		<li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
+		<br>
+		<p>最終更新日期 2020年12月11日</p>
+					</ul>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					</div>
+				</div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+</div>
+
+<!-- REQUIRED SCRIPTS -->
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
+<!-- Suggest -->
+<script src="dist/js/suggest/typeahead.js"></script>
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // ============================================
+  // 主題切換功能
+  // ============================================
+  (function() {
+    var THEME_STORAGE_KEY = 'ws-theme';
+
+    function resolveTheme(theme) {
+      return theme === 'dark' ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme, btn, icon) {
+      var resolvedTheme = resolveTheme(theme);
+      document.documentElement.setAttribute('data-theme', resolvedTheme);
+
+      if (!btn || !icon) {
+        return;
+      }
+
+      var isDark = resolvedTheme === 'dark';
+      icon.classList.remove('fa-sun', 'fa-moon');
+      icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      btn.setAttribute('title', isDark ? '切換為淺色模式' : '切換為深色模式');
+      btn.setAttribute('aria-label', isDark ? '切換為淺色模式' : '切換為深色模式');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('themeToggleBtn');
+      var icon = document.getElementById('themeToggleIcon');
+      if (!btn || !icon) {
+        return;
+      }
+
+      // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
+      var currentTheme = resolveTheme(
+        document.documentElement.getAttribute('data-theme') ||
+        localStorage.getItem(THEME_STORAGE_KEY)
+      );
+      applyTheme(currentTheme, btn, icon);
+
+      btn.addEventListener('click', function() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(currentTheme, btn, icon);
+        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+      });
+    });
+  })();
+
+  // ============================================
+  // 側邊欄開關邏輯
+  // ============================================
+  function toggleCustomDrawer(e) {
+    if(e) e.preventDefault();
+    const drawer = document.getElementById('customDrawer');
+    const overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      const btn = document.getElementById('leftbar');
+      if (btn) {
+        const opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+
+  // 子選單展開邏輯
+  function toggleSubmenu(element, e) {
+    if(e) e.preventDefault();
+    const parent = element.parentElement;
+    if(parent) {
+      parent.classList.toggle('open');
+      const submenu = parent.querySelector('.submenu');
+      if(submenu) {
+        if(parent.classList.contains('open')) {
+          submenu.style.display = 'block';
+        } else {
+          submenu.style.display = 'none';
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // 搜尋歷史管理模組
+  // ============================================
+  var SearchHistory = {
+    STORAGE_KEY: 'championList-search-history',
+    MAX_ITEMS: 10,
+
+    init: function() {
+      this.render();
+      this.attachEventListeners();
+    },
+
+    attachEventListeners: function() {
+      var self = this;
+      var searchInput = document.getElementById('xxxx');
+      if (searchInput) {
+        // 搜尋框 focus 時顯示歷史
+        searchInput.addEventListener('focus', function() {
+          self.show();
+        });
+
+        // Enter 鍵或搜尋時記錄
+        searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' && this.value.trim()) {
+            self.add(this.value.trim());
+            self.render();
+            handleSearch(this.value.trim());
+          }
+        });
+      }
+
+      // 複製 / 搜尋按鈕邏輯
+      var pasteButton = document.getElementById('pasteButton');
+      if (pasteButton) {
+        pasteButton.addEventListener('click', function() {
+          var state = this.getAttribute('data-action-state');
+          if (state === 'copy') {
+            // 複製模式
+            if (navigator.clipboard && searchInput.value) {
+              navigator.clipboard.writeText(searchInput.value).catch(function(err) {
+                console.error('複製失敗:', err);
+              });
+            }
+          } else {
+            // 搜尋模式
+            if (searchInput.value.trim()) {
+              self.add(searchInput.value.trim());
+              self.render();
+              // 觸發搜尋事件
+              handleSearch(searchInput.value.trim());
+            }
+          }
+        });
+      }
+    },
+
+    // 目前選取的地區，一併記錄以便點回歷史時能還原整組查詢條件
+    currentArea: function() {
+      var select = document.getElementById('select_area');
+      return select ? select.value : '所有地區';
+    },
+
+    add: function(query) {
+      if (!query) return;
+      var items = this.getAll();
+      // 移除同一組查詢條件的舊紀錄
+      var area = this.currentArea();
+      items = items.filter(function(i) { return !(i.query === query && i.area === area); });
+      // 在最前面加入新項
+      items.unshift({ query: query, area: area, time: Date.now() });
+      // 限制最多 MAX_ITEMS 項
+      items = items.slice(0, this.MAX_ITEMS);
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    },
+
+    getAll: function() {
+      try {
+        var raw = localStorage.getItem(this.STORAGE_KEY);
+        var items = raw ? JSON.parse(raw) : [];
+        // 相容舊格式（純字串陣列）
+        return items.map(function(i) {
+          return typeof i === 'string' ? { query: i, area: '所有地區', time: 0 } : i;
+        });
+      } catch (e) {
+        return [];
+      }
+    },
+
+    clearAll: function() {
+      try {
+        localStorage.removeItem(this.STORAGE_KEY);
+        this.render();
+      } catch (e) {
+        console.error('Error clearing localStorage:', e);
+      }
+    },
+
+    remove: function(query, area) {
+      var items = this.getAll().filter(function(i) {
+        return !(i.query === query && i.area === area);
+      });
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.error('Error updating localStorage:', e);
+      }
+      this.render();
+    },
+
+    formatTime: function(time) {
+      if (!time) return '';
+      var diff = Date.now() - time;
+      if (diff < 60000) return '剛剛';
+      if (diff < 3600000) return Math.floor(diff / 60000) + ' 分鐘前';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小時前';
+      var d = new Date(time);
+      return (d.getMonth() + 1) + '/' + d.getDate();
+    },
+
+    render: function() {
+      var items = this.getAll();
+      var wrapper = document.getElementById('searchHistoryWrapper');
+      var container = document.getElementById('searchHistoryContainer');
+      var countEl = document.getElementById('historyCount');
+
+      if (!wrapper || !container) return;
+
+      // 沒有紀錄時整區隱藏
+      if (items.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+      }
+
+      wrapper.style.display = 'block';
+      if (countEl) countEl.textContent = items.length;
+
+      container.innerHTML = '';
+
+      var self = this;
+      items.forEach(function(item) {
+        var itemEl = document.createElement('div');
+        itemEl.className = 'history-item';
+        itemEl.innerHTML =
+          '<div class="history-item-main">' +
+            '<div class="history-item-left">' +
+              '<div class="history-item-info">' +
+                '<span class="history-card-number">' + escapeHtml(item.query) + '</span>' +
+                '<span class="history-card-name">' + escapeHtml(item.area || '所有地區') + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="history-item-right">' +
+              '<span class="history-time">' + escapeHtml(self.formatTime(item.time)) + '</span>' +
+            '</div>' +
+          '</div>';
+
+        // 點擊項目還原整組查詢條件
+        itemEl.addEventListener('click', function() {
+          var input = document.getElementById('xxxx');
+          var select = document.getElementById('select_area');
+          if (select && item.area) select.value = item.area;
+          if (input) {
+            input.value = item.query;
+            input.focus();
+          }
+          handleSearch(item.query);
+        });
+
+        // 移除單筆紀錄
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'history-remove-btn';
+        removeBtn.title = '移除這筆紀錄';
+        removeBtn.setAttribute('aria-label', '移除 ' + item.query);
+        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        removeBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          self.remove(item.query, item.area);
+        });
+
+        itemEl.appendChild(removeBtn);
+        container.appendChild(itemEl);
+      });
+    },
+
+    show: function() {
+      var items = this.getAll();
+      var wrapper = document.getElementById('searchHistoryWrapper');
+      if (wrapper && items.length > 0) {
+        wrapper.style.display = 'block';
+      }
+    }
+  };
+
+  function escapeHtml(text) {
+    var map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+  }
+
+  // ============================================
+  // JSON 檔案搜尋模組
+  // ============================================
+  var ChampionDeckStore = {
+    data: [],
+    loaded: false,
+    loading: false,
+    url: 'json/championDecks.json'
+  };
+
+  var selectedCoreCardId = null;
+
+  function normalizeText(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function getSelectedArea() {
+    var select = document.getElementById('select_area');
+    return select ? select.value : '所有地區';
+  }
+
+  function renderEmptyState(targetId, iconClass, message) {
+    var target = document.getElementById(targetId);
+    if (!target) return;
+
+    target.innerHTML =
+      '<div class="deck-empty">' +
+        '<i class="' + iconClass + '"></i>' +
+        '<p>' + escapeHtml(message) + '</p>' +
+      '</div>';
+  }
+
+  function buildCoreCardImageUrl(cardId) {
+    var normalizedId = String(cardId || '').trim().toUpperCase();
+    var match = normalizedId.match(/^([^/\s]+)\/([^\s-]+)-(\d+)(?:[A-Z0-9]*)?$/);
+    if (!match) return '';
+
+    var setId = (match[1] + '_' + match[2]).toLowerCase();
+    var cardNumber = match[3].padStart(3, '0');
+    return 'https://imgs.devilfox.net/ws/' + setId + '/' + setId + '_' + cardNumber + 'ssp.png';
+  }
+
+  function renderCoreCards(items) {
+    var target = document.getElementById('coreCardImgList');
+    if (!target) return;
+
+    if (!items || items.length === 0) {
+      renderEmptyState('coreCardImgList', 'fas fa-bolt', '搜尋作品或選擇地區，這裡會列出最常出場的殺招卡。');
+      return;
+    }
+
+    var coreCards = [];
+    items.forEach(function (item) {
+      if (!item.coreCards || !Array.isArray(item.coreCards)) return;
+      item.coreCards.forEach(function (card) {
+        coreCards.push({
+          card: card,
+          deckName: item.deckName || item.name || '優勝牌組',
+          region: item.region || '所有地區'
+        });
+      });
+    });
+
+    if (coreCards.length === 0) {
+      renderEmptyState('coreCardImgList', 'fas fa-bolt', '目前沒有可顯示的主力殺招。');
+      return;
+    }
+
+    target.innerHTML = '';
+
+    var maxCards = Math.min(coreCards.length, 12);
+    for (var i = 0; i < maxCards; i++) {
+      var item = coreCards[i];
+      var cardItem = document.createElement('div');
+      cardItem.className = 'core-card-tile' + (selectedCoreCardId === String(item.card) ? ' is-selected' : '');
+      cardItem.setAttribute('role', 'button');
+      cardItem.setAttribute('tabindex', '0');
+      cardItem.setAttribute('aria-pressed', selectedCoreCardId === String(item.card) ? 'true' : 'false');
+      cardItem.setAttribute('aria-label', '依卡號篩選 ' + String(item.card));
+      cardItem.style.cssText = [
+        'flex: 0 0 auto',
+        'min-width: 110px',
+        'padding: 0.6rem 0.7rem',
+        'border-radius: 12px',
+        'background: rgba(102,126,234,0.08)',
+        'border: 1px solid rgba(102,126,234,0.15)',
+        'text-align: center',
+        'box-shadow: var(--shadow-soft)'
+      ].join(';');
+
+      cardItem.innerHTML =
+        '<div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.35rem;">' + escapeHtml(item.region) + '</div>' +
+        '<img src="' + escapeHtml(buildCoreCardImageUrl(item.card)) + '" alt="' + escapeHtml(item.card) + '" style="display:block; width:100%; max-width:120px; aspect-ratio:2 / 3; object-fit:cover; margin:0 auto 0.5rem; border-radius:var(--border-radius-small); box-shadow:var(--shadow-soft);" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">' +
+        '<div hidden style="display:grid; min-height:180px; place-items:center; font-weight:700; color:var(--text-primary); font-size:0.9rem; line-height:1.3;">' + escapeHtml(item.card) + '</div>' +
+        '<div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.35rem;">' + escapeHtml(item.deckName) + '</div>';
+
+      function toggleCoreCardFilter() {
+        var searchInput = document.getElementById('xxxx');
+        var cardId = String(item.card);
+        if (selectedCoreCardId === cardId) {
+          selectedCoreCardId = null;
+          if (searchInput) searchInput.value = '';
+        } else {
+          selectedCoreCardId = cardId;
+          if (searchInput) searchInput.value = cardId;
+        }
+        handleSearch(searchInput ? searchInput.value : '');
+      }
+
+      cardItem.addEventListener('click', toggleCoreCardFilter);
+      cardItem.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggleCoreCardFilter();
+        }
+      });
+
+      target.appendChild(cardItem);
+    }
+  }
+
+  function renderDeckResults(items) {
+    var target = document.getElementById('deckListCard');
+    if (!target) return;
+
+    if (!items || items.length === 0) {
+      renderEmptyState('deckListCard', 'fas fa-trophy', '還沒有牌組。輸入作品名稱或卡號前三碼開始查詢。');
+      return;
+    }
+
+    var html = '<div class="deck-panel">';
+    items.forEach(function (item) {
+      var cards = Array.isArray(item.cards) ? item.cards : [];
+      var participantCount = item.participantCount !== undefined && item.participantCount !== null && item.participantCount !== ''
+        ? '<span style="font-size: 0.75rem; color: var(--text-secondary);">參賽人數：' + escapeHtml(item.participantCount) + '</span>'
+        : '';
+      html +=
+        '<div style="padding: 1rem 0; border-bottom: 1px solid rgba(0,0,0,0.06);">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom: 0.5rem;">' +
+            '<strong style="font-size: 1rem;">' + escapeHtml(item.deckName || item.name || '優勝牌組') + '</strong>' +
+            '<div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">' +
+              '<span style="font-size: 0.75rem; color: var(--text-secondary);">' + escapeHtml(item.region || '所有地區') + '</span>' +
+              participantCount +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.55rem;">' + escapeHtml(item.name || '作品名稱未提供') + '</div>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:0.4rem;">';
+
+      if (cards.length === 0) {
+        html += '<span style="font-size: 0.75rem; color: var(--text-secondary);">無牌組資料</span>';
+      } else {
+        cards.forEach(function (card) {
+          html += '<span style="display:inline-block; padding:0.28rem 0.5rem; border-radius:999px; background: rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.12); font-size:0.72rem;">' + escapeHtml(card) + '</span>';
+        });
+      }
+
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    target.innerHTML = html;
+  }
+
+  function filterChampionDecks(query, area) {
+    var normalizedQuery = normalizeText(query);
+    var selectedArea = area || '所有地區';
+
+    if (!ChampionDeckStore.data.length) return [];
+
+    return ChampionDeckStore.data.filter(function (item) {
+      var itemRegion = item.region || '所有地區';
+      var matchesArea = selectedArea === '所有地區' || itemRegion === selectedArea;
+      if (!matchesArea) return false;
+      if (!normalizedQuery) return true;
+
+      var haystack = [
+        item.name || '',
+        item.deckName || '',
+        (item.cardPrefixes || []).join(' '),
+        (item.coreCards || []).join(' '),
+        (item.cards || []).join(' ')
+      ].join(' ').toLowerCase();
+
+      return haystack.indexOf(normalizedQuery) !== -1;
+    });
+  }
+
+  function showDeckLoading(show) {
+    var overlays = [
+      document.getElementById('overlay-2'),
+      document.getElementById('overlay-3')
+    ];
+
+    overlays.forEach(function (overlay) {
+      if (!overlay) return;
+      overlay.classList.toggle('show', !!show);
+    });
+  }
+
+  function loadChampionDecks(callback) {
+    if (ChampionDeckStore.loaded || ChampionDeckStore.loading) {
+      if (callback) callback();
+      return;
+    }
+
+    ChampionDeckStore.loading = true;
+    showDeckLoading(true);
+
+    fetch(ChampionDeckStore.url)
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('資料載入失敗');
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        ChampionDeckStore.data = Array.isArray(data) ? data : [];
+        ChampionDeckStore.loaded = true;
+        ChampionDeckStore.loading = false;
+        showDeckLoading(false);
+
+        if (callback) callback();
+      })
+      .catch(function (error) {
+        console.error('ChampionDeckStore load failed:', error);
+        ChampionDeckStore.loading = false;
+        showDeckLoading(false);
+
+        renderEmptyState('coreCardImgList', 'fas fa-bolt', '資料載入失敗，請稍後再試。');
+        renderEmptyState('deckListCard', 'fas fa-trophy', '資料載入失敗，請稍後再試。');
+      });
+  }
+
+  function handleSearch(query) {
+    var inputValue = query === undefined || query === null ? '' : String(query).trim();
+    var area = getSelectedArea();
+
+    if (!ChampionDeckStore.loaded) {
+      loadChampionDecks(function () {
+        handleSearch(inputValue);
+      });
+      return;
+    }
+
+    var baseResults = filterChampionDecks(selectedCoreCardId ? '' : inputValue, area);
+    var results = selectedCoreCardId
+      ? baseResults.filter(function (item) {
+          return Array.isArray(item.coreCards) && item.coreCards.some(function (card) {
+            return String(card) === selectedCoreCardId;
+          });
+        })
+      : baseResults;
+    renderCoreCards(baseResults);
+    renderDeckResults(results);
+
+    console.log('搜尋:', inputValue, '地區:', area, '結果數:', results.length);
+  }
+
+  function handleFilterChange() {
+    var searchInput = document.getElementById('xxxx');
+    handleSearch(searchInput ? searchInput.value : '');
+  }
+
+  // ============================================
+  // 回到頂部按鈕
+  // ============================================
+  (function() {
+    var scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    if (!scrollToTopBtn) return;
+
+    var isScrolling = false;
+
+    function scrollToTop() {
+      if (isScrolling) return;
+      isScrolling = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(function() { isScrolling = false; }, 1000);
+    }
+
+    function toggleScrollButton() {
+      scrollToTopBtn.classList.toggle('visible', window.pageYOffset > 200);
+    }
+
+    // 節流函數，避免過度觸發
+    function throttle(func, limit) {
+      var inThrottle;
+      return function() {
+        var args = arguments;
+        var context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(function() { inThrottle = false; }, limit);
+        }
+      };
+    }
+
+    scrollToTopBtn.addEventListener('click', scrollToTop);
+    window.addEventListener('scroll', throttle(toggleScrollButton, 100));
+    toggleScrollButton();
+  })();
+
+  // 搜尋框 focus 時，篩選卡片變半透明
+  (function() {
+    var searchInput = document.getElementById('xxxx');
+    var filterCard = document.getElementById('filter-card-tag');
+    if (!searchInput || !filterCard) return;
+
+    searchInput.addEventListener('focus', function() {
+      filterCard.classList.add('dimmed');
+    });
+
+    searchInput.addEventListener('blur', function() {
+      // 延遲移除，避免點擊下拉選項時閃爍
+      setTimeout(function() {
+        filterCard.classList.remove('dimmed');
+      }, 150);
+    });
+  })();
+
+  // 頁面載入時初始化
+  document.addEventListener('DOMContentLoaded', function() {
+    SearchHistory.init();
+
+    loadChampionDecks(function () {
+      var input = document.getElementById('xxxx');
+      if (input) {
+        handleSearch(input.value);
+      }
+    });
+
+    var searchInput = document.getElementById('xxxx');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        selectedCoreCardId = null;
+        handleSearch(this.value);
+      });
+    }
+
+    // 初始化 Typeahead（稍後會添加作品列表）
+    $(".typeahead").typeahead({
+      source: [],
+      minLength: 1,
+      showHintOnFocus: true,
+      scrollHeight: 0,
+      items: 'all',
+      fitToElement: true,
+      selectOnBlur: false
+    });
+  });
+</script>
+</body>
+</html>
