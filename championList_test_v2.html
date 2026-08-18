@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="dist/css/adminlte.min.css">
-  <link rel="stylesheet" href="dist/css/wscards.newline_v86.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v88.css">
 
   <style type="text/css">
     /* ============================================
@@ -728,16 +728,214 @@
   }
 
   // ============================================
-  // 核心功能函數
+  // JSON 檔案搜尋模組
   // ============================================
+  var ChampionDeckStore = {
+    data: [],
+    loaded: false,
+    loading: false,
+    url: 'json/championDecks.json'
+  };
+
+  function normalizeText(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function getSelectedArea() {
+    var select = document.getElementById('select_area');
+    return select ? select.value : '所有地區';
+  }
+
+  function renderEmptyState(targetId, iconClass, message) {
+    var target = document.getElementById(targetId);
+    if (!target) return;
+
+    target.innerHTML =
+      '<div class="deck-empty">' +
+        '<i class="' + iconClass + '"></i>' +
+        '<p>' + escapeHtml(message) + '</p>' +
+      '</div>';
+  }
+
+  function renderCoreCards(items) {
+    var target = document.getElementById('coreCardImgList');
+    if (!target) return;
+
+    if (!items || items.length === 0) {
+      renderEmptyState('coreCardImgList', 'fas fa-bolt', '搜尋作品或選擇地區，這裡會列出最常出場的殺招卡。');
+      return;
+    }
+
+    var coreCards = [];
+    items.forEach(function (item) {
+      if (!item.coreCards || !Array.isArray(item.coreCards)) return;
+      item.coreCards.forEach(function (card) {
+        coreCards.push({
+          card: card,
+          deckName: item.deckName || item.name || '優勝牌組',
+          region: item.region || '所有地區'
+        });
+      });
+    });
+
+    if (coreCards.length === 0) {
+      renderEmptyState('coreCardImgList', 'fas fa-bolt', '目前沒有可顯示的主力殺招。');
+      return;
+    }
+
+    target.innerHTML = '';
+
+    var maxCards = Math.min(coreCards.length, 12);
+    for (var i = 0; i < maxCards; i++) {
+      var item = coreCards[i];
+      var cardItem = document.createElement('div');
+      cardItem.style.cssText = [
+        'flex: 0 0 auto',
+        'min-width: 110px',
+        'padding: 0.6rem 0.7rem',
+        'border-radius: 12px',
+        'background: rgba(102,126,234,0.08)',
+        'border: 1px solid rgba(102,126,234,0.15)',
+        'text-align: center',
+        'box-shadow: var(--shadow-soft)'
+      ].join(';');
+
+      cardItem.innerHTML =
+        '<div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.35rem;">' + escapeHtml(item.region) + '</div>' +
+        '<div style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem; line-height: 1.3;">' + escapeHtml(item.card) + '</div>' +
+        '<div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.35rem;">' + escapeHtml(item.deckName) + '</div>';
+
+      target.appendChild(cardItem);
+    }
+  }
+
+  function renderDeckResults(items) {
+    var target = document.getElementById('deckListCard');
+    if (!target) return;
+
+    if (!items || items.length === 0) {
+      renderEmptyState('deckListCard', 'fas fa-trophy', '還沒有牌組。輸入作品名稱或卡號前三碼開始查詢。');
+      return;
+    }
+
+    var html = '<div class="deck-panel">';
+    items.forEach(function (item) {
+      var cards = Array.isArray(item.cards) ? item.cards : [];
+      html +=
+        '<div style="padding: 1rem 0; border-bottom: 1px solid rgba(0,0,0,0.06);">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom: 0.5rem;">' +
+            '<strong style="font-size: 1rem;">' + escapeHtml(item.deckName || item.name || '優勝牌組') + '</strong>' +
+            '<span style="font-size: 0.75rem; color: var(--text-secondary);">' + escapeHtml(item.region || '所有地區') + '</span>' +
+          '</div>' +
+          '<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.55rem;">' + escapeHtml(item.name || '作品名稱未提供') + '</div>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:0.4rem;">';
+
+      if (cards.length === 0) {
+        html += '<span style="font-size: 0.75rem; color: var(--text-secondary);">無牌組資料</span>';
+      } else {
+        cards.forEach(function (card) {
+          html += '<span style="display:inline-block; padding:0.28rem 0.5rem; border-radius:999px; background: rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.12); font-size:0.72rem;">' + escapeHtml(card) + '</span>';
+        });
+      }
+
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    target.innerHTML = html;
+  }
+
+  function filterChampionDecks(query, area) {
+    var normalizedQuery = normalizeText(query);
+    var selectedArea = area || '所有地區';
+
+    if (!ChampionDeckStore.data.length) return [];
+
+    return ChampionDeckStore.data.filter(function (item) {
+      var itemRegion = item.region || '所有地區';
+      var matchesArea = selectedArea === '所有地區' || itemRegion === selectedArea;
+      if (!matchesArea) return false;
+      if (!normalizedQuery) return true;
+
+      var haystack = [
+        item.name || '',
+        item.deckName || '',
+        (item.cardPrefixes || []).join(' '),
+        (item.coreCards || []).join(' '),
+        (item.cards || []).join(' ')
+      ].join(' ').toLowerCase();
+
+      return haystack.indexOf(normalizedQuery) !== -1;
+    });
+  }
+
+  function showDeckLoading(show) {
+    var overlays = [
+      document.getElementById('overlay-2'),
+      document.getElementById('overlay-3')
+    ];
+
+    overlays.forEach(function (overlay) {
+      if (!overlay) return;
+      overlay.classList.toggle('show', !!show);
+    });
+  }
+
+  function loadChampionDecks(callback) {
+    if (ChampionDeckStore.loaded || ChampionDeckStore.loading) {
+      if (callback) callback();
+      return;
+    }
+
+    ChampionDeckStore.loading = true;
+    showDeckLoading(true);
+
+    fetch(ChampionDeckStore.url)
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('資料載入失敗');
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        ChampionDeckStore.data = Array.isArray(data) ? data : [];
+        ChampionDeckStore.loaded = true;
+        ChampionDeckStore.loading = false;
+        showDeckLoading(false);
+
+        if (callback) callback();
+      })
+      .catch(function (error) {
+        console.error('ChampionDeckStore load failed:', error);
+        ChampionDeckStore.loading = false;
+        showDeckLoading(false);
+
+        renderEmptyState('coreCardImgList', 'fas fa-bolt', '資料載入失敗，請稍後再試。');
+        renderEmptyState('deckListCard', 'fas fa-trophy', '資料載入失敗，請稍後再試。');
+      });
+  }
+
   function handleSearch(query) {
-    console.log('搜尋:', query, '地區:', SearchHistory.currentArea());
-    // 這裡稍後會連接到 Google Sheets API 邏輯
+    var inputValue = query === undefined || query === null ? '' : String(query).trim();
+    var area = getSelectedArea();
+
+    if (!ChampionDeckStore.loaded) {
+      loadChampionDecks(function () {
+        handleSearch(inputValue);
+      });
+      return;
+    }
+
+    var results = filterChampionDecks(inputValue, area);
+    renderCoreCards(results);
+    renderDeckResults(results);
+
+    console.log('搜尋:', inputValue, '地區:', area, '結果數:', results.length);
   }
 
   function handleFilterChange() {
-    var area = document.getElementById('select_area').value;
-    console.log('選中地區:', area);
+    var searchInput = document.getElementById('xxxx');
+    handleSearch(searchInput ? searchInput.value : '');
   }
 
   // ============================================
@@ -800,6 +998,20 @@
   // 頁面載入時初始化
   document.addEventListener('DOMContentLoaded', function() {
     SearchHistory.init();
+
+    loadChampionDecks(function () {
+      var input = document.getElementById('xxxx');
+      if (input) {
+        handleSearch(input.value);
+      }
+    });
+
+    var searchInput = document.getElementById('xxxx');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        handleSearch(this.value);
+      });
+    }
 
     // 初始化 Typeahead（稍後會添加作品列表）
     $(".typeahead").typeahead({
