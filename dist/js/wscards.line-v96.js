@@ -3792,8 +3792,9 @@ function _createStatsComboChartBase64(theme) {
         backgroundColor: theme.priceFill,
         pointBackgroundColor: theme.price,
         pointBorderColor: theme.surface,
-        pointRadius: 3,
-        borderWidth: 2,
+        pointRadius: 2.5,
+        pointHoverRadius: 4,
+        borderWidth: 2.5,
         data: priceData,
         tension: 0.3
     }];
@@ -3806,8 +3807,8 @@ function _createStatsComboChartBase64(theme) {
             backgroundColor: theme.stockFill,
             borderColor: theme.stock,
             borderWidth: 1,
-            barPercentage: 0.55,
-            categoryPercentage: 0.8,
+            barPercentage: 0.48,
+            categoryPercentage: 0.65,
             data: stockData
         });
     }
@@ -3854,8 +3855,8 @@ function _createStatsComboChartBase64(theme) {
     }
 
     var canvas = document.createElement('canvas');
-    canvas.width = 760;
-    canvas.height = 280;
+    canvas.width = 800;
+    canvas.height = 320;
     var ctx = canvas.getContext('2d');
     var exportChart = null;
 
@@ -3871,12 +3872,14 @@ function _createStatsComboChartBase64(theme) {
                 animation: { duration: 0 },
                 legend: {
                     display: true,
-                    align: 'start',
+                    position: 'bottom',
+                    align: 'center',
                     labels: {
                         fontColor: theme.textMuted,
                         fontSize: 12,
                         usePointStyle: true,
-                        boxWidth: 8
+                        boxWidth: 9,
+                        padding: 16
                     }
                 },
                 scales: {
@@ -3979,24 +3982,39 @@ var cardPack = (_statsCardExtra && _statsCardExtra.pack) ? _statsCardExtra.pack 
 var cardFirstRelease = (_statsCardExtra && _statsCardExtra.firstRelease) ? _statsCardExtra.firstRelease : '--';
 var highDate = '--', lowDate = '--';
 var dayChangePrice = '', currentStock = '--', dayChangeStock = '';
+var marketChangeAmount = '--', marketChangePercent = '--';
 (function() {
     if (_rawPriceLabels.length > 0 && _rawPriceData.length > 0) {
-        var r30labels = _rawPriceLabels.slice(-30);
-        var r30data = _rawPriceData.slice(-30).map(function(v) { return parseFloat(v) || 0; });
-        var valid30 = r30data.map(function(v, i) { return { v: v, i: i }; }).filter(function(x) { return x.v > 0; });
+        var cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        var valid30 = [];
+        for (var priceIndex = 0; priceIndex < _rawPriceData.length; priceIndex++) {
+            var price = parseFloat(_rawPriceData[priceIndex]);
+            var priceDate = parseLabelToDate(_rawPriceLabels[priceIndex]);
+            if (!isNaN(price) && price > 0 && priceDate && priceDate >= cutoff) {
+                valid30.push({ value: price, label: _rawPriceLabels[priceIndex] });
+            }
+        }
         if (valid30.length > 0) {
-            var hmaxObj = valid30.reduce(function(acc, x) { return x.v > acc.v ? x : acc; }, valid30[0]);
-            var hminObj = valid30.reduce(function(acc, x) { return x.v < acc.v ? x : acc; }, valid30[0]);
+            var hmaxObj = valid30.reduce(function(acc, x) { return x.value > acc.value ? x : acc; }, valid30[0]);
+            var hminObj = valid30.reduce(function(acc, x) { return x.value < acc.value ? x : acc; }, valid30[0]);
             var fmtLabel = function(s) {
                 if (!s) return s;
-                var parts = s.split('-');
-                if (parts.length >= 3) {
-                    return parts[1].padStart(2,'0') + '/' + parts[2].padStart(2,'0');
-                }
-                return s;
+                var d = parseLabelToDate(s);
+                return d ? (d.getMonth() + 1) + '/' + d.getDate() : s;
             };
-            if (r30labels[hmaxObj.i]) highDate = fmtLabel(r30labels[hmaxObj.i]);
-            if (r30labels[hminObj.i]) lowDate = fmtLabel(r30labels[hminObj.i]);
+            highDate = fmtLabel(hmaxObj.label);
+            lowDate = fmtLabel(hminObj.label);
+
+            // 市場快照只在有首尾兩筆有效資料時才主張「30 日變化」。
+            if (valid30.length >= 2) {
+                var first30 = valid30[0].value;
+                var last30 = valid30[valid30.length - 1].value;
+                var difference = last30 - first30;
+                var sign = difference > 0 ? '+' : '';
+                marketChangeAmount = sign + '¥' + Math.abs(difference).toLocaleString();
+                marketChangePercent = sign + ((difference / first30) * 100).toFixed(1) + '%';
+            }
         }
         // 與昨日相比（price）
         var validAllPrice = _rawPriceData.map(function(v) { return parseFloat(v) || 0; }).filter(function(v) { return v > 0; });
@@ -4071,7 +4089,9 @@ function doCompose() {
         lowDate: lowDate,
         currentStock: currentStock,
         dayChangePrice: dayChangePrice,
-        dayChangeStock: dayChangeStock
+        dayChangeStock: dayChangeStock,
+        marketChangeAmount: marketChangeAmount,
+        marketChangePercent: marketChangePercent
     });
 }
 
@@ -4123,10 +4143,10 @@ function _composeStatsCanvas(info) {
     var theme = info.theme || getStatsExportTheme();
 
     // 區塊高度
-    var HEADER_H = 330;     // 卡圖 + 卡片資訊 + 2x2 價格卡 + 資訊 table
-    var CHART_PANEL_H = 360; // 左統計 + 右圖表
-    var FOOTER_H = 5;      // 底部浮水印
-    var SECTION_GAP = 14;   // 區塊間距
+    var HEADER_H = 354;     // 卡圖、卡片身分與市場快照
+    var CHART_PANEL_H = 386; // 趨勢圖主面板
+    var FOOTER_H = 28;     // 來源與製表資訊
+    var SECTION_GAP = 16;   // 區塊間距
 
     var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
     
@@ -4236,109 +4256,111 @@ function _composeStatsCanvas(info) {
         _drawCardPlaceholderLight(ctx, CI_BOX_X, CI_BOX_Y, CI_BOX_W, CI_BOX_H, theme);
     }
 
-    // ── 右欄（文字區 + 2x2 價格卡）──
+    // ── 右欄：卡片身分 + 市場快照 ──
     var RC_X = hx + LEFT_COL_W + COL_GAP;
     var RC_W = hw - LEFT_COL_W - COL_GAP;
 
-    // 2x2 價格卡（靠右，在右欄的最右側）
-    var PC_CARD_COL_W = 226;
-    var PC_CARD_W = Math.floor((PC_CARD_COL_W - 8) / 2);
-    var PC_CARD_H = 112;
-    var PC_GAP = 8;
-    var PC_RIGHT_GAP = 24;
-    var PC_X0 = hx + hw - PC_RIGHT_GAP - PC_CARD_COL_W;
-    var PC_Y0 = hy + Math.floor((hh - (PC_CARD_H * 2 + PC_GAP)) / 2);
+    var MARKET_W = 252;
+    var MARKET_H = 264;
+    var MARKET_X = hx + hw - MARKET_W - 20;
+    var MARKET_Y = hy + 38;
+    var changeIsNegative = String(info.marketChangePercent || '').indexOf('-') === 0;
+    var changeIsKnown = info.marketChangePercent && info.marketChangePercent !== '--';
+    var marketChangeColor = changeIsKnown ? (changeIsNegative ? C_UP : C_DOWN) : C_TEXT3;
 
-    var pcItems = [
-        { label: '目前價格', value: info.currentPrice,        unit: '¥ JPY', change: info.dayChangePrice || '', changeLabel: '與昨日相比', color: C_ACCENT,  arrow: '' },
-        { label: '庫存數量', value: info.currentStock || '--', unit: '件',    change: info.dayChangeStock || '', changeLabel: '與昨日相比', color: theme.stock, arrow: '' },
-        { label: '30日最高', value: info.highPrice,            unit: '¥ JPY', change: info.highDate ? '日期：' + info.highDate : '', changeLabel: '', color: C_UP,   arrow: '↗' },
-        { label: '30日最低', value: info.lowPrice,             unit: '¥ JPY', change: info.lowDate  ? '日期：' + info.lowDate  : '', changeLabel: '', color: C_DOWN, arrow: '↘' }
-    ];
+    ctx.fillStyle = theme.surfaceRaised;
+    ctx.strokeStyle = theme.borderStrong;
+    ctx.lineWidth = 1;
+    ctx.shadowColor = theme.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(38,31,18,0.10)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    roundRect(ctx, MARKET_X, MARKET_Y, MARKET_W, MARKET_H, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-    for (var pi = 0; pi < 4; pi++) {
-        var pcCol = pi % 2;
-        var pcRow = Math.floor(pi / 2);
-        var pcx = PC_X0 + pcCol * (PC_CARD_W + PC_GAP);
-        var pcy = PC_Y0 + pcRow * (PC_CARD_H + PC_GAP);
-        var pci = pcItems[pi];
+    // 一條完整資料色頂線，把市場快照變成一個完整物件，而不是四個鬆散小卡。
+    ctx.fillStyle = C_ACCENT;
+    roundRect(ctx, MARKET_X + 1, MARKET_Y + 1, MARKET_W - 2, 7, 8);
+    ctx.fill();
+    ctx.fillRect(MARKET_X + 1, MARKET_Y + 5, MARKET_W - 2, 3);
 
-        // 卡片底色 + 陰影
-        ctx.fillStyle = theme.surfaceRaised;
-        ctx.strokeStyle = C_BORDER;
-        ctx.lineWidth = 1;
-        ctx.shadowColor = theme.isDark ? 'rgba(0,0,0,0.22)' : 'rgba(38,31,18,0.07)';
-        ctx.shadowBlur = 5;
-        ctx.shadowOffsetY = 2;
-        ctx.beginPath();
-        roundRectPath(ctx, pcx, pcy, PC_CARD_W, PC_CARD_H, 8);
-        ctx.fill();
-        ctx.stroke();
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-        // 頂部色條
-        ctx.fillStyle = pci.color;
-        ctx.fillRect(pcx + 1, pcy + 1, PC_CARD_W - 2, 4);
-
-        // Label（帶箭頭圖示）
-        var labelText = pci.arrow ? pci.arrow + ' ' + pci.label : pci.label;
-        ctx.fillStyle = pci.arrow ? pci.color : C_TEXT3;
-        ctx.font = '11px "Noto Sans TC", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(labelText, pcx + PC_CARD_W / 2, pcy + 22);
-
-        // Value
-        ctx.fillStyle = C_TEXT1;
-        ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(_truncateText(ctx, pci.value || '--', PC_CARD_W - 8), pcx + PC_CARD_W / 2, pcy + 52);
-
-        // Unit
-        if (pci.unit) {
-            ctx.fillStyle = C_TEXT3;
-            ctx.font = '10px "Noto Sans TC", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(pci.unit, pcx + PC_CARD_W / 2, pcy + 66);
-        }
-
-        // 分隔線
-        ctx.strokeStyle = C_BORDER;
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(pcx + 8, pcy + 74);
-        ctx.lineTo(pcx + PC_CARD_W - 8, pcy + 74);
-        ctx.stroke();
-
-        // 與昨日相比 / 日期
-        if (pci.change) {
-            var changeStr = (pci.changeLabel ? pci.changeLabel + ' ' : '') + pci.change;
-            var changeColor = C_TEXT3;
-            if (pci.changeLabel !== '') {
-                // 價格日變 / 庫存日變：負 → 紅，正 → 綠
-                if (pci.change.indexOf('-') >= 0) changeColor = C_UP;
-                else if (pci.change.indexOf('+') >= 0 || parseFloat(pci.change) > 0) changeColor = C_DOWN;
-            } else {
-                // 日期格式 → 用卡片主色
-                changeColor = pci.color;
-            }
-            ctx.fillStyle = changeColor;
-            ctx.font = '9.5px "Noto Sans TC", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(_truncateText(ctx, changeStr, PC_CARD_W - 8), pcx + PC_CARD_W / 2, pcy + 88);
-        }
-    }
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'left';
+    ctx.fillText('MARKET SNAPSHOT', MARKET_X + 16, MARKET_Y + 29);
+
+    var HERO_Y = MARKET_Y + 48;
+    var HERO_W = (MARKET_W - 32) / 2;
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(MARKET_X + MARKET_W / 2, HERO_Y);
+    ctx.lineTo(MARKET_X + MARKET_W / 2, HERO_Y + 80);
+    ctx.stroke();
+
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '11px "Noto Sans TC", sans-serif';
+    ctx.fillText('目前價格', MARKET_X + 16, HERO_Y + 13);
+    ctx.fillStyle = C_TEXT1;
+    ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
+    ctx.fillText(_truncateText(ctx, info.currentPrice || '--', HERO_W - 4), MARKET_X + 16, HERO_Y + 43);
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '10px "Noto Sans TC", sans-serif';
+    ctx.fillText('遊遊亭最新售價', MARKET_X + 16, HERO_Y + 63);
+
+    var CHANGE_X = MARKET_X + MARKET_W / 2 + 15;
+    ctx.fillStyle = marketChangeColor;
+    ctx.font = '11px "Noto Sans TC", sans-serif';
+    ctx.fillText('30 日變化', CHANGE_X, HERO_Y + 13);
+    ctx.font = 'bold 21px "Noto Sans TC", sans-serif';
+    ctx.fillText(_truncateText(ctx, info.marketChangePercent || '--', HERO_W - 6), CHANGE_X, HERO_Y + 42);
+    ctx.fillStyle = marketChangeColor;
+    ctx.font = 'bold 12px "Noto Sans TC", sans-serif';
+    ctx.fillText(_truncateText(ctx, info.marketChangeAmount || '--', HERO_W - 6), CHANGE_X, HERO_Y + 61);
+
+    var detailY = HERO_Y + 96;
+    var marketDetails = [
+        { label: '30日最高', value: info.highPrice || '--', note: info.highDate || '--', color: C_UP },
+        { label: '30日最低', value: info.lowPrice || '--', note: info.lowDate || '--', color: C_DOWN },
+        { label: '庫存', value: (info.currentStock || '--') + ' 件', note: info.dayChangeStock ? '前次 ' + info.dayChangeStock : '--', color: theme.stock },
+        { label: '價格日變', value: info.dayChangePrice || '--', note: '相較前筆紀錄', color: info.dayChangePrice.indexOf('-') >= 0 ? C_UP : C_DOWN }
+    ];
+    for (var detailIndex = 0; detailIndex < marketDetails.length; detailIndex++) {
+        var detail = marketDetails[detailIndex];
+        var detailCol = detailIndex % 2;
+        var detailRow = Math.floor(detailIndex / 2);
+        var detailX = MARKET_X + 16 + detailCol * (HERO_W + 1);
+        var detailTop = detailY + detailRow * 51;
+        if (detailRow > 0) {
+            ctx.strokeStyle = C_BORDER;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(detailX, detailTop - 9);
+            ctx.lineTo(detailX + HERO_W - 2, detailTop - 9);
+            ctx.stroke();
+        }
+        ctx.fillStyle = detail.color;
+        ctx.font = '10px "Noto Sans TC", sans-serif';
+        ctx.fillText(detail.label, detailX, detailTop + 10);
+        ctx.fillStyle = C_TEXT1;
+        ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
+        ctx.fillText(_truncateText(ctx, detail.value, HERO_W - 4), detailX, detailTop + 29);
+        ctx.fillStyle = C_TEXT3;
+        ctx.font = '9px "Noto Sans TC", sans-serif';
+        ctx.fillText(_truncateText(ctx, detail.note, HERO_W - 4), detailX, detailTop + 42);
+    }
 
     // ── 右欄文字資訊區 ──
-    var TW = RC_W - PC_CARD_COL_W - PC_RIGHT_GAP - 10;
+    var TW = MARKET_X - RC_X - 22;
     var TX = RC_X;
     var TY = hy + 16;
 
     // 品牌小標籤
-    ctx.fillStyle = C_TEXT3;
-    ctx.font = '11px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = theme.accent;
+    ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('WS-Cards  價格走勢統計', TX, TY + 12);
+    ctx.fillText('WS-CARDS / MARKET REPORT', TX, TY + 12);
     TY += 24;
 
     // 分隔線
@@ -4349,13 +4371,13 @@ function _composeStatsCanvas(info) {
     ctx.stroke();
     TY += 14;
 
-    // 卡名（21px bold）
+    // 卡名是卡片身分的主標，市場數據再重要也不該把收藏品本身壓成配角。
     if (info.cardName) {
         ctx.fillStyle = C_TEXT1;
-        ctx.font = 'bold 21px "Noto Sans TC", sans-serif';
+        ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText(_truncateText(ctx, info.cardName, TW), TX, TY + 20);
-        TY += 30;
+        ctx.fillText(_truncateText(ctx, info.cardName, TW), TX, TY + 23);
+        TY += 34;
     }
 
     // Rare / Color / Level / Power Badges
@@ -4468,7 +4490,7 @@ function _composeStatsCanvas(info) {
     drawCard(PAD, cy0, cpW, cpH);
 
     // 標題列
-    var TITLE_BAR_H = 52;
+    var TITLE_BAR_H = 58;
     ctx.fillStyle = theme.surfaceMuted;
     ctx.beginPath();
     roundRectPath(ctx, PAD, cy0, cpW, TITLE_BAR_H, 12);
@@ -4481,7 +4503,7 @@ function _composeStatsCanvas(info) {
     var titleText = '遊遊亭  價格 / 庫存近期紀錄';
     var titleBadgeX = PAD + 16;
     var titleBadgeY = cy0 + 11;
-    var titleBadgeH = 30;
+    var titleBadgeH = 36;
     ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
     var titleBadgeW = Math.min(ctx.measureText(titleText).width + 24, cpW - 32);
     ctx.fillStyle = theme.isDark ? '#0f1210' : '#172235';
@@ -4493,7 +4515,7 @@ function _composeStatsCanvas(info) {
     ctx.fillText(
         _truncateText(ctx, titleText, titleBadgeW - 20),
         titleBadgeX + 10,
-        titleBadgeY + 20
+        titleBadgeY + 23
     );
 
     // 右側最新價格 badge
@@ -4509,7 +4531,7 @@ function _composeStatsCanvas(info) {
     // ctx.fillText(latestPriceText, lpX + 12, cy0 + 32);
 
     // ── 折線圖（全寬置中）──
-    var CH_INNER_PAD = 14;
+    var CH_INNER_PAD = 16;
     var CH_X = PAD + CH_INNER_PAD;
     var CH_Y = cy0 + TITLE_BAR_H + CH_INNER_PAD;
     var CH_W = cpW - CH_INNER_PAD * 2;
@@ -4539,8 +4561,8 @@ function _composeStatsCanvas(info) {
             ctx.drawImage(chartImg, drawX, drawY, drawW, drawH);
             ctx.restore();
 
-            ctx.strokeStyle = C_BORDER;
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = theme.borderStrong;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             roundRectPath(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
             ctx.stroke();
