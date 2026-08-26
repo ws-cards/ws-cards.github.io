@@ -4759,7 +4759,18 @@ function triggerDownload(canvas, cardNo, statsWindow) {
     if (!statsWindow || statsWindow.closed) {
         throw new Error('統計圖片新分頁已關閉');
     }
-    statsWindow.location.href = dataURL;
+    var base64Data = dataURL.split(',')[1];
+    var byteCharacters = atob(base64Data);
+    var byteArray = new Uint8Array(byteCharacters.length);
+    for (var i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+    }
+    var imageBlob = new Blob([byteArray], { type: 'image/jpeg' });
+    var imageUrl = URL.createObjectURL(imageBlob);
+    statsWindow.location.href = imageUrl;
+    setTimeout(function() {
+        URL.revokeObjectURL(imageUrl);
+    }, 60000);
     
     Swal.fire({
         icon: 'success',
