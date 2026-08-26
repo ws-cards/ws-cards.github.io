@@ -1,0 +1,5451 @@
+/**
+ * 頁面載入完成後執行
+ * - 滾動到頂部
+ * - 初始化基本設定
+ */
+window.onload=function(){
+    setTimeout(function(){
+        window.scrollTo(0, 1);
+    }, 100);		
+    setFun();  
+}
+
+// Typeahead 輸入框和下拉選單元素
+var $input = $(".typeahead");
+var $dropdown = $(".dropdown-menu");
+
+
+// 全域圖表變數 - 用於正確的圖表銷毀管理
+var myChart = null;
+var myStockChart = null;
+
+// 圖表線條顏色：深色模式使用淺色系線條以提高可讀性，淺色模式維持原本深藍色
+var CHART_LINE_COLOR_LIGHT = '#1e2d5a';
+var CHART_LINE_COLOR_DARK = '#8ab4f8';
+
+function isDarkTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function getChartLineColor() {
+    return isDarkTheme() ? CHART_LINE_COLOR_DARK : CHART_LINE_COLOR_LIGHT;
+}
+
+// 同步原生 UI 的 color-scheme（依賴 <head> 內聯腳本已先設好 data-theme）
+function syncDocumentColorScheme() {
+    document.documentElement.style.colorScheme = isDarkTheme() ? 'dark' : 'light';
+}
+
+// 主題切換時，即時更新畫面上圖表的線條顏色
+function refreshChartThemeColors() {
+    var color = getChartLineColor();
+    [myChart, myStockChart].forEach(function(chart) {
+        if (!chart || !chart.data || !chart.data.datasets) return;
+        chart.data.datasets.forEach(function(ds) {
+            // 只更新折線資料集（bar 類型維持原色）
+            if (ds.type && ds.type !== 'line') return;
+            ds.borderColor = color;
+            ds.backgroundColor = color;
+            ds.pointBackgroundColor = color;
+            ds.pointBorderColor = color;
+        });
+        chart.update();
+    });
+}
+
+syncDocumentColorScheme();
+
+// 監看 <html data-theme> 變化，切換深/淺色模式時重新上色
+if (typeof MutationObserver !== 'undefined') {
+    (function() {
+        var observer = new MutationObserver(function(mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                if (mutations[i].attributeName === 'data-theme') {
+                    syncDocumentColorScheme();
+                    refreshChartThemeColors();
+                    break;
+                }
+            }
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    })();
+}
+
+// ====================================================
+// 搜尋防抖與鎖定機制
+// - _searchDebounceTimer: 名稱搜尋的 debounce timer
+// - _isSearching: 搜尋進行中的鎖定旗標
+// - _lastSearchedValue: 上次成功觸發搜尋的卡號值（防重複）
+// ====================================================
+var _searchDebounceTimer = null;
+var _cardAutoSearchTimer = null;
+var _cardAutoSearchDelayMs = 30000;
+var _searchActionState = 'copy';
+var _isSearching = false;
+var _lastSearchedValue = '';
+var _cardDictionary = null; // 暫存卡片字典的陣列
+// cardStandard 下拉選單原生就帶 2 個預留 option，options.length 判斷不出載入狀態，需另外追蹤
+var _standardWLoaded = false;
+var _standardSLoaded = false;
+
+// ====================================================
+// 統一下拉容器的資料快取
+// - _typeaheadSuggestions: 作品/系列建議（來自 typeahead）
+// - _cardNameSuggestions:  卡片名稱搜尋結果（來自 cardDictionary）
+// ====================================================
+var _typeaheadSuggestions = [];
+var _cardNameSuggestions = [];
+
+// ====================================================
+// 圖表時間篩選 - 儲存原始圖表資料
+// ====================================================
+var _rawPriceLabels = [];
+var _rawPriceData = [];
+var _rawStockLabels = [];
+var _rawStockData = [];
+var _statsCardExtra = { pack: '', firstRelease: '' };
+
+function _clearCardAutoSearchTimer() {
+    if (_cardAutoSearchTimer) {
+        clearTimeout(_cardAutoSearchTimer);
+        _cardAutoSearchTimer = null;
+    }
+}
+
+function _setSearchActionButtonState(state) {
+    var button = document.getElementById('pasteButton');
+    if (!button) return;
+
+    var nextState = state === 'search' ? 'search' : 'copy';
+    var stateChanged = _searchActionState !== nextState;
+    _searchActionState = nextState;
+
+    button.dataset.actionState = nextState;
+    button.classList.toggle('search-armed', nextState === 'search');
+    // 這顆按鈕在「貼上」與「搜尋」兩種行為間切換，名稱必須跟著實際行為走
+    button.title = nextState === 'search' ? '搜尋' : '貼上';
+    button.setAttribute('aria-label', nextState === 'search' ? '搜尋這個卡號' : '貼上剪貼簿的卡號');
+
+    if (stateChanged) {
+        button.classList.remove('flip-attention');
+        void button.offsetWidth;
+        button.classList.add('flip-attention');
+    }
+}
+
+function _syncSearchActionStateFromValue(inputValue) {
+    var value = (inputValue || '').trim();
+    _setSearchActionButtonState(value.length > 0 ? 'search' : 'copy');
+}
+
+function _scheduleCardAutoSearch(inputValue) {
+    _clearCardAutoSearchTimer();
+    _cardAutoSearchTimer = setTimeout(function() {
+        _cardAutoSearchTimer = null;
+        var currentValue = $input.val().trim();
+        if (currentValue === inputValue && !_isSearching && isCardNumberFormat(currentValue) && currentValue !== _lastSearchedValue) {
+            console.log('30 秒未手動搜尋，自動搜尋卡號:', currentValue);
+            searchByCardNumber(currentValue);
+        }
+    }, _cardAutoSearchDelayMs);
+}
+
+function _handleSearchInputState(inputValue) {
+    var value = (inputValue || '').trim();
+    var isCardFormat = value && value.length >= 8 && isCardNumberFormat(value);
+
+    _syncSearchActionStateFromValue(value);
+
+    if (isCardFormat) {
+        _scheduleCardAutoSearch(value);
+    } else {
+        _clearCardAutoSearchTimer();
+    }
+}
+
+async function handleSearchActionButtonClick() {
+    var inputElement = document.getElementById('xxxx');
+    if (!inputElement) return;
+
+    var inputValue = inputElement.value.trim();
+
+    // 搜尋狀態：只在完整卡號時才立即搜尋
+    if (_searchActionState === 'search' && inputValue.length > 0) {
+        if (_isSearching) {
+            console.log('搜尋進行中，略過搜尋按鈕點擊');
+            return;
+        }
+
+        if (isCardNumberFormat(inputValue)) {
+            _clearCardAutoSearchTimer();
+            if (inputValue !== _lastSearchedValue) {
+                searchByCardNumber(inputValue);
+            }
+        }
+        return;
+    }
+
+    // 複製狀態：讀取剪貼簿並貼到輸入框
+    if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+            var text = await navigator.clipboard.readText();
+            inputElement.value = text;
+            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        } catch (err) {
+            console.log('Clipboard API failed, fallback to manual paste');
+        }
+    }
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: '瀏覽器不允許讀取剪貼簿',
+            text: '請直接長按輸入框貼上；電腦版可按 Ctrl + V。',
+            showConfirmButton: true,
+            confirmButtonText: '知道了'
+        }).then(function() {
+            inputElement.focus();
+        });
+    } else {
+        inputElement.focus();
+    }
+}
+
+function setupSearchActionButton() {
+    var button = document.getElementById('pasteButton');
+    var inputElement = document.getElementById('xxxx');
+    if (!button || !inputElement) return;
+
+    button.removeEventListener('click', handleSearchActionButtonClick);
+    button.addEventListener('click', handleSearchActionButtonClick);
+    _syncSearchActionStateFromValue(inputElement.value);
+}
+
+window.handleSearchActionButtonClick = handleSearchActionButtonClick;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupSearchActionButton);
+} else {
+    setupSearchActionButton();
+}
+
+// 支援外部連結 ?cardno=PRD_W133-001，底線代表卡號中的斜線。
+var _hasProcessedUrlCardNumber = false;
+
+function searchCardNumberFromUrl() {
+    if (_hasProcessedUrlCardNumber || typeof URLSearchParams === 'undefined') return;
+    _hasProcessedUrlCardNumber = true;
+
+    var cardNumber = new URLSearchParams(window.location.search).get('cardno');
+    if (!cardNumber) return;
+
+    cardNumber = cardNumber.trim().replace(/_/g, '/');
+    if (!isCardNumberFormat(cardNumber)) return;
+
+    var inputElement = document.getElementById('xxxx');
+    if (inputElement) inputElement.value = cardNumber;
+    _syncSearchActionStateFromValue(cardNumber);
+    searchByCardNumber(cardNumber);
+}
+
+/**
+ * 將日期標籤字串解析為 Date 物件
+ * 支援格式: YYYYMMDD / YYYY-MM-DD / YYYY/MM/DD
+ */
+function parseLabelToDate(label) {
+    if (typeof label !== 'string') return null;
+    if (label.length === 8 && !label.includes('-') && !label.includes('/')) {
+        return new Date(label.substring(0, 4), parseInt(label.substring(4, 6), 10) - 1, parseInt(label.substring(6, 8), 10));
+    } else if (label.includes('-')) {
+        var p = label.split('-');
+        if (p.length === 3) return new Date(p[0], parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    } else if (label.includes('/')) {
+        var p = label.split('/');
+        if (p.length === 3) return new Date(p[0], parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    }
+    return null;
+}
+
+/**
+ * 依月數過濾 labels / data，回傳近 N 個月的資料
+ * @param {Array} labels
+ * @param {Array} data
+ * @param {number} months  0 = 全部
+ * @returns {{labels: Array, data: Array}}
+ */
+function filterDataByMonths(labels, data, months) {
+    if (!months || months <= 0 || !labels || labels.length === 0) {
+        return { labels: labels.slice(), data: data.slice() };
+    }
+    var cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - months);
+    var filteredLabels = [];
+    var filteredData = [];
+    for (var i = 0; i < labels.length; i++) {
+        var d = parseLabelToDate(labels[i]);
+        if (d && d >= cutoff) {
+            filteredLabels.push(labels[i]);
+            filteredData.push(data[i]);
+        }
+    }
+    // 若過濾後無資料（資料較舊），回傳全部
+    if (filteredLabels.length === 0) {
+        return { labels: labels.slice(), data: data.slice() };
+    }
+    return { labels: filteredLabels, data: filteredData };
+}
+
+/**
+ * 更新價格圖表的時間範圍
+ * @param {string|number} months
+ */
+function applyPriceTimeFilter(months) {
+    months = parseInt(months, 10);
+    if (!myChart) return;
+    var filtered = filterDataByMonths(_rawPriceLabels, _rawPriceData, months);
+    myChart.data.labels = filtered.labels;
+    myChart.data.datasets[0].data = filtered.data;
+    myChart.update();
+    // 更新 chart-period 文字
+    var periodEl = document.getElementById('priceChartPeriod');
+    if (periodEl) periodEl.textContent = _periodText(months);
+}
+
+/**
+ * 更新庫存圖表的時間範圍
+ * @param {string|number} months
+ */
+function applyStockTimeFilter(months) {
+    months = parseInt(months, 10);
+    if (!myStockChart) return;
+    var filtered = filterDataByMonths(_rawStockLabels, _rawStockData, months);
+    myStockChart.data.labels = filtered.labels;
+    myStockChart.data.datasets[0].data = filtered.data;
+    myStockChart.update();
+    // 更新 chart-period 文字
+    var periodEl = document.getElementById('stockChartPeriod');
+    if (periodEl) periodEl.textContent = _periodText(months);
+}
+
+function _periodText(months) {
+    // 與時間範圍下拉選單用同一組字，避免同一件事有兩種說法
+    if (months === 1) return '近一個月';
+    if (months === 3) return '近三個月';
+    if (months === 6) return '近半年';
+    return '近一年';
+}
+
+/**
+* 初始化 Typeahead 自動完成功能
+* - 設定資料來源（作品列表）
+* - 配置搜尋行為和顯示選項
+*/
+$(".typeahead").typeahead({ 
+source:[
+{id:"WS00001", name:"アイドルマスター シンデレラガールズ",cname:"偶像大師 灰姑娘女孩 | IMC"},
+{id:"WS00002", name:"アニメ プリンセスコネクト！Re:Dive",cname:"超異域公主連結☆Re:Dive | PRD"},
+{id:"WS00003", name:"Angel Beats!／クドわふたー",cname:"Angel Beats! | 天使的脈動／庫特wafter | AB,KW,Kab"},
+{id:"WS00004", name:"角川スニーカー文庫",cname:"角川Sneaker文庫 | Snk,Sks,Sst,Ssy,Snw,Ssw,Shh,Smi,Sls,Seo,Sky,Ssk,Ssh,Shg,Sfl,Smc,Smu,Sle,Srm,Sak,Sbm,Scn,Sde,Sdy,Shm,Sme,Soa,Soj,Srd,Ssc,Ssn,Stk,Stm"},
+{id:"WS00005", name:"彼女、お借りします",cname:"出租女友 | KNK"},
+{id:"WS00111", name:"神様になった日",cname:"成神之日 | DBG,Kdb"},
+{id:"WS00006", name:"カードキャプターさくら",cname:"庫洛魔法使 | CCS"},
+{id:"WS00007", name:"カードゲームしよ子",cname:"卡片遊戲SHIYO子 | CGS"},
+{id:"WS00008", name:"ガールフレンド(仮)",cname:"女友伴身邊 | GF"},
+{id:"WS00009", name:"Key",cname:"Key | Key社20周年 | Kab, Kai, Kch, Kcl, Kdb, Key, Khb, Kka, Klb, Krw, Ksm"},
+{id:"WS00010", name:"CLANNAD",cname:"CLANNAD/小鎮家族 | CL,Kcl"},
+{id:"WS00011", name:"けものフレンズ",cname:"動物朋友 | KMN"},
+{id:"WS00012", name:"幻影ヲ駆ケル太陽",cname:"穿透幻影的太陽 | GT"},
+{id:"WS00013", name:"この素晴らしい世界に祝福を！",cname:"為美好的世界獻上祝福！ | KS,Sks"},
+{id:"WS00014", name:"ご注文はうさぎですか？？",cname:"請問您今天要來點兔子嗎？ | GU"},
+{id:"WS00015", name:"五等分の花嫁",cname:"五等分的新娘 | 5HY"},
+{id:"WS00016", name:"冴えない彼女の育てかた",cname:"不起眼女主角培育法 | SHS"},
+{id:"WS00017", name:"Summer Pockets",cname:"夏日口袋 | SMP,Ksm"},
+{id:"WS00018", name:"灼眼のシャナ",cname:"灼眼的夏娜 | SS,Gss"},
+{id:"WS00019", name:"Charlotte",cname:"夏洛特 | CHA,Kch"},
+{id:"WS00020", name:"涼宮ハルヒの憂鬱",cname:"涼宮春日的憂鬱 | SY,Ssy"},
+{id:"WS00021", name:"青春ブタ野郎シリーズ",cname:"青春豬頭少年 | SBY,Gby"},
+{id:"WS00022", name:"戦姫絶唱シンフォギア",cname:"戰姬絕唱 | SG"},
+{id:"WS00023", name:"ゼロの使い魔",cname:"零之使魔 | ZM"},
+{id:"WS00024", name:"宇宙をかける少女／舞-HiME＆舞-乙HiME",cname:"穿越宇宙的少女／舞-HiME＆舞-乙HiME | SK,MH"},
+{id:"WS00118", name:"ゾンビランドサガ リベンジ",cname:"佐賀偶像是傳奇 捲土重來 | ZLS"},
+{id:"WS00025", name:"ダ・カーポ＆Dal Segno",cname:"DC | DS | 初音島 | DC,DC3,DC4,DS,DC5"},
+{id:"WS00026", name:"デート・ア・ライブ",cname:"約會大作戰 | DAL,Fdl"},
+{id:"WS00027", name:"とある魔術の禁書目録／とある科学の超電磁砲",cname:"魔法禁書目錄／科學超電磁砲 | ID,RG,Gid"},
+{id:"WS00028", name:"To LOVEる",cname:"出包王女 | TL"},
+{id:"WS00029", name:"DOG DAYS",cname:"DOG DAYS | DD"},
+{id:"WS00030", name:"ニセコイ",cname:"偽戀 | NK"},
+{id:"WS00031", name:"日常",cname:"日常 | NJ"},
+{id:"WS00032", name:"BanG Dream!",cname:"BanG Dream! 少女樂團派對 | BD"},
+{id:"WS00033", name:"ひなろじ ～from Luck ＆ Logic～",cname:"雛邏輯～from Luck & Logic～ | HLL"},
+{id:"WS00034", name:"ビジュアルアーツ",cname:"Visual Art's | VA"},
+{id:"WS00035", name:"ビビッドレッド・オペレーション",cname:"Vividred Operatio | 緋色戰姬 | VR"},
+{id:"WS00036", name:"ViVid Strike!",cname:"ViVid Strike! | VS"},
+{id:"WS00037", name:"Phantom -Requiem for the Phantom-",cname:"Phantom -Requiem for the Phantom- | PT"},
+{id:"WS00038", name:"富士見ファンタジア文庫",cname:"富士見Fantasia文庫 | Fab,Foy,Fii,Fks,Fkm,Fkz,Fsl,Fsi,F35,Fos,Fdl,Fdy,Ftr,Fdd,Fhc,Ffp,Fmr,Fra"},
+{id:"WS00112", name:"ホロライブプロダクション",cname:"hololive | HOLOLIVE | Hololive | HOL"},
+{id:"WS00039", name:"魔法少女まどか☆マギカ",cname:"魔法少女小圓 | MM,MR"},
+{id:"WS00040", name:"魔法少女リリカルなのは",cname:"魔法少女奈葉 | NS,N1,NV,NA,N2,NR,ND,NTA"},
+{id:"WS00041", name:"ゆらぎ荘の幽奈さん",cname:"搖曳莊的幽奈小姐 | YYS"},
+{id:"WS00042", name:"らき☆すた",cname:"幸運☆星 | LS"},
+{id:"WS00043", name:"ラブライブ！",cname:"Love Live! | LL,SIL,LSF"},
+{id:"WS00044", name:"ラブライブ！サンシャイン!!",cname:"Love Live! Sunshine!! | 水團 | LSS,SIS,LSF"},
+{id:"WS00116", name:"ラブライブ！スーパースター!!",cname:"Love Live! Superstar!! | Love Live! 超級明星!! | 星團 | LSP,SIP,LSF"},
+{id:"WS00045", name:"ラブライブ！虹ヶ咲学園スクールアイドル同好会",cname:"Love Live! 虹咲學園學園偶像同好會 | 虹團 | LNJ,SIN,LSF"},
+{id:"WS00046", name:"リトルバスターズ！",cname:"Little Busters! | 校園剋星 | LB,KW,Klb"},
+{id:"WS00047", name:"Rewrite",cname:"Rewrite | RW,Krw"},
+{id:"WS00048", name:"ロボティクス・ノーツ",cname:"ROBOTICS;NOTES | 機械學報告 | RN"},
+{id:"WS00049", name:"アイドルマスター",cname:"偶像大師 | IM,IAS"},
+{id:"WS00050", name:"アイドルマスター シャイニーカラーズ",cname:"偶像大師 閃耀色彩 | ISC"},
+{id:"WS00051", name:"アイドルマスター ミリオンライブ！",cname:"偶像大師 百萬人演唱會！ | IMS,IAS"},
+{id:"WS00052", name:"アクセル・ワールド",cname:"加速世界 | AW,Gaw"},
+{id:"WS00053", name:"アサルトリリィ",cname:"突擊莉莉 | ALL"},
+{id:"WS00054", name:"アニメーション映画『GODZILLA』",cname:"哥吉拉 | GZL"},
+{id:"WS00055", name:"痛いのは嫌なので防御力に極振りしたいと思います。",cname:"怕痛的我，把防禦力點滿就對了 | BFR"},
+{id:"WS00056", name:"うーさーのその日暮らし",cname:"兔寶的悲慘日常 | Woo"},
+{id:"WS00057", name:"ヱヴァンゲリヲン新劇場版",cname:"新·福音戰士劇場版 | EV"},
+{id:"WS00058", name:"おそ松さん",cname:"阿松 | OMS"},
+{id:"WS00059", name:"オーバーロード",cname:"OVERLORD | OVL"},
+{id:"WS00060", name:"かぐや様は告らせたい～天才たちの恋愛頭脳戦～",cname:"輝夜姬想讓人告白~天才們的戀愛頭腦戰~ | KGL"},
+{id:"WS00061", name:"刀語",cname:"刀語 | KG"},
+{id:"WS00062", name:"CANAAN",cname:"CANAAN | CN"},
+{id:"WS00063", name:"艦隊これくしょん -艦これ-",cname:"艦隊收藏／艦娘 | KC"},
+{id:"WS00064", name:"カードゲームしよ子",cname:"卡片遊戲SHIYO子 | CGS"},
+{id:"WS00065", name:"キズナイーバー",cname:"制約之絆 | KI"},
+{id:"WS00066", name:"境界のRINNE",cname:"境界的輪迴 | KR"},
+{id:"WS00067", name:"キルラキル",cname:"KILL la KILL | KLK"},
+{id:"WS00068", name:"THE KING OF FIGHTERS",cname:"格鬥天王 | KF"},
+{id:"WS00069", name:"ギルティクラウン",cname:"罪惡王冠 | GC"},
+{id:"WS00070", name:"クレヨンしんちゃん",cname:"蠟筆小新 | CS"},
+{id:"WS00071", name:"グリザイアの果実",cname:"灰色的果實 | GRI"},
+{id:"WS00072", name:"マクロスシリーズ",cname:"超時空要塞系列 | Macross | 虛空歌姬 | MF,MDE"},
+{id:"WS00073", name:"ゴブリンスレイヤー",cname:"哥布林殺手 | GBS,GA04"},
+{id:"WS00074", name:"PSYCHO-PASS サイコパス",cname:"心靈判官 | PP"},
+{id:"WS00075", name:"シャイニングシリーズ",cname:"光明與黑暗系列 | SE,SF,SR"},
+{id:"WS00076", name:"STEINS;GATE",cname:"命運石之門 | STG"},
+{id:"WS00077", name:"少女☆歌劇 レヴュースタァライト",cname:"少女☆歌劇 Revue Starlight | RSL"},
+{id:"WS00078", name:"進撃の巨人",cname:"進擊的巨人 | AOT"},
+{id:"WS00079", name:"新サクラ大戦",cname:"新櫻花大戰 | SKR"},
+{id:"WS00080", name:"ジョジョの奇妙な冒険",cname:"JoJo的奇妙冒險 | JJ"},
+{id:"WS00081", name:"翠星のガルガンティア",cname:"翠星上的加爾岡緹亞 | GG"},
+{id:"WS00082", name:"スクールガールストライカーズ",cname:"學園少女突襲者 | Schoolgirl Strikers | SGS"},
+{id:"WS00083", name:"STAR WARS",cname:"星際大戰 | SW,Dsw"},
+{id:"WS00084", name:"戦国BASARA",cname:"戰國BASARA | SB"},
+{id:"WS00085", name:"ソードアート・オンライン",cname:"刀劍神域 | SAO | SAO,Gso"},
+{id:"WS00086", name:"ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",cname:"刀劍神域外傳 Gun Gale Online | GGO | GGO,Ggg"},
+{id:"WS00087", name:"探偵オペラ ミルキィホームズ",cname:"偵探歌劇 少女福爾摩斯 | MK,MK2"},
+{id:"WS00117", name:"ダンジョンに出会いを求めるのは間違っているだろうか",cname:"ダンまち | 在地下城尋求邂逅是否搞錯了什麼 | 地錯 | 地城邂逅 | DDM,GA10"},
+{id:"WS00088", name:"ダーリン・イン・ザ・フランキス",cname:"DARLING in the FRANXX | FXX"},
+{id:"WS00089", name:"チェインクロニクル ～ヘクセイタスの閃～",cname:"鎖鏈戰記 ~赫克瑟塔斯之光~ | CC"},
+{id:"WS00090", name:"超爆裂異次元メンコバトル ギガントシューター つかさ",cname:"超爆裂異次元Menko Battle Gigant Shooter Tsukasa | GST"},
+{id:"WS00091", name:"テラフォーマーズ",cname:"Terra Formars ~火星任務~ | TF"},
+{id:"WS00092", name:"TVアニメ「デビルサバイバー2」",cname:"惡魔倖存者2 | DS2"},
+{id:"WS00093", name:"天元突破グレンラガン",cname:"天元突破 紅蓮螺巖 | GL"},
+{id:"WS00094", name:"転生したらスライムだった件",cname:"關於我轉生變成史萊姆這檔事 | TSK"},
+{id:"WS00114", name:"D_CIDE TRAUMEREI",cname:"D_CIDE TRAUMEREI | DCT"},
+{id:"WS00095", name:"ノーゲーム・ノーライフ",cname:"遊戲人生 | NGL"},
+{id:"WS00096", name:"初音ミク -Project DIVA-",cname:"初音未來 -名伶計畫- | PD"},
+{id:"WS00097", name:"FAIRY TAIL",cname:"魔導少年 | 妖精尾巴 | FT"},
+{id:"WS00098", name:"Fate",cname:"命運停駐之夜 | FS,FU,FH,FZ"},
+{id:"WS00099", name:"Fate/Apocrypha",cname:"命運/外傳 | APO"},
+{id:"WS00100", name:"Fate/Grand Order（アニメ）",cname:"命運/冠位指定 | FGO"},
+{id:"WS00101", name:"ブラック★ロックシューター",cname:"BLACK★ROCK SHOOTER | BR"},
+{id:"WS00102", name:"ぷよぷよ",cname:"魔法氣泡 | PY"},
+{id:"WS00103", name:"プリズマ☆イリヤ",cname:"Fate/kaleid liner 魔法少女☆伊莉雅 | PI"},
+{id:"WS00104", name:"ペルソナ",cname:"女神異聞錄Persona | P3,P4,PQ,P5"},
+{id:"WS00105", name:"魔界戦記ディスガイア",cname:"魔界戰記 | DG"},
+{id:"WS00115", name:"無職転生 ～異世界行ったら本気だす～",cname:"無職轉生 ～異世界行ったら本気だす～ | MTI"},
+{id:"WS00106", name:"MELTY BLOOD／空の境界",cname:"逝血之戰／空之境界 | MB,KK"},
+{id:"WS00107", name:"〈物語〉シリーズ",cname:"《物語》系列 | BM,NM,MG"},
+{id:"WS00108", name:"Re:ゼロから始める異世界生活",cname:"Re: 從零開始的異世界生活 | RZ"},
+{id:"WS00109", name:"ログ・ホライズン",cname:"記錄的地平線 | LH"},
+{id:"WS00110", name:"ロストディケイド",cname:"Lost Decade | LOD"},
+{id:"WS00113", name:"ワールドトリガー",cname:"境界觸發者 | WTR"},
+{id:"WS00119", name:"Marvel/Card Collection",cname:"漫威 | MAR,Dmv"},
+{id:"WS00120", name:"プロジェクトセカイ カラフルステージ！ feat. 初音ミク",cname:"世界計畫 繽紛舞台！ feat.初音未來 | PJS"},
+{id:"WS00121", name:"小林さんちのメイドラゴン",cname:"小林家的龍女僕 | KMD"},
+{id:"WS00122", name:"東京リベンジャーズ",cname:"東京卍復仇者 | TRV"},
+{id:"WS00123", name:"PIXAR",cname:"皮克斯 | PXR,Dpx,MRp"},
+{id:"WS00124", name:"D4DJ",cname:"D4DJ 電音派對 | DJ"},
+{id:"WS00125", name:"ヘブンバーンズレッド",cname:"HEAVEN BURNS RED | HBR,Khb"},
+{id:"WS00126", name:"アズールレーン",cname:"碧藍航線 | AZL"},
+{id:"WS00127", name:"チェンソーマン",cname:"鏈鋸人 | CSM"},
+{id:"WS00128", name:"ありふれた職業で世界最強",cname:"平凡職業造就世界最強 | ARI"},
+{id:"WS00129", name:"Disney100",cname:"迪士尼100 | Dds,Dpx,Dmv,Dsw"},
+{id:"WS00130", name:"パズル＆ドラゴンズ",cname:"龍族拼圖 | 龍拼 | PAD"},
+{id:"WS00131", name:"リコリス・リコイル",cname:"Lycoris Recoil 莉可麗絲 | LRC"},
+{id:"WS00132", name:"ウマ娘 プリティーダービー",cname:"賽馬娘Pretty Derby | UMA"},
+{id:"WS00133", name:"SPY×FAMILY",cname:"間諜家家酒 | SPY"},
+{id:"WS00134", name:"電撃文庫",cname:"電擊文庫 | G86,Gas,Gaw,Gbb,Gbc,Gbd,Gbl,Gby,Gc3,Gdc,Gdr,Gds,Gdy,Gem,Gfq,Gga,Ggh,Ggg,Ggu,Ghh,Ghm,Gid,Giy,Gkb,Gkl,Gkm,Glt,Gmf,Gmm,Gmr,Gms,Gnh,Gnm,Gns,Gny,Goi,Gok,Gom,Gos,Grk,Gsb,Gsc,Gsd,Gsk,Gso,Gsp,Gsr,Gss,Gtd,Gyf"},
+{id:"WS00135", name:"幻日のヨハネ -SUNSHINE in the MIRROR-",cname:"幻日夜羽 -鏡中暉光- | YHN"},
+{id:"WS00136", name:"アリス・ギア・アイギス Expansion",cname:"機戰少女Alice | AGS"},
+{id:"WS00137", name:"あやかしトライアングル",cname:"妖幻三重奏 | AYT"},
+{id:"WS00138", name:"【推しの子】",cname:"【我推的孩子】 | OSK"},
+{id:"WS00139", name:"ぼっち・ざ・ろっく！",cname:"孤獨搖滾！ | BTR"},
+{id:"WS00140", name:"葬送のフリーレン",cname:"葬送的芙莉蓮 | SFN"}	,
+{id:"WS00141", name:"ラブライブ！スクールアイドルフェスティバル2",cname:"Love Live! 學園偶像祭2 Miracle Live! | SIL,SIS,SIN,SIP,LSF"},
+{id:"WS00142", name:"リアセカイ",cname:"Rear Sekai 背面世界 | RSK"},
+{id:"WS00143", name:"ブルーアーカイブ",cname:"蔚藍檔案 Blue Archive | BAV"},
+{id:"WS00144", name:"『ゆるキャン△ SEASON３』",cname:"搖曳露營△ | YRC"},
+{id:"WS00145", name:"『キャプテン翼』",cname:"足球小將翼 | CTB"},
+{id:"WS00146", name:"るろうに剣心 －明治剣客浪漫譚－",cname:"神劍闖江湖 | RKN"},
+{id:"WS00147", name:"勝利の女神：NIKKE",cname:"勝利女神：妮姬 | NIK"},
+{id:"WS00148", name:"TVアニメ『ダンダダン』",cname:"膽大黨 DAN DA DAN | DDD"},
+{id:"WS00149", name:"ガールズバンドクライ",cname:"Girls Band Cry 少女樂團 吶喊吧 少哭 少女樂團哭 | GCR"},
+{id:"WS00150", name:"ラブライブ！蓮ノ空女学院スクールアイドルクラブ feat. Link！Like！ラブライブ！",cname:"蓮之空女學院學園偶像俱樂部 | LHS"},
+{id:"WS00151", name:"甘神さんちの縁結び",cname:"結緣甘神神社 | AMG"},
+{id:"WS00152", name:"学園アイドルマスター",cname:"學園偶像大師 | 學偶 | GIM"},
+{id:"WS00153", name:"あおぎり高校",cname:"青桐高中 | AOH"},
+{id:"WS00154", name:"負けヒロインが多すぎる！",cname:"敗北女角太多了！ | MKI"},
+{id:"WS00155", name:"怪獣８号",cname:"怪獸8號 | 怪8 | KJ8"}	,
+{id:"WS00156", name:"きんいろモザイク",cname:"黃金拼圖 | KMS"},
+{id:"WS00157", name:"『テイルズ オブ』シリーズ",cname:"傳奇系列 | TAL"},
+{id:"WS00158", name:"Disney",cname:"Disney | 迪士尼 | Dds,MRd"},
+{id:"WS00159", name:"ミラー・ウォリアーズ",cname:"迪士尼鏡像宇宙 | Disney Mirrorverse | MRd,MRp"},
+{id:"WS00160", name:"VIRTUAL GIRL",cname:"虛擬少女@世界終焉 | VRG,BDY"},
+{id:"WS00161", name:"東方Project",cname:"東方Project | THP"},
+{id:"WS00162", name:"GA文庫",cname:"GA文庫 | GA01,GA02,GA03,GA04,GA05,GA06,GA07,GA08,GA09,GA10,GA11,GA12,GA13,GA14,GA15,GA16,GA17,GA18,GA19"},
+{id:"WS00163", name:"グランブルーファンタジー",cname:"碧藍幻想 | GBF"},
+{id:"WS00164", name:"ブラウンダスト2",cname:"棕色塵埃2 | 棕塵 | 永遠棕塵 | BRD"}
+]
+,
+minLength:1,          // 最少輸入字數
+showHintOnFocus:true, // 焦點時顯示提示
+scrollHeight:0,       // 滾動高度
+items:'all',          // 顯示所有項目
+    matcher: function (item) {
+        var it = this.displayText(item);
+        var cname=item.cname+"";
+        if(cname.indexOf(this.query)>=0){
+            return item.name;
+        }else if(cname.toLowerCase().indexOf(this.query)>=0){
+            return item.name;
+        }else if(cname.toLowerCase().indexOf(this.query.toLowerCase())>=0){
+            return item.name;
+        }
+        return ~it.toLowerCase().indexOf(this.query.toLowerCase());
+    },
+//  displayText: function(item) {
+//	return item.name
+//  },
+fitToElement:true,     // 適應元素寬度
+selectOnBlur:false     // 失去焦點時不自動選擇
+});
+
+// ====================================================
+// 覆寫 typeahead 實例，將原生 .dropdown-menu 導向
+// 統一的 cardNameSearchContainer，避免兩個下拉並存
+// ====================================================
+(function() {
+    var ta = $input.data('typeahead');
+    if (!ta) return;
+
+    // 覆寫 render：收集匹配結果並交由統一容器渲染
+    ta.render = function(items) {
+        _typeaheadSuggestions = Array.isArray(items) ? items.slice(0, 20) : [];
+        renderUnifiedSearchContainer();
+        // 清空原生 menu，防止空白 ul 顯示
+        this.$menu.html('');
+        return this;
+    };
+
+    // 覆寫 show：不顯示原生 menu，但維持 shown 旗標
+    ta.show = function() {
+        this.shown = true;
+        return this;
+    };
+
+    // 覆寫 hide：清除 typeahead 建議並更新統一容器
+    ta.hide = function() {
+        this.shown = false;
+        _typeaheadSuggestions = [];
+        renderUnifiedSearchContainer();
+        return this;
+    };
+})();
+
+/**
+* 處理 Typeahead 選擇和卡號直接輸入
+* - 檢測是從下拉選單選擇還是直接輸入卡號
+* - 根據不同情況執行對應的搜尋邏輯
+*/
+function handleInputChange() {
+var current = $input.typeahead("getActive");
+var inputValue = $input.val().trim();
+
+console.log('Input change detected(inputValue):', inputValue);
+console.log('current:',current);
+_handleSearchInputState(inputValue);
+
+// 清除任何待執行的 debounce timer（change 事件優先處理）
+if (_searchDebounceTimer) {
+clearTimeout(_searchDebounceTimer);
+_searchDebounceTimer = null;
+}
+
+// 如果正在搜尋中，跳過
+if (_isSearching) {
+console.log('搜尋進行中，跳過 change 事件');
+return;
+}
+
+if (current) {
+// Some item from your model is active!
+if (current.name == inputValue) {
+  console.log('Typeahead item selected:', current.name);
+  changeStandardForSuggest(current.name);
+  scrollToFilters();
+  //when you chose item
+} else {
+        console.log('Partial match detected->keep waiting for search click or 30s auto search');
+}
+} else {
+// Nothing is active so it is a new value (or maybe empty value)
+// 卡號搜尋交由「搜尋按鈕」或「30 秒後自動搜尋」處理
+}
+}
+
+
+// 監聽 change 事件 (失去焦點時觸發)
+$input.change(handleInputChange);
+
+/**
+* 監聽 input 事件 (即時輸入時觸發)
+* - 名稱搜尋維持 debounce 機制
+* - 卡號不再 1.2 秒立即搜尋，改為等待手動點擊搜尋
+* - 若 30 秒未點擊搜尋，才自動搜尋一次
+*/
+$input.on('input', function() {
+// 每次輸入都清除上一次的 debounce timer
+if (_searchDebounceTimer) {
+clearTimeout(_searchDebounceTimer);
+_searchDebounceTimer = null;
+}
+
+var inputValue = $input.val().trim();
+var isCardFormat = inputValue && inputValue.length >= 8 && isCardNumberFormat(inputValue);
+
+_handleSearchInputState(inputValue);
+
+if (inputValue && inputValue.length > 0 && !isCardFormat) {
+// 啟動名稱搜尋的防抖
+_searchDebounceTimer = setTimeout(function() {
+    _searchDebounceTimer = null;
+    var currentValue = $input.val().trim();
+    if (currentValue === inputValue && !isCardNumberFormat(inputValue)) {
+        searchByCardName(inputValue);
+    }
+}, 500); // 模糊搜尋的反應時間可以設短一點
+} else {
+    // 卡號模式或空白時隱藏名稱搜尋結果
+    hideCardNameSearchResults();
+}
+});
+
+// ========= 卡片名稱搜尋與浮動視窗模組 =========
+function fetchCardDictionary(callback) {
+    if (_cardDictionary) {
+        if(callback) callback();
+        return;
+    }
+    console.log("正在載入卡片字典...");
+    // 呼叫包含卡名與卡號對應的 JSON，例如 json/cardDictionary.json
+    // 如果檔案不存在會報錯，開發時需確認該檔案存在，格式為 [["BD/W54-070", "卡名A"], ...]
+    fetch('json/cardDictionary.json')
+        .then(response => response.json())
+        .then(data => {
+            _cardDictionary = data;
+            console.log("卡片字典載入成功！共 " + data.length + " 筆");
+            if(callback) callback();
+        })
+        .catch(err => {
+            console.error("載入卡片字典失敗", err);
+        });
+}
+
+// 點擊卡片彈窗外時關閉
+document.addEventListener('click', function(e) {
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (searchDiv && e.target.id !== 'xxxx' && !searchDiv.contains(e.target)) {
+        hideCardNameSearchResults();
+    }
+});
+
+// scroll / resize 時同步更新浮動面板位置
+function _updateCardNameSearchPos() {
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (!searchDiv || searchDiv.style.display === 'none') return;
+    var inputEl = document.getElementById('xxxx');
+    if (!inputEl) return;
+    var rect = inputEl.getBoundingClientRect();
+    searchDiv.style.top  = (rect.bottom + 2) + 'px';
+    searchDiv.style.left = rect.left + 'px';
+    searchDiv.style.width = rect.width + 'px';
+}
+window.addEventListener('scroll', _updateCardNameSearchPos, true);
+window.addEventListener('resize', _updateCardNameSearchPos);
+
+function hideCardNameSearchResults() {
+    _typeaheadSuggestions = [];
+    _cardNameSuggestions = [];
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (searchDiv) {
+        searchDiv.style.display = 'none';
+    }
+}
+
+function searchByCardName(keyword) {
+    if (!keyword) {
+        _cardNameSuggestions = [];
+        renderUnifiedSearchContainer();
+        return;
+    }
+
+    fetchCardDictionary(function() {
+        if (!_cardDictionary) return;
+        
+        var lowerKeyword = keyword.toLowerCase();
+        // 進行比對並取得前 30 筆
+        _cardNameSuggestions = _cardDictionary.filter(function(item) {
+            return (item[1] && item[1].toLowerCase().includes(lowerKeyword)) || 
+                   (item[0] && item[0].toLowerCase().includes(lowerKeyword));
+        }).slice(0, 30);
+
+        renderUnifiedSearchContainer();
+    });
+}
+
+/**
+ * 統一下拉容器渲染函式
+ * - 上半部：作品/系列建議（_typeaheadSuggestions）
+ * - 下半部：卡片名稱搜尋結果（_cardNameSuggestions）
+ * 兩者共用同一個 #cardNameSearchContainer，不再出現第二個下拉元素
+ */
+function renderUnifiedSearchContainer() {
+    var inputEl = document.getElementById('xxxx');
+    if (!inputEl) return;
+
+    var hasTypeahead = _typeaheadSuggestions.length > 0;
+    var hasCards     = _cardNameSuggestions.length > 0;
+
+    if (!hasTypeahead && !hasCards) {
+        hideCardNameSearchResults();
+        return;
+    }
+
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (!searchDiv) {
+        searchDiv = document.createElement('div');
+        searchDiv.id = 'cardNameSearchContainer';
+        searchDiv.style.position = 'fixed';
+        searchDiv.style.zIndex = '99999';
+        searchDiv.style.background = '#fff';
+        searchDiv.style.border = '1px solid #ccc';
+        searchDiv.style.borderRadius = '0 0 6px 6px';
+        searchDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        searchDiv.style.maxHeight = '360px';
+        searchDiv.style.overflowY = 'auto';
+        searchDiv.style.display = 'none';
+        document.body.appendChild(searchDiv);
+    }
+
+    var rect = inputEl.getBoundingClientRect();
+    searchDiv.style.top   = (rect.bottom + 2) + 'px';
+    searchDiv.style.left  = rect.left + 'px';
+    searchDiv.style.width = rect.width + 'px';
+
+    var html = '';
+
+    // ── 作品/系列區塊 ──
+    if (hasTypeahead) {
+        html += '<div style="padding:5px 10px;background:#eef2ff;color:#4f46e5;font-size:0.72em;font-weight:700;letter-spacing:0.5px;border-bottom:1px solid #e0e7ff;">作品 / 系列</div>';
+        _typeaheadSuggestions.forEach(function(item) {
+            var displayName = (item.name || '').replace(/'/g, '&#39;');
+            var cname       = (item.cname || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            // onclick 使用單引號包裹字串，並跳脫 ' 和 \ 避免 HTML attribute 截斷
+            var safeArg = (item.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += '<div class="unified-search-item typeahead-suggest-item"'
+                  + ' style="padding:8px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;"'
+                  + ' onclick="handleTypeaheadItemClick(\'' + safeArg + '\')">';
+            html += '<div style="font-size:0.88em;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + displayName + '">' + displayName + '</div>';
+            if (cname) {
+                html += '<div style="font-size:0.75em;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + cname + '">' + cname + '</div>';
+            }
+            html += '</div>';
+        });
+    }
+
+    // ── 卡片名稱區塊 ──
+    if (hasCards) {
+        html += '<div style="padding:5px 10px;background:#f0fdf4;color:#15803d;font-size:0.72em;font-weight:700;letter-spacing:0.5px;border-bottom:1px solid #dcfce7;">卡片名稱</div>';
+        _cardNameSuggestions.forEach(function(item) {
+            var cardNo   = item[0];
+            var cardName = item[1];
+            html += '<div class="unified-search-item card-name-search-item"'
+                  + ' style="padding:9px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"'
+                  + ' onclick="handleCardNameResultClick(\'' + cardNo + '\')">';
+            html += '<span style="font-weight:bold;font-size:0.88em;flex:1;margin-right:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + cardName + '">' + cardName + '</span>';
+            html += '<span style="color:#667eea;font-size:0.78em;flex-shrink:0;">' + cardNo + '</span>';
+            html += '</div>';
+        });
+    }
+
+    searchDiv.innerHTML = html;
+    searchDiv.style.display = 'block';
+
+    // hover 效果
+    searchDiv.querySelectorAll('.unified-search-item').forEach(function(el) {
+        el.addEventListener('mouseover', function() { this.style.backgroundColor = '#f8fafc'; });
+        el.addEventListener('mouseout',  function() { this.style.backgroundColor = 'transparent'; });
+    });
+}
+
+// 相容舊呼叫 renderCardNameSearchResults（保留供外部使用）
+function renderCardNameSearchResults(results) {
+    _cardNameSuggestions = results || [];
+    renderUnifiedSearchContainer();
+}
+
+window.handleTypeaheadItemClick = function(itemName) {
+    console.log('選擇作品/系列:', itemName);
+    hideCardNameSearchResults();
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) inputEl.value = itemName;
+    if (typeof changeStandardForSuggest === 'function') changeStandardForSuggest(itemName);
+    if (typeof scrollToFilters === 'function') scrollToFilters();
+};
+
+window.handleCardNameResultClick = function(cardNumber) {
+    console.log("選擇卡片:", cardNumber);
+    hideCardNameSearchResults();
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) {
+        inputEl.value = cardNumber;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (typeof searchByCardNumber === 'function') {
+        searchByCardNumber(cardNumber);
+    }
+};
+// ===============================================
+
+/**
+* 檢查輸入是否符合卡號格式
+* @param {string} input - 輸入的字串
+* @returns {boolean} - 是否為卡號格式
+*/
+function isCardNumberFormat(input) {
+// 卡號格式通常為: XXX/XXX-XXX 或類似的組合
+// 例如: PRD/W01-001, BD/W54-070SSP, SAO/S26-001, MRd/S111-033
+var cardNumberPattern = /^[A-Za-z0-9]+(?:\/[A-Za-z0-9]+)?-[A-Za-z0-9]+[A-Za-z]*$/i;
+var result = cardNumberPattern.test(input);
+console.log('卡號格式檢查:', input, '結果:', result);
+return result;
+}
+
+/**
+* 根據卡號直接搜尋並設置選擇器
+* @param {string} cardNumber - 完整的卡號
+*/
+function searchByCardNumber(cardNumber) {
+try {
+// 防止重複搜尋：正在搜尋中 或 與上次搜尋值相同
+if (_isSearching) {
+  console.log('搜尋進行中，忽略重複請求:', cardNumber);
+  return;
+}
+if (cardNumber === _lastSearchedValue) {
+  console.log('與上次搜尋值相同，忽略重複請求:', cardNumber);
+  return;
+}
+
+console.log('開始解析卡號:', cardNumber);
+
+// 鎖定搜尋狀態
+_isSearching = true;
+_lastSearchedValue = cardNumber;
+
+// 顯示搜尋提示（整段查詢只有這一則進度提示）
+showSearchNotification('查詢 ' + cardNumber + '…');
+
+// 拆解卡號
+var cardParts = parseCardNumber(cardNumber);
+if (!cardParts) {
+  console.warn('無法解析卡號格式:', cardNumber);
+  showSearchNotification('卡號格式看起來不對，正確格式像 PRD/W01-001。', 'error');
+  _isSearching = false;
+  return;
+}
+
+console.log('卡號解析結果:', cardParts);
+
+// 根據解析結果設置選擇器
+setSelectorsFromCardParts(cardParts);
+
+} catch (error) {
+console.error('搜尋卡號時發生錯誤:', error);
+showSearchNotification('查詢時發生問題，請再試一次。', 'error');
+_isSearching = false;
+}
+}
+
+/**
+* 顯示搜尋通知
+*
+* 只有兩種情況該打斷讀者：查詢進行中、以及查詢失敗。
+* 查詢成功不發通知 —— 畫面本身就是答案，且成功後會自動捲到結果。
+*
+* @param {string} message - 通知訊息
+* @param {string} type - 通知類型 ('info', 'error'; 'success' 會被靜音)
+*/
+function showSearchNotification(message, type = 'info') {
+console.log('[搜尋通知]', message);
+
+if (typeof Swal === 'undefined') return;
+
+// 成功不再彈窗，避免一次查詢連續蓋出多個提示
+if (type === 'success') {
+  Swal.close();
+  return;
+}
+
+Swal.fire({
+  icon: type === 'error' ? 'error' : 'info',
+  title: type === 'error' ? '查不到這張卡' : '查詢中',
+  text: message,
+  timer: type === 'error' ? 4000 : 2000,
+  showConfirmButton: false,
+  toast: true,
+  position: 'top-end'
+});
+}
+
+/**
+* 解析卡號各部分
+* @param {string} cardNumber - 完整卡號 (例如: PRD/W01-001)
+* @returns {object|null} - 解析結果
+*/
+function parseCardNumber(cardNumber) {
+// 卡號格式: PREFIX/SET-NUMBER or SET-NUMBER
+// 例如: PRD/W01-001, W103-002 (由於W103一定沒在系列裡面所以會跟原本寫法拋出的結果一樣)
+var parts = cardNumber.match(/^([A-Z0-9]+)(?:\/([A-Z0-9]+))?-([A-Z0-9]+[A-Z]*)$/i);
+
+if (!parts) {
+return null;
+}else{
+const hasSlash = !!parts[2];
+return {
+    prefix: parts[1],           // 例如: PRD or W103
+    series: hasSlash ? parts[1] + '/' + parts[2] : parts[1], //例如:PRD/W01  or  W103
+    suffix: (parts[2] || parts[1]) + '-' + parts[3], //例如:W01-001 or W103-001
+    fullNumber: cardNumber      //例如: PRD/W01-001 or W103-001
+};
+}
+}
+
+/**
+* 根據卡號部分設置各個選擇器
+* @param {object} cardParts - 解析後的卡號部分
+*/
+async function setSelectorsFromCardParts(cardParts) {
+try {
+// 每個查不到的環節對讀者來說都是同一件事：這張卡查不到。
+// 所以不再播報內部步驟，只在真的失敗時說明原因與下一步。
+var notFound = function(target) {
+    showSearchNotification(target + ' 不在遊遊亭的收錄範圍，或卡號有誤。可改用下方「篩選條件」逐步尋找。', 'error');
+    _isSearching = false;
+};
+
+// 1. 首先找到並設置 cardStandard
+var standardFound = await findAndSetCardStandard(cardParts.prefix);
+if (!standardFound) {
+  if(cardParts.prefix !== cardParts.series){
+    //W103-001 這類的就不會進來
+    console.warn('找不到對應的作品標準:', cardParts.prefix);
+    notFound(cardParts.fullNumber);
+    return;
+  }
+}
+reGenTitle();
+// 等待 cardTitle 選項載入完成
+await waitForTitleOptionsLoaded();
+
+
+// 2. 設置 cardTitle
+var titleFound = await findAndSetCardTitle(cardParts.series);
+if (!titleFound) {
+    if(cardParts.prefix !== cardParts.series){
+        console.warn('找不到對應的主題:', cardParts.series);
+        notFound(cardParts.fullNumber);
+        return;
+    }
+}
+
+if(titleFound){
+    // 等待 cardNumber 選項載入完成
+    await waitForNumberOptionsLoaded();
+
+    // 3. 設置 cardNumber
+    var numberFound = await findAndSetCardNumber(cardParts.fullNumber);
+    if (!numberFound) {
+    console.warn('找不到對應的卡號:', cardParts.fullNumber);
+    notFound(cardParts.fullNumber);
+    return;
+    }
+}else{
+    // 2.5 設置 cardSuffix (主要工作將卡號清單找出並展出)
+    var suffixFound = await findAndSetCardSuffix(cardParts.prefix,cardParts.suffix);
+    if (!suffixFound) {
+        console.warn('後綴找不到對應的卡號:', cardParts.suffix);
+        notFound(cardParts.fullNumber);
+        return;
+    }
+
+    // 3. 根據設置 cardNumber (這邊的fullNumber應該是等同於suffix)
+    var numberFound = await findAndSetCardNumberBySuffix(cardParts.fullNumber);
+    if (!numberFound) {
+        console.warn('找不到對應的卡號:', cardParts.fullNumber);
+        notFound(cardParts.fullNumber);
+        return;
+    }
+}
+
+console.log('✓ 卡號搜尋完成:', cardParts.fullNumber);
+// 成功時關掉進度提示即可，結果本身就是回饋
+showSearchNotification('', 'success');
+
+// 搜尋完成，釋放鎖定
+_isSearching = false;
+
+// 搜尋成功後平滑滾動到結果區域
+setTimeout(() => {
+    scrollToResults();
+}, 200); // 延遲一秒讓圖表載入完成	
+
+} catch (error) {
+console.error('設置選擇器時發生錯誤:', error);
+showSearchNotification('查詢時發生問題，請再試一次。', 'error');
+_isSearching = false;
+}
+}
+
+// API 端點 URL 設定
+var requestURLCardPrice = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/BD_W54.json';
+var requestURLCardStock = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/BD_W54.json';
+var requestMappingURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardDisplayMapping.json'
+var requestURLCardPricebyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/stockJson/';
+var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
+var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
+var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
+
+// XMLHttpRequest 物件
+var requestStandardW = new XMLHttpRequest();
+var requestStandardS = new XMLHttpRequest();			
+var requestPrice = new XMLHttpRequest();	
+var requestStock = new XMLHttpRequest();
+var requestTitle = new XMLHttpRequest();	
+var requestMapping = new XMLHttpRequest();
+var mappingRep;
+
+/**
+* 載入卡號顯示對應表
+* - 用於處理特殊格式的卡號顯示
+*/
+requestMapping.open('GET',requestMappingURL);
+requestMapping.responseType = 'json';
+requestMapping.send();	
+requestMapping.onload = function() {
+mappingRep = requestMapping.response;		
+}			  
+
+
+/**
+* 初始化設定函數
+* - 載入作品標準資料 (Weiss 和 Schwarz)
+* - 載入主題資料
+* - 載入預設卡片資料
+* - 設置選擇器初始狀態
+*/
+function setFun(){
+//select 設定
+var selectStandard = document.getElementById("cardStandard");
+selectStandard.length = 1;
+selectStandard.options[0].selected = true;	
+          
+var selectPrice = document.getElementById("cardNumber"); 
+selectPrice.length = 1;
+selectPrice.options[0].selected = true;	
+selectPrice.style.visibility = 'hidden';
+
+var selectTitle = document.getElementById("cardTitle"); 
+selectTitle.length = 1;
+selectTitle.options[0].selected = true;	
+          
+// 載入 Weiss 作品標準
+requestStandardW.open('GET', standardWURL);
+requestStandardW.responseType = 'json';
+requestStandardW.send();
+
+// 載入 Schwarz 作品標準		  
+requestStandardS.open('GET', standardSURL);
+requestStandardS.responseType = 'json';
+requestStandardS.send();
+
+/**
+ * Weiss 作品標準載入完成後
+ * - 填充 Weiss 選項群組
+ */			  
+requestStandardW.onload = function(){
+    var optgroupW = document.getElementById("Weiss");
+    var cardsW = requestStandardW.response;
+    for(var key in cardsW){	 
+        var option = document.createElement("option");
+        option.setAttribute("value",cardsW[key]);
+        option.setAttribute("id",key);
+        option.appendChild(document.createTextNode(key)); 
+        optgroupW.appendChild(option);				
+    }	
+    _standardWLoaded = true;
+}
+requestStandardW.onerror = function(){
+    _standardWLoaded = true;
+}
+
+/**
+ * Schwarz 作品標準載入完成後
+ * - 填充 Schwarz 選項群組
+ */	
+requestStandardS.onload = function(){
+    var optgroupS = document.getElementById("Schwarz");				  
+    var cardsS = requestStandardS.response;		
+    for(var key in cardsS){	 
+        var option = document.createElement("option");
+        option.setAttribute("value",cardsS[key]);
+        option.setAttribute("id",key);	
+        option.appendChild(document.createTextNode(key)); 
+        optgroupS.appendChild(option);				
+    }					
+    _standardSLoaded = true;
+}
+requestStandardS.onerror = function(){
+    _standardSLoaded = true;
+}
+
+// 載入預設價格資料			  
+requestPrice.open('GET', requestURLCardPrice);
+requestPrice.responseType = 'json';
+requestPrice.send();	
+
+requestStock.open('GET', requestURLCardStock);
+requestStock.responseType = 'json';
+requestStock.send();
+          
+requestTitle.open('GET', requestURLCardTitle);
+requestTitle.responseType = 'json';
+requestTitle.send();
+
+/**
+ * 主題資料載入完成後
+ * - 填充主題選擇器
+ */	
+requestTitle.onload = function(){
+    var cardsTitle = requestTitle.response;
+    for(var key in cardsTitle){	 
+        var option = document.createElement("option");
+        option.setAttribute("value",key);
+        option.appendChild(document.createTextNode(cardsTitle[key])); 
+        selectTitle.appendChild(option);				
+    }
+}
+
+/**
+ * 預設價格資料載入完成後
+ * - 顯示預設卡片 (BD/W54-070SSP)
+ */	
+requestPrice.onload = function(){
+    var cards = requestPrice.response;
+    getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
+    //loadCardData 預設
+    loadCardData('BD/W54-070SSP');
+    // 載入預設鑑定卡資料
+    if (typeof GradingModule !== 'undefined') {
+        GradingModule.loadGradingData('BD_W54', 'BD/W54-070SSP');
+    }
+    searchCardNumberFromUrl();
+}
+
+/**
+ * 預設庫存資料載入完成後
+ * - 顯示預設卡片庫存
+ */		  
+requestStock.onload = function(){
+    var cards = requestStock.response;
+    getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
+}			
+
+
+/**
+ * 等待卡片圖片載入完成
+ * - 載入完成後隱藏 overlay
+ */			  
+var timer = setInterval(function(){
+    if (document.getElementById('cardImg').complete){
+        clearInterval(timer);
+        document.getElementById('overlay-1').style.display='none';	
+    }
+}, 10);
+
+if (typeof syncAdvancedFilterButton === 'function') {
+    syncAdvancedFilterButton();
+}
+}
+
+/**
+* 作品標準變更處理函數
+* - 根據選擇的作品標準篩選可用的主題
+* - 重新載入主題選項
+*/			
+function changeStandard(){
+var cardStandard=document.getElementById('cardStandard').value;
+var cardStandardEle=document.getElementById('cardStandard');
+var selectTitle = document.getElementById("cardTitle"); 
+
+// 清空主題選擇器	
+while (selectTitle.firstChild) {
+    selectTitle.removeChild(selectTitle.firstChild);
+}			  
+
+
+// 重新載入主題資料
+requestTitle.open('GET', requestURLCardTitle);
+requestTitle.responseType = 'json';
+requestTitle.send();	
+
+/**
+ * 主題資料載入完成後
+ * - 根據作品標準篩選主題
+ */			
+requestTitle.onload = function(){
+    var cardsTitle = requestTitle.response;
+    var cardStandardArray = cardStandard.split(",");
+
+    for(var key in cardsTitle){	 
+        // 提取主題前綴
+        var keyStr=key.substr(0,key.indexOf('/'));//2~3
+        var keyStrLength=keyStr.length;
+
+        // 檢查是否符合選擇的作品標準
+        var filtered = cardStandardArray.filter(function(value) {
+            return value === keyStr;
+        });			
+
+        if(filtered==0){
+            //double check
+            continue;
+        }
+
+        var option = document.createElement("option");
+        option.setAttribute("value",key);
+        option.appendChild(document.createTextNode(cardsTitle[key])); 
+        selectTitle.appendChild(option);				
+    }
+}		
+changeStandardAfterChangeNumber();			  
+}
+
+/**
+* 根據建議的作品名稱變更作品標準
+* @param {string} productName - 作品名稱
+* 
+* 用於 Typeahead 選擇後自動設置
+*/
+function changeStandardForSuggest(productName){
+document.getElementById(productName).selected=true
+changeStandard();		  
+}	
+
+/**
+* 移除標題提示
+* - 隱藏 "notuse" 元素
+*/
+function removeTitle(){			
+document.getElementById('notuse').style.display='none';
+}				
+
+/**
+* 作品標準變更後更新卡號選擇器
+* - 清空卡號選擇器
+* - 顯示卡號選擇器
+* - 添加預設選項
+*/
+function changeStandardAfterChangeNumber(){
+var selectPrice = document.getElementById("cardNumber"); 
+selectPrice.style.visibility = 'visible';		
+
+while (selectPrice.firstChild) {
+    selectPrice.removeChild(selectPrice.firstChild);
+}		
+
+var cardTitle = document.getElementById('cardTitle').value;
+var selectTitle = document.getElementById("cardTitle"); 			  
+var option = document.createElement("option"); 
+option.setAttribute("value",0);
+option.appendChild(document.createTextNode("選擇產品")); 				  
+selectTitle.appendChild(option);	
+selectTitle.insertBefore(option,selectTitle.childNodes[0]);
+
+removeTitle();
+if (typeof syncAdvancedFilterButton === 'function') {
+    clearAdvancedProductCache();
+    syncAdvancedFilterButton();
+}
+}
+
+
+// ===== 進階選項篩選 =====
+var _advProductCache = { titleCode: '', cards: null };
+var _advFiltersBound = false;
+
+var ADV_KIND_LABELS = {
+    '0': '角色',
+    '1': '事件',
+    '2': '名場面'
+};
+
+function getAdvKindLabel(kind) {
+    var key = String(kind);
+    return ADV_KIND_LABELS[key] || key;
+}
+
+function isProductSelected() {
+    var select = document.getElementById('cardTitle');
+    if (!select || select.selectedIndex < 0) return false;
+    var value = String(select.value || '').trim();
+    var text = (select.options[select.selectedIndex] && select.options[select.selectedIndex].text || '').trim();
+    if (!value || value === '000/000-000' || value === '0') return false;
+    if (!text || text === '選擇主題' || text === '選擇產品') return false;
+    return true;
+}
+
+function clearAdvancedProductCache() {
+    _advProductCache = { titleCode: '', cards: null };
+}
+
+function syncAdvancedFilterButton() {
+    var btn = document.getElementById('advancedFilterBtn');
+    if (!btn) return;
+    btn.style.display = isProductSelected() ? '' : 'none';
+}
+
+function getSelectedProductTitleCode() {
+    var select = document.getElementById('cardTitle');
+    if (!select) return '';
+    return String(select.value || '').replace('/', '_');
+}
+
+function getSelectedProductDisplayName() {
+    var select = document.getElementById('cardTitle');
+    if (!select || select.selectedIndex < 0) return '';
+    return (select.options[select.selectedIndex] && select.options[select.selectedIndex].text) || '';
+}
+
+function buildCardImageUrls(cardId) {
+    var card_Num = cardId;
+    var card_first = card_Num.substr(0, 1);
+    var card_second = card_Num.substr(0, card_Num.indexOf('-'));
+    card_second = card_second.replace('/', '_');
+    var card_third = card_Num.replace('/', '_').replace('-', '_');
+    return {
+        primary: 'https://imgs.devilfox.net/ws/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png',
+        fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' + card_first.toLowerCase() + '/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png'
+    };
+}
+
+function fillSelectOptions(selectEl, values, valueMapper) {
+    if (!selectEl) return;
+    var current = selectEl.value || 'all';
+    selectEl.innerHTML = '';
+    var allOpt = document.createElement('option');
+    allOpt.value = 'all';
+    allOpt.textContent = '全部';
+    selectEl.appendChild(allOpt);
+    values.forEach(function(v) {
+        var opt = document.createElement('option');
+        var mapped = valueMapper ? valueMapper(v) : { value: String(v), label: String(v) };
+        opt.value = mapped.value;
+        opt.textContent = mapped.label;
+        selectEl.appendChild(opt);
+    });
+    var hasCurrent = Array.prototype.some.call(selectEl.options, function(o) { return o.value === current; });
+    selectEl.value = hasCurrent ? current : 'all';
+}
+
+function uniqueSorted(values, sorter) {
+    var set = {};
+    values.forEach(function(v) {
+        if (v === undefined || v === null || v === '') return;
+        set[String(v)] = v;
+    });
+    var arr = Object.keys(set).map(function(k) { return set[k]; });
+    if (sorter) {
+        arr.sort(sorter);
+    } else {
+        arr.sort(function(a, b) {
+            return String(a).localeCompare(String(b), 'zh-Hant', { numeric: true });
+        });
+    }
+    return arr;
+}
+
+function populateAdvancedFilterOptions(cards) {
+    var raritySelect = document.getElementById('advRarity');
+    var colorSelect = document.getElementById('advColor');
+    var levelSelect = document.getElementById('advLevel');
+    var kindSelect = document.getElementById('advKind');
+
+    fillSelectOptions(raritySelect, uniqueSorted(cards.map(function(c) { return c.rarity || c.cardrare; })));
+    fillSelectOptions(colorSelect, uniqueSorted(cards.map(function(c) { return c.color || c.cardcolor; })));
+    fillSelectOptions(levelSelect, uniqueSorted(cards.map(function(c) {
+        return c.level !== undefined ? c.level : c.cardlevel;
+    }), function(a, b) {
+        return Number(a) - Number(b);
+    }));
+    fillSelectOptions(kindSelect, uniqueSorted(cards.map(function(c) {
+        return c.kind !== undefined ? c.kind : c.cardkind;
+    }), function(a, b) {
+        return Number(a) - Number(b);
+    }), function(v) {
+        return { value: String(v), label: getAdvKindLabel(v) };
+    });
+}
+
+function applyAdvancedFilters() {
+    var strip = document.getElementById('advResultStrip');
+    var countEl = document.getElementById('advResultCount');
+    var cards = (_advProductCache && _advProductCache.cards) ? _advProductCache.cards : [];
+
+    var rarity = (document.getElementById('advRarity') || {}).value || 'all';
+    var color = (document.getElementById('advColor') || {}).value || 'all';
+    var level = (document.getElementById('advLevel') || {}).value || 'all';
+    var kind = (document.getElementById('advKind') || {}).value || 'all';
+
+    var filtered = cards.filter(function(c) {
+        var cRarity = String(c.rarity || c.cardrare || '');
+        var cColor = String(c.color || c.cardcolor || '');
+        var cLevel = String(c.level !== undefined ? c.level : (c.cardlevel !== undefined ? c.cardlevel : ''));
+        var cKind = String(c.kind !== undefined ? c.kind : (c.cardkind !== undefined ? c.cardkind : ''));
+        if (rarity !== 'all' && cRarity !== rarity) return false;
+        if (color !== 'all' && cColor !== color) return false;
+        if (level !== 'all' && cLevel !== level) return false;
+        if (kind !== 'all' && cKind !== kind) return false;
+        return true;
+    });
+
+    if (countEl) {
+        countEl.textContent = '結果：' + filtered.length + ' 張';
+    }
+    if (!strip) return;
+
+    if (!filtered.length) {
+        strip.innerHTML = '<div class="adv-result-empty">沒有符合條件的卡片，請放寬上方篩選條件</div>';
+        return;
+    }
+
+    strip.innerHTML = '';
+    filtered.forEach(function(c) {
+        var id = c.id || c.cardno || '';
+        if (!id) return;
+        var urls = buildCardImageUrls(id);
+        var rare = c.rarity || c.cardrare || '-';
+        var name = c.name || c.cardname || '';
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'adv-result-item';
+        btn.setAttribute('data-card-id', id);
+        btn.title = name || id;
+
+        var img = document.createElement('img');
+        img.alt = id;
+        img.loading = 'lazy';
+        img.src = urls.primary;
+        img.onerror = function() {
+            if (urls.fallback && img.src !== urls.fallback) {
+                img.src = urls.fallback;
+            } else {
+                img.onerror = null;
+            }
+        };
+
+        var meta = document.createElement('div');
+        meta.className = 'adv-result-meta';
+        meta.innerHTML = '<span class="adv-rare"></span><span class="adv-id"></span>';
+        meta.querySelector('.adv-rare').textContent = rare;
+        meta.querySelector('.adv-id').textContent = id;
+
+        btn.appendChild(img);
+        btn.appendChild(meta);
+        btn.addEventListener('click', function() {
+            selectAdvancedCard(id);
+        });
+        strip.appendChild(btn);
+    });
+
+    if (!strip.children.length) {
+        strip.innerHTML = '<div class="adv-result-empty">沒有符合條件的卡片，請放寬上方篩選條件</div>';
+    }
+}
+
+function loadProductContentCards(titleCode) {
+    if (_advProductCache.titleCode === titleCode && Array.isArray(_advProductCache.cards)) {
+        return Promise.resolve(_advProductCache.cards);
+    }
+    var jsonUrl = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/' + titleCode + '.json';
+    return fetch(jsonUrl)
+        .then(function(response) {
+            if (!response.ok) throw new Error('JSON載入失敗');
+            return response.json();
+        })
+        .then(function(data) {
+            var cards = [];
+            if (data && data.cards && Array.isArray(data.cards)) {
+                cards = data.cards;
+            } else if (data && typeof data === 'object') {
+                cards = Object.keys(data).filter(function(k) {
+                    return k !== 'metadata';
+                }).map(function(k) {
+                    var item = data[k] || {};
+                    if (!item.id) item.id = k;
+                    return item;
+                });
+            }
+            _advProductCache = { titleCode: titleCode, cards: cards };
+            return cards;
+        });
+}
+
+function bindAdvancedFilterEvents() {
+    if (_advFiltersBound) return;
+    _advFiltersBound = true;
+    ['advRarity', 'advColor', 'advLevel', 'advKind'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', applyAdvancedFilters);
+        }
+    });
+}
+
+function openAdvancedFilterModal() {
+    if (!isProductSelected()) {
+        syncAdvancedFilterButton();
+        return;
+    }
+
+    bindAdvancedFilterEvents();
+
+    var titleCode = getSelectedProductTitleCode();
+    var productName = getSelectedProductDisplayName();
+    var nameEl = document.getElementById('advProductName');
+    if (nameEl) nameEl.textContent = productName;
+
+    var strip = document.getElementById('advResultStrip');
+    var countEl = document.getElementById('advResultCount');
+    if (strip) strip.innerHTML = '<div class="adv-result-empty">載入卡片資料中…</div>';
+    if (countEl) countEl.textContent = '結果：…';
+
+    if (typeof $ !== 'undefined' && $('#advancedFilterModal').modal) {
+        $('#advancedFilterModal').modal('show');
+    }
+
+    loadProductContentCards(titleCode)
+        .then(function(cards) {
+            populateAdvancedFilterOptions(cards);
+            applyAdvancedFilters();
+        })
+        .catch(function(err) {
+            console.error('載入進階篩選資料失敗:', err);
+            clearAdvancedProductCache();
+            if (strip) strip.innerHTML = '<div class="adv-result-empty">無法載入此產品的卡片資料，請關閉後重試</div>';
+            if (countEl) countEl.textContent = '結果：0 張';
+        });
+}
+
+function selectAdvancedCard(cardId) {
+    if (!cardId) return;
+
+    if (typeof $ !== 'undefined' && $('#advancedFilterModal').modal) {
+        $('#advancedFilterModal').modal('hide');
+    }
+
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) {
+        inputEl.value = cardId;
+    }
+
+    // 允許重新搜尋與目前相同的卡號
+    _lastSearchedValue = '';
+    _isSearching = false;
+
+    if (typeof searchByCardNumber === 'function') {
+        searchByCardNumber(cardId);
+    }
+}
+
+
+/**
+* 檢查主題中是否包含指定後綴的卡號
+* @param {string} suffix - 卡號後綴 (例如: W01-001)
+* @returns {Promise<boolean>} - 是否找到匹配的卡號
+* 
+* 用於判斷是否需要使用後綴方式搜尋
+*/
+async function checkTitleOfCardNumberList(suffix){	
+ console.log("checkTitleOfCardNumberList");
+
+return new Promise((resolve) => {
+    var cardTitle = document.getElementById('cardTitle').value;
+    var cardTilteReplaceSpare = cardTitle.replace('/','_');
+    console.log(cardTitle+'->'+cardTilteReplaceSpare);
+                
+    requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+    requestPrice.responseType = 'json';
+    requestPrice.send();				  
+                
+    requestPrice.onload = function() {
+    var cards = requestPrice.response;
+    var found = false;
+                
+    for(var key in cards){
+        //console.log("checkTitleOfCardNumberList - key:"+key);
+                    
+        if(key.indexOf('/')<0 && key.indexOf('S')==0){
+            var cardNumberDisplay = mappingRep[key];
+            if(cardNumberDisplay && cardNumberDisplay.includes(suffix)){
+                found = true;
+                break;
+            }
+        } else {
+            if(key.toLowerCase().includes(suffix.toLowerCase())){
+                found = true;
+                break;
+            }
+        }					
+    }
+                
+    console.log("checkTitleOfCardNumberList result:", found);
+    resolve(found);
+    };
+                
+    requestPrice.onerror = function() {
+    console.error("checkTitleOfCardNumberList request failed");
+    resolve(false);
+    };
+});
+}
+
+/**
+* 主題變更處理函數
+* - 銷毀現有圖表
+* - 載入新主題的卡號列表
+* - 排序卡號選項
+* - 顯示第一個卡號的資料
+*/
+function changeTitle(){	
+window._hasUserModified = true;			
+// 先銷毀現有圖表
+destroyAllCharts();
+        
+sortOption();
+
+if (typeof syncAdvancedFilterButton === 'function') {
+    clearAdvancedProductCache();
+    syncAdvancedFilterButton();
+}
+
+// 設定卡號選擇器
+var selectPrice = document.getElementById("cardNumber"); 
+selectPrice.style.visibility = 'visible';
+selectPrice.length = 1;
+selectPrice.options[0].selected = true;	
+
+// 清空卡號選擇器
+while (selectPrice.firstChild) {
+    selectPrice.removeChild(selectPrice.firstChild);
+}					  
+          
+var cardTitle = document.getElementById('cardTitle').value;	  	
+var cardTilteReplaceSpare = cardTitle.replace('/','_');
+console.log(cardTitle+'->'+cardTilteReplaceSpare);
+  
+// 載入對應主題的價格資料			  
+requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+requestPrice.responseType = 'json';
+requestPrice.send();				  
+
+
+/**
+ * 價格資料載入完成後
+ * - 填充卡號選項
+ * - 處理特殊格式卡號的顯示
+ */
+requestPrice.onload = function() {
+    var cards = requestPrice.response;
+
+    for(var key in cards){
+        if(key.indexOf('/')<0&&key.indexOf('S')==0){
+            // 特殊格式卡號，使用對應表顯示					
+            var option = document.createElement("option"); 
+            option.setAttribute("value",key);
+            option.appendChild(document.createTextNode(mappingRep[key])); 							
+            selectPrice.appendChild(option);					
+        }else{
+            var option = document.createElement("option"); 
+            option.setAttribute("value",key);
+            option.appendChild(document.createTextNode(key)); 							
+            selectPrice.appendChild(option);
+        }					
+    }			
+    
+    
+    //重新排列option
+    sortOption();
+    selectPrice.options[0].selected=true;
+    changeNumber();
+    if (typeof syncAdvancedFilterButton === 'function') {
+        syncAdvancedFilterButton();
+    }
+}
+}
+                
+/**
+* 卡號變更處理函數
+* - 銷毀現有圖表
+* - 顯示載入動畫
+* - 載入新卡號的價格和庫存資料
+* - 更新卡片資訊
+* - 等待圖片載入完成
+*/			
+function changeNumber(){	
+var cardTitle = document.getElementById('cardTitle').value;
+var cardTilteReplaceSpare = cardTitle.replace('/','_');
+console.log(cardTitle+'->'+cardTilteReplaceSpare);
+            
+// 先銷毀現有圖表
+destroyAllCharts();
+
+// 顯示載入動畫
+document.getElementById('overlay-1').style.display='block';					
+document.getElementById('overlay-2').style.display='block';				
+document.getElementById('overlay-3').style.display='block';		
+
+var downloadCardTag = document.getElementById('download-card-tag');
+if (downloadCardTag) {
+    downloadCardTag.style.display = 'none';
+}
+
+// 載入價格資料
+requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+requestPrice.responseType = 'json';
+requestPrice.send();
+
+/**
+ * 價格資料載入完成後
+ * - 繪製價格圖表
+ */	
+requestPrice.onload = function() {
+    var cards = requestPrice.response;
+    var cardNumberSelect=document.getElementById('cardNumber');
+    var selectedIndex=cardNumberSelect.selectedIndex;
+    var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+    var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+    getCardData(cards,internalCardNumber,cardNumberDisplay);
+}
+
+// 載入庫存資料
+requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
+requestStock.responseType = 'json';
+requestStock.send();
+
+/**
+ * 庫存資料載入完成後
+ * - 繪製庫存圖表
+ */
+
+requestStock.onload = function() {
+  var cards = requestStock.response;
+  var cardNumberSelect=document.getElementById('cardNumber');
+  var selectedIndex=cardNumberSelect.selectedIndex;
+  var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
+  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+  getCardStockData(cards,internalCardNumber,cardNumberDisplay);
+}				
+
+/**
+ * update 卡片資訊 & 鑑定卡資料
+*/
+var cardNumberSelect_info = document.getElementById('cardNumber');
+var cardNumberValue = cardNumberSelect_info.value;
+var cardNumberDisplayText = cardNumberValue;
+if (cardNumberSelect_info.selectedIndex >= 0) {
+    cardNumberDisplayText = cardNumberSelect_info.options[cardNumberSelect_info.selectedIndex].text || cardNumberValue;
+}
+
+if (cardNumberValue && cardNumberValue !== '000/000-000') {
+    loadCardData(cardNumberValue);
+
+    if (typeof GradingModule !== 'undefined') {
+        GradingModule.loadGradingData(cardTilteReplaceSpare, cardNumberDisplayText);
+    }
+}
+
+
+// 卡名還沒載入，先以卡號建立連結；卡名進來後由 loadCardData 再更新一次
+if (typeof window.updateExternalSearchLinks === 'function') {
+    window.updateExternalSearchLinks(cardNumberValue, '');
+}
+
+/**
+ * 等待卡片圖片載入完成
+ * - 載入完成後隱藏 overlay
+ */
+var timer = setInterval(function(){
+    if (document.getElementById('cardImg').complete){
+        clearInterval(timer);
+        console.log(document.getElementById('cardImg').complete)
+        document.getElementById('overlay-1').style.display='none';	
+    }
+}, 10);			
+}
+        
+
+/**
+* 繪製價格走勢圖
+* @param {object} jsonObj - 包含所有卡片資料的 JSON 物件
+* @param {string} internalCardNumber - 內部卡號 (用於索引)
+* @param {string} cardNum - 顯示用卡號
+* 
+* 使用 Chart.js 繪製折線圖
+*/			
+function getCardData(jsonObj,internalCardNumber,cardNum) {
+console.log("進入繪圖區:"+cardNum);
+            
+            // 1. 先銷毀現有的價格圖表
+            if (myChart) {
+                console.log('銷毀現有的價格圖表');
+                try {
+                    myChart.destroy();
+                } catch (error) {
+                    console.error('銷毀價格圖表時發生錯誤:', error);
+                }
+                myChart = null;
+            }
+            
+            addPhoto(cardNum);
+            var cardInfo = jsonObj[internalCardNumber];
+            var cardPriceUpDate=cardInfo['upddate'];
+            var cardData=cardInfo['cardPrice'];
+
+            // 儲存原始資料供時間篩選使用
+            _rawPriceLabels = cardPriceUpDate ? cardPriceUpDate.slice() : [];
+            _rawPriceData = cardData ? cardData.slice() : [];
+
+            // 重設價格圖表時間選單為預設值（一年內）
+            var priceTimeSelect = document.getElementById('priceTimeRange');
+            if (priceTimeSelect) priceTimeSelect.value = '12';
+            
+            // 2. 清理並重新獲取 canvas 元素
+            const canvas = document.getElementById('myChart');
+            if (canvas) {
+                // 清理 canvas 的事件監聽器和上下文
+                const newCanvas = canvas.cloneNode(true);
+                canvas.parentNode.replaceChild(newCanvas, canvas);
+            }
+            
+            // 3. 重新獲取清理後的 canvas
+            const cleanCanvas = document.getElementById('myChart');
+            const ctx = cleanCanvas.getContext('2d');
+            
+            // 4. 創建新的圖表實例
+            myChart = new Chart(ctx, {
+                responsive: true,
+                // The type of chart we want to create
+                type: 'line',
+
+                // The data for our dataset
+                data: {
+                    labels: cardPriceUpDate,
+                    datasets: [{
+                        label: '日圓',
+                        fill: false,
+                        borderColor: getChartLineColor(),
+                        backgroundColor: getChartLineColor(),
+                        pointBackgroundColor: getChartLineColor(),
+                        pointBorderColor: getChartLineColor(),
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                        data: cardData,
+                        tension: 0.3
+                    }],
+                },
+                // Configuration options go here
+                options: {
+                legend: {
+                    display: true,
+                    align: 'start',
+                    labels: {
+                        fontColor: '#555',
+                        fontSize: 12,
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    titleFontColor: '#333',
+                    bodyFontColor: '#333',
+                    borderColor: '#e0e0e0',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = data.labels[tooltipItem[0].index] || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return '¥' + tooltipItem.yLabel;
+                            return '¥' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }
+                    }
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            gridLines: {
+                                color: 'rgba(0,0,0,0.05)',
+                                drawBorder: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                callback: function(value) {
+                                    // 原本門檻是 1000，而 .toFixed(0) 會把 1300 / 1400 / 900
+                                    // 全部印成「1k」、把 1500 印成「2k」——大多數 WS 卡的價格
+                                    // 剛好落在這一段，所以價格軸長期讀起來是 1k,1k,1k,2k。
+                                    // 一條被 wipe 畫上去的線，落在會說謊的刻度上比不畫更糟。
+                                    if (value >= 10000) return (value / 1000).toFixed(0) + 'k';
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
+                            }
+                        }]
+                    }
+
+                }
+            });
+
+            console.log('價格圖表創建完成');
+            document.getElementById('overlay-2').style.display='none';
+
+            // 5. 更新價格摘要統計卡片
+            updatePriceSummary(cardData);
+
+            // 6. 記錄到搜尋歷史 (有變動才寫入)
+            if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
+                // 稀有度來源統一使用 cardData.cardrare
+                var historyRare = (cardData && cardData.cardrare) ? String(cardData.cardrare).trim() : '';
+                
+                var cardTitleSelect = document.getElementById('cardTitle');
+                var titleText = (cardTitleSelect && cardTitleSelect.selectedIndex >= 0) 
+                    ? cardTitleSelect.options[cardTitleSelect.selectedIndex].text 
+                    : '';
+
+                // 嘗試獲取目前畫面上的卡名 (如果已經載入的話)
+                var cardNameEl = document.getElementById('cardname');
+                var currentName = (cardNameEl && cardNameEl.textContent !== '-') ? cardNameEl.textContent : '';
+
+                SearchHistory.addItem({
+                    cardNumber: cardNum,
+                    cardName: currentName,
+                    cardRare: historyRare,
+                    cardTitle: titleText
+                });
+                
+                var downloadCardTag = document.getElementById('download-card-tag');
+                if (downloadCardTag) {
+                    downloadCardTag.style.display = 'block';
+                }
+            }
+}
+
+/**
+* 更新價格摘要統計卡片
+* @param {Array} priceData - 價格資料陣列
+* 
+* 計算並顯示：目前價格、最高價、最低價、漲跌幅%
+*/
+function updatePriceSummary(priceData) {
+var summaryCard = document.getElementById('priceSummaryCard');
+if (!summaryCard) return;
+
+var elCurrent = document.getElementById('summaryCurrentPrice');
+var elHigh = document.getElementById('summaryHighPrice');
+var elLow = document.getElementById('summaryLowPrice');
+var elChange = document.getElementById('summaryChangePercent');
+var changeItem = summaryCard.querySelector('.price-summary-item.change');
+
+// 重置為預設狀態（無資料）
+function forceDefault() {
+    summaryCard.style.display = 'block'; // 確保佔位存在，避免佈局抖動
+    if (elCurrent) elCurrent.textContent = '--';
+    if (elHigh) elHigh.textContent = '--';
+    if (elLow) elLow.textContent = '--';
+    if (elChange) {
+        elChange.textContent = '--';
+        elChange.className = 'price-summary-value price-flat';
+    }
+    if (changeItem) {
+        changeItem.classList.remove('is-up', 'is-down');
+        var changeIcon = changeItem.querySelector('.price-summary-icon i');
+        if (changeIcon) changeIcon.className = 'fas fa-minus';
+    }
+    // 沒有價格資料時，不要留著上一張卡的日期
+    var elAsOfDefault = document.getElementById('priceSummaryAsOf');
+    if (elAsOfDefault) elAsOfDefault.textContent = '這張卡目前沒有價格紀錄。';
+    var elSampleDefault = document.getElementById('priceSummarySample');
+    if (elSampleDefault) elSampleDefault.style.display = 'none';
+}
+
+if (!priceData || priceData.length === 0) {
+    forceDefault();
+    return;
+}
+
+// 過濾有效數值（排除 null、undefined、0）
+var validPrices = priceData.filter(function(p) {
+    return p !== null && p !== undefined && p !== 0 && !isNaN(p);
+});
+
+if (validPrices.length === 0) {
+    forceDefault();
+    return;
+}
+
+// 計算統計數據
+var currentPrice = validPrices[validPrices.length - 1];
+
+// 依「實際日期」而非「資料筆數」取區間。
+// 標籤寫「近 30 日 / 近 7 日」，計算就必須真的是日期區間，
+// 否則資料有缺漏時（遊遊亭並非每日都有紀錄）標籤會說謊。
+function _pricesWithinDays(days) {
+    var labels = _rawPriceLabels || [];
+    // 沒有可對應的日期標籤時，退回原本的「近 N 筆」近似值
+    if (labels.length !== priceData.length) {
+        return validPrices.slice(-days);
+    }
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    var picked = [];
+    for (var i = 0; i < priceData.length; i++) {
+        var p = priceData[i];
+        if (p === null || p === undefined || p === 0 || isNaN(p)) continue;
+        var d = parseLabelToDate(labels[i]);
+        if (d && d >= cutoff) picked.push(p);
+    }
+    return picked;
+}
+
+var recent30 = _pricesWithinDays(30);
+var highPrice = recent30.length ? Math.max.apply(null, recent30) : null;
+var lowPrice = recent30.length ? Math.min.apply(null, recent30) : null;
+
+// 漲跌幅：真的用 7 日區間的第一筆當基準；
+// 區間內不足兩筆就沒有「漲跌」可言，寧可顯示 -- 也不給一個假的 0%
+var recent7 = _pricesWithinDays(7);
+var changePercent = null;
+if (recent7.length >= 2 && recent7[0] !== 0) {
+    changePercent = ((currentPrice - recent7[0]) / recent7[0] * 100).toFixed(1);
+}
+
+// 更新 DOM
+var elCurrent = document.getElementById('summaryCurrentPrice');
+var elHigh = document.getElementById('summaryHighPrice');
+var elLow = document.getElementById('summaryLowPrice');
+var elChange = document.getElementById('summaryChangePercent');
+
+// 重設數值的 class（漲/跌/平會換色，所以每次都要整串重寫，不能只加不減）
+//
+// 原本這裡叫 triggerAnimate，會加上 .animate 觸發 @keyframes countUp
+// （from { opacity: 0 }）。那個動畫已經移除：價格是這一頁的答案，
+// 任何讓它半透明的一格都是可讀性風險，而且它的名字在說謊——沒有任何數字
+// 在跳動。真正的數字滾動改由檔尾的「答案抵達」模組負責，它只改 textContent，
+// 完全不碰 opacity，所以量到的對比就是真的對比。
+function setValueClass(el, baseClass) {
+    if (!el) return;
+    el.className = baseClass;
+}
+
+if (elCurrent) {
+    elCurrent.textContent = '¥' + currentPrice.toLocaleString();
+    setValueClass(elCurrent, 'price-summary-value');
+}
+if (elHigh) {
+    elHigh.textContent = highPrice === null ? '--' : '¥' + highPrice.toLocaleString();
+    setValueClass(elHigh, 'price-summary-value');
+}
+if (elLow) {
+    elLow.textContent = lowPrice === null ? '--' : '¥' + lowPrice.toLocaleString();
+    setValueClass(elLow, 'price-summary-value');
+}
+if (elChange) {
+    if (changePercent === null) {
+        elChange.textContent = '--';
+        setValueClass(elChange, 'price-summary-value price-flat');
+    } else {
+        var sign = changePercent > 0 ? '+' : '';
+        elChange.textContent = sign + changePercent + '%';
+        // 漲跌顏色
+        var colorClass = 'price-flat';
+        if (changePercent > 0) colorClass = 'price-up';
+        else if (changePercent < 0) colorClass = 'price-down';
+
+        setValueClass(elChange, 'price-summary-value ' + colorClass);
+    }
+}
+
+// 價格必須帶日期才算完整答案：讀者要知道這個數字是哪一天的
+var elAsOf = document.getElementById('priceSummaryAsOf');
+if (elAsOf) {
+    var lastLabel = (_rawPriceLabels && _rawPriceLabels.length === priceData.length)
+        ? _rawPriceLabels[priceData.length - 1] : '';
+    var lastDate = parseLabelToDate(lastLabel);
+    elAsOf.textContent = lastDate
+        ? '資料日期 ' + (lastDate.getMonth() + 1) + '/' + lastDate.getDate() + '，來源遊遊亭。'
+        : '資料來源：遊遊亭。';
+}
+
+// 開站時載入的是範例卡片，必須說清楚，避免被當成自己要查的卡的價格
+var elSample = document.getElementById('priceSummarySample');
+if (elSample) {
+    elSample.style.display = window._hasUserModified ? 'none' : 'inline';
+}
+
+// 更新漲跌圖標方向
+if (changeItem) {
+    changeItem.classList.remove('is-up', 'is-down');
+    var changeIcon = changeItem.querySelector('.price-summary-icon i');
+    if (changePercent > 0) {
+        changeItem.classList.add('is-up');
+        if (changeIcon) changeIcon.className = 'fas fa-arrow-up';
+    } else if (changePercent < 0) {
+        changeItem.classList.add('is-down');
+        if (changeIcon) changeIcon.className = 'fas fa-arrow-down';
+    } else {
+        if (changeIcon) changeIcon.className = 'fas fa-minus';
+    }
+}
+
+// 顯示卡片
+summaryCard.style.display = 'block';
+}
+
+/**
+* 繪製庫存走勢圖
+* @param {object} jsonObj - 包含所有卡片資料的 JSON 物件
+* @param {string} internalCardNumber - 內部卡號 (用於索引)
+* @param {string} cardNum - 顯示用卡號
+* 
+* 使用 Chart.js 繪製折線圖
+*/
+function getCardStockData(jsonObj,internalCardNumber,cardNum) {
+            console.log("進入庫存繪圖區:"+cardNum);
+            
+            // 1. 先銷毀現有的庫存圖表
+            if (myStockChart) {
+                console.log('銷毀現有的庫存圖表');
+                try {
+                    myStockChart.destroy();
+                } catch (error) {
+                    console.error('銷毀庫存圖表時發生錯誤:', error);
+                }
+                myStockChart = null;
+            }
+            
+            var cardInfo = jsonObj[internalCardNumber];
+            var cardPriceUpDate=cardInfo['upddate'];
+            var cardData=cardInfo['cardPrice'];
+
+            // 儲存原始資料供時間篩選使用
+            _rawStockLabels = cardPriceUpDate ? cardPriceUpDate.slice() : [];
+            _rawStockData = cardData ? cardData.slice() : [];
+
+            // 重設庫存圖表時間選單為預設值（一年內）
+            var stockTimeSelect = document.getElementById('stockTimeRange');
+            if (stockTimeSelect) stockTimeSelect.value = '12';
+            
+            // 2. 清理並重新獲取 canvas 元素
+            const canvas = document.getElementById('myStockChart');
+            if (canvas) {
+                // 清理 canvas 的事件監聽器和上下文
+                const newCanvas = canvas.cloneNode(true);
+                canvas.parentNode.replaceChild(newCanvas, canvas);
+            }
+            
+            // 3. 重新獲取清理後的 canvas
+            const cleanCanvas = document.getElementById('myStockChart');
+            const ctx = cleanCanvas.getContext('2d');
+            
+            // 4. 創建新的圖表實例
+            myStockChart = new Chart(ctx, {
+                responsive: true,
+                // The type of chart we want to create
+                type: 'line',
+
+                // The data for our dataset
+                data: {
+                    labels: cardPriceUpDate,
+                    datasets: [{
+                        label: '數量',
+                        fill: false,
+                        borderColor: getChartLineColor(),
+                        backgroundColor: getChartLineColor(),
+                        pointBackgroundColor: getChartLineColor(),
+                        pointBorderColor: getChartLineColor(),
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                        data: cardData,
+                        tension: 0.3
+                    }],
+                },
+                // Configuration options go here
+                options: {
+                legend: {
+                    display: true,
+                    align: 'start',
+                    labels: {
+                        fontColor: '#555',
+                        fontSize: 12,
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    titleFontColor: '#333',
+                    bodyFontColor: '#333',
+                    borderColor: '#e0e0e0',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(tooltipItem, data) {
+                            var title = data.labels[tooltipItem[0].index] || '';
+                            if (typeof title === 'string') {
+                                if (title.length === 8 && !title.includes('-') && !title.includes('/')) {
+                                    return title.substring(0, 4) + '年' + parseInt(title.substring(4, 6), 10) + '月' + parseInt(title.substring(6, 8), 10) + '日';
+                                } else if (title.includes('-')) {
+                                    var parts = title.split('-');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                } else if (title.includes('/')) {
+                                    var parts = title.split('/');
+                                    if (parts.length === 3) return parts[0] + '年' + parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+                                }
+                            }
+                            return title;
+                        },
+                        label: function(tooltipItem, data) {
+                            var datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (datasetLabel) datasetLabel += ': ';
+                            var value = Number(tooltipItem.yLabel);
+                            if (isNaN(value)) return datasetLabel + tooltipItem.yLabel;
+                            return datasetLabel + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        }
+                    }
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                    scales:{
+                        xAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                autoSkip: true,
+                                maxTicksLimit: 7,
+                                callback: function(value, index, values) {
+                                    if (typeof value === 'string') {
+                                        if (value.length === 8 && !value.includes('-') && !value.includes('/')) {
+                                            return value.substring(4, 6) + '/' + value.substring(6, 8);
+                                        } else if (value.includes('-')) {
+                                            var parts = value.split('-');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        } else if (value.includes('/')) {
+                                            var parts = value.split('/');
+                                            if (parts.length === 3) return parts[1] + '/' + parts[2];
+                                        }
+                                    }
+                                    return value;
+                                }
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            gridLines: {
+                                color: 'rgba(0,0,0,0.05)',
+                                drawBorder: false
+                            },
+                            scaleLabel: {
+                                display: false
+                            },
+                            ticks: {
+                                fontColor: '#999',
+                                fontSize: 11,
+                                callback: function(value) {
+                                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                                }
+                            }
+                        }]
+                    }
+
+                }
+            });		
+
+            console.log('庫存圖表創建完成');
+            document.getElementById('overlay-3').style.display='none';					
+}
+
+/**
+* 添加卡片圖片
+* @param {string} cardNumberDisplay - 顯示用卡號
+* 
+* 根據卡號構建圖片 URL 並顯示
+* 優先讀取: https://imgs.devilfox.net/ws/{folder}/{file}.png
+* 失敗則改用: https://ws-tcg.com/wordpress/wp-content/images/cardlist/{first}/{second}/{third}.png
+*/
+function addPhoto(cardNumberDisplay){
+            var card_Num;
+            if(cardNumberDisplay.indexOf(' ')>=0){
+                card_Num=cardNumberDisplay.substr(0,cardNumberDisplay.indexOf(' '));
+            }else{
+                card_Num=cardNumberDisplay;				
+            }
+
+            var card_first=card_Num.substr(0,1);
+            var card_second=card_Num.substr(0,card_Num.indexOf('-'));
+                card_second=card_second.replace('/','_')
+            var card_third=card_Num.replace('/','_');
+                card_third=card_third.replace('-','_');	
+            const cardImg = document.getElementById('cardImg');
+
+            // 主要來源 (devilfox)：folder = card_second，file = card_third，皆轉小寫
+            // 例如 5HY/W83-002 -> https://imgs.devilfox.net/ws/5hy_w83/5hy_w83_002.png
+            var urlPrimary="https://imgs.devilfox.net/ws/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+            // 備援來源 (ws-tcg)
+            var urlFallback="https://ws-tcg.com/wordpress/wp-content/images/cardlist/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
+            console.log("url card (primary):"+urlPrimary);
+            console.log("url card (fallback):"+urlFallback);
+            cardImg.setAttribute("src",urlPrimary);
+            showCardImage(urlPrimary, urlFallback);
+}
+        
+/**
+* 顯示卡片圖片（現代化效果）
+* @param {string} src - 圖片 URL
+* @param {string} [fallbackSrc] - 主要圖片載入失敗時的備援 URL
+* 
+* 提供淡入效果和載入狀態管理
+*/
+function showCardImage(src, fallbackSrc) {
+            const img = document.getElementById('cardImg');
+            const placeholder = document.querySelector('.image-placeholder');
+            
+            if (src) {
+                // 淡入效果
+                img.style.opacity = '0';
+                img.style.display = 'block';
+
+                img.onload = function() {
+                    placeholder.style.display = 'none';
+                    img.style.transition = 'opacity 0.5s ease';
+                    img.style.opacity = '1';
+                };
+
+                // 主要來源載入失敗時改用備援來源
+                img.onerror = function() {
+                    if (fallbackSrc && img.src !== fallbackSrc) {
+                        console.log("主要圖片載入失敗，改用備援來源:"+fallbackSrc);
+                        img.src = fallbackSrc;
+                    } else {
+                        img.onerror = null;
+                    }
+                };
+
+                img.src = src;
+            } else {
+                img.style.display = 'none';
+                placeholder.style.display = 'block';
+            }
+}    
+                    
+/**
+* 添加選項到 select 元素
+* @param {HTMLSelectElement} object - select 元素
+* @param {Array} object2 - 選項陣列
+*/
+function addOption(object, object2) { 
+        each(object2, function(o, index) { 
+            object.options[index] = o; 
+        }) 
+}
+
+/**
+* 排序選項列表
+* @param {string} sortName - select 元素的 ID
+* @param {boolean} isDesc - 是否降序排列
+* 
+* 按照選項文字進行排序
+*/
+function sortlist(sortName,isDesc) { 
+        var what = document.getElementById(sortName); 
+        this._options = map(what.options, function(o) { 
+            return o; 
+        }); 
+        this._options.sort( function(a, b) { 
+            if (a.text > b.text) { 
+                return isDesc == true ? 1 : -1; 
+            } else { 
+                return isDesc == true ? -1 : 1; 
+            } 
+        }); 
+        what.options.length = 0;// clear current options 
+        addOption(what, this._options); 
+} 
+/**
+* 映射函數
+* @param {object} object - 要映射的物件或陣列
+* @param {function} callback - 回調函數
+* @param {object} thisp - this 指向
+* @returns {Array} - 映射後的陣列
+*/
+function map(object, callback, thisp) { 
+        var ret = []; 
+        each.call(thisp, object, function() { 
+            ret.push(callback.apply(thisp, arguments)); 
+        }); 
+        return ret; 
+} 
+
+/**
+* 遍歷函數
+* @param {object} object - 要遍歷的物件或陣列
+* @param {function} callback - 回調函數
+* 
+* 支援物件和陣列的遍歷
+*/
+function each(object, callback) { 
+        if (undefined === object.length) { 
+            for ( var name in object) { 
+                if (false === callback(object[name], name, object)) 
+                    break; 
+            } 
+        } else { 
+            for ( var i = 0, len = object.length; i < len; i++) { 
+                if (i in object) { 
+                    if (false === callback(object[i], i, object)) 
+                        break; 
+                } 
+            } 
+        } 
+} 
+// 排序順序標記
+var sOrder = true; 
+/**
+* 切換排序順序並排序
+* 
+* 用於卡號選項的排序
+*/
+function sortOption(){         
+        if(sOrder){ 
+            sOrder    = false; 
+        }else{ 
+            sOrder    = true; 
+        } 
+        sortlist("cardNumber",sOrder); 
+} 	
+
+/**
+* 銷毀所有圖表
+* 
+* 在變更卡號或主題時調用，避免圖表重疊
+*/
+function destroyAllCharts() {
+        console.log('開始銷毀所有圖表...');
+        
+        if (myChart) {
+            try {
+                myChart.destroy();
+                console.log('價格圖表已銷毀');
+            } catch (error) {
+                console.error('銷毀價格圖表時發生錯誤:', error);
+            }
+            myChart = null;
+        }
+        
+        if (myStockChart) {
+            try {
+                myStockChart.destroy();
+                console.log('庫存圖表已銷毀');
+            } catch (error) {
+                console.error('銷毀庫存圖表時發生錯誤:', error);
+            }
+            myStockChart = null;
+        }
+}
+
+/**
+* 根據前綴找到並設置 cardStandard
+* @param {string} prefix - 卡號前綴 (例如: PRD)
+* @returns {Promise<boolean>} - 是否找到並設置成功
+*/
+async function findAndSetCardStandard(prefix) {
+return new Promise((resolve) => {
+// 等待標準資料載入完成
+var checkInterval = setInterval(() => {
+  var cardStandardSelect = document.getElementById('cardStandard');
+  // options.length 初始就有 2 個預留 option，判斷不出兩支 XHR 是否都跑完，改認旗標
+  if (!cardStandardSelect || !_standardWLoaded || !_standardSLoaded) {
+    return; // 還沒載入完成
+  }
+  
+  clearInterval(checkInterval);
+  
+  // 遍歷所有選項找到匹配的
+  for (var i = 0; i < cardStandardSelect.options.length; i++) {
+    var option = cardStandardSelect.options[i];
+    var value = option.value;
+    var searchTarget = prefix.toLowerCase();
+    // 檢查值是否包含我們的前綴
+    if (value && value.toLowerCase().includes(searchTarget)) {
+      console.log('找到匹配的作品標準:', option.text, 'value:', value);
+      option.selected = true;
+      
+      // 觸發變更事件
+      removeTitle();
+      changeStandard();
+      
+      resolve(true);
+      return;
+    }
+  }
+  
+  resolve(false);
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve(false);
+}, 5000);
+});
+}
+
+/**
+* 根據系列找到並設置 cardTitle
+* @param {string} series - 卡號系列 (例如: PRD/W01)
+* @returns {Promise<boolean>} - 是否找到並設置成功
+*/
+async function findAndSetCardTitle(series) {
+return new Promise((resolve) => {
+var checkInterval = setInterval(() => {
+  var cardTitleSelect = document.getElementById('cardTitle');
+  if (!cardTitleSelect || cardTitleSelect.options.length <= 1) {
+    return; // 還沒載入完成
+  }
+  
+  clearInterval(checkInterval);
+  
+  // 遍歷所有選項找到匹配的
+  for (var i = 0; i < cardTitleSelect.options.length; i++) {
+    var option = cardTitleSelect.options[i];
+    var value = option.value;
+    var searchTarget = series.toLowerCase();
+
+    if (value && value.toLowerCase() === searchTarget) {
+      console.log('找到匹配的主題:', option.text, 'value:', value);
+      option.selected = true;
+      
+      // 觸發變更事件
+      changeTitle();
+      
+      resolve(true);
+      return;
+    }
+  }
+  
+  resolve(false);
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve(false);
+}, 5000);
+});
+}
+
+/**
+* 根據系列找到並設置 cardTitle
+* @param {string} suffix - 卡號系列 (例如: W01-001)
+* @returns {Promise<boolean>} - 是否找到並設置成功
+*/
+async function findAndSetCardSuffix(prefix,suffix) {
+return new Promise((resolve) => {
+var checkInterval = setInterval(async () => {
+  var cardTitleSelect = document.getElementById('cardTitle');
+ //if (!cardTitleSelect || cardTitleSelect.options.length <= 1) {
+ //   return; // 還沒載入完成
+ // }
+  
+  clearInterval(checkInterval);
+  
+  // 遍歷所有選項找到匹配的
+  for (var i = 0; i < cardTitleSelect.options.length; i++) {
+    var option = cardTitleSelect.options[i];
+    var value = option.value;
+    var searchTarget = prefix.toLowerCase();
+    //console.log('findAndSetCardSuffix searchTarget:'+searchTarget+' value:'+value);
+
+    if (value && value.toLowerCase().includes("/"+searchTarget)) {
+      console.log('找到匹配的主題:', option.text, 'value:', value);
+      option.selected = true;
+      
+
+      // 等待 checkTitleOfCardNumberList 完成
+      try {
+        var hasMatchingNumber = await checkTitleOfCardNumberList(suffix);
+        if (hasMatchingNumber) {
+          console.log('檢測到匹配的卡號，變更主題...'+suffix.toLowerCase());
+          changeTitle();
+          resolve(true);
+          return;
+        }
+      } catch (error) {
+        console.error('checkTitleOfCardNumberList 執行錯誤:', error);
+      }
+
+      //resolve(true);
+      // return;
+    }
+  }
+  //先註解
+//   console.log('findAndSetCardSuffix 第二階段...');
+//   var cardStandardSelect = document.getElementById('cardStandard');
+//   if (!cardStandardSelect || cardStandardSelect.options.length <= 1) {
+//     return; // 還沒載入完成
+//   }
+  
+//   clearInterval(checkInterval);
+  
+//   // 遍歷所有選項找到匹配的
+//   //重找Standard
+//   for (var i = 0; i < cardStandardSelect.options.length; i++) {
+//     var option = cardStandardSelect.options[i];
+//     var value = option.value;
+//     var searchTarget = suffix.toLowerCase();
+//     // 檢查值是否包含我們的前綴
+//     if (value && value.toLowerCase().includes(searchTarget)) {
+//       console.log('找到匹配的作品標準:', option.text, 'value:', value);
+//       option.selected = true;
+      
+//       // 觸發變更事件
+//       changeStandard();
+      
+//       resolve(true);
+//       return;
+//     }
+//   }
+
+      
+//   resolve(false);
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve(false);
+}, 5000);
+});
+}
+
+
+/**
+* 根據完整卡號找到並設置 cardNumber
+* @param {string} fullNumber - 完整卡號 (例如: PRD/W01-001)
+* @returns {Promise<boolean>} - 是否找到並設置成功
+*/
+async function findAndSetCardNumber(fullNumber) {
+return new Promise((resolve) => {
+var checkInterval = setInterval(() => {
+  var cardNumberSelect = document.getElementById('cardNumber');
+  if (!cardNumberSelect || cardNumberSelect.options.length <= 1) {
+    return; // 還沒載入完成
+  }
+  
+  clearInterval(checkInterval);
+  
+  // 遍歷所有選項找到匹配的
+  for (var i = 0; i < cardNumberSelect.options.length; i++) {
+    var option = cardNumberSelect.options[i];
+    var value = option.value;
+    var searchTarget = fullNumber.toLowerCase();
+
+    if (value && value.toLowerCase() === searchTarget) {
+      console.log('找到匹配的卡號:', option.text, 'value:', value);
+      option.selected = true;
+      
+      window._hasUserModified = true;
+
+      // 先銷毀現有圖表再觸发變更事件
+      destroyAllCharts();
+      
+      // 觸發變更事件
+      changeNumber();
+      
+      resolve(true);
+      return;
+    }
+  }
+  
+  resolve(false);
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve(false);
+}, 5000);
+});
+}
+
+/**
+* 根據後綴卡號找到並設置 cardNumber
+* @param {string} fullNumber - 後綴卡號 (例如: W01-001)
+* @returns {Promise<boolean>} - 是否找到並設置成功
+*/
+async function findAndSetCardNumberBySuffix(fullNumber) {
+return new Promise((resolve) => {
+var checkInterval = setInterval(() => {
+  var cardNumberSelect = document.getElementById('cardNumber');
+  if (!cardNumberSelect || cardNumberSelect.options.length <= 1) {
+    return; // 還沒載入完成
+  }
+  
+  clearInterval(checkInterval);
+  
+  // 遍歷所有選項找到匹配的
+  for (var i = 0; i < cardNumberSelect.options.length; i++) {
+    var option = cardNumberSelect.options[i];
+    var value = option.value+"/";
+    var searchTarget = fullNumber.toLowerCase()+"/";
+    // console.log('findAndSetCardNumberBySuffix searchTarget:'+searchTarget);
+    // console.log('findAndSetCardNumberBySuffix value.toLowerCase():'+value.toLowerCase());  
+    if (value && value.toLowerCase().includes(searchTarget)) {
+      console.log('找到匹配的卡號:', option.text, 'value:', value);
+      option.selected = true;
+      
+      window._hasUserModified = true;
+
+      // 先銷毀現有圖表再觸發變更事件
+      destroyAllCharts();
+      
+      // 觸發變更事件
+      changeNumber();
+      
+      resolve(true);
+      return;
+    }
+  }
+  
+  resolve(false);
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve(false);
+}, 5000);
+});
+}
+
+/**
+* 等待 cardTitle 選項載入完成
+* @returns {Promise<void>}
+*/
+async function waitForTitleOptionsLoaded() {
+return new Promise((resolve) => {
+var checkInterval = setInterval(() => {
+  var cardTitleSelect = document.getElementById('cardTitle');
+  if (cardTitleSelect && cardTitleSelect.options.length > 1) {
+    clearInterval(checkInterval);
+    resolve();
+  }
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve();
+}, 5000);
+});
+}
+
+/**
+* 等待 cardNumber 選項載入完成
+* @returns {Promise<void>}
+*/
+async function waitForNumberOptionsLoaded() {
+return new Promise((resolve) => {
+var checkInterval = setInterval(() => {
+  var cardNumberSelect = document.getElementById('cardNumber');
+  if (cardNumberSelect && cardNumberSelect.options.length > 1) {
+    clearInterval(checkInterval);
+    resolve();
+  }
+}, 100);
+
+// 超時處理
+setTimeout(() => {
+  clearInterval(checkInterval);
+  resolve();
+}, 5000);
+});
+}
+
+
+
+/**
+* 平滑滾動到指定錨點
+* @param {string} anchorId - 錨點元素的 ID (不包含 #)
+* @param {string} behavior - 滾動行為 ('smooth' 或 'auto')
+* @param {string} block - 垂直對齊方式 ('start', 'center', 'end', 'nearest')
+*/
+function smoothScrollToAnchor(anchorId, behavior = 'smooth', block = 'start') {
+const targetElement = document.getElementById(anchorId);
+
+if (targetElement) {
+    targetElement.scrollIntoView({
+        behavior: behavior,
+        block: block,
+        inline: 'nearest'
+    });
+    
+    console.log(`平滑滾動到錨點: ${anchorId}`);
+} else {
+    console.warn(`找不到錨點元素: ${anchorId}`);
+}
+}
+
+/**
+* 搜尋完成後滾動到結果區域:卡片預覽區域
+*/
+function scrollToResults() {
+// 滾動到卡片預覽區域
+smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
+}
+
+/**
+* 搜尋完成後滾動到結果區域:篩選條件區域
+*/
+function scrollToFilters() {
+// 滾動到篩選條件區域
+smoothScrollToAnchor('filter-card-tag', 'smooth', 'center');
+}
+
+/**
+* 滾動到圖表區域 (no USED)
+*/
+function scrollToCharts() {
+// 滾動到圖表區域
+smoothScrollToAnchor('myChart', 'smooth', 'start');
+}
+
+/**
+* 重組title
+*/
+function reGenTitle(){
+          var selectTitle = document.getElementById("cardTitle"); 
+          while (selectTitle.firstChild) {
+            selectTitle.removeChild(selectTitle.firstChild);
+          }			  
+          
+          requestTitle.open('GET', requestURLCardTitle);
+          requestTitle.responseType = 'json';
+          requestTitle.send();					
+          requestTitle.onload = function(){
+            var cardsTitle = requestTitle.response;
+
+            for(var key in cardsTitle){	 
+
+                var keyStr=key.substr(0,key.indexOf('/'));//2~3
+                var keyStrLength=keyStr.length;
+
+                var option = document.createElement("option");
+                option.setAttribute("value",key);
+                option.appendChild(document.createTextNode(cardsTitle[key])); 
+                selectTitle.appendChild(option);				
+            }
+          }	
+}
+var elementCardNumber = document.getElementById('cardNumber');
+if (elementCardNumber) {
+elementCardNumber.addEventListener('change', function() {
+     window._hasUserModified = true;
+     // 搜尋成功後平滑滾動到結果區域
+    setTimeout(() => {
+        scrollToResults();
+    }, 200); // 延遲一秒讓圖表載入完成	
+});
+}
+
+/**
+* 更新卡片資訊函數
+* @param {object} cardData - 卡片資料物件
+* 
+* 更新所有卡片資訊欄位，包括:
+* - 卡號、卡名、稀有度
+* - 顏色（帶背景色）
+* - 種類、等級、魂
+* - Cost、Power、サイド
+* - 觸發、特徵、效果
+*/
+function updateCardInfo(cardData) {
+// 更新卡號
+document.getElementById('cardno').textContent = cardData.cardno || '-' ;
+
+// 更新卡名
+document.getElementById('cardname').textContent = cardData.cardname || '-' ;
+
+// 更新稀有度
+document.getElementById('cardrare').textContent = cardData.cardrare || '-' ;
+
+// 更新顏色（帶背景色）
+// 中文/日文皆強制對應到統一顯示文字
+const colorElement = document.getElementById('cardcolor');
+const colorMap = {
+    '青': { bg: '#0437F2', text: '藍' },
+    '藍': { bg: '#0437F2', text: '藍' },
+    '赤': { bg: '#F20404', text: '紅' },
+    '紅': { bg: '#F20404', text: '紅' },
+    '黄': { bg: '#F2E205', text: '黃' },
+    '黃': { bg: '#F2E205', text: '黃' },
+    '緑': { bg: '#04F240', text: '綠' },
+    '綠': { bg: '#04F240', text: '綠' },
+    '無': { bg: '#CCCCCC', text: '無' }
+};
+
+const color = cardData.cardcolor || '無';
+const colorStyle = colorMap[color] || colorMap['無'];
+
+colorElement.textContent = colorStyle.text;
+colorElement.style.background = colorStyle.bg;
+colorElement.style.color = '#fff';
+colorElement.style.padding = '2px 16px';
+colorElement.style.borderRadius = '2px';
+colorElement.style.display = 'inline-block';
+
+// 更新種類（0→角色、1→事件、2→名場面）
+document.getElementById('cardkind').textContent = (cardData.cardkind !== undefined && cardData.cardkind !== null && cardData.cardkind !== '')
+    ? getAdvKindLabel(cardData.cardkind)
+    : '-' ;
+
+// 更新等級
+document.getElementById('cardlevel').textContent = cardData.cardlevel || '-' ;
+
+// 更新魂
+document.getElementById('cardsoul').textContent = cardData.cardsoul || '-' ;
+
+// 更新Cost
+document.getElementById('cardcost').textContent = cardData.cardcost || '-' ;
+
+// 更新Power
+document.getElementById('cardpower').textContent = cardData.cardpower || '-' ;
+
+// 更新サイド
+document.getElementById('cardside').textContent = cardData.cardside || '-' ;
+
+// 更新觸發
+document.getElementById('cardtrigger').textContent = cardData.cardtrigger || '-' ;
+
+// 更新特徵
+document.getElementById('cardfeatures').textContent = cardData.cardfeatures || '-' ;
+
+// 更新效果（支援HTML換行，但需先防範 XSS）
+const cardText = cardData.cardtext || '-';
+const escapedCardText = cardText
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
+document.getElementById('cardtext').innerHTML = escapedCardText.replace(/\n/g, '<br>');
+
+console.log('卡片資訊已更新:', cardData.cardno);
+
+// 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度 (有變動才寫入)
+if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
+    SearchHistory.addItem({
+        cardNumber: cardData.cardno,
+        cardName: cardData.cardname || '',
+        cardRare: cardData.cardrare || '',
+        cardTitle: (document.getElementById('cardTitle') && document.getElementById('cardTitle').selectedIndex >= 0)
+            ? document.getElementById('cardTitle').options[document.getElementById('cardTitle').selectedIndex].text
+            : ''
+    });
+}
+}
+
+// 載入並解析JSON資料:卡片資料 (帶入display number)
+function loadCardData(cardNumber) {
+// 從卡號提取作品代碼（例如：BD/W54-070SSP -> BAV_W129）
+let standard = cardNumber.split('-')[0]; // 取得 BD/W54
+
+// 判斷是 w (Weiss) 還是 s (Schwarz) 還是r (Rose)
+let side = 'w'; // 預設
+if (standard.includes('/')) {
+  let parts = standard.split('/');
+  if (parts.length > 1 && parts[1].length > 0) {
+      side = parts[1].charAt(0).toLowerCase();
+  }
+}
+
+standard = standard.replace('/','_');
+const titleCode = standard; // 需要根據您的對應規則實現
+
+// 構建JSON URL
+let jsonUrl = `https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/${titleCode}.json`;
+
+if (cardNumber === 'BD/W54-070SSP') {
+jsonUrl = `https://ws-cards.cloud/json/${titleCode}.json`;
+}
+
+// 顯示載入動畫
+showOverlay('overlay-1');
+
+// 使用 fetch 載入JSON
+fetch(jsonUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('JSON載入失敗');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 在JSON資料中找到對應的卡片
+        let rawCardData = null;
+        if (data.cards && Array.isArray(data.cards)) {
+            // 參照 BAV_W129.json 的格式
+            rawCardData = data.cards.find(c => c.id === cardNumber);
+        } else {
+            // 相容舊格式
+            rawCardData = data[cardNumber];
+        }
+
+        if (rawCardData) {
+            // 將新格式轉換為 updateCardInfo 需要的格式
+            const cardData = {
+                cardno: rawCardData.id || rawCardData.cardno || cardNumber,
+                cardname: rawCardData.name || rawCardData.cardname,
+                cardrare: rawCardData.rarity || rawCardData.cardrare,
+                cardcolor: rawCardData.color || rawCardData.cardcolor,
+                cardkind: rawCardData.kind !== undefined ? String(rawCardData.kind) : rawCardData.cardkind,
+                cardlevel: rawCardData.level !== undefined ? String(rawCardData.level) : rawCardData.cardlevel,
+                cardsoul: rawCardData.soul !== undefined ? String(rawCardData.soul) : rawCardData.cardsoul,
+                cardcost: rawCardData.cost !== undefined ? String(rawCardData.cost) : rawCardData.cardcost,
+                cardpower: rawCardData.power !== undefined ? String(rawCardData.power) : rawCardData.cardpower,
+                cardside: rawCardData.side || rawCardData.cardside,
+                cardtrigger: rawCardData.trigger !== undefined ? String(rawCardData.trigger) : rawCardData.cardtrigger,
+                cardfeatures: Array.isArray(rawCardData.features) ? rawCardData.features.join('・') : rawCardData.cardfeatures,
+                cardtext: Array.isArray(rawCardData.text) ? rawCardData.text.join('\n') : rawCardData.cardtext
+            };
+
+            //更新搜尋關鍵字（含各連結的無障礙名稱與畫面上的卡號）
+            if (typeof window.updateExternalSearchLinks === 'function') {
+                window.updateExternalSearchLinks(cardNumber, cardData.cardname || '');
+            }
+
+
+            window._statsCardExtra = {
+                pack: rawCardData.pack || rawCardData.packName || rawCardData.set_name || '',
+                firstRelease: rawCardData.firstRelease || rawCardData.releaseDate || rawCardData.release_date || rawCardData.release || ''
+            };
+            console.log('載入的卡片資料:', cardData);
+            updateCardInfo(cardData);
+            hideInfoMask();
+            
+            // ===== 判斷並生成稀有度下拉選單 =====
+            let baseCardNumber = cardNumber;
+            const baseMatch = cardNumber.match(/^(.+-\d+)/);
+            if (baseMatch) {
+                baseCardNumber = baseMatch[1];
+            }
+
+            let relatedCards = [];
+            if (data.cards && Array.isArray(data.cards)) {
+                relatedCards = data.cards.filter(c => c.id && c.id.startsWith(baseCardNumber));
+            } else {
+                relatedCards = Object.keys(data).filter(k => k.startsWith(baseCardNumber)).map(k => data[k]);
+            }
+
+            // 過濾掉可能因為數字前綴相同但長度不同的卡號 (例如 097 和 0970)
+            relatedCards = relatedCards.filter(c => {
+                const id = c.id || c.cardno;
+                // 確保緊接在 baseCardNumber 後面的字元不是數字
+                if (id === baseCardNumber) return true;
+                const rest = id.substring(baseCardNumber.length);
+                return !/^\d/.test(rest);
+            });
+
+            // 取得 filter-container
+            const filterContainer = document.querySelector('.filter-container');
+            if (filterContainer) {
+                // 如果已經有稀有度下拉選單，先移除
+                const existingGroup = document.getElementById('rareFilterGroup');
+                if (existingGroup) {
+                    existingGroup.remove();
+                }
+
+                // 如果有超過一種稀有度，才顯示下拉選單
+                if (relatedCards.length > 1) {
+                    const rareGroup = document.createElement('div');
+                    rareGroup.className = 'filter-group';
+                    rareGroup.id = 'rareFilterGroup';
+                    
+                    const label = document.createElement('label');
+                    label.className = 'filter-label';
+                    label.innerHTML = '<i class="fas fa-star mr-2"></i>此卡其他稀有度(普版、高版)';
+                    
+                    const select = document.createElement('select');
+                    select.name = 'cardRareFilter';
+                    select.id = 'cardRareFilter';
+                    select.style.fontFamily = "'Noto Sans TC', sans-serif";
+                    select.style.width = "300px";
+
+                    relatedCards.forEach(c => {
+                        const id = c.id || c.cardno;
+                        const rare = c.rarity || c.cardrare || '未知';
+                        const option = document.createElement('option');
+                        option.value = id;
+                        // 處理如果 baseNumber 完全等於 id 時，通常是標準稀有度
+                        const displayRare = rare; 
+                        option.textContent = displayRare;
+                        if (id === cardNumber) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+
+                    select.addEventListener('change', function() {
+                        const selectedId = this.value;
+                        // 當切換稀有度時，我們把查詢框和下拉等狀態設好，然後再載入卡片
+                        var inputEl = document.getElementById('xxxx');
+                        if (inputEl) {
+                            inputEl.value = selectedId;
+                        }
+                        if (typeof searchByCardNumber === 'function') {
+                            searchByCardNumber(selectedId);
+                        } else {
+                            loadCardData(selectedId);
+                        }
+                    });
+
+                    rareGroup.appendChild(label);
+                    rareGroup.appendChild(select);
+                    filterContainer.appendChild(rareGroup);
+                }
+            }
+            // =====================================
+
+        } else {
+            console.error('找不到卡號:', cardNumber);
+            showInfoMask('notfound');
+        }
+    })
+    .catch(error => {
+        console.error('載入卡片資料失敗:', error);
+        showInfoMask('error');
+    })
+    .finally(() => {
+        // 隱藏載入動畫
+        hideOverlay('overlay-1');
+    });
+}
+
+
+
+/**
+* 顯示/隱藏 overlay
+*/
+function showOverlay(overlayId) {
+const overlay = document.getElementById(overlayId);
+if (overlay) {
+    overlay.style.display = 'block';
+}
+}
+
+function hideOverlay(overlayId) {
+const overlay = document.getElementById(overlayId);
+if (overlay) {
+    overlay.style.display = 'none';
+}
+}
+
+// 顯示/隱藏卡片資訊遮罩
+// reason: 'notfound' = 字典裡沒有這張卡；'error' = 資料載入失敗（可重試）
+// 兩者對讀者的下一步完全不同，不能都寫「無法取得資料」
+function showInfoMask(reason) {
+    const swiper = document.getElementById('infoSwiper');
+    const mask = document.getElementById('infoSwiperMask');
+    const text = document.getElementById('infoSwiperMaskText');
+    if (mask && swiper) {
+        if (text) {
+            text.innerHTML = reason === 'error'
+                ? '<i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>詳細資料載入失敗，請重新整理頁面'
+                : '<i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>此卡號查無詳細資料';
+        }
+        mask.classList.add('active');
+        swiper.classList.add('has-mask');
+    }
+}
+
+function hideInfoMask() {
+    const swiper = document.getElementById('infoSwiper');
+    const mask = document.getElementById('infoSwiperMask');
+    if (mask && swiper) {
+        mask.classList.remove('active');
+        swiper.classList.remove('has-mask');
+    }
+}
+
+// ====================================================
+// 搜尋歷史紀錄模組
+// - 使用 localStorage 記錄最近查看的 10 張卡片
+// - 提供快速回查功能
+// ====================================================
+
+var SearchHistory = (function() {
+var STORAGE_KEY = 'wsCardsSearchHistory';
+var MAX_ITEMS = 10;
+
+/**
+ * 取得歷史紀錄
+ * @returns {Array} 歷史紀錄陣列
+ */
+function getHistory() {
+    try {
+        var data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error('讀取搜尋歷史失敗:', e);
+        return [];
+    }
+}
+
+/**
+ * 儲存歷史紀錄
+ * @param {Array} history - 歷史紀錄陣列
+ */
+function saveHistory(history) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {
+        console.error('儲存搜尋歷史失敗:', e);
+    }
+}
+
+/**
+ * 新增一筆歷史紀錄
+ * @param {object} item - { cardNumber, cardName, cardTitle, cardRare, timestamp }
+ */
+function addItem(item) {
+    if (!item || !item.cardNumber) return;
+
+    function normalizeText(value) {
+        if (value === null || value === undefined) return '';
+        var text = String(value).trim();
+        return (text === '-' || text === '?') ? '' : text;
+    }
+
+    var normalizedItem = {
+        cardNumber: normalizeText(item.cardNumber),
+        cardName: normalizeText(item.cardName),
+        cardRare: normalizeText(item.cardRare),
+        cardTitle: normalizeText(item.cardTitle)
+    };
+
+    if (!normalizedItem.cardNumber) return;
+
+    var history = getHistory();
+    var existing = null;
+
+    // 移除重複項（同一張卡號）
+    history = history.filter(function(h) {
+        if (h.cardNumber === normalizedItem.cardNumber) {
+            existing = h;
+            return false;
+        }
+        return true;
+    });
+
+    // 避免空值覆蓋：若新資料缺欄位，沿用舊紀錄
+    if (existing) {
+        normalizedItem.cardName = normalizedItem.cardName || normalizeText(existing.cardName);
+        normalizedItem.cardRare = normalizedItem.cardRare || normalizeText(existing.cardRare);
+        normalizedItem.cardTitle = normalizedItem.cardTitle || normalizeText(existing.cardTitle);
+    }
+
+    // 加入時間戳
+    normalizedItem.timestamp = Date.now();
+
+    // 插入到最前面
+    history.unshift(normalizedItem);
+
+    // 超過上限就截斷
+    if (history.length > MAX_ITEMS) {
+        history = history.slice(0, MAX_ITEMS);
+    }
+
+    saveHistory(history);
+    renderHistory();
+    console.log('搜尋歷史已新增:', normalizedItem.cardNumber);
+}
+
+/**
+ * 移除特定歷史紀錄
+ * @param {string} cardNumber - 卡號
+ */
+function removeItem(cardNumber) {
+    var history = getHistory();
+    history = history.filter(function(h) {
+        return h.cardNumber !== cardNumber;
+    });
+    saveHistory(history);
+    renderHistory();
+}
+
+/**
+ * 清空所有歷史紀錄
+ */
+function clearAll() {
+    // 清除無法復原，所以先確認；按鈕直接寫出動作，不用「確定 / 取消」
+    var count = getHistory().length;
+    if (count > 0 && typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: '清除全部查詢紀錄？',
+            text: '將移除 ' + count + ' 筆紀錄，清除後無法復原。',
+            showCancelButton: true,
+            confirmButtonText: '清除紀錄',
+            cancelButtonText: '保留',
+            focusCancel: true
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistory();
+            console.log('搜尋歷史已全部清除');
+        });
+        return;
+    }
+
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistory();
+    console.log('搜尋歷史已全部清除');
+}
+
+/**
+ * 格式化時間差
+ * @param {number} timestamp - 時間戳
+ * @returns {string} 格式化後的時間文字
+ */
+function formatTimeAgo(timestamp) {
+    var now = Date.now();
+    var diff = now - timestamp;
+    var minutes = Math.floor(diff / 60000);
+    var hours = Math.floor(diff / 3600000);
+    var days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '剛剛';
+    if (minutes < 60) return minutes + ' 分鐘前';
+    if (hours < 24) return hours + ' 小時前';
+    if (days < 7) return days + ' 天前';
+    // 超過一週顯示日期
+    var date = new Date(timestamp);
+    return (date.getMonth() + 1) + '/' + date.getDate();
+}
+
+/**
+ * 稀有度對應顏色
+ */
+function getRareColor(rare) {
+    if (!rare) return '#718096';
+    var r = rare.toUpperCase();
+    if (r.indexOf('SSP') >= 0 || r.indexOf('SEC') >= 0 || r.indexOf('SP') >= 0) return '#e53e3e';
+    if (r.indexOf('SR') >= 0 || r.indexOf('OFR') >= 0) return '#d69e2e';
+    if (r.indexOf('RRR') >= 0) return '#805ad5';
+    if (r.indexOf('RR') >= 0) return '#3182ce';
+    if (r.indexOf('R') >= 0) return '#38a169';
+    return '#718096';
+}
+
+/**
+ * 渲染歷史紀錄到 DOM
+ */
+function renderHistory() {
+    var container = document.getElementById('searchHistoryContainer');
+    var wrapper = document.getElementById('searchHistoryWrapper');
+    if (!container || !wrapper) return;
+
+    var history = getHistory();
+
+    if (history.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+
+    // 更新計數
+    var countEl = document.getElementById('historyCount');
+    if (countEl) {
+        countEl.textContent = history.length + ' 張';
+    }
+
+    var html = '';
+    history.forEach(function(item, index) {
+        var rareColor = getRareColor(item.cardRare);
+        var timeAgo = formatTimeAgo(item.timestamp);
+        
+        // 標題描述結果（查詢哪張卡），而不是動作（點擊）
+        html += '<div class="history-item" data-card-number="' + escapeHtml(item.cardNumber) + '" title="查詢 ' + escapeHtml(item.cardNumber) + '">';
+        html += '  <div class="history-item-main" role="button" tabindex="0" aria-label="查詢 ' + escapeHtml(item.cardNumber) + (item.cardName ? ' ' + escapeHtml(item.cardName) : '') + '" onclick="SearchHistory.clickItem(\'' + escapeJsString(item.cardNumber) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();SearchHistory.clickItem(\'' + escapeJsString(item.cardNumber) + '\');}">';
+        html += '    <div class="history-item-left">';
+        html += '      <span class="history-rare-badge" style="background:' + rareColor + '">' + escapeHtml(item.cardRare || '?') + '</span>';
+        html += '      <div class="history-item-info">';
+        html += '        <span class="history-card-number">' + escapeHtml(item.cardNumber) + '</span>';
+        html += '        <span class="history-card-name">' + escapeHtml(item.cardName || '') + '</span>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '    <div class="history-item-right">';
+        html += '      <span class="history-time">' + timeAgo + '</span>';
+        html += '    </div>';
+        html += '  </div>';
+        // 12 個都叫「移除」的按鈕對讀螢幕軟體是無解的，名稱必須指出移除哪一張
+        html += '  <button type="button" class="history-remove-btn" onclick="event.stopPropagation(); SearchHistory.removeItem(\'' + escapeJsString(item.cardNumber) + '\')" title="從紀錄中移除 ' + escapeHtml(item.cardNumber) + '" aria-label="從紀錄中移除 ' + escapeHtml(item.cardNumber) + '">';
+        html += '    <i class="fas fa-times" aria-hidden="true"></i>';
+        html += '  </button>';
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+/**
+ * HTML 跳脫
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * JS 字串跳脫（用於 onclick 屬性）
+ */
+function escapeJsString(str) {
+    if (!str) return '';
+    return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+/**
+ * 點擊歷史紀錄項目 → 觸發搜尋
+ * @param {string} cardNumber - 卡號
+ */
+function clickItem(cardNumber) {
+    console.log('從歷史紀錄快速搜尋:', cardNumber);
+
+    // 填入搜尋框
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) {
+        inputEl.value = cardNumber;
+        // 觸發 input 事件讓 typeahead 處理
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // 直接呼叫卡號搜尋
+    if (typeof searchByCardNumber === 'function') {
+        searchByCardNumber(cardNumber);
+    }
+}
+
+/**
+ * 收集當前卡片的資訊，用於加入歷史紀錄
+ * @returns {object|null}
+ */
+function collectCurrentCardInfo() {
+    var cardNoEl = document.getElementById('cardno');
+    var cardNameEl = document.getElementById('cardname');
+    var cardRareEl = document.getElementById('cardrare');
+    var cardTitleEl = document.getElementById('cardTitle');
+
+    var cardNumber = cardNoEl ? cardNoEl.textContent.trim() : '';
+    if (!cardNumber || cardNumber === '-' || cardNumber === 'BD/W54-070SSP') {
+        // 嘗試從 cardNumber select 取得
+        var selectEl = document.getElementById('cardNumber');
+        if (selectEl && selectEl.selectedIndex >= 0) {
+            cardNumber = selectEl.options[selectEl.selectedIndex].text.trim();
+        }
+    }
+
+    if (!cardNumber || cardNumber === '選擇卡號' || cardNumber === '000/000-000') {
+        return null;
+    }
+
+    return {
+        cardNumber: cardNumber,
+        cardName: cardNameEl ? cardNameEl.textContent.trim() : '',
+        cardRare: cardRareEl ? cardRareEl.textContent.trim() : '',
+        cardTitle: cardTitleEl ? (cardTitleEl.options[cardTitleEl.selectedIndex] ? cardTitleEl.options[cardTitleEl.selectedIndex].text.trim() : '') : ''
+    };
+}
+
+/**
+ * 初始化：頁面載入時渲染歷史
+ */
+function init() {
+    renderHistory();
+}
+
+// 公開 API
+return {
+    getHistory: getHistory,
+    addItem: addItem,
+    removeItem: removeItem,
+    clearAll: clearAll,
+    renderHistory: renderHistory,
+    clickItem: clickItem,
+    collectCurrentCardInfo: collectCurrentCardInfo,
+    init: init
+};
+})();
+
+/**
+* 取得週分桶 key（以週一為週首）
+* @param {Date} d
+* @returns {string}
+*/
+function _getWeekBucketKey(d) {
+    var mondayOffset = (d.getDay() + 6) % 7;
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - mondayOffset);
+    var m = monday.getMonth() + 1;
+    var day = monday.getDate();
+    return monday.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+}
+
+/**
+* 下載圖專用：超過 threshold 筆時改為每週聚合
+* 價格與庫存皆取該週最後一筆有效值，X 軸 label 為該週最後一個日期
+* @param {Array} labels
+* @param {Array} priceData
+* @param {Array} stockData
+* @param {number} [threshold=90]
+* @returns {{labels: Array, priceData: Array, stockData: Array, aggregated: boolean}}
+*/
+function _aggregateWeeklyForStatsExport(labels, priceData, stockData, threshold) {
+    threshold = threshold || 90;
+    if (!labels || labels.length <= threshold) {
+        return {
+            labels: labels,
+            priceData: priceData,
+            stockData: stockData,
+            aggregated: false
+        };
+    }
+
+    var buckets = {};
+    var weekOrder = [];
+
+    for (var i = 0; i < labels.length; i++) {
+        var d = parseLabelToDate(labels[i]);
+        if (!d) continue;
+
+        var weekKey = _getWeekBucketKey(d);
+        if (!buckets[weekKey]) {
+            buckets[weekKey] = { label: labels[i], price: null, stock: null };
+            weekOrder.push(weekKey);
+        } else {
+            buckets[weekKey].label = labels[i];
+        }
+
+        var p = priceData[i];
+        if (p !== null && p !== undefined && !isNaN(Number(p))) {
+            buckets[weekKey].price = p;
+        }
+        var s = stockData[i];
+        if (s !== null && s !== undefined && !isNaN(Number(s))) {
+            buckets[weekKey].stock = s;
+        }
+    }
+
+    var outLabels = [];
+    var outPrice = [];
+    var outStock = [];
+    for (var j = 0; j < weekOrder.length; j++) {
+        var bucket = buckets[weekOrder[j]];
+        outLabels.push(bucket.label);
+        outPrice.push(bucket.price);
+        outStock.push(bucket.stock);
+    }
+
+    return {
+        labels: outLabels,
+        priceData: outPrice,
+        stockData: outStock,
+        aggregated: true
+    };
+}
+
+/**
+* 依價格 labels 對齊庫存資料（找不到的日期填 null）
+* @param {Array} labels
+* @returns {Array}
+*/
+function _alignStockToLabels(labels) {
+    if (!labels || labels.length === 0) return [];
+    var stockIndexMap = {};
+    for (var i = 0; i < _rawStockLabels.length; i++) {
+        stockIndexMap[_rawStockLabels[i]] = _rawStockData[i];
+    }
+    return labels.map(function(label) {
+        return Object.prototype.hasOwnProperty.call(stockIndexMap, label) ? stockIndexMap[label] : null;
+    });
+}
+
+/**
+* 統計圖匯出用 X 軸日期格式化
+* @param {string} value
+* @returns {string}
+*/
+function _formatStatsChartXTick(value) {
+    if (typeof value !== 'string') return value;
+    if (value.length === 8 && value.indexOf('-') < 0 && value.indexOf('/') < 0) {
+        return value.substring(4, 6) + '/' + value.substring(6, 8);
+    }
+    if (value.indexOf('-') >= 0) {
+        var dashParts = value.split('-');
+        if (dashParts.length === 3) return dashParts[1] + '/' + dashParts[2];
+    }
+    if (value.indexOf('/') >= 0) {
+        var slashParts = value.split('/');
+        if (slashParts.length === 3) return slashParts[1] + '/' + slashParts[2];
+    }
+    return value;
+}
+
+/**
+* 建立下載用組合圖（價格折線 + 庫存直條）並回傳 base64
+* 時間範圍跟隨 priceTimeRange 選單
+* @returns {string}
+*/
+function _createStatsComboChartBase64() {
+    if (!_rawPriceLabels || _rawPriceLabels.length === 0) return '';
+
+    var months = 12;
+    var priceTimeSelect = document.getElementById('priceTimeRange');
+    if (priceTimeSelect) months = parseInt(priceTimeSelect.value, 10) || 12;
+
+    var filtered = filterDataByMonths(_rawPriceLabels, _rawPriceData, months);
+    var labels = filtered.labels;
+    var priceData = filtered.data;
+    if (!labels || labels.length === 0) return '';
+
+    var stockData = _alignStockToLabels(labels);
+    var weekly = _aggregateWeeklyForStatsExport(labels, priceData, stockData, 90);
+    labels = weekly.labels;
+    priceData = weekly.priceData;
+    stockData = weekly.stockData;
+    var hasStock = stockData.some(function(v) { return v !== null && v !== undefined && !isNaN(Number(v)); });
+
+    var datasets = [{
+        type: 'line',
+        label: '日圓',
+        yAxisID: 'y-price',
+        fill: false,
+        borderColor: '#1e2d5a',
+        backgroundColor: '#1e2d5a',
+        pointBackgroundColor: '#1e2d5a',
+        pointBorderColor: '#1e2d5a',
+        pointRadius: 3,
+        borderWidth: 2,
+        data: priceData,
+        tension: 0.3
+    }];
+
+    if (hasStock) {
+        datasets.push({
+            type: 'bar',
+            label: '數量',
+            yAxisID: 'y-stock',
+            backgroundColor: 'rgba(245, 158, 11, 0.55)',
+            borderColor: '#d97706',
+            borderWidth: 1,
+            barPercentage: 0.55,
+            categoryPercentage: 0.8,
+            data: stockData
+        });
+    }
+
+    var yAxes = [{
+        id: 'y-price',
+        type: 'linear',
+        position: 'left',
+        display: true,
+        gridLines: {
+            color: 'rgba(0,0,0,0.05)',
+            drawBorder: false
+        },
+        ticks: {
+            fontColor: '#1e2d5a',
+            fontSize: 11,
+            callback: function(value) {
+                // 與走勢圖同一個修正：門檻 1000 會把 1300/1400 都印成「1k」。
+                // 這張圖是會被下載、被轉貼出去的，刻度更不能說謊。
+                if (value >= 10000) return (value / 1000).toFixed(0) + 'k';
+                return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            }
+        }
+    }];
+
+    if (hasStock) {
+        yAxes.push({
+            id: 'y-stock',
+            type: 'linear',
+            position: 'right',
+            display: true,
+            gridLines: {
+                drawOnChartArea: false,
+                drawBorder: false
+            },
+            ticks: {
+                fontColor: '#d97706',
+                fontSize: 11,
+                callback: function(value) {
+                    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                }
+            }
+        });
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = 760;
+    canvas.height = 280;
+    var ctx = canvas.getContext('2d');
+    var exportChart = null;
+
+    try {
+        exportChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: false,
+                animation: { duration: 0 },
+                legend: {
+                    display: true,
+                    align: 'start',
+                    labels: {
+                        fontColor: '#555',
+                        fontSize: 12,
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        gridLines: { display: false },
+                        ticks: {
+                            fontColor: '#999',
+                            fontSize: 11,
+                            autoSkip: true,
+                            maxTicksLimit: 7,
+                            callback: function(value) {
+                                return _formatStatsChartXTick(value);
+                            }
+                        }
+                    }],
+                    yAxes: yAxes
+                }
+            }
+        });
+
+        var base64 = exportChart.toBase64Image();
+        exportChart.destroy();
+        return base64;
+    } catch (e) {
+        console.error('建立組合圖失敗:', e);
+        if (exportChart) {
+            try { exportChart.destroy(); } catch (destroyErr) { /* ignore */ }
+        }
+        return '';
+    }
+}
+
+ /**
+ * 生成統計圖片並在新分頁顯示
+* 圖片結構：
+*   上方 (460px)：左側卡片資訊+價格摘要，右上角卡片圖片
+*   中間 (460px)：價格 / 庫存組合圖
+*   底部 (30px)：浮水印
+*/
+function generateStatsImage() {
+// 檢查是否有價格圖表
+if (!myChart) {
+    Swal.fire({ icon: 'warning', title: '還沒有可下載的圖表', text: '請先查詢一張卡號，載入價格走勢後再下載。', confirmButtonText: '知道了' });
+    return;
+}
+
+// 在使用者點擊的同步階段先開啟分頁，避免非同步合成完成後被瀏覽器阻擋
+var statsWindow = window.open('', '_blank');
+if (!statsWindow) {
+    Swal.fire({ icon: 'warning', title: '無法開啟新分頁', text: '請允許此網站開啟新分頁後再試一次。', confirmButtonText: '知道了' });
+    return;
+}
+
+// 收集卡片資訊
+var cardNo = (document.getElementById('cardno') && document.getElementById('cardno').textContent !== '-') 
+    ? document.getElementById('cardno').textContent : '';
+var cardName = (document.getElementById('cardname') && document.getElementById('cardname').textContent !== '-') 
+    ? document.getElementById('cardname').textContent : '';
+var cardRare = (document.getElementById('cardrare') && document.getElementById('cardrare').textContent !== '-') 
+    ? document.getElementById('cardrare').textContent : '';
+var cardColor = (document.getElementById('cardcolor') && document.getElementById('cardcolor').textContent !== '-') 
+    ? document.getElementById('cardcolor').textContent : '';
+var cardLevel = (document.getElementById('cardlevel') && document.getElementById('cardlevel').textContent !== '-') 
+    ? document.getElementById('cardlevel').textContent : '';
+var cardPower = (document.getElementById('cardpower') && document.getElementById('cardpower').textContent !== '-') 
+    ? document.getElementById('cardpower').textContent : '' ;
+
+// 尚未選擇時的選項要判成空字串，否則「選擇作品系列」這種提示文字
+// 會被當成作品名，直接印進下載的統計圖裡。
+// 用 value 的哨兵值 000/000-000 判斷，而不是比對顯示文字 ——
+// 顯示文字是給人看的，隨時可能被改寫。
+function _selectedOptionLabel(selectEl) {
+    if (!selectEl || selectEl.selectedIndex < 0) return '';
+    var opt = selectEl.options[selectEl.selectedIndex];
+    if (!opt || opt.value === '000/000-000') return '';
+    return opt.text || '';
+}
+
+// 作品名稱（從 cardStandard 選擇器）
+var productName = _selectedOptionLabel(document.getElementById('cardStandard'));
+
+// 系列名稱（從 cardTitle 選擇器）
+var cardTitleSelect = document.getElementById('cardTitle');
+var seriesName = _selectedOptionLabel(cardTitleSelect);
+
+// 價格摘要資訊
+var currentPrice = document.getElementById('summaryCurrentPrice') ? document.getElementById('summaryCurrentPrice').textContent : '--';
+var highPrice = document.getElementById('summaryHighPrice') ? document.getElementById('summaryHighPrice').textContent : '--';
+var lowPrice = document.getElementById('summaryLowPrice') ? document.getElementById('summaryLowPrice').textContent : '--';
+var changePercent = document.getElementById('summaryChangePercent') ? document.getElementById('summaryChangePercent').textContent : '--';
+
+// 額外卡片資訊（Header 2x2 卡 + 資訊 table）
+var cardKind = document.getElementById('cardkind') ? document.getElementById('cardkind').textContent.trim() : '--';
+var cardFeatures = document.getElementById('cardfeatures') ? document.getElementById('cardfeatures').textContent.trim() : '--';
+var cardPack = (_statsCardExtra && _statsCardExtra.pack) ? _statsCardExtra.pack : seriesName;
+var cardFirstRelease = (_statsCardExtra && _statsCardExtra.firstRelease) ? _statsCardExtra.firstRelease : '--';
+var highDate = '--', lowDate = '--';
+var dayChangePrice = '', currentStock = '--', dayChangeStock = '';
+(function() {
+    if (_rawPriceLabels.length > 0 && _rawPriceData.length > 0) {
+        var r30labels = _rawPriceLabels.slice(-30);
+        var r30data = _rawPriceData.slice(-30).map(function(v) { return parseFloat(v) || 0; });
+        var valid30 = r30data.map(function(v, i) { return { v: v, i: i }; }).filter(function(x) { return x.v > 0; });
+        if (valid30.length > 0) {
+            var hmaxObj = valid30.reduce(function(acc, x) { return x.v > acc.v ? x : acc; }, valid30[0]);
+            var hminObj = valid30.reduce(function(acc, x) { return x.v < acc.v ? x : acc; }, valid30[0]);
+            var fmtLabel = function(s) {
+                if (!s) return s;
+                var parts = s.split('-');
+                if (parts.length >= 3) {
+                    return parts[1].padStart(2,'0') + '/' + parts[2].padStart(2,'0');
+                }
+                return s;
+            };
+            if (r30labels[hmaxObj.i]) highDate = fmtLabel(r30labels[hmaxObj.i]);
+            if (r30labels[hminObj.i]) lowDate = fmtLabel(r30labels[hminObj.i]);
+        }
+        // 與昨日相比（price）
+        var validAllPrice = _rawPriceData.map(function(v) { return parseFloat(v) || 0; }).filter(function(v) { return v > 0; });
+        if (validAllPrice.length >= 2) {
+            var todayP = validAllPrice[validAllPrice.length - 1];
+            var yestP  = validAllPrice[validAllPrice.length - 2];
+            var pct = ((todayP - yestP) / yestP * 100).toFixed(1);
+            dayChangePrice = (parseFloat(pct) > 0 ? '+' : '') + pct + '%';
+        }
+    }
+    // 庫存數量 & 與昨日相比（stock）
+    if (_rawStockData.length > 0) {
+        var validStock = _rawStockData.map(function(v) { return parseFloat(v); }).filter(function(v) { return !isNaN(v); });
+        if (validStock.length > 0) {
+            currentStock = String(Math.round(validStock[validStock.length - 1]));
+            if (validStock.length >= 2) {
+                var diff = Math.round(validStock[validStock.length - 1] - validStock[validStock.length - 2]);
+                dayChangeStock = (diff > 0 ? '+' : '') + String(diff);
+            }
+        }
+    }
+})();
+
+// 取得卡片圖片 URL
+var cardImgEl = document.getElementById('cardImg');
+var cardImgSrc = (cardImgEl && cardImgEl.src) ? cardImgEl.src : '';
+
+// 取得組合圖 base64（價格折線 + 庫存直條），失敗時 fallback 至頁面價格圖
+var chartBase64 = '';
+try {
+    chartBase64 = _createStatsComboChartBase64();
+    if (!chartBase64 && myChart) {
+        chartBase64 = myChart.toBase64Image();
+    }
+} catch (e) {
+    console.error('取得圖表圖片失敗:', e);
+    try {
+        if (myChart) chartBase64 = myChart.toBase64Image();
+    } catch (fallbackErr) {
+        console.error('fallback 圖表圖片失敗:', fallbackErr);
+    }
+}
+
+// ===== 載入卡片圖片（跨域），載入完成後再合成 =====
+var cardImage = new Image();
+cardImage.crossOrigin = 'anonymous';
+var cardImageLoaded = false;
+
+function doCompose() {
+    _composeStatsCanvas({
+        cardNo: cardNo,
+        cardName: cardName,
+        cardRare: cardRare,
+        cardColor: cardColor,
+        cardLevel: cardLevel,
+        cardPower: cardPower,
+        productName: productName,
+        seriesName: seriesName,
+        currentPrice: currentPrice,
+        highPrice: highPrice,
+        lowPrice: lowPrice,
+        changePercent: changePercent,
+        chartBase64: chartBase64,
+        cardImage: cardImageLoaded ? cardImage : null,
+        statsWindow: statsWindow,
+        cardKind: cardKind,
+        cardFeatures: cardFeatures,
+        cardPack: cardPack,
+        cardFirstRelease: cardFirstRelease,
+        highDate: highDate,
+        lowDate: lowDate,
+        currentStock: currentStock,
+        dayChangePrice: dayChangePrice,
+        dayChangeStock: dayChangeStock
+    });
+}
+
+var CARD_BACK_URL = './dist/img/cardback.png';
+
+function loadFallbackCardBack() {
+    var fallback = new Image();
+    fallback.crossOrigin = 'anonymous';
+    fallback.onload = function() {
+        cardImageLoaded = true;
+        cardImage = fallback;
+        doCompose();
+    };
+    fallback.onerror = function() {
+        cardImageLoaded = false;
+        doCompose();
+    };
+    fallback.src = CARD_BACK_URL;
+}
+
+if (cardImgSrc) {
+    cardImage.onload = function() {
+        cardImageLoaded = true;
+        doCompose();
+    };
+    cardImage.onerror = function() {
+        // 原圖失敗，改用卡背
+        loadFallbackCardBack();
+    };
+    cardImage.src = cardImgSrc;
+    // 如果圖片已經在快取中
+    if (cardImage.complete && cardImage.naturalWidth > 0) {
+        cardImageLoaded = true;
+    }
+} else {
+    // 沒有卡圖 src，直接用卡背
+    loadFallbackCardBack();
+}
+}
+
+/**
+ * 合成統計圖片 Canvas 並在新分頁顯示
+* 布局參考：卡圖左側 + 右側資訊 / 橫排4格價格摘要 / 左統計右圖表 / 底部浮水印
+* @param {object} info - 所有需要的資料
+*/
+function _composeStatsCanvas(info) {
+    var PAD = 24; // 全域內邊距
+    var IMG_WIDTH = 800;
+
+    // 區塊高度
+    var HEADER_H = 330;     // 卡圖 + 卡片資訊 + 2x2 價格卡 + 資訊 table
+    var CHART_PANEL_H = 360; // 左統計 + 右圖表
+    var FOOTER_H = 5;      // 底部浮水印
+    var SECTION_GAP = 14;   // 區塊間距
+
+    var IMG_HEIGHT = PAD + HEADER_H + SECTION_GAP + CHART_PANEL_H + SECTION_GAP + FOOTER_H + PAD;
+    
+    // ── HiDPI：以 2x 解析度繪製，確保輸出清晰 ──
+    var DPR = 2;
+    var offscreen = document.createElement('canvas');
+    offscreen.width = IMG_WIDTH * DPR;
+    offscreen.height = IMG_HEIGHT * DPR;
+    offscreen.style.width = IMG_WIDTH + 'px';
+    offscreen.style.height = IMG_HEIGHT + 'px';
+    var ctx = offscreen.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    // ── 全域顏色常數 ──
+    var C_BG        = '#f0f2f5';  // 頁面底色（淡灰）
+    var C_CARD      = '#ffffff';  // 卡片白底
+    var C_BORDER    = '#e8eaed';  // 邊框
+    var C_TEXT1     = '#1a1a2e';  // 主文字（深藍黑）
+    var C_TEXT2     = '#555770';  // 次要文字
+    var C_TEXT3     = '#8a8fa8';  // 標籤文字
+    var C_ACCENT    = '#667eea';  // 品牌主色（藍紫）
+    var C_UP        = '#e53e3e';  // 漲（紅）
+    var C_DOWN      = '#38a169'; // 跌（綠）
+    var C_NEUTRAL   = '#718096'; // 持平（灰）
+
+    // ── 背景 ──
+    ctx.fillStyle = C_BG;
+    ctx.fillRect(0, 0, IMG_WIDTH, IMG_HEIGHT);
+
+    // ── Helper: 繪製白色卡片容器 ──
+    function drawCard(x, y, w, h, radius) {
+        ctx.shadowColor = 'rgba(0,0,0,0.08)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 3;
+        ctx.fillStyle = C_CARD;
+        roundRect(ctx, x, y, w, h, radius || 12);
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+    }
+
+    // ── Helper: 繪製 badge 標籤 ──
+    function drawBadge(text, x, y, bgColor, textColor) {
+        ctx.font = 'bold 13px "Noto Sans TC", sans-serif';
+        var tw = ctx.measureText(text).width;
+        var bw = tw + 18;
+        var bh = 26;
+        ctx.fillStyle = bgColor || '#eef0ff';
+        roundRect(ctx, x, y, bw, bh, 6);
+        ctx.fill();
+        ctx.fillStyle = textColor || C_ACCENT;
+        ctx.textAlign = 'left';
+        ctx.fillText(text, x + 9, y + 18);
+        return bw + 8; // 回傳佔用寬度（含間隔）
+    }
+
+    // ════════════════════════════════
+    // Zone 1: Header（30% 卡圖 | 70% 右欄：文字+table(40%) + 2x2價格卡(30%)）
+    // ════════════════════════════════
+    var hx = PAD, hy = PAD, hw = IMG_WIDTH - PAD * 2, hh = HEADER_H;
+    drawCard(hx, hy, hw, hh);
+
+    var LEFT_COL_W = 226;
+    var COL_GAP = 0;
+
+    // ── 左欄：卡片圖片（放大約20%）──
+    var CI_BOX_W = 195, CI_BOX_H = 262;
+    var CI_BOX_X = hx + Math.floor((LEFT_COL_W - CI_BOX_W) / 2);
+    var CI_BOX_Y = hy + Math.floor((hh - CI_BOX_H) / 2);
+    var CI_W = CI_BOX_W, CI_H = CI_BOX_H;
+    var CI_X = CI_BOX_X, CI_Y = CI_BOX_Y;
+
+    if (info.cardImage) {
+        try {
+            var ci_srcW = info.cardImage.naturalWidth || info.cardImage.width || CI_BOX_W;
+            var ci_srcH = info.cardImage.naturalHeight || info.cardImage.height || CI_BOX_H;
+            var ci_scale = Math.min(CI_BOX_W / ci_srcW, CI_BOX_H / ci_srcH);
+            CI_W = ci_srcW * ci_scale;
+            CI_H = ci_srcH * ci_scale;
+            CI_X = CI_BOX_X + (CI_BOX_W - CI_W) / 2;
+            CI_Y = CI_BOX_Y + (CI_BOX_H - CI_H) / 2;
+
+            ctx.shadowColor = 'rgba(0,0,0,0.18)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 4;
+            ctx.save();
+            ctx.beginPath();
+            roundRectPath(ctx, CI_X, CI_Y, CI_W, CI_H, 8);
+            ctx.clip();
+            ctx.drawImage(info.cardImage, CI_X, CI_Y, CI_W, CI_H);
+            ctx.restore();
+            ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = C_BORDER;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            roundRectPath(ctx, CI_X, CI_Y, CI_W, CI_H, 8);
+            ctx.stroke();
+        } catch(e) {
+            _drawCardPlaceholderLight(ctx, CI_BOX_X, CI_BOX_Y, CI_BOX_W, CI_BOX_H);
+        }
+    } else {
+        _drawCardPlaceholderLight(ctx, CI_BOX_X, CI_BOX_Y, CI_BOX_W, CI_BOX_H);
+    }
+
+    // ── 右欄（文字區 + 2x2 價格卡）──
+    var RC_X = hx + LEFT_COL_W + COL_GAP;
+    var RC_W = hw - LEFT_COL_W - COL_GAP;
+
+    // 2x2 價格卡（靠右，在右欄的最右側）
+    var PC_CARD_COL_W = 226;
+    var PC_CARD_W = Math.floor((PC_CARD_COL_W - 8) / 2);
+    var PC_CARD_H = 112;
+    var PC_GAP = 8;
+    var PC_RIGHT_GAP = 24;
+    var PC_X0 = hx + hw - PC_RIGHT_GAP - PC_CARD_COL_W;
+    var PC_Y0 = hy + Math.floor((hh - (PC_CARD_H * 2 + PC_GAP)) / 2);
+
+    var pcItems = [
+        { label: '目前價格', value: info.currentPrice,        unit: '¥ JPY', change: info.dayChangePrice || '', changeLabel: '與昨日相比', color: C_ACCENT,  arrow: '' },
+        { label: '庫存數量', value: info.currentStock || '--', unit: '件',    change: info.dayChangeStock || '', changeLabel: '與昨日相比', color: '#5a67d8', arrow: '' },
+        { label: '30日最高', value: info.highPrice,            unit: '¥ JPY', change: info.highDate ? '日期：' + info.highDate : '', changeLabel: '', color: C_UP,   arrow: '↗' },
+        { label: '30日最低', value: info.lowPrice,             unit: '¥ JPY', change: info.lowDate  ? '日期：' + info.lowDate  : '', changeLabel: '', color: C_DOWN, arrow: '↘' }
+    ];
+
+    for (var pi = 0; pi < 4; pi++) {
+        var pcCol = pi % 2;
+        var pcRow = Math.floor(pi / 2);
+        var pcx = PC_X0 + pcCol * (PC_CARD_W + PC_GAP);
+        var pcy = PC_Y0 + pcRow * (PC_CARD_H + PC_GAP);
+        var pci = pcItems[pi];
+
+        // 卡片底色 + 陰影
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = C_BORDER;
+        ctx.lineWidth = 1;
+        ctx.shadowColor = 'rgba(0,0,0,0.07)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
+        ctx.beginPath();
+        roundRectPath(ctx, pcx, pcy, PC_CARD_W, PC_CARD_H, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+        // 頂部色條
+        ctx.fillStyle = pci.color;
+        ctx.fillRect(pcx + 1, pcy + 1, PC_CARD_W - 2, 4);
+
+        // Label（帶箭頭圖示）
+        var labelText = pci.arrow ? pci.arrow + ' ' + pci.label : pci.label;
+        ctx.fillStyle = pci.arrow ? pci.color : C_TEXT3;
+        ctx.font = '11px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labelText, pcx + PC_CARD_W / 2, pcy + 22);
+
+        // Value
+        ctx.fillStyle = C_TEXT1;
+        ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(_truncateText(ctx, pci.value || '--', PC_CARD_W - 8), pcx + PC_CARD_W / 2, pcy + 52);
+
+        // Unit
+        if (pci.unit) {
+            ctx.fillStyle = C_TEXT3;
+            ctx.font = '10px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(pci.unit, pcx + PC_CARD_W / 2, pcy + 66);
+        }
+
+        // 分隔線
+        ctx.strokeStyle = '#eff1f5';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(pcx + 8, pcy + 74);
+        ctx.lineTo(pcx + PC_CARD_W - 8, pcy + 74);
+        ctx.stroke();
+
+        // 與昨日相比 / 日期
+        if (pci.change) {
+            var changeStr = (pci.changeLabel ? pci.changeLabel + ' ' : '') + pci.change;
+            var changeColor = C_TEXT3;
+            if (pci.changeLabel !== '') {
+                // 價格日變 / 庫存日變：負 → 紅，正 → 綠
+                if (pci.change.indexOf('-') >= 0) changeColor = '#e53e3e';
+                else if (pci.change.indexOf('+') >= 0 || parseFloat(pci.change) > 0) changeColor = '#38a169';
+            } else {
+                // 日期格式 → 用卡片主色
+                changeColor = pci.color;
+            }
+            ctx.fillStyle = changeColor;
+            ctx.font = '9.5px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(_truncateText(ctx, changeStr, PC_CARD_W - 8), pcx + PC_CARD_W / 2, pcy + 88);
+        }
+    }
+    ctx.textAlign = 'left';
+
+    // ── 右欄文字資訊區 ──
+    var TW = RC_W - PC_CARD_COL_W - PC_RIGHT_GAP - 10;
+    var TX = RC_X;
+    var TY = hy + 16;
+
+    // 品牌小標籤
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '11px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('WS-Cards  價格走勢統計', TX, TY + 12);
+    TY += 24;
+
+    // 分隔線
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(TX, TY); ctx.lineTo(TX + TW, TY);
+    ctx.stroke();
+    TY += 14;
+
+    // 卡名（21px bold）
+    if (info.cardName) {
+        ctx.fillStyle = C_TEXT1;
+        ctx.font = 'bold 21px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(_truncateText(ctx, info.cardName, TW), TX, TY + 20);
+        TY += 30;
+    }
+
+    // Rare / Color / Level / Power Badges
+    var badgeX = TX;
+    if (info.cardRare) {
+        badgeX += drawBadge(info.cardRare, badgeX, TY, '#eef0ff', C_ACCENT);
+    }
+    if (info.cardColor) {
+        var colorBg = { '藍':'#ebf4ff', '赤':'#fff5f5', '紅':'#fff5f5', '黃':'#fffae6', '黄':'#fffae6', '綠':'#f0fff4', '緑':'#f0fff4' }[info.cardColor] || '#f7f7f7';
+        var colorFg = { '藍':'#3182ce', '赤':'#e53e3e', '紅':'#e53e3e', '黃':'#d69e2e', '黄':'#d69e2e', '綠':'#38a169', '緑':'#38a169' }[info.cardColor] || '#555';
+        badgeX += drawBadge(info.cardColor, badgeX, TY, colorBg, colorFg);
+    }
+    if (info.cardLevel) {
+        badgeX += drawBadge('Lv.' + info.cardLevel, badgeX, TY, '#f0fff4', '#38a169');
+    }
+    if (info.cardPower) {
+        badgeX += drawBadge('P.' + info.cardPower, badgeX, TY, '#fff5f5', '#e53e3e');
+    }
+    TY += 36;
+
+    // 卡號
+    if (info.cardNo) {
+        TY += 6;
+        ctx.fillStyle = C_TEXT2;
+        ctx.font = '500 13px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(info.cardNo, TX, TY);
+        TY += 20;
+    }
+
+    // 資訊 Table（收錄補充包 / 首次發售 / 卡片種類 / 特徵）
+    TY += 8;
+    var tableRows = [
+        { iconColor: '#667eea', iconBg: '#eef0ff', label: '收錄補充包', value: info.cardPack || '--' },
+        { iconColor: '#48bb78', iconBg: '#e6ffed', label: '首次發售',   value: info.cardFirstRelease || '--' },
+        { iconColor: '#ed8936', iconBg: '#fff3e0', label: '卡片種類',   value: info.cardKind || '--' },
+        { iconColor: '#ed64a6', iconBg: '#fce8f3', label: '特徵',       value: info.cardFeatures || '--' }
+    ];
+    var ROW_H = 28;
+    var TABLE_W = TW;
+    var TABLE_X = TX;
+    var TABLE_H = tableRows.length * ROW_H;
+
+    // Table 底色（white 背景，用 roundRectPath clip）
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    roundRectPath(ctx, TABLE_X, TY, TABLE_W, TABLE_H, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // 偶數行淡灰背景
+    for (var ti = 0; ti < tableRows.length; ti++) {
+        if (ti % 2 === 0) {
+            ctx.fillStyle = '#f8f9fc';
+            ctx.fillRect(TABLE_X + 1, TY + ti * ROW_H, TABLE_W - 2, ROW_H);
+        }
+    }
+
+    // 行分隔線 + 內容
+    for (var tj = 0; tj < tableRows.length; tj++) {
+        var tr = tableRows[tj];
+        var ry = TY + tj * ROW_H;
+        var textMidY = ry + ROW_H / 2 + 4;
+
+        if (tj > 0) {
+            ctx.strokeStyle = C_BORDER;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(TABLE_X, ry);
+            ctx.lineTo(TABLE_X + TABLE_W, ry);
+            ctx.stroke();
+        }
+
+        // // 彩色方形圖示
+        // ctx.fillStyle = tr.iconBg;
+        // roundRect(ctx, TABLE_X + 4, ry + (ROW_H - 16) / 2, 16, 16, 3);
+        // ctx.fill();
+
+        // 標籤
+        ctx.fillStyle = C_TEXT3;
+        ctx.font = '11px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(tr.label, TABLE_X + 26, textMidY);
+
+        // 值（右對齊）
+        ctx.fillStyle = C_TEXT1;
+        ctx.font = '600 11px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'right';
+        var labelW = ctx.measureText(tr.label).width;
+        var valueMaxW = TABLE_W - 26 - labelW - 12;
+        ctx.fillText(_truncateText(ctx, tr.value, valueMaxW < 60 ? 80 : valueMaxW), TABLE_X + TABLE_W - 8, textMidY);
+    }
+
+    // Table 外框（drawn last to cover row bg overflow at corners）
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    roundRectPath(ctx, TABLE_X, TY, TABLE_W, TABLE_H, 6);
+    ctx.stroke();
+    ctx.textAlign = 'left';
+
+    // ════════════════════════════════
+    // Zone 2: 圖表面板（標題列 + 左統計 + 右圖表）
+    // ════════════════════════════════
+    var cy0 = hy + hh + SECTION_GAP;
+    var cpW = IMG_WIDTH - PAD * 2;
+    var cpH = CHART_PANEL_H;
+    drawCard(PAD, cy0, cpW, cpH);
+
+    // 標題列
+    var TITLE_BAR_H = 52;
+    ctx.fillStyle = '#f8f9fc';
+    ctx.beginPath();
+    roundRectPath(ctx, PAD, cy0, cpW, TITLE_BAR_H, 12);
+    ctx.closePath();
+    ctx.fill();
+    // 底部不圓角的補丁
+    ctx.fillRect(PAD, cy0 + TITLE_BAR_H - 10, cpW, 10);
+
+    // 左側標題文字（深色圓角 badge）
+    var titleText = '遊遊亭  價格 / 庫存近期紀錄';
+    var titleBadgeX = PAD + 16;
+    var titleBadgeY = cy0 + 11;
+    var titleBadgeH = 30;
+    ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
+    var titleBadgeW = Math.min(ctx.measureText(titleText).width + 24, cpW - 32);
+    ctx.fillStyle = '#1f2937';
+    roundRect(ctx, titleBadgeX, titleBadgeY, titleBadgeW, titleBadgeH, 10);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.fillText(
+        _truncateText(ctx, titleText, titleBadgeW - 20),
+        titleBadgeX + 10,
+        titleBadgeY + 20
+    );
+
+    // 右側最新價格 badge
+    // var latestPriceText = '最新  ' + (info.currentPrice || '--');
+    // ctx.font = 'bold 14px "Noto Sans TC", sans-serif';
+    // var lpW = ctx.measureText(latestPriceText).width + 24;
+    // var lpX = PAD + cpW - lpW - 14;
+    // ctx.fillStyle = '#eef0ff';
+    // roundRect(ctx, lpX, cy0 + 13, lpW, 28, 6);
+    // ctx.fill();
+    // ctx.fillStyle = C_ACCENT;
+    // ctx.textAlign = 'left';
+    // ctx.fillText(latestPriceText, lpX + 12, cy0 + 32);
+
+    // ── 折線圖（全寬置中）──
+    var CH_INNER_PAD = 14;
+    var CH_X = PAD + CH_INNER_PAD;
+    var CH_Y = cy0 + TITLE_BAR_H + CH_INNER_PAD;
+    var CH_W = cpW - CH_INNER_PAD * 2;
+    var CH_H = cpH - TITLE_BAR_H - CH_INNER_PAD * 2;
+
+    if (info.chartBase64) {
+        var chartImg = new Image();
+        chartImg.onload = function() {
+            // 計算維持原始比例的繪製尺寸（contain 模式，置中）
+            var srcW = chartImg.naturalWidth || chartImg.width;
+            var srcH = chartImg.naturalHeight || chartImg.height;
+            var scale = Math.min(CH_W / srcW, CH_H / srcH);
+            var drawW = srcW * scale;
+            var drawH = srcH * scale;
+            var drawX = CH_X + (CH_W - drawW) / 2;
+            var drawY = CH_Y + (CH_H - drawH) / 2;
+
+            // 圖表背景（填滿整個容器）
+            ctx.fillStyle = '#f8f9fc';
+            roundRect(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
+            ctx.fill();
+
+            ctx.save();
+            ctx.beginPath();
+            roundRectPath(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
+            ctx.clip();
+            ctx.drawImage(chartImg, drawX, drawY, drawW, drawH);
+            ctx.restore();
+
+            ctx.strokeStyle = C_BORDER;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            roundRectPath(ctx, CH_X, CH_Y, CH_W, CH_H, 8);
+            ctx.stroke();
+
+            _drawStatsFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_H, cy0 + cpH + SECTION_GAP, PAD, info);
+            _tryDownload(offscreen, info.cardNo, info.statsWindow, info);
+        };
+        chartImg.onerror = function() {
+            _drawStatsFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_H, cy0 + cpH + SECTION_GAP, PAD, info);
+            _tryDownload(offscreen, info.cardNo, info.statsWindow, info);
+        };
+        chartImg.src = info.chartBase64;
+    } else {
+        _drawStatsFooter(ctx, IMG_WIDTH, IMG_HEIGHT, FOOTER_H, cy0 + cpH + SECTION_GAP, PAD, info);
+        _tryDownload(offscreen, info.cardNo, info.statsWindow, info);
+    }
+}
+
+/**
+* 繪製底部資訊列（浮水印 + 日期 + 來源）
+*/
+function _drawStatsFooter(ctx, imgW, imgH, footerH, fy, pad, info) {
+    var C_TEXT3 = '#8a8fa8';
+    var C_ACCENT = '#667eea';
+    var C_BORDER = '#e8eaed';
+
+    // 分隔線
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, fy + 2); ctx.lineTo(imgW - pad, fy + 2);
+    ctx.stroke();
+
+    // 右：來源 + 日期（同一行）
+    var dateStr = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    var rightText = '資料來源：遊遊亭　製表時間：' + dateStr;
+
+    // 左：品牌（搜尋列樣式）
+    var barH = 20;
+    var barY = fy + 6;
+    var textY = barY + 14;
+    var barRadius = 10;
+    var iconXPad = 8;
+    var iconGap = 7;
+    var keyPadR = 6;
+    var keyH = 14;
+    var keyRadius = 5;
+    var keyText = 'Enter';
+    var rightGap = 14;
+    var desiredBarW = 260;
+
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    var rightTextW = ctx.measureText(rightText).width;
+    var maxBarW = Math.max(120, imgW - pad * 2 - rightTextW - rightGap);
+    var barW = Math.min(desiredBarW, maxBarW);
+
+    // 搜尋框陰影
+    ctx.save();
+    ctx.shadowColor = 'rgba(31, 41, 55, 0.16)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+    roundRect(ctx, pad, barY, barW, barH, barRadius);
+    ctx.fill();
+    ctx.restore();
+
+    // 搜尋框底
+    ctx.fillStyle = '#f8f9fc';
+    roundRect(ctx, pad, barY, barW, barH, barRadius);
+    ctx.fill();
+    ctx.strokeStyle = C_BORDER;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    roundRectPath(ctx, pad, barY, barW, barH, barRadius);
+    ctx.stroke();
+
+    // 右側 Enter 鍵帽提示
+    ctx.font = '600 10px "Noto Sans TC", sans-serif';
+    var keyTextW = ctx.measureText(keyText).width;
+    var keyW = Math.max(34, keyTextW + 10);
+    var keyX = pad + barW - keyPadR - keyW;
+    var keyY = barY + (barH - keyH) / 2;
+
+    ctx.fillStyle = '#f1f3f7';
+    roundRect(ctx, keyX, keyY, keyW, keyH, keyRadius);
+    ctx.fill();
+    ctx.strokeStyle = '#d9dde6';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    roundRectPath(ctx, keyX, keyY, keyW, keyH, keyRadius);
+    ctx.stroke();
+
+    ctx.fillStyle = '#7b8194';
+    ctx.textAlign = 'center';
+    ctx.font = '600 10px "Noto Sans TC", sans-serif';
+    ctx.fillText(keyText, keyX + keyW / 2, keyY + 10);
+
+    // 搜尋 icon + placeholder
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    ctx.fillText('🔍', pad + iconXPad, textY);
+
+    ctx.fillStyle = '#9aa0b5';
+    ctx.font = '500 12px "Noto Sans TC", sans-serif';
+    var brandX = pad + iconXPad + 12 + iconGap;
+    var brandMaxW = Math.max(48, keyX - brandX - 8);
+    ctx.fillText(_truncateText(ctx, 'WS-Cards 卡片雲', brandMaxW), brandX, textY);
+
+    // 右：來源 + 日期（同一行）
+    ctx.fillStyle = C_TEXT3;
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(rightText, imgW - pad, textY);
+}
+
+/**
+ * 嘗試顯示 canvas，若因跨域 taint 失敗則重試不含卡圖
+*/
+function _tryDownload(canvas, cardNo, statsWindow, info) {
+try {
+    triggerDownload(canvas, cardNo, statsWindow);
+} catch (e) {
+    if (!info || !info.cardImage) {
+        if (statsWindow && !statsWindow.closed) statsWindow.close();
+        console.error('圖片產生失敗:', e);
+        Swal.fire({ icon: 'error', title: '圖片產生失敗', text: '請重新整理頁面後再試一次。', confirmButtonText: '知道了' });
+        return;
+    }
+    console.warn('Canvas tainted，嘗試不含卡圖重新生成...', e);
+    // 跨域導致 taint，重新生成不含卡圖的版本
+    Swal.fire({
+        icon: 'info',
+        title: '圖片將不含卡面',
+        text: '卡面圖片來自外部網站，無法一起存下來。其餘價格與卡片資訊都會保留。',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    // 重新呼叫，但不帶卡圖
+    var infoWithoutImg = Object.assign({}, info || {});
+    infoWithoutImg.cardImage = null;
+    _composeStatsCanvas(infoWithoutImg);
+}
+}
+
+/**
+* 繪製卡圖佔位框
+*/
+function _drawCardPlaceholder(ctx, x, y, w, h) {
+ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+roundRect(ctx, x, y, w, h, 12);
+ctx.fill();
+
+ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+ctx.lineWidth = 2;
+ctx.setLineDash([8, 6]);
+ctx.beginPath();
+roundRectPath(ctx, x, y, w, h, 12);
+ctx.stroke();
+ctx.setLineDash([]);
+
+// 圖示
+ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+ctx.font = '48px "Font Awesome 5 Free", sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('🃏', x + w / 2, y + h / 2 + 10);
+
+ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+ctx.font = '14px "Noto Sans TC", sans-serif';
+ctx.fillText('Card Image', x + w / 2, y + h / 2 + 40);
+}
+
+/**
+* 繪製卡圖佔位框（淺色版，用於新版白底下載圖）
+*/
+function _drawCardPlaceholderLight(ctx, x, y, w, h) {
+    ctx.fillStyle = '#f0f2f5';
+    roundRect(ctx, x, y, w, h, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#e0e3ea';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    roundRectPath(ctx, x, y, w, h, 8);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c4c9d8';
+    ctx.font = '36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🃏', x + w / 2, y + h / 2 + 8);
+    ctx.fillStyle = '#b0b5c4';
+    ctx.font = '12px "Noto Sans TC", sans-serif';
+    ctx.fillText('No Image', x + w / 2, y + h / 2 + 32);
+}
+
+/**
+* 繪製標籤 tag
+* @returns {number} 下一個 tag 的 x 座標
+*/
+function _drawTag(ctx, x, y, text, bgColor) {
+ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
+var textWidth = ctx.measureText(text).width;
+var tagW = textWidth + 20;
+var tagH = 28;
+
+ctx.fillStyle = bgColor;
+roundRect(ctx, x, y - tagH + 6, tagW, tagH, 6);
+ctx.fill();
+
+ctx.fillStyle = '#FFFFFF';
+ctx.textAlign = 'left';
+ctx.fillText(text, x + 10, y);
+
+return x + tagW + 8;
+}
+
+/**
+* 稀有度對應標籤顏色
+*/
+function _getRareTagColor(rare) {
+    var rareUpper = (rare || '').toUpperCase();
+    if (rareUpper.indexOf('SSP') >= 0 || rareUpper.indexOf('SEC') >= 0) return '#d69e2e';
+    if (rareUpper.indexOf('SP') >= 0) return '#ed8936';
+    if (rareUpper.indexOf('RRR') >= 0 || rareUpper.indexOf('OFR') >= 0) return '#e53e3e';
+    if (rareUpper.indexOf('SR') >= 0 || rareUpper.indexOf('RR') >= 0) return '#9f7aea';
+    if (rareUpper.indexOf('R') >= 0) return '#667eea';
+    if (rareUpper.indexOf('U') >= 0) return '#38a169';
+    if (rareUpper.indexOf('C') >= 0 || rareUpper.indexOf('CR') >= 0) return '#718096';
+    return '#5a67d8';
+}
+
+/**
+* 卡片顏色對應背景
+*/
+function _getCardColorBg(colorText) {
+if (colorText === '藍' || colorText === '青') return '#2b6cb0';
+if (colorText === '紅' || colorText === '赤') return '#c53030';
+if (colorText === '黃' || colorText === '黄') return '#b7791f';
+if (colorText === '綠' || colorText === '緑') return '#276749';
+return '#718096';
+}
+
+/**
+* 文字截斷（根據 canvas measureText）
+*/
+function _truncateText(ctx, text, maxWidth) {
+if (ctx.measureText(text).width <= maxWidth) return text;
+var truncated = text;
+while (truncated.length > 0 && ctx.measureText(truncated + '...').width > maxWidth) {
+    truncated = truncated.substring(0, truncated.length - 1);
+}
+return truncated + '...';
+}
+
+/**
+* 繪製底部浮水印
+*/
+function drawFooter(ctx, imgWidth, imgHeight, footerHeight) {
+var footerY = imgHeight - footerHeight;
+ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+ctx.fillRect(0, footerY, imgWidth, footerHeight);
+
+ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+ctx.font = '14px "Noto Sans TC", sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('WS-Cards (ws-cards.cloud)  ·  資料來源：遊遊亭  ·  ' + new Date().toLocaleDateString('zh-TW'), imgWidth / 2, footerY + 35);
+}
+
+/**
+ * 在預先開啟的新分頁顯示圖片
+*/
+function triggerDownload(canvas, cardNo, statsWindow) {
+    var dataURL = canvas.toDataURL('image/jpeg', 0.92);
+    var fileName = 'stats';
+    if (cardNo) {
+        fileName = cardNo.replace(/\//g, '_').replace(/\s/g, '') + '_stats';
+    }
+    if (!statsWindow || statsWindow.closed) {
+        throw new Error('統計圖片新分頁已關閉');
+    }
+    statsWindow.location.href = dataURL;
+    
+    Swal.fire({
+        icon: 'success',
+        title: '圖片已在新分頁開啟',
+        text: fileName + '.jpg',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+    });
+}
+
+/**
+* 繪製圓角矩形（填充用）
+*/
+function roundRect(ctx, x, y, width, height, radius) {
+ctx.beginPath();
+ctx.moveTo(x + radius, y);
+ctx.lineTo(x + width - radius, y);
+ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+ctx.lineTo(x + width, y + height - radius);
+ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+ctx.lineTo(x + radius, y + height);
+ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+ctx.lineTo(x, y + radius);
+ctx.quadraticCurveTo(x, y, x + radius, y);
+ctx.closePath();
+}
+
+/**
+* 圓角矩形路徑（用於 clip）
+*/
+function roundRectPath(ctx, x, y, width, height, radius) {
+ctx.moveTo(x + radius, y);
+ctx.lineTo(x + width - radius, y);
+ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+ctx.lineTo(x + width, y + height - radius);
+ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+ctx.lineTo(x + radius, y + height);
+ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+ctx.lineTo(x, y + radius);
+ctx.quadraticCurveTo(x, y, x + radius, y);
+ctx.closePath();
+}
+
+// ====================================================
+// 鑑定卡資訊模組
+// - 顯示 PSA / BGS / ARS 鑑定等級分佈
+// - 計算 10 分率
+// ====================================================
+
+var GradingModule = (function() {
+var currentCompany = 'PSA';
+var gradingData = null;
+var selectedGrade = null;
+var requestURLGradingBase = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/gradingJson/';
+
+var GRADING_COMPANIES = ['PSA', 'BGS', 'ARS'];
+
+function gradeToNumber(grade) {
+    if (grade === '10+') return 10.5;
+    if (grade === '黑10') return 10.2;
+    if (grade === '金10') return 10.1;
+    var num = parseFloat(grade);
+    if (!isNaN(num)) return num;
+    if (grade.indexOf('以下') > -1) {
+        var base = parseFloat(grade);
+        return isNaN(base) ? -1 : base - 0.5;
+    }
+    return -1;
+}
+
+function calculateSummaryStats(allGrades, totalCount, grade) {
+    var selectedCount = 0;
+    var higherCount = 0;
+    var selectedNum = gradeToNumber(grade);
+    allGrades.forEach(function(g) {
+        if (g.grade === grade) selectedCount = g.count;
+        if (gradeToNumber(g.grade) > selectedNum) higherCount += g.count;
+    });
+    var gradeRate = totalCount > 0 ? ((selectedCount / totalCount) * 100).toFixed(2) : '0.00';
+    return { selectedCount: selectedCount, higherCount: higherCount, gradeRate: gradeRate };
+}
+
+function init() {
+    var buttons = document.querySelectorAll('.grading-toggle-btn');
+    buttons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var company = btn.getAttribute('data-company');
+            switchCompany(company);
+        });
+    });
+}
+
+function switchCompany(company) {
+    currentCompany = company;
+    selectedGrade = null;
+    var buttons = document.querySelectorAll('.grading-toggle-btn');
+    buttons.forEach(function(btn) {
+        var isCurrent = btn.getAttribute('data-company') === company;
+        btn.classList.toggle('active', isCurrent);
+        // 目前選了哪一家不能只靠顏色表示
+        btn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
+    });
+    renderGradingData();
+}
+
+/**
+ * 讀取單一鑑定公司 JSON
+ * URL 格式: {base}{titleCode}_{company}.json
+ * JSON 格式: { "卡號": { "等級": 數量 } } 或 { "卡號": null }
+ */
+function fetchCompanyData(titleCode, cardNumber, company) {
+    var url = requestURLGradingBase + titleCode + '_' + company + '.json';
+    return fetch(url)
+        .then(function(response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            if (data && data[cardNumber] && typeof data[cardNumber] === 'object') {
+                var cardData = data[cardNumber];
+                if (data.updateDate) {
+                    cardData._updateDate = data.updateDate;
+                }
+                return cardData;
+            }
+            return null;
+        })
+        .catch(function() {
+            return null;
+        });
+}
+
+/**
+ * 載入鑑定資料（分別讀取 PSA / BGS / ARS 三個 JSON）
+ * @param {string} titleCode - 作品代碼（已替換 / 為 _）
+ * @param {string} cardNumber - 顯示用卡號（如 BD/W54-070SSP）
+ */
+function loadGradingData(titleCode, cardNumber) {
+    if (!titleCode || !cardNumber || cardNumber === '000/000-000' || cardNumber === '選擇卡號') {
+        resetUI();
+        return;
+    }
+
+    console.log('載入鑑定資料, titleCode:', titleCode, '卡號:', cardNumber);
+
+    var promises = GRADING_COMPANIES.map(function(company) {
+        return fetchCompanyData(titleCode, cardNumber, company);
+    });
+
+    Promise.all(promises).then(function(results) {
+        gradingData = {};
+        GRADING_COMPANIES.forEach(function(company, index) {
+            gradingData[company] = results[index];
+        });
+
+        var hasAny = GRADING_COMPANIES.some(function(c) { return gradingData[c] !== null; });
+        if (!hasAny) {
+            gradingData = null;
+            console.log('此卡片無鑑定資料:', cardNumber);
+        } else {
+            console.log('鑑定資料載入完成:', cardNumber, gradingData);
+        }
+
+        updateButtonStates();
+        renderGradingData();
+    });
+}
+
+function updateButtonStates() {
+    var companies = ['PSA', 'BGS', 'ARS'];
+    companies.forEach(function(company) {
+        var btn = document.getElementById('btn' + company);
+        if (!btn) return;
+        btn.disabled = false;
+    });
+}
+
+function renderGradingData() {
+    var container = document.getElementById('gradingContent');
+    var tenRateContainer = document.getElementById('gradingTenRate');
+    if (!container) return;
+
+    if (tenRateContainer) tenRateContainer.style.display = 'none';
+
+    if (!gradingData || !gradingData[currentCompany] ||
+        typeof gradingData[currentCompany] !== 'object' ||
+        Object.keys(gradingData[currentCompany]).length === 0) {
+        // 「暫無」會讓人以為之後就會有 —— 這是系統無法保證的承諾
+        container.innerHTML =
+            '<div class="grading-placeholder">' +
+            '<p>此卡號沒有 ' + currentCompany + ' 的鑑定紀錄</p>' +
+            '<p class="text-muted" style="font-size:0.8rem;">可切換上方其他鑑定公司查看</p>' +
+            '</div>';
+        return;
+    }
+
+    var companyData = gradingData[currentCompany];
+
+    var allGrades = [];
+    var totalCount = 0;
+    Object.keys(companyData).forEach(function(key) {
+        if (key === '_updateDate') return;
+        var count = parseInt(companyData[key], 10) || 0;
+        allGrades.push({ grade: key, count: count });
+        totalCount += count;
+    });
+
+    allGrades.sort(function(a, b) {
+        return gradeToNumber(b.grade) - gradeToNumber(a.grade);
+    });
+
+    var visibleGrades = allGrades.filter(function(g) { return g.count > 0; });
+    var topGrades = visibleGrades.slice(0, 4);
+
+    if (!selectedGrade || !visibleGrades.find(function(g) { return g.grade === selectedGrade; })) {
+        selectedGrade = topGrades.length > 0 ? topGrades[0].grade : null;
+    }
+
+    var stats = calculateSummaryStats(allGrades, totalCount, selectedGrade);
+    var html = '';
+
+    if (companyData._updateDate) {
+        html += '<div style="font-size:0.75rem; color:var(--text-secondary); text-align:right; margin-bottom:0.5rem;">' +
+                '<i class="fas fa-clock mr-1" aria-hidden="true"></i>鑑定資料更新：' + companyData._updateDate + '</div>';
+    }
+
+    html += '<div class="grading-grade-cards">';
+    topGrades.forEach(function(g) {
+        var sel = g.grade === selectedGrade ? ' selected' : '';
+        html += '<div class="grading-grade-card' + sel + '" data-grade="' + g.grade + '">';
+        html += '<div class="grading-grade-card-label">' + currentCompany + ' ' + g.grade + '</div>';
+        html += '<div class="grading-grade-card-count">' + g.count.toLocaleString() + '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="grading-summary-grid">';
+    html += '<div class="grading-summary-item"><div class="grading-summary-label">Total Population</div>';
+    html += '<div class="grading-summary-value" id="gradingSummaryTotal">' + totalCount.toLocaleString() + '</div></div>';
+    html += '<div class="grading-summary-item"><div class="grading-summary-label" id="gradingSummaryGradeLabel">' + currentCompany + ' ' + (selectedGrade || '-') + ' Population</div>';
+    html += '<div class="grading-summary-value" id="gradingSummaryGradeCount">' + stats.selectedCount.toLocaleString() + '</div></div>';
+    html += '<div class="grading-summary-item"><div class="grading-summary-label">Population Higher</div>';
+    html += '<div class="grading-summary-value" id="gradingSummaryHigher">' + stats.higherCount.toLocaleString() + '</div></div>';
+    html += '<div class="grading-summary-item"><div class="grading-summary-label">Grade Rate <span class="grade-rate-info" title="此等級佔總鑑定數的比例">&#9432;</span></div>';
+    html += '<div class="grading-summary-value" id="gradingSummaryRate">' + stats.gradeRate + '%</div></div>';
+    html += '</div>';
+
+    html += '<div class="grading-detail-table-wrap">';
+    html += '<table class="grading-detail-table">';
+    html += '<thead><tr><th>Grade</th><th>Quantity</th></tr></thead>';
+    html += '<tbody>';
+    visibleGrades.forEach(function(g) {
+        html += '<tr><td><strong>' + g.grade + '</strong></td><td>' + g.count.toLocaleString() + '</td></tr>';
+    });
+    html += '<tr class="grading-detail-total-row"><td><strong>Total</strong></td><td><strong>' + totalCount.toLocaleString() + '</strong></td></tr>';
+    html += '</tbody></table>';
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.grading-grade-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            selectGradeCard(card.getAttribute('data-grade'));
+        });
+    });
+}
+
+function selectGradeCard(grade) {
+    selectedGrade = grade;
+
+    document.querySelectorAll('.grading-grade-card').forEach(function(card) {
+        card.classList.toggle('selected', card.getAttribute('data-grade') === grade);
+    });
+
+    var companyData = gradingData[currentCompany];
+    var allGrades = [];
+    var totalCount = 0;
+    Object.keys(companyData).forEach(function(key) {
+        if (key === '_updateDate') return;
+        var count = parseInt(companyData[key], 10) || 0;
+        allGrades.push({ grade: key, count: count });
+        totalCount += count;
+    });
+
+    var stats = calculateSummaryStats(allGrades, totalCount, grade);
+
+    var labelEl = document.getElementById('gradingSummaryGradeLabel');
+    var countEl = document.getElementById('gradingSummaryGradeCount');
+    var higherEl = document.getElementById('gradingSummaryHigher');
+    var rateEl = document.getElementById('gradingSummaryRate');
+    if (labelEl) labelEl.textContent = currentCompany + ' ' + grade + ' Population';
+    if (countEl) countEl.textContent = stats.selectedCount.toLocaleString();
+    if (higherEl) higherEl.textContent = stats.higherCount.toLocaleString();
+    if (rateEl) rateEl.textContent = stats.gradeRate + '%';
+}
+
+function resetUI() {
+    gradingData = null;
+    currentCompany = 'PSA';
+    selectedGrade = null;
+
+    var container = document.getElementById('gradingContent');
+    var tenRateContainer = document.getElementById('gradingTenRate');
+
+    if (container) {
+        container.innerHTML =
+            '<div class="grading-placeholder">' +
+            '<p>選擇卡號後顯示鑑定數量</p>' +
+            '</div>';
+    }
+    if (tenRateContainer) {
+        tenRateContainer.style.display = 'none';
+    }
+
+    ['PSA', 'BGS', 'ARS'].forEach(function(company) {
+        var btn = document.getElementById('btn' + company);
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.toggle('active', company === 'PSA');
+            btn.setAttribute('aria-pressed', company === 'PSA' ? 'true' : 'false');
+        }
+    });
+}
+
+return {
+    init: init,
+    loadGradingData: loadGradingData,
+    switchCompany: switchCompany,
+    resetUI: resetUI
+};
+
+})();
+
+// ============================================================================
+// 答案抵達 — 這一頁唯一一個被授權的動畫時刻
+// ----------------------------------------------------------------------------
+// 查詢完成時，讀者要的答案由三件事組成，而且有先後：
+//   今天多少 → 落在近 30 日的什麼位置 → 一路是怎麼走過來的
+// 抵達動作就照這個順序交出來，總長約 700ms：
+//
+//   t+0    格線與兩軸「已經」畫好（Chart.js 自己的 tween 關掉）
+//   t+0    價格線由左至右 wipe 進來，560ms
+//          —— clip 只套在資料集上，所以線是被畫在已經打好格的紙上。
+//             由左至右就是 x 軸的方向，這個方向本身帶著「時間經過」的意思。
+//   t+120  最新售價從「7 日前的基準價」滾到今天，520ms
+//          —— 基準價由旁邊那個 % 反推（current / (1 + change/100)），
+//             所以滾動的起點永遠跟旁邊顯示的漲跌幅一致，不會各說各話。
+//             從 0 滾上來是廣告手法，什麼都沒說；從上週的價格滾過來，
+//             滾的那一段距離本身就是漲跌。
+//   t+520  近 30 日最高從「今天的價格」往上滾，380ms
+//   t+560  近 30 日最低從「今天的價格」往下滾，380ms
+//          —— 兩個數字往外滾，等於當場把今天的價格所在的區間畫出來
+//   t+120  近 7 日漲跌的箭頭轉到位（不滾數字：這一格的資訊是方向，不是量）
+//
+// 這整段是包在既有函式外面的 wrapper：把這個 IIFE 刪掉，頁面就完全回到
+// 原本的行為，沒有任何呼叫端需要改。
+//
+// prefers-reduced-motion：wipe 直接給滿、數字直接寫最終值、箭頭不轉。
+// 值還是會變、圖還是會重畫，所以「查詢完成了」這個回饋不會消失，
+// 消失的只有位移本身。
+// ============================================================================
+
+(function () {
+    'use strict';
+
+    if (typeof Chart === 'undefined') return;
+
+    function prefersReducedMotion() {
+        return typeof window.matchMedia === 'function' &&
+               window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    // 指數式減速：自信抵達的曲線，不用彈跳
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+
+    // ------------------------------------------------------------------
+    // 1. wsWipe — Chart.js 2.8 外掛
+    //
+    //    beforeDatasetsDraw 把 ctx 裁切到 chartArea 的左側 p 比例，
+    //    afterDatasetsDraw 還原。關鍵在於它只裁「資料集」：格線、兩軸、
+    //    刻度文字從第一格就是完整的，所以看起來是「線被畫上去」，
+    //    而不是「整張圖淡入」。
+    //
+    //    beforeUpdate 順手把格線與刻度改成隨主題走。原本兩張圖的格線都寫死
+    //    rgba(0,0,0,0.05)，在 #141414 的深色底上等於不存在——而「紙已經打好格」
+    //    正是這個 wipe 唯一的立足點，格線看不見的話它就只是一個隨便的揭露。
+    // ------------------------------------------------------------------
+    var CHART_IDS = { myChart: 1, myStockChart: 1 };
+
+    function isPageChart(chart) {
+        return !!(chart && chart.canvas && CHART_IDS[chart.canvas.id]);
+    }
+
+    function isDark() {
+        return document.documentElement.getAttribute('data-theme') === 'dark';
+    }
+
+    Chart.plugins.register({
+        id: 'wsWipe',
+
+        beforeUpdate: function (chart) {
+            if (!isPageChart(chart)) return;
+            var scales = chart.options && chart.options.scales;
+            if (!scales) return;
+
+            var dark = isDark();
+            var grid = dark ? 'rgba(233, 231, 225, 0.12)' : 'rgba(26, 32, 44, 0.10)';
+            var tick = dark ? '#9a958b' : '#5a6472';
+
+            ['xAxes', 'yAxes'].forEach(function (key) {
+                (scales[key] || []).forEach(function (axis) {
+                    if (axis.gridLines && axis.gridLines.display !== false) {
+                        axis.gridLines.color = grid;
+                        axis.gridLines.zeroLineColor = grid;
+                    }
+                    if (axis.ticks) axis.ticks.fontColor = tick;
+                });
+            });
+        },
+
+        beforeDatasetsDraw: function (chart) {
+            var p = chart.$wsWipe;
+            if (typeof p !== 'number' || p >= 1) return;
+            var area = chart.chartArea;
+            if (!area) return;
+            var ctx = chart.ctx;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(
+                area.left,
+                area.top,
+                Math.max(0, (area.right - area.left) * Math.max(0, p)),
+                area.bottom - area.top
+            );
+            ctx.clip();
+            chart.$wsWipeClipped = true;
+        },
+
+        afterDatasetsDraw: function (chart) {
+            if (!chart.$wsWipeClipped) return;
+            chart.$wsWipeClipped = false;
+            chart.ctx.restore();
+        }
+    });
+
+    // Chart.js 2.8 預設會把整張圖（含格線）從 0 撐開 1000ms。
+    // 那個 tween 也是「切換時間範圍時點會亂飛到新位置」的原因：
+    // 它把第 N 個點的舊值補間到第 N 個點的新值，而換了區間之後
+    // 第 N 個點根本是不同的日期。關掉它，改用重新繪製。
+    Chart.defaults.global.animation.duration = 0;
+
+    // 依 canvas id 取圖表實例。不讀 window.myChart：頁面自己的非同步流程
+    // 會重新指派那個全域變數，探測到的可能不是正在畫的那一個。
+    function chartById(id) {
+        var instances = Chart.instances || {};
+        for (var key in instances) {
+            var c = instances[key];
+            if (c && c.canvas && c.canvas.id === id) return c;
+        }
+        return null;
+    }
+
+    var _wipeTokens = {};
+
+    function playWipe(chartId, duration) {
+        var chart = chartById(chartId);
+        if (!chart) return;
+
+        var token = (_wipeTokens[chartId] = (_wipeTokens[chartId] || 0) + 1);
+
+        if (prefersReducedMotion() || !window.requestAnimationFrame) {
+            chart.$wsWipe = 1;
+            try { chart.draw(); } catch (e) {}
+            return;
+        }
+
+        chart.$wsWipe = 0;
+        var start = null;
+
+        function frame(now) {
+            // 讀者在動畫途中換了卡號或換了區間：舊的 wipe 必須讓位，
+            // 否則它會把新的線又蓋回去裁掉一半。
+            if (_wipeTokens[chartId] !== token) return;
+            if (start === null) start = now;
+            var t = Math.min(1, (now - start) / duration);
+            chart.$wsWipe = easeOutCubic(t);
+            try { chart.draw(); } catch (e) { return; }
+            if (t < 1) {
+                requestAnimationFrame(frame);
+            } else {
+                chart.$wsWipe = 1;
+            }
+        }
+
+        try { chart.draw(); } catch (e) {}
+        requestAnimationFrame(frame);
+
+        // 同樣的保底。rAF 停在半路的話，clip 就永遠留在那裡——
+        // 也就是有一段價格線永遠看不到。缺資料比沒有動畫嚴重得多。
+        setTimeout(function () {
+            if (_wipeTokens[chartId] !== token) return;
+            if (chart.$wsWipe === 1) return;
+            chart.$wsWipe = 1;
+            try { chart.draw(); } catch (e) {}
+        }, duration + 80);
+    }
+
+    // ------------------------------------------------------------------
+    // 2. wsRoll — 數字滾動
+    //
+    //    每個元素帶自己的 token。查詢流程可能重入（讀者連續換卡號），
+    //    沒有 token 的話舊的 rAF 會在新值寫進去之後又蓋回舊值，
+    //    最後停在一個從來不存在的價格上。
+    // ------------------------------------------------------------------
+    function wsRoll(el, from, to, duration, delay, format) {
+        if (!el) return;
+
+        var token = (el.__wsRollToken = (el.__wsRollToken || 0) + 1);
+
+        function finish() {
+            if (el.__wsRollToken !== token) return;
+            el.textContent = format(to);
+        }
+
+        if (prefersReducedMotion() || !window.requestAnimationFrame || from === to) {
+            finish();
+            return;
+        }
+
+        el.textContent = format(from);
+
+        var start = null;
+        function frame(now) {
+            if (el.__wsRollToken !== token) return;
+            if (start === null) start = now;
+            var elapsed = now - start;
+            if (elapsed < delay) { requestAnimationFrame(frame); return; }
+            var t = Math.min(1, (elapsed - delay) / duration);
+            el.textContent = format(from + (to - from) * easeOutCubic(t));
+            if (t < 1) requestAnimationFrame(frame); else finish();
+        }
+        requestAnimationFrame(frame);
+
+        // 保底：時間到就把最終值寫上，不管 rAF 有沒有把最後一格送來。
+        //
+        // rAF 不保證會被呼叫到底——分頁切到背景、被節流、或渲染器認為自己
+        // 閒置了，迴圈就停在半路。停在半路的價格是「一個從來不存在的數字」，
+        // 而這一頁存在的理由就是那個數字要能拿去做決定。動畫可以被犧牲，
+        // 答案不行。token 檢查讓這裡是幂等的：如果 rAF 自己跑完了，
+        // 這一次只是把同樣的字再寫一遍；如果期間又查了新的卡號，
+        // token 已經換了，這一次什麼都不做。
+        setTimeout(finish, delay + duration + 80);
+    }
+
+    function yen(v) {
+        return '¥' + Math.round(v).toLocaleString('en-US');
+    }
+
+    // 讀回畫面上已經寫好的字，而不是重算一次。
+    // 這樣滾動的終點必然等於最終顯示值——不可能出現「動畫停在 ¥1,531，
+    // 但答案其實是 ¥1,630」這種對不起來的情況。
+    function numFrom(el) {
+        if (!el) return null;
+        var raw = String(el.textContent || '').replace(/[^0-9.+-]/g, '');
+        if (!raw || raw === '-' || raw === '+') return null;
+        var n = parseFloat(raw);
+        return isNaN(n) ? null : n;
+    }
+
+    // ------------------------------------------------------------------
+    // 3. 抵達的編排
+    // ------------------------------------------------------------------
+    function playArrival() {
+        var card = document.getElementById('priceSummaryCard');
+        if (!card) return;
+
+        var elCurrent = document.getElementById('summaryCurrentPrice');
+        var elHigh = document.getElementById('summaryHighPrice');
+        var elLow = document.getElementById('summaryLowPrice');
+        var elChange = document.getElementById('summaryChangePercent');
+
+        var current = numFrom(elCurrent);
+        var high = numFrom(elHigh);
+        var low = numFrom(elLow);
+        var change = numFrom(elChange);
+
+        // 走勢線：不管有沒有摘要數字都要 wipe，它是這個時刻的主體
+        playWipe('myChart', 560);
+
+        if (current === null) return;   // 沒有價格可言，就沒有答案可以抵達
+
+        // 售價：從 7 日前的基準價滾到今天。
+        // 基準價由旁邊的 % 反推，所以兩個格子永遠說同一件事。
+        // 沒有漲跌幅可算時（區間內不足兩筆）就沒有起點，直接顯示今天的價格。
+        if (change !== null && change !== 0) {
+            var basis = current / (1 + change / 100);
+            if (isFinite(basis) && basis > 0) {
+                wsRoll(elCurrent, basis, current, 520, 120, yen);
+            }
+        }
+
+        // 最高／最低：從今天的價格往外滾，兩個數字一起把區間畫出來
+        if (high !== null && high !== current) wsRoll(elHigh, current, high, 380, 520, yen);
+        if (low !== null && low !== current) wsRoll(elLow, current, low, 380, 560, yen);
+
+        // 漲跌：只轉箭頭。方向是資訊，數字大小不是。
+        var changeItem = card.querySelector('.price-summary-item.change');
+        if (changeItem && change !== null && change !== 0 && !prefersReducedMotion()) {
+            changeItem.classList.remove('is-arriving');
+            void changeItem.offsetWidth;                // 讓動畫可以重播
+            changeItem.classList.add('is-arriving');
+
+            // 用 timer 收尾，不用 animationend。
+            //
+            // 這個箭頭的「方向」就是這一格的資訊，而動畫的起始格是 rotate(±90deg)
+            // ——也就是箭頭指向側邊、看不出漲跌。動畫時間軸並不保證會前進
+            // （背景分頁、節流、被停用的合成動畫都會讓它停在起始格），
+            // 那時 animationend 永遠不會來，箭頭就永遠橫著。
+            // timer 是另一條時鐘，它一定會到；class 一移除，圖示就回到
+            // 靜止角度，也就是正確的方向。這也是為什麼這裡刻意不用
+            // animation-fill-mode: forwards——沒有 fill-mode 的動畫沒跑完
+            // 就會回到靜止狀態，正好是我們要的失敗方式。
+            setTimeout(function () {
+                changeItem.classList.remove('is-arriving');
+            }, 480);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 4. 接到既有流程上（全部用 wrapper，不動原本的函式內容）
+    // ------------------------------------------------------------------
+
+    // updatePriceSummary 負責把最終值寫進 DOM；抵達動作接在它之後，
+    // 讀回它寫好的字當終點。
+    if (typeof window.updatePriceSummary === 'function') {
+        var _updatePriceSummary = window.updatePriceSummary;
+        window.updatePriceSummary = function (priceData) {
+            var r = _updatePriceSummary.apply(this, arguments);
+            try { playArrival(); } catch (e) { console.error('答案抵達動作失敗（不影響資料）:', e); }
+            return r;
+        };
+    }
+
+    // 庫存圖用同一種語言，但短一些、也不帶數字滾動：
+    // 它是補充資訊，不是答案本身。它的資料來自另一個 XHR，
+    // 所以在它自己抵達的時候 wipe。
+    if (typeof window.getCardStockData === 'function') {
+        var _getCardStockData = window.getCardStockData;
+        window.getCardStockData = function () {
+            var r = _getCardStockData.apply(this, arguments);
+            try { playWipe('myStockChart', 380); } catch (e) {}
+            return r;
+        };
+    }
+
+    // 換時間範圍是「重剪」，不是「抵達」：讀者已經知道這條線的樣子了，
+    // 所以走同一個 wipe 但更短，而且不重滾數字（摘要講的是近 30／7 日，
+    // 跟圖表選的區間無關，滾一次會讓人以為那些數字也跟著變了）。
+    ['applyPriceTimeFilter', 'applyStockTimeFilter'].forEach(function (name) {
+        if (typeof window[name] !== 'function') return;
+        var orig = window[name];
+        var chartId = name === 'applyPriceTimeFilter' ? 'myChart' : 'myStockChart';
+        window[name] = function () {
+            var r = orig.apply(this, arguments);
+            try { playWipe(chartId, 320); } catch (e) {}
+            return r;
+        };
+    });
+
+    // 主題切換時 refreshChartThemeColors 會 chart.update()，
+    // 那會經過 beforeUpdate 把格線重新上色。但 update() 也會重畫資料集，
+    // 而此時 $wsWipe 可能還停在 1 以外的值（極少數：切主題時剛好在抵達中）。
+    // 保險起見把它歸零成「不裁切」。
+    if (typeof window.refreshChartThemeColors === 'function') {
+        var _refreshChartThemeColors = window.refreshChartThemeColors;
+        window.refreshChartThemeColors = function () {
+            ['myChart', 'myStockChart'].forEach(function (id) {
+                _wipeTokens[id] = (_wipeTokens[id] || 0) + 1;   // 取消進行中的 wipe
+                var c = chartById(id);
+                if (c) c.$wsWipe = 1;
+            });
+            return _refreshChartThemeColors.apply(this, arguments);
+        };
+    }
+})();
