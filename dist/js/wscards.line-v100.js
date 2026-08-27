@@ -4441,17 +4441,29 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
     // 沒有報價時不要把 62px 的「--」印上去 —— 兩條粗槓看起來像被塗掉，
     // 而不是「沒有資料」。空狀態要用話講清楚。
     var hasPrice = !!info.currentPrice && info.currentPrice !== '--' && info.currentPrice !== '-';
+    var hasChange = hasPrice && info.marketChangePercent && info.marketChangePercent !== '--';
     if (hasPrice) {
+        var priceText = String(info.currentPrice);
+        var priceMaxWidth = colW;
+        if (hasChange) {
+            ctx.font = '700 30px "Noto Sans TC", sans-serif';
+            priceMaxWidth -= ctx.measureText(info.marketChangePercent).width + 34;
+        }
+
+        var priceFontSize = 62;
+        do {
+            ctx.font = '900 ' + priceFontSize + 'px "Noto Sans TC", sans-serif';
+            priceFontSize--;
+        } while (priceFontSize >= 28 && ctx.measureText(priceText).width > priceMaxWidth);
+
         ctx.fillStyle = theme.inkText;
-        ctx.font = '900 62px "Noto Sans TC", sans-serif';
-        ctx.fillText(_truncateText(ctx, info.currentPrice, colW * 0.62), TX, 308);
+        ctx.fillText(priceText, TX, 308);
     } else {
         ctx.fillStyle = theme.inkGoldSoft;
         ctx.font = '700 26px "Noto Sans TC", sans-serif';
         ctx.fillText('目前沒有價格紀錄', TX, 298);
     }
 
-    var hasChange = hasPrice && info.marketChangePercent && info.marketChangePercent !== '--';
     if (hasChange) {
         var direction = _statsChangeDirection(info.marketChangePercent);
         var directionColor = direction > 0 ? theme.up : direction < 0 ? theme.down : theme.inkMuted;
