@@ -3196,7 +3196,7 @@ fetch(jsonUrl)
                     const select = document.createElement('select');
                     select.name = 'cardRareFilter';
                     select.id = 'cardRareFilter';
-                    select.style.fontFamily = "'Noto Sans TC', sans-serif";
+                    select.style.fontFamily = "'M PLUS U', sans-serif";
                     select.style.width = "300px";
 
                     relatedCards.forEach(c => {
@@ -3784,7 +3784,7 @@ function getStatsExportTheme() {
 
 /**
 * Canvas 用 fillText 畫字時，畫的是「當下已載入」的字重。
-* 頁面只請求了 Noto Sans TC 400，62px 的價格數字就會拿到合成假粗體。
+* 頁面使用 M PLUS U；Canvas 文字也要明確指定相同字型。
 * 所以動筆前先把要用到的字重載進來，並且設上限，字型 CDN 掛掉時
 * 圖還是要生得出來。
 * @returns {Promise}
@@ -3794,10 +3794,10 @@ function _statsFontsReady() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     var sample = '0123456789¥%價格庫存最高最低今日';
     var specs = [
-        '400 12px "Noto Sans TC"',
-        '500 12px "Noto Sans TC"',
-        '700 20px "Noto Sans TC"',
-        '900 62px "Noto Sans TC"'
+        '400 12px "M PLUS U"',
+        '500 12px "M PLUS U"',
+        '700 20px "M PLUS U"',
+        '900 62px "M PLUS U"'
     ];
     var jobs = [];
     for (var i = 0; i < specs.length; i++) {
@@ -3985,7 +3985,7 @@ function _drawStatsTriangle(ctx, cx, cy, size, direction, color) {
 */
 function _drawStatsChip(ctx, x, y, text, theme, filled, dotColor) {
     var height = 23;
-    ctx.font = '700 12px "Noto Sans TC", sans-serif';
+    ctx.font = '700 12px "M PLUS U", sans-serif';
     var textWidth = ctx.measureText(text).width;
     var padLeft = dotColor ? 20 : 10;
     var width = textWidth + padLeft + 10;
@@ -4067,7 +4067,7 @@ function _drawStatsCardPlaceholder(ctx, x, y, w, h, theme) {
 
     cy = y + h / 2;
     ctx.fillStyle = theme.inkGoldSoft;
-    ctx.font = '500 11px "Noto Sans TC", sans-serif';
+    ctx.font = '500 11px "M PLUS U", sans-serif';
     ctx.textAlign = 'center';
     _drawTrackedText(ctx, '無卡面圖', cx, cy + 34, 1.6, 'center');
     ctx.textAlign = 'left';
@@ -4390,7 +4390,7 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
 
     ctx.textAlign = 'left';
     ctx.fillStyle = theme.inkText;
-    ctx.font = '700 30px "Noto Sans TC", sans-serif';
+    ctx.font = '700 30px "M PLUS U", sans-serif';
     var nameLines = _wrapStatsText(ctx, info.cardName || info.cardNo || '卡片資料', colW, 2);
     var nameBaseline = 60;
     for (var n = 0; n < nameLines.length; n++) {
@@ -4416,10 +4416,10 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
     for (var f = 0; f < factRows.length; f++) {
         var rowY = factY + f * 22;
         ctx.fillStyle = theme.inkGoldSoft;
-        ctx.font = '500 10px "Noto Sans TC", sans-serif';
+        ctx.font = '500 10px "M PLUS U", sans-serif';
         _drawTrackedText(ctx, factRows[f].label, TX, rowY, 1.8);
         ctx.fillStyle = theme.inkMuted;
-        ctx.font = '400 12px "Noto Sans TC", sans-serif';
+        ctx.font = '400 12px "M PLUS U", sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(_truncateText(ctx, factRows[f].value, colW - 58), TX + 58, rowY);
     }
@@ -4434,7 +4434,7 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
     ctx.stroke();
 
     ctx.fillStyle = theme.inkGold;
-    ctx.font = '700 10px "Noto Sans TC", sans-serif';
+    ctx.font = '700 10px "M PLUS U", sans-serif';
     ctx.textAlign = 'left';
     _drawTrackedText(ctx, '遊遊亭 現價 / JPY', TX, 252, 2.2);
 
@@ -4443,11 +4443,11 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
     var hasPrice = !!info.currentPrice && info.currentPrice !== '--' && info.currentPrice !== '-';
     if (hasPrice) {
         ctx.fillStyle = theme.inkText;
-        ctx.font = '900 62px "Noto Sans TC", sans-serif';
+        ctx.font = '900 62px "M PLUS U", sans-serif';
         ctx.fillText(_truncateText(ctx, info.currentPrice, colW * 0.62), TX, 308);
     } else {
         ctx.fillStyle = theme.inkGoldSoft;
-        ctx.font = '700 26px "Noto Sans TC", sans-serif';
+        ctx.font = '700 26px "M PLUS U", sans-serif';
         ctx.fillText('目前沒有價格紀錄', TX, 298);
     }
 
@@ -4458,7 +4458,7 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
 
         ctx.textAlign = 'right';
         ctx.fillStyle = directionColor;
-        ctx.font = '700 30px "Noto Sans TC", sans-serif';
+        ctx.font = '700 30px "M PLUS U", sans-serif';
         ctx.fillText(info.marketChangePercent, RX, 302);
         if (direction !== 0) {
             var changeWidth = ctx.measureText(info.marketChangePercent).width;
@@ -4466,7 +4466,7 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
         }
 
         ctx.fillStyle = theme.inkGoldSoft;
-        ctx.font = '500 11px "Noto Sans TC", sans-serif';
+        ctx.font = '500 11px "M PLUS U", sans-serif';
         var amount = (info.marketChangeAmount && info.marketChangeAmount !== '--') ? info.marketChangeAmount + '　' : '';
         _drawTrackedText(ctx, amount + '近 30 日', RX, 328, 0.6, 'right');
         ctx.textAlign = 'left';
@@ -4490,13 +4490,13 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
     ctx.fillStyle = theme.paperGold;
     ctx.fillRect(G, 388, 4, 18);
     ctx.fillStyle = theme.paperText;
-    ctx.font = '700 16px "Noto Sans TC", sans-serif';
+    ctx.font = '700 16px "M PLUS U", sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText('價格與庫存走勢', G + 16, 404);
 
     var months = (info.series && info.series.months) ? info.series.months : 12;
     ctx.fillStyle = theme.paperMuted;
-    ctx.font = '500 11px "Noto Sans TC", sans-serif';
+    ctx.font = '500 11px "M PLUS U", sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('近 ' + months + ' 個月　資料來源：遊遊亭', W - G, 403);
     ctx.textAlign = 'left';
@@ -4525,7 +4525,7 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = theme.paperMuted;
-        ctx.font = '500 13px "Noto Sans TC", sans-serif';
+        ctx.font = '500 13px "M PLUS U", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('這張卡目前的價格紀錄不足，畫不出走勢。', plotX + plotW / 2, plotY + plotH / 2);
         ctx.textAlign = 'left';
@@ -4541,7 +4541,7 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
     function py(value) { return plotBottom - ((value - axis.lo) / (axis.hi - axis.lo)) * plotH; }
 
     // 格線：每一條都標數字，所以基準線不從 0 開始也不會誤導
-    ctx.font = '500 11px "Noto Sans TC", sans-serif';
+    ctx.font = '500 11px "M PLUS U", sans-serif';
     for (var tick = axis.lo; tick <= axis.hi + axis.step * 0.01; tick += axis.step) {
         var ty = Math.round(py(tick)) + 0.5;
         ctx.strokeStyle = theme.paperHairline;
@@ -4649,7 +4649,7 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
             ctx.stroke();
         }
 
-        ctx.font = '700 9px "Noto Sans TC", sans-serif';
+        ctx.font = '700 9px "M PLUS U", sans-serif';
         var textW = ctx.measureText(text).width + (text.length - 1) * 1.4;
         var labelY = above ? my - 15 : my + 23;
         labelY = Math.max(plotY + 12, Math.min(plotBottom - 6, labelY));
@@ -4691,13 +4691,13 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
     // 「今日」掛在時間軸上，右端的月份讓位給它。
     var axisBaseline = plotBottom + 20;
     ctx.fillStyle = theme.paperGold;
-    ctx.font = '700 10px "Noto Sans TC", sans-serif';
+    ctx.font = '700 10px "M PLUS U", sans-serif';
     var todayLabelW = _drawTrackedText(ctx, '今日', Math.min(lastX + 12, plotX + plotW), axisBaseline, 1.8, 'right');
     var todayLabelLeft = Math.min(lastX + 12, plotX + plotW) - todayLabelW;
 
     var lastLabelX = -999;
     ctx.fillStyle = theme.paperSubtle;
-    ctx.font = '500 10px "Noto Sans TC", sans-serif';
+    ctx.font = '500 10px "M PLUS U", sans-serif';
     var previousMonth = -1;
     for (var x = 0; x < points.length; x++) {
         var d = parseLabelToDate(points[x].label);
@@ -4716,7 +4716,7 @@ function _drawStatsTrend(ctx, W, L, theme, info) {
     // 圖例：貼在圖上，不用另開一塊圖例區
     var keyY = plotY + 14;
     var keyRight = plotX + plotW;
-    ctx.font = '500 10px "Noto Sans TC", sans-serif';
+    ctx.font = '500 10px "M PLUS U", sans-serif';
     if (hasStock) {
         ctx.fillStyle = theme.paperMuted;
         var stockLabelW = _drawTrackedText(ctx, '庫存', keyRight - 34, keyY, 1.2, 'right');
@@ -4782,17 +4782,17 @@ function _drawStatsMarketStrip(ctx, W, L, theme, info) {
         if (!hasValue) cells[i].note = '';
 
         ctx.fillStyle = theme.paperGold;
-        ctx.font = '700 10px "Noto Sans TC", sans-serif';
+        ctx.font = '700 10px "M PLUS U", sans-serif';
         _drawTrackedText(ctx, cells[i].label, textX, top + 30, 1.8);
 
         ctx.fillStyle = hasValue ? cells[i].color : theme.paperSubtle;
-        ctx.font = '700 24px "Noto Sans TC", sans-serif';
+        ctx.font = '700 24px "M PLUS U", sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(_truncateText(ctx, cells[i].value, cellW - 24), textX, top + 64);
 
         if (cells[i].note) {
             ctx.fillStyle = theme.paperSubtle;
-            ctx.font = '500 10px "Noto Sans TC", sans-serif';
+            ctx.font = '500 10px "M PLUS U", sans-serif';
             _drawTrackedText(ctx, cells[i].note, textX, top + 84, 0.8);
         }
     }
@@ -4815,19 +4815,19 @@ function _drawStatsFooter(ctx, W, H, L, theme, info) {
 
     ctx.textAlign = 'left';
     ctx.fillStyle = theme.inkGold;
-    ctx.font = '700 14px "Noto Sans TC", sans-serif';
+    ctx.font = '700 14px "M PLUS U", sans-serif';
     ctx.fillText('WS-Cards', G + 11, baseline);
     var markWidth = ctx.measureText('WS-Cards').width;
 
     ctx.fillStyle = theme.inkGoldSoft;
-    ctx.font = '500 11px "Noto Sans TC", sans-serif';
+    ctx.font = '500 11px "M PLUS U", sans-serif';
     _drawTrackedText(ctx, '卡片雲　ws-cards.cloud', G + 11 + markWidth + 12, baseline, 0.6);
 
     var now = new Date();
     var stamp = now.getFullYear() + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + ('0' + now.getDate()).slice(-2)
         + ' ' + ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
     ctx.fillStyle = theme.inkGoldSoft;
-    ctx.font = '500 11px "Noto Sans TC", sans-serif';
+    ctx.font = '500 11px "M PLUS U", sans-serif';
     _drawTrackedText(ctx, '資料來源：遊遊亭　製表 ' + stamp, W - G, baseline, 0.6, 'right');
     ctx.textAlign = 'left';
 }
