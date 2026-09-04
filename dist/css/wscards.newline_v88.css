@@ -29,20 +29,13 @@
 }
 
 p {
-     font-family: 'Noto Sans TC';
+    font-family: 'Noto Sans TC', sans-serif;
 }
 h3{
-    font-family: 'Noto Sans TC';	
+    font-family: 'Noto Sans TC', sans-serif;
 }
-.card-img-loading {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-}
-@keyframes loading {
-0% { background-position: 200% 0; }
-100% { background-position: -200% 0; }
-}
+/* 已移除 .card-img-loading 的無限微光動畫：頁面沒有任何地方套用這個 class，
+   而卡面本身已有 .overlay 載入狀態與 opacity 淡入，不需要第二種載入語言。 */
 
 .form-select:focus,
 .form-control:focus {
@@ -71,11 +64,168 @@ z-index: 9999 !important;
     --shadow-medium: 0 20px 40px rgba(0, 0, 0, 0.15);
     --border-radius: 20px;
     --border-radius-small: 12px;
+    --swal-bg: #fffdf8;
+    --swal-text: #263247;
+    --swal-muted: #687385;
+    --swal-border: rgba(38, 50, 71, 0.14);
+    --swal-shadow: 0 18px 48px rgba(30, 45, 90, 0.18), 0 4px 14px rgba(30, 45, 90, 0.08);
+    --swal-accent: #b07c28;
+    --swal-accent-hover: #93651e;
+    --swal-accent-text: #ffffff;
+    --swal-cancel-bg: rgba(38, 50, 71, 0.07);
+    --swal-cancel-hover: rgba(38, 50, 71, 0.13);
+    --swal-focus: rgba(176, 124, 40, 0.28);
+    --swal-progress: #b07c28;
+    --swal-info: #6886a8;
+    --swal-warning: #b07c28;
+    --swal-error: #b45d52;
+    --swal-success: #568a6d;
+}
+
+/* SweetAlert2 與頁面共用紙面／墨色語言，避免套件預設的純白藍色浮在頁面上 */
+.swal2-container {
+    padding: 1rem;
+    z-index: 2000;
+}
+
+.swal2-popup.ws-swal-popup {
+    width: min(32rem, calc(100vw - 2rem));
+    padding: 1.65rem 1.8rem 1.5rem;
+    border: 1px solid var(--swal-border);
+    border-radius: 14px;
+    background: var(--swal-bg);
+    color: var(--swal-text);
+    box-shadow: var(--swal-shadow);
+    font-family: 'Noto Sans TC', sans-serif;
+}
+
+.swal2-popup.ws-swal-toast {
+    width: min(25rem, calc(100vw - 2rem));
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+}
+
+.ws-swal-popup .swal2-title {
+    margin: 0.2rem 0 0;
+    color: var(--swal-text);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.ws-swal-popup .swal2-html-container,
+.ws-swal-popup .swal2-content {
+    margin: 0.7rem 0 0;
+    color: var(--swal-muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+.ws-swal-toast .swal2-title {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.ws-swal-toast .swal2-html-container,
+.ws-swal-toast .swal2-content {
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.ws-swal-popup .swal2-icon {
+    margin: 0 auto 0.6rem;
+    transform: scale(0.82);
+}
+
+.ws-swal-popup .swal2-icon.swal2-info {
+    border-color: var(--swal-info);
+    color: var(--swal-info);
+}
+
+.ws-swal-popup .swal2-icon.swal2-warning {
+    border-color: var(--swal-warning);
+    color: var(--swal-warning);
+}
+
+.ws-swal-popup .swal2-icon.swal2-error {
+    border-color: var(--swal-error);
+    color: var(--swal-error);
+}
+
+.ws-swal-popup .swal2-icon.swal2-success {
+    border-color: var(--swal-success);
+    color: var(--swal-success);
+}
+
+.ws-swal-toast .swal2-icon {
+    margin: 0 0.55rem 0 0;
+    transform: scale(0.7);
+}
+
+.ws-swal-popup .swal2-confirm,
+.ws-swal-popup .swal2-cancel,
+.ws-swal-popup .swal2-deny {
+    min-height: 2.45rem;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.55rem 1.15rem;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.ws-swal-popup .swal2-confirm,
+.ws-swal-popup .swal2-deny {
+    background: var(--swal-accent);
+    color: var(--swal-accent-text);
+}
+
+.ws-swal-popup .swal2-confirm:hover,
+.ws-swal-popup .swal2-deny:hover {
+    background: var(--swal-accent-hover);
+}
+
+.ws-swal-popup .swal2-cancel {
+    background: var(--swal-cancel-bg);
+    color: var(--swal-text);
+}
+
+.ws-swal-popup .swal2-cancel:hover {
+    background: var(--swal-cancel-hover);
+}
+
+.ws-swal-popup .swal2-confirm:focus-visible,
+.ws-swal-popup .swal2-cancel:focus-visible,
+.ws-swal-popup .swal2-deny:focus-visible,
+.ws-swal-popup .swal2-close:focus-visible {
+    outline: 3px solid var(--swal-focus);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.ws-swal-popup .swal2-close {
+    color: var(--swal-muted);
+}
+
+.ws-swal-popup .swal2-close:hover {
+    color: var(--swal-text);
+}
+
+.ws-swal-popup .swal2-timer-progress-bar {
+    height: 3px;
+    background: var(--swal-progress);
+}
+
+.ws-swal-popup .swal2-validation-message {
+    background: rgba(176, 124, 40, 0.1);
+    color: var(--swal-text);
 }
 
 body {
     background: #ffffff;
-    font-family: 'Noto Sans TC', 'Inter', sans-serif;
+    font-family: 'Noto Sans TC', sans-serif;
 }
 
 .main-header {
@@ -579,7 +729,7 @@ select:focus {
     margin-top: 0.9rem;
     padding: 0.5rem 1.75rem;
     color: var(--text-secondary);
-    font-family: 'Noto Sans TC', 'Source Sans Pro', sans-serif;
+    font-family: 'Noto Sans TC', sans-serif;
 }
 [data-theme="dark"] .main-footer.site-footer {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -721,26 +871,16 @@ select:focus {
     }
 }
 
-/* 動畫效果 */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.card {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.card:nth-child(1) { animation-delay: 0.1s; }
-.card:nth-child(2) { animation-delay: 0.2s; }
-.card:nth-child(3) { animation-delay: 0.3s; }
-.card:nth-child(4) { animation-delay: 0.4s; }
+/* 動畫效果
+ *
+ * 這裡原本是 fadeInUp：每一張 .card 都從 opacity:0 往上淡入，還加了四段
+ * 錯開的 delay，另外三個區塊（鑑定卡、價格摘要、搜尋歷史）也各自再叫一次。
+ * 六個一模一樣的入場等於沒有入場——讀者只學到「這頁會動」，學不到任何資訊。
+ * 更實際的問題是：從 opacity:0 開始的載入動畫，只要動畫沒跑完（背景分頁、
+ * 節流、或動畫被停用），內容就是看不見的。
+ *
+ * 這一頁的動畫只留一個時刻：查詢完成時「答案抵達」（見檔尾的答案抵達區塊）。
+ */
 
 /* 圖片樣式改進 */
 #cardImg {
@@ -1368,6 +1508,22 @@ position: relative; /* 添加相對定位 */
     --text-secondary: #9a958b;
     --glass-bg: rgba(26, 25, 23, 0.72);
     --glass-border: rgba(255, 255, 255, 0.10);
+    --swal-bg: #24231f;
+    --swal-text: #f0eee4;
+    --swal-muted: #b8b4a8;
+    --swal-border: rgba(226, 189, 119, 0.24);
+    --swal-shadow: 0 20px 52px rgba(0, 0, 0, 0.48), 0 5px 18px rgba(0, 0, 0, 0.28);
+    --swal-accent: #cbb083;
+    --swal-accent-hover: #e0c493;
+    --swal-accent-text: #211a10;
+    --swal-cancel-bg: rgba(240, 238, 228, 0.09);
+    --swal-cancel-hover: rgba(240, 238, 228, 0.16);
+    --swal-focus: rgba(226, 189, 119, 0.38);
+    --swal-progress: #cbb083;
+    --swal-info: #91a9c7;
+    --swal-warning: #d5b36f;
+    --swal-error: #dc8a80;
+    --swal-success: #8fc5a4;
 }
 
 [data-theme="dark"] body {
@@ -1479,15 +1635,8 @@ position: relative; /* 添加相對定位 */
     color: var(--text-secondary);
 }
 
-/* 微交互動畫 */
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-.info-icon {
-    animation: pulse 2s infinite;
-}
+/* 已移除 .info-icon 的無限脈動：頁面沒有 .info-icon，
+   而且一個永遠在縮放的圖示不表達任何狀態，只是持續消耗注意力。 */
 
 /* 平滑滾動 */
 html {
@@ -1558,7 +1707,9 @@ font-size: 0.8rem;
 font-weight: 600;
 z-index: 20;
 opacity: 0;
-animation: slideHint 3s ease-in-out infinite;
+/* 教一次就夠：跑兩輪後自己停在 opacity:0（不用 fill-mode，結束就回到靜止狀態）。
+   原本是 infinite，即使區塊滑出畫面外也繼續脈動。 */
+animation: slideHint 3s ease-in-out 2;
 pointer-events: none;
 white-space: nowrap;
 }
@@ -1922,17 +2073,9 @@ transform: scale(1.2);
     margin-right: 0.3rem;
 }    
 }
-/* 動畫效果 */
-@keyframes slideInRight {
-from {
-    opacity: 0;
-    transform: translateX(20px);
-}
-to {
-    opacity: 1;
-    transform: translateX(0);
-}
-}
+/* 已移除 slideInRight：.info-row 有 15 列，卻只在頁面解析時跑一次錯開入場，
+   資料真正抵達（loadCardData）時反而完全沒有動。也就是說這個 stagger 從來
+   沒有對應到任何狀態變化，純粹是裝飾。 */
 /* 確保父容器也不會影響寬度 */
 .card-body {
 padding: 1rem;
@@ -1956,9 +2099,6 @@ overflow: hidden; /* 防止內容溢出 */
 }
 }
 
-.info-row {
-animation: slideInRight 0.3s ease-out;
-}
 /* 針對特別長的內容的特殊樣式 */
 .info-value.long-text {
 max-width: none; /* 移除寬度限制 */
@@ -1967,13 +2107,6 @@ text-align: left; /* 長文字左對齊更好讀 */
 margin-left: 0.5rem;
 }
 
-
-.info-row:nth-child(1) { animation-delay: 0.1s; }
-.info-row:nth-child(2) { animation-delay: 0.15s; }
-.info-row:nth-child(3) { animation-delay: 0.2s; }
-.info-row:nth-child(4) { animation-delay: 0.25s; }
-.info-row:nth-child(5) { animation-delay: 0.3s; }
-.info-row:nth-child(6) { animation-delay: 0.35s; }
 
 /* 浮動回到頂部按鈕 */
 .scroll-to-top-btn {
@@ -2061,24 +2194,8 @@ box-shadow: 0 25px 50px rgba(191, 160, 106, 0.5);
 }
 }
 
-/* 按鈕脈衝動畫（可選） */
-@keyframes pulse-glow {
-0%, 100% {
-    box-shadow: var(--shadow-medium);
-}
-50% {
-    box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
-}
-}
-
-.scroll-to-top-btn.pulse {
-animation: pulse-glow 2s infinite;
-}
-
-[data-theme="dark"] .scroll-to-top-btn.pulse {
-    animation: none;
-    box-shadow: 0 0 0 1px rgba(191, 160, 106, 0.22), 0 18px 35px rgba(191, 160, 106, 0.28);
-}
+/* 已移除 .scroll-to-top-btn.pulse 的無限光暈：沒有任何程式碼加上 .pulse，
+   而一顆「回到頂端」按鈕不該持續閃爍——它是工具，不是通知。 */
 
 /* 當搜尋框被 focus 時，篩選卡片變成半透明 */
 #filter-card-tag {
@@ -2171,10 +2288,6 @@ box-shadow: 0 25px 50px rgba(191, 160, 106, 0.5) !important;
 }
 
 /*****************鑑定卡區塊******************/
-.grading-card {
-animation: fadeInUp 0.5s ease-out;
-}
-
 .grading-toggle-group {
 display: flex;
 gap: 0.35rem;
@@ -2473,7 +2586,6 @@ border-top-color: rgba(255, 255, 255, 0.08) !important;
 /*****************價格摘要統計卡片 (Monochrome Glass)******************/
 /* 結合毛玻璃與黑灰白冷峻風格 */
 .price-summary-card {
-animation: fadeInUp 0.5s ease-out;
 margin-bottom: 1.5rem;
 }
 
@@ -2498,7 +2610,10 @@ transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0
 position: relative;
 overflow: hidden;
 z-index: 1;
-will-change: transform, box-shadow, background-color;
+/* will-change 已移除：原本四張摘要磚永久宣告 transform / box-shadow /
+   background-color，等於整頁生命週期都佔著合成層，而它們大部分時間
+   什麼都沒在動。抵達動作裡真正會動的是漲跌箭頭的 420ms 旋轉，
+   那個規模不需要提前開合成層。 */
 }
 
 /* 微妙的光澤滑動特效 - 黑白版 */
@@ -2545,7 +2660,7 @@ gap: 0.25rem;
 
 .price-summary-label {
 font-size: 0.8rem;
-color: #718096;
+color: #5a6472; /* 原 #718096 在白底只有 4.0:1，未達 4.5:1 */
 font-weight: 600;
 letter-spacing: 0.5px;
 white-space: nowrap;
@@ -2557,18 +2672,26 @@ transition: color 0.4s ease;
 font-size: 1.45rem;
 font-weight: 800;
 color: #1a202c;
-font-family: 'Noto Sans TC', sans-serif;
+    font-family: 'Noto Sans TC', sans-serif;
 line-height: 1.2;
 white-space: nowrap;
 letter-spacing: -0.025em;
+/* 等寬數字：售價會逐格跳動，比例數字會讓整塊文字每一格都在改變寬度。
+   這是「答案抵達」能成立的前提，不是排版偏好。 */
+font-variant-numeric: tabular-nums;
+font-feature-settings: "tnum" 1;
 text-shadow: 0 2px 5px rgba(255, 255, 255, 0.5); /* 輕微反光增強立體感 */
 transition: color 0.4s ease, text-shadow 0.4s ease;
 }
 
-/* 漲跌幅動態顏色 - 改為黑灰白理性的顏色 */
-.price-summary-value.price-up { color: #2d3748; }  /* 深灰黑代紅 */
-.price-summary-value.price-down { color: #a0aec0; } /* 淺灰代綠 */
-.price-summary-value.price-flat { color: #718096; } /* 中底灰 */
+/* 漲跌幅動態顏色 - 維持黑灰白（不用紅綠，見 經典綠/經典紅 的取捨），
+   但三個階調都要在白底讀得到：原本 price-down 只有 2.3:1，
+   而它偏偏是「價格」這種絕對不能猜的數字。
+   漲＝更重的墨、跌＝更淡的墨，方向本來就同時由 +/- 與箭頭圖示表達，
+   所以調亮度不會弄丟編碼。 */
+.price-summary-value.price-up { color: #1a202c; }   /* 15.8:1 最重 */
+.price-summary-value.price-down { color: #5f6b7a; } /* 5.3:1（原 #a0aec0 = 2.3:1） */
+.price-summary-value.price-flat { color: #66717f; } /* 5.0:1（原 #718096 = 4.0:1） */
 
 
 
@@ -2597,9 +2720,10 @@ box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 
 [data-theme="dark"] .price-summary-label { color: #a0aec0; }
 [data-theme="dark"] .price-summary-value { color: #f7fafc; text-shadow: none; }
-[data-theme="dark"] .price-summary-value.price-flat { color: #718096; }
-[data-theme="dark"] .price-summary-value.price-up { color: #e2e8f0; } /* 亮灰取代紅 */
-[data-theme="dark"] .price-summary-value.price-down { color: #718096; } /* 沉灰取代綠 */
+/* 深色底同樣的問題：原本 flat / down 都是 #718096，在 #141414 上的卡面只有 4.3:1 */
+[data-theme="dark"] .price-summary-value.price-flat { color: #7e8a9b; } /* 5.0:1 */
+[data-theme="dark"] .price-summary-value.price-up { color: #f7fafc; }   /* 最亮 */
+[data-theme="dark"] .price-summary-value.price-down { color: #8b97a8; } /* 5.8:1 */
 
 /* 平板 */
 @media (max-width: 992px) {
@@ -2647,19 +2771,94 @@ box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 }
 
-/* 數字跳動動畫 */
-@keyframes countUp {
-from { opacity: 0; transform: translateY(10px); }
-to { opacity: 1; transform: translateY(0); }
+/* ============================================================
+   答案抵達（唯一一個被授權的時刻）
+   ------------------------------------------------------------
+   查詢完成時，這一頁真正的答案由三件事組成：今天的售價、它落在近 30 日
+   哪個區間、以及走勢。抵達動作就照這個順序把它們交出來，總長約 700ms。
+
+   原本這裡是 @keyframes countUp（from { opacity: 0 }）。它的名字在說謊
+   （沒有任何數字在跳動），而且它把 opacity 動畫加在「價格」上——價格是這
+   一頁存在的理由，任何讓它半透明的一格都是可讀性風險。現在數字由 JS 逐格
+   改寫 textContent，CSS 完全不碰它的 opacity，所以量到的對比就是真的對比。
+   ============================================================ */
+
+/* 近 7 日漲跌：不做數字滾動——這一格的資訊是方向，不是量。
+   箭頭從水平轉到位，轉的方向就是它要說的話。 */
+.price-summary-item.change.is-arriving .price-summary-icon i {
+animation: wsArrowLand 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-.price-summary-value.animate {
-animation: countUp 0.4s ease-out;
+.price-summary-item.change.is-down.is-arriving .price-summary-icon i {
+animation-name: wsArrowLandDown;
+}
+
+@keyframes wsArrowLand {
+from { transform: rotate(90deg); }
+to { transform: rotate(0deg); }
+}
+@keyframes wsArrowLandDown {
+from { transform: rotate(-90deg); }
+to { transform: rotate(0deg); }
+}
+
+/* 載入遮罩（#overlay-1/2/3）
+ *
+ * 這裡本來想加漸入，量過之後改成先修好它：三個遮罩裡各有一個
+ * .fa-spin（Font Awesome 的無限旋轉），而 overlay-2 / overlay-3
+ * 在首次繪製時就是顯示狀態——只有 overlay-1 會被 setFun() 關掉。
+ * 也就是說一個什麼都沒在載入的頁面，右側永遠有兩個轉不停的圈。
+ * 「非必要的循環動畫必須停下來」的正解不是把 spinner 拿掉
+ *（它在真的載入時是必要的回饋），而是讓遮罩在沒有載入時不存在。
+ *
+ * display: none 寫在 CSS 而不是行內樣式：這一頁的慣例是 JS 直接設
+ * element.style.display（showOverlay / hideOverlay 與 changeNumber 都是），
+ * 行內樣式會蓋過這裡，所以顯示照樣有效、預設又是關的。
+ *
+ * position: absolute; inset: 0 則是修另一半：AdminLTE 的
+ * .overlay-wrapper 是 position: relative 且自身高度為 0，裡面的
+ * .overlay 是 height:100%，等於 100% of 0——它從來沒有蓋住要載入的東西，
+ * 只在版面裡撐出約 40px 的深色橫條。改成絕對定位貼齊 .card
+ *（AdminLTE 的 .card 本身是 position: relative）之後，
+ * 它才真的是「這張卡正在載入」的狀態，而且不再佔用版面高度。
+ */
+.overlay-wrapper {
+display: none;
+position: absolute;
+inset: 0;
+z-index: 3;
+border-radius: inherit;
+overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+.price-summary-item.change.is-arriving .price-summary-icon i,
+.price-summary-item.change.is-down.is-arriving .price-summary-icon i {
+    animation: none;
+}
+/* 提示藥丸改為單純顯示一次再消失，不做縮放 */
+.info-swiper::before {
+    animation-name: wsHintFade;
+    animation-iteration-count: 1;
+}
+@keyframes wsHintFade {
+    0%, 100% { opacity: 0; }
+    25%, 70% { opacity: 1; }
+}
+/* 位移類的裝飾過場一併關掉，但保留顏色/狀態過場（那些帶著意義） */
+#filter-card-tag,
+#filter-card-tag.dimmed,
+.price-summary-item:hover,
+#cardImg:hover {
+    transform: none;
+}
+html {
+    scroll-behavior: auto;
+}
 }
 
 /*****************搜尋歷史紀錄******************/
 .search-history-wrapper {
 margin-bottom: 1.5rem;
-animation: fadeInUp 0.4s ease-out;
 }
 
 .search-history-header {
@@ -2677,146 +2876,6 @@ font-weight: 700;
 font-size: 0.95rem;
 color: var(--text-primary);
 }
-
-/* ===== AI 分析卡片 ===== */
-
-.ai-analysis-card {
-    position: relative;
-}
-
-.ai-analysis-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    color: var(--text-secondary);
-    font-family: 'Noto Sans TC', sans-serif;
-    text-align: center;
-    gap: 0.5rem;
-}
-
-.ai-analysis-placeholder i {
-    font-size: 2rem;
-    opacity: 0.4;
-}
-
-.ai-analysis-placeholder p {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.ai-analysis-section {
-    margin-bottom: 1.25rem;
-    padding-bottom: 1.1rem;
-    border-bottom: 1px solid rgba(102, 126, 234, 0.12);
-}
-
-.ai-analysis-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.ai-analysis-section-title {
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    padding-left: 0.6rem;
-    border-left: 3px solid #667eea;
-    font-family: 'Noto Sans TC', sans-serif;
-    display: flex;
-    align-items: center;
-}
-
-.ai-analysis-body {
-    font-size: 0.9rem;
-    line-height: 1.75;
-    color: var(--text-primary);
-    font-family: 'Noto Sans TC', sans-serif;
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-.ai-analysis-rules {
-    margin: 0;
-    padding-left: 1.4rem;
-    list-style: none;
-    font-family: 'Noto Sans TC', sans-serif;
-}
-
-.ai-analysis-rules li {
-    font-size: 0.88rem;
-    line-height: 1.7;
-    color: var(--text-primary);
-    padding: 0.25rem 0;
-    position: relative;
-    padding-left: 1rem;
-}
-
-.ai-analysis-rules li::before {
-    content: '';
-    position: absolute;
-    left: -0.05rem;
-    top: 0.65em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #667eea;
-    flex-shrink: 0;
-}
-
-.ai-analysis-updated {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-family: 'Noto Sans TC', sans-serif;
-    text-align: center;
-    margin-top: 0.75rem;
-    opacity: 0.7;
-}
-
-/* Dark mode overrides */
-[data-theme="dark"] .ai-analysis-section {
-    border-bottom-color: rgba(196, 166, 114, 0.18);
-}
-
-[data-theme="dark"] .ai-analysis-section-title {
-    border-left-color: #c4a672;
-}
-
-[data-theme="dark"] .ai-analysis-rules li::before {
-    background: #c4a672;
-}
-
-/* 規則 / 實戰評估 / 免責提示逐條淡入 */
-.ai-analysis-rules li.ai-reveal {
-    opacity: 0;
-    transform: translateY(6px);
-}
-
-.ai-analysis-rules li.ai-reveal.ai-reveal-in {
-    opacity: 1;
-    transform: none;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-}
-
-.ai-analysis-updated.ai-reveal {
-    opacity: 0;
-}
-
-.ai-analysis-updated.ai-reveal.ai-reveal-in {
-    opacity: 0.7;
-    transition: opacity 0.5s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ai-typing-cursor { animation: none; }
-}
-
-/* ===== /AI 分析卡片 ===== */
 
 .search-history-title i {
 color: #667eea;
