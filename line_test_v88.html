@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant-TW">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
@@ -14,10 +14,14 @@
       }
     })();
   </script>
-  <meta property="og:title" content="WS-Cards">
-  <meta property="og:type" content="website">  
-  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">  
-  <meta property="og:url" content="https://ws-cards.cloud">  
+  <meta name="description" content="查詢黑白雙翼（Weiss Schwarz）各卡號在遊遊亭的價格與庫存走勢，支援卡名、作品名與卡號查詢。">
+  <meta property="og:title" content="各卡號漲幅趨勢（WS）｜WS-Cards 卡片雲">
+  <meta property="og:description" content="輸入卡號即可查看遊遊亭的價格與庫存走勢，涵蓋近一月至近一年。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/line">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
   <meta name="apple-mobile-web-app-title" content="WS-Cards">  
@@ -25,15 +29,30 @@
   <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
   <meta name="msapplication-TileColor" content="#fff">  
   <link rel="manifest" href="/manifest.json">	
-  <title>WS卡片雲|WS-Cards(β)</title>
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"> 
+  <title>各卡號漲幅趨勢（WS）｜WS-Cards 卡片雲</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Google Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="dist/css/adminlte.min.css">
   <link rel="stylesheet" href="dist/css/wscards.newline_v88.css">
+  <style>
+    body,
+    body button,
+    body input,
+    body select,
+    body textarea,
+    body p,
+    body h3,
+    body h5,
+    body .swal2-popup,
+    body .swal2-popup.ws-swal-popup {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+  </style>
 </head>
 <body class="hold-transition sidebar-mini  layout-fixed layout-navbar-fixed">
 <div class="wrapper">
@@ -42,7 +61,7 @@
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <!-- Left navbar links -->
     <ul class="navbar-nav">
-      <li class="nav-item" style="">
+      <li class="nav-item">
         <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)"><span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span></a>
       </li>
     </ul>
@@ -51,7 +70,7 @@
       <span class="navbar-title-badge">WS</span>
     </div>
     <ul class="navbar-nav ml-auto">
-      <li class="nav-item" style="">
+      <li class="nav-item">
         <button
           id="themeToggleBtn"
           class="theme-toggle-btn"
@@ -74,11 +93,12 @@
   <aside class="custom-drawer" id="customDrawer">
     <div class="custom-drawer-header">
       <a href="./" class="brand-link">
-        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <!-- 標誌旁已有 WS-Cards 文字，圖片重複唸出來只是噪音 -->
+        <img src="dist/img/logo.png" alt="" class="brand-image">
         <span class="brand-text">WS-Cards</span>
       </a>
-      <button class="custom-drawer-close" onclick="toggleCustomDrawer()">
-        <i class="fas fa-times"></i>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -140,12 +160,13 @@
                 </div>
                 <div class="card-body">
                   <!-- Search Input with Modern Design -->
-                  <div class="search-container">                
+                  <div class="search-container">
                       <!-- Input form -->
                     <div class="input-group">
-                        <input id="xxxx" type="text" name="pattern" placeholder="請輸入作品名稱、作品代碼或完整卡號 (例如: PRD/W01-001)" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
+                        <label for="xxxx" class="sr-only">搜尋作品名稱、作品代碼或卡號</label>
+                        <input id="xxxx" type="text" name="pattern" placeholder="作品名稱、作品代碼或卡號（例：PRD/W01-001）" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
                             <div class="input-group-append">
-                          <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="複製" aria-label="複製" data-action-state="copy">
+                          <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="貼上" aria-label="貼上剪貼簿的卡號" data-action-state="copy">
                             <span class="action-icon-flip" aria-hidden="true">
                               <i class="fas fa-paste action-icon-face action-icon-front"></i>
                               <i class="fas fa-search action-icon-face action-icon-back"></i>
@@ -153,11 +174,11 @@
                                 </button>
                             </div>
                       </div>
-                      
+
                         <div class="search-hint">
-                            <i class="fas fa-lightbulb mr-2"></i>
-                        <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">輸入時按鈕會切換為搜尋，30 秒內可手動點搜尋；若未點擊才會自動查詢。</span></small>
-                        </div>                   
+                            <i class="fas fa-lightbulb mr-2" aria-hidden="true"></i>
+                        <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">貼上完整卡號可直接查詢，例如 PRD/W01-001。</span></small>
+                        </div>
                   </div>
                 </div>
               </div>	
@@ -172,8 +193,8 @@
                     <span>最近查看</span>
                     <span class="history-count" id="historyCount"></span>
                   </div>
-                  <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部紀錄">
-                    <i class="fas fa-trash-alt mr-1"></i>清除
+                  <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部查詢紀錄" aria-label="清除全部查詢紀錄">
+                    <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>清除
                   </button>
                 </div>
                 <div class="search-history-list" id="searchHistoryContainer">
@@ -194,36 +215,36 @@
                   <div class="card-body">
                     <div class="filter-container">
                       <div class="filter-group">
-                        <label class="filter-label">
-                          <i class="fas fa-layer-group mr-2"></i>作品系列
+                        <label class="filter-label" for="cardStandard">
+                          <i class="fas fa-layer-group mr-2" aria-hidden="true"></i>作品系列
                         </label>
-                        <select name="cardStandard" id="cardStandard" onclick="removeTitle();" onchange="changeStandard();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;"> 
+                        <select name="cardStandard" id="cardStandard" onclick="removeTitle();" onchange="changeStandard();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
                         <optgroup label="ヴァイスサイド" id="Weiss" style="background-color: white">
-                          <option value="000/000-000" id="notuse">選擇作品</option> 
+                          <option value="000/000-000" id="notuse">選擇作品系列</option>
                         </optgroup>
                         <optgroup label="シュヴァルツサイド" id="Schwarz" style="background-color: gray">
-                          <option value="000/000-000"></option> 						
+                          <option value="000/000-000"></option>
                         </optgroup>
-                        </select>                       
+                        </select>
                       </div>
                       <div class="filter-group">
-                        <label class="filter-label">
-                          <i class="fas fa-bookmark mr-2"></i>產品
+                        <label class="filter-label" for="cardTitle">
+                          <i class="fas fa-bookmark mr-2" aria-hidden="true"></i>產品
                         </label>
-                        <select name="cardTitle" id="cardTitle" onchange="changeTitle();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;"> 
-                          <option value="000/000-000">選擇主題</option> 
+                        <select name="cardTitle" id="cardTitle" onchange="changeTitle();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
+                          <option value="000/000-000">選擇產品</option>
                         </select>
                         <button type="button" id="advancedFilterBtn" class="btn advanced-filter-btn" style="display:none;" onclick="openAdvancedFilterModal();">
-                          <i class="fas fa-sliders-h mr-1"></i>進階選項
+                          <i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>進階選項
                         </button>
                       </div>
                       <div class="filter-group">
-                        <label class="filter-label">
-                          <i class="fas fa-hashtag mr-2"></i>卡號
+                        <label class="filter-label" for="cardNumber">
+                          <i class="fas fa-hashtag mr-2" aria-hidden="true"></i>卡號
                         </label>
-                        <select name="cardNumber" id="cardNumber" onchange="changeNumber();"  style="font-family: 'Noto Sans TC', sans-serif;"> 
-                          <option value="000/000-000">選擇卡號</option> 
-                        </select> 		
+                        <select name="cardNumber" id="cardNumber" onchange="changeNumber();"  style="font-family: 'Noto Sans TC', sans-serif;">
+                          <option value="000/000-000">選擇卡號</option>
+                        </select>
                       </div>
                     </div>  
                   </div>
@@ -239,21 +260,21 @@
                         </h5>                      
                         <div class="card-tools">
                           <!-- Collapse Button -->
-                          <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
+                          <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500" aria-label="收合卡面預覽"><i class="fas fa-minus" aria-hidden="true"></i></button>
                         </div>				
                     </div>
 
                     <div class="card-body">
                         <div class="preview-container" id="displayCardPhoto">
                                 <div class="image-placeholder">
-                                  <i class="fas fa-image"></i>
-                                  <p>請選擇卡片查看預覽</p>
-                                </div>                          
-                                <img id="cardImg" class="img-fluid modern-card-image">
-                        </div>  
+                                  <i class="fas fa-image" aria-hidden="true"></i>
+                                  <p>選擇卡號後在此顯示卡面</p>
+                                </div>
+                                <img id="cardImg" class="img-fluid modern-card-image" alt="">
+                        </div>
                         <div class="overlay-wrapper" id="overlay-1">
-                                <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
-                        </div>					
+                                <div class="overlay" role="status"><i class="fas fa-3x fa-sync-alt fa-spin" aria-hidden="true"></i><div class="text-bold pt-2">載入卡面…</div></div>
+                        </div>
                     </div>  
                 </div>   
 
@@ -264,8 +285,8 @@
                         卡片資訊
                       </h5>
                       <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
-                          <i class="fas fa-minus"></i>
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500" aria-label="收合卡片資訊">
+                          <i class="fas fa-minus" aria-hidden="true"></i>
                         </button>
                       </div>					
                     </div>
@@ -273,7 +294,7 @@
                         <div class="info-swiper" id="infoSwiper">           
                             <!-- 無資料遮罩 -->
                             <div class="info-swiper-mask" id="infoSwiperMask">
-                                <div class="info-swiper-mask-text"><i class="fas fa-exclamation-circle mr-2"></i>無法取得資料</div>
+                                <div class="info-swiper-mask-text" id="infoSwiperMaskText"><i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>此卡號查無詳細資料</div>
                             </div>
                             <!-- 左右控制按鈕 (桌面端) -->
                             <button class="swiper-btn swiper-prev" id="swiperPrev" aria-label="上一頁"><i class="fas fa-chevron-left"></i></button>
@@ -307,9 +328,9 @@
                                     </div>
                                     <div class="info-row two-col">
                                         <i class="fas fa-bolt mr-2"></i>
-                                        <span>總類</span>
+                                        <span>種類</span>
                                         <span id="cardkind" class="info-value">角色</span>
-                                    </div>                  
+                                    </div>           
                                     <div class="info-row two-col">
                                         <i class="fas fa-bolt mr-2"></i>
                                         <span>等級</span>
@@ -333,9 +354,9 @@
                                 
                                     <div class="info-row two-col">
                                         <i class="fas fa-magic mr-2"></i>
-                                        <span>サイド</span>
-                                        <span id="cardside" class="info-value">W</span>
-                                    </div>    
+                                        <span>陣營</span>
+                                        <span id="cardside" class="info-value">W ヴァイス</span>
+                                    </div>
                                     <div class="info-row two-col">
                                         <i class="fas fa-users mr-2"></i>
                                         <span>觸發</span>
@@ -366,53 +387,6 @@
                     </div>
                 </div>	  
             </div>   
-
-            <!-- AI 分析（暫時隱藏） -->
-            <div class="card ai-analysis-card" id="ai-analysis-card" style="display:none;">
-                <div class="card-header">
-                    <h5 class="card-title">
-                        <i class="fas fa-robot mr-2"></i>
-                        AI 分析
-                    </h5>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body" id="aiAnalysisBody">
-                    <!-- 空狀態 placeholder -->
-                    <div class="ai-analysis-placeholder" id="aiAnalysisPlaceholder">
-                        <i class="fas fa-robot"></i>
-                        <p>請選擇卡片查看 AI 分析</p>
-                    </div>
-
-                    <!-- 有資料時的內容 -->
-                    <div id="aiAnalysisContent" style="display:none;">
-                        <!-- 規則注意點 -->
-                        <div class="ai-analysis-section" id="aiRulesSection">
-                            <div class="ai-analysis-section-title">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>規則注意點
-                            </div>
-                            <ul class="ai-analysis-rules" id="aiRulesList"></ul>
-                        </div>
-                        <!-- 實戰評估 -->
-                        <div class="ai-analysis-section">
-                            <div class="ai-analysis-section-title">
-                                <i class="fas fa-chess-knight mr-2"></i>實戰評估
-                            </div>
-                            <ul class="ai-analysis-rules" id="aiEvaluation"></ul>
-                        </div>
-                        <!-- 更新時間 -->
-                        <div class="ai-analysis-updated" id="aiUpdatedAt"></div>
-                    </div>
-
-                    <!-- 載入遮罩 -->
-                    <div class="overlay-wrapper" id="overlay-ai">
-                        <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
-                    </div>
-                </div>
-            </div>
                           
             <!-- 鑑定卡資訊 -->
             <div class="card grading-card" id="grading-card-tag">
@@ -422,25 +396,21 @@
                     鑑定卡
                   </h5>
                   <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500">
-                      <i class="fas fa-minus"></i>
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500" aria-label="收合鑑定卡">
+                      <i class="fas fa-minus" aria-hidden="true"></i>
                     </button>
                   </div>
                 </div>
                 <div class="card-body">
-                  <div class="grading-toggle-group">
-                    <button class="grading-toggle-btn active" data-company="PSA" id="btnPSA">PSA</button>
-                    <button class="grading-toggle-btn" data-company="BGS" id="btnBGS">BGS</button>
-                    <button class="grading-toggle-btn" data-company="ARS" id="btnARS">ARS</button>
+                  <div class="grading-toggle-group" role="group" aria-label="鑑定公司">
+                    <button type="button" class="grading-toggle-btn active" data-company="PSA" id="btnPSA" aria-pressed="true">PSA</button>
+                    <button type="button" class="grading-toggle-btn" data-company="BGS" id="btnBGS" aria-pressed="false">BGS</button>
+                    <button type="button" class="grading-toggle-btn" data-company="ARS" id="btnARS" aria-pressed="false">ARS</button>
                   </div>
                   <div id="gradingContent">
                     <div class="grading-placeholder">
-                      <p>請選擇卡片查看鑑定資訊</p>
+                      <p>選擇卡號後顯示鑑定數量</p>
                     </div>
-                  </div>
-                  <div id="gradingTenRate" class="grading-ten-rate" style="display:none;">
-                    <div class="ten-rate-label"><i class="fas fa-gem mr-2"></i>10分率</div>
-                    <div class="ten-rate-value" id="tenRateValue">0%</div>
                   </div>
                 </div>
 			</div>
@@ -454,64 +424,68 @@
                     <div class="price-summary-grid">
                       <div class="price-summary-item current">
                         <div class="price-summary-icon">
-                          <i class="fas fa-yen-sign"></i>
+                          <i class="fas fa-yen-sign" aria-hidden="true"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">目前價格</span>
+                          <span class="price-summary-label">最新售價（日圓）</span>
                           <span class="price-summary-value" id="summaryCurrentPrice">--</span>
                         </div>
                       </div>
                       <div class="price-summary-item highest">
                         <div class="price-summary-icon">
-                          <i class="fas fa-arrow-up"></i>
+                          <i class="fas fa-arrow-up" aria-hidden="true"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">當月最高</span>
+                          <span class="price-summary-label">近 30 日最高</span>
                           <span class="price-summary-value" id="summaryHighPrice">--</span>
                         </div>
                       </div>
                       <div class="price-summary-item lowest">
                         <div class="price-summary-icon">
-                          <i class="fas fa-arrow-down"></i>
+                          <i class="fas fa-arrow-down" aria-hidden="true"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">當月最低</span>
+                          <span class="price-summary-label">近 30 日最低</span>
                           <span class="price-summary-value" id="summaryLowPrice">--</span>
                         </div>
                       </div>
                       <div class="price-summary-item change">
                         <div class="price-summary-icon">
-                          <i class="fas fa-percentage"></i>
+                          <i class="fas fa-percentage" aria-hidden="true"></i>
                         </div>
                         <div class="price-summary-content">
-                          <span class="price-summary-label">近7天漲跌</span>
+                          <span class="price-summary-label">近 7 日漲跌</span>
                           <span class="price-summary-value" id="summaryChangePercent">--</span>
                         </div>
                       </div>
                     </div>
+                    <p class="text-muted mb-0 mt-2" style="font-size:0.72rem; line-height:1.5;">
+                      <span id="priceSummaryAsOf"></span><span id="priceSummarySample" style="display:none;">目前顯示的是範例卡片，請查詢你要的卡號。</span>
+                    </p>
                   </div>
                 </div>
                 <!-- 價格走勢 -->
                 <div class="card">
                   <div class="card-header price-trend-header">
                     <h5 style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">
-                      <span class="price-trend-label" data-toggle="tooltip" data-trigger="click" title="資料來源：-遊々亭-">
-                      <i class="fas fa-chart-line mr-2"></i>
+                      <span class="price-trend-label" tabindex="0" role="button" data-toggle="tooltip" data-trigger="click hover focus" title="資料來源：遊遊亭（Yuyutei）" aria-label="價格走勢，資料來源：遊遊亭（Yuyutei）">
+                      <i class="fas fa-chart-line mr-2" aria-hidden="true"></i>
                       價格走勢
                       </span>
-                      <label class="chart-time-wrap">
+                      <label class="chart-time-wrap" for="priceTimeRange">
+                      <span class="sr-only">價格走勢時間範圍</span>
                       <select class="chart-period price-time-range" id="priceTimeRange" onchange="applyPriceTimeFilter(this.value)">
-                        <option value="1">(近一月)</option>
-                        <option value="3">(近三月)</option>
-                        <option value="6">(近半年)</option>
-                        <option value="12" selected>(近一年)</option>
+                        <option value="1">近一個月</option>
+                        <option value="3">近三個月</option>
+                        <option value="6">近半年</option>
+                        <option value="12" selected>近一年</option>
                       </select>
                       </label>
-                    </h5>                  
+                    </h5>
                     <div class="card-tools">
                       <!-- Collapse Button -->
-                      <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
-                    </div>					
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500" aria-label="收合價格走勢"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="chart">
@@ -524,64 +498,32 @@
                     </div>					
                   </div>
                   <div class="overlay-wrapper" id="overlay-2">
-                          <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
-                  </div>				  
-                </div>
-                <!-- 市場價格趨勢 (Mercari 成交中位數) -->
-                <div class="card" id="mercariTrendCard">
-                  <div class="card-header price-trend-header">
-                    <h5 style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">
-                      <span class="price-trend-label" data-toggle="tooltip" data-trigger="click" title="資料來源：Mercari 已售出成交價（每日中位數）">
-                      <i class="fas fa-store mr-2"></i>
-                      市場價格趨勢
-                      </span>
-                      <label class="chart-time-wrap">
-                      <select class="chart-period price-time-range" id="mercariTimeRange">
-                        <option value="1">(近一月)</option>
-                        <option value="3">(近三月)</option>
-                        <option value="6">(近半年)</option>
-                        <option value="12" selected>(近一年)</option>
-                      </select>
-                      </label>
-                    </h5>
-                    <div class="card-tools">
-                      <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="chart" style="position:relative;">
-                      <canvas id="myMercariChart" class="chartjs-render-monitor"></canvas>
-                      <div id="mercariTrendEmpty" style="display:none; padding:2rem 1rem; text-align:center; color:#94a3b8; font-family:'Noto Sans TC',sans-serif;">
-                        <i class="fas fa-store mr-2"></i>尚無 Mercari 成交資料
-                      </div>
-                    </div>
-                  </div>
-                  <div class="overlay-wrapper" id="overlay-mercari">
-                    <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
+                          <div class="overlay" role="status"><i class="fas fa-3x fa-sync-alt fa-spin" aria-hidden="true"></i><div class="text-bold pt-2">載入價格走勢…</div></div>
                   </div>
                 </div>
                 <!-- 庫存走勢 -->
                 <div class="card">
                     <div class="card-header stock-trend-header">
                         <h5 style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">
-                            <span class="stock-trend-label" data-toggle="tooltip" data-trigger="click" title="資料來源：-遊々亭-">
-                            <i class="fas fa-boxes mr-2"></i>
+                            <span class="stock-trend-label" tabindex="0" role="button" data-toggle="tooltip" data-trigger="click hover focus" title="資料來源：遊遊亭（Yuyutei）" aria-label="庫存走勢，資料來源：遊遊亭（Yuyutei）">
+                            <i class="fas fa-boxes mr-2" aria-hidden="true"></i>
                             庫存走勢
                             </span>
-                            <label class="chart-time-wrap">
+                            <label class="chart-time-wrap" for="stockTimeRange">
+                            <span class="sr-only">庫存走勢時間範圍</span>
                             <select class="chart-period stock-time-range" id="stockTimeRange" onchange="applyStockTimeFilter(this.value)">
-                              <option value="1">(近一月)</option>
-                              <option value="3">(近三月)</option>
-                              <option value="6">(近半年)</option>
-                              <option value="12" selected>(近一年)</option>
+                              <option value="1">近一個月</option>
+                              <option value="3">近三個月</option>
+                              <option value="6">近半年</option>
+                              <option value="12" selected>近一年</option>
                             </select>
                             </label>
-                        </h5>                
+                        </h5>
                         <div class="card-tools">
 
                             <!-- Collapse Button -->
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500"><i class="fas fa-minus"></i></button>
-                        </div>					
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"  data-animation-speed="500" aria-label="收合庫存走勢"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="chart">
@@ -594,44 +536,40 @@
                     </div>
              
                     <div class="overlay-wrapper" id="overlay-3">
-                            <div class="overlay"><i class="fas fa-3x fa-sync-alt fa-spin"></i><div class="text-bold pt-2">Loading...</div></div>
-                    </div>				  
+                            <div class="overlay" role="status"><i class="fas fa-3x fa-sync-alt fa-spin" aria-hidden="true"></i><div class="text-bold pt-2">載入庫存走勢…</div></div>
+                    </div>
                 </div>
                 <!-- 補位改為外部商城搜尋 -->
                 <div class="card flex-grow-1" id="otherInfo">
                     <div class="card-header">
                         <h5 style="font-family: 'Noto Sans TC', sans-serif;" class="card-title">
-                            <i class="fas fa-external-link-alt mr-2"></i>
-                            外部商城搜尋
-                        </h5>                
+                            <i class="fas fa-external-link-alt mr-2" aria-hidden="true"></i>
+                            到其他平台比價
+                        </h5>
                         <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500"><i class="fas fa-minus"></i></button>
-                        </div>					
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500" aria-label="收合到其他平台比價"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted text-sm mb-3">使用目前選擇的卡號前往外部平台搜尋：</p>
+                        <p class="text-muted text-sm mb-3">以卡號 <strong id="externalSearchCardNo">--</strong> 查詢，連結會另開新視窗。</p>
                         <div class="d-flex flex-column" style="gap: 0.75rem;">
-                            <!-- 設定 id 以便 JS 動態更新 href -->
+                            <!-- 設定 id 以便 JS 動態更新 href 與無障礙名稱 -->
                             <a href="#" id="linkMercari" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
-                                <i class="fas fa-store mr-2 text-dark"></i> Mercari 搜尋
+                                <i class="fas fa-store mr-2 text-dark" aria-hidden="true"></i> Mercari
                             </a>
                             <a href="#" id="linkYahoo" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
-                                <i class="fas fa-gavel mr-2 text-dark"></i> Yahoo日拍搜尋
+                                <i class="fas fa-gavel mr-2 text-dark" aria-hidden="true"></i> Yahoo! 日本拍賣
                             </a>
                             <a href="#" id="linkYuyu" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
-                                <i class="fas fa-shopping-cart mr-2 text-dark"></i> 遊遊亭 搜尋
+                                <i class="fas fa-shopping-cart mr-2 text-dark" aria-hidden="true"></i> 遊遊亭
                             </a>
                             <a href="#" id="linkRuten" target="_blank" rel="noopener noreferrer" class="btn btn-light text-left" style="border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 600;">
-                                <i class="fas fa-shopping-cart mr-2 text-dark"></i> 露天 搜尋
-                            </a>                            
+                                <i class="fas fa-shopping-cart mr-2 text-dark" aria-hidden="true"></i> 露天拍賣
+                            </a>
                         </div>
-                    </div>				  
+                    </div>
                 </div>                
-                
-                
-                
-                <del></del>
-            <!-- /.grading-card -->	  
+            <!-- /.grading-card -->
            </div>
           </div>
           <!-- /.row -->
@@ -644,23 +582,22 @@
 
   <!-- 在 body 結束標籤前添加浮動按鈕 -->
   <div id="download-card-tag" style="display: none;">
-    <button type="button" id="downloadStatsBtn" onclick="generateStatsImage()" title="下載統計圖片" aria-label="下載近期紀錄圖片">
-      <i class="fas fa-download"></i>
+    <button type="button" id="downloadStatsBtn" onclick="generateStatsImage()" title="下載價格統計圖" aria-label="下載價格統計圖">
+      <i class="fas fa-download" aria-hidden="true"></i>
     </button>
   </div>
 
-    <div id="scrollToTopBtn" class="scroll-to-top-btn">
-        <i class="fas fa-chevron-up"></i>
+    <div id="scrollToTopBtn" class="scroll-to-top-btn" role="button" tabindex="0" aria-label="回到頁面頂端" title="回到頁面頂端">
+        <i class="fas fa-chevron-up" aria-hidden="true"></i>
     </div>
 
     <!-- Control Sidebar -->
     <aside class="control-sidebar " id="rightSideBar">
       <!-- Control sidebar content goes here -->
       <div class="p-3">
-        <h5><p>服務條款及免責聲明</p></h5>
-      <br>
-          <p>在使用本網站(ws-cards.cloud)前，請先閱讀利用規約及免責聲明</p><br>
-      <button id="annButton"><p>規約及免責聲明</p></button>
+        <h5>利用規約及免責聲明</h5>
+        <p>使用 ws-cards.cloud 前請先閱讀。</p>
+        <button type="button" id="annButton">閱讀全文</button>
       </div>
     </aside>
     <!-- /.control-sidebar -->
@@ -668,7 +605,7 @@
     <!-- Main Footer -->
     <footer class="main-footer site-footer">
       <div class="site-footer-inner">
-        <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+        <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer" aria-label="意見回饋（另開新視窗的表單）">意見回饋</a>
         <span class="site-footer-sep">·</span>
         <a href="#" onclick="$('#announceexampleModalCenter').modal('show'); return false;">利用規約及免責聲明</a>
         <span class="site-footer-sep">·</span>
@@ -681,12 +618,12 @@
 
 <!-- Announce Modal -->
 <div id="card-modal-announce">
-	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
+	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalLongTitle" aria-hidden="true">
 	  <div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">
 		  <div class="modal-header">
-			<h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
-			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
+			<h5 class="modal-title" id="announceexampleModalLongTitle">利用規約及免責聲明</h5>
+			<button type="button" class="close" aria-label="關閉"  data-dismiss="modal">
 			  <span aria-hidden="true">&times;</span>
 			</button>
 		  </div>
@@ -695,15 +632,14 @@
 				<div class="row">
 					<div class="col text">
 					<ul>
-		<li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
-		<li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
-		<li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
-		<li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
-		<li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
-		<br>
-		<p>最終更新日期 2020年12月11日</p>		
+		<li>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</li>
+		<li>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</li>
+		<li>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</li>
+		<li>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</li>
+		<li>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</li>
 					</ul>
-						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>			  
+					<p class="text-muted">最後更新：2020 年 12 月 11 日</p>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>			  
 					</div>				
 				</div>
 			</div>
@@ -757,7 +693,7 @@
           <span id="advResultCount">結果：0 張</span>
         </div>
         <div class="adv-result-strip" id="advResultStrip">
-          <div class="adv-result-empty">請選擇篩選條件或等待資料載入</div>
+          <div class="adv-result-empty">選擇上方條件後顯示符合的卡片</div>
         </div>
       </div>
     </div>
@@ -833,10 +769,32 @@ $(function () {
   });
 })();
 
-document.getElementById('linkMercari').href = `https://jp.mercari.com/search?keyword=${encodeURIComponent('BD/W54-070SSP')}`;
-document.getElementById('linkYahoo').href = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent('BD/W54-070SSP')}`;
-document.getElementById('linkYuyu').href = `https://yuyu-tei.jp/sell/ws/s/search?search_word=${encodeURIComponent('BD/W54-070SSP')}`;
-document.getElementById('linkRuten').href = `https://www.ruten.com.tw/find/?q=${encodeURIComponent('BD/W54-070SSP')}`;    
+// 外部平台連結：連結名稱要能單獨看懂（讀螢幕軟體會把連結抽出來獨立朗讀），
+// 所以每個 aria-label 都帶上平台與卡號，並說明會另開視窗。
+// 日本的 Mercari / Yahoo 拍賣多以「卡名」上架，用卡名搜得到的結果比卡號多；
+// 遊遊亭與露天則是以卡號為主。兩種關鍵字都保留，但無障礙名稱要說出實際查的是哪一個，
+// 否則畫面說「以卡號查詢」、實際卻查卡名，等於騙讀者。
+window.updateExternalSearchLinks = function(cardNo, cardName) {
+  if (!cardNo || cardNo === '-' || cardNo === '000/000-000') return;
+  var jpTerm = cardName || cardNo;   // Mercari / Yahoo
+  var noTerm = cardNo;               // 遊遊亭 / 露天
+  var targets = [
+    ['linkMercari', 'Mercari',        jpTerm, 'https://jp.mercari.com/search?keyword=' + encodeURIComponent(jpTerm)],
+    ['linkYahoo',   'Yahoo! 日本拍賣', jpTerm, 'https://auctions.yahoo.co.jp/search/search?p=' + encodeURIComponent(jpTerm)],
+    ['linkYuyu',    '遊遊亭',          noTerm, 'https://yuyu-tei.jp/sell/ws/s/search?search_word=' + encodeURIComponent(noTerm)],
+    ['linkRuten',   '露天拍賣',        noTerm, 'https://www.ruten.com.tw/find/?q=' + encodeURIComponent(noTerm)]
+  ];
+  targets.forEach(function(t) {
+    var el = document.getElementById(t[0]);
+    if (!el) return;
+    el.href = t[3];
+    el.setAttribute('aria-label', '在 ' + t[1] + ' 搜尋「' + t[2] + '」（另開新視窗）');
+  });
+  var noEl = document.getElementById('externalSearchCardNo');
+  if (noEl) noEl.textContent = cardNo;
+};
+
+window.updateExternalSearchLinks('BD/W54-070SSP', '“鳥籠の歌姫”湊友希那');
     // 手機模式預設關閉「外部商城搜尋」區塊 (小於 992px)
     document.addEventListener("DOMContentLoaded", function() {
         if (window.innerWidth < 992) {
@@ -1132,6 +1090,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 事件監聽器
     scrollToTopBtn.addEventListener('click', scrollToTop);
+    // 這顆是 div 加上 role="button"，鍵盤按鍵要自己接，否則只有滑鼠能用
+    scrollToTopBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            scrollToTop();
+        }
+    });
     window.addEventListener('scroll', throttle(toggleScrollButton, 100));
     
     // 鍵盤快捷鍵支援 (可選)
@@ -1204,13 +1169,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var hintEl = document.getElementById('searchHintText');
     if (!hintEl) return;
 
+    // 每則提示都要回答讀者真的會有的疑問，而不是描述介面自己怎麼運作。
+    // 原本第一則在解釋「30 秒自動查詢」的內部計時器 —— 那是實作細節，不是提示。
     var hints = [
-        '輸入時按鈕會切換為搜尋，30 秒內可手動點搜尋；若未點擊才會自動查詢。',
-        '可直接貼上完整卡號（例如 PRD/W01-001）快速查詢。',
-        '點右上角月亮圖示可切換深色 / 淺色模式。',
-        '使用「篩選條件」依作品系列、產品、卡號逐步縮小查詢範圍。',
-        '價格與庫存走勢圖可切換一月 / 三月 / 半年 / 一年區間。',
-        '在「外部商城搜尋」可一鍵前往 Mercari、Yahoo 拍賣、露天等平台。'
+        '貼上完整卡號可直接查詢，例如 PRD/W01-001。',
+        '記不住卡號時，用「篩選條件」依作品系列、產品逐步找。',
+        '走勢圖可切換近一個月到近一年，看得出是長期漲還是短期波動。',
+        '價格為遊遊亭的日圓售價，尚未換算成台幣。'
     ];
 
     var index = 0;
@@ -1229,405 +1194,6 @@ document.addEventListener('DOMContentLoaded', function() {
             hintEl.style.opacity = '1';
         }, 400);
     }, 10000);
-})();
-</script>
-
-<!-- ===== 市場價格趨勢 (Mercari 成交中位數) — 獨立模組，不影響既有邏輯 ===== -->
-<script>
-(function () {
-  // scraper (--market) 產出的 JSON 位置，與遊々亭 cardData/ 平行放在同一 bucket
-  var MERCARI_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/mercariData/';
-
-  var mercariChart = null;
-  var rawLabels = [];
-  var rawData = [];
-  var cache = {};            // 產品碼 -> Promise(該產品 JSON)
-
-  function el(id) { return document.getElementById(id); }
-
-  // 型番 -> 產品檔名: "BD/W54-070SSP" -> "BD_W54"  (與 scraper / 遊々亭同規則)
-  function productCodeFromCardNo(v) {
-    return (String(v || '').split('-')[0] || '').replace(/\//g, '_');
-  }
-
-  // 與遊々亭圖區隔的配色 (綠系)，並支援深色模式
-  function lineColor() {
-    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return dark ? '#34d399' : '#059669';
-  }
-
-  function setOverlay(show) {
-    var o = el('overlay-mercari');
-    if (o) o.style.display = show ? 'block' : 'none';
-  }
-
-  function showEmpty(isEmpty) {
-    var empty = el('mercariTrendEmpty');
-    var canvas = el('myMercariChart');
-    if (empty) empty.style.display = isEmpty ? 'block' : 'none';
-    if (canvas) canvas.style.display = isEmpty ? 'none' : 'block';
-  }
-
-  // 依時間選單 (月數) 篩選資料點；ISO 日期字串可直接字典序比較
-  function filterByRange(labels, data) {
-    var sel = el('mercariTimeRange');
-    var months = sel ? parseInt(sel.value, 10) : 12;
-    if (!months || !labels.length) return { labels: labels.slice(), data: data.slice() };
-    var d = new Date();
-    d.setMonth(d.getMonth() - months);
-    var cutoff = d.toISOString().slice(0, 10);
-    var L = [], D = [];
-    for (var i = 0; i < labels.length; i++) {
-      if (labels[i] >= cutoff) { L.push(labels[i]); D.push(data[i]); }
-    }
-    return { labels: L, data: D };
-  }
-
-  function drawChart(labels, data) {
-    var canvas = el('myMercariChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-
-    if (mercariChart) {
-      try { mercariChart.destroy(); } catch (e) {}
-      mercariChart = null;
-    }
-    // 沿用既有圖表的 canvas 清理手法，避免殘留事件/context
-    var fresh = canvas.cloneNode(true);
-    canvas.parentNode.replaceChild(fresh, canvas);
-    var ctx = el('myMercariChart').getContext('2d');
-    var color = lineColor();
-
-    mercariChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: '日圓 (成交中位數)',
-          fill: false,
-          borderColor: color,
-          backgroundColor: color,
-          pointBackgroundColor: color,
-          pointBorderColor: color,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          borderWidth: 2,
-          data: data
-        }]
-      },
-      options: {
-        responsive: true,
-        legend: { display: true },
-        tooltips: {
-          callbacks: {
-            label: function (item) { return '成交中位數: ' + item.yLabel + ' 円'; }
-          }
-        },
-        scales: {
-          yAxes: [{ ticks: { beginAtZero: false } }]
-        }
-      }
-    });
-  }
-
-  function render() {
-    var f = filterByRange(rawLabels, rawData);
-    if (!f.labels.length) { showEmpty(true); return; }
-    showEmpty(false);
-    drawChart(f.labels, f.data);
-  }
-
-  function fetchProduct(product) {
-    if (cache[product]) return cache[product];
-    var url = MERCARI_BASE + product + '.json';
-    cache[product] = fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('mercari json ' + r.status);
-      return r.json();
-    });
-    return cache[product];
-  }
-
-  // 對外主流程：讀取目前選中的型番，載入並繪圖
-  function loadMercariTrend() {
-    var sel = el('cardNumber');
-    if (!sel) return;
-    var cardNo = sel.value;
-    if (!cardNo || cardNo === '000/000-000') { rawLabels = []; rawData = []; showEmpty(true); return; }
-
-    var product = productCodeFromCardNo(cardNo);
-    setOverlay(true);
-    fetchProduct(product)
-      .then(function (json) {
-        var entry = (json && json[cardNo]) || null;
-        rawLabels = (entry && Array.isArray(entry.upddate)) ? entry.upddate.slice() : [];
-        rawData = (entry && Array.isArray(entry.cardPrice)) ? entry.cardPrice.slice() : [];
-        var timeSel = el('mercariTimeRange');
-        if (timeSel) timeSel.value = '12';   // 每次切卡重設為近一年
-        render();
-      })
-      .catch(function () {          // 該產品尚未有 Mercari 資料 → 顯示空狀態
-        rawLabels = []; rawData = [];
-        showEmpty(true);
-      })
-      .then(function () { setOverlay(false); });
-  }
-
-  // 時間選單改變 → 只重新篩選，不重抓
-  var timeSel = el('mercariTimeRange');
-  if (timeSel) timeSel.addEventListener('change', render);
-
-  // 深色/淺色切換 → 重新上色
-  new MutationObserver(function () {
-    if (mercariChart) render();
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-  // 掛進既有的 changeNumber(): 原邏輯照跑，跑完再載入 Mercari 趨勢。
-  // changeNumber 是全域函式，重新指派會同時影響 onchange 屬性與外部 JS 的內部呼叫。
-  var _origChangeNumber = window.changeNumber;
-  window.changeNumber = function () {
-    var ret;
-    if (typeof _origChangeNumber === 'function') {
-      ret = _origChangeNumber.apply(this, arguments);
-    }
-    try { loadMercariTrend(); } catch (e) { console.error('[mercari] 載入失敗', e); }
-    return ret;
-  };
-
-  // 若載入頁面時已有選中的型番，補畫一次；否則關閉遮罩並顯示空狀態
-  document.addEventListener('DOMContentLoaded', function () {
-    var sel = el('cardNumber');
-    if (sel && sel.value && sel.value !== '000/000-000') {
-      loadMercariTrend();
-    } else {
-      setOverlay(false);
-      showEmpty(true);
-    }
-  });
-})();
-</script>
-
-<!-- ===== AI 分析模組 — 獨立模組，讀取預備好的 JSON，不直接呼叫 AI API ===== -->
-<script>
-(function () {
-  var AI_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/aiAnalysis/';
-
-  var cache = {};  // productCode -> Promise
-
-  // 逐條淡入狀態
-  var revealToken = 0;        // 用於取消進行中的淡入序列（切換卡片時遞增）
-  var revealPending = false;  // 有內容待淡入（尚未進入畫面）
-  var revealStarted = false;  // 本次 render 是否已開始淡入（避免捲入捲出重播）
-  var _observer = null;       // IntersectionObserver 只建立一次
-  var _scrollBound = false;   // 不支援 IO 時的捲動 fallback
-
-  function el(id) { return document.getElementById(id); }
-
-  // "BD/W54-070SSP" -> "BD_W54"
-  function productCodeFromCardNo(v) {
-    return (String(v || '').split('-')[0] || '').replace(/\//g, '_');
-  }
-
-  function setOverlay(show) {
-    var o = el('overlay-ai');
-    if (o) o.style.display = show ? 'block' : 'none';
-  }
-
-  function showPlaceholder(show) {
-    var ph = el('aiAnalysisPlaceholder');
-    var ct = el('aiAnalysisContent');
-    if (ph) ph.style.display = show ? 'block' : 'none';
-    if (ct) ct.style.display = show ? 'none' : 'block';
-  }
-
-  function renderAiAnalysis(cardNo, data) {
-    // 取消任何進行中的淡入序列，並重置本次狀態
-    revealToken++;
-    revealPending = false;
-    revealStarted = false;
-
-    var entry = data && data[cardNo];
-    if (!entry) {
-      // 該卡號無資料
-      var ph = el('aiAnalysisPlaceholder');
-      if (ph) {
-        ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
-        ph.style.display = 'block';
-      }
-      var ct = el('aiAnalysisContent');
-      if (ct) ct.style.display = 'none';
-      return;
-    }
-
-    // 填充規則注意點（先隱藏，稍後逐條淡入）
-    var rulesEl = el('aiRulesList');
-    var rulesSection = el('aiRulesSection');
-    var rules = Array.isArray(entry.rulesNotes) ? entry.rulesNotes : [];
-    if (rulesEl) {
-      rulesEl.innerHTML = '';
-      rules.forEach(function (note) {
-        var li = document.createElement('li');
-        li.textContent = note;
-        li.className = 'ai-reveal';
-        rulesEl.appendChild(li);
-      });
-    }
-    if (rulesSection) {
-      rulesSection.style.display = rules.length ? 'block' : 'none';
-    }
-
-    // 填充實戰評估（條列式）：支援字串或字串陣列；字串視為單一項目
-    var evalEl = el('aiEvaluation');
-    var evalItems = Array.isArray(entry.evaluation)
-      ? entry.evaluation.filter(Boolean)
-      : (entry.evaluation ? [entry.evaluation] : []);
-    if (evalEl) {
-      evalEl.innerHTML = '';
-      evalItems.forEach(function (para) {
-        var li = document.createElement('li');
-        li.textContent = para;
-        li.className = 'ai-reveal';
-        evalEl.appendChild(li);
-      });
-    }
-
-    // AI 產生內容免責提示（先隱藏）
-    var updEl = el('aiUpdatedAt');
-    if (updEl) {
-      updEl.textContent = '此分析內容是由 AI 產生，有可能會出現錯誤';
-      updEl.className = 'ai-analysis-updated ai-reveal';
-    }
-
-    showPlaceholder(false);
-
-    // 交由 IntersectionObserver 於進入畫面時觸發淡入
-    revealPending = true;
-    maybeStartReveal();
-  }
-
-  // 依 DOM 順序（規則 → 實戰評估 → 免責提示）逐條淡入
-  function revealSequence() {
-    if (!revealPending || revealStarted) return;
-    revealStarted = true;
-    revealPending = false;
-
-    var ct = el('aiAnalysisContent');
-    var items = ct ? ct.querySelectorAll('.ai-reveal') : [];
-
-    // 使用者偏好降低動態效果：一次全部顯示，不做 stagger
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      for (var k = 0; k < items.length; k++) items[k].classList.add('ai-reveal-in');
-      return;
-    }
-
-    var token = revealToken;
-    var i = 0;
-    (function next() {
-      if (token !== revealToken) return;  // 已被新的 render 取代
-      if (i >= items.length) return;
-      items[i].classList.add('ai-reveal-in');
-      i++;
-      setTimeout(next, 120);
-    })();
-  }
-
-  // 若模組已在畫面內就立即淡入，否則交給觀察器
-  function maybeStartReveal() {
-    if (!revealPending) return;
-    var card = el('ai-analysis-card');
-    if (!card) { revealSequence(); return; }
-    ensureObserver();
-    var vh = window.innerHeight || document.documentElement.clientHeight;
-    var rect = card.getBoundingClientRect();
-    if (rect.top < vh && rect.bottom > 0) revealSequence();
-  }
-
-  // 建立一次性的進入畫面觀察器（含不支援 IO 的 fallback）
-  function ensureObserver() {
-    var card = el('ai-analysis-card');
-    if (!card) return;
-
-    if ('IntersectionObserver' in window) {
-      if (_observer) return;
-      _observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting && revealPending) {
-            revealSequence();
-          }
-        });
-      }, { threshold: 0.1 });
-      _observer.observe(card);
-    } else if (!_scrollBound) {
-      _scrollBound = true;
-      var onScroll = function () {
-        if (!revealPending) return;
-        var vh = window.innerHeight || document.documentElement.clientHeight;
-        var rect = card.getBoundingClientRect();
-        if (rect.top < vh && rect.bottom > 0) revealSequence();
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-    }
-  }
-
-  function fetchProduct(product) {
-    if (cache[product]) return cache[product];
-    var url = AI_BASE + product + '.json';
-    cache[product] = fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('ai json ' + r.status);
-      return r.json();
-    });
-    return cache[product];
-  }
-
-  function loadAiAnalysis() {
-    var sel = el('cardNumber');
-    if (!sel) return;
-    var cardNo = sel.value;
-    if (!cardNo || cardNo === '000/000-000') {
-      var ph = el('aiAnalysisPlaceholder');
-      if (ph) ph.innerHTML = '<i class="fas fa-robot"></i><p>請選擇卡片查看 AI 分析</p>';
-      showPlaceholder(true);
-      return;
-    }
-
-    var product = productCodeFromCardNo(cardNo);
-    setOverlay(true);
-    fetchProduct(product)
-      .then(function (json) {
-        renderAiAnalysis(cardNo, json);
-      })
-      .catch(function () {
-        var ph = el('aiAnalysisPlaceholder');
-        if (ph) {
-          ph.innerHTML = '<i class="fas fa-robot"></i><p>此卡目前無 AI 分析資料</p>';
-          ph.style.display = 'block';
-        }
-        var ct = el('aiAnalysisContent');
-        if (ct) ct.style.display = 'none';
-      })
-      .then(function () { setOverlay(false); });
-  }
-
-  // Hook changeNumber（與 Mercari 模組相同的 wrap 模式）
-  var _origChangeNumber = window.changeNumber;
-  window.changeNumber = function () {
-    var ret;
-    if (typeof _origChangeNumber === 'function') {
-      ret = _origChangeNumber.apply(this, arguments);
-    }
-    try { loadAiAnalysis(); } catch (e) { console.error('[ai] 載入失敗', e); }
-    return ret;
-  };
-
-  // 頁面已有選中卡號時補跑一次；否則關閉遮罩並顯示 placeholder
-  document.addEventListener('DOMContentLoaded', function () {
-    var sel = el('cardNumber');
-    if (sel && sel.value && sel.value !== '000/000-000') {
-      loadAiAnalysis();
-    } else {
-      setOverlay(false);
-      showPlaceholder(true);
-    }
-  });
 })();
 </script>
 
