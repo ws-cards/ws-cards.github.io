@@ -87,6 +87,11 @@
         document.documentElement.classList.add('is-banner-hidden');
       }
     } catch (err) { /* storage unavailable; show the banner */ }
+
+    // The scroll-reveal hidden state is scoped to this class, set before first
+    // paint. If the main script never runs, the class is never added and the
+    // page stays fully visible instead of blank.
+    document.documentElement.classList.add('has-reveal');
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -580,15 +585,42 @@
       margin-right: auto;
     }
 
+    /* ========== SCROLL REVEAL ==========
+       Sections lift into place instead of appearing. Two knobs per element:
+       --reveal-shift (how far it travels) and --reveal-delay (set by JS for
+       staggered groups). The travel is deliberately small — 28px reads as the
+       block settling, not as it flying in from off-screen.
+
+       Note the unscoped rule stays visible: it is the no-JS floor. Only
+       .has-reveal (added pre-paint) hides anything. */
     .reveal {
       opacity: 1;
       transform: none;
-      transition: opacity 0.6s ease, transform 0.6s ease;
     }
 
-    .reveal.visible {
+    .has-reveal .reveal {
+      opacity: 0;
+      transform: translate3d(0, var(--reveal-shift, 28px), 0);
+      transition:
+        opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms),
+        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+      will-change: opacity, transform;
+    }
+
+    .has-reveal .reveal.visible {
       opacity: 1;
-      transform: translateY(0);
+      transform: none;
+      /* Dropped once the element has landed so the compositor layer is not
+         held for the rest of the session. */
+      will-change: auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .has-reveal .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
     }
 
     /* ========== PRODUCTS: featured tile + price ledger ==========
@@ -1354,9 +1386,9 @@
     }
 
 
-    /* ========== PRODUCT STAGGER ========== */
-    .products .reveal:nth-child(1) { transition-delay: 0ms; }
-    .products .reveal:nth-child(2) { transition-delay: 100ms; }
+    /* Stagger is no longer hand-written per section: any container carrying
+       data-reveal-stagger gets --reveal-delay assigned to its .reveal children
+       in DOM order. See the reveal block above and the observer setup below. */
 
     /* ========== BADGE PULSE ========== */
     @keyframes badgePulse {
@@ -1388,7 +1420,7 @@
       inset: 23% -15% 12% 32%;
       border: 1px solid #646d68;
       border-radius: 50%;
-      transform: rotate(-32deg);
+      transform: translateY(var(--parallax-y, 0px)) rotate(-32deg);
       box-shadow: inset 0 -2px 0 #c6d1ca, 0 18px 46px #0008;
       opacity: 0.65;
     }
@@ -1396,7 +1428,7 @@
       inset: 19% -18% 17% 36%;
       border-color: #343a36;
       box-shadow: inset 0 1px 0 #9aa79f;
-      transform: rotate(-32deg) translateY(-24px);
+      transform: translateY(var(--parallax-y, 0px)) rotate(-32deg) translateY(-24px);
       opacity: 0.6;
     }
     .hero__art {
@@ -1405,7 +1437,7 @@
       top: calc(var(--banner-height) + var(--nav-height) + 55px);
       left: calc(65% - 146px);
       margin: 0;
-      transform: rotate(9deg);
+      transform: translateY(var(--parallax-y, 0px)) rotate(9deg);
       filter: drop-shadow(18px 30px 22px #0009);
     }
     .hero__art img {
@@ -1429,7 +1461,7 @@
       width: 206px;
       left: calc(83% - 103px);
       top: calc(var(--banner-height) + var(--nav-height) + 140px);
-      transform: rotate(-12deg);
+      transform: translateY(var(--parallax-y, 0px)) rotate(-12deg);
       filter: drop-shadow(12px 24px 18px #0009);
     }
     .hero__copy {
@@ -1502,10 +1534,10 @@
         min-height: 740px;
         padding: calc(var(--banner-height) + var(--nav-height) + 302px) 20px 24px;
       }
-      .hero__art { width: 190px; left: calc(50% - 95px); top: calc(var(--banner-height) + var(--nav-height) + 20px); transform: rotate(7deg); }
+      .hero__art { width: 190px; left: calc(50% - 95px); top: calc(var(--banner-height) + var(--nav-height) + 20px); transform: translateY(var(--parallax-y, 0px)) rotate(7deg); }
       .hero__art--back { display: none; }
-      .hero__rail { inset: 20% -30% 57% -20%; transform: rotate(-24deg); }
-      .hero__rail--back { transform: rotate(-24deg) translateY(-18px); }
+      .hero__rail { inset: 20% -30% 57% -20%; transform: translateY(var(--parallax-y, 0px)) rotate(-24deg); }
+      .hero__rail--back { transform: translateY(var(--parallax-y, 0px)) rotate(-24deg) translateY(-18px); }
       .hero__copy { padding-bottom: 26px; }
       .hero__title { font-size: 3.5rem; }
       .hero__subtitle { margin-top: 14px; font-size: 0.85rem; }
@@ -1597,6 +1629,7 @@
     .discovery__item .feature__link { padding: 10px 0; }
     .discovery__art { display: flex; align-items: center; gap: 28px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #c5d0c8; }
     .discovery__art img { width: 100px; height: auto; border-radius: 4px; }
+    .discovery__art img { transform: translateY(var(--discovery-parallax-y, 0px)); }
     .discovery__art strong { display: block; font-size: 0.85rem; }
     .discovery__art span { display: block; font-family: var(--font-mono); font-size: 0.7rem; margin-top: 8px; }
     .tool-pair { padding: 60px 0; background: #cfddcd; color: #142019; }
@@ -1741,10 +1774,10 @@
       <div class="hero__rail hero__rail--back"></div>
       <div class="hero__rail"></div>
       <figure class="hero__art hero__art--back">
-        <img src="assets/landing-page-4/bd_w54_070.png" alt="" width="400" height="558" decoding="async" onerror="this.parentElement.hidden = true;">
+        <img src="assets/landing-page/bd_w54_070.png" alt="" width="400" height="558" decoding="async" onerror="this.parentElement.hidden = true;">
       </figure>
       <figure class="hero__art">
-        <img src="assets/landing-page-4/bd_w54_070ssp.png" alt="" width="400" height="558" fetchpriority="high" decoding="async" onerror="this.parentElement.hidden = true;">
+        <img src="assets/landing-page/bd_w54_070ssp.png" alt="" width="400" height="558" fetchpriority="high" decoding="async" onerror="this.parentElement.hidden = true;">
       </figure>
     </div>
     <div class="hero__copy">
@@ -1771,15 +1804,19 @@
         <h2 class="section__title">下一步，從這裡開始。</h2>
         <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
       </div>
-      <div class="products">
+      <!-- The five columns come in left to right, so the price board reads as
+           being posted rather than appearing all at once. Note the reveal sits
+           on each __row, not on .product-ledger: that wrapper is
+           `display: contents` here, so it has no box to fade or move. -->
+      <div class="products" data-reveal-stagger="70">
         <a class="product-feature reveal" href="line_test_v88.html" data-track="product_card_trends" aria-labelledby="pc-trends">
           <span class="product-feature__tag">trends</span>
           <h3 id="pc-trends">庫存價格漲幅趨勢</h3>
           <p>價格與庫存，放回時間裡看。</p>
           <span class="product-feature__cta">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
         </a>
-        <div class="product-ledger reveal">
-          <a class="product-ledger__row" href="searchCard.html" data-track="product_card_search" aria-labelledby="pc-search">
+        <div class="product-ledger">
+          <a class="product-ledger__row reveal" href="searchCard.html" data-track="product_card_search" aria-labelledby="pc-search">
             <span class="product-ledger__tag">search</span>
             <span class="product-ledger__body">
               <span class="product-ledger__title" id="pc-search">卡片搜尋</span>
@@ -1787,7 +1824,7 @@
             </span>
             <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </a>
-          <a class="product-ledger__row" href="championList.html" data-track="product_card_decks" aria-labelledby="pc-decks">
+          <a class="product-ledger__row reveal" href="championList.html" data-track="product_card_decks" aria-labelledby="pc-decks">
             <span class="product-ledger__tag">decks</span>
             <span class="product-ledger__body">
               <span class="product-ledger__title" id="pc-decks">優勝上位牌組</span>
@@ -1795,7 +1832,7 @@
             </span>
             <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </a>
-          <a class="product-ledger__row" href="increase.html" data-track="product_card_ranking" aria-labelledby="pc-ranking">
+          <a class="product-ledger__row reveal" href="increase.html" data-track="product_card_ranking" aria-labelledby="pc-ranking">
             <span class="product-ledger__tag">rank</span>
             <span class="product-ledger__body">
               <span class="product-ledger__title" id="pc-ranking">漲幅排行</span>
@@ -1803,7 +1840,7 @@
             </span>
             <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
           </a>
-          <a class="product-ledger__row product-ledger__row--flagship" href="deckPrice.html" data-track="product_card_analysis" aria-labelledby="pc-analysis">
+          <a class="product-ledger__row product-ledger__row--flagship reveal" href="deckPrice.html" data-track="product_card_analysis" aria-labelledby="pc-analysis">
             <span class="product-ledger__tag">analysis</span>
             <span class="product-ledger__body">
               <span class="product-ledger__title" id="pc-analysis">牌組分析</span>
@@ -1819,13 +1856,15 @@
   <section class="section section--alt" id="features">
     <div class="container">
 
-      <div class="feature feature--spotlight reveal">
-        <div class="feature__content">
+      <!-- Copy lands first, screenshot follows: the sentence is what the
+           reader needs before the image means anything. -->
+      <div class="feature feature--spotlight" data-reveal-stagger="140">
+        <div class="feature__content reveal">
           <h2>喜歡一張卡。<br>也了解它的走勢。</h2>
           <p>從歷史價格到庫存變化，把單次報價放回完整脈絡。收藏、交易之前，多一份判斷的依據。</p>
           <a href="line_test_v88.html" class="feature__link" data-track="feature_trends_link">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
-        <div class="feature__visual">
+        <div class="feature__visual reveal" style="--reveal-shift: 40px;">
           <div class="feature__media feature__media--shot" data-theme="trends" aria-label="價格走勢實際畫面">
             <picture class="feature__shot">
               <source srcset="./assets/feature-trends.webp" type="image/webp">
@@ -1841,26 +1880,26 @@
 
   <section class="discovery" aria-labelledby="discovery-title">
     <div class="container">
-      <div class="discovery__heading">
+      <div class="discovery__heading reveal">
         <h2 class="section__title" id="discovery-title">找到你的下一張。<br>也找到下一種可能。</h2>
         <p>從喜歡的角色出發，走向自己的構築。卡片資訊與賽事牌組，都在這裡。</p>
       </div>
-      <div class="discovery__grid">
-        <article class="discovery__item">
+      <div class="discovery__grid" data-reveal-stagger="130">
+        <article class="discovery__item reveal">
           <h3>卡名、卡號，一次找到。</h3>
           <p>想起一個名字，或手上只有卡號，都能從搜尋開始，找到你關心的卡片。</p>
           <a href="searchCard.html" class="feature__link" data-track="feature_search_link">搜尋卡片 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
           <div class="discovery__art">
-            <img src="assets/landing-page-4/bd_w54_070.png" alt="湊友希那 WS 卡片官方預覽，保留 SAMPLE 標記" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
+            <img src="assets/landing-page/bd_w54_070.png" alt="湊友希那 WS 卡片官方預覽，保留 SAMPLE 標記" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
             <div><strong>BanG Dream! 少女樂團派對</strong><span>BD/W54-070</span><a href="searchCard.html" class="feature__link" data-track="mid_cta_primary">開始查卡 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
-        <article class="discovery__item">
+        <article class="discovery__item reveal">
           <h3>靈感，來自賽場。</h3>
           <p>參考日本與台灣賽事的優勝牌組，看看熟悉的系列，還能如何搭配。</p>
           <a href="championList.html" class="feature__link" data-track="feature_decks_link">探索優勝牌組 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
           <div class="discovery__art">
-            <img src="assets/landing-page-4/bd_w54_070ssp.png" alt="湊友希那 SSP 卡片官方預覽，非賽事牌組示意" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
+            <img src="assets/landing-page/bd_w54_070ssp.png" alt="湊友希那 SSP 卡片官方預覽，非賽事牌組示意" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
             <div><strong>收藏的熱愛，構築的起點。</strong><span>BD/W54-070SSP</span></div>
           </div>
         </article>
@@ -1869,13 +1908,13 @@
   </section>
 
   <section class="tool-pair" aria-label="市場與預算工具">
-    <div class="container">
-      <article>
+    <div class="container" data-reveal-stagger="120">
+      <article class="reveal">
         <h2>市場焦點，一眼掌握。</h2>
         <p>從漲跌幅發現值得關注的卡片，再深入查看價格變化。</p>
         <a href="increase.html" class="feature__link" data-track="feature_ranking_link">看漲幅排行 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
       </article>
-      <article>
+      <article class="reveal">
         <h2>組牌之前，心裡有數。</h2>
         <p>計算牌組總價，把構築想法與手上的預算放在一起考量。</p>
         <a href="deckPrice.html" class="feature__link" data-track="feature_analysis_link">計算牌組預算 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
@@ -1920,15 +1959,17 @@
 
   <footer class="footer">
     <div class="container">
-      <div class="footer__grid">
-        <div class="footer__brand">
+      <!-- Smaller shift here: the footer is dense with links, and a 28px
+           travel on four columns at once reads as the page still loading. -->
+      <div class="footer__grid" data-reveal-stagger="70" style="--reveal-shift: 16px;">
+        <div class="footer__brand reveal">
           <a href="index.html" class="navbar__logo">
             <div class="navbar__logo-icon" aria-hidden="true">卡</div>
             <span>卡片雲</span>
           </a>
           <p>一個卡牌玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
         </div>
-        <div class="footer__col">
+        <div class="footer__col reveal">
           <h4>功能</h4>
           <ul>
             <li><a href="deckPrice.html">價格查詢</a></li>
@@ -1937,7 +1978,7 @@
             <li><a href="increase.html">漲幅記錄</a></li>
           </ul>
         </div>
-        <div class="footer__col">
+        <div class="footer__col reveal">
           <h4>工具</h4>
           <ul>
             <li><a href="deckPrice.html" data-track="footer_analysis_link">牌組分析</a></li>
@@ -1945,7 +1986,7 @@
             <li><a href="cardlist.html">系列查詢</a></li>
           </ul>
         </div>
-        <div class="footer__col">
+        <div class="footer__col reveal">
           <h4>連結</h4>
           <ul>
             <li><a href="index.html" data-track="footer_home_link">主站首頁</a></li>
@@ -2178,8 +2219,116 @@
         heroArt.style.removeProperty('--light-position');
       });
 
+      var parallaxItems = [
+        { element: hero.querySelector('.hero__art:not(.hero__art--back)'), desktop: 28, mobile: 10 },
+        { element: hero.querySelector('.hero__art--back'), desktop: 44, mobile: 0 },
+        { element: hero.querySelector('.hero__rail:not(.hero__rail--back)'), desktop: 64, mobile: 18 },
+        { element: hero.querySelector('.hero__rail--back'), desktop: 80, mobile: 18 }
+      ].filter(function (item) { return item.element; });
+      var discoveryParallaxItems = Array.prototype.slice.call(document.querySelectorAll('.discovery__art img')).map(function (element) {
+        return { element: element, parent: element.closest('.discovery__art') };
+      }).filter(function (item) { return item.parent; });
+      var parallaxActive = true;
+      var parallaxFrame = 0;
+      var parallaxObserver;
+      var parallaxIsMobile = window.matchMedia('(max-width: 700px)');
+
+      function clearParallax() {
+        parallaxItems.forEach(function (item) {
+          item.element.style.removeProperty('--parallax-y');
+        });
+        discoveryParallaxItems.forEach(function (item) {
+          item.element.style.removeProperty('--discovery-parallax-y');
+        });
+      }
+
+      function updateParallax() {
+        parallaxFrame = 0;
+        var bounds = hero.getBoundingClientRect();
+        var inRange = bounds.bottom > -80 && bounds.top < window.innerHeight + 80;
+        if (prefersReduced || document.hidden) {
+          clearParallax();
+          return;
+        }
+        if (inRange) {
+          var progress = Math.max(0, Math.min(1, -bounds.top / Math.max(1, bounds.height)));
+          parallaxItems.forEach(function (item) {
+            var limit = parallaxIsMobile.matches ? item.mobile : item.desktop;
+            item.element.style.setProperty('--parallax-y', (progress * limit).toFixed(2) + 'px');
+          });
+        } else {
+          parallaxItems.forEach(function (item) {
+            item.element.style.removeProperty('--parallax-y');
+          });
+        }
+        discoveryParallaxItems.forEach(function (item) {
+          if (parallaxIsMobile.matches) {
+            item.element.style.removeProperty('--discovery-parallax-y');
+            return;
+          }
+          var itemBounds = item.parent.getBoundingClientRect();
+          var itemInRange = itemBounds.bottom > -40 && itemBounds.top < window.innerHeight + 40;
+          if (!itemInRange) {
+            item.element.style.removeProperty('--discovery-parallax-y');
+            return;
+          }
+          var itemProgress = Math.max(0, Math.min(1, (window.innerHeight - itemBounds.top) / (window.innerHeight + itemBounds.height)));
+          item.element.style.setProperty('--discovery-parallax-y', ((0.5 - itemProgress) * 20).toFixed(2) + 'px');
+        });
+      }
+
+      function requestParallaxUpdate() {
+        if (!parallaxFrame && !prefersReduced) {
+          parallaxFrame = requestAnimationFrame(updateParallax);
+        }
+      }
+
       if (!prefersReduced && 'IntersectionObserver' in window) {
-        var revealEls = document.querySelectorAll('.reveal');
+        parallaxObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.target === hero) {
+              parallaxActive = entry.isIntersecting;
+              requestParallaxUpdate();
+            }
+          });
+        }, { threshold: 0, rootMargin: '80px 0px 80px 0px' });
+        parallaxObserver.observe(hero);
+        window.addEventListener('scroll', requestParallaxUpdate, { passive: true });
+        window.addEventListener('resize', requestParallaxUpdate, { passive: true });
+        document.addEventListener('visibilitychange', requestParallaxUpdate);
+        updateParallax();
+      }
+      if (isTrackDebug) {
+        window.wsCardsParallaxUpdate = updateParallax;
+      }
+
+      // ===== Scroll reveal =====
+      // Children of a [data-reveal-stagger] container come in one after
+      // another, so a grid settles row by row instead of popping as one block.
+      // The attribute value is the gap in ms between siblings.
+      var revealEls = document.querySelectorAll('.reveal');
+      document.querySelectorAll('[data-reveal-stagger]').forEach(function (group) {
+        var step = parseInt(group.getAttribute('data-reveal-stagger'), 10);
+        if (!(step > 0)) step = 90;
+        group.querySelectorAll('.reveal').forEach(function (el, i) {
+          el.style.setProperty('--reveal-delay', (i * step) + 'ms');
+        });
+      });
+
+      function revealAll() {
+        revealEls.forEach(function (el) { el.classList.add('visible'); });
+      }
+
+      if (!prefersReduced && 'IntersectionObserver' in window) {
+        // A block is revealed once its top edge crosses REVEAL_LINE — 88% of
+        // the viewport. Expressed to the observer as threshold 0 plus a
+        // negative bottom margin rather than as a ratio: a ratio trigger is a
+        // function of element height, so a block taller than the viewport can
+        // never reach it. This way every block fires at the same moment, far
+        // enough inside the fold that the motion is seen, not already over.
+        var REVEAL_LINE = 0.88;
+        var pending = Array.prototype.slice.call(revealEls);
+
         var observer = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) {
@@ -2187,12 +2336,60 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-        revealEls.forEach(function (el) { observer.observe(el); });
-      } else {
-        document.querySelectorAll('.reveal').forEach(function (el) {
-          el.classList.add('visible');
+        }, { threshold: 0, rootMargin: '0px 0px -' + ((1 - REVEAL_LINE) * 100) + '% 0px' });
+
+        pending.forEach(function (el) {
+          // A `display: contents` element generates no box, so it can neither
+          // be faded nor moved and the observer would never report it — a
+          // reveal placed there is silently dead. .product-ledger is exactly
+          // that at this breakpoint, which is why its rows carry the class.
+          if (getComputedStyle(el).display === 'contents') {
+            el.classList.add('visible');
+            return;
+          }
+          observer.observe(el);
         });
+
+        // The observer alone is not enough. An element that ends up entirely
+        // ABOVE the viewport after an instant jump — anchor nav, a scroll
+        // position restored on reload, a deep link — never intersects, so it
+        // would sit at opacity 0 for the rest of the session. This sweep
+        // reveals anything already at or past the line, and unbinds itself
+        // once nothing is left hidden, so it costs nothing after the first
+        // full read of the page.
+        var sweepFrame = 0;
+        function sweep() {
+          sweepFrame = 0;
+          var line = window.innerHeight * REVEAL_LINE;
+          pending = pending.filter(function (el) {
+            if (el.classList.contains('visible')) return false;
+            if (el.getBoundingClientRect().top >= line) return true;
+            el.classList.add('visible');
+            observer.unobserve(el);
+            return false;
+          });
+          if (!pending.length) {
+            window.removeEventListener('scroll', requestSweep);
+            window.removeEventListener('resize', requestSweep);
+          }
+        }
+        function requestSweep() {
+          if (sweepFrame) return;
+          sweepFrame = requestAnimationFrame(sweep);
+          // rAF delivery stops in a throttled or background tab, and it is not
+          // the thing guaranteeing correctness here — the sweep is. So a timer
+          // takes over if the frame never arrives.
+          window.setTimeout(function () {
+            if (!sweepFrame) return;
+            cancelAnimationFrame(sweepFrame);
+            sweep();
+          }, 150);
+        }
+        window.addEventListener('scroll', requestSweep, { passive: true });
+        window.addEventListener('resize', requestSweep, { passive: true });
+        sweep();
+      } else {
+        revealAll();
       }
 
       // Scrollspy: activate nav link for the section currently in the reading zone
