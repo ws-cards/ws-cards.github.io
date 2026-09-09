@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:site_name" content="卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="卡片雲 | 卡牌資訊一站整合">
+  <meta property="og:type" content="website">
+  <meta property="og:description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="卡片雲 — 卡牌玩家查價的新方式">
+  <meta property="og:url" content="https://ws-cards.cloud">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="卡片雲 | 卡牌資訊一站整合">
+  <meta name="twitter:description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  <meta name="twitter:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta name="twitter:image:alt" content="卡片雲 — 卡牌玩家查價的新方式">
+  <title>卡片雲 | 卡牌資訊一站整合</title>
+  <meta name="description" content="查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="keywords" content="WS卡牌, 查價, 卡片搜尋, 牌組, 漲幅排行, Weiss Schwarz">
+  <meta name="author" content="ws-cards devilFox">
+  <link rel="canonical" href="https://ws-cards.cloud/">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <meta name="language" content="zh-TW">
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "卡片雲",
+      "url": "https://ws-cards.cloud/",
+      "description": "查價、牌組、漲幅、庫存一站整合。WS 卡牌玩家的實用小工具。",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://ws-cards.cloud/searchCard.html?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "卡片雲",
+      "url": "https://ws-cards.cloud/",
+      "logo": "https://ws-cards.cloud/dist/img/logo.png",
+      "sameAs": [
+        "https://ws-cards.cloud/index.html"
+      ]
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "首頁",
+          "item": "https://ws-cards.cloud/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "功能總覽",
+          "item": "https://ws-cards.cloud/#products"
+        }
+      ]
+    }
+  </script>
+
+  <script>
+    // Bump WS_BANNER_ID whenever the announcement text changes so people who
+    // dismissed the previous one still see the new one. Runs before first paint
+    // so a dismissed bar never flashes and then collapses.
+    window.WS_BANNER_ID = 'deck-total-calculator';
+    try {
+      if (localStorage.getItem('ws_cards_banner_dismissed') === window.WS_BANNER_ID) {
+        document.documentElement.classList.add('is-banner-hidden');
+      }
+    } catch (err) { /* storage unavailable; show the banner */ }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --bg-alt: #f4f4f5;
+      --bg-card: #ffffff;
+      --bg-dark: #0a0a0a;
+      --text: #0a0a0a;
+      --text-muted: #52525b;
+      --text-light: #71717a;
+      --text-on-dark: #ffffff;
+      --text-muted-dark: rgba(255,255,255,0.7);
+      --accent-green: #22c55e;
+      --accent-gold: #fbbf24;
+      /* Site's actual logo green (PRODUCT.md), kept distinct from --accent-green
+         which is the crypto-style price-up color and must not be conflated. */
+      --brand-green: #8cc351;
+      --brand-green-deep: #5f8f2e;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.14);
+      --border-dark: rgba(255,255,255,0.12);
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-soft: 0 24px 80px rgba(0,0,0,0.12);
+      --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
+      --container-max: 1200px;
+      /* System CJK fonts sit before Noto Sans TC so Chinese text paints without
+         waiting on a webfont download. Noto stays as the fallback for platforms
+         that ship neither PingFang nor JhengHei. */
+      --font-cjk: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC';
+      --font-display: 'Noto Sans TC', var(--font-cjk), sans-serif;
+      --font-body: 'Manrope', var(--font-cjk), sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', var(--font-cjk), monospace;
+      --nav-height: 64px;
+      --banner-height: 40px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    #products,
+    #features,
+    #cta {
+      scroll-margin-top: calc(var(--banner-height) + var(--nav-height) + 20px);
+    }
+
+    /* Skip-link target only; never reached by tabbing, so no ring needed. */
+    #main:focus { outline: none; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ========== FOCUS ========== */
+    /* The page alternates light and dark surfaces, so the ring flips colour
+       rather than relying on one that only reads on half of them. */
+    :focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
+    }
+
+    .announce :focus-visible,
+    .navbar :focus-visible,
+    .hero :focus-visible,
+    .mid-cta :focus-visible,
+    .final-cta :focus-visible,
+    .footer :focus-visible,
+    .code-block :focus-visible {
+      outline-color: var(--text-on-dark);
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -100px;
+      z-index: 1002;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus {
+      top: calc(var(--banner-height) + 12px);
+    }
+
+    /* ========== ICONS ========== */
+    /* Inline sprite replaces Font Awesome: 7 glyphs instead of a 59 KB
+       render-blocking stylesheet plus a 78 KB webfont. */
+    .ico-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .ico {
+      width: 1em;
+      height: 1em;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vertical-align: -0.125em;
+    }
+
+    /* ========== ANNOUNCEMENT ========== */
+    .announce {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1001;
+      height: var(--banner-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 0.78rem;
+      color: var(--text-muted-dark);
+    }
+
+    .announce a {
+      color: var(--text-on-dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    /* Every offset below is calc'd from --banner-height, so zeroing the variable
+       is all it takes to reclaim the space the bar occupied. */
+    html.is-banner-hidden { --banner-height: 0px; }
+    .is-banner-hidden .announce { display: none; }
+
+    .announce__close {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      padding: 7px;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      color: var(--text-muted-dark);
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .announce__close:hover {
+      color: var(--text-on-dark);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .announce__badge {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      animation: badgePulse 2.8s ease-in-out infinite;
+    }
+
+    /* ========== NAVBAR ========== */
+    .navbar {
+      position: fixed;
+      top: var(--banner-height);
+      left: 0; right: 0;
+      z-index: 1000;
+      height: var(--nav-height);
+      display: flex;
+      align-items: center;
+      background: rgba(9,9,9,0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .navbar.scrolled {
+      border-color: var(--border-dark);
+      background: rgba(9,9,9,0.92);
+    }
+
+    .navbar__inner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      width: 100%;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-on-dark);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+
+    .navbar__logo-icon {
+      width: 28px; height: 28px;
+      background: var(--text-on-dark);
+      color: var(--bg-dark);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1rem;
+    }
+
+    .navbar__links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .navbar__links a {
+      text-decoration: none;
+      color: var(--text-muted-dark);
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      position: relative;
+    }
+
+    .navbar__links a:hover { color: var(--text-on-dark); }
+
+    .navbar__links a.is-active {
+      color: var(--text-on-dark);
+    }
+
+    .navbar__links a.is-active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0; right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 1px;
+      transition: opacity 0.3s;
+    }
+
+    .navbar__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s, background 0.2s, border-color 0.2s;
+      font-family: var(--font-body);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn--primary {
+      background: var(--text-on-dark);
+      color: var(--bg-dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn--primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -80%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.07), transparent);
+      transform: skewX(-20deg);
+    }
+
+    .btn--primary:hover { opacity: 0.9; }
+
+    .btn--primary:hover::after {
+      animation: btnShimmer 0.55s ease forwards;
+    }
+
+    @keyframes btnShimmer {
+      to { left: 150%; }
+    }
+
+    .navbar__toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-on-dark);
+      cursor: pointer;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      /* dvh excludes mobile browser chrome, which 100vh does not. */
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: calc(var(--banner-height) + var(--nav-height) + 80px) 24px 60px;
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero__brand {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      margin-bottom: 32px;
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 400;
+      line-height: 1.02;
+      max-width: 920px;
+      letter-spacing: -0.03em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__title em {
+      font-style: italic;
+    }
+
+    .hero__subtitle {
+      margin-top: 28px;
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--text-muted-dark);
+      max-width: 480px;
+      line-height: 1.75;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__cta {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__subnav {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__subnav a {
+      color: var(--text-on-dark);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      transition: border-color 0.2s, opacity 0.2s;
+      opacity: 0.85;
+    }
+
+    .hero__subnav a:hover {
+      opacity: 1;
+      border-color: rgba(255,255,255,0.85);
+    }
+
+    .hero__trust {
+      margin-top: 80px;
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero__trust-label {
+      font-size: 0.75rem;
+      color: var(--text-muted-dark);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ========== SECTION COMMON ========== */
+    .section { padding: 100px 0; }
+    .section--alt {
+      background:
+        radial-gradient(ellipse 70% 55% at 15% 50%, rgba(255,255,255,0.55) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 45% at 88% 48%, rgba(244,244,245,0.9) 0%, transparent 60%),
+        var(--bg-alt);
+    }
+    .section--white { background: var(--bg-card); }
+
+    .section__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .section__subtitle {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .section__header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section__header .section__subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ========== PRODUCTS: featured tile + price ledger ==========
+       Five same-size icon-cards is the bento template every SaaS deck now
+       ships; a card shop's tools are not five equal peers, so they no
+       longer read like one. Trends is the flagship and gets room; the rest
+       read as a posted price board — lines, not tiles. */
+    .products {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .product-feature {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 36px;
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      overflow: hidden;
+      min-height: 320px;
+      transition: transform 0.25s;
+    }
+
+    .product-feature:hover { transform: translateY(-4px); }
+
+    .product-feature::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(115deg, rgba(140,195,81,0.16) 0px, rgba(140,195,81,0.16) 1px, transparent 1px, transparent 38px);
+      mask-image: radial-gradient(ellipse 95% 85% at 25% 15%, #000 5%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse 95% 85% at 25% 15%, #000 5%, transparent 75%);
+    }
+
+    .product-feature__tag {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brand-green);
+    }
+
+    .product-feature h3 {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.15rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      max-width: 18ch;
+      margin: 16px 0 12px;
+    }
+
+    .product-feature p {
+      position: relative;
+      z-index: 1;
+      color: var(--text-muted-dark);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      max-width: 32ch;
+    }
+
+    .product-feature__cta {
+      position: relative;
+      z-index: 1;
+      margin-top: auto;
+      padding-top: 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-on-dark);
+      transition: gap 0.2s;
+    }
+
+    .product-feature:hover .product-feature__cta,
+    .product-feature:focus-visible .product-feature__cta { gap: 13px; }
+
+    .product-ledger {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .product-ledger__row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      text-decoration: none;
+      color: inherit;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .product-ledger__row:last-child { border-bottom: none; }
+
+    .product-ledger__row:hover,
+    .product-ledger__row:focus-visible {
+      background: var(--bg-alt);
+    }
+
+    .product-ledger__row:hover .product-ledger__body,
+    .product-ledger__row:hover .product-ledger__tag,
+    .product-ledger__row:focus-visible .product-ledger__body,
+    .product-ledger__row:focus-visible .product-ledger__tag {
+      transform: translateX(6px);
+    }
+
+    .product-ledger__tag,
+    .product-ledger__body {
+      transition: transform 0.2s;
+    }
+
+    .product-ledger__tag {
+      flex-shrink: 0;
+      width: 60px;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-light);
+    }
+
+    .product-ledger__body { flex: 1; min-width: 0; }
+
+    .product-ledger__title {
+      display: block;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .product-ledger__desc {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.78rem;
+      color: var(--text-light);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-ledger__arrow {
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      transition: transform 0.2s, color 0.2s;
+    }
+
+    .product-ledger__row:hover .product-ledger__arrow {
+      transform: translateX(4px);
+      color: var(--text);
+    }
+
+    .product-ledger__row--flagship .product-ledger__tag { color: var(--brand-green-deep); }
+
+
+    /* ========== FEATURE BLOCKS ========== */
+    .feature {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 64px;
+      align-items: center;
+      padding: 80px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feature:last-child { border-bottom: none; }
+
+    .feature--reverse .feature__content { order: 2; }
+    .feature--reverse .feature__visual { order: 1; }
+
+    .feature__content h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .feature__content p {
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    .feature__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+
+    .feature__link:hover { gap: 10px; }
+
+    /* ========== FEATURE MEDIA ========== */
+    .feature__visual {
+      content-visibility: auto;
+      contain-intrinsic-size: 0 380px;
+    }
+
+    .feature__media {
+      position: relative;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-dark);
+      box-shadow: var(--shadow-soft);
+      min-height: 340px;
+      padding: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      color: var(--text-on-dark);
+      background: linear-gradient(145deg, #141414 0%, #090909 55%, #161616 100%);
+    }
+
+    .feature__media::before {
+      content: '';
+      position: absolute;
+      inset: -30% auto auto -20%;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+
+    .feature__rows {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .feature__rows li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      font-size: 0.76rem;
+    }
+
+    .feature__rows strong {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+    }
+
+    .feature__rows em {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    .feature__rows .is-up { color: var(--accent-green); }
+    .feature__rows .is-hot { color: var(--accent-gold); }
+
+    /* These two panels hold placeholder figures rather than a real screenshot,
+       so they say so instead of passing themselves off as live data. */
+    .feature__mock-tag {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 4px 10px;
+      border: 1px solid var(--border-dark);
+      border-radius: 100px;
+      background: rgba(255,255,255,0.06);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--text-muted-dark);
+      pointer-events: none;
+    }
+
+    .feature__media[data-theme="search"] {
+      background: linear-gradient(145deg, #101317 0%, #08090b 55%, #141a21 100%);
+    }
+
+    .feature__media[data-theme="decks"] {
+      background: linear-gradient(145deg, #17120b 0%, #0b0906 52%, #18140d 100%);
+    }
+
+    .feature__media[data-theme="ranking"] {
+      background: linear-gradient(145deg, #111313 0%, #090a0a 52%, #141717 100%);
+    }
+
+    .feature__media[data-theme="analysis"] {
+      background: linear-gradient(145deg, #120f15 0%, #08070a 55%, #191320 100%);
+    }
+
+    .feature__media--shot {
+      padding: 0;
+      justify-content: flex-end;
+      background: #0b0b0b;
+      isolation: isolate;
+    }
+
+    .feature__shot {
+      position: absolute;
+      inset: 0;
+      display: block;
+      background: #111;
+    }
+
+    .feature__shot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transform: scale(1.01);
+      transition: transform 0.45s ease, filter 0.45s ease;
+      filter: contrast(1.06) saturate(1.05) brightness(1.03);
+    }
+
+    .feature__shot::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.06) 48%, rgba(0,0,0,0.42) 100%);
+      pointer-events: none;
+    }
+
+    .feature__media--shot:hover .feature__shot-img {
+      transform: scale(1.025);
+    }
+
+    .feature__shot-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted-dark);
+      background: linear-gradient(145deg, #131313 0%, #090909 52%, #171717 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .feature__shot.is-broken + .feature__shot-fallback {
+      opacity: 1;
+    }
+
+    .feature__media--shot[data-theme="trends"] .feature__shot-img {
+      object-position: center 14%;
+      filter: contrast(1.08) saturate(1.07) brightness(1.05);
+    }
+
+    .feature__media--shot[data-theme="search"] .feature__shot-img {
+      object-position: center 18%;
+      filter: contrast(1.06) saturate(1.03) brightness(1.04);
+    }
+
+    .feature__media--shot[data-theme="decks"] .feature__shot-img {
+      object-position: center 20%;
+      filter: contrast(1.09) saturate(1.06) brightness(1.02);
+    }
+
+    /* ========== MID CTA ========== */
+    .mid-cta {
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mid-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 640px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mid-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted-dark);
+      font-size: 1rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mid-cta__btn { margin-top: 32px; position: relative; z-index: 1; }
+
+    /* ========== SETUP ========== */
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .setup__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .setup__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .setup__text {
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-size: 0.95rem;
+    }
+
+    .code-block {
+      background: var(--bg-dark);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-dark);
+    }
+
+    .code-block__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .code-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+    }
+
+    .code-block__copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-dark);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-on-dark);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .code-block__copy:hover { background: rgba(255,255,255,0.08); }
+    .code-block__copy.is-copied { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); }
+
+    .code-block__body {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: rgba(250,250,250,0.8);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    .code-block__body .comment { color: rgba(250,250,250,0.35); }
+    .code-block__body .url { color: #93c5fd; }
+
+    /* ========== FINAL CTA ========== */
+    .final-cta {
+      padding: 120px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+    }
+
+    .final-cta__box {
+      max-width: 640px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .final-cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .final-cta__text {
+      margin-top: 16px;
+      color: var(--text-muted-dark);
+      font-size: 1rem;
+    }
+
+    .final-cta__buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      padding: 60px 0 32px;
+      border-top: 1px solid var(--border-dark);
+      background: var(--bg-dark);
+      color: var(--text-on-dark);
+    }
+
+    .footer .navbar__logo { margin-bottom: 0; }
+
+    .footer__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer__brand p {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted-dark);
+      line-height: 1.7;
+      max-width: 300px;
+    }
+
+    .footer__col h4 {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted-dark);
+      margin-bottom: 16px;
+    }
+
+    .footer__col ul { list-style: none; }
+    .footer__col li { margin-bottom: 10px; }
+
+    .footer__col a {
+      text-decoration: none;
+      color: var(--text-muted-dark);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer__col a:hover { color: var(--text-on-dark); }
+
+    .footer__bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted-dark);
+      flex-wrap: wrap;
+      gap: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .footer__mode {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+    }
+
+    .footer__mode span {
+      padding: 6px 12px;
+    }
+
+    .footer__mode span:first-child {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-on-dark);
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 900px) {
+      .products { grid-template-columns: 1fr; }
+
+      .feature,
+      .feature--reverse {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .feature--reverse .feature__content,
+      .feature--reverse .feature__visual { order: unset; }
+
+      .setup { grid-template-columns: 1fr; gap: 40px; }
+      .footer__grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    }
+
+    @media (max-width: 640px) {
+      .product-feature { padding: 26px; min-height: 260px; }
+    }
+
+    @media (max-width: 768px) {
+      .navbar__links {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: var(--nav-height);
+        left: 0; right: 0;
+        background: var(--bg-dark);
+        padding: 0 24px;
+        border-bottom: 1px solid transparent;
+        gap: 16px;
+        max-height: 0;
+        overflow: hidden;
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+      .navbar__links.is-open {
+        max-height: 240px;
+        padding-top: 24px;
+        padding-bottom: 24px;
+        border-bottom-color: var(--border-dark);
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+      }
+      .navbar__toggle { display: inline-flex; align-items: center; }
+
+      /* navLinks is position:absolute on mobile, so actions must be pinned to col 3 */
+      .navbar__actions { grid-column: 3; }
+
+      .section { padding: 72px 0; }
+      .feature { padding: 56px 0; }
+      .mid-cta { padding: 72px 0; }
+      .footer__grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 0 16px; }
+
+      /* --banner-height is a fixed 40px, so the text has to truncate rather than
+         wrap out of the bar. Right padding keeps it clear of the close button. */
+      .announce { font-size: 0.7rem; padding: 0 42px 0 12px; }
+      .announce a { gap: 6px; }
+      .announce__text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .hero { padding: calc(var(--banner-height) + var(--nav-height) + 40px) 16px 40px; }
+      .hero__title { font-size: clamp(1.75rem, 6vw, 2.5rem); }
+      .hero__subtitle { font-size: 0.875rem; }
+
+      .product-feature { padding: 22px; min-height: 220px; }
+      .product-feature h3 { font-size: 1.3rem; }
+      .product-ledger__row { padding: 16px 18px; }
+
+      .section__title { font-size: clamp(1.5rem, 4vw, 2rem); }
+      .feature__content h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); }
+      .feature__media { min-height: 280px; padding: 18px; }
+      .feature__media--shot { min-height: 280px; padding: 0; }
+
+      .footer__grid { gap: 24px; }
+      .footer__col h4 { font-size: 0.6rem; }
+    }
+
+    /* ========== FOIL SHEEN ==========
+       A holo-foil card catches light in one diagonal band, not a soft blob —
+       this stands in for the ambient-orb cliche with a motif the product's
+       own subject (foil-rarity WS cards) actually owns. Hero only: repeating
+       it on every dark section is the same tell with a different shape. */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        115deg,
+        rgba(140,195,81,0.16) 0px,
+        rgba(140,195,81,0.16) 1px,
+        transparent 1px,
+        transparent 46px
+      );
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, #000 15%, transparent 82%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, #000 15%, transparent 82%);
+    }
+
+    .mid-cta::before,
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--brand-green), transparent);
+    }
+
+
+    /* ========== PRODUCT STAGGER ========== */
+    .products .reveal:nth-child(1) { transition-delay: 0ms; }
+    .products .reveal:nth-child(2) { transition-delay: 100ms; }
+
+    /* ========== BADGE PULSE ========== */
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+      50% { box-shadow: 0 0 0 5px rgba(255,255,255,0); }
+    }
+
+    .hero {
+      min-height: 720px;
+      min-height: min(860px, calc(100svh - 48px));
+      padding: calc(var(--banner-height) + var(--nav-height) + 48px) 32px 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: end;
+      text-align: left;
+      isolation: isolate;
+      background: #101211;
+    }
+
+    .hero::before { content: none; }
+    .hero__scene {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .hero__rail {
+      position: absolute;
+      inset: 23% -15% 12% 32%;
+      border: 1px solid #646d68;
+      border-radius: 50%;
+      transform: rotate(-32deg);
+      box-shadow: inset 0 -2px 0 #c6d1ca, 0 18px 46px #0008;
+      opacity: 0.65;
+    }
+    .hero__rail--back {
+      inset: 19% -18% 17% 36%;
+      border-color: #343a36;
+      box-shadow: inset 0 1px 0 #9aa79f;
+      transform: rotate(-32deg) translateY(-24px);
+      opacity: 0.6;
+    }
+    .hero__art {
+      position: absolute;
+      width: 292px;
+      top: calc(var(--banner-height) + var(--nav-height) + 55px);
+      left: calc(65% - 146px);
+      margin: 0;
+      transform: rotate(9deg);
+      filter: drop-shadow(18px 30px 22px #0009);
+    }
+    .hero__art img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 400 / 559;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #242a26;
+    }
+    .hero__art::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      box-shadow: inset 1px 1px 0 #ffffff70;
+      pointer-events: none;
+    }
+    .hero__art--back {
+      width: 206px;
+      left: calc(83% - 103px);
+      top: calc(var(--banner-height) + var(--nav-height) + 140px);
+      transform: rotate(-12deg);
+      filter: drop-shadow(12px 24px 18px #0009);
+    }
+    .hero__copy {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding-bottom: 82px;
+      position: relative;
+    }
+    .hero__title {
+      font-size: 6rem;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 1.12;
+      max-width: 5em;
+    }
+    .hero__subtitle {
+      margin-top: 24px;
+      max-width: 29em;
+      font-size: 1rem;
+      color: #c4cdc7;
+    }
+    .hero__subtitle strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #f3f6f4;
+    }
+    .hero__cta { justify-content: flex-start; margin-top: 28px; }
+    .hero__subnav { justify-content: flex-start; font-family: var(--font-body); letter-spacing: 0; gap: 20px; }
+    .hero__caption {
+      position: absolute;
+      right: 32px;
+      bottom: 102px;
+      font-size: 0.75rem;
+      color: #bbc6bf;
+      text-align: right;
+    }
+    .hero__caption span { display: block; font-family: var(--font-mono); font-size: 0.65rem; margin-top: 4px; }
+    .hero__foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding-top: 20px;
+      border-top: 1px solid #555e57;
+      font-size: 0.75rem;
+      color: #bbc6bf;
+    }
+    .hero__foot a { color: #eff5f1; text-decoration: none; display: flex; align-items: center; gap: 12px; }
+    .hero__foot a .ico { transform: rotate(90deg); }
+    .hero .btn--primary { background: #b3ec7b; color: #15220d; padding: 14px 24px; border-radius: 4px; font-size: 0.9rem; }
+    .hero .btn--primary .ico { margin-left: 28px; }
+    @media (min-width: 1600px) {
+      .hero__art { width: 336px; left: calc(64% - 168px); }
+      .hero__art--back { width: 230px; left: calc(78% - 115px); }
+    }
+    @media (max-width: 1000px) {
+      .hero__title { font-size: 4.5rem; }
+      .hero__art { width: 250px; left: calc(68% - 125px); }
+      .hero__art--back { width: 176px; left: calc(87% - 88px); }
+      .hero__caption { bottom: 110px; }
+    }
+    @media (max-width: 700px) {
+      .hero {
+        min-height: 740px;
+        padding: calc(var(--banner-height) + var(--nav-height) + 302px) 20px 24px;
+      }
+      .hero__art { width: 190px; left: calc(50% - 95px); top: calc(var(--banner-height) + var(--nav-height) + 20px); transform: rotate(7deg); }
+      .hero__art--back { display: none; }
+      .hero__rail { inset: 20% -30% 57% -20%; transform: rotate(-24deg); }
+      .hero__rail--back { transform: rotate(-24deg) translateY(-18px); }
+      .hero__copy { padding-bottom: 26px; }
+      .hero__title { font-size: 3.5rem; }
+      .hero__subtitle { margin-top: 14px; font-size: 0.85rem; }
+      .hero__subtitle strong { font-size: 1.125rem; margin-bottom: 6px; }
+      .hero__cta { margin-top: 20px; }
+      .hero__subnav { margin-top: 14px; }
+      .hero__caption { display: none; }
+      .hero__foot { font-size: 0.65rem; gap: 8px; padding-top: 16px; }
+    }
+    @media (max-width: 380px) {
+      .hero { padding-top: calc(var(--banner-height) + var(--nav-height) + 254px); min-height: 690px; }
+      .hero__art { width: 160px; left: calc(50% - 80px); }
+      .hero__title { font-size: 3rem; }
+      .hero__foot > span { max-width: 15em; }
+    }
+    *, *::before, *::after { letter-spacing: 0; }
+    [hidden] { display: none !important; }
+    html { scrollbar-color: #707b73 #141815; }
+    ::selection { background: #b3ec7b; color: #15220d; }
+    a { text-underline-offset: 5px; }
+    h1, h2, h3 { text-wrap: balance; }
+    .container { max-width: 1280px; }
+    .navbar { background: #101211ed; backdrop-filter: none; }
+    .navbar__logo { white-space: nowrap; letter-spacing: 0; }
+    .navbar__logo-icon { background: var(--brand-green); border-radius: 4px; font-family: var(--font-body); }
+    .navbar__toggle, .announce__close { min-width: 44px; min-height: 40px; justify-content: center; }
+    .announce__badge { animation: none; }
+    .btn { border-radius: 4px; letter-spacing: 0; text-transform: none; }
+    .btn--primary::after { content: none; }
+    .section__title { font-size: 2.75rem; font-weight: 700; letter-spacing: 0; }
+    #products { padding: 38px 0 48px; background: #e8eee9; }
+    #products .section__header { text-align: left; margin-bottom: 28px; }
+    #products .section__title { font-size: 1.25rem; }
+    #products .section__subtitle { display: none; }
+    .products { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 0; }
+    .product-ledger { display: contents; }
+    .product-feature, .product-ledger__row {
+      min-height: 128px;
+      padding: 8px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      border: none;
+      border-right: 1px solid #bac5bc;
+      border-radius: 0;
+      background: none;
+      color: #172019;
+      overflow: visible;
+      transition: background 0.2s;
+    }
+    .product-feature { padding-left: 0; }
+    .product-feature::before, .product-feature__tag, .product-ledger__tag { display: none; }
+    .product-feature:hover { transform: none; }
+    .product-feature h3, .product-ledger__title { font-family: var(--font-body); font-size: 1rem; font-weight: 700; line-height: 1.5; margin: 0; letter-spacing: 0; }
+    .product-feature p, .product-ledger__desc { color: #48564c; font-size: 0.8rem; line-height: 1.7; white-space: normal; max-width: none; }
+    .product-ledger__desc { margin-top: 8px; }
+    .product-feature__cta { padding-top: 0; margin-top: auto; color: #172019; font-size: 0.7rem; letter-spacing: 0; }
+    .product-ledger__arrow { margin-top: auto; color: #172019; }
+    .product-ledger__row:last-child { border: none; }
+    .product-ledger__row:hover, .product-ledger__row:focus-visible { background: #dbe5dd; }
+    .product-ledger__row:hover .product-ledger__body, .product-ledger__row:focus-visible .product-ledger__body { transform: none; }
+    #features { background: #101211; color: #f0f4f1; padding: 88px 0; }
+    .feature { min-width: 0; padding: 0; border: none; gap: 32px; }
+    .feature--spotlight { grid-template-columns: minmax(0,1fr); }
+    .feature--spotlight .feature__content { display: grid; grid-template-columns: 1fr 1fr; column-gap: 80px; align-items: start; }
+    .feature__content h2 { font-size: 2.75rem; font-weight: 700; line-height: 1.3; letter-spacing: 0; }
+    .feature--spotlight h2 { grid-row: span 2; }
+    .feature__content p { color: #bbc6bf; margin-bottom: 16px; }
+    .feature__link { color: inherit; font-family: var(--font-body); font-size: 0.85rem; letter-spacing: 0; }
+    .feature__visual { content-visibility: visible; min-width: 0; }
+    .feature__media--shot { min-height: 0; border-radius: 8px; padding: 0; display: block; border-color: #47534b; box-shadow: 0 24px 60px #0005; }
+    .feature__media--shot::before { content: none; }
+    .feature__shot { position: relative; inset: auto; }
+    .feature__shot::after { content: none; }
+    .feature__shot-img { height: auto; aspect-ratio: 1512 / 864; object-fit: contain; transform: none; }
+    .feature__media--shot[data-theme="trends"] .feature__shot-img { filter: none; }
+    .feature__media--shot:hover .feature__shot-img { transform: none; }
+    .feature__shot-fallback { background: #1b231e; }
+    .feature__caption { margin-top: 12px; color: #b8c3bb; font-size: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; }
+    .feature__caption a { color: #e4eee7; padding: 10px 0; }
+    .discovery { padding: 96px 0; background: #edf1ee; color: #142019; }
+    .discovery__heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 48px; }
+    .discovery__heading p { max-width: 28em; font-size: 0.95rem; color: #49584e; }
+    .discovery__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+    .discovery__item { min-width: 0; border-top: 1px solid #aab8ae; padding-top: 28px; }
+    .discovery__item h3 { font-size: 1.5rem; margin-bottom: 14px; }
+    .discovery__item p { color: #49584e; font-size: 0.95rem; line-height: 1.8; max-width: 36em; margin-bottom: 24px; }
+    .discovery__item .feature__link { padding: 10px 0; }
+    .discovery__art { display: flex; align-items: center; gap: 28px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #c5d0c8; }
+    .discovery__art img { width: 100px; height: auto; border-radius: 4px; }
+    .discovery__art strong { display: block; font-size: 0.85rem; }
+    .discovery__art span { display: block; font-family: var(--font-mono); font-size: 0.7rem; margin-top: 8px; }
+    .tool-pair { padding: 60px 0; background: #cfddcd; color: #142019; }
+    .tool-pair .container { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+    .tool-pair h2 { font-size: 1.5rem; }
+    .tool-pair p { margin: 12px 0 18px; color: #3e5143; font-size: 0.9rem; max-width: 34em; }
+    .setup { gap: 48px; grid-template-columns: 1fr 1fr; }
+    .setup__title { font-size: 2rem; font-weight: 700; letter-spacing: 0; }
+    .code-block { border-radius: 8px; }
+    .code-block__header { padding: 18px 20px; }
+    .code-block__label { font-family: var(--font-body); letter-spacing: 0; font-size: 0.85rem; }
+    .code-block__copy { min-width: 108px; min-height: 44px; justify-content: center; font-family: var(--font-body); }
+    .code-block__body { padding: 24px 20px; font-size: 1rem; }
+    .code-block__body a { font-family: var(--font-body); font-size: 0.85rem; }
+    .final-cta { padding: 80px 0; text-align: left; }
+    .final-cta__box { max-width: none; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+    .final-cta__title { font-size: 3rem; font-weight: 700; letter-spacing: 0; }
+    .final-cta__text { max-width: 32em; }
+    .final-cta__buttons { margin: 0; flex-shrink: 0; }
+    .final-cta .btn { background: #b3ec7b; color: #15220d; padding: 16px 24px; }
+    .final-cta::before { content: none; }
+    .footer { padding-top: 48px; }
+    .footer__col h4 { font-family: var(--font-body); font-size: 0.8rem; letter-spacing: 0; }
+    .footer__bottom { letter-spacing: 0; }
+    .footer__signature { font-family: var(--font-body); }
+    .hero__art::after {
+      background: linear-gradient(115deg, transparent 35%, #c9ffff38 46%, #ffffff70 49%, transparent 56%);
+      background-size: 300% 100%;
+      background-position: var(--light-position, 100%) 0;
+      animation: foilArrival 1100ms ease-out both;
+    }
+    .hero.is-interactive .hero__art::after { animation: none; }
+    #features :focus-visible { outline-color: #ffffff; }
+    @keyframes foilArrival { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+    @media (prefers-reduced-motion: reduce) { .hero__art::after { animation: none; background: none; } }
+    @media (max-width: 900px) {
+      .products { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .product-feature { grid-column: 1 / -1; min-height: 100px; border-right: none; border-bottom: 1px solid #bac5bc; padding: 0 0 20px; margin-bottom: 20px; }
+      .product-feature p { max-width: none; }
+      .product-ledger__row { padding: 16px; border-bottom: 1px solid #bac5bc; }
+      .product-ledger__row:nth-child(even) { border-right: 0; }
+      .feature--spotlight .feature__content { grid-template-columns: 1fr; gap: 0; }
+      .feature--spotlight h2 { grid-row: auto; }
+      .discovery__heading { align-items: start; flex-direction: column; gap: 20px; }
+      .discovery__grid, .tool-pair .container { gap: 32px; }
+      .final-cta__box { align-items: flex-start; flex-direction: column; }
+      .setup { grid-template-columns: 1fr; gap: 28px; }
+    }
+    @media (max-width: 600px) {
+      #products { padding: 28px 0; }
+      #features, .discovery { padding: 56px 0; }
+      .section__title, .feature__content h2 { font-size: 2rem; }
+      .discovery__grid, .tool-pair .container { grid-template-columns: 1fr; gap: 36px; }
+      .discovery__heading { margin-bottom: 32px; }
+      .feature__media--shot { min-height: 0; }
+      .tool-pair { padding: 40px 0; }
+      .final-cta__title { font-size: 2.25rem; }
+      .final-cta { padding: 56px 0; }
+      .product-ledger__row { min-height: 144px; padding: 16px 12px; }
+      .hero__foot { flex-wrap: wrap; }
+    }
+    @media (max-width: 768px) {
+      .navbar:not(.is-enhanced) { height: auto; }
+      .navbar:not(.is-enhanced) .navbar__inner { padding-top: 12px; }
+      .navbar:not(.is-enhanced) .navbar__links {
+        position: static;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 12px 0;
+        max-height: none;
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+        background: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- THESIS: Real WS card artwork in a black-chrome exhibition, not a SaaS template.
+       OWN-WORLD: charcoal, cold silver, brand green; upright CJK type and open bands.
+       STORY: encounter a collectible, inspect real price-history evidence, start searching.
+       FIRST VIEWPORT: full-bleed card scene, protected title/action area; single card on phones.
+       FORM: user-pinned black chrome and spotlight, code-led; no random concept selection.
+       FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance. -->
+
+  <svg class="ico-sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24">
+        <path d="M4 12h15M13 5l7 7-7 7"/>
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M4 12.5l5 5L20 6.5"/>
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <a class="skip-link" href="#main">跳到主要內容</a>
+
+  <div class="announce" id="announce">
+    <a href="deckPrice.html">
+      <span class="announce__badge">NEW</span>
+      <span class="announce__text">牌組總額計算機上線，立即體驗</span>
+      <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg>
+    </a>
+    <button class="announce__close" id="announceClose" type="button" aria-label="關閉公告" hidden>
+      <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-close"/></svg>
+    </button>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__logo">
+        <div class="navbar__logo-icon" aria-hidden="true">卡</div>
+        <span>卡片雲</span>
+      </a>
+      <ul class="navbar__links" id="navLinks">
+        <li><a href="#products">功能</a></li>
+        <li><a href="#features">展示</a></li>
+        <li><a href="#cta">開始使用</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <button class="navbar__toggle" id="navToggle" type="button" aria-label="選單" hidden
+                aria-controls="navLinks" aria-expanded="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg></button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero" id="main" tabindex="-1">
+    <div class="hero__scene" aria-hidden="true">
+      <div class="hero__rail hero__rail--back"></div>
+      <div class="hero__rail"></div>
+      <figure class="hero__art hero__art--back">
+        <img src="assets/landing-page-4/bd_w54_070.png" alt="" width="400" height="558" decoding="async" onerror="this.parentElement.hidden = true;">
+      </figure>
+      <figure class="hero__art">
+        <img src="assets/landing-page-4/bd_w54_070ssp.png" alt="" width="400" height="558" fetchpriority="high" decoding="async" onerror="this.parentElement.hidden = true;">
+      </figure>
+    </div>
+    <div class="hero__copy">
+      <h1 class="hero__title">卡片雲</h1>
+      <p class="hero__subtitle"><strong>每一張熱愛，都值得了解。</strong>WS 卡牌價格、牌組與市場走勢。<br>為你的下一次收藏，找到依據。</p>
+      <div class="hero__cta">
+        <a href="searchCard.html" class="btn btn--primary" data-track="hero_primary_cta">開始查卡 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <p class="hero__subnav">
+        <a href="championList.html" data-track="hero_secondary_decks">優勝牌組</a>
+        <a href="increase.html" data-track="hero_secondary_ranking">漲幅排行</a>
+      </p>
+    </div>
+    <p class="hero__caption">BanG Dream! 少女樂團派對<span>BD/W54-070SSP</span></p>
+    <div class="hero__foot">
+      <span>Weiss Schwarz / 卡牌資訊一站整合</span>
+      <a href="#products">探索卡牌工具 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
+    </div>
+  </section>
+
+  <section class="section section--white" id="products">
+    <div class="container">
+      <div class="section__header reveal">
+        <h2 class="section__title">下一步，從這裡開始。</h2>
+        <p class="section__subtitle">從查價到分析，WS-Cards 整合你需要的每一項功能</p>
+      </div>
+      <div class="products">
+        <a class="product-feature reveal" href="line_test_v88.html" data-track="product_card_trends" aria-labelledby="pc-trends">
+          <span class="product-feature__tag">trends</span>
+          <h3 id="pc-trends">庫存價格漲幅趨勢</h3>
+          <p>價格與庫存，放回時間裡看。</p>
+          <span class="product-feature__cta">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+        </a>
+        <div class="product-ledger reveal">
+          <a class="product-ledger__row" href="searchCard.html" data-track="product_card_search" aria-labelledby="pc-search">
+            <span class="product-ledger__tag">search</span>
+            <span class="product-ledger__body">
+              <span class="product-ledger__title" id="pc-search">卡片搜尋</span>
+              <span class="product-ledger__desc">輸入卡名或編號，找到價格走勢與相關牌組</span>
+            </span>
+            <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+          </a>
+          <a class="product-ledger__row" href="championList.html" data-track="product_card_decks" aria-labelledby="pc-decks">
+            <span class="product-ledger__tag">decks</span>
+            <span class="product-ledger__body">
+              <span class="product-ledger__title" id="pc-decks">優勝上位牌組</span>
+              <span class="product-ledger__desc">日台賽事優勝牌組，按系列與色別篩選</span>
+            </span>
+            <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+          </a>
+          <a class="product-ledger__row" href="increase.html" data-track="product_card_ranking" aria-labelledby="pc-ranking">
+            <span class="product-ledger__tag">rank</span>
+            <span class="product-ledger__body">
+              <span class="product-ledger__title" id="pc-ranking">漲幅排行</span>
+              <span class="product-ledger__desc">按漲跌幅排序，及早發現市場熱點</span>
+            </span>
+            <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+          </a>
+          <a class="product-ledger__row product-ledger__row--flagship" href="deckPrice.html" data-track="product_card_analysis" aria-labelledby="pc-analysis">
+            <span class="product-ledger__tag">analysis</span>
+            <span class="product-ledger__body">
+              <span class="product-ledger__title" id="pc-analysis">牌組分析</span>
+              <span class="product-ledger__desc">計算牌組總價，比較市場平均，輔助預算</span>
+            </span>
+            <span class="product-ledger__arrow"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt" id="features">
+    <div class="container">
+
+      <div class="feature feature--spotlight reveal">
+        <div class="feature__content">
+          <h2>喜歡一張卡。<br>也了解它的走勢。</h2>
+          <p>從歷史價格到庫存變化，把單次報價放回完整脈絡。收藏、交易之前，多一份判斷的依據。</p>
+          <a href="line_test_v88.html" class="feature__link" data-track="feature_trends_link">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
+        </div>
+        <div class="feature__visual">
+          <div class="feature__media feature__media--shot" data-theme="trends" aria-label="價格走勢實際畫面">
+            <picture class="feature__shot">
+              <source srcset="./assets/feature-trends.webp" type="image/webp">
+              <img class="feature__shot-img" src="./assets/feature-trends.png" alt="庫存價格漲幅趨勢實際畫面" width="1512" height="864" loading="lazy" decoding="async" onerror="this.closest('.feature__shot').classList.add('is-broken');">
+            </picture>
+            <div class="feature__shot-fallback">價格走勢畫面預覽</div>
+          </div>
+          <p class="feature__caption"><span>價格走勢介面截圖，畫面中的數值非即時報價。</span><a href="assets/feature-trends.webp" target="_blank" rel="noopener" aria-label="檢視價格走勢原圖（另開分頁）">檢視原圖 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="discovery" aria-labelledby="discovery-title">
+    <div class="container">
+      <div class="discovery__heading">
+        <h2 class="section__title" id="discovery-title">找到你的下一張。<br>也找到下一種可能。</h2>
+        <p>從喜歡的角色出發，走向自己的構築。卡片資訊與賽事牌組，都在這裡。</p>
+      </div>
+      <div class="discovery__grid">
+        <article class="discovery__item">
+          <h3>卡名、卡號，一次找到。</h3>
+          <p>想起一個名字，或手上只有卡號，都能從搜尋開始，找到你關心的卡片。</p>
+          <a href="searchCard.html" class="feature__link" data-track="feature_search_link">搜尋卡片 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <div class="discovery__art">
+            <img src="assets/landing-page-4/bd_w54_070.png" alt="湊友希那 WS 卡片官方預覽，保留 SAMPLE 標記" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
+            <div><strong>BanG Dream! 少女樂團派對</strong><span>BD/W54-070</span><a href="searchCard.html" class="feature__link" data-track="mid_cta_primary">開始查卡 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></div>
+          </div>
+        </article>
+        <article class="discovery__item">
+          <h3>靈感，來自賽場。</h3>
+          <p>參考日本與台灣賽事的優勝牌組，看看熟悉的系列，還能如何搭配。</p>
+          <a href="championList.html" class="feature__link" data-track="feature_decks_link">探索優勝牌組 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <div class="discovery__art">
+            <img src="assets/landing-page-4/bd_w54_070ssp.png" alt="湊友希那 SSP 卡片官方預覽，非賽事牌組示意" width="400" height="558" loading="lazy" decoding="async" onerror="this.hidden = true;">
+            <div><strong>收藏的熱愛，構築的起點。</strong><span>BD/W54-070SSP</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="tool-pair" aria-label="市場與預算工具">
+    <div class="container">
+      <article>
+        <h2>市場焦點，一眼掌握。</h2>
+        <p>從漲跌幅發現值得關注的卡片，再深入查看價格變化。</p>
+        <a href="increase.html" class="feature__link" data-track="feature_ranking_link">看漲幅排行 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+      </article>
+      <article>
+        <h2>組牌之前，心裡有數。</h2>
+        <p>計算牌組總價，把構築想法與手上的預算放在一起考量。</p>
+        <a href="deckPrice.html" class="feature__link" data-track="feature_analysis_link">計算牌組預算 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section section--white">
+    <div class="container">
+      <div class="setup reveal">
+        <div class="setup__info">
+          <h2 class="setup__title">就從這張卡開始。</h2>
+          <p class="setup__text">BanG Dream! 少女樂團派對<br>湊友希那 / SSP</p>
+        </div>
+        <div class="code-block">
+          <div class="code-block__header">
+            <span class="code-block__label">卡號</span>
+            <button class="code-block__copy" id="copyBtn" type="button" hidden
+                    data-copy="BD/W54-070SSP" aria-live="polite">
+              <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"/></svg> 複製卡號
+            </button>
+          </div>
+          <div class="code-block__body" id="codeContent">BD/W54-070SSP<br><a class="url" href="searchCard.html">前往卡片搜尋</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" id="cta">
+    <div class="container">
+      <div class="final-cta__box reveal">
+        <div>
+          <h2 class="final-cta__title">下一張，會是什麼？</h2>
+          <p class="final-cta__text">把熱愛留給收藏。查價、牌組與市場資訊，交給卡片雲。</p>
+        </div>
+        <div class="final-cta__buttons">
+          <a href="searchCard.html" class="btn btn--primary" data-track="final_cta_primary">開始查卡 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="index.html" class="navbar__logo">
+            <div class="navbar__logo-icon" aria-hidden="true">卡</div>
+            <span>卡片雲</span>
+          </a>
+          <p>一個卡牌玩家做的小網站，整理卡片價格、牌組與查詢功能。希望對大家有幫助。</p>
+        </div>
+        <div class="footer__col">
+          <h4>功能</h4>
+          <ul>
+            <li><a href="deckPrice.html">價格查詢</a></li>
+            <li><a href="championList.html">優勝牌組</a></li>
+            <li><a href="searchCard.html">卡片搜尋</a></li>
+            <li><a href="increase.html">漲幅記錄</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>工具</h4>
+          <ul>
+            <li><a href="deckPrice.html" data-track="footer_analysis_link">牌組分析</a></li>
+            <li><a href="line_test_v88.html" data-track="footer_stock_link">庫存追蹤</a></li>
+            <li><a href="cardlist.html">系列查詢</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>連結</h4>
+          <ul>
+            <li><a href="index.html" data-track="footer_home_link">主站首頁</a></li>
+            <li><a href="#products">功能總覽</a></li>
+            <li><a href="#cta">開始使用</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>&copy; 2026 卡片雲</span>
+        <span class="footer__signature">為玩家而做，為熱愛而留。</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Point this at a collector to make clicks survive the navigation that
+      // follows them. Left empty, tracking stays dataLayer/GTM-only and no
+      // beacon is queued or sent.
+      var TRACK_ENDPOINT = '';
+
+      var dataLayer = window.dataLayer = window.dataLayer || [];
+      var pendingEvents = [];
+
+      // localStorage throws, not returns null, in some privacy modes.
+      function readStored(key) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function writeStored(key, value) {
+        try {
+          if (value === null) {
+            window.localStorage.removeItem(key);
+          } else {
+            window.localStorage.setItem(key, value);
+          }
+        } catch (err) {
+          /* storage unavailable — tracking still works, it just won't persist */
+        }
+      }
+
+      var isTrackDebug = /[?&]debugTrack=1(?:&|$)/.test(window.location.search) ||
+        readStored('ws_cards_track_debug') === '1';
+
+      function flushEvents() {
+        if (!TRACK_ENDPOINT || !pendingEvents.length || !navigator.sendBeacon) {
+          return;
+        }
+        var batch = pendingEvents.splice(0, pendingEvents.length);
+        var blob = new Blob([JSON.stringify(batch)], { type: 'application/json' });
+        if (!navigator.sendBeacon(TRACK_ENDPOINT, blob)) {
+          // Queue is full or the payload was rejected; keep them for a later flush.
+          pendingEvents = batch.concat(pendingEvents);
+        }
+      }
+
+      function trackEvent(name, payload) {
+        var eventPayload = Object.assign({
+          event: name,
+          page: 'landingPage_4',
+          timestamp: Date.now()
+        }, payload || {});
+        dataLayer.push(eventPayload);
+        if (TRACK_ENDPOINT) {
+          pendingEvents.push(eventPayload);
+        }
+        if (isTrackDebug) {
+          // Debug mode helps verify event payloads without external analytics tools.
+          console.log('[ws-cards-track]', eventPayload);
+        }
+      }
+
+      // A click that navigates away cancels in-flight requests, so these two
+      // events are the last reliable point to hand the batch to the browser.
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+          flushEvents();
+        }
+      });
+      window.addEventListener('pagehide', flushEvents);
+
+      window.wsCardsTrackDebug = {
+        enable: function () {
+          writeStored('ws_cards_track_debug', '1');
+          console.log('[ws-cards-track] debug enabled');
+        },
+        disable: function () {
+          writeStored('ws_cards_track_debug', null);
+          console.log('[ws-cards-track] debug disabled');
+        },
+        pending: function () {
+          return pendingEvents.slice();
+        },
+        flush: flushEvents
+      };
+
+      var announceClose = document.getElementById('announceClose');
+      announceClose.addEventListener('click', function () {
+        document.documentElement.classList.add('is-banner-hidden');
+        writeStored('ws_cards_banner_dismissed', window.WS_BANNER_ID);
+        trackEvent('announce_dismiss', { target: window.WS_BANNER_ID });
+      });
+      announceClose.hidden = false;
+
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', function () {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+      }, { passive: true });
+
+      var navToggle = document.getElementById('navToggle');
+      var navLinks = document.getElementById('navLinks');
+
+      function setNavOpen(open) {
+        navLinks.classList.toggle('is-open', open);
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      navToggle.addEventListener('click', function () {
+        setNavOpen(!navLinks.classList.contains('is-open'));
+      });
+
+      navLinks.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          setNavOpen(false);
+        });
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && navLinks.classList.contains('is-open')) {
+          setNavOpen(false);
+          navToggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!navLinks.classList.contains('is-open')) {
+          return;
+        }
+        if (!navLinks.contains(event.target) && !navToggle.contains(event.target)) {
+          setNavOpen(false);
+        }
+      });
+      navbar.classList.add('is-enhanced');
+      navToggle.hidden = false;
+
+      // Product cards are real anchors now, so navigation is the browser's job —
+      // this only records the click and keeps the original event names.
+      document.querySelectorAll('[data-track]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          trackEvent((el.classList.contains('product-feature') || el.classList.contains('product-ledger__row')) ? 'product_card_click' : 'cta_click', {
+            target: el.getAttribute('data-track'),
+            href: el.getAttribute('href') || ''
+          });
+        });
+      });
+
+      var copyBtn = document.getElementById('copyBtn');
+      var codeContent = document.getElementById('codeContent');
+
+      var copyResetTimer;
+
+      function showCopied() {
+        clearTimeout(copyResetTimer);
+        copyBtn.classList.add('is-copied');
+        copyBtn.innerHTML = '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-check"/></svg> 已複製';
+        copyResetTimer = setTimeout(function () {
+          copyBtn.classList.remove('is-copied');
+          copyBtn.innerHTML = '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-copy"/></svg> 複製卡號';
+        }, 2000);
+      }
+
+      function legacyCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var copied = false;
+        try {
+          copied = document.execCommand('copy');
+        } catch (err) {
+          copied = false;
+        }
+        document.body.removeChild(ta);
+        return copied;
+      }
+
+      copyBtn.addEventListener('click', function () {
+        var text = copyBtn.getAttribute('data-copy') || codeContent.innerText;
+        function fallback() {
+          if (legacyCopy(text)) {
+            showCopied();
+          } else {
+            window.prompt('請手動複製以下卡號', text);
+          }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          // Clipboard API rejects on insecure origins and when permission is denied.
+          navigator.clipboard.writeText(text).then(showCopied, fallback);
+        } else {
+          fallback();
+        }
+      });
+      copyBtn.hidden = false;
+
+      var hero = document.querySelector('.hero');
+      var heroArt = hero.querySelector('.hero__art:not(.hero__art--back)');
+      var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      hero.addEventListener('pointermove', function (event) {
+        if (!finePointer.matches || reducedMotion.matches) return;
+        var bounds = hero.getBoundingClientRect();
+        var position = Math.max(70, Math.min(130, 70 + (event.clientX - bounds.left) / bounds.width * 60));
+        heroArt.style.setProperty('--light-position', position + '%');
+        hero.classList.add('is-interactive');
+      }, { passive: true });
+      hero.addEventListener('pointerleave', function () {
+        heroArt.style.removeProperty('--light-position');
+      });
+
+      if (!prefersReduced && 'IntersectionObserver' in window) {
+        var revealEls = document.querySelectorAll('.reveal');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function (el) { observer.observe(el); });
+      } else {
+        document.querySelectorAll('.reveal').forEach(function (el) {
+          el.classList.add('visible');
+        });
+      }
+
+      // Scrollspy: activate nav link for the section currently in the reading zone
+      if ('IntersectionObserver' in window) {
+        var spyLinks = {};
+        navLinks.querySelectorAll('a[href^="#"]').forEach(function (a) {
+          spyLinks[a.getAttribute('href').slice(1)] = a;
+        });
+
+        function clearSpyActive() {
+          Object.keys(spyLinks).forEach(function (id) {
+            spyLinks[id].classList.remove('is-active');
+          });
+        }
+
+        var spyObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            clearSpyActive();
+            var a = spyLinks[entry.target.id];
+            if (a) a.classList.add('is-active');
+          });
+        }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+
+        Object.keys(spyLinks).forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) spyObserver.observe(el);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
