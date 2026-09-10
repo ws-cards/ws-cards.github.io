@@ -954,71 +954,6 @@
       isolation: isolate;
     }
 
-    .feature__shot {
-      position: absolute;
-      inset: 0;
-      display: block;
-      background: #111;
-    }
-
-    .feature__shot-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-      transform: scale(1.01);
-      transition: transform 0.45s ease, filter 0.45s ease;
-      filter: contrast(1.06) saturate(1.05) brightness(1.03);
-    }
-
-    .feature__shot::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.06) 48%, rgba(0,0,0,0.42) 100%);
-      pointer-events: none;
-    }
-
-    .feature__media--shot:hover .feature__shot-img {
-      transform: scale(1.025);
-    }
-
-    .feature__shot-fallback {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-muted-dark);
-      background: linear-gradient(145deg, #131313 0%, #090909 52%, #171717 100%);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .feature__shot.is-broken + .feature__shot-fallback {
-      opacity: 1;
-    }
-
-    .feature__media--shot[data-theme="trends"] .feature__shot-img {
-      object-position: center 14%;
-      filter: contrast(1.08) saturate(1.07) brightness(1.05);
-    }
-
-    .feature__media--shot[data-theme="search"] .feature__shot-img {
-      object-position: center 18%;
-      filter: contrast(1.06) saturate(1.03) brightness(1.04);
-    }
-
-    .feature__media--shot[data-theme="decks"] .feature__shot-img {
-      object-position: center 20%;
-      filter: contrast(1.09) saturate(1.06) brightness(1.02);
-    }
-
     /* ========== MID CTA ========== */
     .mid-cta {
       background: var(--bg-dark);
@@ -1611,14 +1546,347 @@
     .feature__visual { content-visibility: visible; min-width: 0; }
     .feature__media--shot { min-height: 0; border-radius: 8px; padding: 0; display: block; border-color: #47534b; box-shadow: 0 24px 60px #0005; }
     .feature__media--shot::before { content: none; }
-    .feature__shot { position: relative; inset: auto; }
-    .feature__shot::after { content: none; }
-    .feature__shot-img { height: auto; aspect-ratio: 1512 / 864; object-fit: contain; transform: none; }
-    .feature__media--shot[data-theme="trends"] .feature__shot-img { filter: none; }
-    .feature__media--shot:hover .feature__shot-img { transform: none; }
-    .feature__shot-fallback { background: #1b231e; }
     .feature__caption { margin-top: 12px; color: #b8c3bb; font-size: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; }
     .feature__caption a { color: #e4eee7; padding: 10px 0; }
+
+    /* ========== TRENDS INTERFACE DRAWING ==========
+       The 685 KB screenshot this replaced went blurry the moment it was scaled,
+       and its labels were pixels rather than text. The interface is drawn in
+       markup instead: every length is a multiple of one unit, so the whole
+       frame scales with its container and the type stays crisp.
+       1u = 1px of the app at a 1512px-wide window. */
+    .shot {
+      container-type: inline-size;
+      --u: calc(100cqw / 1512);
+      position: relative;
+      aspect-ratio: 1512 / 864;
+      overflow: hidden;
+      background: #0a0a0a;
+      color: #f2f2f2;
+      font-family: var(--font-display);
+      line-height: 1.2;
+    }
+
+    .shot__bar {
+      display: flex;
+      align-items: center;
+      height: calc(88 * var(--u));
+      padding: 0 calc(48 * var(--u)) 0 calc(27 * var(--u));
+      background: #171717;
+      box-shadow: 0 1px 0 #242424;
+    }
+
+    .shot__menu {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: calc(6 * var(--u));
+      width: calc(58 * var(--u));
+      height: calc(58 * var(--u));
+      padding: 0 calc(16 * var(--u));
+      border-radius: calc(16 * var(--u));
+      background: #2b2b2b;
+    }
+
+    .shot__menu i {
+      height: calc(2.5 * var(--u));
+      background: #ededed;
+    }
+
+    .shot__title {
+      margin-left: calc(15 * var(--u));
+      font-size: calc(26 * var(--u));
+      font-weight: 500;
+    }
+
+    .shot__tag {
+      margin-left: calc(9 * var(--u));
+      padding: calc(5 * var(--u)) calc(9 * var(--u));
+      border-radius: calc(7 * var(--u));
+      background: #2f2f2f;
+      color: #cfcfcf;
+      font-family: var(--font-mono);
+      font-size: calc(13 * var(--u));
+    }
+
+    .shot__theme {
+      display: grid;
+      place-items: center;
+      margin-left: auto;
+      width: calc(60 * var(--u));
+      height: calc(60 * var(--u));
+      border-radius: 50%;
+      background: #342a10;
+      color: #e0b338;
+      font-size: calc(28 * var(--u));
+    }
+
+    .shot__body {
+      display: grid;
+      grid-template-columns: calc(585 * var(--u)) calc(612 * var(--u));
+      column-gap: calc(91 * var(--u));
+      padding: calc(36 * var(--u)) calc(119 * var(--u)) 0 calc(105 * var(--u));
+    }
+
+    .shot__phead {
+      display: flex;
+      align-items: center;
+      gap: calc(22 * var(--u));
+      font-size: calc(26 * var(--u));
+    }
+
+    .shot__phead .ico { font-size: calc(26 * var(--u)); color: #cfcfcf; }
+    .shot__phead em { font-style: normal; font-size: calc(15 * var(--u)); color: #b0b0b0; }
+    .shot__phead b { font-weight: 400; font-size: calc(13 * var(--u)); color: #b0b0b0; margin-left: calc(9 * var(--u)); }
+
+    .shot__collapse {
+      margin-left: auto;
+      width: calc(16 * var(--u));
+      height: calc(2 * var(--u));
+      background: #8a8a8a;
+    }
+
+    .shot__card {
+      width: calc(427 * var(--u));
+      margin: calc(58 * var(--u)) auto 0;
+    }
+
+    .shot__card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: calc(6 * var(--u));
+      box-shadow: 0 calc(8 * var(--u)) calc(24 * var(--u)) #000000a6;
+    }
+
+    .shot__stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: calc(25 * var(--u));
+      margin-top: calc(16 * var(--u));
+    }
+
+    .shot__stat {
+      display: flex;
+      align-items: center;
+      gap: calc(24 * var(--u));
+      height: calc(98 * var(--u));
+      padding: 0 calc(24 * var(--u));
+      border: 1px solid #212121;
+      border-radius: calc(14 * var(--u));
+      background: #131313;
+    }
+
+    .shot__stat-mark {
+      width: calc(26 * var(--u));
+      text-align: center;
+      font-size: calc(24 * var(--u));
+      color: #4d4d4d;
+    }
+
+    .shot__stat-label { display: block; font-size: calc(15 * var(--u)); color: #9b9b9b; }
+
+    .shot__stat-value {
+      display: block;
+      margin-top: calc(8 * var(--u));
+      font-size: calc(30 * var(--u));
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* A flat week is a fact, not a failure: it reads muted rather than red or
+       green. Swap in #86d29b / #e28b8b if the example numbers ever move. */
+    .shot__stat-value--flat { color: #98a1ad; }
+
+    .shot__note {
+      margin: calc(22 * var(--u)) 0 0;
+      font-size: calc(14 * var(--u));
+      color: #8a8a8a;
+    }
+
+    .shot__phead--chart { margin-top: calc(60 * var(--u)); }
+
+    .shot__legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: calc(9 * var(--u));
+      margin-top: calc(34 * var(--u));
+      font-size: calc(15 * var(--u));
+      color: #dcdcdc;
+    }
+
+    .shot__dot {
+      width: calc(12 * var(--u));
+      height: calc(12 * var(--u));
+      border-radius: 50%;
+      background: #7ea6e8;
+    }
+
+    .shot__plot {
+      display: flex;
+      gap: calc(7 * var(--u));
+      margin-top: calc(18 * var(--u));
+      height: calc(183 * var(--u));
+    }
+
+    .shot__yaxis {
+      position: relative;
+      width: calc(52 * var(--u));
+      height: 100%;
+      font-size: calc(15 * var(--u));
+      color: #9b9b9b;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .shot__yaxis span {
+      position: absolute;
+      right: 0;
+      top: calc(var(--y) * 1%);
+      transform: translateY(-50%);
+    }
+
+    /* The line is drawn stepped, as a quote series moves: a price holds until
+       the next listing changes it, so joining the points would invent motion. */
+    .shot__grid { flex: 1; overflow: visible; }
+    .shot__grid line { stroke: #242424; stroke-width: 1.5; }
+    .shot__grid path { fill: none; stroke: #7ea6e8; stroke-width: 5; }
+
+    .shot__xaxis {
+      position: relative;
+      height: calc(48 * var(--u));
+      margin: calc(12 * var(--u)) 0 0 calc(59 * var(--u));
+      font-size: calc(14 * var(--u));
+      color: #9b9b9b;
+    }
+
+    .shot__xaxis span {
+      position: absolute;
+      top: 0;
+      right: calc((100 - var(--x)) * 1%);
+      transform-origin: 100% 0;
+      transform: rotate(-45deg);
+      white-space: nowrap;
+    }
+
+    .shot__fab {
+      position: absolute;
+      right: calc(69 * var(--u));
+      display: grid;
+      place-items: center;
+      width: calc(72 * var(--u));
+      height: calc(72 * var(--u));
+      border-radius: 50%;
+      font-size: calc(30 * var(--u));
+    }
+
+    .shot__fab--download { top: calc(596 * var(--u)); background: #33290f; color: #d7ab35; }
+    .shot__fab--top { top: calc(685 * var(--u)); background: #4a3a12; color: #f0cd63; }
+
+    /* Tier two: the card panel would shrink the numbers past reading size, so
+       the frame keeps the half a visitor came for and drops the rest. */
+    @media (max-width: 1024px) {
+      .shot { --u: calc(100cqw / 836); aspect-ratio: 836 / 850; }
+      .shot__body { grid-template-columns: minmax(0, 1fr); }
+      .shot__col--card, .shot__fab { display: none; }
+    }
+
+    /* Tier three: at phone width the page itself is a different layout — one
+       column of panels, a 2-up stat grid, its own type scale — so the drawing
+       switches to that layout rather than scaling the desktop one down.
+       Sizes measured off ws-cards.cloud/line_test_v101.html at 390px. */
+    @media (max-width: 600px) {
+      /* Tall enough that the opening offset shows both data panels whole,
+         with the card panel left peeking above as the cue to scroll up. */
+      .shot { --u: calc(100cqw / 390); aspect-ratio: 390 / 520; }
+      .shot__bar {
+        height: calc(60 * var(--u));
+        padding: 0 calc(18 * var(--u)) 0 calc(19 * var(--u));
+        border-radius: 0 0 calc(20 * var(--u)) calc(20 * var(--u));
+      }
+      .shot__menu {
+        width: calc(38 * var(--u));
+        height: calc(38 * var(--u));
+        padding: 0 calc(10 * var(--u));
+        border-radius: calc(12 * var(--u));
+        gap: calc(4 * var(--u));
+      }
+      .shot__menu i { height: calc(2 * var(--u)); }
+      .shot__title { margin-left: calc(8 * var(--u)); font-size: calc(16 * var(--u)); font-weight: 600; }
+      .shot__tag {
+        margin-left: calc(8 * var(--u));
+        padding: calc(2 * var(--u)) calc(7 * var(--u));
+        border-radius: calc(5 * var(--u));
+        font-size: calc(10 * var(--u));
+      }
+      .shot__theme { width: calc(34 * var(--u)); height: calc(34 * var(--u)); font-size: calc(18 * var(--u)); }
+
+      /* The frame becomes a real scrollport here: the bar holds still and the
+         panels travel under it. The stack starts at 卡面預覽 — the panels the
+         page puts above that (search, filters) are not part of this story. */
+      .shot { display: flex; flex-direction: column; }
+      .shot__bar { flex: none; }
+      .shot__body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        row-gap: calc(20 * var(--u));
+        padding: calc(18 * var(--u)) calc(24 * var(--u));
+        scrollbar-width: none;
+        outline: none;
+      }
+      /* A visible scrollbar would break the illusion; the panel clipped at the
+         frame edge is the affordance, and it is a truer one. */
+      .shot__body::-webkit-scrollbar { display: none; }
+
+      .shot__col--card { display: block; }
+      .shot__panel--card { padding: calc(16 * var(--u)); }
+      .shot__card { width: calc(285 * var(--u)); margin: calc(12 * var(--u)) auto 0; }
+      .shot__card img { border-radius: calc(4 * var(--u)); box-shadow: none; }
+
+      .shot__panel { border: 1px solid #212121; border-radius: calc(16 * var(--u)); background: #131313; }
+      .shot__panel + .shot__panel { margin-top: calc(20 * var(--u)); }
+      .shot__panel--stats { padding: calc(16 * var(--u)); }
+      .shot__panel--chart { padding: calc(12 * var(--u)); }
+
+      .shot__stats { gap: calc(8 * var(--u)); margin-top: 0; }
+      .shot__stat {
+        height: calc(68 * var(--u));
+        gap: calc(10 * var(--u));
+        padding: calc(12 * var(--u));
+        border-width: calc(2 * var(--u));
+        border-radius: calc(12 * var(--u));
+        background: #1a1a1a;
+      }
+      .shot__stat-mark { width: calc(16 * var(--u)); font-size: calc(15 * var(--u)); }
+      .shot__stat-label { font-size: calc(10.4 * var(--u)); font-weight: 600; }
+      .shot__stat-value { margin-top: calc(3 * var(--u)); font-size: calc(16.8 * var(--u)); font-weight: 800; }
+      .shot__note { margin-top: calc(8 * var(--u)); font-size: calc(11.5 * var(--u)); }
+
+      .shot__phead { gap: calc(10 * var(--u)); font-size: calc(20 * var(--u)); }
+      .shot__phead .ico { font-size: calc(20 * var(--u)); }
+      .shot__phead em { font-size: calc(12 * var(--u)); }
+      .shot__phead b { font-size: calc(11 * var(--u)); margin-left: calc(6 * var(--u)); }
+      .shot__phead--chart { margin-top: 0; }
+      .shot__collapse { width: calc(12 * var(--u)); }
+
+      .shot__legend { gap: calc(6 * var(--u)); margin-top: calc(12 * var(--u)); font-size: calc(12 * var(--u)); }
+      .shot__dot { width: calc(8 * var(--u)); height: calc(8 * var(--u)); }
+      .shot__plot { gap: calc(3 * var(--u)); margin-top: calc(10 * var(--u)); height: calc(77 * var(--u)); }
+      .shot__yaxis { width: calc(30 * var(--u)); font-size: calc(11 * var(--u)); }
+      /* The viewBox is squeezed harder here, so the stroke needs a bigger
+         number to land at the same apparent weight. */
+      .shot__grid path { stroke-width: 6; }
+      .shot__xaxis {
+        height: calc(28 * var(--u));
+        margin: calc(6 * var(--u)) 0 0 calc(33 * var(--u));
+        font-size: calc(10 * var(--u));
+      }
+      /* Four gridlines instead of seven: the short plot cannot carry the
+         in-between labels without them touching. */
+      .shot--minor { display: none; }
+    }
+
     .discovery { padding: 96px 0; background: #edf1ee; color: #142019; }
     .discovery__heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 48px; }
     .discovery__heading p { max-width: 28em; font-size: 0.95rem; color: #49584e; }
@@ -1734,6 +2002,22 @@
       </symbol>
       <symbol id="i-close" viewBox="0 0 24 24">
         <path d="M6 6l12 12M18 6L6 18"/>
+      </symbol>
+      <!-- The five below are only used by the trends interface drawing. -->
+      <symbol id="i-image" viewBox="0 0 24 24">
+        <rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="8.6" cy="10" r="1.6"/><path d="M20.4 16.2l-4.9-4.9-8 8"/>
+      </symbol>
+      <symbol id="i-trend" viewBox="0 0 24 24">
+        <path d="M4 4v16h16"/><path d="M7.5 15.5l3.5-4.5 3 2 4.5-6"/>
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M5.2 18.8l1.6-1.6M17.2 6.8l1.6-1.6"/>
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 4v9.5M8.2 10.2L12 14l3.8-3.8M5 19h14"/>
+      </symbol>
+      <symbol id="i-chevron-up" viewBox="0 0 24 24">
+        <path d="M6 14.5l6-6 6 6"/>
       </symbol>
     </defs>
   </svg>
@@ -1865,14 +2149,99 @@
           <a href="line_test_v88.html" class="feature__link" data-track="feature_trends_link">查看趨勢 <svg class="ico" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></a>
         </div>
         <div class="feature__visual reveal" style="--reveal-shift: 40px;">
-          <div class="feature__media feature__media--shot" data-theme="trends" aria-label="價格走勢實際畫面">
-            <picture class="feature__shot">
-              <source srcset="./assets/feature-trends.png" type="image/webp">
-              <img class="feature__shot-img" src="./assets/feature-trends.png" alt="庫存價格漲幅趨勢實際畫面" width="1512" height="864" loading="lazy" decoding="async" onerror="this.closest('.feature__shot').classList.add('is-broken');">
-            </picture>
-            <div class="feature__shot-fallback">價格走勢畫面預覽</div>
+          <div class="feature__media feature__media--shot" data-theme="trends" role="img" aria-label="各卡號漲幅趨勢頁面示意：左側是卡面預覽，右側是最新售價、近 30 日高低與近一年的價格走勢圖。">
+            <div class="shot" aria-hidden="true">
+              <div class="shot__bar">
+                <span class="shot__menu"><i></i><i></i><i></i></span>
+                <span class="shot__title">各卡號漲幅趨勢</span>
+                <span class="shot__tag">WS</span>
+                <span class="shot__theme"><svg class="ico" focusable="false"><use href="#i-sun"/></svg></span>
+              </div>
+              <div class="shot__body" tabindex="-1">
+                <div class="shot__col shot__col--card shot__panel shot__panel--card">
+                  <div class="shot__phead">
+                    <svg class="ico" focusable="false"><use href="#i-image"/></svg>
+                    <span>卡面預覽</span>
+                    <span class="shot__collapse"></span>
+                  </div>
+                  <div class="shot__card">
+                    <img src="assets/landing-page/bd_w54_070ssp.png" alt="" width="400" height="558" loading="lazy" decoding="async">
+                  </div>
+                </div>
+                <div class="shot__col shot__col--data">
+                  <div class="shot__panel shot__panel--stats">
+                  <div class="shot__stats">
+                    <div class="shot__stat">
+                      <span class="shot__stat-mark">¥</span>
+                      <span><span class="shot__stat-label">最新售價（日圓）</span><span class="shot__stat-value">¥348,000</span></span>
+                    </div>
+                    <div class="shot__stat">
+                      <span class="shot__stat-mark">↑</span>
+                      <span><span class="shot__stat-label">近 30 日最高</span><span class="shot__stat-value">¥348,000</span></span>
+                    </div>
+                    <div class="shot__stat">
+                      <span class="shot__stat-mark">↓</span>
+                      <span><span class="shot__stat-label">近 30 日最低</span><span class="shot__stat-value">¥348,000</span></span>
+                    </div>
+                    <div class="shot__stat">
+                      <span class="shot__stat-mark">−</span>
+                      <span><span class="shot__stat-label">近 7 日漲跌</span><span class="shot__stat-value shot__stat-value--flat">0.0%</span></span>
+                    </div>
+                  </div>
+                  <p class="shot__note">資料日期 9/10，來源遊遊亭。</p>
+                  </div>
+                  <div class="shot__panel shot__panel--chart">
+                  <div class="shot__phead shot__phead--chart">
+                    <svg class="ico" focusable="false"><use href="#i-trend"/></svg>
+                    <span>價格走勢<em>近一年</em><b>▾</b></span>
+                    <span class="shot__collapse"></span>
+                  </div>
+                  <div class="shot__legend"><span class="shot__dot"></span>日圓</div>
+                  <div class="shot__plot">
+                    <!-- Axis positions are percentages of the plot box, so the
+                         same markup serves the wide frame and the phone frame;
+                         the odd gridlines drop out when the box gets short. -->
+                    <div class="shot__yaxis">
+                      <span style="--y:0">360k</span>
+                      <span class="shot--minor" style="--y:16.667">350k</span>
+                      <span style="--y:33.333">340k</span>
+                      <span class="shot--minor" style="--y:50">330k</span>
+                      <span style="--y:66.667">320k</span>
+                      <span class="shot--minor" style="--y:83.333">310k</span>
+                      <span style="--y:100">300k</span>
+                    </div>
+                    <svg class="shot__grid" viewBox="0 0 553 183" preserveAspectRatio="none" focusable="false">
+                      <line x1="0" y1="0" x2="553" y2="0"/>
+                      <line class="shot--minor" x1="0" y1="30.5" x2="553" y2="30.5"/>
+                      <line x1="0" y1="61" x2="553" y2="61"/>
+                      <line class="shot--minor" x1="0" y1="91.5" x2="553" y2="91.5"/>
+                      <line x1="0" y1="122" x2="553" y2="122"/>
+                      <line class="shot--minor" x1="0" y1="152.5" x2="553" y2="152.5"/>
+                      <line x1="0" y1="183" x2="553" y2="183"/>
+                      <!-- 320k, a dip to 310k, then 330k / 340k and a flat
+                           348k over the final ~31 days — which is what makes
+                           the three tiles read the same number and the 7-day
+                           change read 0.0%. Move one and re-derive the rest. -->
+                      <path d="M0 122H46V152.5H120V122H430V91.5H470V61H505V36.6H553"/>
+                    </svg>
+                  </div>
+                  <div class="shot__xaxis">
+                    <span style="--x:0">08/06</span>
+                    <span style="--x:16.3">10/24</span>
+                    <span style="--x:32.5">12/19</span>
+                    <span style="--x:48.8">02/15</span>
+                    <span style="--x:65.1">04/16</span>
+                    <span style="--x:81.4">06/07</span>
+                    <span style="--x:97.6">07/28</span>
+                  </div>
+                  </div>
+                </div>
+              </div>
+              <span class="shot__fab shot__fab--download"><svg class="ico" focusable="false"><use href="#i-download"/></svg></span>
+              <span class="shot__fab shot__fab--top"><svg class="ico" focusable="false"><use href="#i-chevron-up"/></svg></span>
+            </div>
           </div>
-          <p class="feature__caption"><span>價格走勢介面截圖，畫面中的數值非即時報價。</span><a href="assets/feature-trends.png" target="_blank" rel="noopener" aria-label="檢視價格走勢原圖（另開分頁）">檢視原圖 <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a></p>
+          <p class="feature__caption"><span>介面示意圖，卡片與數值為範例，非即時報價。</span></p>
         </div>
       </div>
     </div>
@@ -2418,6 +2787,26 @@
           var el = document.getElementById(id);
           if (el) spyObserver.observe(el);
         });
+      }
+
+      // At phone width the trends drawing is a scrollport. Open it on the
+      // numbers: the card panel above is what a visitor scrolls up to find,
+      // not what this section is arguing. No-op at any wider size, where the
+      // frame shows everything at once and nothing overflows.
+      var shotScroller = document.querySelector('.shot__body');
+      var shotAnchor = document.querySelector('.shot__panel--stats');
+      if (shotScroller && shotAnchor) {
+        var openShotOnStats = function () {
+          if (shotScroller.scrollHeight <= shotScroller.clientHeight) return;
+          var delta = shotAnchor.getBoundingClientRect().top - shotScroller.getBoundingClientRect().top;
+          shotScroller.scrollTop += delta - Math.round(shotScroller.clientHeight * 0.05);
+        };
+        openShotOnStats();
+        // A resize can cross the breakpoint and reset the offset to zero;
+        // reposition only in that case, never while someone is reading it.
+        window.addEventListener('resize', function () {
+          if (shotScroller.scrollTop === 0) openShotOnStats();
+        }, { passive: true });
       }
     })();
   </script>
