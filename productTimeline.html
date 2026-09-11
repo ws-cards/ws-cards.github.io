@@ -1,735 +1,594 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant-TW">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta property="og:title" content="WS-Cards">
-  <meta property="og:type" content="website">  
-  <meta property="og:image" content="https://ws-cards.cloud/favicon.ico">  
-  <meta property="og:url" content="https://ws-cards.cloud">  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
-  <meta name="apple-mobile-web-app-title" content="WS卡片雲|WS-Cards(β)">  
-  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico"> 
-	<meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
-	<meta name="msapplication-TileColor" content="#fff">   
-	<link rel="manifest" href="/manifest.json">
-  <title>WS卡片雲|WS-Cards(β)</title>
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"> 
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="dist/css/adminlte.min.css">
-  <link rel="stylesheet" href="dist/css/wscards.line.css">
-  <!-- Slick -->
-  <link rel="stylesheet" href="dist/css/mfpup/magnific-popup.css">
-  <!-- Suggest --> 
-
-  <style type="text/css">
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font: normal 16px/1.5 "Helvetica Neue", sans-serif;
-  background: #456990;
-  color: #fff;
-  overflow-x: hidden;
-  padding-bottom: 50px;
-}
-
-
-/* INTRO SECTION
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-.intro {
-  background: black;
-  padding: 100px 0;
-}
-
-.container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-h1 {
-  font-size: 2.5rem;
-}
-
-
-/* TIMELINE
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-.timeline ul {
-  background: gray;
-  padding: 50px 0;
-}
-
-.timeline ul li {
-  list-style-type: none;
-  position: relative;
-  width: 6px;
-  margin: 0 auto;
-  padding-top: 50px;
-  background: #fff;
-}
-
-.timeline ul li::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: inherit;
-  z-index: 1;
-}
-
-.timeline ul li div {
-  position: relative;
-  bottom: 0;
-  width: 400px;
-  padding: 15px;
-  background: #f45b69;
-}
-
-.timeline ul li div::before {
-  content: "";
-  position: absolute;
-  bottom: 7px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-}
-
-.timeline ul li:nth-child(odd) div {
-  left: 45px;
-}
-
-.timeline ul li:nth-child(odd) div::before {
-  left: -15px;
-  border-width: 8px 16px 8px 0;
-  border-color: transparent #f45b69 transparent transparent;
-}
-
-.timeline ul li:nth-child(even) div {
-  left: -439px;
-}
-
-.timeline ul li:nth-child(even) div::before {
-  right: -15px;
-  border-width: 8px 0 8px 16px;
-  border-color: transparent transparent transparent #f45b69;
-}
-
-time {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-
-/* EFFECTS
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-.timeline ul li::after {
-  transition: background 0.5s ease-in-out;
-}
-
-.timeline ul li.in-view::after {
-  background: #f45b69;
-}
-
-.timeline ul li div {
-  visibility: hidden;
-  opacity: 0;
-  transition: all 0.5s ease-in-out;
-}
-
-.timeline ul li:nth-child(odd) div {
-  transform: translate3d(200px, 0, 0);
-}
-
-.timeline ul li:nth-child(even) div {
-  transform: translate3d(-200px, 0, 0);
-}
-
-.timeline ul li.in-view div {
-  transform: none;
-  visibility: visible;
-  opacity: 1;
-}
-
-
-/* GENERAL MEDIA QUERIES
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-@media screen and (max-width: 900px) {
-  .timeline ul li div {
-    width: 250px;
-  }
-  .timeline ul li:nth-child(even) div {
-    left: -289px;
-    /*250+45-6*/
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .timeline ul li {
-    margin-left: 20px;
-  }
-  .timeline ul li div {
-    width: calc(100vw - 91px);
-  }
-  .timeline ul li:nth-child(even) div {
-    left: 45px;
-  }
-  .timeline ul li:nth-child(even) div::before {
-    left: -15px;
-    border-width: 8px 16px 8px 0;
-    border-color: transparent #f45b69 transparent transparent;
-  }
-}
-
-
-/* EXTRA/CLIP PATH STYLES
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-.timeline-clippy ul li::after {
-  width: 40px;
-  height: 40px;
-  border-radius: 0;
-}
-
-.timeline-rhombus ul li::after {
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-}
-
-.timeline-rhombus ul li div::before {
-  bottom: 12px;
-}
-
-.timeline-star ul li::after {
-  clip-path: polygon(
-    50% 0%,
-    61% 35%,
-    98% 35%,
-    68% 57%,
-    79% 91%,
-    50% 70%,
-    21% 91%,
-    32% 57%,
-    2% 35%,
-    39% 35%
-  );
-}
-
-.timeline-heptagon ul li::after {
-  clip-path: polygon(
-    50% 0%,
-    90% 20%,
-    100% 60%,
-    75% 100%,
-    25% 100%,
-    0% 60%,
-    10% 20%
-  );
-}
-
-.timeline-infinite ul li::after {
-  animation: scaleAnimation 2s infinite;
-}
-
-@keyframes scaleAnimation {
-  0% {
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    transform: translateX(-50%) scale(1.25);
-  }
-  100% {
-    transform: translateX(-50%) scale(1);
-  }
-}
-
-
-/* FOOTER STYLES
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-.page-footer {
-  position: fixed;
-  right: 0;
-  bottom: 20px;
-  display: flex;
-  align-items: center;
-  padding: 5px;
-  color: black;
-  background: rgba(255, 255, 255, 0.65);
-}
-
-.page-footer a {
-  display: flex;
-  margin-left: 4px;
-}
-  .slider {
-        width: 95%;
-        margin: 10px auto;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('ws-theme');
+      document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
     }
+  })();
+</script>
+<title>Weiß Schwarz 商品發售時間軸 2008–2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" href="dist/css/adminlte.min.css">
+<link rel="stylesheet" href="dist/css/wscards.newline_v101.css">
+<style>
+  /* ============================================================
+     Weiß(白)× Schwarz(黑):配色直接取自品牌名的字義
+     ============================================================ */
+  .release-timeline-page {
+    --weiss:  #f3f2ee;   /* 白:頁面底 */
+    --schwarz:#161616;   /* 黑:文字與主線條 */
+    --gray:   #b9b7b0;   /* 輔助線 */
+    --gray-2: #6f6d67;   /* 弱化文字 */
+    --blau:   #2447d6;   /* 唯一強調色:連結、目前年份、進度 */
+    --jp:     'Zen Kaku Gothic New', sans-serif;
+    --num:    'Archivo Black', sans-serif;
+    --rail-x: clamp(20px, 5vw, 84px);
+  }
 
-    .slick-slide {
-      margin: 0px 10px;
-    }
+  .release-timeline-page * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
 
-    .slick-slide img {
-      width: 100%;
-    }
+  body.release-timeline-page {
+    background: var(--weiss);
+    color: var(--schwarz);
+    font-family: var(--jp);
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+  .release-timeline-page ::selection { background: var(--schwarz); color: var(--weiss); }
+  .release-timeline-page a { color: inherit; }
 
-    .slick-prev:before,
-    .slick-next:before {
-      color: black;
-    }
+  /* ============================================================
+     Hero
+     ============================================================ */
+  .release-timeline-page .hero {
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 var(--rail-x);
+    border-bottom: 2px solid var(--schwarz);
+  }
+  .release-timeline-page .hero .kicker { font-weight: 700; letter-spacing: .18em; color: var(--gray-2); font-size: .85rem; }
+  .release-timeline-page .hero h1 {
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6.5vw, 4.8rem);
+    line-height: 1.3;
+    margin-top: .6rem;
+    max-width: 16em;
+  }
+  .release-timeline-page .hero h1 .de { font-family: var(--num); letter-spacing: .01em; }
+  .release-timeline-page .hero p { margin-top: 1.4rem; max-width: 36em; color: var(--gray-2); }
+  .release-timeline-page .hero .stats { margin-top: 2.2rem; font-size: .95rem; }
+  .release-timeline-page .hero .stats strong { font-family: var(--num); font-size: 1.5rem; margin-right: .2em; }
+  .release-timeline-page .hero .stats span + strong { margin-left: 1.8em; }
 
+  /* ============================================================
+     篩選列(sticky)
+     ============================================================ */
+  .release-timeline-page .filterbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: .7rem var(--rail-x);
+    background: var(--weiss);
+    border-bottom: 1px solid var(--gray);
+  }
+  .release-timeline-page .filterbar .lbl { font-size: .8rem; color: var(--gray-2); margin-right: .4rem; }
+  .release-timeline-page .chip {
+    font-family: var(--jp);
+    font-weight: 700;
+    font-size: .8rem;
+    padding: .28rem .85rem;
+    border: 1.5px solid var(--schwarz);
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .release-timeline-page .chip:hover { background: #e5e4df; }
+  .release-timeline-page .chip.on { background: var(--schwarz); color: var(--weiss); }
+  .release-timeline-page .chip .n { color: var(--gray); font-weight: 500; margin-left: .35em; }
+  .release-timeline-page .chip.on .n { color: var(--gray); }
 
-    .slick-slide {
-      transition: all ease-in-out .3s;
-      opacity: .2;
-    }
+  /* ============================================================
+     時間軸
+     ============================================================ */
+  .release-timeline-page .timeline { position: relative; }
+  .release-timeline-page .rail, .release-timeline-page .rail-fill {
+    position: absolute;
+    left: var(--rail-x);
+    top: 0; bottom: 0;
+    width: 2px;
+  }
+  .release-timeline-page .rail { background: var(--gray); }
+  .release-timeline-page .rail-fill { background: var(--schwarz); transform-origin: top; transform: scaleY(0); }
+
+  .release-timeline-page .year-block {
+    position: relative;
+    padding: clamp(4rem, 9vh, 7rem) var(--rail-x) clamp(3rem, 7vh, 5rem)
+             calc(var(--rail-x) + clamp(24px, 4vw, 56px));
+  }
+  .release-timeline-page .year-block::before { /* 節點 */
+    content: '';
+    position: absolute;
+    left: calc(var(--rail-x) - 5px);
+    top: clamp(4.6rem, 10vh, 7.8rem);
+    width: 12px; height: 12px;
+    background: var(--weiss);
+    border: 3px solid var(--schwarz);
+    border-radius: 50%;
+  }
+
+  /* 巨大年份:唯一的視差層 */
+  .release-timeline-page .year-block .big-year {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-family: var(--num);
+    font-size: clamp(6rem, 20vw, 17rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 2px var(--gray);
+    z-index: 99;
+    opacity: .5;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+  }
+
+  .release-timeline-page .year-head { position: relative; z-index: 3; display: flex; align-items: baseline; gap: 1rem; }
+  .release-timeline-page .year-head h2 { font-family: var(--num); font-size: clamp(1.8rem, 3.5vw, 2.6rem); }
+  .release-timeline-page .year-head .count { color: var(--gray-2); font-size: .9rem; }
+
+  /* 商品卡片網格:緊湊、不做視差 */
+  .release-timeline-page .grid {
+    position: relative;
+    z-index: 3;
+    margin-top: 1.6rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+    gap: 2px;                       /* 細縫露出底色,像印刷分格線 */
+    background: var(--gray);
+    border: 1.5px solid var(--schwarz);
+  }
+  .release-timeline-page .item {
+    display: grid;
+    grid-template-columns: 4.2em 3.4em 1fr;
+    gap: .7em;
+    align-items: start;
+    padding: .8rem .95rem;
+    background: var(--weiss);
+    text-decoration: none;
+    transition: background .12s;
+  }
+  .release-timeline-page .item:hover { background: #fff; }
+  .release-timeline-page .item:hover .name { color: var(--blau); text-decoration: underline; text-underline-offset: 3px; }
+  .release-timeline-page .item .date { font-family: var(--num); font-size: .82rem; padding-top: .15em; color: var(--gray-2); }
+  .release-timeline-page .item .badge {
+    font-family: var(--num);
+    font-size: .68rem;
+    text-align: center;
+    padding: .18em 0;
+    border: 1.5px solid var(--schwarz);
+  }
+  .release-timeline-page .item .badge.BP  { background: var(--schwarz); color: var(--weiss); }   /* 黑 */
+  .release-timeline-page .item .badge.TD  { background: transparent; }                            /* 白 */
+  .release-timeline-page .item .badge.TDP { background: #dddcd6; }
+  .release-timeline-page .item .badge.EB  { border-style: dashed; }
+  .release-timeline-page .item .badge.PB  { background: var(--blau); border-color: var(--blau); color: #fff; }
+  .release-timeline-page .item .badge.OT  { border-color: var(--gray); color: var(--gray-2); }
+  .release-timeline-page .item .name { font-size: .92rem; font-weight: 500; line-height: 1.55; word-break: break-all; }
+
+  .release-timeline-page .year-block.empty { display: none; }
+
+  /* ============================================================
+     年份快速導覽(桌面右側)
+     ============================================================ */
+  .release-timeline-page .yearnav {
+    position: fixed;
+    right: clamp(10px, 2vw, 28px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    font-family: var(--num);
+    font-size: .68rem;
+  }
+  .release-timeline-page .yearnav a {
+    text-decoration: none;
+    color: var(--gray-2);
+    padding: .1rem .4rem;
+    border-right: 3px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .release-timeline-page .yearnav a:hover { color: var(--schwarz); }
+  .release-timeline-page .yearnav a.now { color: var(--blau); border-right-color: var(--blau); }
+  @media (max-width: 1100px) { .release-timeline-page .yearnav { display: none; } }
+
+  /* ============================================================
+     結尾
+     ============================================================ */
+  .release-timeline-page .outro { padding: 16vh var(--rail-x) 20vh; border-top: 2px solid var(--schwarz); }
+  .release-timeline-page .outro h2 { font-weight: 900; font-size: clamp(1.5rem, 3.5vw, 2.6rem); line-height: 1.5; max-width: 20em; }
+  .release-timeline-page .outro p  { margin-top: 1rem; color: var(--gray-2); max-width: 38em; font-size: .95rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .release-timeline-page .big-year { transform: none !important; }
+  }
+
+  .release-timeline-page .main-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-height: 56px;
+  }
+  .release-timeline-page .custom-drawer-header {
+    padding: 1.6rem 1.5rem 1.4rem;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .release-timeline-page .release-frame-content {
+    display: block;
+    min-height: calc(100vh - 56px);
+  }
+  .release-timeline-page .release-frame-content > .hero {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  .release-timeline-page .navbar-title-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+  }
+  .release-timeline-page .navbar-title-text {
+    font-family: var(--jp);
+    font-size: 1.05rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .release-timeline-page .navbar-title-badge {
+    font: 700 .65rem var(--num);
+    letter-spacing: .12em;
+    padding: 2px 7px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+  }
+  .release-timeline-page .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    background: transparent;
     
-    .slick-active {
-      opacity: 1;
-    }
-
-    .slick-current {
-      opacity: 1;
-    }	
-	@media screen and (min-width: 992px) {
-		#cardImg{
-			max-width: 19%;
-			padding-left:2%;
-			padding-right:2%;
-			height: auto;
-		}
-		#coreCardImgList{
-			overflow-x: auto;
-			white-space: nowrap;		
-		}		
-	}
-	@media screen and (min-width:721px) and (max-width:991px){
-		#cardImg{
-			max-width: 26%;
-			padding-left:2%;
-			padding-right:2%;
-			height: auto;
-		}
-		#coreCardImgList{
-			overflow-x: auto;
-			white-space: nowrap;		
-		}		
-	}
-	@media screen and (min-width:471px) and (max-width:720px){
-		#cardImg{
-			max-width: 35%;
-			padding-left:2%;
-			padding-right:2%;
-			height: auto;
-		}
-		#coreCardImgList{
-			overflow-x: auto;
-			white-space: nowrap;		
-		}		
-	}
-	@media screen and (max-width:470px){
-		#cardImg{
-			max-width: 40%;
-			padding-left:2%;
-			padding-right:2%;			
-			height: auto;
-		}	
-		#coreCardImgList{
-			overflow-x: auto;
-			white-space: nowrap;		
-		}
-	}
-	.pointer {
-		cursor: pointer;
-	}
-	#likebox-wrapper * {
-	   width: 100% !important;
-	}
-	ul.typeahead.dropdown-menu {
-		max-height: 300px;
-		overflow-y: auto;
-		overflow-x: hidden;
-		
-		
-	}
-
-	</style>
+  }
+  .release-timeline-page .release-drawer-link {
+    color: var(--blau) !important;
+    font-weight: 700;
+  }
+  .release-timeline-page .release-frame-footer {
+    padding: 1.2rem var(--rail-x) 2rem;
+    border-top: 2px solid var(--schwarz);
+    color: var(--gray-2);
+    font-size: .82rem;
+  }
+  @media (max-width: 768px) {
+    .release-timeline-page .navbar-title-text { max-width: 52vw; overflow: hidden; text-overflow: ellipsis; }
+    .release-timeline-page .hero { min-height: calc(100vh - 56px); }
+  }
+  [data-theme="dark"] .release-timeline-page {
+    --weiss: #11100e;
+    --schwarz: #f3f2ee;
+    --gray: #5d5b55;
+    --gray-2: #aaa79f;
+    --blau: #8fa7ff;
+  }
+  [data-theme="dark"] .release-timeline-page .item { background: #1b1a17; }
+  [data-theme="dark"] .release-timeline-page .item:hover { background: #27251f; }
+  [data-theme="dark"] .release-timeline-page .chip:hover { background: #2b2923; }
+  [data-theme="dark"] .release-timeline-page .year-block .big-year { opacity: .5; }
+</style>
 </head>
-<body class="hold-transition sidebar-collapse layout-top-nav">
-<div class="wrapper">
-
-  <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button"  id="leftbar"><i class="fas fa-bars"  id="mainBarIcon"></i></a>
+<body class="release-timeline-page hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+  <ul class="navbar-nav">
+    <li class="nav-item">
+      <a class="nav-link" href="#" id="leftbar" role="button" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)">
+        <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+      </a>
+    </li>
+  </ul>
+  <div class="navbar-title-block">
+    <span class="navbar-title-text">商品發售時間軸</span>
+    <span class="navbar-title-badge">WS</span>
+  </div>
+  <ul class="navbar-nav ml-auto">
+    <li class="nav-item">
+      <button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="切換為深色模式" aria-label="切換為深色模式" aria-pressed="false">
+        <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+      </button>
+    </li>
+  </ul>
+</nav>
+<div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+<aside class="custom-drawer" id="customDrawer">
+  <div class="custom-drawer-header">
+    <a href="./" class="brand-link">
+      <!-- 標誌旁已有 WS-Cards 文字，圖片重複唸出來只是噪音 -->
+      <img src="dist/img/logo.png" alt="" class="brand-image">
+      <span class="brand-text">WS-Cards</span>
+    </a>
+    <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+  </div>
+  <nav class="custom-drawer-nav" aria-label="網站導覽">
+    <ul>
+      <li class="menu-item open">
+        <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+          <i class="fas fa-tachometer-alt main-icon"></i>
+          <span>遊遊亭價格查詢</span>
+          <i class="fas fa-angle-left right-icon"></i>
+        </a>
+        <ul class="submenu">
+          <li>
+            <a href="line" class="menu-link">
+              <i class="fas fa-chart-line main-icon"></i>
+              <span>各卡號漲幅趨勢(WS)</span>
+            </a>
+          </li>
+          <li>
+            <a href="lineWSR" class="menu-link">
+              <i class="fas fa-chart-line main-icon"></i>
+              <span>各卡號漲幅趨勢(WSR)</span>
+            </a>
+          </li>
+          <li>
+            <a href="deckPrice" class="menu-link">
+              <i class="fas fa-search-dollar main-icon"></i>
+              <span>牌組總額查詢計算機</span>
+            </a>
+          </li>
+        </ul>
       </li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <a href="./index" class="nav-link">Home</a>
+      <li class="menu-item">
+        <a href="championList" class="menu-link">
+          <i class="fas fa-trophy main-icon"></i>
+          <span>優勝牌組查詢 (Beta)</span>
+        </a>
       </li>
-    </ul>
-
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button"><i class="fas fa-bullhorn"  id="rightBarIcon"></i></a>
+      <li class="menu-item">
+        <a href="productTimeline.html" class="menu-link release-drawer-link active">
+          <i class="fas fa-calendar-alt main-icon"></i>
+          <span>商品發售時間軸</span>
+        </a>
       </li>
     </ul>
   </nav>
-  <!-- /.navbar -->
+  <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+</aside>
+<main class="release-frame-content">
 
-  <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-dark-primary elevation-4"  id="mainSideBar">
-    <!-- Brand Logo -->
-    <a href="./" class="brand-link">
-      <img src="dist/img/logo.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light">WS-Cards</span>
-    </a>
+<header class="hero">
+  <div class="kicker">PRODUCT RELEASE TIMELINE 2008–2026</div>
+  <h1><span class="de">Weiß Schwarz</span><br>商品發售時間軸</h1>
+  <p>從 2008 年第一批トライアルデッキ開始,到 2026 年的最新彈——依發售日排列的完整商品年表。往下捲動,以年份為節奏瀏覽;點擊商品可前往官方頁面。</p>
+  <div class="stats" id="stats"></div>
+</header>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Sidebar user panel (optional) -->
-      <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>
-                遊遊亭價格查詢
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="line" class="nav-link">
-                  <i class="fas fa-chart-line nav-icon"></i>
-                  <p>各卡號漲幅趨勢</p>
-                </a>
-              </li>
-            </ul>				
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="deckPrice" class="nav-link">
-                  <i class="fas fa-search-dollar nav-icon"></i>
-                  <p>牌組總額查詢計算機</p>
-                </a>
-              </li>
-            </ul>					
-          </li>
-		  <li  class="nav-item">
-            <a href="championList" class="nav-link active">
-			  <i class="nav-icon fas fa-trophy"></i>
-              <p>
-                優勝牌組查詢 (Beta)
-              </p>
-            </a>		  
-		  </li>		  
-		  <li  class="nav-item">
-            <a href="map" class="nav-link">
-              <i class="nav-icon fas fa-map-marked-alt"></i>
-              <p>
-                WS店家地圖
-              </p>
-            </a>		  
-		  </li>
-        </ul>
-      </nav>
-      <!-- /.sidebar-menu -->
-    </div>
-    <!-- /.sidebar -->
-  </aside>
+<nav class="filterbar" id="filterbar" aria-label="商品類型篩選">
+  <span class="lbl">類型篩選</span>
+</nav>
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-      <div class="container">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1  style="font-family: 'Noto Sans TC', sans-serif;color:black;" class="m-0">歴代参戦タイトル年表</h1>
-          </div><!-- /.col -->
-          <div class="col-sm-6">
-          </div><!-- /.col -->
-        </div><!-- /.row -->	  
-	  
-      </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
+<main class="timeline" id="timeline">
+  <div class="rail"></div>
+  <div class="rail-fill" id="railFill"></div>
+  <!-- 年份區塊由 JS 依資料生成 -->
+</main>
 
-    <!-- Main content -->
-    <div class="content">
-      <div class="container">
-        <div class="row">
-		  <div class="col-lg-12">
-	  		
-			<div class="card   card-outline">
-<section class="intro">
-  <div class="container">
-    <h1>WS Product Line &darr;</h1>
-  </div>
-</section>
+<nav class="yearnav" id="yearnav" aria-label="年份導覽"></nav>
 
-<section class="timeline">
-  <ul>
-    <li>
-      <div>
-        <time>2008</time> At vero eos et <hr>accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2009</time> Proin quam velit, efficitur vel neque vitae, rhoncus commodo mi. Suspendisse finibus mauris et bibendum molestie. Aenean ex augue, varius et pulvinar in, pretium non nisi.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2010</time> Proin iaculis, nibh eget efficitur varius, libero tellus porta dolor, at pulvinar tortor ex eget ligula. Integer eu dapibus arcu, sit amet sollicitudin eros.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2011</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2012</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2013</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2014</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2015</time> Aenean condimentum odio a bibendum rhoncus. Ut mauris felis, volutpat eget porta faucibus, euismod quis ante.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2016</time> Vestibulum porttitor lorem sed pharetra dignissim. Nulla maximus, dui a tristique iaculis, quam dolor convallis enim, non dignissim ligula ipsum a turpis.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2017</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2018</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2019</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2020</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>
-    <li>
-      <div>
-        <time>2021</time> In mattis elit vitae odio posuere, nec maximus massa varius. Suspendisse varius volutpat mattis. Vestibulum id magna est.
-      </div>
-    </li>	
-  </ul>
-</section>
-			
-                   				
-			</div>
-		  </div> <!-- /.col-md-12 -->			
-        </div>
-        <!-- /.row -->
-      </div>
-	  <!-- /.container-fluid -->
-    </div>
-    <!-- /.content -->
-  </div>
-  <!-- /.content-wrapper -->
-
-   <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark" id="rightSideBar">
-    <!-- Control sidebar content goes here -->
-    <div class="p-3">
-      <h5><p>服務條款及免責聲明</p></h5>
-		<br>
-        <p>在使用本網站(ws-cards.cloud)前，請先閱讀利用規約及免責聲明</p></br>
-		<button id="annButton"><p>規約及免責聲明</p></button>
-    </div>
-  </aside>
-  <!-- /.control-sidebar -->
-
-  <!-- Main Footer -->
-  <footer class="main-footer">
-    <!-- To the right -->
-	<div class="float-right d-none d-sm-inline">
-		<a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc"><i class="fas fa-envelope"></i></a>
-	</div>	
-    <!-- Default to the left -->
-    <strong>Copyright &copy; 2020 <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc">WS-Cards</a> </strong> All rights reserved.
-	<strong><a onclick="$('#announceexampleModalCenter').modal('show');	" >利用規約</a></strong>
-  </footer>
-</div>
-<!-- ./wrapper -->
-
-<!-- Announce Modal -->
-<div id="card-modal-announce">
-	<div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalCenterTitle" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered" role="document">
-		<div class="modal-content">
-		  <div class="modal-header">
-			<h5 class="modal-title" id="announceexampleModalLongTitle"><p>利用規約及免責聲明</p></h5>
-			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
-			  <span aria-hidden="true">&times;</span>
-			</button>
-		  </div>
-		  <div class="modal-body">
-			<div id="announce-card-popup-modal">
-				<div class="row">
-					<div class="col text">
-					<ul>
-		<li><p>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</p></li>
-		<li><p>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</p></li>
-		<li><p>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</p></li>
-		<li><p>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</p></li>
-		<li><p>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</p></li>
-		<br>
-		<p>最終更新日期 2020年12月11日<p>		
-					</ul>
-						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>			  
-					</div>				
-				</div>
-			</div>
-		  </div>
-		</div>
-	  </div>
-	</div>
-</div>
-<!-- Modal -->
-<div id="card-modal">
-	<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered" role="document">
-		<div class="modal-content">
-		  <div class="modal-header">
-			<h5 class="modal-title" id="exampleModalLongTitle"></h5>
-			<button type="button" class="close" aria-label="Close"  data-dismiss="modal">
-			  <span aria-hidden="true">&times;</span>
-			</button>
-		  </div>
-		  <div class="modal-body">
-			<div id="card-popup-modal">
-				
-				<div class="row">
-					<div class="col text-center">
-						<div id="snsContent"></id>					
-								  
-					</div>		
-				<div class="col text-center" id="modal-body-bottom">
-				</div>					
-				</div>
-			</div>
-		  </div>
-		</div>
-	  </div>
-	</div>
-</div>
-	
-<!-- REQUIRED SCRIPTS -->
-<!--twitter widgets.js-->
-<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
-<!--chart.js-->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-<!-- jQuery -->
-<script src="plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="dist/js/adminlte.min.js"></script>
-<!-- Suggest -->
-<script src="dist/js/suggest/typeahead.js"></script>
-<!-- Sweet Alert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-<!-- 實際開發位置 -->
-<script src="dist/js/mobile-sidebar-control.js"></script>
-
+<footer class="outro">
+  <h2>十九年、六百五十八款商品。<br>而下一彈,持續推出你所愛。</h2>
+  <p>資料來源:ws-tcg.com 官方商品頁。</p>
+</footer>
 
 <script>
-(function () {
-  "use strict";
+/* ====== 資料(由 CSV 產生,依年份分組;欄位:[月-日, 類型碼, 名稱, 連結]) ====== */
+const DATA = {"2008":[["03-29","TD","D.C. D.C.II","https://ws-tcg.com/products/dc_td/"],["03-29","TD","リトルバスターズ！","https://ws-tcg.com/products/lb_td/"],["04-05","TD","ペルソナ3","https://ws-tcg.com/products/p3_td/"],["05-29","BP","D.C. D.C.II","https://ws-tcg.com/products/dc_bp/"],["05-29","BP","ペルソナ3","https://ws-tcg.com/products/p3_bp/"],["06-27","BP","リトルバスターズ！","https://ws-tcg.com/products/lb_bp/"],["08-23","TD","ゼロの使い魔","https://ws-tcg.com/products/zero_td/"],["08-28","EB","エクストラパック D.C. D.C.II","https://ws-tcg.com/products/dcdc2_eb/"],["08-28","EB","エクストラパック リトルバスターズ!エクスタシー","https://ws-tcg.com/products/lbe_eb/"],["09-20","BP","ゼロの使い魔","https://ws-tcg.com/products/zero_bp/"],["10-25","TD","Fate/stay night","https://ws-tcg.com/products/fs_td/"],["10-25","TD","なのはStrikerS","https://ws-tcg.com/products/ns_td/"],["10-25","TD","魔界戦記ディスガイア","https://ws-tcg.com/products/dis_td/"],["11-15","BP","魔界戦記ディスガイア","https://ws-tcg.com/products/dis_bp/"],["11-29","BP","なのはStrikerS","https://ws-tcg.com/products/ns_bp/"],["12-20","BP","Fate/stay night","https://ws-tcg.com/products/fs_bp/"]],"2009":[["01-10","EB","エクストラパック D.C.II P.C.","https://ws-tcg.com/products/dcpc_eb/"],["01-10","EB","エクストラパック ペルソナ4","https://ws-tcg.com/products/p4_eb/"],["01-10","EB","ヴァイスシュヴァルツ エクストラパック CLANNAD vol.01","https://ws-tcg.com/products/cl_eb1/"],["02-07","TD","シャイニング・フォース イクサ","https://ws-tcg.com/products/sfe_td/"],["02-21","BP","シャイニング・フォース イクサ","https://ws-tcg.com/products/sfe_bp/"],["03-14","TD","らき☆すた","https://ws-tcg.com/products/lucky_td/"],["03-14","TD","リトルバスターズ! エクスタシー","https://ws-tcg.com/products/lb_ex_td/"],["03-28","EB","ヴァイスシュヴァルツ エクストラパック CLANNAD vol.02","https://ws-tcg.com/products/cl_eb2/"],["03-28","BP","らき☆すた","https://ws-tcg.com/products/lucky_bp/"],["04-04","EB","ヴァイスシュヴァルツ エクストラパック宇宙をかける少女/舞-HiME＆舞-乙HiME","https://ws-tcg.com/products/sun_eb/"],["05-16","BP","リトルバスターズ! エクスタシー","https://ws-tcg.com/products/lb_ex_bp/"],["05-30","TD","StarterDeck Disgaea ～Hour of Darkness～","https://ws-tcg.com/products/dis_td_e/"],["06-27","TD","THE KING OF FIGHTERS","https://ws-tcg.com/products/kof_td/"],["06-27","TD","戦国BASARA","https://ws-tcg.com/products/basara_td/"],["07-18","BP","THE KING OF FIGHTERS","https://ws-tcg.com/products/kof_bp/"],["07-18","BP","戦国BASARA","https://ws-tcg.com/products/basara_bp/"],["07-25","TD","THE IDOLM@STER","https://ws-tcg.com/products/idol_td/"],["08-22","BP","THE IDOLM@STER","https://ws-tcg.com/products/idol_bp/"],["08-27","EB","エクストラパック CANAAN","https://ws-tcg.com/products/canaan/"],["08-27","EB","ヴァイスシュヴァルツ エクストラパック宇宙をかける少女/舞-HiME＆舞-乙HiME Vol.02","https://ws-tcg.com/products/sun_eb2/"],["09-12","TD","Phantom～Requiem for the Phantom～","https://ws-tcg.com/products/pha_td/"],["10-10","BP","Phantom～Requiem for the Phantom～","https://ws-tcg.com/products/pha_bp/"],["10-24","TD","ペルソナ4","https://ws-tcg.com/products/p4_td/"],["11-21","EB","Fate/hollow ataraxia","https://ws-tcg.com/products/fateh_eb/"],["11-21","TD","涼宮ハルヒの憂鬱","https://ws-tcg.com/products/haruhi_td/"],["12-05","BP","ペルソナ4","https://ws-tcg.com/products/p4_bp/"],["12-19","BP","涼宮ハルヒの憂鬱","https://ws-tcg.com/products/haruhi_bp/"]],"2010":[["01-09","EB","エクストラパック THE IDOLM@STER Dearly Stars","https://ws-tcg.com/products/imas_ds_eb/"],["01-23","EB","ヴァイスシュヴァルツ エクストラパック魔法少女リリカルなのは The MOVIE 1st","https://ws-tcg.com/products/n1_eb/"],["02-27","TD","D.C. D.C.II プラスコミュニケーション","https://ws-tcg.com/products/dcdc2pc_td/"],["03-27","TD","とある科学の超電磁砲","https://ws-tcg.com/products/index_railgun_td/"],["03-27","BP","D.C. D.C.II プラスコミュニケーション","https://ws-tcg.com/products/dcdc2pc_bp/"],["04-24","BP","禁書目録＆超電磁砲","https://ws-tcg.com/products/index_railgun_bp/"],["05-29","EB","CLANNAD vol.03","https://ws-tcg.com/products/cl_eb3/"],["06-26","TD","Angel Beats! ＆ クドわふたー","https://ws-tcg.com/products/ab_kw_td/"],["06-26","TD","FAIRY TAIL","https://ws-tcg.com/products/fairy_td/"],["06-26","TD","魔法少女リリカルなのはA’s","https://ws-tcg.com/products/nas_td/"],["07-17","BP","FAIRY TAIL","https://ws-tcg.com/products/fairy_bp/"],["08-21","BP","魔法少女リリカルなのはA’s","https://ws-tcg.com/products/nas_bp/"],["08-27","EB","D.C. D.C.II プラスコミュニケーション","https://ws-tcg.com/products/dcdc2pc_eb/"],["09-18","EB","ＴＶアニメ 戦国BASARA弐","https://ws-tcg.com/products/basara2_eb/"],["09-18","BP","Angel Beats! ＆ クドわふたー","https://ws-tcg.com/products/ab_kw_bp/"],["10-30","TD","MELTY BLOOD","https://ws-tcg.com/products/mb_td/"],["10-30","TD","ヱヴァンゲリヲン新劇場版","https://ws-tcg.com/products/eva_td/"],["10-30","TD","探偵オペラ ミルキィホームズ","https://ws-tcg.com/products/milky_td/"],["11-20","BP","MELTY BLOOD","https://ws-tcg.com/products/mb_bp/"],["12-11","BP","ヱヴァンゲリヲン新劇場版","https://ws-tcg.com/products/eva_bp/"],["12-24","BP","探偵オペラ ミルキィホームズ","https://ws-tcg.com/products/milky_bp/"]],"2011":[["01-22","EB","ブラック★ロックシューター","https://ws-tcg.com/products/brs_eb/"],["01-29","EB","涼宮ハルヒの憂鬱","https://ws-tcg.com/products/haruhi_eb/"],["02-26","TD","とある魔術の禁書目録II","https://ws-tcg.com/products/index2_railgun_td/"],["02-26","BP","禁書目録ＩＩ＆超電磁砲","https://ws-tcg.com/products/index2_railgun_bp/"],["04-02","OT","エクストラトライアル 刀語","https://ws-tcg.com/products/kg_etd/"],["04-02","EB","刀語","https://ws-tcg.com/products/kg_eb/"],["04-02","TD","劇場版マクロスＦ ～イツワリノウタヒメ～","https://ws-tcg.com/products/macross_f_td/"],["04-02","TD","灼眼のシャナ","https://ws-tcg.com/products/shana_td/"],["04-02","BP","灼眼のシャナ","https://ws-tcg.com/products/shana_bp/"],["05-21","TD","アイドルマスター２","https://ws-tcg.com/products/idol2_td/"],["05-21","TD","化物語","https://ws-tcg.com/products/bake_td/"],["05-28","EB","魔界戦記ディスガイア４","https://ws-tcg.com/products/dis4_eb/"],["06-25","TD","Rewrite","https://ws-tcg.com/products/rewrite_td/"],["06-25","BP","化物語","https://ws-tcg.com/products/bake_bp/"],["07-23","BP","劇場版マクロスＦ","https://ws-tcg.com/products/macross_f_bp/"],["08-20","EB","Angel Beats!","https://ws-tcg.com/products/ab_eb/"],["08-20","EB","ミルキィホームズ怪盗帝国の逆襲","https://ws-tcg.com/products/milky_k_eb/"],["08-27","BP","アイドルマスター２","https://ws-tcg.com/products/idol2_bp/"],["09-30","BP","Rewrite","https://ws-tcg.com/products/rewrite_bp/"],["11-26","TD","Fate/Zero","https://ws-tcg.com/products/fz_td/"],["11-26","TD","TVアニメ「ペルソナ４」","https://ws-tcg.com/products/p4a_td/"],["11-26","TD","ギルティクラウン","https://ws-tcg.com/products/gc_td/"],["12-03","EB","FAIRY TAIL","https://ws-tcg.com/products/ft_eb/"],["12-10","EB","ミルキィホームズ Genius4の反撃","https://ws-tcg.com/products/milky_g4_eb/"],["12-17","TD","探偵オペラ ミルキィホームズ ころもがえ版","https://ws-tcg.com/products/milky_td_new/"]],"2012":[["01-14","EB","日常","https://ws-tcg.com/products/nj/"],["01-21","OT","エクストラトライアル DOG DAYS","https://ws-tcg.com/products/dogdays_etd/"],["01-21","EB","DOG DAYS","https://ws-tcg.com/products/dogdays/"],["02-11","TD","魔法少女まどか☆マギカ","https://ws-tcg.com/products/madoka_td/"],["02-25","EB","Fate/Zero","https://ws-tcg.com/products/fz_eb/"],["02-25","BP","魔法少女まどか☆マギカ","https://ws-tcg.com/products/madoka_bp/"],["03-24","TD","D.C.III～ダ・カーポIII～","https://ws-tcg.com/products/dc3_td/"],["03-31","EB","TVアニメ「ペルソナ４」","https://ws-tcg.com/products/p4a_eb/"],["04-07","BP","ギルティクラウン","https://ws-tcg.com/products/gc_bp/"],["04-14","TD","ゼロの使い魔Ｆ","https://ws-tcg.com/products/zero-f_td/"],["04-14","TD","戦姫絶唱シンフォギア","https://ws-tcg.com/products/sym_td/"],["05-12","EB","ゼロの使い魔Ｆ","https://ws-tcg.com/products/zero-f_eb/"],["05-25","BP","D.C.Ⅲ～ダ・カーポⅢ～","https://ws-tcg.com/products/dc3_bp/"],["06-30","TD","Trial Deck(English Version) Fate/Zero","https://ws-tcg.com/products/fz_td_e/"],["06-30","TD","Trial Deck(English Version) Puella Magi Madoka Magica","https://ws-tcg.com/products/madoka_td_e/"],["06-30","BP","戦姫絶唱シンフォギア","https://ws-tcg.com/products/sym_bp/"],["07-14","TD","アニメ「アイドルマスター」","https://ws-tcg.com/products/idol_anime_td/"],["08-04","BP","アニメ「アイドルマスター」","https://ws-tcg.com/products/idol_anime_bp/"],["08-25","TD","アクセル・ワールド","https://ws-tcg.com/products/aw_td/"],["08-25","TD","ロボティクス・ノーツ","https://ws-tcg.com/products/rn_td/"],["08-25","TD","探偵オペラ ミルキィホームズ２","https://ws-tcg.com/products/milky2_td/"],["09-08","EB","Angel Beats! vol.02","https://ws-tcg.com/products/ab_eb2/"],["09-08","BP","Fate/Zero","https://ws-tcg.com/products/fz_bp/"],["09-29","EB","灼眼のシャナIII-FINAL-","https://ws-tcg.com/products/shana3_eb/"],["10-13","BP","Rewrite Harvest festa!","https://ws-tcg.com/products/rewrite_hf/"],["10-27","BP","アクセル・ワールド","https://ws-tcg.com/products/aw_bp/"],["11-24","BP","ロボティクス・ノーツ","https://ws-tcg.com/products/rn_bp/"],["12-22","TD","ソードアート・オンライン","https://ws-tcg.com/products/sao_td/"],["12-22","BP","探偵オペラ ミルキィホームズ２","https://ws-tcg.com/products/milky2_bp/"]],"2013":[["01-12","TD","D.C.～ダ・カーポ～ 10thアニバーサリーミックス","https://ws-tcg.com/products/dc-10th_td/"],["01-12","TD","アニメ「リトルバスターズ！」","https://ws-tcg.com/products/litbus-anime_td/"],["01-26","BP","D.C.～ダ・カーポ～10thアニバーサリーミックス","https://ws-tcg.com/products/dc-10th_bp/"],["02-09","EB","Ｐ４Ｕ","https://ws-tcg.com/products/p4u/"],["02-23","BP","ソードアート・オンライン","https://ws-tcg.com/products/sao_bp/"],["03-09","TD","初音ミク -Project DIVA- f","https://ws-tcg.com/products/pd-f_td/"],["03-30","BP","初音ミク -Project DIVA- f","https://ws-tcg.com/products/pd-f_bp/"],["04-13","TD","ビビッドレッド・オペレーション","https://ws-tcg.com/products/vividred_td/"],["04-13","TD","ラブライブ！","https://ws-tcg.com/products/lovelive_td/"],["04-27","BP","魔法少女リリカルなのは The MOVIE 2nd A’s","https://ws-tcg.com/products/nas_2nd/"],["05-18","EB","PSYCHO-PASS サイコパス","https://ws-tcg.com/products/pp/"],["05-25","BP","アニメ「リトルバスターズ！」","https://ws-tcg.com/products/litbus-anime_bp/"],["05-31","BP","Booster Pack(English Version) Puella Magi Madoka Magica","https://ws-tcg.com/products/madoka_bp_e/"],["06-29","BP","ビビッドレッド・オペレーション","https://ws-tcg.com/products/vividred_bp/"],["07-05","TD","Trial Deck(English Version) Sword Art Online","https://ws-tcg.com/products/sao_td_e/"],["07-19","TD","とある科学の超電磁砲S","https://ws-tcg.com/products/railguns_td/"],["07-19","TD","翠星のガルガンティア","https://ws-tcg.com/products/gar_td/"],["07-19","BP","Booster Pack(English Version) Sword Art Online","https://ws-tcg.com/products/sao_bp_e/"],["07-26","BP","ラブライブ！","https://ws-tcg.com/products/lovelive_bp/"],["08-16","EB","DOG DAYS’","https://ws-tcg.com/products/dogdays_d/"],["08-16","EB","アニメ「D.C.III～ダ・カーポIII～」","https://ws-tcg.com/products/dc3_eb/"],["08-16","BP","Booster Pack(English Version) Fate/Zero","https://ws-tcg.com/products/fz_bp_e/"],["08-23","BP","翠星のガルガンティア","https://ws-tcg.com/products/gar_bp/"],["09-13","EB","ディスガイア D2","https://ws-tcg.com/products/disd2/"],["09-27","BP","とある科学の超電磁砲S","https://ws-tcg.com/products/railguns_bp/"],["10-11","TD","幻影ヲ駆ケル太陽","https://ws-tcg.com/products/geneitaiyo_td/"],["10-18","EB","TVアニメ「デビルサバイバー2」","https://ws-tcg.com/products/ds2/"],["11-01","TD","Trial Deck(English Version) Hatsune Miku : Project DIVA f","https://ws-tcg.com/products/pd-f_td_e/"],["11-01","BP","偽物語","https://ws-tcg.com/products/nise/"],["11-15","BP","Booster Pack Hatsune Miku : Project DIVA f","https://ws-tcg.com/products/pd-f_bp_e/"],["11-29","BP","幻影ヲ駆ケル太陽","https://ws-tcg.com/products/geneitaiyo_bp/"],["12-20","BP","戦姫絶唱シンフォギアG","https://ws-tcg.com/products/symg/"],["12-27","EB","Fate/kaleid liner プリズマ☆イリヤ","https://ws-tcg.com/products/iriya_eb/"]],"2014":[["01-11","OT","スペシャルセット「うーさーのその日暮らし」","https://ws-tcg.com/products/spset_s/"],["01-24","BP","ラブライブ！ feat.スクールアイドルフェスティバル","https://ws-tcg.com/products/lovelive-sif/"],["02-14","TD","艦隊これくしょん -艦これ-","https://ws-tcg.com/products/kc_td/"],["02-21","TD","キルラキル","https://ws-tcg.com/products/klk_td/"],["02-21","TD","ログ・ホライズン","https://ws-tcg.com/products/lh_td/"],["03-28","BP","艦隊これくしょん -艦これ-","https://ws-tcg.com/products/kc_bp/"],["04-05","TD","ニセコイ","https://ws-tcg.com/products/nisekoi_td/"],["04-18","TD","クレヨンしんちゃん","https://ws-tcg.com/products/sinchan_td/"],["04-18","BP","クレヨンしんちゃん","https://ws-tcg.com/products/sinchan_bp/"],["04-25","BP","ソードアート・オンライン Vol.2","https://ws-tcg.com/products/sao_vol2/"],["05-23","EB","アニメ「リトルバスターズ！～Refrain～」","https://ws-tcg.com/products/lb_r_eb/"],["05-23","BP","キルラキル","https://ws-tcg.com/products/klk_bp/"],["06-13","EB","ログ・ホライズン","https://ws-tcg.com/products/lh_eb/"],["06-27","EB","ラブライブ！","https://ws-tcg.com/products/ll_eb/"],["06-27","TD","Angel Beats! Re: Edit","https://ws-tcg.com/products/ab_re_td/"],["06-27","BP","Angel Beats! Re: Edit","https://ws-tcg.com/products/ab_re_bp/"],["07-25","BP","初音ミク -Project DIVA- F 2nd","https://ws-tcg.com/products/pd-f2/"],["08-22","BP","ニセコイ","https://ws-tcg.com/products/nisekoi_bp/"],["09-05","EB","D.C.～ダ・カーポ～サクラサクパック","https://ws-tcg.com/products/dcss/"],["09-05","EB","リトルバスターズ！カードミッション","https://ws-tcg.com/products/lbcm/"],["09-12","EB","ペルソナQ シャドウ オブ ザ ラビリンス","https://ws-tcg.com/products/pq/"],["10-10","OT","ギガントブースター 「超爆裂異次元メンコバトル ギガントシューター つかさ」","https://ws-tcg.com/products/gigant_s/"],["10-23","TD","ソードアート・オンラインⅡ","https://ws-tcg.com/products/sao2/"],["10-23","BP","魔法少女リリカルなのは THE MOVIE 1st ＆ 2nd A’s","https://ws-tcg.com/products/nas_movie/"],["11-28","EB","ソードアート・オンラインⅡ","https://ws-tcg.com/products/sao2_eb/"],["11-28","BP","劇場版「THE IDOLM@STER MOVIE 輝きの向こう側へ！」","https://ws-tcg.com/products/idol_movie/"],["12-12","TD","ガールフレンド（仮）","https://ws-tcg.com/products/gf_td/"],["12-12","TD","テラフォーマーズ","https://ws-tcg.com/products/terraf_td/"],["12-12","BP","「艦隊これくしょん -艦これ-」第二艦隊","https://ws-tcg.com/products/kc_bp2/"],["12-26","BP","ガールフレンド（仮）","https://ws-tcg.com/products/gf_bp/"]],"2015":[["01-16","EB","Fate/kaleid liner プリズマ☆イリヤ ツヴァイ！","https://ws-tcg.com/products/iriya2_eb/"],["01-22","OT","ブースターパック ラブライブ！ Vol.2【限定版A】","https://ws-tcg.com/products/lovelive_2_la/"],["01-22","OT","ブースターパック ラブライブ！ Vol.2【限定版B】","https://ws-tcg.com/products/lovelive_2_lb/"],["01-22","BP","「ラブライブ！ Vol.2」","https://ws-tcg.com/products/lovelive_2_bp/"],["02-27","TD","「ミルキィホームズ セカンドステージ エディション」","https://ws-tcg.com/products/milky2nd_td/"],["02-27","BP","テラフォーマーズ","https://ws-tcg.com/products/terraf_bp/"],["03-20","BP","「ミルキィホームズ セカンドステージ エディション」","https://ws-tcg.com/products/milky2nd_bp/"],["04-03","TD","Fate/stay night [Unlimited Blade Works]","https://ws-tcg.com/products/fate-ubw_td/"],["04-23","BP","Fate/stay night [Unlimited Blade Works]","https://ws-tcg.com/products/fate-ubw_bp/"],["05-15","BP","劇場版 魔法少女まどか☆マギカ[新編]叛逆の物語","https://ws-tcg.com/products/madoka_movie/"],["06-06","OT","ラブライブ！ feat.スクールアイドルフェスティバル豪華キラキラカード9種セット","https://ws-tcg.com/products/lovelive-feat2_td/"],["06-13","TD","ラブライブ！ feat.スクールアイドルフェスティバル","https://ws-tcg.com/products/lovelive-feat2_td-2/"],["06-13","BP","ラブライブ！ feat.スクールアイドルフェスティバル Vol.2","https://ws-tcg.com/products/lovelive-feat2_bp/"],["07-10","TD","To LOVEる-とらぶる-ダークネス2nd","https://ws-tcg.com/products/tld2nd_td/"],["07-24","BP","ガールフレンド（仮） Vol.2","https://ws-tcg.com/products/gf2/"],["07-31","EB","シャイニング・レゾナンス","https://ws-tcg.com/products/shining_resonance/"],["08-21","OT","アイドルマスター ミニキャラパック『765pro』","https://ws-tcg.com/products/imas_minipack/"],["08-21","EB","ソードアート・オンラインⅡ Vol.2","https://ws-tcg.com/products/sao2vol2/"],["08-21","EB","ニセコイ:","https://ws-tcg.com/products/nk2/"],["08-21","TD","進撃の巨人","https://ws-tcg.com/products/aot_td/"],["09-04","BP","進撃の巨人","https://ws-tcg.com/products/aot_bp/"],["09-18","TD","Charlotte","https://ws-tcg.com/products/charlotte/"],["09-18","BP","To LOVEる-とらぶる-ダークネス2nd","https://ws-tcg.com/products/tld2nd_bp/"],["09-25","TD","アイドルマスター シンデレラガールズ  ～Heart～","https://ws-tcg.com/products/imas-cinderella_tdh/"],["09-25","TD","アイドルマスター シンデレラガールズ  ～Power～","https://ws-tcg.com/products/imas-cinderella_tdp/"],["09-25","TD","アイドルマスター シンデレラガールズ  ～Smile～","https://ws-tcg.com/products/imas-cinderella_tds/"],["10-16","BP","アイドルマスター シンデレラガールズ","https://ws-tcg.com/products/imas-cinderella_bp/"],["10-30","BP","Charlotte","https://ws-tcg.com/products/charlotte-2/"],["11-13","EB","DOG DAYS”","https://ws-tcg.com/products/dogdays_dd/"],["11-20","BP","戦姫絶唱シンフォギアＧＸ","https://ws-tcg.com/products/symphogear-gx/"],["12-04","TD","スクールガールストライカーズ","https://ws-tcg.com/products/schoolgirlstrikers_td/"],["12-04","BP","Fate/stay night [Unlimited Blade Works]Vol.II","https://ws-tcg.com/products/fate-ubw_bp2/"],["12-15","OT","ラブライブ！ feat. スクールアイドルフェスティバル バラエティセット","https://ws-tcg.com/products/lovelive-feat2_vs/"],["12-18","EB","「艦隊これくしょん -艦これ-」深海棲艦見ゆ","https://ws-tcg.com/products/kc_eb/"]],"2016":[["01-15","EB","ラブライブ！The School Idol Movie","https://ws-tcg.com/products/the_school_idol_movie/"],["01-22","BP","〈物語〉シリーズ セカンドシーズン","https://ws-tcg.com/products/2ndseason/"],["02-04","TD","ぷよぷよ","https://ws-tcg.com/products/puyo_td/"],["02-04","BP","ぷよぷよ","https://ws-tcg.com/products/puyo_bp/"],["02-26","BP","スクールガールストライカーズ","https://ws-tcg.com/products/schoolgirlstrikers_bp/"],["03-11","BP","To LOVEる-とらぶる-ダークネス2nd Vol.2","https://ws-tcg.com/products/tld2nd_bp2/"],["03-25","OT","カードゲームしよ子 アルティメットスターター","https://ws-tcg.com/products/ultimatecgs/"],["04-08","OT","パワーアップセット CLANNAD","https://ws-tcg.com/products/clannad/"],["04-08","OT","パワーアップセット ログ・ホライズン","https://ws-tcg.com/products/loghorizon/"],["04-22","BP","アイドルマスター シンデレラガールズ 2nd SEASON","https://ws-tcg.com/products/imas-cinderella_bp2/"],["04-29","OT","パワーアップセット アイドルマスター ver.BLUE","https://ws-tcg.com/products/puim_blue/"],["04-29","OT","パワーアップセット アイドルマスター ver.RED","https://ws-tcg.com/products/puim_red/"],["05-14","EB","劇場版 探偵オペラ ミルキィホームズ～逆襲のミルキィホームズ～","https://ws-tcg.com/products/mh-movie/"],["05-20","BP","Fate/kaleid liner プリズマ☆イリヤ ツヴァイ ヘルツ！","https://ws-tcg.com/products/2weihelz/"],["06-17","OT","ヴァイスシュヴァルツはじめ松セット「おそ松さん」","https://ws-tcg.com/products/osm_s/"],["06-17","BP","「おそ松さん」","https://ws-tcg.com/products/osm/"],["07-15","EB","境界のRINNE","https://ws-tcg.com/products/rinne/"],["07-22","BP","「艦隊これくしょん -艦これ-」到着！欧州からの増派艦隊","https://ws-tcg.com/products/kc_bp3/"],["08-20","TD","ご注文はうさぎですか？？","https://ws-tcg.com/products/gochiusa_td/"],["08-20","BP","ご注文はうさぎですか？？","https://ws-tcg.com/products/gochiusa_bp/"],["09-02","BP","アクセル・ワールド -インフィニット・バースト-","https://ws-tcg.com/products/aw-2/"],["09-16","TD","キズナイーバー","https://ws-tcg.com/products/ki_td/"],["09-16","TD","ラブライブ！サンシャイン!!","https://ws-tcg.com/products/uranohoshi_td/"],["09-30","BP","キズナイーバー","https://ws-tcg.com/products/ki_bp/"],["10-28","BP","「D.S. -Dal Segno-」＆「D.C.Ⅲ With You ～ダ・カーポⅢ～ ウィズユー」","https://ws-tcg.com/products/ds/"],["11-25","BP","ラブライブ！サンシャイン!!","https://ws-tcg.com/products/uranohoshi_bp/"],["12-16","TD","ペルソナ５","https://ws-tcg.com/products/p5_td/"],["12-16","BP","ペルソナ５","https://ws-tcg.com/products/p5_bp/"],["12-23","OT","パワーアップセット とある科学の超電磁砲S","https://ws-tcg.com/products/rgps/"],["12-23","OT","パワーアップセット キルラキル","https://ws-tcg.com/products/klkps/"],["12-23","OT","パワーアップセット 涼宮ハルヒの憂鬱","https://ws-tcg.com/products/syps/"],["12-23","EB","ご注文はうさぎですか？？","https://ws-tcg.com/products/gochiusa_eb/"]],"2017":[["01-13","TD","Re:ゼロから始める異世界生活","https://ws-tcg.com/products/re-zero_td/"],["01-20","BP","Re:ゼロから始める異世界生活","https://ws-tcg.com/products/re-zero_bp/"],["01-27","BP","TVアニメ「Rewrite」","https://ws-tcg.com/products/rewrite-anime-tv/"],["02-15","TD+","BanG Dream!","https://ws-tcg.com/products/bang_dream_td/"],["02-24","BP","ソードアート・オンライン Re: Edit","https://ws-tcg.com/products/sao-re-edit/"],["03-10","TD+","ViVid Strike!","https://ws-tcg.com/products/vivid-strike_td/"],["03-10","TD+","この素晴らしい世界に祝福を！","https://ws-tcg.com/products/konosuba_td/"],["03-17","TD+","チェインクロニクル ～ヘクセイタスの閃～","https://ws-tcg.com/products/cc_td/"],["04-07","BP","この素晴らしい世界に祝福を！","https://ws-tcg.com/products/konosuba_bp/"],["04-28","BP","チェインクロニクル ～ヘクセイタスの閃～","https://ws-tcg.com/products/cc_bp/"],["05-05","OT","BanG Dream! きら★きらカードコレクション♪","https://ws-tcg.com/products/bang-dream_kirakira/"],["05-05","OT","ジョークブースター ミルキィホームズファンファンパーリーパック♪","https://ws-tcg.com/products/mkfn-2/"],["05-26","BP","BanG Dream!","https://ws-tcg.com/products/bang_dream_bp/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.215 ラブライブ！『μ’s（僕たちはひとつの光）』高坂 穂乃果","https://ws-tcg.com/products/the_school_idol_movie_a/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.216 ラブライブ！『μ’s（僕たちはひとつの光）』絢瀬 絵里","https://ws-tcg.com/products/the_school_idol_movie_b/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.217 ラブライブ！『μ’s（僕たちはひとつの光）』南 ことり","https://ws-tcg.com/products/the_school_idol_movie_c/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.218 ラブライブ！『μ’s（僕たちはひとつの光）』園田 海未","https://ws-tcg.com/products/the_school_idol_movie_d/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.219 ラブライブ！『μ’s（僕たちはひとつの光）』星空 凛","https://ws-tcg.com/products/the_school_idol_movie_e/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.220 ラブライブ！『μ’s（僕たちはひとつの光）』西木野 真姫","https://ws-tcg.com/products/the_school_idol_movie_f/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.221 ラブライブ！『μ’s（僕たちはひとつの光）』東條 希","https://ws-tcg.com/products/the_school_idol_movie_g/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.222 ラブライブ！『μ’s（僕たちはひとつの光）』小泉 花陽","https://ws-tcg.com/products/the_school_idol_movie_h/"],["06-10","OT","ブシロード スリーブコレクションエクストラVol.223 ラブライブ！『μ’s（僕たちはひとつの光）』矢澤 にこ","https://ws-tcg.com/products/the_school_idol_movie_i/"],["06-10","EB","ラブライブ！サンシャイン!!","https://ws-tcg.com/products/uranohoshi_eb/"],["06-16","TD","STAR WARS","https://ws-tcg.com/products/starwars_td/"],["06-16","BP","STAR WARS","https://ws-tcg.com/products/starwars_bp/"],["06-23","BP","ViVid Strike!","https://ws-tcg.com/products/vivid-strike_bp/"],["07-14","TD+","Re:ゼロから始める異世界生活","https://ws-tcg.com/products/re-zero_tdplus/"],["07-28","EB","Fate/kaleid liner プリズマ☆イリヤ ドライ!!","https://ws-tcg.com/products/pi3/"],["08-05","OT","ラブライブ！サンシャイン!!ラバーマット＆ヴァイスシュヴァルツおためしデッキセット","https://ws-tcg.com/products/lss_sp_set/"],["08-11","TD+","「けものフレンズ」","https://ws-tcg.com/products/km_td/"],["08-25","BP","ヴァイスシュヴァルツ  けものフレンズ","https://ws-tcg.com/products/km_bp/"],["09-22","BP","戦姫絶唱シンフォギアXD UNLIMITED","https://ws-tcg.com/products/sgxd-2/"],["09-29","BP","「進撃の巨人」Vol.2","https://ws-tcg.com/products/aot2/"],["10-25","TD+","ラブライブ！サンシャイン!!","https://ws-tcg.com/products/td2-lss/"],["10-27","BP","「劇場版 ソードアート・オンライン -オーディナル・スケール-」","https://ws-tcg.com/products/saomovie/"],["11-24","OT","ひなろじ ～from Luck ＆ Logic～ Blu-ray 上巻ヴァイスシュヴァルツ合体（トランス）セット","https://ws-tcg.com/products/hll_set/"],["11-24","EB","「ひなろじ ～from Luck ＆ Logic～」Vol.1","https://ws-tcg.com/products/hll/"],["12-01","EB","初音ミク -Project DIVA- X HD","https://ws-tcg.com/products/pdx/"],["12-08","TD+","「バンドリ！ ガールズバンドパーティ！ ［Roselia］」","https://ws-tcg.com/products/gbp_td/"],["12-22","BP","「バンドリ！ ガールズバンドパーティ！」","https://ws-tcg.com/products/gbp_bp/"]],"2018":[["01-12","BP","この素晴らしい世界に祝福を！２","https://ws-tcg.com/products/konosuba2/"],["01-26","OT","ひなろじ ～from Luck ＆ Logic～ Blu-ray 下巻ヴァイスシュヴァルツ合体（トランス）セット","https://ws-tcg.com/products/hll_set_2/"],["01-26","EB","「ひなろじ ～from Luck ＆ Logic～」Vol.2","https://ws-tcg.com/products/hll2/"],["01-26","TD+","天元突破グレンラガン","https://ws-tcg.com/products/gl_td/"],["01-26","BP","天元突破グレンラガン","https://ws-tcg.com/products/gurrenlagann/"],["02-23","TD+","「バンドリ！ ガールズバンドパーティ！ ［Pastel＊Palettes］」","https://ws-tcg.com/products/bgp_p/"],["02-23","TD+","冴えない彼女の育てかた","https://ws-tcg.com/products/shs_td/"],["02-23","BP","冴えない彼女の育てかた","https://ws-tcg.com/products/shs_bp/"],["03-23","BP","ご注文はうさぎですか？？ ～Dear My Sister～","https://ws-tcg.com/products/gu_dms/"],["03-29","EB","ダ・カーポ vs リトルバスターズ！","https://ws-tcg.com/products/dc_lb/"],["04-13","TD+","Fate/Apocrypha","https://ws-tcg.com/products/apocrypha_td/"],["04-13","TD+","「バンドリ！ ガールズバンドパーティ！ ［Afterglow］」","https://ws-tcg.com/products/bgp_a/"],["04-27","BP","「ラブライブ！サンシャイン!!」Vol.2","https://ws-tcg.com/products/uranohoshi-bp2/"],["05-11","BP","魔法少女リリカルなのは Reflection","https://ws-tcg.com/products/nanoha-reflection/"],["05-18","TD+","「アニメーション映画『GODZILLA』」","https://ws-tcg.com/products/tdplus_gzl/"],["05-25","BP","Fate/Apocrypha","https://ws-tcg.com/products/apocrypha_bp/"],["06-08","TD+","「バンドリ！ ガールズバンドパーティ！ ［ハロー、ハッピーワールド！］」","https://ws-tcg.com/products/bgp_h/"],["06-08","TD+","ダーリン・イン・ザ・フランキス","https://ws-tcg.com/products/darli_fra_td/"],["06-08","TD+","マギアレコード 魔法少女まどか☆マギカ外伝","https://ws-tcg.com/products/magireco_td/"],["06-29","BP","マギアレコード 魔法少女まどか☆マギカ外伝","https://ws-tcg.com/products/magireco/"],["07-20","TD+","ノーゲーム・ノーライフ","https://ws-tcg.com/products/ngnl_td/"],["07-20","BP","「Re:ゼロから始める異世界生活」Vol.2","https://ws-tcg.com/products/re-zero2/"],["08-03","BP","ノーゲーム・ノーライフ","https://ws-tcg.com/products/ngnl_bp/"],["08-10","OT","スペシャルパック「バンドリ！ ガールズバンドパーティ！」","https://ws-tcg.com/products/sp_gbp/"],["08-10","TD+","Summer Pockets","https://ws-tcg.com/products/summer_td/"],["08-24","BP","Summer Pockets","https://ws-tcg.com/products/summer_bp/"],["09-14","TD+","ソードアート・オンライン オルタナティブ ガンゲイル・オンライン","https://ws-tcg.com/products/ggo/"],["09-14","TD+","少女☆歌劇 レヴュースタァライト","https://ws-tcg.com/products/revuestarlight/"],["09-21","BP","ダーリン・イン・ザ・フランキス","https://ws-tcg.com/products/darli-fra/"],["10-26","TD+","STEINS;GATE","https://ws-tcg.com/products/steinsgate_td/"],["10-26","BP","STEINS;GATE","https://ws-tcg.com/products/steinsgate_bp/"],["11-09","EB","「アニメーション映画『GODZILLA』」","https://ws-tcg.com/products/eb_gzl/"],["11-23","BP","ソードアート・オンライン オルタナティブ ガンゲイル・オンライン","https://ws-tcg.com/products/sao_a_ggo/"],["12-07","TD+","ゆらぎ荘の幽奈さん","https://ws-tcg.com/products/yys-td/"],["12-07","TD+","アイドルマスター ミリオンライブ！","https://ws-tcg.com/products/imm_td/"],["12-07","TD+","バンドリ！ ガールズバンドパーティ！［Poppin’Party］","https://ws-tcg.com/products/bgp_pp/"],["12-14","BP","ゆらぎ荘の幽奈さん","https://ws-tcg.com/products/yys-bp/"],["12-21","BP","少女☆歌劇 レヴュースタァライト","https://ws-tcg.com/products/revuestarlight_bp/"]],"2019":[["01-25","BP","アイドルマスター ミリオンライブ！","https://ws-tcg.com/products/imm_bp/"],["01-28","OT","ブシロード スリーブコレクションエクストラ 探偵オペラ ミルキィホームズ『エルキュール・バートン』","https://ws-tcg.com/products/mk_sce_c/"],["01-28","OT","ブシロード スリーブコレクションエクストラ 探偵オペラ ミルキィホームズ『コーデリア・グラウカ』","https://ws-tcg.com/products/mk_sce_d/"],["01-28","OT","ブシロード スリーブコレクションエクストラ 探偵オペラ ミルキィホームズ『シャーロック・シェリンフォード』","https://ws-tcg.com/products/mk_sce_a/"],["01-28","OT","ブシロード スリーブコレクションエクストラ 探偵オペラ ミルキィホームズ『譲崎ネロ』","https://ws-tcg.com/products/mk_sce_b/"],["02-01","TD+","オーバーロード","https://ws-tcg.com/products/td-ovl/"],["02-15","BP","オーバーロード","https://ws-tcg.com/products/bp_ovl/"],["03-16","BP","「バンドリ！ ガールズバンドパーティ！」Vol.2","https://ws-tcg.com/products/gbp2/"],["03-29","TD+","ゴブリンスレイヤー","https://ws-tcg.com/products/gbs_td/"],["03-29","TD+","角川スニーカー文庫","https://ws-tcg.com/products/s-td/"],["04-05","BP","角川スニーカー文庫","https://ws-tcg.com/products/s-bp/"],["04-19","BP","ゴブリンスレイヤー","https://ws-tcg.com/products/gbs_bp/"],["05-10","TD+","青春ブタ野郎はバニーガール先輩の夢を見ない","https://ws-tcg.com/products/td_sby/"],["05-10","BP","青春ブタ野郎はバニーガール先輩の夢を見ない","https://ws-tcg.com/products/bp_sby/"],["05-24","BP","劇場版「Fate/stay night [Heaven’s Feel]」","https://ws-tcg.com/products/bp_fatehf/"],["06-07","TD+","富士見ファンタジア文庫","https://ws-tcg.com/products/f-td/"],["06-07","BP","富士見ファンタジア文庫","https://ws-tcg.com/products/f-bp/"],["06-14","TD+","ジョジョの奇妙な冒険 黄金の風","https://ws-tcg.com/products/jojo_gw_td/"],["06-21","TD+","ソードアート・オンライン アリシゼーション","https://ws-tcg.com/products/sao_alicization_td/"],["06-21","BP","ソードアート・オンライン アリシゼーション","https://ws-tcg.com/products/sao_alicization_bp/"],["07-12","BP","魔法少女リリカルなのは Detonation","https://ws-tcg.com/products/nanoha-detonation/"],["07-19","TD+","艦隊これくしょん -艦これ-","https://ws-tcg.com/products/tdplus_kc/"],["07-26","BP","「艦隊これくしょん -艦これ-」5th Phase","https://ws-tcg.com/products/bp_kc5th/"],["08-09","BP","ラブライブ！ feat.スクールアイドルフェスティバル Vol.3～6th Anniversary～","https://ws-tcg.com/products/ll_sif3_bp/"],["08-09","BP","ラブライブ！サンシャイン!! feat.スクールアイドルフェスティバル～6th Anniversary～","https://ws-tcg.com/products/lss_sif_bp/"],["08-23","TD+","カードキャプターさくら クリアカード編","https://ws-tcg.com/products/ccs-clear-td/"],["08-23","BP","カードキャプターさくら クリアカード編","https://ws-tcg.com/products/ccs-clear-bp/"],["09-13","BP","戦姫絶唱シンフォギアAXZ","https://ws-tcg.com/products/bp_symphogear_axz/"],["09-13","BP","戦姫絶唱シンフォギアXD UNLIMITED EXTEND","https://ws-tcg.com/products/sgxd_u_ex/"],["09-27","BP","ジョジョの奇妙な冒険 黄金の風","https://ws-tcg.com/products/jojo_gw_bp/"],["10-25","BP","冴えない彼女の育てかた♭","https://ws-tcg.com/products/shsfl_bp/"],["11-08","BP","少女☆歌劇 レヴュースタァライト -Re LIVE-","https://ws-tcg.com/products/bp_starlight_relive/"],["11-22","BP","Re:ゼロから始める異世界生活 Memory Snow","https://ws-tcg.com/products/bp_rzms/"],["11-29","TD+","転生したらスライムだった件","https://ws-tcg.com/products/ten-sura-td/"],["12-06","TD+","BanG Dream!［RAISE A SUILEN］","https://ws-tcg.com/products/bd_td_ras/"],["12-13","BP","転生したらスライムだった件","https://ws-tcg.com/products/ten-sura-bp/"],["12-28","BP","「BanG Dream!」Vol.2","https://ws-tcg.com/products/bang_dream_bp2/"]],"2020":[["01-24","BP","ソードアート・オンライン 10th Anniversary","https://ws-tcg.com/products/sao_10th_bp/"],["02-14","TD+","グリザイアの果実","https://ws-tcg.com/products/grisaia_td/"],["02-28","BP","この素晴らしい世界に祝福を！ Re:Edit","https://ws-tcg.com/products/ks-reedit/"],["03-13","BP","グリザイアの果実","https://ws-tcg.com/products/grisaia_bp/"],["03-27","TD+","Fate/Grand Order -絶対魔獣戦線バビロニア-","https://ws-tcg.com/products/td_fgo_7/"],["03-27","BP","青春ブタ野郎はゆめみる少女の夢を見ない","https://ws-tcg.com/products/bp_sby_2/"],["04-24","BP","映画 この素晴らしい世界に祝福を！紅伝説","https://ws-tcg.com/products/ks-kurenai/"],["05-15","TD+","アサルトリリィ BOUQUET","https://ws-tcg.com/products/td_all_bq/"],["05-15","TD+","ロストディケイド","https://ws-tcg.com/products/td_lod/"],["05-15","TD+","新サクラ大戦","https://ws-tcg.com/products/td_skr/"],["05-15","BP","新サクラ大戦","https://ws-tcg.com/products/bp_skr/"],["05-29","BP","Key 20th Anniversary","https://ws-tcg.com/products/key/"],["06-05","BP","ロストディケイド","https://ws-tcg.com/products/bp_lod/"],["06-26","BP","Fate/Grand Order -絶対魔獣戦線バビロニア-","https://ws-tcg.com/products/bp_fgo_7/"],["07-10","TD+","デート・ア・ライブ","https://ws-tcg.com/products/td_dal/"],["07-10","BP","デート・ア・ライブ","https://ws-tcg.com/products/bp_dal/"],["07-17","EB","Re:ゼロから始める異世界生活 氷結の絆","https://ws-tcg.com/products/eb_rz/"],["07-31","TD+","TVアニメ「マギアレコード 魔法少女まどか☆マギカ外伝」","https://ws-tcg.com/products/td2_mr/"],["08-14","BP","TVアニメ「マギアレコード 魔法少女まどか☆マギカ外伝」","https://ws-tcg.com/products/bp2_mr/"],["08-28","TD+","五等分の花嫁 一花","https://ws-tcg.com/products/td_5hy_ichika/"],["08-28","TD+","五等分の花嫁 三玖","https://ws-tcg.com/products/td_5hy_miku/"],["08-28","TD+","五等分の花嫁 二乃","https://ws-tcg.com/products/td_5hy_nino/"],["08-28","TD+","五等分の花嫁 五月","https://ws-tcg.com/products/td_5hy_itsuki/"],["08-28","TD+","五等分の花嫁 四葉","https://ws-tcg.com/products/td_5hy_yotsuba/"],["09-11","BP","五等分の花嫁","https://ws-tcg.com/products/bp_5hy/"],["10-09","BP","サーカス 20th Anniversary","https://ws-tcg.com/products/bp-circus-20th/"],["10-30","BP","Summer Pockets REFLECTION BLUE","https://ws-tcg.com/products/bp_smprb/"],["11-13","TD+","痛いのは嫌なので防御力に極振りしたいと思います。","https://ws-tcg.com/products/td_bfr/"],["11-20","BP","痛いのは嫌なので防御力に極振りしたいと思います。","https://ws-tcg.com/products/bp_bfr/"],["12-04","BP","劇場版「Fate/stay night [Heaven’s Feel]」Vol.2","https://ws-tcg.com/products/bp_fatehfvol2/"],["12-11","TD+","ラブライブ！虹ヶ咲学園スクールアイドル同好会 feat.スクールアイドルフェスティバル ALL STARS","https://ws-tcg.com/products/lnj_td/"],["12-18","TD+","かぐや様は告らせたい～天才たちの恋愛頭脳戦～","https://ws-tcg.com/products/td_kgl/"],["12-18","BP","かぐや様は告らせたい～天才たちの恋愛頭脳戦～","https://ws-tcg.com/products/bp_kgl/"],["12-25","TD+","アニメ プリンセスコネクト！Re:Dive","https://ws-tcg.com/products/td_prd/"],["12-25","TD+","彼女、お借りします","https://ws-tcg.com/products/td_knk/"]],"2021":[["01-08","BP","アニメ プリンセスコネクト！Re:Dive","https://ws-tcg.com/products/bp_prd/"],["01-22","TD","Re:Edit アサルトリリィ BOUQUET","https://ws-tcg.com/products/tdre_all/"],["01-22","BP","彼女、お借りします","https://ws-tcg.com/products/bp_knk/"],["02-12","EB","Fate/kaleid liner Prisma☆Illya プリズマ☆ファンタズム","https://ws-tcg.com/products/eb_pipp/"],["02-26","BP","ソードアート・オンライン アリシゼーション Vol.2","https://ws-tcg.com/products/sao_wou/"],["02-26","PB","バンドリ！ ガールズバンドパーティ！","https://ws-tcg.com/products/pb_bgp/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ アルストロメリア","https://ws-tcg.com/products/isc_td_als/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ アンティーカ","https://ws-tcg.com/products/isc_td_lan/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ イルミネーションスターズ","https://ws-tcg.com/products/isc_td_ill/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ ストレイライト","https://ws-tcg.com/products/isc_td_str/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ ノクチル","https://ws-tcg.com/products/isc_td_noc/"],["03-05","TD+","アイドルマスター シャイニーカラーズ 283プロ 放課後クライマックスガールズ","https://ws-tcg.com/products/isc_td_hok/"],["03-12","BP","アイドルマスター シャイニーカラーズ","https://ws-tcg.com/products/isc_bp/"],["03-26","BP","転生したらスライムだった件 Vol.2","https://ws-tcg.com/products/bp_tsk_vol2/"],["04-02","OT","プレミアムセット アサルトリリィ BOUQUET","https://ws-tcg.com/products/set_all/"],["04-09","BP","アサルトリリィ BOUQUET","https://ws-tcg.com/products/bp_all/"],["04-23","BP","ラブライブ！虹ヶ咲学園スクールアイドル同好会 feat.スクールアイドルフェスティバル ALL STARS","https://ws-tcg.com/products/lnj_bp/"],["05-14","EB","デート・ア・バレット","https://ws-tcg.com/products/dab/"],["05-14","TD+","バンドリ！ ガールズバンドパーティ！［Morfonica］","https://ws-tcg.com/products/td_bd_mor/"],["05-28","TD+","神様になった日","https://ws-tcg.com/products/dbg_td/"],["05-28","BP","神様になった日","https://ws-tcg.com/products/dbg_bp/"],["06-11","BP","戦姫絶唱シンフォギアＸＶ","https://ws-tcg.com/products/bp_sg_xv/"],["06-25","EB","Poppin’Party×Roselia","https://ws-tcg.com/products/eb_bd_pprs/"],["07-02","EB","Morfonica×RAISE A SUILEN","https://ws-tcg.com/products/eb_bd_mnrs/"],["07-16","BP","ご注文はうさぎですか？ BLOOM","https://ws-tcg.com/products/bp_gu_bloom/"],["07-30","OT","ヴァイスシュヴァルツクロニクル ペルソナ3","https://ws-tcg.com/products/wschronicle_p3/"],["07-30","TD+","無職転生 ～異世界行ったら本気だす～","https://ws-tcg.com/products/mti_td/"],["07-30","BP","無職転生 ～異世界行ったら本気だす～","https://ws-tcg.com/products/mti_bp/"],["08-20","BP","グリザイアの果実 Vol.2","https://ws-tcg.com/products/grisaia2_bp/"],["08-27","TD+","ラブライブ！スーパースター!!","https://ws-tcg.com/products/lsp_td/"],["09-10","BP","五等分の花嫁∬","https://ws-tcg.com/products/5hy%e2%88%ac/"],["09-24","TD+","ホロライブプロダクション ホロライブ0期生","https://ws-tcg.com/products/hol_td0/"],["09-24","TD+","ホロライブプロダクション ホロライブ1期生","https://ws-tcg.com/products/hol_td1/"],["09-24","TD+","ホロライブプロダクション ホロライブ2期生","https://ws-tcg.com/products/hol_td2/"],["09-24","TD+","ホロライブプロダクション ホロライブ3期生","https://ws-tcg.com/products/hol_td3/"],["09-24","TD+","ホロライブプロダクション ホロライブ4期生","https://ws-tcg.com/products/hol_td4/"],["09-24","TD+","ホロライブプロダクション ホロライブ5期生","https://ws-tcg.com/products/hol_td5/"],["09-24","TD+","ホロライブプロダクション ホロライブゲーマーズ","https://ws-tcg.com/products/hol_tdg/"],["10-01","BP","ホロライブプロダクション","https://ws-tcg.com/products/hol_bp/"],["10-15","OT","ヴァイスシュヴァルツクロニクル リトルバスターズ！","https://ws-tcg.com/products/wschronicle_lb/"],["10-15","TD+","D_CIDE TRAUMEREI","https://ws-tcg.com/products/dct_td/"],["10-15","TD+","ワールドトリガー","https://ws-tcg.com/products/wtr_td/"],["10-15","BP","ワールドトリガー","https://ws-tcg.com/products/wtr_bp/"],["10-29","BP","劇場版 Fate/Grand Order -神聖円卓領域キャメロット-","https://ws-tcg.com/products/bp_fgo_6/"],["11-12","TD+","ゾンビランドサガ リベンジ","https://ws-tcg.com/products/zls_td/"],["11-12","BP","ゾンビランドサガ リベンジ","https://ws-tcg.com/products/zls_bp/"],["11-26","OT","ポートレートブースター 舞台「D.C.Ⅲ ～ダ・カーポⅢ～君と旅する時の魔法」","https://ws-tcg.com/products/pb_dc3stage/"],["11-26","TD+","ダンジョンに出会いを求めるのは間違っているだろうか","https://ws-tcg.com/products/ddm_td/"],["11-26","BP","ダンジョンに出会いを求めるのは間違っているだろうか","https://ws-tcg.com/products/ddm_bp/"],["12-10","BP","ラブライブ！スーパースター!!","https://ws-tcg.com/products/lsp_bp/"],["12-24","TD+","Marvel Avengers","https://ws-tcg.com/products/mar_td/"],["12-24","BP","Marvel/Card Collection","https://ws-tcg.com/products/mar_bp/"]],"2022":[["01-14","BP","アサルトリリィ Vol.2","https://ws-tcg.com/products/bp2_all/"],["01-20","OT","ポートレートブースター アサルトリリィ Last Bullet","https://ws-tcg.com/products/pb_allb/"],["01-28","OT","ヴァイスシュヴァルツクロニクル D.C. D.C.II","https://ws-tcg.com/products/wschronicle_dc/"],["01-28","BP","ご注文はうさぎですか？ Re:Edit","https://ws-tcg.com/products/bp_gu_reedit/"],["02-11","TD+","プロジェクトセカイ カラフルステージ！ feat. 初音ミク 25時、ナイトコードで。","https://ws-tcg.com/products/pjs_td05/"],["02-11","TD+","プロジェクトセカイ カラフルステージ！ feat. 初音ミク Leo/need","https://ws-tcg.com/products/pjs_td01/"],["02-11","TD+","プロジェクトセカイ カラフルステージ！ feat. 初音ミク MORE MORE JUMP！","https://ws-tcg.com/products/pjs_td02/"],["02-11","TD+","プロジェクトセカイ カラフルステージ！ feat. 初音ミク Vivid BAD SQUAD","https://ws-tcg.com/products/pjs_td03/"],["02-11","TD+","プロジェクトセカイ カラフルステージ！ feat. 初音ミク ワンダーランズ×ショウタイム","https://ws-tcg.com/products/pjs_td04/"],["02-11","BP","プロジェクトセカイ カラフルステージ！ feat. 初音ミク","https://ws-tcg.com/products/pjs_bp/"],["03-11","OT","イントロデッキ バンドリ！ ガールズバンドパーティ！ 5th Anniversary","https://ws-tcg.com/products/bd5th_id/"],["03-11","BP","バンドリ！ ガールズバンドパーティ！ 5th Anniversary","https://ws-tcg.com/products/bd5th_bp/"],["03-25","OT","ポートレートブースター 少女☆歌劇 レヴュースタァライト -The LIVE エーデル- Delight","https://ws-tcg.com/products/pb_rsl/"],["04-08","TD+","小林さんちのメイドラゴン","https://ws-tcg.com/products/kmd_td/"],["04-08","BP","小林さんちのメイドラゴン","https://ws-tcg.com/products/kmd_bp/"],["04-29","BP","D_CIDE TRAUMEREI","https://ws-tcg.com/products/dct_bp/"],["05-13","TD+","東京リベンジャーズ","https://ws-tcg.com/products/trv_td/"],["05-13","BP","Booster Pack hololive production","https://ws-tcg.com/products/hol_bp_e/"],["05-13","BP","東京リベンジャーズ","https://ws-tcg.com/products/trv_bp/"],["05-27","BP","ラブライブ！虹ヶ咲学園スクールアイドル同好会","https://ws-tcg.com/products/lnj_bp2/"],["06-03","PB","ホロライブプロダクション","https://ws-tcg.com/products/pb_hol/"],["06-10","BP","冴えない彼女の育てかた Fine","https://ws-tcg.com/products/shsf_bp3/"],["06-24","TD+","Toy Story","https://ws-tcg.com/products/pxr_td01/"],["06-24","BP","アイドルマスター ミリオンライブ！ Welcome to the New St@ge","https://ws-tcg.com/products/imm_bpwns/"],["07-15","BP","かぐや様は告らせたい？<s>～天才たちの恋愛頭脳戦～</s>","https://ws-tcg.com/products/kgl_bp2/"],["07-29","TD+","Monsters, Inc.","https://ws-tcg.com/products/pxr_td02/"],["08-05","BP","デート・ア・ライブ Vol.2","https://ws-tcg.com/products/dal_bp_vol2/"],["09-09","TD+","Cars","https://ws-tcg.com/products/pxr_td03/"],["09-09","BP","アニメ プリンセスコネクト！Re:Dive Season 2","https://ws-tcg.com/products/bp_prd2/"],["09-16","BP","映画「五等分の花嫁」","https://ws-tcg.com/products/mv_5hy_bp/"],["09-23","BP","カムバックブースター / STAR WARS","https://ws-tcg.com/products/sw_cb/"],["09-24","PB","ラブライブ！スクフェスシリーズ感謝祭 2022","https://ws-tcg.com/products/pb_ll/"],["10-14","BP","「劇場版 少女☆歌劇 レヴュースタァライト」","https://ws-tcg.com/products/bprsl_movie/"],["10-21","BP","PIXAR CHARACTERS","https://ws-tcg.com/products/pxr_bp/"],["11-04","BP","オーバーロード Vol.2","https://ws-tcg.com/products/ovl_bp2/"],["11-18","BP","アニメ ソードアート・オンライン 10th Anniversary","https://ws-tcg.com/products/anime_sao_10th_bp/"],["12-09","BP","Key all-star","https://ws-tcg.com/products/key_bp2/"],["12-16","TD","アズールレーン ver.ユニオン","https://ws-tcg.com/products/azl_td1/"],["12-16","TD","アズールレーン ver.ロイヤル","https://ws-tcg.com/products/azl_td2/"],["12-16","TD","アズールレーン ver.重桜","https://ws-tcg.com/products/azl_td3/"],["12-16","TD","アズールレーン ver.鉄血","https://ws-tcg.com/products/azl_td4/"],["12-23","BP","アズールレーン","https://ws-tcg.com/products/azl_bp/"]],"2023":[["01-20","BP","転生したらスライムだった件 Vol.3","https://ws-tcg.com/products/tsk_bp_vol3/"],["02-10","TD","ヘブンバーンズレッド","https://ws-tcg.com/products/tdhbr/"],["02-10","BP","ヘブンバーンズレッド","https://ws-tcg.com/products/bphbr/"],["02-17","PB","MARVEL","https://ws-tcg.com/products/pb_mar/"],["02-17","PB","STAR WARS","https://ws-tcg.com/products/pb_sw/"],["02-24","TD","D4DJ Groovy Mix Happy Around! & Lyrical Lily","https://ws-tcg.com/products/dj_td1/"],["02-24","TD","D4DJ Groovy Mix Merm4id & 燐舞曲","https://ws-tcg.com/products/dj_td3/"],["02-24","TD","D4DJ Groovy Mix Peaky P-key & Photon Maiden","https://ws-tcg.com/products/dj_td2/"],["02-24","TD","ありふれた職業で世界最強","https://ws-tcg.com/products/ari_td/"],["02-24","BP","ありふれた職業で世界最強","https://ws-tcg.com/products/ari_bp/"],["03-24","BP","ホロライブプロダクション Vol.2","https://ws-tcg.com/products/hol_vol2_bp/"],["04-07","BP","Disney100","https://ws-tcg.com/products/disney100_bp/"],["04-15","PB","ラブライブ！スクフェスシリーズ10th Anniversary","https://ws-tcg.com/products/pb_ll10th/"],["04-21","TD","チェンソーマン","https://ws-tcg.com/products/csm_td/"],["04-21","BP","D4DJ Groovy Mix","https://ws-tcg.com/products/dj_bp/"],["05-19","TD","パズル＆ドラゴンズ","https://ws-tcg.com/products/pad_td/"],["05-19","BP","パズル＆ドラゴンズ","https://ws-tcg.com/products/pad_bp/"],["06-02","TD","リコリス・リコイル","https://ws-tcg.com/products/lrc_td/"],["06-02","BP","リコリス・リコイル","https://ws-tcg.com/products/lrc_bp/"],["06-16","BP","チェンソーマン","https://ws-tcg.com/products/csm_bp/"],["06-23","TD","ウマ娘 プリティーダービー 第1R","https://ws-tcg.com/products/umamusume_td1/"],["06-23","TD","ウマ娘 プリティーダービー 第2R","https://ws-tcg.com/products/umamusume_td2/"],["06-30","BP","ウマ娘 プリティーダービー","https://ws-tcg.com/products/umamusume_bp/"],["07-03","OT","プラチナカード / Disney 100 Years of Wonder","https://ws-tcg.com/products/disney-100-years-of-wonder/"],["07-21","TD","SPY×FAMILY","https://ws-tcg.com/products/spy_td/"],["07-21","BP","SPY×FAMILY","https://ws-tcg.com/products/spy_bp/"],["08-11","PB","ジョジョの奇妙な冒険 スターダストクルセイダース","https://ws-tcg.com/products/pb_jsc/"],["08-11","PB","ジョジョの奇妙な冒険 ストーンオーシャン","https://ws-tcg.com/products/pb_jso/"],["08-24","PB","D.C.～ダ・カーポ～ 20th Anniversary","https://ws-tcg.com/products/pb-dc-20th/"],["09-01","TD","電撃文庫 シュヴァルツサイド","https://ws-tcg.com/products/dengekibunko_td2/"],["09-01","TD","電撃文庫 ヴァイスサイド","https://ws-tcg.com/products/dengekibunko_td1/"],["09-01","BP","電撃文庫","https://ws-tcg.com/products/dengekibunko_bp/"],["09-15","PB","バンドリ！ ガールズバンドパーティ！ Countdown Collection","https://ws-tcg.com/products/bdcc_pb/"],["09-22","PB","THE KING OF FIGHTERS","https://ws-tcg.com/products/wspb_kof/"],["09-29","TD","Plus BanG Dream! [MyGO!!!!!]","https://ws-tcg.com/products/bd_tdp/"],["09-29","TD","ぼっち・ざ・ろっく！","https://ws-tcg.com/products/btr_td/"],["09-29","BP","ぼっち・ざ・ろっく！","https://ws-tcg.com/products/btr_bp/"],["10-13","TD","アリス・ギア・アイギス Expansion","https://ws-tcg.com/products/ags_td/"],["10-13","BP","アリス・ギア・アイギス Expansion","https://ws-tcg.com/products/ags_bp/"],["10-20","PB","灼眼のシャナ","https://ws-tcg.com/products/wspb_ss/"],["10-27","BP","ラブライブ！スクールアイドルフェスティバル2 MIRACLE LIVE!","https://ws-tcg.com/products/llsif2_bp/"],["11-10","TD","幻日のヨハネ -SUNSHINE in the MIRROR-","https://ws-tcg.com/products/yhn_td/"],["11-10","BP","幻日のヨハネ -SUNSHINE in the MIRROR-","https://ws-tcg.com/products/yhn_bp/"],["11-23","TD","あやかしトライアングル","https://ws-tcg.com/products/ayt_td/"],["11-23","BP","あやかしトライアングル","https://ws-tcg.com/products/ayt_bp/"],["12-08","TD","【推しの子】","https://ws-tcg.com/products/osk_td/"],["12-08","BP","【推しの子】","https://ws-tcg.com/products/osk_bp/"],["12-22","TD","葬送のフリーレン","https://ws-tcg.com/products/sfn_td/"],["12-22","BP","プロジェクトセカイ カラフルステージ！ feat. 初音ミク Vol.2","https://ws-tcg.com/products/pjs_bp2/"]],"2024":[["01-19","EB","リアセカイ","https://ws-tcg.com/products/wseb_rsk/"],["01-25","PB","マクロスΔ","https://ws-tcg.com/products/pb_mde/"],["02-09","TD","ブルーアーカイブ","https://ws-tcg.com/products/bav_td/"],["02-09","BP","ブルーアーカイブ","https://ws-tcg.com/products/bav_bp/"],["02-23","BP","カードキャプターさくら 25th Anniversary","https://ws-tcg.com/products/ccs_bp/"],["03-08","PB","五等分の花嫁∽","https://ws-tcg.com/products/wspb_5hy/"],["03-15","BP","『青春ブタ野郎』シリーズ","https://ws-tcg.com/products/bp_sby_3/"],["03-22","PB","ホロライブプロダクション Summer Collection","https://ws-tcg.com/products/pb_holsummer/"],["03-29","OT","プレミアムセット ホロライブプロダクション feat.ヴァイスシュヴァルツアンバサダー","https://ws-tcg.com/products/set_hol/"],["04-12","BP","葬送のフリーレン","https://ws-tcg.com/products/sfn_bp/"],["04-26","TD","アイドルマスター シャイニーカラーズ 283プロ シーズ","https://ws-tcg.com/products/isc_tdshh/"],["04-26","BP","アイドルマスター シャイニーカラーズ Shine More!","https://ws-tcg.com/products/isc_bpsh/"],["05-17","PB","ペルソナ３ リロード","https://ws-tcg.com/products/wspb_p3/"],["05-24","TD","Disney ミラー・ウォリアーズ","https://ws-tcg.com/products/mrw_td/"],["05-24","BP","Disney ミラー・ウォリアーズ","https://ws-tcg.com/products/mrw_bp/"],["06-07","BP","グリザイア：ファントムトリガー","https://ws-tcg.com/products/gri_bp3/"],["06-28","TD","『ゆるキャン△ SEASON３』","https://ws-tcg.com/products/yrc_td/"],["06-28","TD","アイドルマスター シンデレラガールズ Type:Cool","https://ws-tcg.com/products/td_imc_co/"],["06-28","TD","アイドルマスター シンデレラガールズ Type:Cute","https://ws-tcg.com/products/td_imc_cu/"],["06-28","TD","アイドルマスター シンデレラガールズ Type:Passion","https://ws-tcg.com/products/td_imc_pa/"],["06-28","BP","アイドルマスター シンデレラガールズ Next Twinkle!","https://ws-tcg.com/products/bp_imc_tw/"],["07-12","TD","るろうに剣心 －明治剣客浪漫譚－","https://ws-tcg.com/products/rkn_td/"],["07-12","BP","るろうに剣心 －明治剣客浪漫譚－","https://ws-tcg.com/products/rkn_bp/"],["07-26","TD","映画クレヨンしんちゃん","https://ws-tcg.com/products/cs_td/"],["07-26","BP","映画クレヨンしんちゃん","https://ws-tcg.com/products/cs_bp/"],["08-09","BP","ヘブンバーンズレッド Vol.2","https://ws-tcg.com/products/hbr_bp2/"],["08-23","PB","STAR WARS Vol.2","https://ws-tcg.com/products/pb_sw2/"],["08-30","BP","MARVEL Vol.2","https://ws-tcg.com/products/mar_bp_2/"],["09-06","BP","ホロライブプロダクション Vol.1&Vol.2 Re:Mix","https://ws-tcg.com/products/bpholremix/"],["09-13","BP","『キャプテン翼』","https://ws-tcg.com/products/ctb_bp/"],["09-27","BP","劇場版『ウマ娘 プリティーダービー 新時代の扉』","https://ws-tcg.com/products/umamusume_bp2/"],["10-11","PB","TVアニメ「ご注文はうさぎですか？」10th Anniversary","https://ws-tcg.com/products/pb_gu/"],["10-25","TD","富士見ファンタジア文庫 Vol.2","https://ws-tcg.com/products/f-td2/"],["10-25","BP","富士見ファンタジア文庫 Vol.2","https://ws-tcg.com/products/f-bp2/"],["11-08","BP","『ゆるキャン△ SEASON３』","https://ws-tcg.com/products/yrc_bp/"],["11-15","PB","リコリス・リコイル","https://ws-tcg.com/products/lrc_pb/"],["11-22","BP","「Re:ゼロから始める異世界生活」Vol.3","https://ws-tcg.com/products/rz_bp3/"],["12-13","TD","TVアニメ『ダンダダン』","https://ws-tcg.com/products/ddd_td/"],["12-13","TD","勝利の女神：NIKKE","https://ws-tcg.com/ex/nik_jp/"],["12-13","BP","勝利の女神：NIKKE","https://ws-tcg.com/ex/nik_jp/"],["12-27","PB","ガールズバンドクライ","https://ws-tcg.com/products/gcr_pb/"]],"2025":[["01-10","OT","コレクションパック プロジェクトセカイ カラフルステージ！ feat. 初音ミク","https://ws-tcg.com/products/cp_pjs/"],["01-17","BP","アズールレーン Vol.2","https://ws-tcg.com/ex/azl_bp2/"],["01-31","TD","ラブライブ！蓮ノ空女学院スクールアイドルクラブ feat. Link！Like！ラブライブ！","https://ws-tcg.com/products/td_lhs/"],["01-31","TD","甘神さんちの縁結び","https://ws-tcg.com/products/amg_td/"],["01-31","BP","ラブライブ！蓮ノ空女学院スクールアイドルクラブ feat. Link！Like！ラブライブ！","https://ws-tcg.com/products/bp_lhs/"],["02-07","BP","FAIRY TAIL 100年クエスト","https://ws-tcg.com/products/ft_bp100q/"],["02-14","BP","【推しの子】Vol.2","https://ws-tcg.com/products/osk_bp2/"],["02-28","TD","BanG Dream! [Ave Mujica]","https://ws-tcg.com/products/td_bd_am/"],["02-28","TD","ガールズバンドクライ","https://ws-tcg.com/products/gcr_td/"],["02-28","BP","MyGO!!!!! × Ave Mujica","https://ws-tcg.com/ex/bd_mm_bp/"],["03-07","EB","ソードアート・オンライン オルタナティブ ガンゲイル・オンラインⅡ","https://ws-tcg.com/products/eb_ggo/"],["03-14","TD","角川スニーカー文庫 Vol.2","https://ws-tcg.com/products/s_td2/"],["03-14","BP","角川スニーカー文庫 Vol.2","https://ws-tcg.com/products/s_bp2/"],["03-28","BP","TVアニメ『ダンダダン』","https://ws-tcg.com/products/ddd_bp/"],["04-18","BP","甘神さんちの縁結び","https://ws-tcg.com/products/amg_bp/"],["05-23","TD","学園アイドルマスター","https://ws-tcg.com/ex/td_bp_gim/"],["05-23","BP","学園アイドルマスター","https://ws-tcg.com/ex/td_bp_gim/"],["05-30","EB","劇場版「オーバーロード」聖王国編","https://ws-tcg.com/products/eb_ovl/"],["06-13","TD","あおぎり高校","https://ws-tcg.com/ex/aoh/"],["06-13","BP","あおぎり高校","https://ws-tcg.com/ex/aoh/"],["06-20","PB","魔法少女リリカルなのは 20th Anniversary","https://ws-tcg.com/products/nta_pb/"],["06-27","TD","負けヒロインが多すぎる！","https://ws-tcg.com/products/mki_td/"],["06-27","BP","負けヒロインが多すぎる！","https://ws-tcg.com/products/mki_bp/"],["07-18","BP","Summer Pockets REFLECTION BLUE Re:Edit","https://ws-tcg.com/products/smp_bp3/"],["07-26","PB","アイドルマスター 765PRO ALLSTARS","https://ws-tcg.com/ex/IMseries20th/pb_ias/"],["08-01","BP","Toy Story 30YEARS＆BEYOND","https://ws-tcg.com/products/pxr_bp2/"],["08-08","TD","怪獣８号","https://ws-tcg.com/products/kj8_td/"],["08-08","BP","怪獣８号","https://ws-tcg.com/products/kj8_bp/"],["09-12","PB","BanG Dream! 10th Anniversary！","https://ws-tcg.com/ex/bd_10th/"],["09-19","BP","MARVEL Vol.3 [MARVEL STUDIOS]","https://ws-tcg.com/products/mar_bp_vol3ms/"],["09-26","PB","アイドルマスター シャイニーカラーズ","https://ws-tcg.com/ex/IMseries20th/pb_isc/"],["10-03","BP","デート・ア・ライブ Vol.3","https://ws-tcg.com/products/dal_bp_vol3/"],["10-24","BP","ブルーアーカイブ The Animation","https://ws-tcg.com/products/bp_bav2/"],["10-31","BP","彼女、お借りします Vol.2","https://ws-tcg.com/products/bp_knk2/"],["11-07","PB","Key 25th Anniversary","https://ws-tcg.com/products/key_pb/"],["11-14","TD","きんいろモザイク 15th Anniversary","https://ws-tcg.com/ex/kms_td_bp/"],["11-14","BP","きんいろモザイク 15th Anniversary","https://ws-tcg.com/ex/kms_td_bp/"],["11-28","PB","原作 オーバーロード","https://ws-tcg.com/products/pb_g-ovl/"],["12-26","BP","プロジェクトセカイ カラフルステージ！ feat. 初音ミク Vol.3","https://ws-tcg.com/products/pjs_bp3/"]],"2026":[["01-16","TD","『テイルズ オブ』シリーズ","https://ws-tcg.com/ex/TAL_ws_wsb/index.html"],["01-16","BP","『テイルズ オブ』シリーズ","https://ws-tcg.com/ex/TAL_ws_wsb/index.html"],["01-30","PB","アイドルマスター シンデレラガールズ","https://ws-tcg.com/ex/IMseries20th/pb_imc/"],["02-13","BP","アニメ『ウマ娘 シンデレラグレイ』","https://ws-tcg.com/products/umamusume_bp3/"],["02-27","BP","アサルトリリィ Last Bullet","https://ws-tcg.com/products/all_bplb/"],["03-06","EB","VIRTUAL GIRL @ WORLD’S END","https://ws-tcg.com/products/vrg_eb/"],["03-06","TD","BanG Dream! [夢限大みゅーたいぷ]","https://ws-tcg.com/products/bdy_td/"],["03-13","BP","D.C. Re:tune ～ダ・カーポ～ リチューン","https://ws-tcg.com/products/bp_dcre/"],["03-20","BP","葬送のフリーレン 新装版","https://ws-tcg.com/products/sfn_bp_new/"],["03-27","BP","青春ブタ野郎はサンタクロースの夢を見ない","https://ws-tcg.com/products/sby_bp_vol4/"],["04-10","BP","TVアニメ『Summer Pockets』","https://ws-tcg.com/products/smp_bp_anime/"],["04-24","PB","アイドルマスター ミリオンライブ！","https://ws-tcg.com/ex/IMseries20th/pb_ims/"],["05-01","TD","anemoi","https://ws-tcg.com/products/anm_td/"],["05-02","OT","プリコネフェス2026 スペシャルカードセット","https://ws-tcg.com/products/scs_prd/"],["05-15","BP","TVアニメ『ダンダダン』Vol.2","https://ws-tcg.com/products/dddbpvol-2/"],["05-30","TD","東方Project ～ Black and White Lotus Land.","https://ws-tcg.com/products/td_thp/"],["05-30","BP","東方Project ～ Black and White Lotus Land.","https://ws-tcg.com/products/bp_thp/"],["06-12","TD","GA文庫","https://ws-tcg.com/products/td_ga/"],["06-12","BP","GA文庫","https://ws-tcg.com/products/bp_ga/"],["06-26","TD","グランブルーファンタジー","https://ws-tcg.com/products/gbf_td/"],["06-26","BP","グランブルーファンタジー","https://ws-tcg.com/products/gbf_bp/"],["07-03","TD","ブラウンダスト2","https://ws-tcg.com/products/brd_td/"],["07-03","BP","ブラウンダスト2","https://ws-tcg.com/products/brd_bp/"],["07-18","OT","アイドルマスター シンデレラガールズ シンデレラガール総選挙2026","https://ws-tcg.com/products/scs_imc/"],["07-24","BP","「Re:ゼロから始める異世界生活」Vol.4","https://ws-tcg.com/products/bp_rzvol-4/"],["08-07","BP","【推しの子】Vol.3","https://ws-tcg.com/products/osk_bp3/"],["08-28","BP","葬送のフリーレン Vol.2","https://ws-tcg.com/products/sfn_bp_vol2/"],["09-19","BP","勝利の女神：NIKKE Vol.2","https://ws-tcg.com/products/nik_bp2/"],["10-02","BP","anemoi","https://ws-tcg.com/products/anm_bp/"],["10-16","TD","ステラソラ","https://ws-tcg.com/products/sts_td/"],["10-16","BP","ステラソラ","https://ws-tcg.com/products/sts_bp/"],["10-30","TD","ガールズ＆パンツァー 大洗女子学園","https://ws-tcg.com/products/gup_td_o/"],["10-30","TD","ガールズ＆パンツァー 無限軌道杯","https://ws-tcg.com/products/gup_td_m/"],["10-30","BP","ガールズ＆パンツァー","https://ws-tcg.com/products/gup_bp/"],["11-13","BP","BanG Dream! [夢限大みゅーたいぷ]","https://ws-tcg.com/products/bdy_bp/"],["11-27","BP","Persona 30th Anniversary","https://ws-tcg.com/products/p30_wsbp/"],["12-18","PB","超かぐや姫！","https://ws-tcg.com/products/cpk_pb/"],["12-25","BP","アズールレーン Vol.3","https://ws-tcg.com/products/azl_vol3_bp/"]]};
 
-  // define variables
-  var items = document.querySelectorAll(".timeline li");
+const TYPE_LABEL = {
+  BP:  'ブースターパック',
+  TD:  'トライアルデッキ',
+  'TD+': 'トライアルデッキ＋',
+  EB:  'エクストラブースター',
+  PB:  'プレミアムブースター',
+  OT:  'その他',
+};
+const CLASS_OF = t => t === 'TD+' ? 'TDP' : t;
 
-  // check if an element is in viewport
-  // http://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
-  function isElementInViewport(el) {
-    var rect = el.getBoundingClientRect();
-    return (
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <=
-        (window.innerHeight || document.documentElement.clientHeight) &&
-      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
+/* ====== 渲染 ====== */
+const timeline = document.getElementById('timeline');
+const yearnav  = document.getElementById('yearnav');
+const years    = Object.keys(DATA);
+let total = 0;
+
+for (const y of years) {
+  const items = DATA[y];
+  total += items.length;
+
+  const sec = document.createElement('section');
+  sec.className = 'year-block';
+  sec.id = 'y' + y;
+  sec.innerHTML =
+    '<div class="big-year" data-speed="0.22" aria-hidden="true">' + y + '</div>' +
+    '<div class="year-head"><h2>' + y + '</h2>' +
+    '<span class="count"><b class="c"></b> 款商品</span></div>' +
+    '<div class="grid"></div>';
+
+  const grid = sec.querySelector('.grid');
+  for (const [md, type, name, url] of items) {
+    const a = document.createElement('a');
+    a.className = 'item';
+    a.dataset.type = type;
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML =
+      '<span class="date">' + md.replace('-', '/') + '</span>' +
+      '<span class="badge ' + CLASS_OF(type) + '" title="' + TYPE_LABEL[type] + '">' + type + '</span>' +
+      '<span class="name"></span>';
+    a.querySelector('.name').textContent = name;
+    grid.appendChild(a);
   }
+  timeline.appendChild(sec);
 
-  function callbackFunc() {
-    for (var i = 0; i < items.length; i++) {
-      if (isElementInViewport(items[i])) {
-        items[i].classList.add("in-view");
-      }
+  const navA = document.createElement('a');
+  navA.href = '#y' + y;
+  navA.textContent = y;
+  yearnav.appendChild(navA);
+}
+
+document.getElementById('stats').innerHTML =
+  '<strong>' + years.length + '</strong><span>年</span>' +
+  '<strong>' + total + '</strong><span>款商品</span>' +
+  '<strong>' + Object.keys(TYPE_LABEL).length + '</strong><span>種類型</span>';
+
+/* ====== 類型篩選 ====== */
+const counts = {};
+for (const y of years) for (const it of DATA[y]) counts[it[1]] = (counts[it[1]] || 0) + 1;
+
+const filterbar = document.getElementById('filterbar');
+const active = new Set(Object.keys(TYPE_LABEL));
+let ticking = false;
+for (const t of Object.keys(TYPE_LABEL)) {
+  const b = document.createElement('button');
+  b.className = 'chip on';
+  b.innerHTML = t + '<span class="n">' + (counts[t] || 0) + '</span>';
+  b.title = TYPE_LABEL[t];
+  b.addEventListener('click', () => {
+    if (active.has(t)) { active.delete(t); b.classList.remove('on'); }
+    else { active.add(t); b.classList.add('on'); }
+    applyFilter();
+  });
+  filterbar.appendChild(b);
+}
+
+function applyFilter() {
+  document.querySelectorAll('.year-block').forEach(sec => {
+    let visible = 0;
+    sec.querySelectorAll('.item').forEach(el => {
+      const show = active.has(el.dataset.type);
+      el.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    sec.querySelector('.c').textContent = visible;
+    sec.classList.toggle('empty', visible === 0);
+  });
+  onScroll(); // 版面高度變了,重算視差與進度
+}
+applyFilter();
+
+/* ====== Parallax:只針對 19 個年份數字,成本極低 ====== */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const layers = Array.from(document.querySelectorAll('.big-year'));
+const railFill = document.getElementById('railFill');
+
+function update() {
+  ticking = false;
+  const vh = window.innerHeight;
+
+  if (!reduceMotion.matches) {
+    for (const el of layers) {
+      const rect = el.parentElement.getBoundingClientRect();
+      if (rect.bottom < -200 || rect.top > vh + 200) continue; // 視窗外不計算
+      const delta = rect.top + rect.height / 2 - vh / 2;
+      el.style.transform = 'translateY(' + (delta * parseFloat(el.dataset.speed)).toFixed(1) + 'px)';
     }
   }
 
-  // listen for events
-  window.addEventListener("load", callbackFunc);
-  window.addEventListener("resize", callbackFunc);
-  window.addEventListener("scroll", callbackFunc);
-})();
+  const t = timeline.getBoundingClientRect();
+  const totalH = t.height - vh;
+  const scrolled = Math.min(Math.max(-t.top, 0), totalH);
+  railFill.style.transform = 'scaleY(' + (totalH > 0 ? scrolled / totalH : 0) + ')';
 
-	$('.nav-link').PushMenu('collapse');	
-			var annButton=document.getElementById('annButton');	
-			annButton.addEventListener("click", function(){
-				$('#announceexampleModalCenter').modal('show');	
-	});	
+  // 年份導覽 scrollspy
+  let current = null;
+  for (const sec of document.querySelectorAll('.year-block:not(.empty)')) {
+    if (sec.getBoundingClientRect().top <= vh * 0.4) current = sec.id;
+  }
+  document.querySelectorAll('.yearnav a').forEach(a => {
+    a.classList.toggle('now', a.getAttribute('href') === '#' + current);
+  });
+}
 
+function onScroll() {
+  if (!ticking) { ticking = true; requestAnimationFrame(update); }
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll);
+update();
 </script>
-<style>
-</style>
+</main>
+<script>
+  function toggleCustomDrawer(event) {
+    if (event) event.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    var button = document.getElementById('leftbar');
+    if (!drawer || !overlay) return;
+    var open = drawer.classList.toggle('open');
+    overlay.classList.toggle('active', open);
+    if (button) {
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      button.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
+    }
+  }
+
+  function toggleSubmenu(element, event) {
+    if (event) event.preventDefault();
+    var item = element.closest('.menu-item');
+    if (item) item.classList.toggle('open');
+  }
+
+  (function () {
+    var button = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeToggleIcon');
+    if (!button || !icon) return;
+
+    function applyTheme(theme) {
+      var dark = theme === 'dark';
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      icon.classList.toggle('fa-sun', dark);
+      icon.classList.toggle('fa-moon', !dark);
+      button.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      button.setAttribute('title', dark ? '切換為淺色模式' : '切換為深色模式');
+      button.setAttribute('aria-label', dark ? '切換為淺色模式' : '切換為深色模式');
+    }
+
+    applyTheme(document.documentElement.getAttribute('data-theme'));
+    button.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('ws-theme', next);
+    });
+  })();
+</script>
 </body>
 </html>
