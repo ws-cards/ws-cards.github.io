@@ -212,13 +212,28 @@
   function moveCard(id, targetGroup, targetIndex) {
     var card = cardMap()[id];
     if (!card || !state.tiers[targetGroup] && targetGroup !== 'unranked') return;
+    var sourceLocation = findLocation(id);
     removeFromCurrent(id);
     var target = targetGroup === 'unranked' ? state.unranked : state.tiers[targetGroup];
-    var index = Math.max(0, Math.min(Number(targetIndex) || 0, target.length));
+    var index = Number(targetIndex);
+    if (!isFinite(index)) index = target.length;
+    if (sourceLocation.group === targetGroup && sourceLocation.index < index) index -= 1;
+    index = Math.max(0, Math.min(index, target.length));
     target.splice(index, 0, id);
     persistState();
     render();
     announce(card.name + ' 已移至 ' + (targetGroup === 'unranked' ? '未分級' : targetGroup + ' Tier') + '。');
+  }
+
+  function getDropIndex(group, targetCard, clientX, clientY) {
+    if (!targetCard) return state[group === 'unranked' ? 'unranked' : group].length;
+    var targetId = targetCard.dataset.cardId;
+    var targetItems = state[group === 'unranked' ? 'unranked' : group];
+    var targetIndex = targetItems.indexOf(targetId);
+    if (targetIndex < 0) return targetItems.length;
+    var rect = targetCard.getBoundingClientRect();
+    var after = clientY > rect.bottom || (clientY >= rect.top && clientY <= rect.bottom && clientX > rect.left + rect.width / 2);
+    return targetIndex + (after ? 1 : 0);
   }
 
   function createCard(card, currentGroup) {
@@ -285,16 +300,7 @@
       if (targetCard === article) { clearDragState(); return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
       clearDragState();
-      if (group === 'unranked') {
-        moveCard(card.id, group, 9999);
-        return;
-      }
-      var cards = Array.prototype.slice.call(items.querySelectorAll('.tier-card')).filter(function (element) { return element !== article; });
-      var index = cards.length;
-      var next = cards.findIndex(function (element) {
-        return point.clientY < element.getBoundingClientRect().top + element.getBoundingClientRect().height / 2;
-      });
-      if (next !== -1) index = next;
+      var index = getDropIndex(group, targetCard, point.clientX, point.clientY);
       moveCard(card.id, group, index);
     }, { passive: true });
     article.addEventListener('touchcancel', function () { clearDragState(); }, { passive: true });
@@ -346,14 +352,7 @@
       var sourceArticle = draggedArticle;
       clearDragState();
       if (targetCard && (targetCard === sourceArticle || targetCard.dataset.cardId === id)) return;
-      if (group === 'unranked') {
-        moveCard(id, group, 9999);
-        return;
-      }
-      var cards = Array.prototype.slice.call(container.querySelectorAll('.tier-card'));
-      var index = cards.length;
-      var next = cards.findIndex(function (card) { return event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2; });
-      if (next !== -1) index = next;
+      var index = getDropIndex(group, targetCard, event.clientX, event.clientY);
       moveCard(id, group, index);
     });
   }
