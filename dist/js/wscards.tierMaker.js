@@ -3,6 +3,7 @@
 
   var STORAGE_KEY = 'ws-tier-maker-series-v1';
   var DATA_URL = 'cardTitle.json';
+  var UNRANKED_RENDER_LIMIT = 80;
   var tierDefinitions = [
     { id: 'S', label: 'S', color: '#e74c3c' },
     { id: 'A', label: 'A', color: '#ed8b32' },
@@ -176,6 +177,11 @@
       document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
       if (!items) { draggedId = null; return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
+      if (group === 'unranked') {
+        moveCard(card.id, group, 9999);
+        draggedId = null;
+        return;
+      }
       var cards = Array.prototype.slice.call(items.querySelectorAll('.tier-card')).filter(function (element) { return element !== article; });
       var index = cards.length;
       var next = cards.findIndex(function (element) {
@@ -204,7 +210,15 @@
       container.innerHTML = '<div class="tier-empty">沒有符合「' + escapeHtml(query) + '」的系列</div>';
       return;
     }
-    visible.forEach(function (id) { container.appendChild(createCard(map[id], group)); });
+    var renderable = group === 'unranked' ? visible.slice(0, UNRANKED_RENDER_LIMIT) : visible;
+    renderable.forEach(function (id) { container.appendChild(createCard(map[id], group)); });
+    if (group === 'unranked' && visible.length > UNRANKED_RENDER_LIMIT) {
+      var hiddenCount = visible.length - UNRANKED_RENDER_LIMIT;
+      var hint = document.createElement('div');
+      hint.className = 'tier-items__hint';
+      hint.textContent = '尚有 ' + hiddenCount + ' 個系列未顯示，請使用搜尋查看。';
+      container.appendChild(hint);
+    }
   }
 
   function addDropEvents(container, group) {
@@ -221,6 +235,10 @@
       container.classList.remove('is-over');
       var id = event.dataTransfer.getData('text/plain') || draggedId;
       if (!id) return;
+      if (group === 'unranked') {
+        moveCard(id, group, 9999);
+        return;
+      }
       var cards = Array.prototype.slice.call(container.querySelectorAll('.tier-card'));
       var index = cards.length;
       var next = cards.findIndex(function (card) { return event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2; });
