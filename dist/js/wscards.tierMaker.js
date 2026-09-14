@@ -13,6 +13,7 @@
   ];
   var state = { cards: [], unranked: [], tiers: {} };
   var draggedId = null;
+  var draggedArticle = null;
   var dragGhost = null;
   var dragGhostOffset = { x: 0, y: 0 };
   var autoScrollFrame = null;
@@ -188,6 +189,7 @@
     document.querySelectorAll('.tier-card.is-dragging').forEach(function (element) { element.classList.remove('is-dragging'); });
     document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
     draggedId = null;
+    draggedArticle = null;
   }
 
   function findLocation(id) {
@@ -240,6 +242,7 @@
     });
     article.addEventListener('dragstart', function (event) {
       draggedId = card.id;
+      draggedArticle = article;
       article.classList.add('is-dragging');
       scheduleUnrankedCollapse();
       event.dataTransfer.effectAllowed = 'move';
@@ -254,6 +257,7 @@
     article.addEventListener('touchstart', function (event) {
       var point = event.touches[0];
       draggedId = card.id;
+      draggedArticle = article;
       article.classList.add('is-dragging');
       scheduleUnrankedCollapse();
       createDragGhost(article, point.clientX, point.clientY);
@@ -274,9 +278,11 @@
       var point = event.changedTouches[0];
       var target = document.elementFromPoint(point.clientX, point.clientY);
       var items = target && target.closest('.tier-items');
+      var targetCard = target && target.closest('.tier-card');
       article.classList.remove('is-dragging');
       document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
       if (!items) { clearDragState(); return; }
+      if (targetCard === article) { clearDragState(); return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
       clearDragState();
       if (group === 'unranked') {
@@ -336,7 +342,10 @@
       container.classList.remove('is-over');
       var id = event.dataTransfer.getData('text/plain') || draggedId;
       if (!id) return;
+      var targetCard = event.target && event.target.closest('.tier-card');
+      var sourceArticle = draggedArticle;
       clearDragState();
+      if (targetCard && (targetCard === sourceArticle || targetCard.dataset.cardId === id)) return;
       if (group === 'unranked') {
         moveCard(id, group, 9999);
         return;
