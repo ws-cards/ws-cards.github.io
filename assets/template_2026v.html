@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('ws-theme');
+      document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+    } catch (error) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+<!-- Replace the page title and sharing metadata when creating a new page. -->
+<title>頁面模板 | WS-Cards</title>
+<meta name="description" content="WS-Cards 個人網站頁面模板">
+<meta name="theme-color" content="#f3f2ee">
+<meta property="og:title" content="頁面模板 | WS-Cards">
+<meta property="og:description" content="WS-Cards 個人網站頁面模板">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" href="dist/css/adminlte.min.css">
+<link rel="stylesheet" href="dist/css/wscards.newline_v101.css">
+<style>
+  :root { color-scheme: light; }
+  [data-theme="dark"] { color-scheme: dark; }
+
+  .personal-template-page {
+    --paper: #f3f2ee;
+    --ink: #161616;
+    --muted: #6f6d67;
+    --rule: #b9b7b0;
+    --accent: #2447d6;
+    --content-gutter: clamp(20px, 5vw, 84px);
+    --content-max: 1440px;
+    --display: 'Archivo Black', 'Noto Sans TC', sans-serif;
+    --body: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+  }
+
+  .personal-template-page *,
+  .personal-template-page *::before,
+  .personal-template-page *::after { box-sizing: border-box; }
+  .personal-template-page { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); line-height: 1.75; overflow-x: hidden; }
+  .personal-template-page ::selection { background: var(--ink); color: var(--paper); }
+  .personal-template-page a { color: inherit; }
+  .personal-template-page button,
+  .personal-template-page a { -webkit-tap-highlight-color: transparent; }
+  .personal-template-page :where(a, button):focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+
+  .personal-template-page .main-header { position: sticky; top: 0; z-index: 100; min-height: 56px; }
+  .personal-template-page .navbar-title-block { display: flex; align-items: center; gap: 8px; margin-left: 10px; }
+  .personal-template-page .navbar-title-text { font-family: var(--body); font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
+  .personal-template-page .navbar-title-badge { font: 700 .65rem var(--display); letter-spacing: .1em; padding: 2px 7px; border: 1px solid currentColor; border-radius: 4px; }
+  .personal-template-page .theme-toggle-btn { width: 40px; height: 40px; border: 1px solid currentColor; border-radius: 999px; background: transparent; }
+
+  .personal-template-page .drawer-heading { padding: 1.6rem 1.5rem 1.4rem; font-family: 'Noto Sans TC', sans-serif; }
+  .personal-template-page .template-drawer-link { color: inherit !important; }
+
+  .personal-template-page .page-shell { min-height: calc(100vh - 56px); }
+  .personal-template-page .hero,
+  .personal-template-page .content-section,
+  .personal-template-page .site-footer { width: min(100%, var(--content-max)); margin: 0 auto; padding-left: var(--content-gutter); padding-right: var(--content-gutter); }
+  .personal-template-page .hero { min-height: min(86vh, 820px); display: flex; flex-direction: column; justify-content: center; padding-top: 6rem; padding-bottom: 7rem; border-bottom: 2px solid var(--ink); }
+  .personal-template-page .hero h1 { max-width: 11em; margin: 0; font-size: clamp(2.8rem, 7vw, 6rem); font-weight: 900; line-height: 1.12; letter-spacing: -.03em; }
+  .personal-template-page .hero h1 strong { display: block; font-family: var(--display); font-weight: 900; letter-spacing: 0; }
+  .personal-template-page .hero-copy { max-width: 38rem; margin: 2rem 0 0; color: var(--muted); font-size: 1.05rem; }
+  .personal-template-page .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2.25rem; }
+  .personal-template-page .text-link { display: inline-flex; align-items: center; gap: .65rem; min-height: 44px; padding: .55rem 1rem; border: 1px solid var(--ink); text-decoration: none; font-weight: 700; transition: background .18s, color .18s; }
+  .personal-template-page .text-link::after { content: '\2197'; font-size: 1.1em; }
+  .personal-template-page .text-link:hover { background: var(--ink); color: var(--paper); }
+  .personal-template-page .text-link.accent { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .personal-template-page .text-link.accent:hover { background: var(--ink); border-color: var(--ink); }
+
+  .personal-template-page .content-section { display: grid; grid-template-columns: minmax(180px, .35fr) minmax(0, 1fr); gap: clamp(2rem, 8vw, 8rem); padding-top: 7rem; padding-bottom: 7rem; border-bottom: 1px solid var(--rule); }
+  .personal-template-page .section-label { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .personal-template-page .section-content h2 { max-width: 14em; margin: 0; font-size: clamp(1.8rem, 4vw, 3.5rem); line-height: 1.25; letter-spacing: -.02em; }
+  .personal-template-page .section-content > p { max-width: 65ch; margin: 1.5rem 0 0; color: var(--muted); }
+  .personal-template-page .link-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 2.5rem; border-top: 1px solid var(--ink); }
+  .personal-template-page .link-list a { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; font-weight: 700; }
+  .personal-template-page .link-list a::after { content: '\2192'; color: var(--accent); transition: transform .18s; }
+  .personal-template-page .link-list a:hover::after { transform: translateX(4px); }
+
+  .personal-template-page .site-footer { display: flex; justify-content: space-between; gap: 2rem; padding-top: 1.5rem; padding-bottom: 2.5rem; color: var(--muted); font-size: .85rem; }
+  .personal-template-page .site-footer p { margin: 0; }
+  .personal-template-page .site-footer strong { color: var(--ink); }
+
+  [data-theme="dark"] .personal-template-page { --paper: #11100e; --ink: #f3f2ee; --muted: #aaa79f; --rule: #5d5b55; --accent: #8fa7ff; }
+  [data-theme="dark"] .personal-template-page .text-link.accent { color: #11100e; }
+  [data-theme="dark"] .personal-template-page .text-link:hover,
+  [data-theme="dark"] .personal-template-page .text-link.accent:hover { background: var(--paper); color: var(--ink); }
+
+  @media (max-width: 720px) {
+    .personal-template-page .hero { min-height: calc(100svh - 56px); padding-top: 4rem; padding-bottom: 4rem; }
+    .personal-template-page .hero h1 { font-size: clamp(2.7rem, 13vw, 4.4rem); }
+    .personal-template-page .content-section { grid-template-columns: 1fr; gap: 1.25rem; padding-top: 4rem; padding-bottom: 4rem; }
+    .personal-template-page .link-list { grid-template-columns: 1fr; margin-top: 2rem; }
+    .personal-template-page .site-footer { align-items: flex-start; flex-direction: column; gap: .35rem; }
+    .personal-template-page .navbar-title-text { max-width: 52vw; overflow: hidden; text-overflow: ellipsis; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .personal-template-page *, .personal-template-page *::before, .personal-template-page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body class="personal-template-page hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div data-navbar data-page-title="頁面模板">
+  <!-- Static fallback keeps the navbar visible when fetch is unavailable. -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#top" id="leftbar" role="button" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)">
+          <span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span>
+        </a>
+      </li>
+    </ul>
+    <div class="navbar-title-block">
+      <span class="navbar-title-text" data-navbar-title>頁面模板</span>
+      <span class="navbar-title-badge">WS</span>
+    </div>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="切換為深色模式" aria-label="切換為深色模式" aria-pressed="false" onclick="toggleTheme()">
+          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+</div>
+<script>
+  (function () {
+    var icon = document.getElementById('themeToggleIcon');
+    if (!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.classList.toggle('fa-sun', dark);
+    icon.classList.toggle('fa-moon', !dark);
+  })();
+</script>
+<script>
+  // A file:// page cannot fetch the shared navbar partial because of browser CORS rules.
+  if (window.location.protocol !== 'file:') {
+    var navbarLoader = document.createElement('script');
+    navbarLoader.src = 'dist/js/include-navbar.js';
+    document.body.appendChild(navbarLoader);
+  }
+</script>
+
+<div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+<aside class="custom-drawer" id="customDrawer" aria-label="網站導覽">
+  <div class="custom-drawer-header drawer-heading">
+    <a href="./" class="brand-link">
+      <img src="dist/img/logo.png" alt="" class="brand-image">
+      <span class="brand-text">WS-Cards</span>
+    </a>
+    <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+  </div>
+  <nav class="custom-drawer-nav" aria-label="網站導覽">
+    <ul>
+      <li class="menu-item open">
+        <a href="#top" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+          <i class="fas fa-tachometer-alt main-icon" aria-hidden="true"></i>
+          <span>遊遊亭價格查詢</span>
+          <i class="fas fa-angle-left right-icon" aria-hidden="true"></i>
+        </a>
+        <ul class="submenu">
+          <li><a href="line" class="menu-link"><i class="fas fa-chart-line main-icon" aria-hidden="true"></i><span>各卡號漲幅趨勢(WS)</span></a></li>
+          <li><a href="lineWSR" class="menu-link"><i class="fas fa-chart-line main-icon" aria-hidden="true"></i><span>各卡號漲幅趨勢(WSR)</span></a></li>
+          <li><a href="deckPrice" class="menu-link"><i class="fas fa-search-dollar main-icon" aria-hidden="true"></i><span>牌組總額查詢計算機</span></a></li>
+        </ul>
+      </li>
+      <li class="menu-item"><a href="championList" class="menu-link template-drawer-link"><i class="fas fa-trophy main-icon" aria-hidden="true"></i><span>優勝牌組查詢</span></a></li>
+    </ul>
+  </nav>
+  <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+</aside>
+
+<main class="page-shell">
+  <!-- Replace this hero title, paragraph, and links for each new page. -->
+  <header class="hero" id="top">
+    <h1><strong>YOUR<br>STORY</strong>從這裡開始</h1>
+    <p class="hero-copy">這是一個可直接複製的個人網站頁面模板。替換標題、說明與連結，就能快速建立下一個內容頁面。</p>
+    <div class="hero-actions">
+      <a class="text-link accent" href="#content">探索內容</a>
+      <a class="text-link" href="#contact">聯絡我</a>
+    </div>
+  </header>
+
+  <!-- Duplicate, remove, or rename this section as the page needs. -->
+  <section class="content-section" id="content">
+    <div class="section-label">About this page</div>
+    <div class="section-content">
+      <h2>讓內容保有自己的節奏。</h2>
+      <p>這裡是主要介紹文字的位置。適合放一段清楚的背景、作品說明或頁面導讀，建議維持短段落與明確的閱讀寬度。</p>
+      <div class="link-list" aria-label="內容連結">
+        <a href="#content">內容連結一</a>
+        <a href="#content">內容連結二</a>
+        <a href="#content">內容連結三</a>
+        <a href="#content">內容連結四</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section" id="contact">
+    <div class="section-label">Next step</div>
+    <div class="section-content">
+      <h2>留下值得繼續的線索。</h2>
+      <p>這個區塊可以改成聯絡方式、下一步行動或頁面結尾。保留一個清楚的出口，讓訪客知道接下來可以做什麼。</p>
+      <div class="hero-actions">
+        <a class="text-link accent" href="#top">回到頁首</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p><strong>WS-Cards</strong> / 個人網站模板</p>
+  <p>© 2026 保留所有權利</p>
+</footer>
+
+<script>
+  function toggleTheme() {
+    var button = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeToggleIcon');
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var next = dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    if (button && icon) {
+      icon.classList.toggle('fa-sun', next === 'dark');
+      icon.classList.toggle('fa-moon', next !== 'dark');
+      button.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
+      button.setAttribute('title', next === 'dark' ? '切換為淺色模式' : '切換為深色模式');
+      button.setAttribute('aria-label', next === 'dark' ? '切換為淺色模式' : '切換為深色模式');
+    }
+    try {
+      localStorage.setItem('ws-theme', next);
+    } catch (error) {
+      // Theme switching still works for the current page when storage is unavailable.
+    }
+  }
+
+  function toggleCustomDrawer(event) {
+    if (event) event.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    var button = document.getElementById('leftbar');
+    if (!drawer || !overlay) return;
+    var open = drawer.classList.toggle('open');
+    overlay.classList.toggle('active', open);
+    if (button) {
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      button.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
+    }
+  }
+
+  function toggleSubmenu(element, event) {
+    if (event) event.preventDefault();
+    var item = element.closest('.menu-item');
+    if (item) item.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
