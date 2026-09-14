@@ -13,6 +13,10 @@
   ];
   var state = { cards: [], unranked: [], tiers: {} };
   var draggedId = null;
+  var dragGhost = null;
+  var dragGhostOffset = { x: 0, y: 0 };
+  var autoScrollFrame = null;
+  var autoScrollVelocity = 0;
   var els = {};
 
   function byId(id) { return document.getElementById(id); }
@@ -100,6 +104,72 @@
     if (els.live) els.live.textContent = message;
   }
 
+  function createDragGhost(article, clientX, clientY) {
+    destroyDragGhost();
+    var rect = article.getBoundingClientRect();
+    dragGhost = article.cloneNode(true);
+    dragGhost.classList.remove('is-dragging');
+    dragGhost.classList.add('tier-drag-ghost');
+    dragGhost.setAttribute('aria-hidden', 'true');
+    dragGhost.setAttribute('draggable', 'false');
+    dragGhostOffset.x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    dragGhostOffset.y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+    dragGhost.style.width = rect.width + 'px';
+    dragGhost.style.height = rect.height + 'px';
+    document.body.appendChild(dragGhost);
+    updateDragGhost(clientX, clientY);
+  }
+
+  function updateDragGhost(clientX, clientY) {
+    if (!dragGhost) return;
+    dragGhost.style.left = (clientX - dragGhostOffset.x) + 'px';
+    dragGhost.style.top = (clientY - dragGhostOffset.y) + 'px';
+  }
+
+  function destroyDragGhost() {
+    if (dragGhost) dragGhost.remove();
+    dragGhost = null;
+  }
+
+  function stopAutoScroll() {
+    autoScrollVelocity = 0;
+    if (autoScrollFrame !== null) cancelAnimationFrame(autoScrollFrame);
+    autoScrollFrame = null;
+  }
+
+  function updateAutoScroll(clientY) {
+    var edge = 88;
+    var maxSpeed = 18;
+    var viewportHeight = window.innerHeight;
+    if (clientY < edge) {
+      autoScrollVelocity = -maxSpeed * (1 - Math.max(0, clientY) / edge);
+    } else if (clientY > viewportHeight - edge) {
+      autoScrollVelocity = maxSpeed * (1 - Math.max(0, viewportHeight - clientY) / edge);
+    } else {
+      autoScrollVelocity = 0;
+    }
+    if (autoScrollVelocity && autoScrollFrame === null) {
+      var scroll = function () {
+        if (!draggedId || !autoScrollVelocity) {
+          autoScrollFrame = null;
+          return;
+        }
+        var root = document.scrollingElement || document.documentElement;
+        root.scrollTop += autoScrollVelocity;
+        autoScrollFrame = requestAnimationFrame(scroll);
+      };
+      autoScrollFrame = requestAnimationFrame(scroll);
+    }
+  }
+
+  function clearDragState() {
+    stopAutoScroll();
+    destroyDragGhost();
+    document.querySelectorAll('.tier-card.is-dragging').forEach(function (element) { element.classList.remove('is-dragging'); });
+    document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
+    draggedId = null;
+  }
+
   function findLocation(id) {
     var location = { group: 'unranked', index: state.unranked.indexOf(id) };
     tierDefinitions.some(function (tier) {
@@ -153,16 +223,25 @@
       article.classList.add('is-dragging');
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', card.id);
+      var transparentImage = document.createElement('canvas');
+      transparentImage.width = 1;
+      transparentImage.height = 1;
+      event.dataTransfer.setDragImage(transparentImage, 0, 0);
+      createDragGhost(article, event.clientX || article.getBoundingClientRect().left, event.clientY || article.getBoundingClientRect().top);
     });
-    article.addEventListener('dragend', function () { article.classList.remove('is-dragging'); draggedId = null; });
-    article.addEventListener('touchstart', function () {
+    article.addEventListener('dragend', function () { clearDragState(); });
+    article.addEventListener('touchstart', function (event) {
+      var point = event.touches[0];
       draggedId = card.id;
       article.classList.add('is-dragging');
+      createDragGhost(article, point.clientX, point.clientY);
     }, { passive: true });
     article.addEventListener('touchmove', function (event) {
       if (event.touches.length !== 1 || !draggedId) return;
       event.preventDefault();
       var point = event.touches[0];
+      updateDragGhost(point.clientX, point.clientY);
+      updateAutoScroll(point.clientY);
       var target = document.elementFromPoint(point.clientX, point.clientY);
       var items = target && target.closest('.tier-items');
       document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
@@ -177,9 +256,9 @@
       document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
       if (!items) { draggedId = null; return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
+      clearDragState();
       if (group === 'unranked') {
         moveCard(card.id, group, 9999);
-        draggedId = null;
         return;
       }
       var cards = Array.prototype.slice.call(items.querySelectorAll('.tier-card')).filter(function (element) { return element !== article; });
@@ -189,8 +268,8 @@
       });
       if (next !== -1) index = next;
       moveCard(card.id, group, index);
-      draggedId = null;
     }, { passive: true });
+    article.addEventListener('touchcancel', function () { clearDragState(); }, { passive: true });
     article.querySelector('select').addEventListener('change', function (event) {
       if (event.target.value) moveCard(card.id, event.target.value, 9999);
       event.target.value = '';
@@ -235,6 +314,7 @@
       container.classList.remove('is-over');
       var id = event.dataTransfer.getData('text/plain') || draggedId;
       if (!id) return;
+      clearDragState();
       if (group === 'unranked') {
         moveCard(id, group, 9999);
         return;
@@ -245,6 +325,19 @@
       if (next !== -1) index = next;
       moveCard(id, group, index);
     });
+  }
+
+  function bindGlobalDragEvents() {
+    document.addEventListener('dragover', function (event) {
+      if (!draggedId) return;
+      updateDragGhost(event.clientX, event.clientY);
+      updateAutoScroll(event.clientY);
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) clearDragState();
+    });
+    window.addEventListener('blur', clearDragState);
+    window.addEventListener('pagehide', clearDragState);
   }
 
   function render() {
@@ -333,6 +426,7 @@
       unranked: byId('tierItemsUnranked'), total: byId('tierTotal'), ranked: byId('tierRanked'), remaining: byId('tierRemaining'),
       exportButton: byId('tierExport'), resetButton: byId('tierReset')
     };
+    bindGlobalDragEvents();
     tierDefinitions.forEach(function (tier) { addDropEvents(byId('tierItems' + tier.id), tier.id); });
     addDropEvents(els.unranked, 'unranked');
     els.search.addEventListener('input', render);
