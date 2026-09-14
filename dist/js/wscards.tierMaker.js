@@ -17,6 +17,7 @@
   var dragGhostOffset = { x: 0, y: 0 };
   var autoScrollFrame = null;
   var autoScrollVelocity = 0;
+  var unrankedCollapseTimer = null;
   var els = {};
 
   function byId(id) { return document.getElementById(id); }
@@ -137,6 +138,24 @@
     autoScrollFrame = null;
   }
 
+  function scheduleUnrankedCollapse() {
+    if (unrankedCollapseTimer !== null) clearTimeout(unrankedCollapseTimer);
+    unrankedCollapseTimer = setTimeout(function () {
+      unrankedCollapseTimer = null;
+      if (!draggedId || !els.unranked) return;
+      var pool = els.unranked.closest('.tier-pool');
+      if (pool) pool.classList.add('is-collapsed');
+    }, 1500);
+  }
+
+  function restoreUnrankedPool() {
+    if (unrankedCollapseTimer !== null) clearTimeout(unrankedCollapseTimer);
+    unrankedCollapseTimer = null;
+    if (!els.unranked) return;
+    var pool = els.unranked.closest('.tier-pool');
+    if (pool) pool.classList.remove('is-collapsed');
+  }
+
   function updateAutoScroll(clientY) {
     var edge = 88;
     var maxSpeed = 18;
@@ -165,6 +184,7 @@
   function clearDragState() {
     stopAutoScroll();
     destroyDragGhost();
+    restoreUnrankedPool();
     document.querySelectorAll('.tier-card.is-dragging').forEach(function (element) { element.classList.remove('is-dragging'); });
     document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
     draggedId = null;
@@ -221,6 +241,7 @@
     article.addEventListener('dragstart', function (event) {
       draggedId = card.id;
       article.classList.add('is-dragging');
+      scheduleUnrankedCollapse();
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', card.id);
       var transparentImage = document.createElement('canvas');
@@ -234,6 +255,7 @@
       var point = event.touches[0];
       draggedId = card.id;
       article.classList.add('is-dragging');
+      scheduleUnrankedCollapse();
       createDragGhost(article, point.clientX, point.clientY);
     }, { passive: true });
     article.addEventListener('touchmove', function (event) {
@@ -254,7 +276,7 @@
       var items = target && target.closest('.tier-items');
       article.classList.remove('is-dragging');
       document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
-      if (!items) { draggedId = null; return; }
+      if (!items) { clearDragState(); return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
       clearDragState();
       if (group === 'unranked') {
