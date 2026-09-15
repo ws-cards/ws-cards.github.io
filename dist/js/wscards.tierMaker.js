@@ -18,7 +18,7 @@
   var dragGhostOffset = { x: 0, y: 0 };
   var autoScrollFrame = null;
   var autoScrollVelocity = 0;
-  var draggedSourceGroup = null;
+  var unrankedCollapseTimer = null;
   var els = {};
 
   function byId(id) { return document.getElementById(id); }
@@ -139,13 +139,19 @@
     autoScrollFrame = null;
   }
 
-  function collapseUnrankedPool() {
-    if (!els.unranked) return;
-    var pool = els.unranked.closest('.tier-pool');
-    if (pool) pool.classList.add('is-collapsed');
+  function scheduleUnrankedCollapse() {
+    if (unrankedCollapseTimer !== null) clearTimeout(unrankedCollapseTimer);
+    unrankedCollapseTimer = setTimeout(function () {
+      unrankedCollapseTimer = null;
+      if (!draggedId || !els.unranked) return;
+      var pool = els.unranked.closest('.tier-pool');
+      if (pool) pool.classList.add('is-collapsed');
+    }, 1500);
   }
 
   function restoreUnrankedPool() {
+    if (unrankedCollapseTimer !== null) clearTimeout(unrankedCollapseTimer);
+    unrankedCollapseTimer = null;
     if (!els.unranked) return;
     var pool = els.unranked.closest('.tier-pool');
     if (pool) pool.classList.remove('is-collapsed');
@@ -184,7 +190,6 @@
     document.querySelectorAll('.tier-items.is-over').forEach(function (element) { element.classList.remove('is-over'); });
     draggedId = null;
     draggedArticle = null;
-    draggedSourceGroup = null;
   }
 
   function findLocation(id) {
@@ -254,8 +259,7 @@
       draggedId = card.id;
       draggedArticle = article;
       article.classList.add('is-dragging');
-      draggedSourceGroup = findLocation(card.id).group;
-      if (draggedSourceGroup === 'unranked') collapseUnrankedPool();
+      scheduleUnrankedCollapse();
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', card.id);
       var transparentImage = document.createElement('canvas');
@@ -270,8 +274,7 @@
       draggedId = card.id;
       draggedArticle = article;
       article.classList.add('is-dragging');
-      draggedSourceGroup = findLocation(card.id).group;
-      if (draggedSourceGroup === 'unranked') collapseUnrankedPool();
+      scheduleUnrankedCollapse();
       createDragGhost(article, point.clientX, point.clientY);
     }, { passive: true });
     article.addEventListener('touchmove', function (event) {
@@ -296,9 +299,7 @@
       if (!items) { clearDragState(); return; }
       if (targetCard === article) { clearDragState(); return; }
       var group = items.id === 'tierItemsUnranked' ? 'unranked' : items.id.replace('tierItems', '');
-      var sourceGroup = draggedSourceGroup;
       clearDragState();
-      if (sourceGroup === 'unranked' && group === 'unranked') return;
       var index = getDropIndex(group, targetCard, point.clientX, point.clientY);
       moveCard(card.id, group, index);
     }, { passive: true });
@@ -349,13 +350,10 @@
       if (!id) return;
       var targetCard = event.target && event.target.closest('.tier-card');
       var sourceArticle = draggedArticle;
-      var sourceGroup = draggedSourceGroup;
-      var targetGroup = group;
       clearDragState();
       if (targetCard && (targetCard === sourceArticle || targetCard.dataset.cardId === id)) return;
-      if (sourceGroup === 'unranked' && targetGroup === 'unranked') return;
-      var index = getDropIndex(targetGroup, targetCard, event.clientX, event.clientY);
-      moveCard(id, targetGroup, index);
+      var index = getDropIndex(group, targetCard, event.clientX, event.clientY);
+      moveCard(id, group, index);
     });
   }
 
