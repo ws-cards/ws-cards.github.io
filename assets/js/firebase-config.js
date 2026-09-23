@@ -4,10 +4,11 @@
  * 範例見 firebase-config.example.js
  */
 window.WS_FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA-by2t0FsVs0knWlOU9PneHCHbb_x13Oo",
+  authDomain: "divine-vehicle-292507.firebaseapp.com",
+  projectId: "divine-vehicle-292507",
+  storageBucket: "divine-vehicle-292507.firebasestorage.app",
+  messagingSenderId: "669727048059",
+  appId: "1:669727048059:web:2719833abc2ce9aa4ffdde",
+  measurementId: "G-QK9CC71Q6F"
 };
