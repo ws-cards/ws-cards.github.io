@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WS 場上戰況計算</title>
-  <link rel="stylesheet" href="../plugins/fontawesome-free/css/all.min.css">
-  <link rel="stylesheet" href="../dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
   <style>
     :root{
       /* 黑白相間 + 單線條（極簡） */
@@ -37,10 +37,11 @@
     }
     .topbar{
       display:flex;
-      align-items:baseline;
+      align-items:flex-start;
       justify-content:space-between;
       gap: 12px;
       margin-bottom: 14px;
+      flex-wrap: wrap;
     }
     .title{
       display:flex;
@@ -57,6 +58,13 @@
       color: var(--muted);
       font-size: 12px;
     }
+    .topbar-actions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
     .pill{
       display:inline-flex;
       align-items:center;
@@ -68,6 +76,11 @@
       color: var(--muted);
       font-size: 12px;
       white-space: nowrap;
+    }
+    .auth-user{
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .board{
       border-radius: var(--radius);
@@ -781,11 +794,20 @@
     <div class="topbar">
       <div class="title">
         <h1>WS 場上戰況計算</h1>
-        <div class="sub">能量區、牌組僅顯示數量；其他公開區可點擊查看清單。</div>
+        <div class="sub">能量區、牌組僅顯示數量；其他公開區可點擊查看清單。登入後可同步到雲端。</div>
       </div>
-      <div class="pill" id="saveStatus">
-        <i class="fas fa-circle text-success" style="font-size:10px;"></i>
-        <span>已自動儲存</span>
+      <div class="topbar-actions">
+        <div class="pill" id="saveStatus" title="本機與雲端儲存狀態">
+          <i class="fas fa-circle text-success" style="font-size:10px;"></i>
+          <span id="saveStatusText">已自動儲存（本機）</span>
+        </div>
+        <span class="pill auth-user" id="authUserLabel" style="display:none;"></span>
+        <button type="button" class="btn-ghost" id="btnAuthSignIn" title="使用 Google 登入並同步戰況">
+          <i class="fab fa-google mr-1"></i>登入同步
+        </button>
+        <button type="button" class="btn-ghost" id="btnAuthSignOut" style="display:none;" title="登出（本機資料仍保留）">
+          <i class="fas fa-sign-out-alt mr-1"></i>登出
+        </button>
       </div>
     </div>
 
@@ -1145,10 +1167,21 @@
     </div>
   </div>
 
-  <script src="../plugins/jquery/jquery.min.js"></script>
-  <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="plugins/jquery/jquery.min.js"></script>
+  <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
   <script>
     const STORAGE_KEY = "ws-battle-counter-v1";
+    const CLOUD_SAVE_MS = 800;
+
+    const fb = window.WsFirebase || null;
+    let cloudUser = null;
+    let cloudSaveTimer = null;
+    let cloudSyncing = false;
 
     const PUBLIC_ZONES = [
       { key: "hand", label: "手牌" },
@@ -1402,10 +1435,61 @@
       }
     }
 
+    function setSaveStatus(text, ok) {
+      const el = document.getElementById("saveStatus");
+      const textEl = document.getElementById("saveStatusText");
+      if (textEl) textEl.textContent = text;
+      if (!el) return;
+      const icon = el.querySelector("i");
+      if (icon) {
+        icon.className = ok === false
+          ? "fas fa-circle text-danger"
+          : "fas fa-circle text-success";
+        icon.style.fontSize = "10px";
+      }
+      el.style.borderColor = ok === false
+        ? "rgba(220,53,69,.55)"
+        : "rgba(45,212,191,.55)";
+      setTimeout(() => { el.style.borderColor = "var(--border)"; }, 450);
+    }
+
+    function scheduleCloudSave() {
+      if (!fb || !fb.ready || !cloudUser) return;
+      if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        cloudSaveTimer = null;
+        pushStateToCloud();
+      }, CLOUD_SAVE_MS);
+    }
+
+    function pushStateToCloud() {
+      if (!fb || !fb.ready || !cloudUser || !state) return Promise.resolve(false);
+      cloudSyncing = true;
+      setSaveStatus("同步雲端中…", true);
+      return fb.saveCountingState(state)
+        .then(function (ok) {
+          cloudSyncing = false;
+          if (ok) setSaveStatus("已同步雲端", true);
+          else setSaveStatus("已儲存（本機）", true);
+          return ok;
+        })
+        .catch(function (err) {
+          cloudSyncing = false;
+          console.error("Firestore sync failed:", err);
+          setSaveStatus("雲端同步失敗（本機仍已存）", false);
+          return false;
+        });
+    }
+
     function saveState() {
       state.updatedAt = Date.now();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      flashSaved();
+      if (cloudUser) {
+        scheduleCloudSave();
+        setSaveStatus("已存本機，準備同步…", true);
+      } else {
+        setSaveStatus("已自動儲存（本機）", true);
+      }
     }
 
     let saveTimer = null;
@@ -1414,11 +1498,123 @@
       saveTimer = setTimeout(() => saveState(), 120);
     }
 
-    function flashSaved() {
-      const el = document.getElementById("saveStatus");
-      if (!el) return;
-      el.style.borderColor = "rgba(45,212,191,.55)";
-      setTimeout(() => { el.style.borderColor = "var(--border)"; }, 450);
+    function stateUpdatedAt(s) {
+      return (s && typeof s.updatedAt === "number") ? s.updatedAt : 0;
+    }
+
+    function applyLoadedState(next) {
+      if (!next || !next.zones) return;
+      state = next;
+      for (const z of [...PUBLIC_ZONES, ...HIDDEN_ZONES]) ensureZone(z.key);
+      rebuildRefCatalogFromDeck();
+      renderCounts();
+    }
+
+    /**
+     * 登入後合併：取 updatedAt 較新的一邊；若雲端無資料則上傳本機。
+     */
+    function mergeLocalAndCloud() {
+      if (!fb || !fb.ready || !cloudUser) return Promise.resolve();
+      const local = state;
+      setSaveStatus("讀取雲端戰況…", true);
+      return fb.loadCountingState()
+        .then(function (remote) {
+          if (!remote) {
+            return pushStateToCloud().then(function () {
+              setSaveStatus("已上傳本機戰況到雲端", true);
+            });
+          }
+          const localTs = stateUpdatedAt(local);
+          const remoteTs = stateUpdatedAt(remote);
+          if (remoteTs > localTs) {
+            applyLoadedState(remote);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            setSaveStatus("已載入雲端戰況", true);
+            return;
+          }
+          if (localTs > remoteTs) {
+            return pushStateToCloud().then(function () {
+              setSaveStatus("本機較新，已覆蓋雲端", true);
+            });
+          }
+          setSaveStatus("本機與雲端已一致", true);
+        })
+        .catch(function (err) {
+          console.error("Cloud merge failed:", err);
+          setSaveStatus("雲端讀取失敗（繼續用本機）", false);
+        });
+    }
+
+    function updateAuthUi(user) {
+      cloudUser = user || null;
+      const btnIn = document.getElementById("btnAuthSignIn");
+      const btnOut = document.getElementById("btnAuthSignOut");
+      const label = document.getElementById("authUserLabel");
+      const configured = !!(fb && fb.ready);
+
+      if (btnIn) {
+        btnIn.style.display = cloudUser ? "none" : "";
+        btnIn.disabled = false;
+        if (!configured) {
+          btnIn.title = (fb && fb.reason) || "請先設定 Firebase";
+        } else {
+          btnIn.title = "使用 Google 登入並同步戰況";
+        }
+      }
+      if (btnOut) btnOut.style.display = cloudUser ? "" : "none";
+      if (label) {
+        if (cloudUser) {
+          label.style.display = "";
+          label.textContent = cloudUser.displayName || cloudUser.email || cloudUser.uid;
+          label.title = cloudUser.email || cloudUser.uid;
+        } else {
+          label.style.display = "none";
+          label.textContent = "";
+        }
+      }
+    }
+
+    function wireAuth() {
+      const btnIn = document.getElementById("btnAuthSignIn");
+      const btnOut = document.getElementById("btnAuthSignOut");
+
+      if (btnIn) {
+        btnIn.addEventListener("click", function () {
+          if (!fb || !fb.ready) {
+            alert((fb && fb.reason) || "請先在 assets/js/firebase-config.js 填入 Firebase 設定，並於 Console 啟用 Google 登入。");
+            return;
+          }
+          btnIn.disabled = true;
+          fb.signInWithGoogle()
+            .catch(function (err) {
+              console.error(err);
+              alert("登入失敗：" + (err && err.message ? err.message : err));
+            })
+            .then(function () {
+              btnIn.disabled = false;
+            });
+        });
+      }
+
+      if (btnOut) {
+        btnOut.addEventListener("click", function () {
+          if (!fb || !fb.ready) return;
+          fb.signOut().catch(function (err) {
+            console.error(err);
+            alert("登出失敗：" + (err && err.message ? err.message : err));
+          });
+        });
+      }
+
+      if (fb && typeof fb.onAuth === "function") {
+        fb.onAuth(function (user) {
+          updateAuthUi(user);
+          if (user) mergeLocalAndCloud();
+          else if (fb.ready) setSaveStatus("已自動儲存（本機）", true);
+        });
+      } else {
+        updateAuthUi(null);
+      }
     }
 
     function zoneLabel(key) {
@@ -2518,6 +2714,7 @@
       }
       rebuildRefCatalogFromDeck();
       wireAddCardAutocompletes();
+      wireAuth();
       // 讓匯入/洗牌後也能即時更新提示索引
       $("#editorModal").on("shown.bs.modal", function() {
         rebuildRefCatalogFromDeck();

@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 使用者自己的計數／收藏等資料
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // 公開唯讀（若之後要放賽事榜等）
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
