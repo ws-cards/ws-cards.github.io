@@ -1,6 +1,7 @@
 /**
  * WS-Cards Firebase Auth + Firestore 輕量封裝（compat SDK）。
- * 依賴：firebase-app-compat / auth-compat / firestore-compat，以及 window.WS_FIREBASE_CONFIG
+ * 依賴：firebase-app-compat / auth-compat，以及 window.WS_FIREBASE_CONFIG
+ * firestore-compat 可選：僅 save/loadCountingState 需要。
  */
 (function (global) {
   "use strict";
@@ -30,6 +31,7 @@
   function createDisabledApi(reason) {
     return {
       ready: false,
+      firestoreReady: false,
       reason: reason || "Firebase 尚未設定",
       auth: null,
       db: null,
@@ -55,6 +57,9 @@
     if (typeof global.firebase === "undefined") {
       return createDisabledApi("Firebase SDK 未載入");
     }
+    if (!firebase.auth) {
+      return createDisabledApi("Firebase Auth SDK 未載入");
+    }
 
     try {
       if (!firebase.apps.length) {
@@ -65,10 +70,25 @@
     }
 
     var auth = firebase.auth();
-    var db = firebase.firestore();
+    var db = null;
+    if (typeof firebase.firestore === "function") {
+      try {
+        db = firebase.firestore();
+      } catch (e) {
+        db = null;
+      }
+    }
+
+    function requireDb() {
+      if (!db) {
+        return Promise.reject(new Error("Firebase Firestore SDK 未載入"));
+      }
+      return null;
+    }
 
     return {
       ready: true,
+      firestoreReady: !!db,
       reason: "",
       auth: auth,
       db: db,
@@ -89,6 +109,8 @@
         return auth.signOut();
       },
       loadCountingState: function () {
+        var missing = requireDb();
+        if (missing) return missing;
         var user = auth.currentUser;
         if (!user) return Promise.resolve(null);
         return sessionRef(db, user.uid)
@@ -100,6 +122,8 @@
           });
       },
       saveCountingState: function (state) {
+        var missing = requireDb();
+        if (missing) return missing;
         var user = auth.currentUser;
         if (!user || !state || !state.zones) return Promise.resolve(false);
         var payload = {
