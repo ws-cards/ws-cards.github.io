@@ -4,7 +4,7 @@
   var container = document.querySelector('[data-navbar]');
   if (!container) return;
 
-  var templatePath = container.getAttribute('data-navbar-template') || 'assets/partials/navbar.html';
+  var templatePath = container.getAttribute('data-navbar-template') || '/assets/partials/navbar.html';
   var pageTitle = container.getAttribute('data-page-title') || document.title;
 
   function applyTheme(theme, button, icon) {
