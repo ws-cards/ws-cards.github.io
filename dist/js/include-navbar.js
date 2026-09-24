@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  var AUTH_HINT_KEY = 'ws-auth-signed-in';
+  var AUTH_LABEL_KEY = 'ws-auth-label';
+
   var container = document.querySelector('[data-navbar]');
   if (!container) return;
 
@@ -27,7 +30,42 @@
     }
   }
 
-  function updateAuthUi(user) {
+  function readAuthHint() {
+    try {
+      if (localStorage.getItem(AUTH_HINT_KEY) !== '1') return null;
+      return {
+        displayName: localStorage.getItem(AUTH_LABEL_KEY) || '',
+        email: ''
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeAuthHint(user) {
+    try {
+      if (user) {
+        localStorage.setItem(AUTH_HINT_KEY, '1');
+        localStorage.setItem(
+          AUTH_LABEL_KEY,
+          user.displayName || user.email || user.uid || ''
+        );
+      } else {
+        localStorage.removeItem(AUTH_HINT_KEY);
+        localStorage.removeItem(AUTH_LABEL_KEY);
+      }
+    } catch (e) {
+      // private mode 等略過
+    }
+  }
+
+  /**
+   * @param {object|null} user
+   * @param {{ persist?: boolean }} [options] persist 預設 true；樂觀 UI 時設 false 以免誤清 hint
+   */
+  function updateAuthUi(user, options) {
+    var opts = options || {};
+    var persist = opts.persist !== false;
     var btnIn = container.querySelector('#navAuthSignIn');
     var btnOut = container.querySelector('#navAuthSignOut');
     var label = container.querySelector('#navAuthUser');
@@ -38,7 +76,7 @@
     if (label) {
       if (signedIn) {
         var text = user.displayName || user.email || user.uid || '';
-        label.style.display = '';
+        label.style.display = text ? '' : 'none';
         label.textContent = text;
         label.title = user.email || text;
       } else {
@@ -47,6 +85,14 @@
         label.title = '';
       }
     }
+
+    if (persist) writeAuthHint(user);
+  }
+
+  function applyOptimisticAuthUi() {
+    var hint = readAuthHint();
+    if (hint) updateAuthUi(hint, { persist: false });
+    // 無 hint：保持 navbar 預設（登入／登出皆隱藏），等 Firebase 確認
   }
 
   function initializeAuth() {
@@ -55,6 +101,8 @@
     var fb = window.WsFirebase;
 
     if (!btnIn && !btnOut) return;
+
+    applyOptimisticAuthUi();
 
     if (btnIn) {
       btnIn.addEventListener('click', function () {
@@ -84,13 +132,14 @@
       });
     }
 
-    if (fb && typeof fb.onAuth === 'function') {
+    if (fb && fb.ready && typeof fb.onAuth === 'function') {
       fb.onAuth(function (user) {
         updateAuthUi(user);
         dispatchAuthChanged(user);
       });
-    } else {
-      updateAuthUi(null);
+    } else if (!readAuthHint()) {
+      // 無 Firebase 且無 hint：顯示登入鈕（點擊會提示設定）
+      updateAuthUi(null, { persist: false });
     }
   }
 
