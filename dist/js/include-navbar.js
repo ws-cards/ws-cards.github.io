@@ -71,18 +71,29 @@
     var label = container.querySelector('#navAuthUser');
     var signedIn = !!user;
 
-    if (btnIn) btnIn.style.display = signedIn ? 'none' : '';
-    if (btnOut) btnOut.style.display = signedIn ? '' : 'none';
+    if (btnIn) {
+      btnIn.style.display = '';
+      var inItem = container.querySelector('#navAuthSignInItem') || btnIn.parentElement;
+      if (inItem) inItem.style.display = signedIn ? 'none' : '';
+    }
+    if (btnOut) {
+      btnOut.style.display = '';
+      var outItem = container.querySelector('#navAuthSignOutItem') || btnOut.parentElement;
+      if (outItem) outItem.style.display = signedIn ? '' : 'none';
+    }
     if (label) {
+      var labelItem = container.querySelector('#navAuthUserItem') || label.parentElement;
       if (signedIn) {
         var text = user.displayName || user.email || user.uid || '';
-        label.style.display = text ? '' : 'none';
         label.textContent = text;
         label.title = user.email || text;
+        if (labelItem) {
+          labelItem.style.display = text ? 'flex' : 'none';
+        }
       } else {
-        label.style.display = 'none';
         label.textContent = '';
         label.title = '';
+        if (labelItem) labelItem.style.display = 'none';
       }
     }
 
