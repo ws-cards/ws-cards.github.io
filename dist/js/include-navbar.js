@@ -42,6 +42,40 @@
     }
   }
 
+  /** 插入 DOM 前就把 hint 寫進 HTML，避免先畫錯 icon；也不再依賴 display:none（快取不同步會整顆消失） */
+  function applyThemeHintToNavbarHtml(html, theme) {
+    var dark = theme === 'dark';
+    var out = String(html || '');
+    // 清掉舊版方案 C 殘留的 display:none，避免按鈕永遠隱藏
+    out = out.replace(
+      /id="navThemeToggleItem"([^>]*)style="display:\s*none;?"/i,
+      'id="navThemeToggleItem"$1'
+    );
+    out = out.replace(
+      /(<li[^>]*id="navThemeToggleItem"[^>]*style=")display:\s*none;?([^"]*")/i,
+      '$1$2'
+    );
+    if (dark) {
+      out = out.replace(
+        /id="themeToggleIcon" class="fas fa-moon"/,
+        'id="themeToggleIcon" class="fas fa-sun"'
+      );
+      out = out.replace(
+        /id="themeToggleBtn"([\s\S]*?)title="切換為深色模式"/,
+        'id="themeToggleBtn"$1title="切換為淺色模式"'
+      );
+      out = out.replace(
+        /id="themeToggleBtn"([\s\S]*?)aria-label="切換為深色模式"/,
+        'id="themeToggleBtn"$1aria-label="切換為淺色模式"'
+      );
+      out = out.replace(
+        /id="themeToggleBtn"([\s\S]*?)aria-pressed="false"/,
+        'id="themeToggleBtn"$1aria-pressed="true"'
+      );
+    }
+    return out;
+  }
+
   function dispatchAuthChanged(user) {
     try {
       document.dispatchEvent(new CustomEvent('ws-auth-changed', {
@@ -184,10 +218,12 @@
     if (title) title.textContent = pageTitle;
     if (!button || !icon) return;
 
-    // 方案 C：先依 hint 套好正確 icon，再顯示按鈕，避免月亮／太陽閃爍
+    // 方案 C：依 hint 確認 icon；並強制清掉可能殘留的 display:none
     var currentTheme = resolveThemeHint();
     applyTheme(currentTheme, button, icon);
-    if (themeItem) themeItem.style.display = '';
+    if (themeItem) {
+      themeItem.style.removeProperty('display');
+    }
 
     button.addEventListener('click', function () {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -202,7 +238,8 @@
       return response.text();
     })
     .then(function (html) {
-      container.innerHTML = html;
+      var theme = resolveThemeHint();
+      container.innerHTML = applyThemeHintToNavbarHtml(html, theme);
       initializeNavbar();
       initializeAuth();
     })
