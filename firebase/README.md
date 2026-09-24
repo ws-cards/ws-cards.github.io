@@ -14,6 +14,23 @@
 | `assets/js/ws-firebase.js` | Auth / Firestore 封裝（已寫好，通常不用改） |
 | `firebase/firestore.rules` | 安全規則（要貼到 Console 並發布） |
 | `countingDemoNew.html` | 已接好登入按鈕與同步邏輯 |
+| `account.html` | Auth + Firestore 個人資料頁 |
+
+---
+
+## 資料模型（摘要）
+
+```
+users/{uid}                              ← 個人資料（account.html）
+  displayName, email, photoURL
+  nickname, bio
+  createdAt, updatedAt
+
+users/{uid}/countingSessions/default     ← 戰況（countingDemoNew）
+  state, updatedAt, syncedAt
+```
+
+> 請將最新 `firebase/firestore.rules` 發布到 Console（需允許 `users/{uid}` 本體讀寫，不只子集合）。
 
 ---
 
