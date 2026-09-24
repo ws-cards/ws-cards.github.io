@@ -3,6 +3,7 @@
 
   var AUTH_HINT_KEY = 'ws-auth-signed-in';
   var AUTH_LABEL_KEY = 'ws-auth-label';
+  var THEME_HINT_KEY = 'ws-theme';
 
   var container = document.querySelector('[data-navbar]');
   if (!container) return;
@@ -18,6 +19,27 @@
     button.setAttribute('aria-pressed', dark ? 'true' : 'false');
     button.setAttribute('title', dark ? '切換為淺色模式' : '切換為深色模式');
     button.setAttribute('aria-label', dark ? '切換為淺色模式' : '切換為深色模式');
+  }
+
+  /** 與 Auth 方案 C 相同：優先 data-theme，其次 localStorage hint */
+  function resolveThemeHint() {
+    var attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'dark' || attr === 'light') return attr;
+    try {
+      var saved = localStorage.getItem(THEME_HINT_KEY);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch (e) {
+      // ignore
+    }
+    return 'light';
+  }
+
+  function writeThemeHint(theme) {
+    try {
+      localStorage.setItem(THEME_HINT_KEY, theme === 'dark' ? 'dark' : 'light');
+    } catch (e) {
+      // private mode 等略過
+    }
   }
 
   function dispatchAuthChanged(user) {
@@ -158,19 +180,19 @@
     var title = container.querySelector('[data-navbar-title]');
     var button = container.querySelector('#themeToggleBtn');
     var icon = container.querySelector('#themeToggleIcon');
+    var themeItem = container.querySelector('#navThemeToggleItem') || (button && button.parentElement);
     if (title) title.textContent = pageTitle;
     if (!button || !icon) return;
 
-    var currentTheme = document.documentElement.getAttribute('data-theme');
-    applyTheme(currentTheme === 'dark' ? 'dark' : 'light', button, icon);
+    // 方案 C：先依 hint 套好正確 icon，再顯示按鈕，避免月亮／太陽閃爍
+    var currentTheme = resolveThemeHint();
+    applyTheme(currentTheme, button, icon);
+    if (themeItem) themeItem.style.display = '';
+
     button.addEventListener('click', function () {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       applyTheme(currentTheme, button, icon);
-      try {
-        localStorage.setItem('ws-theme', currentTheme);
-      } catch (e) {
-        // 儲存失敗時仍保留本次頁面的主題切換
-      }
+      writeThemeHint(currentTheme);
     });
   }
 
