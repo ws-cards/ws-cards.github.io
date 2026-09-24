@@ -129,7 +129,7 @@
     }
   </style>
 </head>
-<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed is-loading">
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
 <div class="wrapper">
 
   <div data-navbar data-page-title="個人資料"></div>
@@ -303,8 +303,6 @@
   </footer>
 </div>
 
-<script src="plugins/jquery/jquery.min.js"></script>
-<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
   function toggleCustomDrawer(e) {
     if (e) e.preventDefault();
@@ -351,10 +349,6 @@
       document.getElementById('accountProfileCard').style.display = isGuest ? 'none' : '';
     }
 
-    function setLoading(on) {
-      body.classList.toggle('is-loading', !!on);
-    }
-
     function showAvatar(url, name) {
       var img = document.getElementById('profileAvatar');
       var fallback = document.getElementById('profileAvatarFallback');
@@ -391,25 +385,33 @@
       showAvatar(profile.photoURL, name);
     }
 
-    function loadProfile() {
+    function profileFromAuth(user) {
+      return {
+        uid: user.uid,
+        displayName: user.displayName || '',
+        email: user.email || '',
+        photoURL: user.photoURL || '',
+        nickname: '',
+        bio: ''
+      };
+    }
+
+    function syncCloudProfile() {
       if (!fb || !fb.ready || !fb.firestoreReady) {
         setStatus((fb && fb.reason) || 'Firestore 未就緒', 'is-error');
-        setLoading(false);
         return;
       }
-      setLoading(true);
-      setStatus('載入中…');
+      setStatus('同步雲端資料…');
       fb.ensureUserProfile()
         .then(function (profile) {
           if (!profile) throw new Error('無法載入個人資料');
           fillForm(profile);
-          setStatus('已載入', 'is-ok');
+          setStatus('已同步', 'is-ok');
         })
         .catch(function (err) {
           console.error(err);
-          setStatus('載入失敗：' + (err && err.message ? err.message : err), 'is-error');
-        })
-        .then(function () { setLoading(false); });
+          setStatus('雲端同步失敗（已顯示登入帳號資料）：' + (err && err.message ? err.message : err), 'is-error');
+        });
     }
 
     document.getElementById('gateSignInBtn').addEventListener('click', function () {
@@ -423,7 +425,7 @@
     });
 
     document.getElementById('profileReloadBtn').addEventListener('click', function () {
-      loadProfile();
+      syncCloudProfile();
     });
 
     document.getElementById('profileForm').addEventListener('submit', function (e) {
@@ -432,15 +434,23 @@
       var btn = document.getElementById('profileSaveBtn');
       btn.disabled = true;
       setStatus('儲存中…');
-      fb.saveUserProfile({
+      var patch = {
         displayName: document.getElementById('profileDisplayName').value,
         nickname: document.getElementById('profileNickname').value,
         bio: document.getElementById('profileBio').value,
         photoURL: document.getElementById('profilePhotoURL').value
-      })
-        .then(function () { return fb.loadUserProfile(); })
-        .then(function (profile) {
-          if (profile) fillForm(profile);
+      };
+      fb.saveUserProfile(patch)
+        .then(function () {
+          var user = fb.currentUser && fb.currentUser();
+          fillForm({
+            uid: user && user.uid,
+            displayName: patch.displayName,
+            email: (user && user.email) || document.getElementById('profileEmail').value,
+            photoURL: patch.photoURL,
+            nickname: patch.nickname,
+            bio: patch.bio
+          });
           setStatus('已儲存到雲端', 'is-ok');
         })
         .catch(function (err) {
@@ -452,7 +462,6 @@
 
     if (!fb || typeof fb.onAuth !== 'function') {
       setGuest(true);
-      setLoading(false);
       setStatus((fb && fb.reason) || 'Firebase 未載入', 'is-error');
       return;
     }
@@ -460,12 +469,13 @@
     fb.onAuth(function (user) {
       if (!user) {
         setGuest(true);
-        setLoading(false);
         setStatus('');
         return;
       }
+      // 先立刻用 Auth 資料畫面，再背景同步 Firestore（避免整頁卡在 loading）
       setGuest(false);
-      loadProfile();
+      fillForm(profileFromAuth(user));
+      syncCloudProfile();
     });
   })();
 </script>

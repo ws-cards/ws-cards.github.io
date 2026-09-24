@@ -102,6 +102,33 @@
       };
     }
 
+    function profileFromSnap(user, snap) {
+      var base = authBasics(user);
+      if (!snap || !snap.exists) {
+        return {
+          uid: user.uid,
+          displayName: base.displayName,
+          email: base.email,
+          photoURL: base.photoURL,
+          nickname: "",
+          bio: "",
+          createdAt: null,
+          updatedAt: null
+        };
+      }
+      var data = snap.data() || {};
+      return {
+        uid: user.uid,
+        displayName: data.displayName != null ? data.displayName : base.displayName,
+        email: data.email || base.email,
+        photoURL: data.photoURL != null ? data.photoURL : base.photoURL,
+        nickname: data.nickname || "",
+        bio: data.bio || "",
+        createdAt: data.createdAt || null,
+        updatedAt: data.updatedAt || null
+      };
+    }
+
     function loadUserProfile() {
       var missing = requireDb();
       if (missing) return missing;
@@ -110,19 +137,7 @@
       return profileRef(db, user.uid)
         .get()
         .then(function (snap) {
-          var base = authBasics(user);
-          if (!snap.exists) return base;
-          var data = snap.data() || {};
-          return {
-            uid: user.uid,
-            displayName: data.displayName != null ? data.displayName : base.displayName,
-            email: data.email || base.email,
-            photoURL: data.photoURL != null ? data.photoURL : base.photoURL,
-            nickname: data.nickname || "",
-            bio: data.bio || "",
-            createdAt: data.createdAt || null,
-            updatedAt: data.updatedAt || null
-          };
+          return profileFromSnap(user, snap);
         });
     }
 
@@ -146,16 +161,17 @@
         .then(function () { return true; });
     }
 
-    /** 首次進入時把 Auth 基本欄位 merge 進 users/{uid} */
+    /** 首次進入時確保 users/{uid} 存在；盡量只 1 次讀取，避免多餘 get/set */
     function ensureUserProfile() {
       var missing = requireDb();
       if (missing) return missing;
       var user = auth.currentUser;
       if (!user) return Promise.resolve(null);
       var ref = profileRef(db, user.uid);
+      var base = authBasics(user);
       return ref.get().then(function (snap) {
-        var base = authBasics(user);
         if (!snap.exists) {
+          var created = profileFromSnap(user, null);
           return ref
             .set({
               displayName: base.displayName,
@@ -166,16 +182,17 @@
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true })
-            .then(function () { return loadUserProfile(); });
+            .then(function () { return created; });
         }
-        // 已有文件：補 email／空的 displayName／photoURL
+
         var data = snap.data() || {};
-        var patch = {
-          email: base.email,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        var profile = profileFromSnap(user, snap);
+        var patch = {};
         var need = false;
-        if (!data.email && base.email) need = true;
+        if (base.email && data.email !== base.email) {
+          patch.email = base.email;
+          need = true;
+        }
         if (!data.displayName && base.displayName) {
           patch.displayName = base.displayName;
           need = true;
@@ -184,8 +201,21 @@
           patch.photoURL = base.photoURL;
           need = true;
         }
-        if (!need && data.email === base.email) return loadUserProfile();
-        return ref.set(patch, { merge: true }).then(function () { return loadUserProfile(); });
+        if (!need) return profile;
+
+        patch.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        return ref.set(patch, { merge: true }).then(function () {
+          return {
+            uid: profile.uid,
+            displayName: patch.displayName != null ? patch.displayName : profile.displayName,
+            email: patch.email != null ? patch.email : profile.email,
+            photoURL: patch.photoURL != null ? patch.photoURL : profile.photoURL,
+            nickname: profile.nickname,
+            bio: profile.bio,
+            createdAt: profile.createdAt,
+            updatedAt: profile.updatedAt
+          };
+        });
       });
     }
 
