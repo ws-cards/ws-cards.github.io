@@ -3,6 +3,8 @@
 
   var AUTH_HINT_KEY = 'ws-auth-signed-in';
   var AUTH_LABEL_KEY = 'ws-auth-label';
+  var AUTH_EMAIL_KEY = 'ws-auth-email';
+  var AUTH_PHOTO_KEY = 'ws-auth-photo';
   var THEME_HINT_KEY = 'ws-theme';
 
   var container = document.querySelector('[data-navbar]');
@@ -10,6 +12,48 @@
 
   var templatePath = container.getAttribute('data-navbar-template') || '/assets/partials/navbar.html';
   var pageTitle = container.getAttribute('data-page-title') || document.title;
+  var menuOpen = false;
+  var currentAuthUser = null;
+
+  function ensureAuthMenuStyles() {
+    if (document.getElementById('nav-auth-menu-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'nav-auth-menu-styles';
+    style.textContent = [
+      '.nav-auth-menu{position:relative;}',
+      '.nav-auth-avatar-btn{padding:0;overflow:hidden;}',
+      '.nav-auth-avatar-img{width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;}',
+      '.nav-auth-initial{font-size:0.85rem;font-weight:700;line-height:1;letter-spacing:0;}',
+      '.nav-auth-dropdown{',
+      'position:absolute;top:calc(100% + 8px);right:0;min-width:220px;z-index:1100;',
+      'padding:8px;border-radius:12px;border:1px solid rgba(10,10,10,.12);',
+      'background:#fff;box-shadow:0 12px 28px rgba(0,0,0,.14);',
+      '}',
+      '[data-theme="dark"] .nav-auth-dropdown{',
+      'background:#1a1a1a;border-color:rgba(255,255,255,.14);',
+      'box-shadow:0 12px 28px rgba(0,0,0,.45);color:#f3f3f3;',
+      '}',
+      '.nav-auth-dropdown[hidden]{display:none!important;}',
+      '.nav-auth-dropdown-head{',
+      'padding:8px 10px 10px;margin-bottom:6px;',
+      'border-bottom:1px solid rgba(10,10,10,.08);',
+      '}',
+      '[data-theme="dark"] .nav-auth-dropdown-head{border-bottom-color:rgba(255,255,255,.1);}',
+      '.nav-auth-dropdown-name{font-size:0.92rem;font-weight:700;line-height:1.3;}',
+      '.nav-auth-dropdown-email{font-size:0.78rem;opacity:0.7;margin-top:2px;word-break:break-all;}',
+      '.nav-auth-dropdown-item{',
+      'width:100%;display:flex;align-items:center;gap:10px;',
+      'padding:10px 10px;border:0;border-radius:8px;background:transparent;',
+      'color:inherit;font-size:0.9rem;text-align:left;cursor:pointer;',
+      '}',
+      '.nav-auth-dropdown-item:hover{background:rgba(10,10,10,.06);}',
+      '[data-theme="dark"] .nav-auth-dropdown-item:hover{background:rgba(255,255,255,.08);}',
+      '.nav-auth-dropdown-item i{width:1rem;text-align:center;opacity:0.85;}',
+      '.nav-auth-dropdown-danger{color:#b42318;}',
+      '[data-theme="dark"] .nav-auth-dropdown-danger{color:#f97066;}'
+    ].join('');
+    document.head.appendChild(style);
+  }
 
   function applyTheme(theme, button, icon) {
     var dark = theme === 'dark';
@@ -21,7 +65,6 @@
     button.setAttribute('aria-label', dark ? '切換為淺色模式' : '切換為深色模式');
   }
 
-  /** 與 Auth 方案 C 相同：優先 data-theme，其次 localStorage hint */
   function resolveThemeHint() {
     var attr = document.documentElement.getAttribute('data-theme');
     if (attr === 'dark' || attr === 'light') return attr;
@@ -42,11 +85,9 @@
     }
   }
 
-  /** 插入 DOM 前就把 hint 寫進 HTML，避免先畫錯 icon；也不再依賴 display:none（快取不同步會整顆消失） */
   function applyThemeHintToNavbarHtml(html, theme) {
     var dark = theme === 'dark';
     var out = String(html || '');
-    // 清掉舊版方案 C 殘留的 display:none，避免按鈕永遠隱藏
     out = out.replace(
       /id="navThemeToggleItem"([^>]*)style="display:\s*none;?"/i,
       'id="navThemeToggleItem"$1'
@@ -82,7 +123,7 @@
         detail: { user: user || null }
       }));
     } catch (e) {
-      // IE 等不支援 CustomEvent 時略過
+      // ignore
     }
   }
 
@@ -91,7 +132,8 @@
       if (localStorage.getItem(AUTH_HINT_KEY) !== '1') return null;
       return {
         displayName: localStorage.getItem(AUTH_LABEL_KEY) || '',
-        email: ''
+        email: localStorage.getItem(AUTH_EMAIL_KEY) || '',
+        photoURL: localStorage.getItem(AUTH_PHOTO_KEY) || ''
       };
     } catch (e) {
       return null;
@@ -106,52 +148,95 @@
           AUTH_LABEL_KEY,
           user.displayName || user.email || user.uid || ''
         );
+        localStorage.setItem(AUTH_EMAIL_KEY, user.email || '');
+        localStorage.setItem(AUTH_PHOTO_KEY, user.photoURL || '');
       } else {
         localStorage.removeItem(AUTH_HINT_KEY);
         localStorage.removeItem(AUTH_LABEL_KEY);
+        localStorage.removeItem(AUTH_EMAIL_KEY);
+        localStorage.removeItem(AUTH_PHOTO_KEY);
       }
     } catch (e) {
-      // private mode 等略過
+      // ignore
+    }
+  }
+
+  function userInitial(user) {
+    var raw = (user && (user.displayName || user.email || user.uid)) || '?';
+    var ch = String(raw).trim().charAt(0);
+    return ch ? ch.toUpperCase() : '?';
+  }
+
+  function setUserMenuOpen(open) {
+    menuOpen = !!open;
+    var btn = container.querySelector('#navAuthUserMenuBtn');
+    var dropdown = container.querySelector('#navAuthUserDropdown');
+    if (btn) btn.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
+    if (dropdown) {
+      if (menuOpen) dropdown.removeAttribute('hidden');
+      else dropdown.setAttribute('hidden', '');
+    }
+  }
+
+  function fillUserMenu(user) {
+    var nameEl = container.querySelector('#navAuthDropdownName');
+    var emailEl = container.querySelector('#navAuthDropdownEmail');
+    var avatar = container.querySelector('#navAuthUserAvatar');
+    var initial = container.querySelector('#navAuthUserInitial');
+    var btn = container.querySelector('#navAuthUserMenuBtn');
+    var name = (user && (user.displayName || user.email || user.uid)) || '';
+    var email = (user && user.email) || '';
+    var photo = (user && user.photoURL) || '';
+
+    if (nameEl) nameEl.textContent = name || '已登入';
+    if (emailEl) {
+      emailEl.textContent = email;
+      emailEl.style.display = email ? '' : 'none';
+    }
+    if (btn) {
+      btn.title = name ? ('帳戶選單（' + name + '）') : '帳戶選單';
+      btn.setAttribute('aria-label', btn.title);
+    }
+    if (avatar && initial) {
+      if (photo) {
+        avatar.hidden = false;
+        avatar.src = photo;
+        avatar.alt = '';
+        initial.style.display = 'none';
+        avatar.onerror = function () {
+          avatar.hidden = true;
+          initial.style.display = '';
+          initial.textContent = userInitial(user);
+        };
+      } else {
+        avatar.hidden = true;
+        avatar.removeAttribute('src');
+        initial.style.display = '';
+        initial.textContent = userInitial(user);
+      }
     }
   }
 
   /**
    * @param {object|null} user
-   * @param {{ persist?: boolean }} [options] persist 預設 true；樂觀 UI 時設 false 以免誤清 hint
+   * @param {{ persist?: boolean }} [options]
    */
   function updateAuthUi(user, options) {
     var opts = options || {};
     var persist = opts.persist !== false;
-    var btnIn = container.querySelector('#navAuthSignIn');
-    var btnOut = container.querySelector('#navAuthSignOut');
-    var label = container.querySelector('#navAuthUser');
     var signedIn = !!user;
+    currentAuthUser = user || null;
 
-    if (btnIn) {
-      btnIn.style.display = '';
-      var inItem = container.querySelector('#navAuthSignInItem') || btnIn.parentElement;
-      if (inItem) inItem.style.display = signedIn ? 'none' : '';
-    }
-    if (btnOut) {
-      btnOut.style.display = '';
-      var outItem = container.querySelector('#navAuthSignOutItem') || btnOut.parentElement;
-      if (outItem) outItem.style.display = signedIn ? '' : 'none';
-    }
-    if (label) {
-      var labelItem = container.querySelector('#navAuthUserItem') || label.parentElement;
-      if (signedIn) {
-        var text = user.displayName || user.email || user.uid || '';
-        label.textContent = text;
-        label.title = user.email || text;
-        if (labelItem) {
-          labelItem.style.display = text ? 'flex' : 'none';
-        }
-      } else {
-        label.textContent = '';
-        label.title = '';
-        if (labelItem) labelItem.style.display = 'none';
-      }
-    }
+    var btnIn = container.querySelector('#navAuthSignIn');
+    var inItem = container.querySelector('#navAuthSignInItem');
+    var menuItem = container.querySelector('#navAuthUserMenuItem');
+
+    if (btnIn) btnIn.style.display = '';
+    if (inItem) inItem.style.display = signedIn ? 'none' : '';
+    if (menuItem) menuItem.style.display = signedIn ? '' : 'none';
+
+    if (signedIn) fillUserMenu(user);
+    else setUserMenuOpen(false);
 
     if (persist) writeAuthHint(user);
   }
@@ -159,15 +244,34 @@
   function applyOptimisticAuthUi() {
     var hint = readAuthHint();
     if (hint) updateAuthUi(hint, { persist: false });
-    // 無 hint：保持 navbar 預設（登入／登出皆隱藏），等 Firebase 確認
+  }
+
+  function openProfile() {
+    setUserMenuOpen(false);
+    var user = currentAuthUser;
+    try {
+      document.dispatchEvent(new CustomEvent('ws-auth-profile', {
+        detail: { user: user || null }
+      }));
+    } catch (e) {
+      // ignore
+    }
+    // 尚無獨立個人資料頁：先顯示目前帳號資訊
+    var name = (user && (user.displayName || user.email || user.uid)) || '（未知）';
+    var email = (user && user.email) || '（未提供）';
+    alert('個人資料\n\n名稱：' + name + '\nEmail：' + email);
   }
 
   function initializeAuth() {
+    ensureAuthMenuStyles();
+
     var btnIn = container.querySelector('#navAuthSignIn');
+    var menuBtn = container.querySelector('#navAuthUserMenuBtn');
+    var profileBtn = container.querySelector('#navAuthProfileBtn');
     var btnOut = container.querySelector('#navAuthSignOut');
     var fb = window.WsFirebase;
 
-    if (!btnIn && !btnOut) return;
+    if (!btnIn && !menuBtn) return;
 
     applyOptimisticAuthUi();
 
@@ -189,8 +293,27 @@
       });
     }
 
+    if (menuBtn) {
+      menuBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        setUserMenuOpen(!menuOpen);
+      });
+    }
+
+    if (profileBtn) {
+      profileBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openProfile();
+      });
+    }
+
     if (btnOut) {
-      btnOut.addEventListener('click', function () {
+      btnOut.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        setUserMenuOpen(false);
         if (!fb || !fb.ready) return;
         fb.signOut().catch(function (err) {
           console.error(err);
@@ -199,13 +322,23 @@
       });
     }
 
+    document.addEventListener('click', function (e) {
+      if (!menuOpen) return;
+      var menuItem = container.querySelector('#navAuthUserMenuItem');
+      if (menuItem && menuItem.contains(e.target)) return;
+      setUserMenuOpen(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setUserMenuOpen(false);
+    });
+
     if (fb && fb.ready && typeof fb.onAuth === 'function') {
       fb.onAuth(function (user) {
         updateAuthUi(user);
         dispatchAuthChanged(user);
       });
     } else if (!readAuthHint()) {
-      // 無 Firebase 且無 hint：顯示登入鈕（點擊會提示設定）
       updateAuthUi(null, { persist: false });
     }
   }
@@ -218,12 +351,9 @@
     if (title) title.textContent = pageTitle;
     if (!button || !icon) return;
 
-    // 方案 C：依 hint 確認 icon；並強制清掉可能殘留的 display:none
     var currentTheme = resolveThemeHint();
     applyTheme(currentTheme, button, icon);
-    if (themeItem) {
-      themeItem.style.removeProperty('display');
-    }
+    if (themeItem) themeItem.style.removeProperty('display');
 
     button.addEventListener('click', function () {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
