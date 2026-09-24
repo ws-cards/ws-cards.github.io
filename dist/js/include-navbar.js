@@ -248,18 +248,14 @@
 
   function openProfile() {
     setUserMenuOpen(false);
-    var user = currentAuthUser;
     try {
       document.dispatchEvent(new CustomEvent('ws-auth-profile', {
-        detail: { user: user || null }
+        detail: { user: currentAuthUser || null }
       }));
     } catch (e) {
       // ignore
     }
-    // 尚無獨立個人資料頁：先顯示目前帳號資訊
-    var name = (user && (user.displayName || user.email || user.uid)) || '（未知）';
-    var email = (user && user.email) || '（未提供）';
-    alert('個人資料\n\n名稱：' + name + '\nEmail：' + email);
+    window.location.href = '/account.html';
   }
 
   function initializeAuth() {

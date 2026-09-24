@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <meta name="description" content="WS-Cards 個人資料與帳號設定">
+  <meta property="og:title" content="個人資料｜WS-Cards 卡片雲">
+  <meta property="og:description" content="管理 WS-Cards 帳號顯示名稱、暱稱與簡介。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/account.html">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <title>個人資料｜WS-Cards 卡片雲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v101.css">
+  <style>
+    body,
+    body button,
+    body input,
+    body select,
+    body textarea,
+    body p,
+    body h3,
+    body h5 {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .account-hero {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    [data-theme="dark"] .account-hero {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    .account-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: rgba(0, 0, 0, 0.06);
+      flex-shrink: 0;
+    }
+    [data-theme="dark"] .account-avatar {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .account-avatar-fallback {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: rgba(102, 126, 234, 0.15);
+      color: #4c63d2;
+      flex-shrink: 0;
+    }
+    .account-hero-meta { min-width: 0; }
+    .account-hero-meta .name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .account-hero-meta .email,
+    .account-hero-meta .uid {
+      margin-top: 0.25rem;
+      font-size: 0.88rem;
+      color: #6c757d;
+      word-break: break-all;
+    }
+    [data-theme="dark"] .account-hero-meta .email,
+    [data-theme="dark"] .account-hero-meta .uid {
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .account-hero-meta .uid { font-size: 0.78rem; opacity: 0.9; }
+    .account-field { margin-bottom: 1rem; }
+    .account-field label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .account-status {
+      margin-top: 0.85rem;
+      min-height: 1.25rem;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    .account-status.is-error { color: #dc3545; }
+    .account-status.is-ok { color: #28a745; }
+    .account-gate { display: none; text-align: center; padding: 2rem 1rem; }
+    .account-gate h5 { font-weight: 800; margin-bottom: 0.5rem; }
+    .account-gate p { color: #6c757d; margin-bottom: 1.25rem; }
+    [data-theme="dark"] .account-gate p { color: rgba(255, 255, 255, 0.65); }
+    body.is-guest #accountProfileCard { display: none; }
+    body.is-guest #accountGateCard { display: block; }
+    body.is-loading #accountProfileCard,
+    body.is-loading #accountGateCard {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed is-loading">
+<div class="wrapper">
+
+  <div data-navbar data-page-title="個人資料"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="productTimeline.html" class="menu-link">
+            <i class="fas fa-calendar-alt main-icon"></i>
+            <span>商品發售時間軸</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="account.html" class="menu-link active">
+            <i class="fas fa-user main-icon"></i>
+            <span>個人資料</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-12" id="accountGateCard" style="display:none;">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-user-lock mr-2"></i>
+                  請先登入
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="account-gate" style="display:block;">
+                  <h5>尚未登入</h5>
+                  <p>登入後即可查看與編輯個人資料（同步至 Firestore）。</p>
+                  <button type="button" class="btn btn-outline-secondary" id="gateSignInBtn">
+                    <i class="fab fa-google mr-1" aria-hidden="true"></i>使用 Google 登入
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-12" id="accountProfileCard">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-user mr-2"></i>
+                  個人資料
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-3">
+                  <i class="fas fa-lightbulb mr-1" aria-hidden="true"></i>
+                  <small>Email 來自 Google 帳號（唯讀）。顯示名稱、暱稱、簡介與頭像網址可編輯並存到雲端。</small>
+                </p>
+
+                <div class="account-hero">
+                  <img id="profileAvatar" class="account-avatar" alt="" hidden>
+                  <div id="profileAvatarFallback" class="account-avatar-fallback" aria-hidden="true">?</div>
+                  <div class="account-hero-meta">
+                    <div class="name" id="profileHeroName">—</div>
+                    <div class="email" id="profileHeroEmail">—</div>
+                    <div class="uid" id="profileUid">uid：—</div>
+                  </div>
+                </div>
+
+                <form id="profileForm" novalidate>
+                  <div class="account-field">
+                    <label for="profileEmail">Email（唯讀）</label>
+                    <input id="profileEmail" type="email" class="form-control" disabled autocomplete="email">
+                  </div>
+                  <div class="account-field">
+                    <label for="profileDisplayName">顯示名稱</label>
+                    <input id="profileDisplayName" type="text" class="form-control" maxlength="80" autocomplete="nickname">
+                    <small class="form-text text-muted">預設帶入 Google 名稱，可改成站內想顯示的名字。</small>
+                  </div>
+                  <div class="account-field">
+                    <label for="profileNickname">暱稱</label>
+                    <input id="profileNickname" type="text" class="form-control" maxlength="40" autocomplete="off">
+                  </div>
+                  <div class="account-field">
+                    <label for="profileBio">簡介</label>
+                    <textarea id="profileBio" class="form-control" rows="4" maxlength="500" placeholder="簡單介紹自己（最多 500 字）"></textarea>
+                  </div>
+                  <div class="account-field">
+                    <label for="profilePhotoURL">頭像網址</label>
+                    <input id="profilePhotoURL" type="url" class="form-control" maxlength="500" placeholder="https://…">
+                    <small class="form-text text-muted">預設為 Google 大頭貼；可改成其他公開圖片網址。</small>
+                  </div>
+
+                  <div class="mt-3">
+                    <button type="submit" class="btn btn-outline-secondary mr-2" id="profileSaveBtn">
+                      <i class="fas fa-save mr-1" aria-hidden="true"></i>儲存
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="profileReloadBtn">
+                      <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>重新載入
+                    </button>
+                  </div>
+                  <div class="account-status" id="profileStatus" role="status" aria-live="polite"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer" aria-label="意見回饋（另開新視窗的表單）">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+  function toggleCustomDrawer(e) {
+    if (e) e.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      var btn = document.getElementById('leftbar');
+      if (btn) {
+        var opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+
+  function toggleSubmenu(element, e) {
+    if (e) e.preventDefault();
+    var parent = element.parentElement;
+    if (!parent) return;
+    parent.classList.toggle('open');
+    var submenu = parent.querySelector('.submenu');
+    if (submenu) {
+      submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  }
+
+  (function () {
+    var fb = window.WsFirebase;
+    var body = document.body;
+    var statusEl = document.getElementById('profileStatus');
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg || '';
+      statusEl.classList.remove('is-error', 'is-ok');
+      if (kind) statusEl.classList.add(kind);
+    }
+
+    function setGuest(isGuest) {
+      body.classList.toggle('is-guest', !!isGuest);
+      document.getElementById('accountGateCard').style.display = isGuest ? '' : 'none';
+      document.getElementById('accountProfileCard').style.display = isGuest ? 'none' : '';
+    }
+
+    function setLoading(on) {
+      body.classList.toggle('is-loading', !!on);
+    }
+
+    function showAvatar(url, name) {
+      var img = document.getElementById('profileAvatar');
+      var fallback = document.getElementById('profileAvatarFallback');
+      var initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
+      fallback.textContent = initial;
+      if (url) {
+        img.hidden = false;
+        img.style.display = 'block';
+        fallback.style.display = 'none';
+        img.src = url;
+        img.onerror = function () {
+          img.hidden = true;
+          img.style.display = 'none';
+          fallback.style.display = 'flex';
+        };
+      } else {
+        img.hidden = true;
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        fallback.style.display = 'flex';
+      }
+    }
+
+    function fillForm(profile) {
+      var name = profile.displayName || profile.nickname || profile.email || '使用者';
+      document.getElementById('profileHeroName').textContent = name;
+      document.getElementById('profileHeroEmail').textContent = profile.email || '（未提供 Email）';
+      document.getElementById('profileUid').textContent = 'uid：' + (profile.uid || '—');
+      document.getElementById('profileEmail').value = profile.email || '';
+      document.getElementById('profileDisplayName').value = profile.displayName || '';
+      document.getElementById('profileNickname').value = profile.nickname || '';
+      document.getElementById('profileBio').value = profile.bio || '';
+      document.getElementById('profilePhotoURL').value = profile.photoURL || '';
+      showAvatar(profile.photoURL, name);
+    }
+
+    function loadProfile() {
+      if (!fb || !fb.ready || !fb.firestoreReady) {
+        setStatus((fb && fb.reason) || 'Firestore 未就緒', 'is-error');
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setStatus('載入中…');
+      fb.ensureUserProfile()
+        .then(function (profile) {
+          if (!profile) throw new Error('無法載入個人資料');
+          fillForm(profile);
+          setStatus('已載入', 'is-ok');
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus('載入失敗：' + (err && err.message ? err.message : err), 'is-error');
+        })
+        .then(function () { setLoading(false); });
+    }
+
+    document.getElementById('gateSignInBtn').addEventListener('click', function () {
+      if (!fb || !fb.ready) {
+        alert((fb && fb.reason) || 'Firebase 尚未設定');
+        return;
+      }
+      fb.signInWithGoogle().catch(function (err) {
+        alert('登入失敗：' + (err && err.message ? err.message : err));
+      });
+    });
+
+    document.getElementById('profileReloadBtn').addEventListener('click', function () {
+      loadProfile();
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!fb || !fb.ready) return;
+      var btn = document.getElementById('profileSaveBtn');
+      btn.disabled = true;
+      setStatus('儲存中…');
+      fb.saveUserProfile({
+        displayName: document.getElementById('profileDisplayName').value,
+        nickname: document.getElementById('profileNickname').value,
+        bio: document.getElementById('profileBio').value,
+        photoURL: document.getElementById('profilePhotoURL').value
+      })
+        .then(function () { return fb.loadUserProfile(); })
+        .then(function (profile) {
+          if (profile) fillForm(profile);
+          setStatus('已儲存到雲端', 'is-ok');
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus('儲存失敗：' + (err && err.message ? err.message : err), 'is-error');
+        })
+        .then(function () { btn.disabled = false; });
+    });
+
+    if (!fb || typeof fb.onAuth !== 'function') {
+      setGuest(true);
+      setLoading(false);
+      setStatus((fb && fb.reason) || 'Firebase 未載入', 'is-error');
+      return;
+    }
+
+    fb.onAuth(function (user) {
+      if (!user) {
+        setGuest(true);
+        setLoading(false);
+        setStatus('');
+        return;
+      }
+      setGuest(false);
+      loadProfile();
+    });
+  })();
+</script>
+</body>
+</html>
