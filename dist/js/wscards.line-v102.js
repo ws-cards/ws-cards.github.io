@@ -236,14 +236,15 @@ if (document.readyState === 'loading') {
     setupSearchActionButton();
 }
 
-// 支援外部連結 ?cardno=PRD_W133-001，底線代表卡號中的斜線。
+// 支援外部連結 ?card=BD/W54-070SSP 或 ?cardno=BD_W54-070SSP（底線代表斜線）。
 var _hasProcessedUrlCardNumber = false;
 
 function searchCardNumberFromUrl() {
     if (_hasProcessedUrlCardNumber || typeof URLSearchParams === 'undefined') return;
     _hasProcessedUrlCardNumber = true;
 
-    var cardNumber = new URLSearchParams(window.location.search).get('cardno');
+    var params = new URLSearchParams(window.location.search);
+    var cardNumber = params.get('card') || params.get('cardno');
     if (!cardNumber) return;
 
     cardNumber = cardNumber.trim().replace(/_/g, '/');
