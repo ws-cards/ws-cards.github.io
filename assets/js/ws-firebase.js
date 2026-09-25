@@ -1,7 +1,7 @@
 /**
  * WS-Cards Firebase Auth + Firestore 輕量封裝（compat SDK）。
  * 依賴：firebase-app-compat / auth-compat，以及 window.WS_FIREBASE_CONFIG
- * firestore-compat 可選：counting / profile 讀寫需要。
+ * firestore-compat 可選：counting / profile / cardFavorites 讀寫需要。
  */
 (function (global) {
   "use strict";
@@ -9,6 +9,7 @@
   var SESSION_DOC = "default";
   var COLLECTION_USERS = "users";
   var COLLECTION_SESSIONS = "countingSessions";
+  var COLLECTION_FAVORITES = "cardFavorites";
 
   function isConfigured(cfg) {
     if (!cfg || typeof cfg !== "object") return false;
@@ -32,6 +33,41 @@
     return db.collection(COLLECTION_USERS).doc(uid);
   }
 
+  function favoritesCol(db, uid) {
+    return db
+      .collection(COLLECTION_USERS)
+      .doc(uid)
+      .collection(COLLECTION_FAVORITES);
+  }
+
+  /** 卡號 → Firestore doc id（不可含 /） */
+  function favoriteCardId(cardNumber) {
+    return String(cardNumber || "")
+      .trim()
+      .replace(/\//g, "_")
+      .replace(/[.#$\[\]]/g, "_");
+  }
+
+  function normalizeFavoriteMeta(meta) {
+    if (!meta || typeof meta !== "object") return null;
+    var cardNumber = String(meta.cardNumber || "").trim();
+    if (!cardNumber) return null;
+    function text(v) {
+      if (v === null || v === undefined) return "";
+      var t = String(v).trim();
+      return t === "-" || t === "?" ? "" : t;
+    }
+    var ts = typeof meta.timestamp === "number" ? meta.timestamp : Date.now();
+    return {
+      cardNumber: cardNumber,
+      cardName: text(meta.cardName),
+      cardRare: text(meta.cardRare),
+      cardTitle: text(meta.cardTitle),
+      source: text(meta.source) || "line",
+      timestamp: ts
+    };
+  }
+
   function createDisabledApi(reason) {
     return {
       ready: false,
@@ -52,7 +88,11 @@
       saveCountingState: function () { return Promise.resolve(false); },
       loadUserProfile: function () { return Promise.resolve(null); },
       saveUserProfile: function () { return Promise.resolve(false); },
-      ensureUserProfile: function () { return Promise.resolve(null); }
+      ensureUserProfile: function () { return Promise.resolve(null); },
+      favoriteCardId: favoriteCardId,
+      loadCardFavorites: function () { return Promise.resolve([]); },
+      addCardFavorite: function () { return Promise.resolve(false); },
+      removeCardFavorite: function () { return Promise.resolve(false); }
     };
   }
 
@@ -219,6 +259,97 @@
       });
     }
 
+    function timestampToMillis(value) {
+      if (typeof value === "number" && isFinite(value)) return value;
+      if (value && typeof value.toMillis === "function") {
+        try { return value.toMillis(); } catch (e) { return 0; }
+      }
+      if (value && typeof value.seconds === "number") {
+        return value.seconds * 1000;
+      }
+      return 0;
+    }
+
+    function favoriteFromDoc(docSnap) {
+      var data = (docSnap && docSnap.data) ? (docSnap.data() || {}) : {};
+      var cardNumber = String(data.cardNumber || "").trim();
+      if (!cardNumber && docSnap && docSnap.id) {
+        // 舊資料後備：doc id 可能是 BD_W54-070SSP
+        cardNumber = String(docSnap.id).replace(/_/g, "/");
+      }
+      if (!cardNumber) return null;
+      var ts = timestampToMillis(data.timestamp);
+      if (!ts) ts = timestampToMillis(data.updatedAt);
+      if (!ts) ts = timestampToMillis(data.createdAt);
+      return {
+        cardNumber: cardNumber,
+        cardName: data.cardName || "",
+        cardRare: data.cardRare || "",
+        cardTitle: data.cardTitle || "",
+        source: data.source || "line",
+        timestamp: ts || Date.now()
+      };
+    }
+
+    function loadCardFavorites() {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) return Promise.resolve([]);
+      return favoritesCol(db, user.uid)
+        .get()
+        .then(function (snap) {
+          var list = [];
+          snap.forEach(function (docSnap) {
+            var item = favoriteFromDoc(docSnap);
+            if (item) list.push(item);
+          });
+          list.sort(function (a, b) {
+            return (b.timestamp || 0) - (a.timestamp || 0);
+          });
+          return list;
+        });
+    }
+
+    function addCardFavorite(meta) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var item = normalizeFavoriteMeta(meta);
+      if (!user || !item) return Promise.resolve(false);
+
+      var ref = favoritesCol(db, user.uid).doc(favoriteCardId(item.cardNumber));
+      var base = {
+        cardNumber: item.cardNumber,
+        cardName: item.cardName,
+        cardRare: item.cardRare,
+        cardTitle: item.cardTitle,
+        source: item.source || "line",
+        timestamp: item.timestamp || Date.now(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      return ref.get().then(function (snap) {
+        if (snap.exists) {
+          return ref.set(base, { merge: true }).then(function () { return true; });
+        }
+        base.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        return ref.set(base).then(function () { return true; });
+      });
+    }
+
+    function removeCardFavorite(cardNumber) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var id = favoriteCardId(cardNumber);
+      if (!user || !id) return Promise.resolve(false);
+      return favoritesCol(db, user.uid)
+        .doc(id)
+        .delete()
+        .then(function () { return true; });
+    }
+
     return {
       ready: true,
       firestoreReady: !!db,
@@ -270,7 +401,11 @@
       },
       loadUserProfile: loadUserProfile,
       saveUserProfile: saveUserProfile,
-      ensureUserProfile: ensureUserProfile
+      ensureUserProfile: ensureUserProfile,
+      favoriteCardId: favoriteCardId,
+      loadCardFavorites: loadCardFavorites,
+      addCardFavorite: addCardFavorite,
+      removeCardFavorite: removeCardFavorite
     };
   }
 
