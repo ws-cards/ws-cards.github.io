@@ -3536,17 +3536,29 @@ return {
 // ====================================================
 // 卡面收藏（星形）
 // - 星形浮在卡圖右上角；僅在卡面成功顯示後出現
-// - 使用 localStorage 記錄收藏清單
+// - 本機 localStorage 為主；登入且 Firestore 可用時雙寫雲端
 // ====================================================
 
 var CardFavorites = (function() {
     var STORAGE_KEY = 'wsCardsFavorites';
     var MAX_ITEMS = 100;
+    var cloudUser = null;
+    var mergeInFlight = null;
+    var authUnsub = null;
 
     function normalizeText(value) {
         if (value === null || value === undefined) return '';
         var text = String(value).trim();
         return (text === '-' || text === '?') ? '' : text;
+    }
+
+    function getFb() {
+        return (typeof window !== 'undefined' && window.WsFirebase) ? window.WsFirebase : null;
+    }
+
+    function canUseCloud() {
+        var fb = getFb();
+        return !!(fb && fb.ready && fb.firestoreReady && cloudUser);
     }
 
     function getFavorites() {
@@ -3607,6 +3619,7 @@ var CardFavorites = (function() {
             cardTitle: (cardTitleEl && cardTitleEl.selectedIndex >= 0)
                 ? normalizeText(cardTitleEl.options[cardTitleEl.selectedIndex].text)
                 : '',
+            source: 'line',
             timestamp: Date.now()
         };
     }
@@ -3659,6 +3672,120 @@ var CardFavorites = (function() {
         updateButtonDom(isFavorite(cardNumber));
     }
 
+    function showSyncToast(title, ok) {
+        if (typeof showWsAlert !== 'function') return;
+        showWsAlert({
+            icon: ok ? 'success' : 'info',
+            title: title,
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }
+
+    /** 本機與雲端聯集；同一卡號取較新 timestamp 的中繼資料 */
+    function mergeFavoriteLists(localList, remoteList) {
+        var map = {};
+        function upsert(item) {
+            if (!item || !item.cardNumber) return;
+            var key = String(item.cardNumber).trim();
+            if (!key) return;
+            var ts = typeof item.timestamp === 'number' ? item.timestamp : 0;
+            var prev = map[key];
+            if (!prev || ts >= (prev.timestamp || 0)) {
+                map[key] = {
+                    cardNumber: key,
+                    cardName: normalizeText(item.cardName),
+                    cardRare: normalizeText(item.cardRare),
+                    cardTitle: normalizeText(item.cardTitle),
+                    source: normalizeText(item.source) || 'line',
+                    timestamp: ts || Date.now()
+                };
+            }
+        }
+        (localList || []).forEach(upsert);
+        (remoteList || []).forEach(upsert);
+        return Object.keys(map)
+            .map(function(k) { return map[k]; })
+            .sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); })
+            .slice(0, MAX_ITEMS);
+    }
+
+    function pushMissingToCloud(merged, remoteList) {
+        var fb = getFb();
+        if (!canUseCloud() || !fb) return Promise.resolve(true);
+        var remoteKeys = {};
+        (remoteList || []).forEach(function(item) {
+            if (item && item.cardNumber) remoteKeys[item.cardNumber] = true;
+        });
+        var missing = (merged || []).filter(function(item) {
+            return item && item.cardNumber && !remoteKeys[item.cardNumber];
+        });
+        if (!missing.length) return Promise.resolve(true);
+
+        var chain = Promise.resolve();
+        missing.forEach(function(item) {
+            chain = chain.then(function() {
+                return fb.addCardFavorite(item).catch(function(err) {
+                    console.error('上傳收藏失敗:', item.cardNumber, err);
+                    return false;
+                });
+            });
+        });
+        return chain.then(function() { return true; });
+    }
+
+    function mergeLocalAndCloud() {
+        var fb = getFb();
+        if (!canUseCloud() || !fb) return Promise.resolve();
+        if (mergeInFlight) return mergeInFlight;
+
+        mergeInFlight = fb.loadCardFavorites()
+            .then(function(remote) {
+                var local = getFavorites();
+                var merged = mergeFavoriteLists(local, remote || []);
+                saveFavorites(merged);
+                syncButton();
+                return pushMissingToCloud(merged, remote || []).then(function() {
+                    if ((remote || []).length && local.length === 0) {
+                        showSyncToast('已載入雲端收藏', true);
+                    } else if (local.length && !(remote || []).length) {
+                        showSyncToast('本機收藏已上傳雲端', true);
+                    } else if (local.length || (remote || []).length) {
+                        showSyncToast('收藏已與雲端同步', true);
+                    }
+                });
+            })
+            .catch(function(err) {
+                console.error('收藏雲端合併失敗:', err);
+                showSyncToast('雲端收藏讀取失敗（繼續用本機）', false);
+            })
+            .then(function() {
+                mergeInFlight = null;
+            });
+
+        return mergeInFlight;
+    }
+
+    function syncAddToCloud(meta) {
+        var fb = getFb();
+        if (!canUseCloud() || !fb) return Promise.resolve(false);
+        return fb.addCardFavorite(meta).catch(function(err) {
+            console.error('收藏雲端寫入失敗:', err);
+            return false;
+        });
+    }
+
+    function syncRemoveFromCloud(cardNumber) {
+        var fb = getFb();
+        if (!canUseCloud() || !fb) return Promise.resolve(false);
+        return fb.removeCardFavorite(cardNumber).catch(function(err) {
+            console.error('收藏雲端刪除失敗:', err);
+            return false;
+        });
+    }
+
     function toggleCurrent() {
         var cardNumber = getCurrentCardNumber();
         if (!cardNumber || !isCardImageReady()) return;
@@ -3673,11 +3800,13 @@ var CardFavorites = (function() {
         }
 
         var nowFavorited;
+        var meta = null;
         if (existingIndex >= 0) {
             list.splice(existingIndex, 1);
             nowFavorited = false;
         } else {
-            list.unshift(collectMeta(cardNumber));
+            meta = collectMeta(cardNumber);
+            list.unshift(meta);
             if (list.length > MAX_ITEMS) {
                 list = list.slice(0, MAX_ITEMS);
             }
@@ -3687,17 +3816,31 @@ var CardFavorites = (function() {
         saveFavorites(list);
         updateButtonDom(nowFavorited);
 
-        if (typeof showWsAlert === 'function') {
-            showWsAlert({
-                icon: 'success',
-                title: nowFavorited ? '已加入收藏' : '已取消收藏',
-                text: cardNumber,
-                timer: 1600,
-                showConfirmButton: false,
-                toast: true,
-                position: 'top-end'
-            });
-        }
+        var cloudPromise = nowFavorited
+            ? syncAddToCloud(meta)
+            : syncRemoveFromCloud(cardNumber);
+
+        cloudPromise.then(function(ok) {
+            var detail = cardNumber;
+            if (!canUseCloud()) {
+                detail += ' · 已存本機';
+            } else if (ok) {
+                detail += ' · 已同步雲端';
+            } else {
+                detail += ' · 已存本機（雲端同步失敗）';
+            }
+            if (typeof showWsAlert === 'function') {
+                showWsAlert({
+                    icon: 'success',
+                    title: nowFavorited ? '已加入收藏' : '已取消收藏',
+                    text: detail,
+                    timer: 1800,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            }
+        });
     }
 
     function onClick(event) {
@@ -3708,12 +3851,29 @@ var CardFavorites = (function() {
         toggleCurrent();
     }
 
+    function onAuthChanged(user) {
+        cloudUser = user || null;
+        if (cloudUser && canUseCloud()) {
+            mergeLocalAndCloud();
+        } else {
+            syncButton();
+        }
+    }
+
+    function bindAuth() {
+        var fb = getFb();
+        if (!fb || typeof fb.onAuth !== 'function') return;
+        if (authUnsub) return;
+        authUnsub = fb.onAuth(onAuthChanged);
+    }
+
     function init() {
         var btn = document.getElementById('cardFavoriteBtn');
         if (btn && !btn.dataset.favoriteBound) {
             btn.addEventListener('click', onClick);
             btn.dataset.favoriteBound = '1';
         }
+        bindAuth();
         syncButton();
     }
 
@@ -3723,7 +3883,8 @@ var CardFavorites = (function() {
         hideButton: hideButton,
         isFavorite: isFavorite,
         getFavorites: getFavorites,
-        toggleCurrent: toggleCurrent
+        toggleCurrent: toggleCurrent,
+        mergeLocalAndCloud: mergeLocalAndCloud
     };
 })();
 
