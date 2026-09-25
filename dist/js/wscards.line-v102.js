@@ -2319,7 +2319,11 @@ function addPhoto(cardNumberDisplay){
             var urlFallback="https://ws-tcg.com/wordpress/wp-content/images/cardlist/"+card_first.toLowerCase()+"/"+card_second.toLowerCase()+"/"+card_third.toLowerCase()+".png";
             console.log("url card (primary):"+urlPrimary);
             console.log("url card (fallback):"+urlFallback);
-            cardImg.setAttribute("src",urlPrimary);
+            if (typeof CardFavorites !== 'undefined') {
+                CardFavorites.hideButton();
+            }
+            // 只交給 showCardImage 設定 src，避免先 setAttribute 導致快取命中時
+            // onload 已錯過、收藏星永遠不出現。
             showCardImage(urlPrimary, urlFallback);
 }
         
@@ -2333,17 +2337,24 @@ function addPhoto(cardNumberDisplay){
 function showCardImage(src, fallbackSrc) {
             const img = document.getElementById('cardImg');
             const placeholder = document.querySelector('.image-placeholder');
+            const wrap = document.getElementById('cardImageWrap');
             
             if (src) {
+                if (wrap) wrap.hidden = false;
                 // 淡入效果
                 img.style.opacity = '0';
                 img.style.display = 'block';
 
-                img.onload = function() {
-                    placeholder.style.display = 'none';
+                function onCardImageReady() {
+                    if (placeholder) placeholder.style.display = 'none';
                     img.style.transition = 'opacity 0.5s ease';
                     img.style.opacity = '1';
-                };
+                    if (typeof CardFavorites !== 'undefined') {
+                        CardFavorites.syncButton();
+                    }
+                }
+
+                img.onload = onCardImageReady;
 
                 // 主要來源載入失敗時改用備援來源
                 img.onerror = function() {
@@ -2352,13 +2363,24 @@ function showCardImage(src, fallbackSrc) {
                         img.src = fallbackSrc;
                     } else {
                         img.onerror = null;
+                        if (typeof CardFavorites !== 'undefined') {
+                            CardFavorites.hideButton();
+                        }
                     }
                 };
 
                 img.src = src;
+                // 快取命中時 onload 可能不會再觸發
+                if (img.complete && img.naturalWidth > 0) {
+                    onCardImageReady();
+                }
             } else {
                 img.style.display = 'none';
-                placeholder.style.display = 'block';
+                if (wrap) wrap.hidden = true;
+                if (placeholder) placeholder.style.display = 'block';
+                if (typeof CardFavorites !== 'undefined') {
+                    CardFavorites.hideButton();
+                }
             }
 }    
                     
@@ -3509,6 +3531,200 @@ return {
     collectCurrentCardInfo: collectCurrentCardInfo,
     init: init
 };
+})();
+
+// ====================================================
+// 卡面收藏（星形）
+// - 星形浮在卡圖右上角；僅在卡面成功顯示後出現
+// - 使用 localStorage 記錄收藏清單
+// ====================================================
+
+var CardFavorites = (function() {
+    var STORAGE_KEY = 'wsCardsFavorites';
+    var MAX_ITEMS = 100;
+
+    function normalizeText(value) {
+        if (value === null || value === undefined) return '';
+        var text = String(value).trim();
+        return (text === '-' || text === '?') ? '' : text;
+    }
+
+    function getFavorites() {
+        try {
+            var data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error('讀取收藏清單失敗:', e);
+            return [];
+        }
+    }
+
+    function saveFavorites(list) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {
+            console.error('儲存收藏清單失敗:', e);
+        }
+    }
+
+    function isFavorite(cardNumber) {
+        var target = normalizeText(cardNumber);
+        if (!target) return false;
+        return getFavorites().some(function(item) {
+            return item && item.cardNumber === target;
+        });
+    }
+
+    function getCurrentCardNumber() {
+        var selectEl = document.getElementById('cardNumber');
+        if (selectEl && selectEl.selectedIndex >= 0) {
+            var selected = normalizeText(selectEl.options[selectEl.selectedIndex].text);
+            if (selected && selected !== '選擇卡號' && selected !== '000/000-000') {
+                return selected.indexOf(' ') >= 0 ? selected.substr(0, selected.indexOf(' ')) : selected;
+            }
+            var selectedValue = normalizeText(selectEl.value);
+            if (selectedValue && selectedValue !== '000/000-000') {
+                return selectedValue;
+            }
+        }
+
+        var cardNoEl = document.getElementById('cardno');
+        var fromInfo = cardNoEl ? normalizeText(cardNoEl.textContent) : '';
+        if (fromInfo && fromInfo !== '選擇卡號' && fromInfo !== '000/000-000') {
+            return fromInfo;
+        }
+        return '';
+    }
+
+    function collectMeta(cardNumber) {
+        var cardNameEl = document.getElementById('cardname');
+        var cardRareEl = document.getElementById('cardrare');
+        var cardTitleEl = document.getElementById('cardTitle');
+        return {
+            cardNumber: cardNumber,
+            cardName: cardNameEl ? normalizeText(cardNameEl.textContent) : '',
+            cardRare: cardRareEl ? normalizeText(cardRareEl.textContent) : '',
+            cardTitle: (cardTitleEl && cardTitleEl.selectedIndex >= 0)
+                ? normalizeText(cardTitleEl.options[cardTitleEl.selectedIndex].text)
+                : '',
+            timestamp: Date.now()
+        };
+    }
+
+    function isCardImageReady() {
+        var img = document.getElementById('cardImg');
+        if (!img) return false;
+        if (img.style.display === 'none') return false;
+        if (!img.getAttribute('src') && !img.src) return false;
+        if (img.naturalWidth === 0) return false;
+        return true;
+    }
+
+    function updateButtonDom(favorited) {
+        var btn = document.getElementById('cardFavoriteBtn');
+        if (!btn) return;
+        btn.classList.toggle('is-favorited', !!favorited);
+        btn.setAttribute('aria-pressed', favorited ? 'true' : 'false');
+        btn.setAttribute('aria-label', favorited ? '取消收藏此卡片' : '收藏此卡片');
+        btn.title = favorited ? '取消收藏' : '收藏此卡片';
+        var icon = btn.querySelector('i');
+        if (icon) {
+            icon.className = favorited ? 'fas fa-star' : 'far fa-star';
+        }
+    }
+
+    function hideButton() {
+        var btn = document.getElementById('cardFavoriteBtn');
+        if (!btn) return;
+        btn.hidden = true;
+        btn.classList.remove('is-favorited');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', '收藏此卡片');
+        btn.title = '收藏此卡片';
+        var icon = btn.querySelector('i');
+        if (icon) icon.className = 'far fa-star';
+    }
+
+    function syncButton() {
+        var btn = document.getElementById('cardFavoriteBtn');
+        if (!btn) return;
+
+        var cardNumber = getCurrentCardNumber();
+        if (!cardNumber || !isCardImageReady()) {
+            hideButton();
+            return;
+        }
+
+        btn.hidden = false;
+        updateButtonDom(isFavorite(cardNumber));
+    }
+
+    function toggleCurrent() {
+        var cardNumber = getCurrentCardNumber();
+        if (!cardNumber || !isCardImageReady()) return;
+
+        var list = getFavorites();
+        var existingIndex = -1;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && list[i].cardNumber === cardNumber) {
+                existingIndex = i;
+                break;
+            }
+        }
+
+        var nowFavorited;
+        if (existingIndex >= 0) {
+            list.splice(existingIndex, 1);
+            nowFavorited = false;
+        } else {
+            list.unshift(collectMeta(cardNumber));
+            if (list.length > MAX_ITEMS) {
+                list = list.slice(0, MAX_ITEMS);
+            }
+            nowFavorited = true;
+        }
+
+        saveFavorites(list);
+        updateButtonDom(nowFavorited);
+
+        if (typeof showWsAlert === 'function') {
+            showWsAlert({
+                icon: 'success',
+                title: nowFavorited ? '已加入收藏' : '已取消收藏',
+                text: cardNumber,
+                timer: 1600,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        }
+    }
+
+    function onClick(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        toggleCurrent();
+    }
+
+    function init() {
+        var btn = document.getElementById('cardFavoriteBtn');
+        if (btn && !btn.dataset.favoriteBound) {
+            btn.addEventListener('click', onClick);
+            btn.dataset.favoriteBound = '1';
+        }
+        syncButton();
+    }
+
+    return {
+        init: init,
+        syncButton: syncButton,
+        hideButton: hideButton,
+        isFavorite: isFavorite,
+        getFavorites: getFavorites,
+        toggleCurrent: toggleCurrent
+    };
 })();
 
 /**
