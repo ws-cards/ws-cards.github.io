@@ -13,9 +13,9 @@
       }
     })();
   </script>
-  <meta name="description" content="查看已收藏的 Weiss Schwarz 卡片，並快速跳轉查價。">
+  <meta name="description" content="查看已收藏的 Weiss Schwarz 卡片，支援搜尋、排序與勾選合計價格。">
   <meta property="og:title" content="我的收藏｜WS-Cards 卡片雲">
-  <meta property="og:description" content="查看收藏卡片清單，點選即可查詢價格走勢。">
+  <meta property="og:description" content="以相簿方式瀏覽收藏卡片，搜尋排序並勾選合計最新售價。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -53,7 +53,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
     .fav-toolbar-meta {
       font-size: 0.9rem;
@@ -61,6 +61,36 @@
     }
     [data-theme="dark"] .fav-toolbar-meta {
       color: #a0aec0;
+    }
+    .fav-controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (min-width: 720px) {
+      .fav-controls {
+        grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.7fr) auto;
+        align-items: end;
+      }
+    }
+    .fav-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #6c757d;
+      margin-bottom: 0.25rem;
+    }
+    [data-theme="dark"] .fav-field label {
+      color: #a0aec0;
+    }
+    .fav-field .form-control {
+      font-size: 0.9rem;
+    }
+    .fav-control-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
     }
     .fav-status {
       min-height: 1.25rem;
@@ -72,6 +102,39 @@
     .fav-status.is-ok { color: #2f855a; }
     [data-theme="dark"] .fav-status.is-error { color: #fc8181; }
     [data-theme="dark"] .fav-status.is-ok { color: #68d391; }
+
+    .fav-total-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(102, 126, 234, 0.08);
+      border: 1px solid rgba(102, 126, 234, 0.18);
+    }
+    [data-theme="dark"] .fav-total-bar {
+      background: rgba(196, 166, 114, 0.12);
+      border-color: rgba(196, 166, 114, 0.28);
+    }
+    .fav-total-main {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .fav-total-sub {
+      font-size: 0.78rem;
+      color: #6c757d;
+      margin-top: 0.15rem;
+    }
+    [data-theme="dark"] .fav-total-sub {
+      color: #a0aec0;
+    }
+    .fav-total-value {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
 
     .fav-empty {
       text-align: center;
@@ -87,7 +150,6 @@
       margin-bottom: 1rem;
     }
 
-    /* 相簿網格 */
     .fav-album {
       list-style: none;
       margin: 0;
@@ -106,6 +168,12 @@
       position: relative;
       margin: 0;
       min-width: 0;
+    }
+    .fav-tile.is-checked .fav-tile-link {
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.55);
+    }
+    [data-theme="dark"] .fav-tile.is-checked .fav-tile-link {
+      box-shadow: 0 0 0 2px rgba(196, 166, 114, 0.65);
     }
     .fav-tile-link {
       display: block;
@@ -133,13 +201,11 @@
     .fav-tile-art {
       position: relative;
       aspect-ratio: 63 / 88;
-      background:
-        linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
       overflow: hidden;
     }
     [data-theme="dark"] .fav-tile-art {
-      background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     }
     .fav-tile-art img {
       width: 100%;
@@ -149,12 +215,8 @@
       opacity: 0;
       transition: opacity 0.35s ease;
     }
-    .fav-tile-art img.is-loaded {
-      opacity: 1;
-    }
-    .fav-tile-art img.is-broken {
-      display: none;
-    }
+    .fav-tile-art img.is-loaded { opacity: 1; }
+    .fav-tile-art img.is-broken { display: none; }
     .fav-tile-placeholder {
       position: absolute;
       inset: 0;
@@ -171,9 +233,7 @@
       font-size: 1.5rem;
       opacity: 0.55;
     }
-    .fav-tile-art.has-image .fav-tile-placeholder {
-      display: none;
-    }
+    .fav-tile-art.has-image .fav-tile-placeholder { display: none; }
     .fav-rare {
       position: absolute;
       left: 0.45rem;
@@ -187,6 +247,31 @@
       color: #fff;
       background: #718096;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    .fav-check {
+      position: absolute;
+      top: 0.4rem;
+      left: 0.4rem;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      margin: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .fav-check {
+      background: rgba(36, 36, 36, 0.92);
+    }
+    .fav-check input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
     }
     .fav-tile-caption {
       padding: 0.55rem 0.15rem 0.1rem;
@@ -210,9 +295,7 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    [data-theme="dark"] .fav-name {
-      color: #cbd5e0;
-    }
+    [data-theme="dark"] .fav-name { color: #cbd5e0; }
     .fav-meta {
       margin-top: 0.2rem;
       font-size: 0.7rem;
@@ -221,9 +304,20 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    [data-theme="dark"] .fav-meta {
+    [data-theme="dark"] .fav-meta { color: #a0aec0; }
+    .fav-price {
+      margin-top: 0.2rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #2d3748;
+    }
+    .fav-price.is-muted {
+      font-weight: 500;
       color: #a0aec0;
     }
+    [data-theme="dark"] .fav-price { color: #e2e8f0; }
+    [data-theme="dark"] .fav-price.is-muted { color: #718096; }
     .fav-remove-btn {
       position: absolute;
       top: 0.4rem;
@@ -375,10 +469,42 @@
                     </button>
                   </div>
                 </div>
+
+                <div class="fav-controls">
+                  <div class="fav-field">
+                    <label for="favSearchInput">搜尋</label>
+                    <input id="favSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、稀有度" autocomplete="off">
+                  </div>
+                  <div class="fav-field">
+                    <label for="favSortSelect">排序</label>
+                    <select id="favSortSelect" class="form-control">
+                      <option value="newest" selected>最新收藏</option>
+                      <option value="oldest">最早收藏</option>
+                      <option value="cardNumber">卡號 A→Z</option>
+                      <option value="rare">稀有度</option>
+                      <option value="priceDesc">價格高→低</option>
+                      <option value="priceAsc">價格低→高</option>
+                    </select>
+                  </div>
+                  <div class="fav-control-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favSelectVisibleBtn">全選可見</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favClearCheckBtn">清除勾選</button>
+                  </div>
+                </div>
+
+                <div class="fav-total-bar" id="favTotalBar" aria-live="polite">
+                  <div>
+                    <div class="fav-total-main">
+                      合計 <span class="fav-total-value" id="favTotalValue">¥0</span>
+                    </div>
+                    <div class="fav-total-sub" id="favTotalSub">已勾選 0 張 · 有價 0 張 · 無價 0 張</div>
+                  </div>
+                </div>
+
                 <div class="fav-status" id="favStatus" role="status" aria-live="polite"></div>
                 <div id="favEmpty" class="fav-empty" style="display:none;">
                   <div><i class="far fa-star" aria-hidden="true"></i></div>
-                  <p>尚未收藏任何卡片。</p>
+                  <p id="favEmptyText">尚未收藏任何卡片。</p>
                   <a class="btn btn-outline-secondary" href="line_test_v102.html">
                     <i class="fas fa-chart-line mr-1" aria-hidden="true"></i>前往查價並收藏
                   </a>
@@ -432,16 +558,32 @@
 
   (function () {
     var STORAGE_KEY = 'wsCardsFavorites';
+    var PRICE_CACHE_KEY = 'wsFavPriceCache';
+    var PRICE_TTL_MS = 12 * 60 * 60 * 1000;
     var MAX_ITEMS = 100;
     var LINE_PAGE = 'line_test_v102.html';
+    var PRICE_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
+    var PRICE_LOCAL_FALLBACKS = ['scrapy/mercariData/', 'json/cardData/'];
+
     var fb = window.WsFirebase;
     var cloudUser = null;
-    var currentList = [];
+    var allItems = [];
+    var checkedSet = {};
+    var filterQuery = '';
+    var sortMode = 'newest';
+    var priceCache = {};
+    var setJsonCache = {};
+    var priceLoadToken = 0;
 
     var listEl = document.getElementById('favList');
     var emptyEl = document.getElementById('favEmpty');
+    var emptyTextEl = document.getElementById('favEmptyText');
     var countEl = document.getElementById('favCountLabel');
     var statusEl = document.getElementById('favStatus');
+    var searchInput = document.getElementById('favSearchInput');
+    var sortSelect = document.getElementById('favSortSelect');
+    var totalValueEl = document.getElementById('favTotalValue');
+    var totalSubEl = document.getElementById('favTotalSub');
 
     function setStatus(msg, kind) {
       statusEl.textContent = msg || '';
@@ -473,6 +615,24 @@
       }
     }
 
+    function readPriceCache() {
+      try {
+        var raw = localStorage.getItem(PRICE_CACHE_KEY);
+        var data = raw ? JSON.parse(raw) : {};
+        return data && typeof data === 'object' ? data : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function writePriceCache() {
+      try {
+        localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceCache));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     function canUseCloud() {
       return !!(fb && fb.ready && fb.firestoreReady && cloudUser);
     }
@@ -492,7 +652,10 @@
             cardRare: normalizeText(item.cardRare),
             cardTitle: normalizeText(item.cardTitle),
             source: normalizeText(item.source) || 'line',
-            timestamp: ts || Date.now()
+            timestamp: ts || Date.now(),
+            priceJPY: null,
+            priceAsOf: '',
+            priceStatus: 'idle'
           };
         }
       }
@@ -535,6 +698,20 @@
       return '#718096';
     }
 
+    function rareRank(rare) {
+      if (!rare) return 90;
+      var r = String(rare).toUpperCase();
+      if (r.indexOf('SSP') >= 0 || r.indexOf('SEC') >= 0) return 10;
+      if (r.indexOf('SP') >= 0) return 20;
+      if (r.indexOf('SR') >= 0 || r.indexOf('OFR') >= 0) return 30;
+      if (r.indexOf('RRR') >= 0) return 40;
+      if (r.indexOf('RR') >= 0) return 50;
+      if (r.indexOf('R') >= 0) return 60;
+      if (r.indexOf('U') >= 0) return 70;
+      if (r.indexOf('C') >= 0) return 80;
+      return 90;
+    }
+
     function formatTime(ts) {
       if (!ts) return '—';
       var now = Date.now();
@@ -547,9 +724,7 @@
       if (hours < 24) return hours + ' 小時前';
       if (days < 7) return days + ' 天前';
       var d = new Date(ts);
-      var m = d.getMonth() + 1;
-      var day = d.getDate();
-      return d.getFullYear() + '/' + m + '/' + day;
+      return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
     }
 
     function escapeHtml(str) {
@@ -561,22 +736,21 @@
         .replace(/'/g, '&#39;');
     }
 
+    function formatYen(n) {
+      if (n === null || n === undefined || isNaN(n)) return '—';
+      return '¥' + Number(n).toLocaleString('en-US');
+    }
+
     function buildLineUrl(cardNumber) {
-      // 與既有 ?cardno= 相容；同時帶 card= 方便閱讀
       var underscored = String(cardNumber || '').replace(/\//g, '_');
       return LINE_PAGE + '?card=' + encodeURIComponent(cardNumber) +
         '&cardno=' + encodeURIComponent(underscored);
     }
 
-    /** 與查價頁 addPhoto 相同規則：主圖 devilfox，備援 ws-tcg */
     function buildCardImageUrls(cardNumberDisplay) {
       var cardNum = String(cardNumberDisplay || '').trim();
-      if (cardNum.indexOf(' ') >= 0) {
-        cardNum = cardNum.substr(0, cardNum.indexOf(' '));
-      }
-      if (!cardNum || cardNum.indexOf('-') < 0) {
-        return { primary: '', fallback: '' };
-      }
+      if (cardNum.indexOf(' ') >= 0) cardNum = cardNum.substr(0, cardNum.indexOf(' '));
+      if (!cardNum || cardNum.indexOf('-') < 0) return { primary: '', fallback: '' };
       var cardFirst = cardNum.substr(0, 1);
       var cardSecond = cardNum.substr(0, cardNum.indexOf('-')).replace('/', '_');
       var cardThird = cardNum.replace('/', '_').replace('-', '_');
@@ -587,29 +761,286 @@
       };
     }
 
-    function renderList(list) {
-      currentList = list || [];
-      countEl.textContent = '共 ' + currentList.length + ' 張';
+    function setCodeFromCardNumber(cardNumber) {
+      var n = String(cardNumber || '').trim();
+      var dash = n.indexOf('-');
+      if (dash < 0) return '';
+      return n.slice(0, dash).replace(/\//g, '_');
+    }
 
-      if (!currentList.length) {
+    function extractLatestPrice(cardInfo) {
+      if (!cardInfo || !Array.isArray(cardInfo.cardPrice)) {
+        return { priceJPY: null, asOf: '' };
+      }
+      var prices = cardInfo.cardPrice;
+      var dates = Array.isArray(cardInfo.upddate) ? cardInfo.upddate : [];
+      for (var i = prices.length - 1; i >= 0; i--) {
+        var p = prices[i];
+        if (p !== null && p !== undefined && p !== 0 && !isNaN(p)) {
+          return {
+            priceJPY: Number(p),
+            asOf: dates[i] ? String(dates[i]) : ''
+          };
+        }
+      }
+      return { priceJPY: null, asOf: '' };
+    }
+
+    function applyCachedPrices(items) {
+      var now = Date.now();
+      (items || []).forEach(function (item) {
+        var cached = priceCache[item.cardNumber];
+        if (!cached) return;
+        if (cached.fetchedAt && (now - cached.fetchedAt) > PRICE_TTL_MS) return;
+        if (typeof cached.priceJPY === 'number') {
+          item.priceJPY = cached.priceJPY;
+          item.priceAsOf = cached.asOf || '';
+          item.priceStatus = 'ready';
+        } else if (cached.missing) {
+          item.priceJPY = null;
+          item.priceAsOf = '';
+          item.priceStatus = 'missing';
+        }
+      });
+    }
+
+    function lookupPriceInSetJson(setJson, cardNumber) {
+      if (!setJson || typeof setJson !== 'object') return null;
+      if (setJson[cardNumber]) return extractLatestPrice(setJson[cardNumber]);
+      var underscored = String(cardNumber).replace(/\//g, '_');
+      if (setJson[underscored]) return extractLatestPrice(setJson[underscored]);
+      for (var key in setJson) {
+        if (!Object.prototype.hasOwnProperty.call(setJson, key)) continue;
+        if (String(key).toLowerCase() === String(cardNumber).toLowerCase()) {
+          return extractLatestPrice(setJson[key]);
+        }
+      }
+      return { priceJPY: null, asOf: '' };
+    }
+
+    function fetchJson(url) {
+      return fetch(url, { credentials: 'omit' }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      });
+    }
+
+    function loadSetJson(setCode) {
+      if (!setCode) return Promise.resolve(null);
+      if (Object.prototype.hasOwnProperty.call(setJsonCache, setCode)) {
+        return Promise.resolve(setJsonCache[setCode]);
+      }
+      var urls = [PRICE_BASE + setCode + '.json'].concat(
+        PRICE_LOCAL_FALLBACKS.map(function (prefix) { return prefix + setCode + '.json'; })
+      );
+
+      function tryNext(i) {
+        if (i >= urls.length) {
+          setJsonCache[setCode] = null;
+          return null;
+        }
+        return fetchJson(urls[i]).then(function (json) {
+          setJsonCache[setCode] = json;
+          return json;
+        }).catch(function () {
+          return tryNext(i + 1);
+        });
+      }
+
+      return tryNext(0);
+    }
+
+    function loadPricesForItems(items) {
+      var token = ++priceLoadToken;
+      var groups = {};
+      (items || []).forEach(function (item) {
+        if (!item || !item.cardNumber) return;
+        if (item.priceStatus === 'ready' || item.priceStatus === 'missing') return;
+        var setCode = setCodeFromCardNumber(item.cardNumber);
+        if (!setCode) {
+          item.priceStatus = 'missing';
+          return;
+        }
+        if (!groups[setCode]) groups[setCode] = [];
+        groups[setCode].push(item);
+        item.priceStatus = 'loading';
+      });
+
+      var setCodes = Object.keys(groups);
+      if (!setCodes.length) {
+        updateTotalBar();
+        return Promise.resolve();
+      }
+
+      var chain = Promise.resolve();
+      setCodes.forEach(function (setCode) {
+        chain = chain.then(function () {
+          if (token !== priceLoadToken) return;
+          return loadSetJson(setCode).then(function (json) {
+            if (token !== priceLoadToken) return;
+            var now = Date.now();
+            groups[setCode].forEach(function (item) {
+              var result = json ? lookupPriceInSetJson(json, item.cardNumber) : { priceJPY: null, asOf: '' };
+              if (result && typeof result.priceJPY === 'number') {
+                item.priceJPY = result.priceJPY;
+                item.priceAsOf = result.asOf || '';
+                item.priceStatus = 'ready';
+                priceCache[item.cardNumber] = {
+                  priceJPY: result.priceJPY,
+                  asOf: result.asOf || '',
+                  fetchedAt: now
+                };
+              } else {
+                item.priceJPY = null;
+                item.priceAsOf = '';
+                item.priceStatus = 'missing';
+                priceCache[item.cardNumber] = {
+                  missing: true,
+                  fetchedAt: now
+                };
+              }
+            });
+            writePriceCache();
+            refreshVisiblePrices();
+            updateTotalBar();
+          });
+        });
+      });
+      return chain;
+    }
+
+    function matchesFilter(item, q) {
+      if (!q) return true;
+      var hay = [
+        item.cardNumber || '',
+        item.cardName || '',
+        item.cardTitle || '',
+        item.cardRare || ''
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) >= 0;
+    }
+
+    function getVisibleItems() {
+      var q = String(filterQuery || '').trim().toLowerCase();
+      var list = allItems.filter(function (item) {
+        return matchesFilter(item, q);
+      });
+
+      list.sort(function (a, b) {
+        if (sortMode === 'oldest') return (a.timestamp || 0) - (b.timestamp || 0);
+        if (sortMode === 'cardNumber') {
+          return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''), 'en', { numeric: true });
+        }
+        if (sortMode === 'rare') {
+          var rr = rareRank(a.cardRare) - rareRank(b.cardRare);
+          if (rr !== 0) return rr;
+          return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''), 'en', { numeric: true });
+        }
+        if (sortMode === 'priceDesc' || sortMode === 'priceAsc') {
+          var ap = typeof a.priceJPY === 'number' ? a.priceJPY : -1;
+          var bp = typeof b.priceJPY === 'number' ? b.priceJPY : -1;
+          if (ap < 0 && bp < 0) return (b.timestamp || 0) - (a.timestamp || 0);
+          if (ap < 0) return 1;
+          if (bp < 0) return -1;
+          return sortMode === 'priceDesc' ? (bp - ap) : (ap - bp);
+        }
+        return (b.timestamp || 0) - (a.timestamp || 0);
+      });
+      return list;
+    }
+
+    function priceLabel(item) {
+      if (!item) return { text: '—', muted: true };
+      if (item.priceStatus === 'loading' || item.priceStatus === 'idle') {
+        return { text: '價格載入中…', muted: true };
+      }
+      if (typeof item.priceJPY === 'number') {
+        return { text: formatYen(item.priceJPY), muted: false };
+      }
+      return { text: '無價格紀錄', muted: true };
+    }
+
+    function updateCountLabel(visibleCount) {
+      if (!allItems.length) {
+        countEl.textContent = '共 0 張';
+        return;
+      }
+      if (visibleCount === allItems.length) {
+        countEl.textContent = '共 ' + allItems.length + ' 張';
+      } else {
+        countEl.textContent = '顯示 ' + visibleCount + ' / 共 ' + allItems.length + ' 張';
+      }
+    }
+
+    function updateTotalBar() {
+      var checked = 0;
+      var priced = 0;
+      var unpriced = 0;
+      var total = 0;
+      Object.keys(checkedSet).forEach(function (cardNumber) {
+        if (!checkedSet[cardNumber]) return;
+        var item = allItems.find(function (it) { return it.cardNumber === cardNumber; });
+        if (!item) return;
+        checked += 1;
+        if (typeof item.priceJPY === 'number') {
+          priced += 1;
+          total += item.priceJPY;
+        } else {
+          unpriced += 1;
+        }
+      });
+      totalValueEl.textContent = formatYen(total);
+      totalSubEl.textContent = '已勾選 ' + checked + ' 張 · 有價 ' + priced + ' 張 · 無價 ' + unpriced + ' 張';
+    }
+
+    function refreshVisiblePrices() {
+      var nodes = listEl.querySelectorAll('[data-price-for]');
+      Array.prototype.forEach.call(nodes, function (el) {
+        var cardNumber = el.getAttribute('data-price-for');
+        var item = allItems.find(function (it) { return it.cardNumber === cardNumber; });
+        var label = priceLabel(item);
+        el.textContent = label.text;
+        el.classList.toggle('is-muted', !!label.muted);
+      });
+    }
+
+    function renderAlbum() {
+      var visible = getVisibleItems();
+      updateCountLabel(visible.length);
+      updateTotalBar();
+
+      if (!allItems.length) {
         emptyEl.style.display = '';
+        emptyTextEl.textContent = '尚未收藏任何卡片。';
+        listEl.innerHTML = '';
+        return;
+      }
+
+      if (!visible.length) {
+        emptyEl.style.display = '';
+        emptyTextEl.textContent = '沒有符合搜尋條件的卡片。';
         listEl.innerHTML = '';
         return;
       }
 
       emptyEl.style.display = 'none';
       var html = '';
-      currentList.forEach(function (item) {
+      visible.forEach(function (item) {
         var cardNumber = item.cardNumber || '';
         var name = item.cardName || '（尚無卡名）';
         var rare = item.cardRare || '';
         var urls = buildCardImageUrls(cardNumber);
+        var checked = !!checkedSet[cardNumber];
         var rareHtml = rare
           ? '<span class="fav-rare" style="background:' + getRareColor(rare) + ';">' + escapeHtml(rare) + '</span>'
           : '';
+        var label = priceLabel(item);
         var aria = '查詢 ' + cardNumber + (name ? ' ' + name : '');
 
-        html += '<li class="fav-tile" data-card-number="' + escapeHtml(cardNumber) + '">';
+        html += '<li class="fav-tile' + (checked ? ' is-checked' : '') + '" data-card-number="' + escapeHtml(cardNumber) + '">';
+        html += '  <label class="fav-check">';
+        html += '    <input type="checkbox" data-check="' + escapeHtml(cardNumber) + '"' + (checked ? ' checked' : '') + ' aria-label="勾選 ' + escapeHtml(cardNumber) + ' 以合計價格">';
+        html += '  </label>';
         html += '  <a class="fav-tile-link" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="' + escapeHtml(aria) + '">';
         html += '    <div class="fav-tile-art">';
         html += '      <div class="fav-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
@@ -621,6 +1052,7 @@
         html += '    <div class="fav-tile-caption">';
         html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
         html += '      <span class="fav-name">' + escapeHtml(name) + '</span>';
+        html += '      <div class="fav-price' + (label.muted ? ' is-muted' : '') + '" data-price-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(label.text) + '</div>';
         html += '      <div class="fav-meta">收藏於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
         html += '    </div>';
         html += '  </a>';
@@ -630,6 +1062,30 @@
         html += '</li>';
       });
       listEl.innerHTML = html;
+    }
+
+    function setItemsAndRender(list) {
+      allItems = (list || []).map(function (item) {
+        return {
+          cardNumber: item.cardNumber,
+          cardName: item.cardName || '',
+          cardRare: item.cardRare || '',
+          cardTitle: item.cardTitle || '',
+          source: item.source || 'line',
+          timestamp: item.timestamp || Date.now(),
+          priceJPY: null,
+          priceAsOf: '',
+          priceStatus: 'idle'
+        };
+      });
+      Object.keys(checkedSet).forEach(function (key) {
+        if (!allItems.some(function (it) { return it.cardNumber === key; })) {
+          delete checkedSet[key];
+        }
+      });
+      applyCachedPrices(allItems);
+      renderAlbum();
+      loadPricesForItems(allItems);
     }
 
     function onAlbumImageLoad(img) {
@@ -657,11 +1113,21 @@
 
     function removeFavorite(cardNumber) {
       if (!cardNumber) return;
-      var next = currentList.filter(function (item) {
-        return item.cardNumber !== cardNumber;
-      });
+      var next = allItems
+        .filter(function (item) { return item.cardNumber !== cardNumber; })
+        .map(function (item) {
+          return {
+            cardNumber: item.cardNumber,
+            cardName: item.cardName,
+            cardRare: item.cardRare,
+            cardTitle: item.cardTitle,
+            source: item.source,
+            timestamp: item.timestamp
+          };
+        });
+      delete checkedSet[cardNumber];
       writeLocal(next);
-      renderList(next);
+      setItemsAndRender(next);
       setStatus('已取消收藏 ' + cardNumber, 'is-ok');
 
       if (canUseCloud()) {
@@ -674,7 +1140,7 @@
 
     function loadFavorites() {
       var local = readLocal();
-      renderList(local);
+      setItemsAndRender(local);
 
       if (!canUseCloud()) {
         setStatus(cloudUser ? '雲端未就緒，顯示本機收藏' : '顯示本機收藏（登入後可同步雲端）');
@@ -686,7 +1152,7 @@
         .then(function (remote) {
           var merged = mergeLists(local, remote || []);
           writeLocal(merged);
-          renderList(merged);
+          setItemsAndRender(merged);
           return pushMissingToCloud(merged, remote || []).then(function () {
             setStatus('已同步雲端收藏', 'is-ok');
             return merged;
@@ -707,6 +1173,18 @@
       removeFavorite(btn.getAttribute('data-remove'));
     });
 
+    listEl.addEventListener('change', function (e) {
+      var input = e.target.closest('[data-check]');
+      if (!input) return;
+      var cardNumber = input.getAttribute('data-check');
+      if (!cardNumber) return;
+      if (input.checked) checkedSet[cardNumber] = true;
+      else delete checkedSet[cardNumber];
+      var tile = input.closest('.fav-tile');
+      if (tile) tile.classList.toggle('is-checked', !!input.checked);
+      updateTotalBar();
+    });
+
     listEl.addEventListener('load', function (e) {
       if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
     }, true);
@@ -715,9 +1193,40 @@
       if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
     }, true);
 
+    searchInput.addEventListener('input', function () {
+      filterQuery = searchInput.value || '';
+      renderAlbum();
+    });
+
+    sortSelect.addEventListener('change', function () {
+      sortMode = sortSelect.value || 'newest';
+      renderAlbum();
+    });
+
+    document.getElementById('favSelectVisibleBtn').addEventListener('click', function () {
+      getVisibleItems().forEach(function (item) {
+        checkedSet[item.cardNumber] = true;
+      });
+      renderAlbum();
+    });
+
+    document.getElementById('favClearCheckBtn').addEventListener('click', function () {
+      checkedSet = {};
+      renderAlbum();
+    });
+
     document.getElementById('favReloadBtn').addEventListener('click', function () {
+      // 強制重抓價格：清掉記憶體狀態但保留 TTL 內快取；若要強制可再清 cache
+      allItems.forEach(function (item) {
+        item.priceStatus = 'idle';
+        item.priceJPY = null;
+        item.priceAsOf = '';
+      });
+      setJsonCache = {};
       loadFavorites();
     });
+
+    priceCache = readPriceCache();
 
     if (fb && typeof fb.onAuth === 'function') {
       fb.onAuth(function (user) {
@@ -725,7 +1234,7 @@
         loadFavorites();
       });
     } else {
-      renderList(readLocal());
+      setItemsAndRender(readLocal());
       setStatus((fb && fb.reason) || 'Firebase 未載入，僅顯示本機收藏', 'is-error');
     }
   })();
