@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <meta name="description" content="查看已收藏的 Weiss Schwarz 卡片，並快速跳轉查價。">
+  <meta property="og:title" content="我的收藏｜WS-Cards 卡片雲">
+  <meta property="og:description" content="查看收藏卡片清單，點選即可查詢價格走勢。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/favorites.html">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <title>我的收藏｜WS-Cards 卡片雲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
+  <style>
+    body,
+    body button,
+    body input,
+    body select,
+    body textarea,
+    body p,
+    body h3,
+    body h5 {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .fav-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .fav-toolbar-meta {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    [data-theme="dark"] .fav-toolbar-meta {
+      color: #a0aec0;
+    }
+    .fav-status {
+      min-height: 1.25rem;
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 0.75rem;
+    }
+    .fav-status.is-error { color: #c53030; }
+    .fav-status.is-ok { color: #2f855a; }
+    [data-theme="dark"] .fav-status.is-error { color: #fc8181; }
+    [data-theme="dark"] .fav-status.is-ok { color: #68d391; }
+
+    .fav-empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: #6c757d;
+    }
+    .fav-empty i {
+      font-size: 2.2rem;
+      opacity: 0.45;
+      margin-bottom: 0.75rem;
+    }
+    .fav-empty p {
+      margin-bottom: 1rem;
+    }
+
+    .fav-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .fav-item {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .fav-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .fav-item-main {
+      flex: 1;
+      min-width: 0;
+      display: block;
+      padding: 0.85rem 1rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    .fav-item-main:hover {
+      background: rgba(102, 126, 234, 0.06);
+    }
+    [data-theme="dark"] .fav-item-main:hover {
+      background: rgba(196, 166, 114, 0.1);
+    }
+    .fav-item-main:focus-visible {
+      outline: 2px solid #667eea;
+      outline-offset: -2px;
+    }
+    .fav-item-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.4rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    .fav-cardno {
+      font-weight: 700;
+      font-size: 0.98rem;
+      letter-spacing: 0.01em;
+    }
+    .fav-rare {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      color: #fff;
+      background: #718096;
+    }
+    .fav-name {
+      font-size: 0.92rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .fav-meta {
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      color: #6c757d;
+    }
+    [data-theme="dark"] .fav-meta {
+      color: #a0aec0;
+    }
+    .fav-item-actions {
+      display: flex;
+      align-items: center;
+      padding: 0 0.55rem;
+      border-left: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    [data-theme="dark"] .fav-item-actions {
+      border-left-color: rgba(255, 255, 255, 0.08);
+    }
+    .fav-remove-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #a0aec0;
+      cursor: pointer;
+    }
+    .fav-remove-btn:hover {
+      background: rgba(229, 62, 62, 0.1);
+      color: #e53e3e;
+    }
+    .fav-remove-btn:focus-visible {
+      outline: 2px solid #e53e3e;
+      outline-offset: 1px;
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <div data-navbar data-page-title="我的收藏"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
+      </a>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line_test_v102.html" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="productTimeline.html" class="menu-link">
+            <i class="fas fa-calendar-alt main-icon"></i>
+            <span>商品發售時間軸</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="favorites.html" class="menu-link active">
+            <i class="fas fa-star main-icon"></i>
+            <span>我的收藏</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="account.html" class="menu-link">
+            <i class="fas fa-user main-icon"></i>
+            <span>個人資料</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-star mr-2"></i>
+                  我的收藏
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="fav-toolbar">
+                  <div class="fav-toolbar-meta" id="favCountLabel">共 0 張</div>
+                  <div>
+                    <a class="btn btn-outline-secondary btn-sm" href="line_test_v102.html">
+                      <i class="fas fa-search mr-1" aria-hidden="true"></i>去查價頁收藏
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favReloadBtn">
+                      <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>重新整理
+                    </button>
+                  </div>
+                </div>
+                <div class="fav-status" id="favStatus" role="status" aria-live="polite"></div>
+                <div id="favEmpty" class="fav-empty" style="display:none;">
+                  <div><i class="far fa-star" aria-hidden="true"></i></div>
+                  <p>尚未收藏任何卡片。</p>
+                  <a class="btn btn-outline-secondary" href="line_test_v102.html">
+                    <i class="fas fa-chart-line mr-1" aria-hidden="true"></i>前往查價並收藏
+                  </a>
+                </div>
+                <ul class="fav-list" id="favList" aria-label="收藏卡片清單"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer" aria-label="意見回饋（另開新視窗的表單）">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  function toggleCustomDrawer(e) {
+    if (e) e.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      var btn = document.getElementById('leftbar');
+      if (btn) {
+        var opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+
+  function toggleSubmenu(element, e) {
+    if (e) e.preventDefault();
+    var parent = element.parentElement;
+    if (!parent) return;
+    parent.classList.toggle('open');
+    var submenu = parent.querySelector('.submenu');
+    if (submenu) {
+      submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  }
+
+  (function () {
+    var STORAGE_KEY = 'wsCardsFavorites';
+    var MAX_ITEMS = 100;
+    var LINE_PAGE = 'line_test_v102.html';
+    var fb = window.WsFirebase;
+    var cloudUser = null;
+    var currentList = [];
+
+    var listEl = document.getElementById('favList');
+    var emptyEl = document.getElementById('favEmpty');
+    var countEl = document.getElementById('favCountLabel');
+    var statusEl = document.getElementById('favStatus');
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg || '';
+      statusEl.classList.remove('is-error', 'is-ok');
+      if (kind) statusEl.classList.add(kind);
+    }
+
+    function normalizeText(value) {
+      if (value === null || value === undefined) return '';
+      var text = String(value).trim();
+      return (text === '-' || text === '?') ? '' : text;
+    }
+
+    function readLocal() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    function writeLocal(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list || []));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function canUseCloud() {
+      return !!(fb && fb.ready && fb.firestoreReady && cloudUser);
+    }
+
+    function mergeLists(localList, remoteList) {
+      var map = {};
+      function upsert(item) {
+        if (!item || !item.cardNumber) return;
+        var key = String(item.cardNumber).trim();
+        if (!key) return;
+        var ts = typeof item.timestamp === 'number' ? item.timestamp : 0;
+        var prev = map[key];
+        if (!prev || ts >= (prev.timestamp || 0)) {
+          map[key] = {
+            cardNumber: key,
+            cardName: normalizeText(item.cardName),
+            cardRare: normalizeText(item.cardRare),
+            cardTitle: normalizeText(item.cardTitle),
+            source: normalizeText(item.source) || 'line',
+            timestamp: ts || Date.now()
+          };
+        }
+      }
+      (localList || []).forEach(upsert);
+      (remoteList || []).forEach(upsert);
+      return Object.keys(map)
+        .map(function (k) { return map[k]; })
+        .sort(function (a, b) { return (b.timestamp || 0) - (a.timestamp || 0); })
+        .slice(0, MAX_ITEMS);
+    }
+
+    function pushMissingToCloud(merged, remoteList) {
+      if (!canUseCloud()) return Promise.resolve();
+      var remoteKeys = {};
+      (remoteList || []).forEach(function (item) {
+        if (item && item.cardNumber) remoteKeys[item.cardNumber] = true;
+      });
+      var missing = (merged || []).filter(function (item) {
+        return item && item.cardNumber && !remoteKeys[item.cardNumber];
+      });
+      var chain = Promise.resolve();
+      missing.forEach(function (item) {
+        chain = chain.then(function () {
+          return fb.addCardFavorite(item).catch(function (err) {
+            console.error('上傳收藏失敗:', item.cardNumber, err);
+          });
+        });
+      });
+      return chain;
+    }
+
+    function getRareColor(rare) {
+      if (!rare) return '#718096';
+      var r = String(rare).toUpperCase();
+      if (r.indexOf('SSP') >= 0 || r.indexOf('SEC') >= 0 || r.indexOf('SP') >= 0) return '#e53e3e';
+      if (r.indexOf('SR') >= 0 || r.indexOf('OFR') >= 0) return '#d69e2e';
+      if (r.indexOf('RRR') >= 0) return '#805ad5';
+      if (r.indexOf('RR') >= 0) return '#3182ce';
+      if (r.indexOf('R') >= 0) return '#38a169';
+      return '#718096';
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '—';
+      var now = Date.now();
+      var diff = now - ts;
+      var minutes = Math.floor(diff / 60000);
+      var hours = Math.floor(diff / 3600000);
+      var days = Math.floor(diff / 86400000);
+      if (minutes < 1) return '剛剛';
+      if (minutes < 60) return minutes + ' 分鐘前';
+      if (hours < 24) return hours + ' 小時前';
+      if (days < 7) return days + ' 天前';
+      var d = new Date(ts);
+      var m = d.getMonth() + 1;
+      var day = d.getDate();
+      return d.getFullYear() + '/' + m + '/' + day;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildLineUrl(cardNumber) {
+      // 與既有 ?cardno= 相容；同時帶 card= 方便閱讀
+      var underscored = String(cardNumber || '').replace(/\//g, '_');
+      return LINE_PAGE + '?card=' + encodeURIComponent(cardNumber) +
+        '&cardno=' + encodeURIComponent(underscored);
+    }
+
+    function renderList(list) {
+      currentList = list || [];
+      countEl.textContent = '共 ' + currentList.length + ' 張';
+
+      if (!currentList.length) {
+        emptyEl.style.display = '';
+        listEl.innerHTML = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      var html = '';
+      currentList.forEach(function (item) {
+        var cardNumber = item.cardNumber || '';
+        var name = item.cardName || '（尚無卡名）';
+        var rare = item.cardRare || '';
+        var title = item.cardTitle || '';
+        var rareHtml = rare
+          ? '<span class="fav-rare" style="background:' + getRareColor(rare) + ';">' + escapeHtml(rare) + '</span>'
+          : '';
+        var metaBits = [];
+        if (title) metaBits.push(escapeHtml(title));
+        metaBits.push('收藏於 ' + escapeHtml(formatTime(item.timestamp)));
+
+        html += '<li class="fav-item" data-card-number="' + escapeHtml(cardNumber) + '">';
+        html += '  <a class="fav-item-main" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="查詢 ' + escapeHtml(cardNumber) + '">';
+        html += '    <div class="fav-item-top">';
+        html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
+        html += rareHtml;
+        html += '    </div>';
+        html += '    <div class="fav-name">' + escapeHtml(name) + '</div>';
+        html += '    <div class="fav-meta">' + metaBits.join(' · ') + '</div>';
+        html += '  </a>';
+        html += '  <div class="fav-item-actions">';
+        html += '    <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="取消收藏" aria-label="取消收藏 ' + escapeHtml(cardNumber) + '">';
+        html += '      <i class="fas fa-trash-alt" aria-hidden="true"></i>';
+        html += '    </button>';
+        html += '  </div>';
+        html += '</li>';
+      });
+      listEl.innerHTML = html;
+    }
+
+    function removeFavorite(cardNumber) {
+      if (!cardNumber) return;
+      var next = currentList.filter(function (item) {
+        return item.cardNumber !== cardNumber;
+      });
+      writeLocal(next);
+      renderList(next);
+      setStatus('已取消收藏 ' + cardNumber, 'is-ok');
+
+      if (canUseCloud()) {
+        fb.removeCardFavorite(cardNumber).catch(function (err) {
+          console.error(err);
+          setStatus('本機已移除，雲端同步失敗', 'is-error');
+        });
+      }
+    }
+
+    function loadFavorites() {
+      var local = readLocal();
+      renderList(local);
+
+      if (!canUseCloud()) {
+        setStatus(cloudUser ? '雲端未就緒，顯示本機收藏' : '顯示本機收藏（登入後可同步雲端）');
+        return Promise.resolve(local);
+      }
+
+      setStatus('同步雲端收藏…');
+      return fb.loadCardFavorites()
+        .then(function (remote) {
+          var merged = mergeLists(local, remote || []);
+          writeLocal(merged);
+          renderList(merged);
+          return pushMissingToCloud(merged, remote || []).then(function () {
+            setStatus('已同步雲端收藏', 'is-ok');
+            return merged;
+          });
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus('雲端讀取失敗，繼續顯示本機收藏', 'is-error');
+          return local;
+        });
+    }
+
+    listEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-remove]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      removeFavorite(btn.getAttribute('data-remove'));
+    });
+
+    document.getElementById('favReloadBtn').addEventListener('click', function () {
+      loadFavorites();
+    });
+
+    if (fb && typeof fb.onAuth === 'function') {
+      fb.onAuth(function (user) {
+        cloudUser = user || null;
+        loadFavorites();
+      });
+    } else {
+      renderList(readLocal());
+      setStatus((fb && fb.reason) || 'Firebase 未載入，僅顯示本機收藏', 'is-error');
+    }
+  })();
+</script>
+</body>
+</html>

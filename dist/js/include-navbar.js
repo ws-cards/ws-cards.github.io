@@ -258,12 +258,18 @@
     window.location.href = '/account.html';
   }
 
+  function openFavorites() {
+    setUserMenuOpen(false);
+    window.location.href = '/favorites.html';
+  }
+
   function initializeAuth() {
     ensureAuthMenuStyles();
 
     var btnIn = container.querySelector('#navAuthSignIn');
     var menuBtn = container.querySelector('#navAuthUserMenuBtn');
     var profileBtn = container.querySelector('#navAuthProfileBtn');
+    var favoritesBtn = container.querySelector('#navAuthFavoritesBtn');
     var btnOut = container.querySelector('#navAuthSignOut');
     var fb = window.WsFirebase;
 
@@ -302,6 +308,14 @@
         e.preventDefault();
         e.stopPropagation();
         openProfile();
+      });
+    }
+
+    if (favoritesBtn) {
+      favoritesBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openFavorites();
       });
     }
 
