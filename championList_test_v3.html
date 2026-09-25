@@ -39,8 +39,9 @@
     /* ============================================
        本頁專屬樣式
        ------------------------------------------------
-       navbar、側邊欄 drawer、卡片、篩選、搜尋歷史、
-       深淺色主題等外觀一律沿用 wscards.newline_v86.css，
+       頂部導覽列改由 assets/partials/navbar.html 注入；
+       側邊欄 drawer、卡片、篩選、搜尋歷史、深淺色主題等
+       外觀一律沿用 wscards.newline_v88.css，
        此處只補「優勝牌組」內容區塊需要、共用樣式沒有的部分。
        ============================================ */
 
@@ -152,32 +153,12 @@
 <div class="wrapper">
 
   <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" href="#" role="button" id="leftbar" aria-label="開啟選單" aria-expanded="false" onclick="toggleCustomDrawer(event)"><span class="hamburger" id="mainBarIcon" aria-hidden="true"><span></span><span></span><span></span></span></a>
-      </li>
-    </ul>
-    <div class="navbar-title-block">
-      <span class="navbar-title-text">優勝牌組查詢</span>
-      <span class="navbar-title-badge">Beta</span>
-    </div>
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <button
-          id="themeToggleBtn"
-          class="theme-toggle-btn"
-          type="button"
-          title="切換為深色模式"
-          aria-label="切換為深色模式"
-          aria-pressed="false"
-        >
-          <i id="themeToggleIcon" class="fas fa-moon" aria-hidden="true"></i>
-        </button>
-      </li>
-    </ul>
-  </nav>
+  <div data-navbar data-page-title="優勝牌組查詢"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
   <!-- /.navbar -->
 
   <!-- Custom Drawer Overlay -->
@@ -187,11 +168,12 @@
   <aside class="custom-drawer" id="customDrawer">
     <div class="custom-drawer-header">
       <a href="./" class="brand-link">
-        <img src="dist/img/logo.png" alt="Logo" class="brand-image">
+        <!-- 標誌旁已有 WS-Cards 文字，圖片重複唸出來只是噪音 -->
+        <img src="dist/img/logo.png" alt="" class="brand-image">
         <span class="brand-text">WS-Cards</span>
       </a>
-      <button class="custom-drawer-close" onclick="toggleCustomDrawer()">
-        <i class="fas fa-times"></i>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -449,54 +431,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  // ============================================
-  // 主題切換功能
-  // ============================================
-  (function() {
-    var THEME_STORAGE_KEY = 'ws-theme';
-
-    function resolveTheme(theme) {
-      return theme === 'dark' ? 'dark' : 'light';
-    }
-
-    function applyTheme(theme, btn, icon) {
-      var resolvedTheme = resolveTheme(theme);
-      document.documentElement.setAttribute('data-theme', resolvedTheme);
-
-      if (!btn || !icon) {
-        return;
-      }
-
-      var isDark = resolvedTheme === 'dark';
-      icon.classList.remove('fa-sun', 'fa-moon');
-      icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
-
-      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-      btn.setAttribute('title', isDark ? '切換為淺色模式' : '切換為深色模式');
-      btn.setAttribute('aria-label', isDark ? '切換為淺色模式' : '切換為深色模式');
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      var btn = document.getElementById('themeToggleBtn');
-      var icon = document.getElementById('themeToggleIcon');
-      if (!btn || !icon) {
-        return;
-      }
-
-      // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
-      var currentTheme = resolveTheme(
-        document.documentElement.getAttribute('data-theme') ||
-        localStorage.getItem(THEME_STORAGE_KEY)
-      );
-      applyTheme(currentTheme, btn, icon);
-
-      btn.addEventListener('click', function() {
-        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        applyTheme(currentTheme, btn, icon);
-        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
-      });
-    });
-  })();
+  // 主題切換改由 dist/js/include-navbar.js 處理（共用 'ws-theme'）
 
   // ============================================
   // 側邊欄開關邏輯
