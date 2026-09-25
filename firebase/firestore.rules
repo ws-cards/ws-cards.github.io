@@ -7,7 +7,13 @@ service cloud.firestore {
                          && request.auth.uid == userId;
     }
 
-    // 使用者子集合（countingSessions 等）
+    // 卡片收藏：users/{uid}/cardFavorites/{cardId}
+    match /users/{userId}/cardFavorites/{cardId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // 使用者其他子集合（countingSessions 等）
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
