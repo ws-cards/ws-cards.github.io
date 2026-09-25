@@ -87,104 +87,186 @@
       margin-bottom: 1rem;
     }
 
-    .fav-list {
+    /* 相簿網格 */
+    .fav-album {
       list-style: none;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 1rem 0.85rem;
     }
-    .fav-item {
-      display: flex;
-      align-items: stretch;
-      gap: 0.5rem;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 10px;
-      background: #fff;
-      overflow: hidden;
+    @media (min-width: 768px) {
+      .fav-album {
+        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+        gap: 1.15rem 1rem;
+      }
     }
-    [data-theme="dark"] .fav-item {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    .fav-item-main {
-      flex: 1;
+    .fav-tile {
+      position: relative;
+      margin: 0;
       min-width: 0;
+    }
+    .fav-tile-link {
       display: block;
-      padding: 0.85rem 1rem;
       text-decoration: none;
       color: inherit;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.03);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .fav-item-main:hover {
-      background: rgba(102, 126, 234, 0.06);
+    [data-theme="dark"] .fav-tile-link {
+      background: rgba(255, 255, 255, 0.04);
     }
-    [data-theme="dark"] .fav-item-main:hover {
-      background: rgba(196, 166, 114, 0.1);
+    .fav-tile-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
     }
-    .fav-item-main:focus-visible {
+    .fav-tile-link:focus-visible {
       outline: 2px solid #667eea;
-      outline-offset: -2px;
+      outline-offset: 3px;
     }
-    .fav-item-top {
+    [data-theme="dark"] .fav-tile-link:focus-visible {
+      outline-color: #c4a672;
+    }
+    .fav-tile-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      background:
+        linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      overflow: hidden;
+    }
+    [data-theme="dark"] .fav-tile-art {
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    }
+    .fav-tile-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .fav-tile-art img.is-loaded {
+      opacity: 1;
+    }
+    .fav-tile-art img.is-broken {
+      display: none;
+    }
+    .fav-tile-placeholder {
+      position: absolute;
+      inset: 0;
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0.4rem 0.75rem;
-      margin-bottom: 0.25rem;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      color: #a0aec0;
+      font-size: 0.75rem;
+      pointer-events: none;
     }
-    .fav-cardno {
-      font-weight: 700;
-      font-size: 0.98rem;
-      letter-spacing: 0.01em;
+    .fav-tile-placeholder i {
+      font-size: 1.5rem;
+      opacity: 0.55;
+    }
+    .fav-tile-art.has-image .fav-tile-placeholder {
+      display: none;
     }
     .fav-rare {
+      position: absolute;
+      left: 0.45rem;
+      bottom: 0.45rem;
+      z-index: 1;
       display: inline-block;
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 0.1rem 0.45rem;
+      padding: 0.12rem 0.4rem;
       border-radius: 4px;
       color: #fff;
       background: #718096;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    .fav-tile-caption {
+      padding: 0.55rem 0.15rem 0.1rem;
+    }
+    .fav-cardno {
+      display: block;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .fav-name {
-      font-size: 0.92rem;
-      line-height: 1.4;
-      word-break: break-word;
+      margin-top: 0.15rem;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #4a5568;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .fav-name {
+      color: #cbd5e0;
     }
     .fav-meta {
-      margin-top: 0.35rem;
-      font-size: 0.78rem;
-      color: #6c757d;
+      margin-top: 0.2rem;
+      font-size: 0.7rem;
+      color: #718096;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     [data-theme="dark"] .fav-meta {
       color: #a0aec0;
     }
-    .fav-item-actions {
-      display: flex;
-      align-items: center;
-      padding: 0 0.55rem;
-      border-left: 1px solid rgba(0, 0, 0, 0.06);
-    }
-    [data-theme="dark"] .fav-item-actions {
-      border-left-color: rgba(255, 255, 255, 0.08);
-    }
     .fav-remove-btn {
-      width: 40px;
-      height: 40px;
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
       border: none;
-      border-radius: 8px;
-      background: transparent;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
       color: #a0aec0;
       cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+    }
+    .fav-tile:hover .fav-remove-btn,
+    .fav-tile:focus-within .fav-remove-btn,
+    .fav-remove-btn:focus-visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    @media (hover: none) {
+      .fav-remove-btn {
+        opacity: 1;
+        transform: none;
+      }
     }
     .fav-remove-btn:hover {
-      background: rgba(229, 62, 62, 0.1);
       color: #e53e3e;
+      background: #fff;
     }
     .fav-remove-btn:focus-visible {
       outline: 2px solid #e53e3e;
       outline-offset: 1px;
+    }
+    [data-theme="dark"] .fav-remove-btn {
+      background: rgba(36, 36, 36, 0.92);
+      color: #a0aec0;
     }
   </style>
 </head>
@@ -301,7 +383,7 @@
                     <i class="fas fa-chart-line mr-1" aria-hidden="true"></i>前往查價並收藏
                   </a>
                 </div>
-                <ul class="fav-list" id="favList" aria-label="收藏卡片清單"></ul>
+                <ul class="fav-album" id="favList" aria-label="收藏卡片相簿"></ul>
               </div>
             </div>
           </div>
@@ -486,6 +568,25 @@
         '&cardno=' + encodeURIComponent(underscored);
     }
 
+    /** 與查價頁 addPhoto 相同規則：主圖 devilfox，備援 ws-tcg */
+    function buildCardImageUrls(cardNumberDisplay) {
+      var cardNum = String(cardNumberDisplay || '').trim();
+      if (cardNum.indexOf(' ') >= 0) {
+        cardNum = cardNum.substr(0, cardNum.indexOf(' '));
+      }
+      if (!cardNum || cardNum.indexOf('-') < 0) {
+        return { primary: '', fallback: '' };
+      }
+      var cardFirst = cardNum.substr(0, 1);
+      var cardSecond = cardNum.substr(0, cardNum.indexOf('-')).replace('/', '_');
+      var cardThird = cardNum.replace('/', '_').replace('-', '_');
+      return {
+        primary: 'https://imgs.devilfox.net/ws/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png',
+        fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' +
+          cardFirst.toLowerCase() + '/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png'
+      };
+    }
+
     function renderList(list) {
       currentList = list || [];
       countEl.textContent = '共 ' + currentList.length + ' 張';
@@ -502,31 +603,56 @@
         var cardNumber = item.cardNumber || '';
         var name = item.cardName || '（尚無卡名）';
         var rare = item.cardRare || '';
-        var title = item.cardTitle || '';
+        var urls = buildCardImageUrls(cardNumber);
         var rareHtml = rare
           ? '<span class="fav-rare" style="background:' + getRareColor(rare) + ';">' + escapeHtml(rare) + '</span>'
           : '';
-        var metaBits = [];
-        if (title) metaBits.push(escapeHtml(title));
-        metaBits.push('收藏於 ' + escapeHtml(formatTime(item.timestamp)));
+        var aria = '查詢 ' + cardNumber + (name ? ' ' + name : '');
 
-        html += '<li class="fav-item" data-card-number="' + escapeHtml(cardNumber) + '">';
-        html += '  <a class="fav-item-main" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="查詢 ' + escapeHtml(cardNumber) + '">';
-        html += '    <div class="fav-item-top">';
-        html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
+        html += '<li class="fav-tile" data-card-number="' + escapeHtml(cardNumber) + '">';
+        html += '  <a class="fav-tile-link" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="' + escapeHtml(aria) + '">';
+        html += '    <div class="fav-tile-art">';
+        html += '      <div class="fav-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
+        if (urls.primary) {
+          html += '      <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="" loading="lazy" decoding="async">';
+        }
         html += rareHtml;
         html += '    </div>';
-        html += '    <div class="fav-name">' + escapeHtml(name) + '</div>';
-        html += '    <div class="fav-meta">' + metaBits.join(' · ') + '</div>';
+        html += '    <div class="fav-tile-caption">';
+        html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
+        html += '      <span class="fav-name">' + escapeHtml(name) + '</span>';
+        html += '      <div class="fav-meta">收藏於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
+        html += '    </div>';
         html += '  </a>';
-        html += '  <div class="fav-item-actions">';
-        html += '    <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="取消收藏" aria-label="取消收藏 ' + escapeHtml(cardNumber) + '">';
-        html += '      <i class="fas fa-trash-alt" aria-hidden="true"></i>';
-        html += '    </button>';
-        html += '  </div>';
+        html += '  <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="取消收藏" aria-label="取消收藏 ' + escapeHtml(cardNumber) + '">';
+        html += '    <i class="fas fa-trash-alt" aria-hidden="true"></i>';
+        html += '  </button>';
         html += '</li>';
       });
       listEl.innerHTML = html;
+    }
+
+    function onAlbumImageLoad(img) {
+      img.classList.add('is-loaded');
+      var art = img.closest('.fav-tile-art');
+      if (art) art.classList.add('has-image');
+    }
+
+    function onAlbumImageError(img) {
+      var fallback = img.getAttribute('data-fallback');
+      if (fallback && img.getAttribute('src') !== fallback) {
+        img.removeAttribute('data-fallback');
+        img.src = fallback;
+        return;
+      }
+      img.classList.add('is-broken');
+      img.removeAttribute('src');
+      var art = img.closest('.fav-tile-art');
+      if (art) {
+        art.classList.remove('has-image');
+        var label = art.querySelector('.fav-tile-placeholder span');
+        if (label) label.textContent = '無卡面';
+      }
     }
 
     function removeFavorite(cardNumber) {
@@ -580,6 +706,14 @@
       e.stopPropagation();
       removeFavorite(btn.getAttribute('data-remove'));
     });
+
+    listEl.addEventListener('load', function (e) {
+      if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+    }, true);
+
+    listEl.addEventListener('error', function (e) {
+      if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+    }, true);
 
     document.getElementById('favReloadBtn').addEventListener('click', function () {
       loadFavorites();
