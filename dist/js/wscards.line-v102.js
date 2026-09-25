@@ -2322,7 +2322,8 @@ function addPhoto(cardNumberDisplay){
             if (typeof CardFavorites !== 'undefined') {
                 CardFavorites.hideButton();
             }
-            cardImg.setAttribute("src",urlPrimary);
+            // 只交給 showCardImage 設定 src，避免先 setAttribute 導致快取命中時
+            // onload 已錯過、收藏星永遠不出現。
             showCardImage(urlPrimary, urlFallback);
 }
         
@@ -2344,14 +2345,16 @@ function showCardImage(src, fallbackSrc) {
                 img.style.opacity = '0';
                 img.style.display = 'block';
 
-                img.onload = function() {
-                    placeholder.style.display = 'none';
+                function onCardImageReady() {
+                    if (placeholder) placeholder.style.display = 'none';
                     img.style.transition = 'opacity 0.5s ease';
                     img.style.opacity = '1';
                     if (typeof CardFavorites !== 'undefined') {
                         CardFavorites.syncButton();
                     }
-                };
+                }
+
+                img.onload = onCardImageReady;
 
                 // 主要來源載入失敗時改用備援來源
                 img.onerror = function() {
@@ -2367,10 +2370,14 @@ function showCardImage(src, fallbackSrc) {
                 };
 
                 img.src = src;
+                // 快取命中時 onload 可能不會再觸發
+                if (img.complete && img.naturalWidth > 0) {
+                    onCardImageReady();
+                }
             } else {
                 img.style.display = 'none';
                 if (wrap) wrap.hidden = true;
-                placeholder.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'block';
                 if (typeof CardFavorites !== 'undefined') {
                     CardFavorites.hideButton();
                 }
