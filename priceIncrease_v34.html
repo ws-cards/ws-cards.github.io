@@ -144,16 +144,14 @@
         text-decoration: none;
       }
 
-      /* ── 頂部導覽列 (Site Nav) ──
-         結構照 line_test_v86.html 的 .main-header：左邊漢堡開抽屜、中間頁名
-         加 WS 標記、右邊主題切換。外觀沒有照抄：那邊是毛玻璃 + 16px 圓角 +
-         大陰影，跟本頁靠細線分區的紙媒語彙不是同一種東西，所以一律改吃這頁
-         的變數（3px 圓角、hairline 邊、hover 反白），只留版面骨架。 */
+      /* ── 頂部導覽列（共用 assets/partials/navbar.html → .main-header）──
+         結構跟 line_test / productTimeline 同一套：漢堡、頁名、主題、Google 登入。
+         外觀不跟毛玻璃版走，改吃本頁變數（3px 圓角、hairline 邊、hover 反白）。 */
       body {
         padding-top: var(--nav-h);
       }
 
-      .siteNav {
+      .main-header.navbar {
         position: fixed;
         top: 0;
         left: 0;
@@ -161,25 +159,45 @@
         /* 要壓過 #stickyTheadMirror(50) 與置頂按鈕(60)，但要低於抽屜(1050)、
            卡圖預覽(9999) 與購買彈窗(10000) */
         z-index: 900;
-        background: var(--surface);
-        border-bottom: 1px solid var(--border-strong);
-        padding: 0 14px;
-        /* 高度含底線一起等於 --nav-h。不含的話整條會是 53px，body 的
-           padding-top 跟鏡像表頭的 top 都只讓 52px，底線會被下一條蓋掉 1px。 */
-        box-sizing: border-box;
-        height: var(--nav-h);
-      }
-
-      .siteNavInner {
-        max-width: 1280px;
-        margin: 0 auto;
-        height: 100%;
         display: flex;
         align-items: center;
         gap: 10px;
+        margin: 0;
+        padding: 0 14px;
+        /* 高度含底線一起等於 --nav-h，否則 body padding-top / 鏡像表頭 top
+           只讓 52px，底線會被下一條蓋掉 1px。 */
+        box-sizing: border-box;
+        height: var(--nav-h);
+        min-height: var(--nav-h);
+        background: var(--surface);
+        border: 0;
+        border-bottom: 1px solid var(--border-strong);
+        border-radius: 0;
+        box-shadow: none;
+        color: var(--text);
       }
 
-      /* 漢堡鈕。方框 + 細線 + hover 反白，跟 .action-btn 同一組手勢 */
+      .main-header .navbar-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .main-header .navbar-nav.ml-auto {
+        margin-left: auto;
+        padding-left: 12px;
+      }
+
+      .main-header .nav-item {
+        display: flex;
+        align-items: center;
+      }
+
+      /* 漢堡鈕與抽屜關閉鈕：方框 + 細線 + hover 反白，跟 .action-btn 同一組手勢 */
+      .main-header #leftbar,
       .navIconBtn {
         flex-shrink: 0;
         width: 34px;
@@ -197,12 +215,14 @@
           color 0.14s ease;
       }
 
+      .main-header #leftbar:hover,
       .navIconBtn:hover {
         background: var(--text);
         border-color: var(--text);
         color: var(--bg);
       }
 
+      .main-header #leftbar:focus-visible,
       .navIconBtn:focus-visible {
         outline: 2px solid var(--primary);
         outline-offset: 2px;
@@ -229,26 +249,26 @@
       .hamburger span:nth-child(3) { top: 10px; }
 
       /* 抽屜開著時三條線收成叉，跟抽屜自己的關閉鈕是同一個狀態的兩個出口 */
-      .navIconBtn.is-open .hamburger span:nth-child(1) {
+      #leftbar.is-open .hamburger span:nth-child(1) {
         top: 5px;
         transform: rotate(45deg);
       }
-      .navIconBtn.is-open .hamburger span:nth-child(2) {
+      #leftbar.is-open .hamburger span:nth-child(2) {
         opacity: 0;
       }
-      .navIconBtn.is-open .hamburger span:nth-child(3) {
+      #leftbar.is-open .hamburger span:nth-child(3) {
         top: 5px;
         transform: rotate(-45deg);
       }
 
-      .navTitleBlock {
+      .main-header .navbar-title-block {
         display: flex;
         align-items: center;
         gap: 8px;
         min-width: 0;
       }
 
-      .navTitleText {
+      .main-header .navbar-title-text {
         font-size: 14px;
         font-weight: 700;
         letter-spacing: -0.01em;
@@ -256,10 +276,11 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: var(--text);
       }
 
       /* WS 標記用等寬體加字距，跟行情列的標籤同一種讀法：註記，不是標題 */
-      .navTitleBadge {
+      .main-header .navbar-title-badge {
         flex-shrink: 0;
         font-family: var(--mono);
         font-size: 9.5px;
@@ -273,12 +294,37 @@
         line-height: 1.4;
       }
 
-      .navActions {
-        display: flex;
+      .main-header .theme-toggle-btn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
-        margin-left: auto;
-        padding-left: 12px;
+        justify-content: center;
+        padding: 0;
+        background: transparent;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--r);
+        color: var(--text);
+        cursor: pointer;
+        transition: background-color 0.14s ease, border-color 0.14s ease,
+          color 0.14s ease;
+      }
+
+      .main-header .theme-toggle-btn:hover {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+      }
+
+      .main-header .theme-toggle-btn:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+
+      .main-header .theme-toggle-btn i {
+        font-size: 14px;
+        line-height: 1;
       }
 
       /* ── 側邊抽屜 (Drawer) ── */
@@ -466,22 +512,24 @@
           --nav-h: 48px;
         }
 
-        .siteNav {
+        .main-header.navbar {
           padding: 0 10px;
         }
 
-        .navTitleText {
+        .main-header .navbar-title-text {
           font-size: 13px;
           max-width: 42vw;
         }
 
-        .navActions {
+        .main-header .navbar-nav.ml-auto {
           padding-left: 8px;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
+        .main-header #leftbar,
         .navIconBtn,
+        .main-header .theme-toggle-btn,
         .hamburger span,
         .drawer,
         .drawerOverlay,
@@ -1983,35 +2031,16 @@
     </style>
   </head>
   <body>
-    <!-- 頂部導覽列（結構參照 line_test_v86.html 的 .main-header） -->
-    <nav class="siteNav" id="siteNav">
-      <div class="siteNavInner">
-        <button
-          type="button"
-          class="navIconBtn"
-          id="drawerToggle"
-          aria-label="開啟選單"
-          aria-expanded="false"
-          aria-controls="siteDrawer"
-        >
-          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
-        </button>
-        <div class="navTitleBlock">
-          <span class="navTitleText">價格漲跌幅觀測</span>
-          <span class="navTitleBadge">WS</span>
-        </div>
-        <div class="navActions">
-          <!-- 主題切換從行情列搬上來：導覽列右側就是 v86 放它的位置，
-               留在行情列會變成同一頁兩顆同功能的按鈕 -->
-          <button id="themeToggleBtn" type="button" class="action-btn" title="切換淺色/深色主題">
-            <i class="fa-regular fa-moon"></i>
-          </button>
-        </div>
-      </div>
-    </nav>
+    <!-- 共用導覽列（Google 登入 / 主題 / 抽屜漢堡） -->
+    <div data-navbar data-page-title="價格漲跌幅觀測"></div>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="assets/js/firebase-config.js"></script>
+    <script src="assets/js/ws-firebase.js"></script>
+    <script src="dist/js/include-navbar.js"></script>
 
     <!-- 抽屜遮罩 -->
-    <div class="drawerOverlay" id="drawerOverlay"></div>
+    <div class="drawerOverlay" id="drawerOverlay" onclick="toggleCustomDrawer()"></div>
 
     <!-- 側邊抽屜選單 -->
     <aside class="drawer" id="siteDrawer" aria-label="網站選單" aria-hidden="true">
@@ -2020,7 +2049,7 @@
           <img src="dist/img/logo.png" alt="" class="drawerBrandImg" />
           <span>WS-Cards</span>
         </a>
-        <button type="button" class="navIconBtn" id="drawerClose" aria-label="關閉選單">
+        <button type="button" class="navIconBtn" id="drawerClose" aria-label="關閉選單" onclick="toggleCustomDrawer()">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2053,7 +2082,7 @@
                 </a>
               </li>
               <li>
-                <a href="./priceIncrease_v31.html" class="menuLink active" aria-current="page">
+                <a href="./priceIncrease_v34.html" class="menuLink active" aria-current="page">
                   <i class="fa-solid fa-arrow-trend-up mainIcon"></i>
                   <span>價格漲跌幅觀測</span>
                 </a>
@@ -2259,8 +2288,7 @@
         const CARD_DICTIONARY_URL = "json/cardDictionary.json";
         const CARD_TITLE_URL = "json/cardTitle.json";
         const SPARKLINE_CONCURRENCY = 6;
-        // 與 line_test_v86.html 共用同一把鑰匙，兩頁的深淺色設定才會互通
-        const THEME_STORAGE_KEY = "ws-theme";
+        // 主題切換改由 dist/js/include-navbar.js 處理（共用 'ws-theme'）
         const WATCHLIST_STORAGE_KEY = "cardWatchlist";
 
         // 購買通路：卡號直接當關鍵字接在 search 後面。三個站的查詢參數不同名，
@@ -2300,7 +2328,6 @@
         const els = {
           generatedAtText: document.getElementById("generatedAtText"),
           reloadBtn: document.getElementById("reloadBtn"),
-          themeToggleBtn: document.getElementById("themeToggleBtn"),
           q: document.getElementById("q"),
           pageInfo: document.getElementById("pageInfo"),
           prevPageBtn: document.getElementById("prevPageBtn"),
@@ -2330,49 +2357,15 @@
           errorBox: document.getElementById("errorBox"),
         };
 
-        /* 只認 'dark' 與 'light' 兩個值，其餘（null、系統偏好、舊資料）一律當淺色。
-           跟 line_test_v86.html 同一套規則：不看 prefers-color-scheme，
-           否則系統深色的使用者在沒手動切換過時，兩頁會各自算出不同結果。 */
-        function resolveTheme(theme) {
-          return theme === "dark" ? "dark" : "light";
-        }
-
-        function resolveInitialTheme() {
-          // 優先沿用 <head> 已套用的 data-theme，避免再次閃爍
-          return resolveTheme(
-            document.documentElement.getAttribute("data-theme") ||
-            localStorage.getItem(THEME_STORAGE_KEY)
-          );
-        }
-
-        function applyTheme(theme) {
-          const resolved = resolveTheme(theme);
-          document.documentElement.setAttribute("data-theme", resolved);
-          if (els.themeToggleBtn) {
-            const isDark = resolved === "dark";
-            els.themeToggleBtn.innerHTML = isDark
-              ? `<i class="fa-regular fa-sun"></i> `
-              : `<i class="fa-regular fa-moon"></i> `;
-          }
-        }
-
-        /* 只有使用者親手切換才寫入 localStorage。初始化不寫，
-           免得這頁把自己推算出的預設值蓋到共用的 'ws-theme' 上。 */
-        function toggleTheme() {
-          const next = resolveInitialTheme() === "dark" ? "light" : "dark";
-          applyTheme(next);
-          try {
-            localStorage.setItem(THEME_STORAGE_KEY, next);
-          } catch (e) {
-            /* 無痕模式寫不進去也不該擋住切換 */
-          }
-        }
-
         /* 導覽列是 fixed 蓋在畫面最上緣，所以「捲到某處」跟「釘在上緣」這兩類
-           計算都要先扣掉它。量元素實際高度而不讀 --nav-h，手機版收窄後照樣對。 */
+           計算都要先扣掉它。量元素實際高度而不讀 --nav-h，手機版收窄後照樣對。
+           共用導覽列注入後是 .main-header；尚未載入時退回 CSS 變數高度。 */
         function navOffset() {
-          const nav = document.getElementById("siteNav");
-          return nav ? nav.getBoundingClientRect().height : 0;
+          const nav = document.querySelector(".main-header");
+          if (nav) return nav.getBoundingClientRect().height;
+          const raw = getComputedStyle(document.documentElement).getPropertyValue("--nav-h");
+          const parsed = parseFloat(raw);
+          return Number.isFinite(parsed) ? parsed : 52;
         }
 
         function fmtNum(n) {
@@ -3509,9 +3502,6 @@
 
           document.getElementById("tableWrapHeader").addEventListener("click", handleHeaderSortClick);
           els.reloadBtn.addEventListener("click", () => load());
-          if (els.themeToggleBtn) {
-            els.themeToggleBtn.addEventListener("click", toggleTheme);
-          }
 
           window.addEventListener("keydown", (ev) => {
             if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "r") {
@@ -3524,7 +3514,6 @@
             }
           });
         }
-        applyTheme(resolveInitialTheme());
         bind();
 
         // ── Sticky thead 鏡像方案 ──
@@ -3595,31 +3584,27 @@
           window.addEventListener("resize",   () => { if (pinned) syncWidths(); }, { passive: true });
         })();
 
-        // ── 側邊抽屜選單（行為照 line_test_v86.html 的 toggleCustomDrawer /
-        //    toggleSubmenu，但改成事件綁定，子選單只切 class 不寫 inline style）──
-        (function initDrawer() {
+        // ── 側邊抽屜選單（漢堡由共用導覽列 #leftbar → toggleCustomDrawer）──
+        window.toggleCustomDrawer = function toggleCustomDrawer(event) {
+          if (event) event.preventDefault();
           const drawer = document.getElementById("siteDrawer");
           const overlay = document.getElementById("drawerOverlay");
-          const toggleBtn = document.getElementById("drawerToggle");
-          if (!drawer || !overlay || !toggleBtn) return;
-
-          function setDrawer(open) {
-            drawer.classList.toggle("open", open);
-            overlay.classList.toggle("active", open);
-            drawer.setAttribute("aria-hidden", open ? "false" : "true");
+          const toggleBtn = document.getElementById("leftbar");
+          if (!drawer || !overlay) return;
+          const open = !drawer.classList.contains("open");
+          drawer.classList.toggle("open", open);
+          overlay.classList.toggle("active", open);
+          drawer.setAttribute("aria-hidden", open ? "false" : "true");
+          if (toggleBtn) {
             toggleBtn.classList.toggle("is-open", open);
             toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
             toggleBtn.setAttribute("aria-label", open ? "關閉選單" : "開啟選單");
           }
+        };
 
-          const isOpen = () => drawer.classList.contains("open");
-
-          toggleBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            setDrawer(!isOpen());
-          });
-          overlay.addEventListener("click", () => setDrawer(false));
-          document.getElementById("drawerClose").addEventListener("click", () => setDrawer(false));
+        (function initDrawer() {
+          const drawer = document.getElementById("siteDrawer");
+          if (!drawer) return;
 
           // 子選單展開
           drawer.querySelectorAll(".drawerSubToggle").forEach((link) => {
@@ -3634,10 +3619,11 @@
 
           // Esc 關閉。抽屜開著時把焦點還給漢堡鈕，鍵盤不會掉在關掉的面板裡
           window.addEventListener("keydown", (ev) => {
-            if (ev.key === "Escape" && isOpen()) {
-              setDrawer(false);
-              toggleBtn.focus();
-            }
+            if (ev.key !== "Escape") return;
+            if (!drawer.classList.contains("open")) return;
+            window.toggleCustomDrawer();
+            const toggleBtn = document.getElementById("leftbar");
+            if (toggleBtn) toggleBtn.focus();
           });
         })();
 
