@@ -1273,22 +1273,22 @@
 
     function buildBuyoutPoster(items, images) {
       var count = items.length;
-      var cols = count <= 1 ? 1 : (count === 2 || count === 4 ? 2 : (count <= 6 ? 3 : 4));
+      // 1–4 張用較寬卡面（2 欄），較接近附件樣式；更多張才改 3/4 欄
+      var cols = count <= 1 ? 1 : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
 
       var width = 1080;
-      var sideGutter = 88;
-      var topY = 300;
-      var bottomReserve = 170;
-      var gapX = 28;
-      var gapY = 36;
+      var sideGutter = 56;
+      var topY = 280;
+      var bottomReserve = 160;
+      var gapX = 40;
+      var gapY = 40;
       var cardRatio = 63 / 88;
-      // 限制卡面寬度，避免大圖蓋住「買取情報」標題
-      var maxCardWByCount = count <= 2 ? 300 : (count <= 4 ? 260 : 220);
+      var maxCardWByCount = count <= 2 ? 460 : (count <= 4 ? 440 : 310);
       var availableW = width - sideGutter * 2 - gapX * (cols - 1);
       var cardW = Math.min(maxCardWByCount, Math.floor(availableW / cols));
       var cardH = Math.floor(cardW / cardRatio);
-      var priceH = 78;
+      var priceH = 84;
       var cellH = cardH + priceH;
       var gridW = cols * cardW + (cols - 1) * gapX;
       var gridLeft = Math.floor((width - gridW) / 2);
@@ -1330,7 +1330,7 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         var priceText = formatYen(item.priceJPY);
-        var fontSize = priceText.length > 9 ? 40 : (priceText.length > 7 ? 46 : 52);
+        var fontSize = priceText.length > 9 ? 42 : (priceText.length > 7 ? 50 : 56);
         ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
         ctx.shadowColor = 'rgba(0,0,0,0.35)';
         ctx.shadowBlur = 6;
