@@ -1277,17 +1277,21 @@
       var rows = Math.ceil(count / cols);
 
       var width = 1080;
-      var marginX = 88;
-      var topY = 220;
+      var sideGutter = 88;
+      var topY = 300;
       var bottomReserve = 170;
-      var gapX = 34;
-      var gapY = 44;
+      var gapX = 28;
+      var gapY = 36;
       var cardRatio = 63 / 88;
-      var availableW = width - marginX * 2 - gapX * (cols - 1);
-      var cardW = Math.floor(availableW / cols);
+      // 限制卡面寬度，避免大圖蓋住「買取情報」標題
+      var maxCardWByCount = count <= 2 ? 300 : (count <= 4 ? 260 : 220);
+      var availableW = width - sideGutter * 2 - gapX * (cols - 1);
+      var cardW = Math.min(maxCardWByCount, Math.floor(availableW / cols));
       var cardH = Math.floor(cardW / cardRatio);
-      var priceH = 86;
+      var priceH = 78;
       var cellH = cardH + priceH;
+      var gridW = cols * cardW + (cols - 1) * gapX;
+      var gridLeft = Math.floor((width - gridW) / 2);
       var height = Math.max(1350, topY + rows * cellH + gapY * (rows - 1) + bottomReserve);
 
       var canvas = document.createElement('canvas');
@@ -1318,20 +1322,20 @@
         var rowOffset = cardsInRow < cols
           ? Math.floor((cols - cardsInRow) * (cardW + gapX) / 2)
           : 0;
-        var x = marginX + rowOffset + col * (cardW + gapX);
+        var x = gridLeft + rowOffset + col * (cardW + gapX);
         var y = topY + row * (cellH + gapY);
-        drawCoverImage(ctx, images[index], x, y, cardW, cardH, 14);
+        drawCoverImage(ctx, images[index], x, y, cardW, cardH, 12);
 
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         var priceText = formatYen(item.priceJPY);
-        var fontSize = priceText.length > 9 ? 44 : (priceText.length > 7 ? 52 : 60);
+        var fontSize = priceText.length > 9 ? 40 : (priceText.length > 7 ? 46 : 52);
         ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
         ctx.shadowColor = 'rgba(0,0,0,0.35)';
         ctx.shadowBlur = 6;
         ctx.shadowOffsetY = 2;
-        ctx.fillText(priceText, x + cardW / 2, y + cardH + 16);
+        ctx.fillText(priceText, x + cardW / 2, y + cardH + 14);
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
