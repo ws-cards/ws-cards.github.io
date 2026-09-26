@@ -1104,6 +1104,7 @@
     var posterDownload = document.getElementById('favPosterDownload');
     var posterBtn = document.getElementById('favPosterBtn');
     var posterObjectUrl = '';
+    var posterLastFocus = null;
 
     function getCheckedPricedItems() {
       var list = [];
@@ -1378,6 +1379,13 @@
         URL.revokeObjectURL(posterObjectUrl);
         posterObjectUrl = '';
       }
+      var restore = posterLastFocus;
+      posterLastFocus = null;
+      if (restore && typeof restore.focus === 'function') {
+        try { restore.focus(); } catch (e) { /* ignore */ }
+      } else if (posterBtn) {
+        posterBtn.focus();
+      }
     }
 
     function openPosterModal(dataUrl) {
@@ -1386,12 +1394,16 @@
         URL.revokeObjectURL(posterObjectUrl);
         posterObjectUrl = '';
       }
+      posterLastFocus = document.activeElement;
       posterPreview.src = dataUrl;
       posterDownload.href = dataUrl;
       posterDownload.download = 'ws-cards-buyout-' + new Date().toISOString().slice(0, 10) + '.png';
       posterModal.hidden = false;
       posterModal.classList.add('is-open');
       posterModal.setAttribute('aria-hidden', 'false');
+      var closeBtn = posterModal.querySelector('[data-poster-close="1"].btn');
+      if (closeBtn) closeBtn.focus();
+      else posterDownload.focus();
     }
 
     function generateBuyoutPoster() {
