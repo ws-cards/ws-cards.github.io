@@ -142,6 +142,59 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
     }
+    .fav-total-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .fav-poster-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .fav-poster-modal.is-open { display: flex; }
+    .fav-poster-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.62);
+    }
+    .fav-poster-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 100%);
+      max-height: min(92vh, 900px);
+      overflow: auto;
+      border-radius: 14px;
+      background: #111;
+      color: #f7fafc;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+      padding: 1rem 1rem 1.1rem;
+    }
+    .fav-poster-dialog h3 {
+      margin: 0 0 0.65rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .fav-poster-preview {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      background: #1a1512;
+    }
+    .fav-poster-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.85rem;
+      justify-content: flex-end;
+    }
 
     .fav-empty {
       text-align: center;
@@ -501,6 +554,11 @@
                     </div>
                     <div class="fav-total-sub" id="favTotalSub">已勾選 0 張 · 有價 0 張 · 無價 0 張</div>
                   </div>
+                  <div class="fav-total-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favPosterBtn" title="依勾選卡片產出買取情報圖">
+                      <i class="fas fa-image mr-1" aria-hidden="true"></i>產出買取圖
+                    </button>
+                  </div>
                 </div>
 
                 <div class="fav-status" id="favStatus" role="status" aria-live="polite"></div>
@@ -527,6 +585,20 @@
       <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
     </div>
   </footer>
+</div>
+
+<div id="favPosterModal" class="fav-poster-modal" hidden aria-hidden="true">
+  <div class="fav-poster-backdrop" data-poster-close="1"></div>
+  <div class="fav-poster-dialog" role="dialog" aria-modal="true" aria-labelledby="favPosterTitle">
+    <h3 id="favPosterTitle">買取情報預覽</h3>
+    <img id="favPosterPreview" class="fav-poster-preview" alt="買取情報圖預覽">
+    <div class="fav-poster-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-poster-close="1">關閉</button>
+      <a id="favPosterDownload" class="btn btn-primary btn-sm" download="ws-cards-buyout.png">
+        <i class="fas fa-download mr-1" aria-hidden="true"></i>下載圖片
+      </a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1026,6 +1098,359 @@
       totalSubEl.textContent = '已勾選 ' + checked + ' 張 · 有價 ' + priced + ' 張 · 無價 ' + unpriced + ' 張';
     }
 
+    var POSTER_MAX_CARDS = 8;
+    var posterModal = document.getElementById('favPosterModal');
+    var posterPreview = document.getElementById('favPosterPreview');
+    var posterDownload = document.getElementById('favPosterDownload');
+    var posterBtn = document.getElementById('favPosterBtn');
+    var posterObjectUrl = '';
+    var posterLastFocus = null;
+
+    function getCheckedPricedItems() {
+      var list = [];
+      Object.keys(checkedSet).forEach(function (cardNumber) {
+        if (!checkedSet[cardNumber]) return;
+        var item = allItems.find(function (it) { return it.cardNumber === cardNumber; });
+        if (!item || typeof item.priceJPY !== 'number') return;
+        list.push(item);
+      });
+      list.sort(function (a, b) { return (b.priceJPY || 0) - (a.priceJPY || 0); });
+      return list;
+    }
+
+    function loadImageForPoster(url) {
+      return new Promise(function (resolve) {
+        if (!url) {
+          resolve(null);
+          return;
+        }
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        var done = false;
+        var timer = setTimeout(function () {
+          if (done) return;
+          done = true;
+          resolve(null);
+        }, 12000);
+        img.onload = function () {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          resolve(img);
+        };
+        img.onerror = function () {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          resolve(null);
+        };
+        img.src = url;
+      });
+    }
+
+    function loadPosterCardArt(item) {
+      var urls = buildCardImageUrls(item.cardNumber);
+      var chain = Promise.resolve(null);
+      if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+        var cardNum = String(item.cardNumber || '').trim();
+        if (cardNum.indexOf(' ') >= 0) cardNum = cardNum.substr(0, cardNum.indexOf(' '));
+        var localName = cardNum.replace(/\//g, '_').replace(/-/g, '_').toLowerCase() + '.png';
+        chain = loadImageForPoster('tmp-poster-cards/' + localName);
+      }
+      return chain.then(function (img) {
+        if (img) return img;
+        return loadImageForPoster(urls.primary);
+      }).then(function (img) {
+        if (img) return img;
+        return loadImageForPoster(urls.fallback);
+      });
+    }
+
+    function fillEarthTexture(ctx, width, height) {
+      ctx.fillStyle = '#3a2418';
+      ctx.fillRect(0, 0, width, height);
+
+      var grad = ctx.createRadialGradient(width * 0.5, height * 0.35, 40, width * 0.5, height * 0.5, width * 0.75);
+      grad.addColorStop(0, 'rgba(92, 58, 34, 0.55)');
+      grad.addColorStop(0.55, 'rgba(42, 24, 16, 0.2)');
+      grad.addColorStop(1, 'rgba(18, 10, 7, 0.85)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      var i;
+      for (i = 0; i < 5200; i++) {
+        var x = Math.random() * width;
+        var y = Math.random() * height;
+        var shade = 28 + Math.floor(Math.random() * 55);
+        var a = 0.08 + Math.random() * 0.22;
+        ctx.fillStyle = 'rgba(' + shade + ',' + Math.floor(shade * 0.62) + ',' + Math.floor(shade * 0.38) + ',' + a + ')';
+        ctx.fillRect(x, y, 1 + Math.random() * 2.2, 1 + Math.random() * 2.2);
+      }
+
+      ctx.strokeStyle = 'rgba(18, 10, 6, 0.28)';
+      ctx.lineWidth = 1;
+      for (i = 0; i < 42; i++) {
+        var sx = Math.random() * width;
+        var sy = Math.random() * height;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        var segs = 3 + Math.floor(Math.random() * 4);
+        var j;
+        for (j = 0; j < segs; j++) {
+          sx += (Math.random() - 0.5) * 70;
+          sy += 12 + Math.random() * 36;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+      var radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+
+    function drawCoverImage(ctx, img, x, y, w, h, radius) {
+      ctx.save();
+      roundRectPath(ctx, x, y, w, h, radius);
+      ctx.clip();
+      if (img) {
+        var scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+        var dw = img.naturalWidth * scale;
+        var dh = img.naturalHeight * scale;
+        ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+      } else {
+        ctx.fillStyle = '#241810';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.font = '600 28px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('NO IMAGE', x + w / 2, y + h / 2);
+      }
+      ctx.restore();
+      ctx.save();
+      roundRectPath(ctx, x, y, w, h, radius);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawVerticalText(ctx, text, x, yCenter, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = '600 22px "Noto Sans TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.translate(x, yCenter);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawWsLogo(ctx, x, y, size) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fill();
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = '900 ' + Math.floor(size * 0.28) + 'px "Noto Sans TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('WS', x + size / 2, y + size / 2 - size * 0.08);
+      ctx.font = '700 ' + Math.floor(size * 0.14) + 'px "Noto Sans TC", sans-serif';
+      ctx.fillText('CARDS', x + size / 2, y + size / 2 + size * 0.2);
+      ctx.restore();
+    }
+
+    function buildBuyoutPoster(items, images) {
+      var count = items.length;
+      var cols = count <= 1 ? 1 : (count === 2 || count === 4 ? 2 : (count <= 6 ? 3 : 4));
+      var rows = Math.ceil(count / cols);
+
+      var width = 1080;
+      var marginX = 88;
+      var topY = 220;
+      var bottomReserve = 170;
+      var gapX = 34;
+      var gapY = 44;
+      var cardRatio = 63 / 88;
+      var availableW = width - marginX * 2 - gapX * (cols - 1);
+      var cardW = Math.floor(availableW / cols);
+      var cardH = Math.floor(cardW / cardRatio);
+      var priceH = 86;
+      var cellH = cardH + priceH;
+      var height = Math.max(1350, topY + rows * cellH + gapY * (rows - 1) + bottomReserve);
+
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+
+      fillEarthTexture(ctx, width, height);
+      drawWsLogo(ctx, 42, 36, 92);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = '700 28px "Noto Sans TC", sans-serif';
+      ctx.fillText('WEISS SCHWARZ', width / 2, 48);
+      ctx.font = '900 66px "Noto Sans TC", sans-serif';
+      ctx.fillText('WSカード', width / 2, 88);
+      ctx.font = '900 60px "Noto Sans TC", sans-serif';
+      ctx.fillText('買取情報', width / 2, 162);
+
+      drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, 'rgba(255,255,255,0.78)');
+      drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, 'rgba(255,255,255,0.78)');
+
+      items.forEach(function (item, index) {
+        var col = index % cols;
+        var row = Math.floor(index / cols);
+        var cardsInRow = (row === rows - 1) ? (count - row * cols) : cols;
+        var rowOffset = cardsInRow < cols
+          ? Math.floor((cols - cardsInRow) * (cardW + gapX) / 2)
+          : 0;
+        var x = marginX + rowOffset + col * (cardW + gapX);
+        var y = topY + row * (cellH + gapY);
+        drawCoverImage(ctx, images[index], x, y, cardW, cardH, 14);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        var priceText = formatYen(item.priceJPY);
+        var fontSize = priceText.length > 9 ? 44 : (priceText.length > 7 ? 52 : 60);
+        ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText(priceText, x + cardW / 2, y + cardH + 16);
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+      });
+
+      ctx.fillStyle = 'rgba(255,255,255,0.86)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.font = '500 16px "Noto Sans TC", sans-serif';
+      var lines = [
+        '※価格はカードの状態・在庫・相場変動により異なります。',
+        '※画像はイメージです。実際の買取価格は店舗・査定結果に準じます。',
+        '※本画像の価格は参考値であり、当日のみ有効です。'
+      ];
+      var lineY = height - 36;
+      for (var li = lines.length - 1; li >= 0; li--) {
+        ctx.fillText(lines[li], 48, lineY);
+        lineY -= 24;
+      }
+
+      var badgeText = '当日のみ有効';
+      ctx.font = '800 22px "Noto Sans TC", sans-serif';
+      var badgePadX = 16;
+      var badgePadY = 10;
+      var badgeW = ctx.measureText(badgeText).width + badgePadX * 2;
+      var badgeH = 22 + badgePadY * 2;
+      var badgeX = width - 48 - badgeW;
+      var badgeY = height - 48 - badgeH;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+      ctx.fillStyle = '#111111';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+
+      return canvas;
+    }
+
+    function closePosterModal() {
+      if (!posterModal) return;
+      posterModal.classList.remove('is-open');
+      posterModal.hidden = true;
+      posterModal.setAttribute('aria-hidden', 'true');
+      if (posterObjectUrl) {
+        URL.revokeObjectURL(posterObjectUrl);
+        posterObjectUrl = '';
+      }
+      var restore = posterLastFocus;
+      posterLastFocus = null;
+      if (restore && typeof restore.focus === 'function') {
+        try { restore.focus(); } catch (e) { /* ignore */ }
+      } else if (posterBtn) {
+        posterBtn.focus();
+      }
+    }
+
+    function openPosterModal(dataUrl) {
+      if (!posterModal || !posterPreview || !posterDownload) return;
+      if (posterObjectUrl) {
+        URL.revokeObjectURL(posterObjectUrl);
+        posterObjectUrl = '';
+      }
+      posterLastFocus = document.activeElement;
+      posterPreview.src = dataUrl;
+      posterDownload.href = dataUrl;
+      posterDownload.download = 'ws-cards-buyout-' + new Date().toISOString().slice(0, 10) + '.png';
+      posterModal.hidden = false;
+      posterModal.classList.add('is-open');
+      posterModal.setAttribute('aria-hidden', 'false');
+      var closeBtn = posterModal.querySelector('[data-poster-close="1"].btn');
+      if (closeBtn) closeBtn.focus();
+      else posterDownload.focus();
+    }
+
+    function generateBuyoutPoster() {
+      var items = getCheckedPricedItems();
+      if (!items.length) {
+        setStatus('請先勾選至少一張「有價格」的卡片，再產出買取圖。', 'is-error');
+        return;
+      }
+      if (items.length > POSTER_MAX_CARDS) {
+        items = items.slice(0, POSTER_MAX_CARDS);
+        setStatus('已選超過 ' + POSTER_MAX_CARDS + ' 張，僅取價格最高的 ' + POSTER_MAX_CARDS + ' 張產出。', '');
+      } else {
+        setStatus('正在產出買取情報圖…', '');
+      }
+
+      if (posterBtn) {
+        posterBtn.disabled = true;
+        posterBtn.setAttribute('aria-busy', 'true');
+      }
+
+      var fontsReady = (document.fonts && document.fonts.ready)
+        ? document.fonts.ready.catch(function () { return null; })
+        : Promise.resolve();
+
+      fontsReady.then(function () {
+        return Promise.all(items.map(loadPosterCardArt));
+      }).then(function (images) {
+        var canvas = buildBuyoutPoster(items, images);
+        var dataUrl;
+        try {
+          dataUrl = canvas.toDataURL('image/png');
+        } catch (err) {
+          throw new Error('無法匯出圖片（卡圖跨網域限制），請改用正式站 ws-cards.cloud 再試');
+        }
+        openPosterModal(dataUrl);
+        setStatus('買取情報圖已就緒，可預覽或下載。', 'is-ok');
+      }).catch(function (err) {
+        console.error(err);
+        setStatus('產圖失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
+      }).then(function () {
+        if (posterBtn) {
+          posterBtn.disabled = false;
+          posterBtn.removeAttribute('aria-busy');
+        }
+      });
+    }
+
     function refreshVisiblePrices() {
       var nodes = listEl.querySelectorAll('[data-price-for]');
       Array.prototype.forEach.call(nodes, function (el) {
@@ -1269,6 +1694,22 @@
       writePriceCache();
       setJsonCache = {};
       loadFavorites();
+    });
+
+    if (posterBtn) {
+      posterBtn.addEventListener('click', function () {
+        generateBuyoutPoster();
+      });
+    }
+    if (posterModal) {
+      posterModal.addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute('data-poster-close')) closePosterModal();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && posterModal && posterModal.classList.contains('is-open')) {
+        closePosterModal();
+      }
     });
 
     priceCache = readPriceCache();
