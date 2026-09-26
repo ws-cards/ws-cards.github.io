@@ -800,13 +800,26 @@
 
     function lookupPriceInSetJson(setJson, cardNumber) {
       if (!setJson || typeof setJson !== 'object') return null;
-      if (setJson[cardNumber]) return extractLatestPrice(setJson[cardNumber]);
-      var underscored = String(cardNumber).replace(/\//g, '_');
-      if (setJson[underscored]) return extractLatestPrice(setJson[underscored]);
+      var raw = String(cardNumber || '').trim();
+      if (!raw) return { priceJPY: null, asOf: '' };
+
+      var candidates = [raw];
+      var underscored = raw.replace(/\//g, '_');
+      if (underscored !== raw) candidates.push(underscored);
+      if (raw.indexOf('/') < 0 && raw.indexOf('_') >= 0) {
+        candidates.push(raw.replace('_', '/'));
+      }
+
+      for (var c = 0; c < candidates.length; c++) {
+        if (setJson[candidates[c]]) return extractLatestPrice(setJson[candidates[c]]);
+      }
+
+      var lowerCandidates = candidates.map(function (k) { return String(k).toLowerCase(); });
       for (var key in setJson) {
         if (!Object.prototype.hasOwnProperty.call(setJson, key)) continue;
-        if (String(key).toLowerCase() === String(cardNumber).toLowerCase()) {
-          return extractLatestPrice(setJson[key]);
+        var lowerKey = String(key).toLowerCase();
+        for (var i = 0; i < lowerCandidates.length; i++) {
+          if (lowerKey === lowerCandidates[i]) return extractLatestPrice(setJson[key]);
         }
       }
       return { priceJPY: null, asOf: '' };
@@ -830,7 +843,7 @@
 
       function tryNext(i) {
         if (i >= urls.length) {
-          setJsonCache[setCode] = null;
+          // 不把失敗寫進 setJsonCache，方便重新整理後重試
           return null;
         }
         return fetchJson(urls[i]).then(function (json) {
@@ -866,6 +879,7 @@
         return Promise.resolve();
       }
 
+      var anyFetchFailed = false;
       var chain = Promise.resolve();
       setCodes.forEach(function (setCode) {
         chain = chain.then(function () {
@@ -873,8 +887,24 @@
           return loadSetJson(setCode).then(function (json) {
             if (token !== priceLoadToken) return;
             var now = Date.now();
+            if (!json) {
+              anyFetchFailed = true;
+              groups[setCode].forEach(function (item) {
+                item.priceJPY = null;
+                item.priceAsOf = '';
+                item.priceStatus = 'error';
+                // 網路／CORS 失敗不當成「無價」快取，避免合計長期卡在 ¥0
+                if (priceCache[item.cardNumber] && priceCache[item.cardNumber].missing) {
+                  delete priceCache[item.cardNumber];
+                }
+              });
+              writePriceCache();
+              refreshVisiblePrices();
+              updateTotalBar();
+              return;
+            }
             groups[setCode].forEach(function (item) {
-              var result = json ? lookupPriceInSetJson(json, item.cardNumber) : { priceJPY: null, asOf: '' };
+              var result = lookupPriceInSetJson(json, item.cardNumber);
               if (result && typeof result.priceJPY === 'number') {
                 item.priceJPY = result.priceJPY;
                 item.priceAsOf = result.asOf || '';
@@ -900,7 +930,12 @@
           });
         });
       });
-      return chain;
+      return chain.then(function () {
+        if (token !== priceLoadToken) return;
+        if (anyFetchFailed) {
+          setStatus('價格資料載入失敗，勾選合計可能不完整。請按重新整理重試。', 'is-error');
+        }
+      });
     }
 
     function matchesFilter(item, q) {
@@ -947,6 +982,9 @@
       if (!item) return { text: '—', muted: true };
       if (item.priceStatus === 'loading' || item.priceStatus === 'idle') {
         return { text: '價格載入中…', muted: true };
+      }
+      if (item.priceStatus === 'error') {
+        return { text: '價格載入失敗', muted: true };
       }
       if (typeof item.priceJPY === 'number') {
         return { text: formatYen(item.priceJPY), muted: false };
@@ -1160,10 +1198,22 @@
 
     listEl.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-remove]');
-      if (!btn) return;
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        removeFavorite(btn.getAttribute('data-remove'));
+        return;
+      }
+
+      // 點卡面／說明區也可勾選，方便合計總額
+      if (e.target.closest('.fav-check') || e.target.closest('[data-check]')) return;
+      var tile = e.target.closest('.fav-tile');
+      if (!tile) return;
+      var input = tile.querySelector('[data-check]');
+      if (!input) return;
       e.preventDefault();
-      e.stopPropagation();
-      removeFavorite(btn.getAttribute('data-remove'));
+      input.checked = !input.checked;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
     listEl.addEventListener('change', function (e) {
@@ -1209,12 +1259,13 @@
     });
 
     document.getElementById('favReloadBtn').addEventListener('click', function () {
-      // 強制重抓價格：清掉記憶體狀態但保留 TTL 內快取；若要強制可再清 cache
       allItems.forEach(function (item) {
         item.priceStatus = 'idle';
         item.priceJPY = null;
         item.priceAsOf = '';
+        if (item.cardNumber) delete priceCache[item.cardNumber];
       });
+      writePriceCache();
       setJsonCache = {};
       loadFavorites();
     });
