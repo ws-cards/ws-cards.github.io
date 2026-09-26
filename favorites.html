@@ -1438,8 +1438,10 @@
       }
       if (posterBgColorInput) posterBgColorInput.value = current;
       if (posterBgCustomWrap) {
-        posterBgCustomWrap.classList.toggle('is-active', !isPosterPresetBg(current));
-        posterBgCustomWrap.style.background = current;
+        var customActive = !isPosterPresetBg(current);
+        posterBgCustomWrap.classList.toggle('is-active', customActive);
+        // 預設色時保留棋盤格提示「可自訂」；自訂色才把圓點填成所選色
+        posterBgCustomWrap.style.background = customActive ? current : '';
       }
     }
 
