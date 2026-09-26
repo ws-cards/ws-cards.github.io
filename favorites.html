@@ -36,6 +36,31 @@
   <link rel="stylesheet" href="dist/css/adminlte.min.css">
   <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
   <style>
+    :root {
+      --fav-ink: #14161c;
+      --fav-muted: #5c6570;
+      --fav-surface: #ffffff;
+      --fav-surface-soft: #f4f2ec;
+      --fav-line: rgba(20, 22, 28, 0.12);
+      --fav-accent: #c57a1a;
+      --fav-accent-deep: #9a5c10;
+      --fav-accent-soft: rgba(197, 122, 26, 0.14);
+      --fav-ok: #1f7a4c;
+      --fav-danger: #c53030;
+    }
+    [data-theme="dark"] {
+      --fav-ink: #f3efe6;
+      --fav-muted: #a8b0bc;
+      --fav-surface: #1c1b19;
+      --fav-surface-soft: #25231f;
+      --fav-line: rgba(243, 239, 230, 0.12);
+      --fav-accent: #d4a24a;
+      --fav-accent-deep: #ecc94b;
+      --fav-accent-soft: rgba(212, 162, 74, 0.18);
+      --fav-ok: #68d391;
+      --fav-danger: #fc8181;
+    }
+
     body,
     body button,
     body input,
@@ -47,107 +72,265 @@
       font-family: 'Noto Sans TC', sans-serif;
     }
 
+    /* 頁面氣氛：非純灰底 */
+    .content-wrapper {
+      background:
+        radial-gradient(1200px 420px at 12% -10%, rgba(197, 122, 26, 0.12), transparent 55%),
+        linear-gradient(180deg, #ebe7df 0%, #f7f5f1 42%, #f0eee8 100%);
+    }
+    [data-theme="dark"] .content-wrapper {
+      background:
+        radial-gradient(1000px 380px at 10% -8%, rgba(212, 162, 74, 0.14), transparent 50%),
+        linear-gradient(180deg, #141311 0%, #1a1916 50%, #121110 100%);
+    }
+    .content-wrapper::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+      background-image: repeating-linear-gradient(
+        -32deg,
+        transparent 0,
+        transparent 11px,
+        rgba(20, 22, 28, 0.025) 11px,
+        rgba(20, 22, 28, 0.025) 12px
+      );
+    }
+    [data-theme="dark"] .content-wrapper::before {
+      background-image: repeating-linear-gradient(
+        -32deg,
+        transparent 0,
+        transparent 11px,
+        rgba(255, 255, 255, 0.02) 11px,
+        rgba(255, 255, 255, 0.02) 12px
+      );
+    }
+    .content-wrapper > .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .favorites-shell.card.search-card {
+      border: 1px solid var(--fav-line);
+      border-radius: 16px;
+      background: var(--fav-surface);
+      box-shadow: 0 18px 40px rgba(20, 22, 28, 0.08);
+      overflow: hidden;
+    }
+    .favorites-shell > .card-header {
+      border-bottom: 1px solid var(--fav-line);
+      background: linear-gradient(180deg, var(--fav-surface-soft), var(--fav-surface));
+      padding: 1rem 1.15rem;
+    }
+    .favorites-shell > .card-header .card-title {
+      color: var(--fav-ink);
+      font-weight: 900;
+      font-size: 1.2rem;
+      letter-spacing: 0.02em;
+    }
+    .favorites-shell > .card-header .card-title i {
+      color: var(--fav-accent);
+    }
+    .favorites-shell > .card-body {
+      padding: 1.1rem 1.15rem 1.35rem;
+    }
+
     .fav-toolbar {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.9rem;
     }
     .fav-toolbar-meta {
-      font-size: 0.9rem;
-      color: #6c757d;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--fav-ink);
+      letter-spacing: 0.01em;
     }
-    [data-theme="dark"] .fav-toolbar-meta {
-      color: #a0aec0;
+    .fav-toolbar .btn {
+      font-weight: 700;
     }
+
     .fav-controls {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.65rem;
-      margin-bottom: 0.85rem;
+      gap: 0.75rem;
+      margin-bottom: 0.95rem;
     }
     @media (min-width: 720px) {
       .fav-controls {
-        grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.7fr) auto;
+        grid-template-columns: minmax(0, 1.45fr) minmax(170px, 0.7fr) auto;
         align-items: end;
       }
     }
     .fav-field label {
       display: block;
       font-size: 0.78rem;
-      font-weight: 600;
-      color: #6c757d;
-      margin-bottom: 0.25rem;
-    }
-    [data-theme="dark"] .fav-field label {
-      color: #a0aec0;
+      font-weight: 800;
+      color: var(--fav-muted);
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
     .fav-field .form-control {
-      font-size: 0.9rem;
+      height: 44px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--fav-ink);
+      border: 1.5px solid var(--fav-line);
+      border-radius: 10px;
+      background: var(--fav-surface);
+      box-shadow: none;
+    }
+    .fav-field .form-control:focus {
+      border-color: var(--fav-accent);
+      box-shadow: 0 0 0 3px var(--fav-accent-soft);
     }
     .fav-control-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      gap: 0.45rem;
     }
+    .fav-btn-solid,
+    .fav-btn-ghost {
+      height: 44px;
+      padding: 0 0.95rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+    .fav-btn-solid {
+      background: var(--fav-ink);
+      color: #fff;
+      border-color: var(--fav-ink);
+    }
+    [data-theme="dark"] .fav-btn-solid {
+      background: var(--fav-accent);
+      color: #141311;
+      border-color: var(--fav-accent);
+    }
+    .fav-btn-solid:hover {
+      transform: translateY(-1px);
+      background: var(--fav-accent-deep);
+      border-color: var(--fav-accent-deep);
+      color: #fff;
+    }
+    [data-theme="dark"] .fav-btn-solid:hover {
+      color: #141311;
+      filter: brightness(1.05);
+    }
+    .fav-btn-ghost {
+      background: transparent;
+      color: var(--fav-ink);
+      border-color: var(--fav-line);
+    }
+    .fav-btn-ghost:hover {
+      border-color: var(--fav-ink);
+      background: var(--fav-surface-soft);
+    }
+    .fav-btn-solid:focus-visible,
+    .fav-btn-ghost:focus-visible {
+      outline: 2px solid var(--fav-accent);
+      outline-offset: 2px;
+    }
+
     .fav-status {
       min-height: 1.25rem;
       font-size: 0.85rem;
-      color: #6c757d;
-      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--fav-muted);
+      margin-bottom: 0.85rem;
     }
-    .fav-status.is-error { color: #c53030; }
-    .fav-status.is-ok { color: #2f855a; }
-    [data-theme="dark"] .fav-status.is-error { color: #fc8181; }
-    [data-theme="dark"] .fav-status.is-ok { color: #68d391; }
+    .fav-status.is-error { color: var(--fav-danger); }
+    .fav-status.is-ok { color: var(--fav-ok); }
 
+    /* 合計列：主視覺 */
     .fav-total-bar {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.65rem;
-      margin-bottom: 1rem;
-      padding: 0.75rem 0.9rem;
-      border-radius: 10px;
-      background: rgba(102, 126, 234, 0.08);
-      border: 1px solid rgba(102, 126, 234, 0.18);
+      gap: 0.75rem 1.25rem;
+      margin-bottom: 1.15rem;
+      padding: 1rem 1.15rem;
+      border-radius: 14px;
+      background: var(--fav-ink);
+      color: #f7f3ea;
+      border: 1px solid rgba(197, 122, 26, 0.45);
+      box-shadow: 0 12px 28px rgba(20, 22, 28, 0.18);
     }
     [data-theme="dark"] .fav-total-bar {
-      background: rgba(196, 166, 114, 0.12);
-      border-color: rgba(196, 166, 114, 0.28);
+      background: #12100e;
+      border-color: rgba(212, 162, 74, 0.45);
+    }
+    .fav-total-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(247, 243, 234, 0.72);
+      margin-bottom: 0.15rem;
     }
     .fav-total-main {
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-    .fav-total-sub {
-      font-size: 0.78rem;
-      color: #6c757d;
-      margin-top: 0.15rem;
-    }
-    [data-theme="dark"] .fav-total-sub {
-      color: #a0aec0;
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      line-height: 1;
     }
     .fav-total-value {
+      font-size: clamp(1.65rem, 4vw, 2rem);
+      font-weight: 900;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
+      color: #fff;
+      display: inline-block;
+      transform-origin: left center;
+    }
+    .fav-total-value.is-updating {
+      animation: favTotalPop 180ms ease-out;
+    }
+    @keyframes favTotalPop {
+      0% { opacity: 0.45; transform: scale(0.96); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .fav-total-sub {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: rgba(247, 243, 234, 0.7);
+      margin-top: 0.4rem;
+    }
+    .fav-total-accent {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--fav-accent);
+      box-shadow: 0 0 0 4px var(--fav-accent-soft);
+      flex-shrink: 0;
     }
 
     .fav-empty {
       text-align: center;
-      padding: 2.5rem 1rem;
-      color: #6c757d;
+      padding: 2.75rem 1rem;
+      color: var(--fav-muted);
     }
     .fav-empty i {
-      font-size: 2.2rem;
-      opacity: 0.45;
-      margin-bottom: 0.75rem;
+      font-size: 2.4rem;
+      color: var(--fav-accent);
+      opacity: 0.7;
+      margin-bottom: 0.85rem;
     }
     .fav-empty p {
       margin-bottom: 1rem;
+      font-weight: 700;
+      color: var(--fav-ink);
     }
 
     .fav-album {
@@ -155,13 +338,13 @@
       margin: 0;
       padding: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-      gap: 1rem 0.85rem;
+      grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+      gap: 1.15rem 0.95rem;
     }
     @media (min-width: 768px) {
       .fav-album {
-        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-        gap: 1.15rem 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+        gap: 1.35rem 1.15rem;
       }
     }
     .fav-tile {
@@ -169,30 +352,30 @@
       margin: 0;
       min-width: 0;
     }
-    .fav-tile.is-checked .fav-tile-body {
-      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.55);
-    }
-    [data-theme="dark"] .fav-tile.is-checked .fav-tile-body {
-      box-shadow: 0 0 0 2px rgba(196, 166, 114, 0.65);
-    }
     .fav-tile-body {
       display: block;
       color: inherit;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
-      background: rgba(0, 0, 0, 0.03);
+      background: var(--fav-surface);
+      border: 1.5px solid var(--fav-line);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
-    [data-theme="dark"] .fav-tile-body {
-      background: rgba(255, 255, 255, 0.04);
+    .fav-tile.is-checked .fav-tile-body {
+      border-color: var(--fav-accent);
+      box-shadow: 0 0 0 3px var(--fav-accent-soft);
+      animation: favCheckPop 160ms ease-out;
+    }
+    @keyframes favCheckPop {
+      0% { transform: scale(0.985); }
+      100% { transform: scale(1); }
     }
     .fav-tile-art {
       position: relative;
       aspect-ratio: 63 / 88;
-      background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      background: linear-gradient(160deg, var(--fav-surface-soft), rgba(20, 22, 28, 0.08));
       overflow: hidden;
-    }
-    [data-theme="dark"] .fav-tile-art {
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      border-bottom: 1px solid var(--fav-line);
     }
     .fav-tile-art img {
       width: 100%;
@@ -212,154 +395,170 @@
       align-items: center;
       justify-content: center;
       gap: 0.35rem;
-      color: #a0aec0;
+      color: var(--fav-muted);
       font-size: 0.75rem;
+      font-weight: 700;
       pointer-events: none;
     }
     .fav-tile-placeholder i {
-      font-size: 1.5rem;
+      font-size: 1.55rem;
       opacity: 0.55;
+      color: var(--fav-accent);
     }
     .fav-tile-art.has-image .fav-tile-placeholder { display: none; }
     .fav-rare {
       position: absolute;
-      left: 0.45rem;
-      bottom: 0.45rem;
+      left: 0.5rem;
+      bottom: 0.5rem;
       z-index: 1;
       display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 0.12rem 0.4rem;
-      border-radius: 4px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      padding: 0.18rem 0.5rem;
+      border-radius: 5px;
       color: #fff;
       background: #718096;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
     }
     .fav-check {
       position: absolute;
-      top: 0.4rem;
-      left: 0.4rem;
+      top: 0.45rem;
+      left: 0.45rem;
       z-index: 2;
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       margin: 0;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.92);
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid var(--fav-line);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .fav-tile.is-checked .fav-check {
+      border-color: var(--fav-accent);
+      background: #fff8ef;
+      transform: scale(1.05);
     }
     [data-theme="dark"] .fav-check {
-      background: rgba(36, 36, 36, 0.92);
+      background: rgba(28, 27, 25, 0.94);
+    }
+    [data-theme="dark"] .fav-tile.is-checked .fav-check {
+      background: rgba(40, 34, 24, 0.96);
     }
     .fav-check input {
-      width: 16px;
-      height: 16px;
+      width: 17px;
+      height: 17px;
       margin: 0;
+      accent-color: var(--fav-accent);
       cursor: pointer;
     }
     .fav-tile-caption {
-      padding: 0.55rem 0.15rem 0.1rem;
+      padding: 0.7rem 0.7rem 0.75rem;
+    }
+    .fav-price {
+      margin: 0 0 0.28rem;
+      font-size: 1.05rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+      color: var(--fav-ink);
+      line-height: 1.15;
+    }
+    .fav-price.is-muted {
+      font-weight: 700;
+      font-size: 0.86rem;
+      color: var(--fav-muted);
     }
     .fav-cardno {
       display: block;
-      font-weight: 700;
-      font-size: 0.78rem;
+      font-weight: 800;
+      font-size: 0.82rem;
       letter-spacing: 0.01em;
+      color: var(--fav-ink);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .fav-name {
-      margin-top: 0.15rem;
+      margin-top: 0.18rem;
       font-size: 0.78rem;
       line-height: 1.35;
-      color: #4a5568;
+      font-weight: 600;
+      color: var(--fav-muted);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    [data-theme="dark"] .fav-name { color: #cbd5e0; }
     .fav-meta {
-      margin-top: 0.2rem;
+      margin-top: 0.28rem;
       font-size: 0.7rem;
-      color: #718096;
+      font-weight: 600;
+      color: var(--fav-muted);
+      opacity: 0.9;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    [data-theme="dark"] .fav-meta { color: #a0aec0; }
     .fav-open-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
-      margin-top: 0.4rem;
-      padding: 0.28rem 0.55rem;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      background: transparent;
-      color: #4a5568;
-      font-size: 0.72rem;
-      font-weight: 600;
+      gap: 0.3rem;
+      margin-top: 0.55rem;
+      padding: 0.42rem 0.7rem;
+      border: 1.5px solid var(--fav-ink);
+      border-radius: 8px;
+      background: var(--fav-ink);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
     }
     .fav-open-btn:hover {
-      background: rgba(102, 126, 234, 0.08);
-      border-color: rgba(102, 126, 234, 0.35);
-      color: #4338ca;
+      background: var(--fav-accent-deep);
+      border-color: var(--fav-accent-deep);
+      color: #fff;
+      transform: translateY(-1px);
     }
     .fav-open-btn:focus-visible {
-      outline: 2px solid #667eea;
-      outline-offset: 1px;
+      outline: 2px solid var(--fav-accent);
+      outline-offset: 2px;
     }
     [data-theme="dark"] .fav-open-btn {
-      border-color: rgba(255, 255, 255, 0.14);
-      color: #cbd5e0;
+      background: var(--fav-accent);
+      border-color: var(--fav-accent);
+      color: #141311;
     }
     [data-theme="dark"] .fav-open-btn:hover {
-      background: rgba(196, 166, 114, 0.12);
-      border-color: rgba(196, 166, 114, 0.4);
-      color: #ecc94b;
+      filter: brightness(1.06);
+      color: #141311;
     }
-    [data-theme="dark"] .fav-open-btn:focus-visible {
-      outline-color: #c4a672;
-    }
-    .fav-price {
-      margin-top: 0.2rem;
-      font-size: 0.78rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      color: #2d3748;
-    }
-    .fav-price.is-muted {
-      font-weight: 500;
-      color: #a0aec0;
-    }
-    [data-theme="dark"] .fav-price { color: #e2e8f0; }
-    [data-theme="dark"] .fav-price.is-muted { color: #718096; }
     .fav-remove-btn {
       position: absolute;
-      top: 0.4rem;
-      right: 0.4rem;
+      top: 0.45rem;
+      right: 0.45rem;
       z-index: 2;
-      width: 34px;
-      height: 34px;
-      border: none;
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--fav-line);
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.92);
-      color: #a0aec0;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--fav-muted);
       cursor: pointer;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       transform: scale(0.92);
-      transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+      transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
     .fav-tile:hover .fav-remove-btn,
     .fav-tile:focus-within .fav-remove-btn,
@@ -374,16 +573,17 @@
       }
     }
     .fav-remove-btn:hover {
-      color: #e53e3e;
+      color: var(--fav-danger);
+      border-color: var(--fav-danger);
       background: #fff;
     }
     .fav-remove-btn:focus-visible {
-      outline: 2px solid #e53e3e;
+      outline: 2px solid var(--fav-danger);
       outline-offset: 1px;
     }
     [data-theme="dark"] .fav-remove-btn {
-      background: rgba(36, 36, 36, 0.92);
-      color: #a0aec0;
+      background: rgba(28, 27, 25, 0.94);
+      color: var(--fav-muted);
     }
   </style>
 </head>
@@ -473,7 +673,7 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-12">
-            <div class="card search-card">
+            <div class="card search-card favorites-shell">
               <div class="card-header">
                 <h5 class="card-title">
                   <i class="fas fa-star mr-2"></i>
@@ -510,18 +710,20 @@
                     </select>
                   </div>
                   <div class="fav-control-actions">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favSelectVisibleBtn">全選可見</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favClearCheckBtn">清除勾選</button>
+                    <button type="button" class="fav-btn-solid" id="favSelectVisibleBtn">全選可見</button>
+                    <button type="button" class="fav-btn-ghost" id="favClearCheckBtn">清除勾選</button>
                   </div>
                 </div>
 
                 <div class="fav-total-bar" id="favTotalBar" aria-live="polite">
                   <div>
+                    <span class="fav-total-label">合計</span>
                     <div class="fav-total-main">
-                      合計 <span class="fav-total-value" id="favTotalValue">¥0</span>
+                      <span class="fav-total-value" id="favTotalValue">¥0</span>
                     </div>
                     <div class="fav-total-sub" id="favTotalSub">已勾選 0 張 · 有價 0 張 · 無價 0 張</div>
                   </div>
+                  <span class="fav-total-accent" aria-hidden="true"></span>
                 </div>
 
                 <div class="fav-status" id="favStatus" role="status" aria-live="polite"></div>
@@ -1012,7 +1214,16 @@
           unpriced += 1;
         }
       });
-      totalValueEl.textContent = formatYen(total);
+      var nextText = formatYen(total);
+      if (totalValueEl.textContent !== nextText) {
+        totalValueEl.textContent = nextText;
+        totalValueEl.classList.remove('is-updating');
+        // restart animation
+        void totalValueEl.offsetWidth;
+        totalValueEl.classList.add('is-updating');
+      } else {
+        totalValueEl.textContent = nextText;
+      }
       totalSubEl.textContent = '已勾選 ' + checked + ' 張 · 有價 ' + priced + ' 張 · 無價 ' + unpriced + ' 張';
     }
 
@@ -1073,9 +1284,9 @@
         html += rareHtml;
         html += '    </div>';
         html += '    <div class="fav-tile-caption">';
+        html += '      <div class="fav-price' + (label.muted ? ' is-muted' : '') + '" data-price-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(label.text) + '</div>';
         html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
         html += '      <span class="fav-name">' + escapeHtml(name) + '</span>';
-        html += '      <div class="fav-price' + (label.muted ? ' is-muted' : '') + '" data-price-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(label.text) + '</div>';
         html += '      <div class="fav-meta">收藏於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
         html += '      <a class="fav-open-btn" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="' + escapeHtml(openLabel) + '">';
         html += '        <i class="fas fa-chart-line" aria-hidden="true"></i>查價';
