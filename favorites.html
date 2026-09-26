@@ -167,8 +167,8 @@
     .fav-poster-dialog {
       position: relative;
       z-index: 1;
-      width: min(560px, 100%);
-      max-height: min(92vh, 900px);
+      width: min(640px, 100%);
+      max-height: min(92vh, 960px);
       overflow: auto;
       border-radius: 14px;
       background: #111;
@@ -177,9 +177,45 @@
       padding: 1rem 1rem 1.1rem;
     }
     .fav-poster-dialog h3 {
-      margin: 0 0 0.65rem;
+      margin: 0 0 0.35rem;
       font-size: 1.05rem;
       font-weight: 700;
+    }
+    .fav-poster-hint {
+      margin: 0 0 0.75rem;
+      font-size: 0.78rem;
+      color: rgba(247, 250, 252, 0.65);
+    }
+    .fav-poster-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+    .fav-poster-currency {
+      display: inline-flex;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .fav-poster-currency button {
+      border: 0;
+      background: transparent;
+      color: rgba(247, 250, 252, 0.75);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.7rem;
+      cursor: pointer;
+    }
+    .fav-poster-currency button.is-active {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+    .fav-poster-rate {
+      font-size: 0.72rem;
+      color: rgba(247, 250, 252, 0.55);
     }
     .fav-poster-preview {
       display: block;
@@ -187,6 +223,71 @@
       height: auto;
       border-radius: 8px;
       background: #1a1512;
+    }
+    .fav-poster-editor {
+      list-style: none;
+      margin: 0.75rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .fav-poster-editor-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.35rem 0.75rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .fav-poster-editor-meta {
+      min-width: 0;
+    }
+    .fav-poster-editor-cardno {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fav-poster-editor-name {
+      display: block;
+      font-size: 0.72rem;
+      color: rgba(247, 250, 252, 0.65);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fav-poster-price-btn {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      padding: 0.35rem 0.65rem;
+      cursor: pointer;
+      min-width: 7.5rem;
+      text-align: right;
+    }
+    .fav-poster-price-btn:hover,
+    .fav-poster-price-btn:focus-visible {
+      border-color: rgba(255, 255, 255, 0.45);
+      outline: none;
+    }
+    .fav-poster-price-input {
+      width: 7.5rem;
+      border: 1px solid rgba(102, 126, 234, 0.7);
+      border-radius: 8px;
+      background: #0b0b0b;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      padding: 0.35rem 0.55rem;
+      text-align: right;
     }
     .fav-poster-actions {
       display: flex;
@@ -591,7 +692,16 @@
   <div class="fav-poster-backdrop" data-poster-close="1"></div>
   <div class="fav-poster-dialog" role="dialog" aria-modal="true" aria-labelledby="favPosterTitle">
     <h3 id="favPosterTitle">買取情報預覽</h3>
+    <p class="fav-poster-hint">點價格可修改收購報價（只影響本次產圖，不會改收藏合計）。</p>
+    <div class="fav-poster-toolbar">
+      <div class="fav-poster-currency" role="group" aria-label="產圖幣別">
+        <button type="button" id="favPosterCurrencyJpy" data-poster-currency="JPY" class="is-active">¥</button>
+        <button type="button" id="favPosterCurrencyTwd" data-poster-currency="TWD">NT$</button>
+      </div>
+      <div class="fav-poster-rate" id="favPosterRateLabel">匯率：1 ¥ ≈ 0.22 NT$（暫定）</div>
+    </div>
     <img id="favPosterPreview" class="fav-poster-preview" alt="買取情報圖預覽">
+    <ul class="fav-poster-editor" id="favPosterEditor" aria-label="本次產圖價格編輯"></ul>
     <div class="fav-poster-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-poster-close="1">關閉</button>
       <a id="favPosterDownload" class="btn btn-primary btn-sm" download="ws-cards-buyout.png">
@@ -1099,12 +1209,20 @@
     }
 
     var POSTER_MAX_CARDS = 8;
+    // 暫定固定匯率；之後可接即時匯率 API
+    var POSTER_JPY_TO_TWD = 0.22;
     var posterModal = document.getElementById('favPosterModal');
     var posterPreview = document.getElementById('favPosterPreview');
     var posterDownload = document.getElementById('favPosterDownload');
     var posterBtn = document.getElementById('favPosterBtn');
+    var posterEditor = document.getElementById('favPosterEditor');
+    var posterRateLabel = document.getElementById('favPosterRateLabel');
+    var posterCurrencyJpyBtn = document.getElementById('favPosterCurrencyJpy');
+    var posterCurrencyTwdBtn = document.getElementById('favPosterCurrencyTwd');
     var posterObjectUrl = '';
     var posterLastFocus = null;
+    var posterSession = null;
+    var posterRedrawToken = 0;
 
     function getCheckedPricedItems() {
       var list = [];
@@ -1116,6 +1234,43 @@
       });
       list.sort(function (a, b) { return (b.priceJPY || 0) - (a.priceJPY || 0); });
       return list;
+    }
+
+    function createPosterRng(seed) {
+      var a = seed >>> 0;
+      return function () {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        var t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function formatPosterPrice(amount, currency) {
+      var n = Math.round(Number(amount));
+      if (!isFinite(n) || isNaN(n)) n = 0;
+      var num = n.toLocaleString('en-US');
+      return currency === 'TWD' ? ('NT$' + num) : ('¥' + num);
+    }
+
+    function convertPosterAmount(amount, fromCurrency, toCurrency, rate) {
+      var n = Number(amount);
+      if (!isFinite(n) || isNaN(n)) return 0;
+      if (fromCurrency === toCurrency) return Math.round(n);
+      if (fromCurrency === 'JPY' && toCurrency === 'TWD') return Math.round(n * rate);
+      if (fromCurrency === 'TWD' && toCurrency === 'JPY') return Math.round(n / rate);
+      return Math.round(n);
+    }
+
+    function updatePosterCurrencyUi() {
+      if (!posterSession) return;
+      var isJpy = posterSession.currency === 'JPY';
+      if (posterCurrencyJpyBtn) posterCurrencyJpyBtn.classList.toggle('is-active', isJpy);
+      if (posterCurrencyTwdBtn) posterCurrencyTwdBtn.classList.toggle('is-active', !isJpy);
+      if (posterRateLabel) {
+        posterRateLabel.textContent = '匯率：1 ¥ ≈ ' + POSTER_JPY_TO_TWD + ' NT$（暫定，之後接即時匯率）';
+      }
     }
 
     function loadImageForPoster(url) {
@@ -1166,7 +1321,8 @@
       });
     }
 
-    function fillEarthTexture(ctx, width, height) {
+    function fillEarthTexture(ctx, width, height, rng) {
+      var rand = rng || Math.random;
       ctx.fillStyle = '#3a2418';
       ctx.fillRect(0, 0, width, height);
 
@@ -1179,26 +1335,26 @@
 
       var i;
       for (i = 0; i < 5200; i++) {
-        var x = Math.random() * width;
-        var y = Math.random() * height;
-        var shade = 28 + Math.floor(Math.random() * 55);
-        var a = 0.08 + Math.random() * 0.22;
+        var x = rand() * width;
+        var y = rand() * height;
+        var shade = 28 + Math.floor(rand() * 55);
+        var a = 0.08 + rand() * 0.22;
         ctx.fillStyle = 'rgba(' + shade + ',' + Math.floor(shade * 0.62) + ',' + Math.floor(shade * 0.38) + ',' + a + ')';
-        ctx.fillRect(x, y, 1 + Math.random() * 2.2, 1 + Math.random() * 2.2);
+        ctx.fillRect(x, y, 1 + rand() * 2.2, 1 + rand() * 2.2);
       }
 
       ctx.strokeStyle = 'rgba(18, 10, 6, 0.28)';
       ctx.lineWidth = 1;
       for (i = 0; i < 42; i++) {
-        var sx = Math.random() * width;
-        var sy = Math.random() * height;
+        var sx = rand() * width;
+        var sy = rand() * height;
         ctx.beginPath();
         ctx.moveTo(sx, sy);
-        var segs = 3 + Math.floor(Math.random() * 4);
+        var segs = 3 + Math.floor(rand() * 4);
         var j;
         for (j = 0; j < segs; j++) {
-          sx += (Math.random() - 0.5) * 70;
-          sy += 12 + Math.random() * 36;
+          sx += (rand() - 0.5) * 70;
+          sy += 12 + rand() * 36;
           ctx.lineTo(sx, sy);
         }
         ctx.stroke();
@@ -1271,9 +1427,8 @@
       ctx.restore();
     }
 
-    function buildBuyoutPoster(items, images) {
-      var count = items.length;
-      // 1–4 張用較寬卡面（2 欄），較接近附件樣式；更多張才改 3/4 欄
+    function buildBuyoutPoster(entries, images, currency, textureSeed) {
+      var count = entries.length;
       var cols = count <= 1 ? 1 : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
 
@@ -1298,8 +1453,9 @@
       canvas.width = width;
       canvas.height = height;
       var ctx = canvas.getContext('2d');
+      var rng = createPosterRng(textureSeed || 20260926);
 
-      fillEarthTexture(ctx, width, height);
+      fillEarthTexture(ctx, width, height, rng);
       drawWsLogo(ctx, 42, 36, 92);
 
       ctx.fillStyle = '#ffffff';
@@ -1315,7 +1471,7 @@
       drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, 'rgba(255,255,255,0.78)');
       drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, 'rgba(255,255,255,0.78)');
 
-      items.forEach(function (item, index) {
+      entries.forEach(function (entry, index) {
         var col = index % cols;
         var row = Math.floor(index / cols);
         var cardsInRow = (row === rows - 1) ? (count - row * cols) : cols;
@@ -1329,8 +1485,8 @@
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        var priceText = formatYen(item.priceJPY);
-        var fontSize = priceText.length > 9 ? 42 : (priceText.length > 7 ? 50 : 56);
+        var priceText = formatPosterPrice(entry.amount, currency);
+        var fontSize = priceText.length > 10 ? 40 : (priceText.length > 8 ? 48 : 56);
         ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
         ctx.shadowColor = 'rgba(0,0,0,0.35)';
         ctx.shadowBlur = 6;
@@ -1374,11 +1530,130 @@
       return canvas;
     }
 
+    function applyPosterPreviewDataUrl(dataUrl) {
+      if (!posterPreview || !posterDownload) return;
+      posterPreview.src = dataUrl;
+      posterDownload.href = dataUrl;
+      posterDownload.download = 'ws-cards-buyout-' + new Date().toISOString().slice(0, 10) + '.png';
+    }
+
+    function redrawPosterPreview() {
+      if (!posterSession) return Promise.resolve();
+      var token = ++posterRedrawToken;
+      var fontsReady = (document.fonts && document.fonts.ready)
+        ? document.fonts.ready.catch(function () { return null; })
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        if (token !== posterRedrawToken || !posterSession) return;
+        var canvas = buildBuyoutPoster(
+          posterSession.entries,
+          posterSession.images,
+          posterSession.currency,
+          posterSession.textureSeed
+        );
+        var dataUrl;
+        try {
+          dataUrl = canvas.toDataURL('image/png');
+        } catch (err) {
+          throw new Error('無法匯出圖片（卡圖跨網域限制），請改用正式站 ws-cards.cloud 再試');
+        }
+        if (token !== posterRedrawToken) return;
+        applyPosterPreviewDataUrl(dataUrl);
+      });
+    }
+
+    function renderPosterEditor() {
+      if (!posterEditor || !posterSession) return;
+      var html = '';
+      posterSession.entries.forEach(function (entry, index) {
+        html += '<li class="fav-poster-editor-item" data-poster-index="' + index + '">';
+        html += '  <div class="fav-poster-editor-meta">';
+        html += '    <span class="fav-poster-editor-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
+        html += '    <span class="fav-poster-editor-name">' + escapeHtml(entry.cardName || '（無卡名）') + '</span>';
+        html += '  </div>';
+        html += '  <button type="button" class="fav-poster-price-btn" data-poster-edit="' + index + '" aria-label="修改 ' + escapeHtml(entry.cardNumber) + ' 價格">';
+        html += escapeHtml(formatPosterPrice(entry.amount, posterSession.currency));
+        html += '  </button>';
+        html += '</li>';
+      });
+      posterEditor.innerHTML = html;
+    }
+
+    function commitPosterPriceEdit(index, rawValue) {
+      if (!posterSession || !posterSession.entries[index]) return;
+      var cleaned = String(rawValue || '').replace(/[^\d]/g, '');
+      var amount = cleaned === '' ? 0 : parseInt(cleaned, 10);
+      if (!isFinite(amount) || isNaN(amount) || amount < 0) amount = 0;
+      posterSession.entries[index].amount = amount;
+      renderPosterEditor();
+      redrawPosterPreview().catch(function (err) {
+        console.error(err);
+        setStatus('更新預覽失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
+      });
+    }
+
+    function beginPosterPriceEdit(index) {
+      if (!posterEditor || !posterSession || !posterSession.entries[index]) return;
+      var item = posterEditor.querySelector('[data-poster-index="' + index + '"]');
+      if (!item) return;
+      var btn = item.querySelector('[data-poster-edit]');
+      if (!btn) return;
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.className = 'fav-poster-price-input';
+      input.value = String(Math.round(Number(posterSession.entries[index].amount) || 0));
+      input.setAttribute('aria-label', '輸入 ' + posterSession.entries[index].cardNumber + ' 價格');
+      btn.replaceWith(input);
+      input.focus();
+      input.select();
+
+      var finished = false;
+      function finish(save) {
+        if (finished) return;
+        finished = true;
+        if (save) commitPosterPriceEdit(index, input.value);
+        else renderPosterEditor();
+      }
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          finish(true);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          finish(false);
+        }
+      });
+      input.addEventListener('blur', function () {
+        finish(true);
+      });
+    }
+
+    function setPosterCurrency(nextCurrency) {
+      if (!posterSession) return;
+      if (nextCurrency !== 'JPY' && nextCurrency !== 'TWD') return;
+      if (posterSession.currency === nextCurrency) return;
+      var from = posterSession.currency;
+      posterSession.entries.forEach(function (entry) {
+        entry.amount = convertPosterAmount(entry.amount, from, nextCurrency, POSTER_JPY_TO_TWD);
+      });
+      posterSession.currency = nextCurrency;
+      updatePosterCurrencyUi();
+      renderPosterEditor();
+      redrawPosterPreview().catch(function (err) {
+        console.error(err);
+        setStatus('切換幣別後重繪失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
+      });
+    }
+
     function closePosterModal() {
       if (!posterModal) return;
       posterModal.classList.remove('is-open');
       posterModal.hidden = true;
       posterModal.setAttribute('aria-hidden', 'true');
+      posterSession = null;
+      if (posterEditor) posterEditor.innerHTML = '';
       if (posterObjectUrl) {
         URL.revokeObjectURL(posterObjectUrl);
         posterObjectUrl = '';
@@ -1392,22 +1667,17 @@
       }
     }
 
-    function openPosterModal(dataUrl) {
-      if (!posterModal || !posterPreview || !posterDownload) return;
-      if (posterObjectUrl) {
-        URL.revokeObjectURL(posterObjectUrl);
-        posterObjectUrl = '';
-      }
+    function openPosterModal() {
+      if (!posterModal) return;
       posterLastFocus = document.activeElement;
-      posterPreview.src = dataUrl;
-      posterDownload.href = dataUrl;
-      posterDownload.download = 'ws-cards-buyout-' + new Date().toISOString().slice(0, 10) + '.png';
+      updatePosterCurrencyUi();
+      renderPosterEditor();
       posterModal.hidden = false;
       posterModal.classList.add('is-open');
       posterModal.setAttribute('aria-hidden', 'false');
       var closeBtn = posterModal.querySelector('[data-poster-close="1"].btn');
       if (closeBtn) closeBtn.focus();
-      else posterDownload.focus();
+      else if (posterDownload) posterDownload.focus();
     }
 
     function generateBuyoutPoster() {
@@ -1435,15 +1705,23 @@
       fontsReady.then(function () {
         return Promise.all(items.map(loadPosterCardArt));
       }).then(function (images) {
-        var canvas = buildBuyoutPoster(items, images);
-        var dataUrl;
-        try {
-          dataUrl = canvas.toDataURL('image/png');
-        } catch (err) {
-          throw new Error('無法匯出圖片（卡圖跨網域限制），請改用正式站 ws-cards.cloud 再試');
-        }
-        openPosterModal(dataUrl);
-        setStatus('買取情報圖已就緒，可預覽或下載。', 'is-ok');
+        posterSession = {
+          currency: 'JPY',
+          textureSeed: Date.now() % 1000000000,
+          images: images,
+          entries: items.map(function (item) {
+            return {
+              cardNumber: item.cardNumber,
+              cardName: item.cardName || '',
+              refJPY: item.priceJPY,
+              amount: Math.round(Number(item.priceJPY) || 0)
+            };
+          })
+        };
+        openPosterModal();
+        return redrawPosterPreview();
+      }).then(function () {
+        setStatus('買取情報圖已就緒：可點價格修改後再下載。', 'is-ok');
       }).catch(function (err) {
         console.error(err);
         setStatus('產圖失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
@@ -1707,11 +1985,24 @@
     }
     if (posterModal) {
       posterModal.addEventListener('click', function (e) {
-        if (e.target && e.target.getAttribute('data-poster-close')) closePosterModal();
+        if (e.target && e.target.getAttribute('data-poster-close')) {
+          closePosterModal();
+          return;
+        }
+        var currencyBtn = e.target.closest('[data-poster-currency]');
+        if (currencyBtn) {
+          setPosterCurrency(currencyBtn.getAttribute('data-poster-currency'));
+          return;
+        }
+        var editBtn = e.target.closest('[data-poster-edit]');
+        if (editBtn) {
+          beginPosterPriceEdit(Number(editBtn.getAttribute('data-poster-edit')));
+        }
       });
     }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && posterModal && posterModal.classList.contains('is-open')) {
+        if (posterEditor && posterEditor.querySelector('.fav-poster-price-input')) return;
         closePosterModal();
       }
     });
