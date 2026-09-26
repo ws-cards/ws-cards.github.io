@@ -1273,22 +1273,22 @@
 
     function buildBuyoutPoster(items, images) {
       var count = items.length;
-      var cols = count <= 1 ? 1 : (count === 2 || count === 4 ? 2 : (count <= 6 ? 3 : 4));
+      // 1–4 張用較寬卡面（2 欄），較接近附件樣式；更多張才改 3/4 欄
+      var cols = count <= 1 ? 1 : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
 
       var width = 1080;
-      var sideGutter = 72;
-      var topY = 290;
-      var bottomReserve = 170;
-      var gapX = 32;
+      var sideGutter = 64;
+      var topY = 280;
+      var bottomReserve = 160;
+      var gapX = 36;
       var gapY = 40;
       var cardRatio = 63 / 88;
-      // 卡面加大但仍留標題下方空隙；上限略低於滿版以免壓到「買取情報」
-      var maxCardWByCount = count <= 2 ? 400 : (count <= 4 ? 360 : 300);
+      var maxCardWByCount = count <= 2 ? 420 : (count <= 4 ? 380 : 300);
       var availableW = width - sideGutter * 2 - gapX * (cols - 1);
       var cardW = Math.min(maxCardWByCount, Math.floor(availableW / cols));
       var cardH = Math.floor(cardW / cardRatio);
-      var priceH = 82;
+      var priceH = 84;
       var cellH = cardH + priceH;
       var gridW = cols * cardW + (cols - 1) * gapX;
       var gridLeft = Math.floor((width - gridW) / 2);
