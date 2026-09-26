@@ -1272,20 +1272,20 @@
 
     function buildBuyoutPoster(items, images) {
       var count = items.length;
-      var cols = count <= 2 ? count : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
+      var cols = count <= 1 ? 1 : (count === 2 || count === 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
 
       var width = 1080;
       var marginX = 88;
-      var topY = 210;
+      var topY = 220;
       var bottomReserve = 170;
-      var gapX = 36;
-      var gapY = 48;
+      var gapX = 34;
+      var gapY = 44;
       var cardRatio = 63 / 88;
       var availableW = width - marginX * 2 - gapX * (cols - 1);
       var cardW = Math.floor(availableW / cols);
       var cardH = Math.floor(cardW / cardRatio);
-      var priceH = 78;
+      var priceH = 86;
       var cellH = cardH + priceH;
       var height = Math.max(1350, topY + rows * cellH + gapY * (rows - 1) + bottomReserve);
 
@@ -1302,10 +1302,10 @@
       ctx.textBaseline = 'top';
       ctx.font = '700 28px "Noto Sans TC", sans-serif';
       ctx.fillText('WEISS SCHWARZ', width / 2, 48);
-      ctx.font = '900 64px "Noto Sans TC", sans-serif';
+      ctx.font = '900 66px "Noto Sans TC", sans-serif';
       ctx.fillText('WSカード', width / 2, 88);
-      ctx.font = '900 58px "Noto Sans TC", sans-serif';
-      ctx.fillText('買取情報', width / 2, 158);
+      ctx.font = '900 60px "Noto Sans TC", sans-serif';
+      ctx.fillText('買取情報', width / 2, 162);
 
       drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, 'rgba(255,255,255,0.78)');
       drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, 'rgba(255,255,255,0.78)');
@@ -1313,7 +1313,11 @@
       items.forEach(function (item, index) {
         var col = index % cols;
         var row = Math.floor(index / cols);
-        var x = marginX + col * (cardW + gapX);
+        var cardsInRow = (row === rows - 1) ? (count - row * cols) : cols;
+        var rowOffset = cardsInRow < cols
+          ? Math.floor((cols - cardsInRow) * (cardW + gapX) / 2)
+          : 0;
+        var x = marginX + rowOffset + col * (cardW + gapX);
         var y = topY + row * (cellH + gapY);
         drawCoverImage(ctx, images[index], x, y, cardW, cardH, 14);
 
@@ -1321,9 +1325,15 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         var priceText = formatYen(item.priceJPY);
-        var fontSize = priceText.length > 9 ? 42 : (priceText.length > 7 ? 48 : 56);
+        var fontSize = priceText.length > 9 ? 44 : (priceText.length > 7 ? 52 : 60);
         ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
-        ctx.fillText(priceText, x + cardW / 2, y + cardH + 14);
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText(priceText, x + cardW / 2, y + cardH + 16);
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
       });
 
       ctx.fillStyle = 'rgba(255,255,255,0.86)';
