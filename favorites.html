@@ -292,42 +292,6 @@
       text-overflow: ellipsis;
     }
     [data-theme="dark"] .fav-meta { color: #a0aec0; }
-    .fav-open-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      margin-top: 0.4rem;
-      padding: 0.28rem 0.55rem;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      background: transparent;
-      color: #4a5568;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .fav-open-btn:hover {
-      background: rgba(102, 126, 234, 0.08);
-      border-color: rgba(102, 126, 234, 0.35);
-      color: #4338ca;
-    }
-    .fav-open-btn:focus-visible {
-      outline: 2px solid #667eea;
-      outline-offset: 1px;
-    }
-    [data-theme="dark"] .fav-open-btn {
-      border-color: rgba(255, 255, 255, 0.14);
-      color: #cbd5e0;
-    }
-    [data-theme="dark"] .fav-open-btn:hover {
-      background: rgba(196, 166, 114, 0.12);
-      border-color: rgba(196, 166, 114, 0.4);
-      color: #ecc94b;
-    }
-    [data-theme="dark"] .fav-open-btn:focus-visible {
-      outline-color: #c4a672;
-    }
     .fav-price {
       margin-top: 0.2rem;
       font-size: 0.78rem;
@@ -584,7 +548,6 @@
     var PRICE_CACHE_KEY = 'wsFavPriceCache';
     var PRICE_TTL_MS = 12 * 60 * 60 * 1000;
     var MAX_ITEMS = 100;
-    var LINE_PAGE = 'line_test_v102.html';
     var PRICE_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardData/';
     var PRICE_LOCAL_FALLBACKS = ['scrapy/mercariData/', 'json/cardData/'];
 
@@ -762,12 +725,6 @@
     function formatYen(n) {
       if (n === null || n === undefined || isNaN(n)) return '—';
       return '¥' + Number(n).toLocaleString('en-US');
-    }
-
-    function buildLineUrl(cardNumber) {
-      var underscored = String(cardNumber || '').replace(/\//g, '_');
-      return LINE_PAGE + '?card=' + encodeURIComponent(cardNumber) +
-        '&cardno=' + encodeURIComponent(underscored);
     }
 
     function buildCardImageUrls(cardNumberDisplay) {
@@ -1058,7 +1015,6 @@
           ? '<span class="fav-rare" style="background:' + getRareColor(rare) + ';">' + escapeHtml(rare) + '</span>'
           : '';
         var label = priceLabel(item);
-        var openLabel = '查詢 ' + cardNumber + (name ? ' ' + name : '');
 
         html += '<li class="fav-tile' + (checked ? ' is-checked' : '') + '" data-card-number="' + escapeHtml(cardNumber) + '">';
         html += '  <label class="fav-check">';
@@ -1077,9 +1033,6 @@
         html += '      <span class="fav-name">' + escapeHtml(name) + '</span>';
         html += '      <div class="fav-price' + (label.muted ? ' is-muted' : '') + '" data-price-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(label.text) + '</div>';
         html += '      <div class="fav-meta">收藏於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
-        html += '      <a class="fav-open-btn" href="' + escapeHtml(buildLineUrl(cardNumber)) + '" aria-label="' + escapeHtml(openLabel) + '">';
-        html += '        <i class="fas fa-chart-line" aria-hidden="true"></i>查價';
-        html += '      </a>';
         html += '    </div>';
         html += '  </div>';
         html += '  <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="取消收藏" aria-label="取消收藏 ' + escapeHtml(cardNumber) + '">';
