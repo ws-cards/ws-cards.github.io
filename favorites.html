@@ -247,13 +247,15 @@
       gap: 0.35rem;
     }
     .fav-poster-bg-swatch {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
       border: 2px solid rgba(255, 255, 255, 0.28);
       padding: 0;
       cursor: pointer;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .fav-poster-bg-swatch.is-active {
       border-color: #fff;
@@ -261,8 +263,10 @@
     }
     .fav-poster-bg-custom {
       position: relative;
-      width: 28px;
-      height: 28px;
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
       border: 2px dashed rgba(255, 255, 255, 0.45);
       background:
@@ -273,21 +277,46 @@
         #666;
       overflow: hidden;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .fav-poster-bg-custom.is-active {
       border-style: solid;
       border-color: #fff;
       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.75);
     }
+    /* 原生 color input：不可用 opacity:0（iOS/部分 Android 會點不到） */
     .fav-poster-bg-custom input[type="color"] {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      border: 0;
+      left: 50%;
+      top: 50%;
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      min-height: 48px;
+      transform: translate(-50%, -50%);
+      margin: 0;
       padding: 0;
+      border: 0;
+      opacity: 0.01;
       cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      color-scheme: light;
+    }
+    @media (hover: none), (pointer: coarse) {
+      .fav-poster-bg-swatch,
+      .fav-poster-bg-custom {
+        width: 40px;
+        height: 40px;
+      }
+      .fav-poster-bg-custom input[type="color"] {
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        min-height: 56px;
+      }
     }
     .fav-poster-preview {
       display: block;
@@ -1405,17 +1434,25 @@
       return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
     }
 
+    function posterContrastRatio(l1, l2) {
+      var bright = Math.max(l1, l2);
+      var dark = Math.min(l1, l2);
+      return (bright + 0.05) / (dark + 0.05);
+    }
+
     function posterInkFromBg(bgHex) {
       var rgb = parsePosterHex(bgHex);
-      var light = posterRelativeLuminance(rgb) > 0.45;
+      var lum = posterRelativeLuminance(rgb);
+      // 選黑／白中對比更高者（舊閾值 0.45 會讓米色／灰等中亮度仍用白字，手機上幾乎看不清）
+      var light = posterContrastRatio(lum, 0) >= posterContrastRatio(1, lum);
       return {
         lightBg: light,
         primary: light ? '#111111' : '#ffffff',
-        muted: light ? 'rgba(17,17,17,0.72)' : 'rgba(255,255,255,0.78)',
-        footer: light ? 'rgba(17,17,17,0.72)' : 'rgba(255,255,255,0.86)',
+        muted: light ? 'rgba(17,17,17,0.78)' : 'rgba(255,255,255,0.82)',
+        footer: light ? 'rgba(17,17,17,0.78)' : 'rgba(255,255,255,0.88)',
         badgeBg: light ? '#111111' : '#ffffff',
         badgeFg: light ? '#ffffff' : '#111111',
-        cardStroke: light ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.18)',
+        cardStroke: light ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)',
         noImageBg: light ? '#d7d7d7' : '#241810',
         noImageFg: light ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.72)',
         crack: light ? 'rgba(0,0,0,0.16)' : 'rgba(18,10,6,0.28)'
@@ -2224,12 +2261,12 @@
       });
     }
     if (posterBgColorInput) {
-      posterBgColorInput.addEventListener('input', function () {
+      // input：桌面拖曳即時更新；change：iOS/Android 關閉圓盤後才確定
+      function onPosterBgColorPicked() {
         setPosterBgColor(posterBgColorInput.value);
-      });
-      posterBgColorInput.addEventListener('change', function () {
-        setPosterBgColor(posterBgColorInput.value);
-      });
+      }
+      posterBgColorInput.addEventListener('input', onPosterBgColorPicked);
+      posterBgColorInput.addEventListener('change', onPosterBgColorPicked);
     }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && posterModal && posterModal.classList.contains('is-open')) {
