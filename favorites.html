@@ -993,6 +993,7 @@
     var sortMode = 'newest';
     var priceCache = {};
     var setJsonCache = {};
+    var setJsonInflight = {};
     var priceLoadToken = 0;
 
     var listEl = document.getElementById('favList');
@@ -1257,15 +1258,14 @@
       if (Object.prototype.hasOwnProperty.call(setJsonCache, setCode)) {
         return Promise.resolve(setJsonCache[setCode]);
       }
+      if (setJsonInflight[setCode]) return setJsonInflight[setCode];
+
       var urls = [PRICE_BASE + setCode + '.json'].concat(
         PRICE_LOCAL_FALLBACKS.map(function (prefix) { return prefix + setCode + '.json'; })
       );
 
       function tryNext(i) {
-        if (i >= urls.length) {
-          // 不把失敗寫進 setJsonCache，方便之後重試
-          return null;
-        }
+        if (i >= urls.length) return null;
         return fetchJson(urls[i]).then(function (json) {
           setJsonCache[setCode] = json;
           return json;
@@ -1274,7 +1274,53 @@
         });
       }
 
-      return tryNext(0);
+      setJsonInflight[setCode] = Promise.resolve()
+        .then(function () { return tryNext(0); })
+        .then(function (json) {
+          delete setJsonInflight[setCode];
+          // 失敗不寫 cache，方便之後重試
+          return json;
+        }, function (err) {
+          delete setJsonInflight[setCode];
+          throw err;
+        });
+
+      return setJsonInflight[setCode];
+    }
+
+    function applySetPricesToItems(items, setCode, json, now) {
+      var failed = !json;
+      (items || []).forEach(function (item) {
+        if (!json) {
+          item.priceJPY = null;
+          item.priceAsOf = '';
+          item.priceStatus = 'error';
+          if (priceCache[item.cardNumber] && priceCache[item.cardNumber].missing) {
+            delete priceCache[item.cardNumber];
+          }
+          return;
+        }
+        var result = lookupPriceInSetJson(json, item.cardNumber);
+        if (result && typeof result.priceJPY === 'number') {
+          item.priceJPY = result.priceJPY;
+          item.priceAsOf = result.asOf || '';
+          item.priceStatus = 'ready';
+          priceCache[item.cardNumber] = {
+            priceJPY: result.priceJPY,
+            asOf: result.asOf || '',
+            fetchedAt: now
+          };
+        } else {
+          item.priceJPY = null;
+          item.priceAsOf = '';
+          item.priceStatus = 'missing';
+          priceCache[item.cardNumber] = {
+            missing: true,
+            fetchedAt: now
+          };
+        }
+      });
+      return failed;
     }
 
     function loadPricesForItems(items) {
@@ -1299,61 +1345,21 @@
         return Promise.resolve();
       }
 
-      var anyFetchFailed = false;
-      var chain = Promise.resolve();
-      setCodes.forEach(function (setCode) {
-        chain = chain.then(function () {
-          if (token !== priceLoadToken) return;
-          return loadSetJson(setCode).then(function (json) {
-            if (token !== priceLoadToken) return;
-            var now = Date.now();
-            if (!json) {
-              anyFetchFailed = true;
-              groups[setCode].forEach(function (item) {
-                item.priceJPY = null;
-                item.priceAsOf = '';
-                item.priceStatus = 'error';
-                // 網路／CORS 失敗不當成「無價」快取，避免合計長期卡在 ¥0
-                if (priceCache[item.cardNumber] && priceCache[item.cardNumber].missing) {
-                  delete priceCache[item.cardNumber];
-                }
-              });
-              writePriceCache();
-              refreshVisiblePrices();
-              updateTotalBar();
-              return;
-            }
-            groups[setCode].forEach(function (item) {
-              var result = lookupPriceInSetJson(json, item.cardNumber);
-              if (result && typeof result.priceJPY === 'number') {
-                item.priceJPY = result.priceJPY;
-                item.priceAsOf = result.asOf || '';
-                item.priceStatus = 'ready';
-                priceCache[item.cardNumber] = {
-                  priceJPY: result.priceJPY,
-                  asOf: result.asOf || '',
-                  fetchedAt: now
-                };
-              } else {
-                item.priceJPY = null;
-                item.priceAsOf = '';
-                item.priceStatus = 'missing';
-                priceCache[item.cardNumber] = {
-                  missing: true,
-                  fetchedAt: now
-                };
-              }
-            });
-            writePriceCache();
-            refreshVisiblePrices();
-            updateTotalBar();
-          });
+      // 多卡組並行抓價（舊版串行，N 組 ≈ N×2s）
+      return Promise.all(setCodes.map(function (setCode) {
+        return loadSetJson(setCode).then(function (json) {
+          if (token !== priceLoadToken) return { failed: false };
+          var failed = applySetPricesToItems(groups[setCode], setCode, json, Date.now());
+          writePriceCache();
+          refreshVisiblePrices();
+          updateTotalBar();
+          return { failed: failed };
         });
-      });
-      return chain.then(function () {
+      })).then(function (results) {
         if (token !== priceLoadToken) return;
+        var anyFetchFailed = (results || []).some(function (r) { return r && r.failed; });
         if (anyFetchFailed) {
-          setStatus('價格資料載入失敗，勾選合計可能不完整。請按重新整理重試。', 'is-error');
+          setStatus('價格資料載入失敗，勾選合計可能不完整。請稍後再試或重新進入本頁。', 'is-error');
         }
       });
     }
@@ -2295,7 +2301,14 @@
     }
 
     function setItemsAndRender(list) {
+      var prevByNumber = {};
+      allItems.forEach(function (item) {
+        if (item && item.cardNumber) prevByNumber[item.cardNumber] = item;
+      });
+
       allItems = (list || []).map(function (item) {
+        var prev = prevByNumber[item.cardNumber];
+        var keepPrice = prev && (prev.priceStatus === 'ready' || prev.priceStatus === 'missing');
         return {
           cardNumber: item.cardNumber,
           cardName: item.cardName || '',
@@ -2303,9 +2316,9 @@
           cardTitle: item.cardTitle || '',
           source: item.source || 'line',
           timestamp: item.timestamp || Date.now(),
-          priceJPY: null,
-          priceAsOf: '',
-          priceStatus: 'idle'
+          priceJPY: keepPrice ? prev.priceJPY : null,
+          priceAsOf: keepPrice ? (prev.priceAsOf || '') : '',
+          priceStatus: keepPrice ? prev.priceStatus : 'idle'
         };
       });
       Object.keys(checkedSet).forEach(function (key) {
