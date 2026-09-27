@@ -325,6 +325,64 @@
       border-radius: 8px;
       background: #1a1512;
     }
+    .fav-poster-copy {
+      margin: 0 0 0.65rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .fav-poster-copy > summary {
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: rgba(247, 250, 252, 0.85);
+      list-style: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fav-poster-copy > summary::-webkit-details-marker { display: none; }
+    .fav-poster-copy > summary::before {
+      content: '▸ ';
+      color: rgba(247, 250, 252, 0.55);
+    }
+    .fav-poster-copy[open] > summary::before { content: '▾ '; }
+    .fav-poster-copy-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+      margin-top: 0.55rem;
+    }
+    @media (min-width: 560px) {
+      .fav-poster-copy-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .fav-poster-copy-grid .fav-poster-copy-span2 {
+        grid-column: 1 / -1;
+      }
+    }
+    .fav-poster-copy-field {
+      display: grid;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .fav-poster-copy-field span {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: rgba(247, 250, 252, 0.55);
+    }
+    .fav-poster-copy-field input {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.28);
+      color: #fff;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.5rem;
+    }
+    .fav-poster-copy-field input:focus {
+      outline: 2px solid rgba(102, 126, 234, 0.75);
+      outline-offset: 1px;
+    }
     .fav-poster-editor {
       list-style: none;
       margin: 0.75rem 0 0;
@@ -806,7 +864,7 @@
   <div class="fav-poster-dialog" role="dialog" aria-modal="true" aria-labelledby="favPosterTitle">
     <div class="fav-poster-body">
       <h3 id="favPosterTitle">買取情報預覽</h3>
-      <p class="fav-poster-hint">點價格可修改收購報價（只影響本次產圖，不會改收藏合計）。</p>
+      <p class="fav-poster-hint">可改文案與價格（只影響本次產圖，不會改收藏合計）。</p>
       <div class="fav-poster-toolbar">
         <div class="fav-poster-toolbar-row">
           <div class="fav-poster-currency" role="group" aria-label="產圖幣別">
@@ -823,6 +881,39 @@
           </label>
         </div>
       </div>
+      <details class="fav-poster-copy" id="favPosterCopyPanel" open>
+        <summary>產圖文案</summary>
+        <div class="fav-poster-copy-grid">
+          <label class="fav-poster-copy-field">
+            <span>副標</span>
+            <input type="text" id="favPosterCopyEyebrow" data-poster-copy="eyebrow" maxlength="40" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field">
+            <span>主標</span>
+            <input type="text" id="favPosterCopyTitle" data-poster-copy="title" maxlength="24" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field fav-poster-copy-span2">
+            <span>標題</span>
+            <input type="text" id="favPosterCopyHeadline" data-poster-copy="headline" maxlength="24" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field fav-poster-copy-span2">
+            <span>徽章</span>
+            <input type="text" id="favPosterCopyBadge" data-poster-copy="badge" maxlength="20" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field fav-poster-copy-span2">
+            <span>免責 1</span>
+            <input type="text" id="favPosterCopyFootnote0" data-poster-copy="footnote0" maxlength="80" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field fav-poster-copy-span2">
+            <span>免責 2</span>
+            <input type="text" id="favPosterCopyFootnote1" data-poster-copy="footnote1" maxlength="80" autocomplete="off">
+          </label>
+          <label class="fav-poster-copy-field fav-poster-copy-span2">
+            <span>免責 3</span>
+            <input type="text" id="favPosterCopyFootnote2" data-poster-copy="footnote2" maxlength="80" autocomplete="off">
+          </label>
+        </div>
+      </details>
       <img id="favPosterPreview" class="fav-poster-preview" alt="買取情報圖預覽">
       <ul class="fav-poster-editor" id="favPosterEditor" aria-label="本次產圖價格編輯"></ul>
     </div>
@@ -1336,6 +1427,17 @@
     // 暫定固定匯率；之後可接即時匯率 API
     var POSTER_JPY_TO_TWD = 0.22;
     var POSTER_DEFAULT_BG = '#3a2418';
+    var POSTER_DEFAULT_COPY = {
+      eyebrow: 'WEISS SCHWARZ',
+      title: 'WSカード',
+      headline: '買取情報',
+      badge: '当日のみ有効',
+      footnotes: [
+        '※価格はカードの状態・在庫・相場変動により異なります。',
+        '※画像はイメージです。実際の買取価格は店舗・査定結果に準じます。',
+        '※本画像の価格は参考値であり、当日のみ有効です。'
+      ]
+    };
     var POSTER_BG_PRESETS = [
       { id: 'brown', hex: '#3a2418', label: '深棕' },
       { id: 'black', hex: '#111111', label: '黑色' },
@@ -1354,10 +1456,37 @@
     var posterBgSwatches = document.getElementById('favPosterBgSwatches');
     var posterBgColorInput = document.getElementById('favPosterBgColorInput');
     var posterBgCustomWrap = document.getElementById('favPosterBgCustomWrap');
+    var posterCopyPanel = document.getElementById('favPosterCopyPanel');
+    var posterCopyInputs = {
+      eyebrow: document.getElementById('favPosterCopyEyebrow'),
+      title: document.getElementById('favPosterCopyTitle'),
+      headline: document.getElementById('favPosterCopyHeadline'),
+      badge: document.getElementById('favPosterCopyBadge'),
+      footnote0: document.getElementById('favPosterCopyFootnote0'),
+      footnote1: document.getElementById('favPosterCopyFootnote1'),
+      footnote2: document.getElementById('favPosterCopyFootnote2')
+    };
     var posterObjectUrl = '';
     var posterLastFocus = null;
     var posterSession = null;
     var posterRedrawToken = 0;
+    var posterCopyRedrawTimer = null;
+
+    function clonePosterDefaultCopy() {
+      return {
+        eyebrow: POSTER_DEFAULT_COPY.eyebrow,
+        title: POSTER_DEFAULT_COPY.title,
+        headline: POSTER_DEFAULT_COPY.headline,
+        badge: POSTER_DEFAULT_COPY.badge,
+        footnotes: POSTER_DEFAULT_COPY.footnotes.slice()
+      };
+    }
+
+    function normalizePosterCopyText(value, maxLen) {
+      var text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+      if (maxLen && text.length > maxLen) text = text.slice(0, maxLen);
+      return text;
+    }
 
     function getCheckedPricedItems() {
       var list = [];
@@ -1676,12 +1805,33 @@
       ctx.restore();
     }
 
-    function buildBuyoutPoster(entries, images, currency, textureSeed, bgColor) {
+    function fitPosterTextSize(ctx, text, weight, maxSize, minSize, maxWidth) {
+      var size = maxSize;
+      var sample = String(text || '');
+      if (!sample) return minSize;
+      while (size > minSize) {
+        ctx.font = weight + ' ' + size + 'px "Noto Sans TC", sans-serif';
+        if (ctx.measureText(sample).width <= maxWidth) break;
+        size -= 2;
+      }
+      ctx.font = weight + ' ' + size + 'px "Noto Sans TC", sans-serif';
+      return size;
+    }
+
+    function buildBuyoutPoster(entries, images, currency, textureSeed, bgColor, copy) {
       var count = entries.length;
       var cols = count <= 1 ? 1 : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
       var bg = normalizePosterHex(bgColor || POSTER_DEFAULT_BG);
       var ink = posterInkFromBg(bg);
+      var texts = copy || POSTER_DEFAULT_COPY;
+      var eyebrow = normalizePosterCopyText(texts.eyebrow, 40);
+      var title = normalizePosterCopyText(texts.title, 24);
+      var headline = normalizePosterCopyText(texts.headline, 24);
+      var badgeText = normalizePosterCopyText(texts.badge, 20);
+      var footnotes = (texts.footnotes || []).map(function (line) {
+        return normalizePosterCopyText(line, 80);
+      }).filter(Boolean);
 
       var width = 1080;
       var sideGutter = 56;
@@ -1705,6 +1855,7 @@
       canvas.height = height;
       var ctx = canvas.getContext('2d');
       var rng = createPosterRng(textureSeed || 20260926);
+      var titleMaxW = width - 220;
 
       fillEarthTexture(ctx, width, height, rng, bg);
       drawWsLogo(ctx, 42, 36, 92);
@@ -1712,12 +1863,18 @@
       ctx.fillStyle = ink.primary;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.font = '700 28px "Noto Sans TC", sans-serif';
-      ctx.fillText('WEISS SCHWARZ', width / 2, 48);
-      ctx.font = '900 66px "Noto Sans TC", sans-serif';
-      ctx.fillText('WSカード', width / 2, 88);
-      ctx.font = '900 60px "Noto Sans TC", sans-serif';
-      ctx.fillText('買取情報', width / 2, 162);
+      if (eyebrow) {
+        fitPosterTextSize(ctx, eyebrow, '700', 28, 16, titleMaxW);
+        ctx.fillText(eyebrow, width / 2, 48);
+      }
+      if (title) {
+        fitPosterTextSize(ctx, title, '900', 66, 28, titleMaxW);
+        ctx.fillText(title, width / 2, 88);
+      }
+      if (headline) {
+        fitPosterTextSize(ctx, headline, '900', 60, 28, titleMaxW);
+        ctx.fillText(headline, width / 2, 162);
+      }
 
       drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, ink.muted);
       drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, ink.muted);
@@ -1751,32 +1908,28 @@
       ctx.fillStyle = ink.footer;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      ctx.font = '500 16px "Noto Sans TC", sans-serif';
-      var lines = [
-        '※価格はカードの状態・在庫・相場変動により異なります。',
-        '※画像はイメージです。実際の買取価格は店舗・査定結果に準じます。',
-        '※本画像の価格は参考値であり、当日のみ有効です。'
-      ];
       var lineY = height - 36;
-      for (var li = lines.length - 1; li >= 0; li--) {
-        ctx.fillText(lines[li], 48, lineY);
+      for (var li = footnotes.length - 1; li >= 0; li--) {
+        fitPosterTextSize(ctx, footnotes[li], '500', 16, 12, width - 96);
+        ctx.fillText(footnotes[li], 48, lineY);
         lineY -= 24;
       }
 
-      var badgeText = '当日のみ有効';
-      ctx.font = '800 22px "Noto Sans TC", sans-serif';
-      var badgePadX = 16;
-      var badgePadY = 10;
-      var badgeW = ctx.measureText(badgeText).width + badgePadX * 2;
-      var badgeH = 22 + badgePadY * 2;
-      var badgeX = width - 48 - badgeW;
-      var badgeY = height - 48 - badgeH;
-      ctx.fillStyle = ink.badgeBg;
-      ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-      ctx.fillStyle = ink.badgeFg;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+      if (badgeText) {
+        var badgeSize = fitPosterTextSize(ctx, badgeText, '800', 22, 14, 360);
+        var badgePadX = 16;
+        var badgePadY = 10;
+        var badgeW = ctx.measureText(badgeText).width + badgePadX * 2;
+        var badgeH = badgeSize + badgePadY * 2;
+        var badgeX = width - 48 - badgeW;
+        var badgeY = height - 48 - badgeH;
+        ctx.fillStyle = ink.badgeBg;
+        ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+        ctx.fillStyle = ink.badgeFg;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+      }
 
       return canvas;
     }
@@ -1801,7 +1954,8 @@
           posterSession.images,
           posterSession.currency,
           posterSession.textureSeed,
-          posterSession.bgColor
+          posterSession.bgColor,
+          posterSession.copy
         );
         var dataUrl;
         try {
@@ -1812,6 +1966,46 @@
         if (token !== posterRedrawToken) return;
         applyPosterPreviewDataUrl(dataUrl);
       });
+    }
+
+    function syncPosterCopyInputsFromSession() {
+      if (!posterSession || !posterSession.copy) return;
+      var copy = posterSession.copy;
+      if (posterCopyInputs.eyebrow) posterCopyInputs.eyebrow.value = copy.eyebrow || '';
+      if (posterCopyInputs.title) posterCopyInputs.title.value = copy.title || '';
+      if (posterCopyInputs.headline) posterCopyInputs.headline.value = copy.headline || '';
+      if (posterCopyInputs.badge) posterCopyInputs.badge.value = copy.badge || '';
+      var notes = copy.footnotes || [];
+      if (posterCopyInputs.footnote0) posterCopyInputs.footnote0.value = notes[0] || '';
+      if (posterCopyInputs.footnote1) posterCopyInputs.footnote1.value = notes[1] || '';
+      if (posterCopyInputs.footnote2) posterCopyInputs.footnote2.value = notes[2] || '';
+    }
+
+    function readPosterCopyFromInputs() {
+      return {
+        eyebrow: normalizePosterCopyText(posterCopyInputs.eyebrow && posterCopyInputs.eyebrow.value, 40),
+        title: normalizePosterCopyText(posterCopyInputs.title && posterCopyInputs.title.value, 24),
+        headline: normalizePosterCopyText(posterCopyInputs.headline && posterCopyInputs.headline.value, 24),
+        badge: normalizePosterCopyText(posterCopyInputs.badge && posterCopyInputs.badge.value, 20),
+        footnotes: [
+          normalizePosterCopyText(posterCopyInputs.footnote0 && posterCopyInputs.footnote0.value, 80),
+          normalizePosterCopyText(posterCopyInputs.footnote1 && posterCopyInputs.footnote1.value, 80),
+          normalizePosterCopyText(posterCopyInputs.footnote2 && posterCopyInputs.footnote2.value, 80)
+        ]
+      };
+    }
+
+    function schedulePosterCopyRedraw() {
+      if (posterCopyRedrawTimer) clearTimeout(posterCopyRedrawTimer);
+      posterCopyRedrawTimer = setTimeout(function () {
+        posterCopyRedrawTimer = null;
+        if (!posterSession) return;
+        posterSession.copy = readPosterCopyFromInputs();
+        redrawPosterPreview().catch(function (err) {
+          console.error(err);
+          setStatus('更新文案失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
+        });
+      }, 180);
     }
 
     function renderPosterEditor() {
@@ -1905,7 +2099,14 @@
       posterModal.hidden = true;
       posterModal.setAttribute('aria-hidden', 'true');
       posterSession = null;
+      if (posterCopyRedrawTimer) {
+        clearTimeout(posterCopyRedrawTimer);
+        posterCopyRedrawTimer = null;
+      }
       if (posterEditor) posterEditor.innerHTML = '';
+      Object.keys(posterCopyInputs).forEach(function (key) {
+        if (posterCopyInputs[key]) posterCopyInputs[key].value = '';
+      });
       if (posterObjectUrl) {
         URL.revokeObjectURL(posterObjectUrl);
         posterObjectUrl = '';
@@ -1924,6 +2125,7 @@
       posterLastFocus = document.activeElement;
       updatePosterCurrencyUi();
       renderPosterBgSwatches();
+      syncPosterCopyInputsFromSession();
       renderPosterEditor();
       posterModal.hidden = false;
       posterModal.classList.add('is-open');
@@ -1963,6 +2165,7 @@
           bgColor: POSTER_DEFAULT_BG,
           textureSeed: Date.now() % 1000000000,
           images: images,
+          copy: clonePosterDefaultCopy(),
           entries: items.map(function (item) {
             return {
               cardNumber: item.cardNumber,
@@ -1976,7 +2179,7 @@
         renderPosterBgSwatches();
         return redrawPosterPreview();
       }).then(function () {
-        setStatus('買取情報圖已就緒：可點價格修改後再下載。', 'is-ok');
+        setStatus('買取情報圖已就緒：可改文案／價格後再下載。', 'is-ok');
       }).catch(function (err) {
         console.error(err);
         setStatus('產圖失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
@@ -2268,9 +2471,20 @@
       posterBgColorInput.addEventListener('input', onPosterBgColorPicked);
       posterBgColorInput.addEventListener('change', onPosterBgColorPicked);
     }
+    if (posterCopyPanel) {
+      posterCopyPanel.addEventListener('input', function (e) {
+        if (!e.target || !e.target.getAttribute('data-poster-copy')) return;
+        schedulePosterCopyRedraw();
+      });
+      posterCopyPanel.addEventListener('change', function (e) {
+        if (!e.target || !e.target.getAttribute('data-poster-copy')) return;
+        schedulePosterCopyRedraw();
+      });
+    }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && posterModal && posterModal.classList.contains('is-open')) {
         if (posterEditor && posterEditor.querySelector('.fav-poster-price-input')) return;
+        if (posterCopyPanel && posterCopyPanel.contains(document.activeElement)) return;
         closePosterModal();
       }
     });
