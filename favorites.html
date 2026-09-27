@@ -205,6 +205,13 @@
       gap: 0.5rem;
       margin-bottom: 0.65rem;
     }
+    .fav-poster-toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem 0.65rem;
+      width: 100%;
+    }
     .fav-poster-currency {
       display: inline-flex;
       border: 1px solid rgba(255, 255, 255, 0.18);
@@ -227,6 +234,60 @@
     .fav-poster-rate {
       font-size: 0.72rem;
       color: rgba(247, 250, 252, 0.55);
+    }
+    .fav-poster-bg-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(247, 250, 252, 0.75);
+    }
+    .fav-poster-bg-swatches {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .fav-poster-bg-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.28);
+      padding: 0;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+    .fav-poster-bg-swatch.is-active {
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.75);
+    }
+    .fav-poster-bg-custom {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 2px dashed rgba(255, 255, 255, 0.45);
+      background:
+        linear-gradient(45deg, #fff 25%, transparent 25%) 0 0 / 8px 8px,
+        linear-gradient(-45deg, #fff 25%, transparent 25%) 0 4px / 8px 8px,
+        linear-gradient(45deg, transparent 75%, #bbb 75%) 4px -4px / 8px 8px,
+        linear-gradient(-45deg, transparent 75%, #bbb 75%) 4px 0 / 8px 8px,
+        #666;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .fav-poster-bg-custom.is-active {
+      border-style: solid;
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.75);
+    }
+    .fav-poster-bg-custom input[type="color"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
     }
     .fav-poster-preview {
       display: block;
@@ -718,11 +779,20 @@
       <h3 id="favPosterTitle">買取情報預覽</h3>
       <p class="fav-poster-hint">點價格可修改收購報價（只影響本次產圖，不會改收藏合計）。</p>
       <div class="fav-poster-toolbar">
-        <div class="fav-poster-currency" role="group" aria-label="產圖幣別">
-          <button type="button" id="favPosterCurrencyJpy" data-poster-currency="JPY" class="is-active">¥</button>
-          <button type="button" id="favPosterCurrencyTwd" data-poster-currency="TWD">NT$</button>
+        <div class="fav-poster-toolbar-row">
+          <div class="fav-poster-currency" role="group" aria-label="產圖幣別">
+            <button type="button" id="favPosterCurrencyJpy" data-poster-currency="JPY" class="is-active">¥</button>
+            <button type="button" id="favPosterCurrencyTwd" data-poster-currency="TWD">NT$</button>
+          </div>
+          <div class="fav-poster-rate" id="favPosterRateLabel">匯率：1 ¥ ≈ 0.22 NT$（暫定）</div>
         </div>
-        <div class="fav-poster-rate" id="favPosterRateLabel">匯率：1 ¥ ≈ 0.22 NT$（暫定）</div>
+        <div class="fav-poster-toolbar-row" aria-label="產圖背景色">
+          <span class="fav-poster-bg-label">背景</span>
+          <div class="fav-poster-bg-swatches" id="favPosterBgSwatches"></div>
+          <label class="fav-poster-bg-custom" id="favPosterBgCustomWrap" title="自訂顏色">
+            <input type="color" id="favPosterBgColorInput" value="#3a2418" aria-label="自訂背景顏色">
+          </label>
+        </div>
       </div>
       <img id="favPosterPreview" class="fav-poster-preview" alt="買取情報圖預覽">
       <ul class="fav-poster-editor" id="favPosterEditor" aria-label="本次產圖價格編輯"></ul>
@@ -1236,6 +1306,14 @@
     var POSTER_MAX_CARDS = 8;
     // 暫定固定匯率；之後可接即時匯率 API
     var POSTER_JPY_TO_TWD = 0.22;
+    var POSTER_DEFAULT_BG = '#3a2418';
+    var POSTER_BG_PRESETS = [
+      { id: 'brown', hex: '#3a2418', label: '深棕' },
+      { id: 'black', hex: '#111111', label: '黑色' },
+      { id: 'navy', hex: '#1a2744', label: '深藍' },
+      { id: 'wine', hex: '#3a1518', label: '深紅' },
+      { id: 'forest', hex: '#1f2e1f', label: '深綠' }
+    ];
     var posterModal = document.getElementById('favPosterModal');
     var posterPreview = document.getElementById('favPosterPreview');
     var posterDownload = document.getElementById('favPosterDownload');
@@ -1244,6 +1322,9 @@
     var posterRateLabel = document.getElementById('favPosterRateLabel');
     var posterCurrencyJpyBtn = document.getElementById('favPosterCurrencyJpy');
     var posterCurrencyTwdBtn = document.getElementById('favPosterCurrencyTwd');
+    var posterBgSwatches = document.getElementById('favPosterBgSwatches');
+    var posterBgColorInput = document.getElementById('favPosterBgColorInput');
+    var posterBgCustomWrap = document.getElementById('favPosterBgCustomWrap');
     var posterObjectUrl = '';
     var posterLastFocus = null;
     var posterSession = null;
@@ -1298,6 +1379,97 @@
       }
     }
 
+    function normalizePosterHex(hex) {
+      var h = String(hex || '').trim().replace('#', '');
+      if (/^[0-9a-fA-F]{3}$/.test(h)) {
+        h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      }
+      if (!/^[0-9a-fA-F]{6}$/.test(h)) return POSTER_DEFAULT_BG;
+      return '#' + h.toLowerCase();
+    }
+
+    function parsePosterHex(hex) {
+      var h = normalizePosterHex(hex).slice(1);
+      return {
+        r: parseInt(h.slice(0, 2), 16),
+        g: parseInt(h.slice(2, 4), 16),
+        b: parseInt(h.slice(4, 6), 16)
+      };
+    }
+
+    function posterRelativeLuminance(rgb) {
+      function channel(c) {
+        var v = c / 255;
+        return v <= 0.03928 ? (v / 12.92) : Math.pow((v + 0.055) / 1.055, 2.4);
+      }
+      return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+    }
+
+    function posterInkFromBg(bgHex) {
+      var rgb = parsePosterHex(bgHex);
+      var light = posterRelativeLuminance(rgb) > 0.45;
+      return {
+        lightBg: light,
+        primary: light ? '#111111' : '#ffffff',
+        muted: light ? 'rgba(17,17,17,0.72)' : 'rgba(255,255,255,0.78)',
+        footer: light ? 'rgba(17,17,17,0.72)' : 'rgba(255,255,255,0.86)',
+        badgeBg: light ? '#111111' : '#ffffff',
+        badgeFg: light ? '#ffffff' : '#111111',
+        cardStroke: light ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.18)',
+        noImageBg: light ? '#d7d7d7' : '#241810',
+        noImageFg: light ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.72)',
+        crack: light ? 'rgba(0,0,0,0.16)' : 'rgba(18,10,6,0.28)'
+      };
+    }
+
+    function isPosterPresetBg(hex) {
+      var normalized = normalizePosterHex(hex);
+      return POSTER_BG_PRESETS.some(function (p) { return p.hex === normalized; });
+    }
+
+    function updatePosterBgUi() {
+      if (!posterSession) return;
+      var current = normalizePosterHex(posterSession.bgColor || POSTER_DEFAULT_BG);
+      if (posterBgSwatches) {
+        var nodes = posterBgSwatches.querySelectorAll('[data-poster-bg]');
+        Array.prototype.forEach.call(nodes, function (btn) {
+          btn.classList.toggle('is-active', normalizePosterHex(btn.getAttribute('data-poster-bg')) === current);
+        });
+      }
+      if (posterBgColorInput) posterBgColorInput.value = current;
+      if (posterBgCustomWrap) {
+        var customActive = !isPosterPresetBg(current);
+        posterBgCustomWrap.classList.toggle('is-active', customActive);
+        // 預設色時保留棋盤格提示「可自訂」；自訂色才把圓點填成所選色
+        posterBgCustomWrap.style.background = customActive ? current : '';
+      }
+    }
+
+    function renderPosterBgSwatches() {
+      if (!posterBgSwatches) return;
+      var html = '';
+      POSTER_BG_PRESETS.forEach(function (preset) {
+        html += '<button type="button" class="fav-poster-bg-swatch" data-poster-bg="' + preset.hex + '" title="' + escapeHtml(preset.label) + '" aria-label="背景 ' + escapeHtml(preset.label) + '" style="background:' + preset.hex + ';"></button>';
+      });
+      posterBgSwatches.innerHTML = html;
+      updatePosterBgUi();
+    }
+
+    function setPosterBgColor(hex) {
+      if (!posterSession) return;
+      var next = normalizePosterHex(hex);
+      if (posterSession.bgColor === next) {
+        updatePosterBgUi();
+        return;
+      }
+      posterSession.bgColor = next;
+      updatePosterBgUi();
+      redrawPosterPreview().catch(function (err) {
+        console.error(err);
+        setStatus('更新背景色失敗：' + (err && err.message ? err.message : '未知錯誤'), 'is-error');
+      });
+    }
+
     function loadImageForPoster(url) {
       return new Promise(function (resolve) {
         if (!url) {
@@ -1346,15 +1518,29 @@
       });
     }
 
-    function fillEarthTexture(ctx, width, height, rng) {
+    function fillEarthTexture(ctx, width, height, rng, baseHex) {
       var rand = rng || Math.random;
-      ctx.fillStyle = '#3a2418';
+      var rgb = parsePosterHex(baseHex || POSTER_DEFAULT_BG);
+      var ink = posterInkFromBg(baseHex || POSTER_DEFAULT_BG);
+
+      function shade(t) {
+        return {
+          r: Math.max(0, Math.min(255, Math.round(rgb.r + t * 90))),
+          g: Math.max(0, Math.min(255, Math.round(rgb.g + t * 90))),
+          b: Math.max(0, Math.min(255, Math.round(rgb.b + t * 90)))
+        };
+      }
+
+      ctx.fillStyle = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
       ctx.fillRect(0, 0, width, height);
 
+      var light = shade(0.32);
+      var mid = shade(-0.18);
+      var dark = shade(-0.42);
       var grad = ctx.createRadialGradient(width * 0.5, height * 0.35, 40, width * 0.5, height * 0.5, width * 0.75);
-      grad.addColorStop(0, 'rgba(92, 58, 34, 0.55)');
-      grad.addColorStop(0.55, 'rgba(42, 24, 16, 0.2)');
-      grad.addColorStop(1, 'rgba(18, 10, 7, 0.85)');
+      grad.addColorStop(0, 'rgba(' + light.r + ',' + light.g + ',' + light.b + ',0.45)');
+      grad.addColorStop(0.55, 'rgba(' + mid.r + ',' + mid.g + ',' + mid.b + ',0.18)');
+      grad.addColorStop(1, 'rgba(' + dark.r + ',' + dark.g + ',' + dark.b + ',0.72)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
@@ -1362,13 +1548,13 @@
       for (i = 0; i < 5200; i++) {
         var x = rand() * width;
         var y = rand() * height;
-        var shade = 28 + Math.floor(rand() * 55);
+        var speck = shade((rand() - 0.5) * 1.1);
         var a = 0.08 + rand() * 0.22;
-        ctx.fillStyle = 'rgba(' + shade + ',' + Math.floor(shade * 0.62) + ',' + Math.floor(shade * 0.38) + ',' + a + ')';
+        ctx.fillStyle = 'rgba(' + speck.r + ',' + speck.g + ',' + speck.b + ',' + a + ')';
         ctx.fillRect(x, y, 1 + rand() * 2.2, 1 + rand() * 2.2);
       }
 
-      ctx.strokeStyle = 'rgba(18, 10, 6, 0.28)';
+      ctx.strokeStyle = ink.crack;
       ctx.lineWidth = 1;
       for (i = 0; i < 42; i++) {
         var sx = rand() * width;
@@ -1397,7 +1583,8 @@
       ctx.closePath();
     }
 
-    function drawCoverImage(ctx, img, x, y, w, h, radius) {
+    function drawCoverImage(ctx, img, x, y, w, h, radius, ink) {
+      var palette = ink || posterInkFromBg(POSTER_DEFAULT_BG);
       ctx.save();
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.clip();
@@ -1407,9 +1594,9 @@
         var dh = img.naturalHeight * scale;
         ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
       } else {
-        ctx.fillStyle = '#241810';
+        ctx.fillStyle = palette.noImageBg;
         ctx.fillRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.fillStyle = palette.noImageFg;
         ctx.font = '600 28px "Noto Sans TC", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1418,7 +1605,7 @@
       ctx.restore();
       ctx.save();
       roundRectPath(ctx, x, y, w, h, radius);
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeStyle = palette.cardStroke;
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.restore();
@@ -1452,10 +1639,12 @@
       ctx.restore();
     }
 
-    function buildBuyoutPoster(entries, images, currency, textureSeed) {
+    function buildBuyoutPoster(entries, images, currency, textureSeed, bgColor) {
       var count = entries.length;
       var cols = count <= 1 ? 1 : (count <= 4 ? 2 : (count <= 6 ? 3 : 4));
       var rows = Math.ceil(count / cols);
+      var bg = normalizePosterHex(bgColor || POSTER_DEFAULT_BG);
+      var ink = posterInkFromBg(bg);
 
       var width = 1080;
       var sideGutter = 56;
@@ -1480,10 +1669,10 @@
       var ctx = canvas.getContext('2d');
       var rng = createPosterRng(textureSeed || 20260926);
 
-      fillEarthTexture(ctx, width, height, rng);
+      fillEarthTexture(ctx, width, height, rng, bg);
       drawWsLogo(ctx, 42, 36, 92);
 
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = ink.primary;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.font = '700 28px "Noto Sans TC", sans-serif';
@@ -1493,8 +1682,8 @@
       ctx.font = '900 60px "Noto Sans TC", sans-serif';
       ctx.fillText('買取情報', width / 2, 162);
 
-      drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, 'rgba(255,255,255,0.78)');
-      drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, 'rgba(255,255,255,0.78)');
+      drawVerticalText(ctx, 'WS-CARDS TRADING CARD', 34, height * 0.52, ink.muted);
+      drawVerticalText(ctx, 'WEISS SCHWARZ CARD GAME', width - 34, height * 0.52, ink.muted);
 
       entries.forEach(function (entry, index) {
         var col = index % cols;
@@ -1505,15 +1694,15 @@
           : 0;
         var x = gridLeft + rowOffset + col * (cardW + gapX);
         var y = topY + row * (cellH + gapY);
-        drawCoverImage(ctx, images[index], x, y, cardW, cardH, 12);
+        drawCoverImage(ctx, images[index], x, y, cardW, cardH, 12, ink);
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = ink.primary;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         var priceText = formatPosterPrice(entry.amount, currency);
         var fontSize = priceText.length > 10 ? 40 : (priceText.length > 8 ? 48 : 56);
         ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
-        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowColor = ink.lightBg ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
         ctx.shadowBlur = 6;
         ctx.shadowOffsetY = 2;
         ctx.fillText(priceText, x + cardW / 2, y + cardH + 14);
@@ -1522,7 +1711,7 @@
         ctx.shadowOffsetY = 0;
       });
 
-      ctx.fillStyle = 'rgba(255,255,255,0.86)';
+      ctx.fillStyle = ink.footer;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
       ctx.font = '500 16px "Noto Sans TC", sans-serif';
@@ -1545,9 +1734,9 @@
       var badgeH = 22 + badgePadY * 2;
       var badgeX = width - 48 - badgeW;
       var badgeY = height - 48 - badgeH;
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = ink.badgeBg;
       ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-      ctx.fillStyle = '#111111';
+      ctx.fillStyle = ink.badgeFg;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
@@ -1574,7 +1763,8 @@
           posterSession.entries,
           posterSession.images,
           posterSession.currency,
-          posterSession.textureSeed
+          posterSession.textureSeed,
+          posterSession.bgColor
         );
         var dataUrl;
         try {
@@ -1696,6 +1886,7 @@
       if (!posterModal) return;
       posterLastFocus = document.activeElement;
       updatePosterCurrencyUi();
+      renderPosterBgSwatches();
       renderPosterEditor();
       posterModal.hidden = false;
       posterModal.classList.add('is-open');
@@ -1732,6 +1923,7 @@
       }).then(function (images) {
         posterSession = {
           currency: 'JPY',
+          bgColor: POSTER_DEFAULT_BG,
           textureSeed: Date.now() % 1000000000,
           images: images,
           entries: items.map(function (item) {
@@ -1744,6 +1936,7 @@
           })
         };
         openPosterModal();
+        renderPosterBgSwatches();
         return redrawPosterPreview();
       }).then(function () {
         setStatus('買取情報圖已就緒：可點價格修改後再下載。', 'is-ok');
@@ -2019,10 +2212,23 @@
           setPosterCurrency(currencyBtn.getAttribute('data-poster-currency'));
           return;
         }
+        var bgBtn = e.target.closest('[data-poster-bg]');
+        if (bgBtn) {
+          setPosterBgColor(bgBtn.getAttribute('data-poster-bg'));
+          return;
+        }
         var editBtn = e.target.closest('[data-poster-edit]');
         if (editBtn) {
           beginPosterPriceEdit(Number(editBtn.getAttribute('data-poster-edit')));
         }
+      });
+    }
+    if (posterBgColorInput) {
+      posterBgColorInput.addEventListener('input', function () {
+        setPosterBgColor(posterBgColorInput.value);
+      });
+      posterBgColorInput.addEventListener('change', function () {
+        setPosterBgColor(posterBgColorInput.value);
       });
     }
     document.addEventListener('keydown', function (e) {
