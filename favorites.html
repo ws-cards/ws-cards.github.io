@@ -1827,16 +1827,17 @@
       ctx.restore();
     }
 
-    function fitPosterTextSize(ctx, text, weight, maxSize, minSize, maxWidth) {
+    function fitPosterTextSize(ctx, text, weight, maxSize, minSize, maxWidth, fontFamily) {
       var size = maxSize;
       var sample = String(text || '');
+      var family = fontFamily || '"Noto Sans TC", sans-serif';
       if (!sample) return minSize;
       while (size > minSize) {
-        ctx.font = weight + ' ' + size + 'px "Noto Sans TC", sans-serif';
+        ctx.font = weight + ' ' + size + 'px ' + family;
         if (ctx.measureText(sample).width <= maxWidth) break;
         size -= 2;
       }
-      ctx.font = weight + ' ' + size + 'px "Noto Sans TC", sans-serif';
+      ctx.font = weight + ' ' + size + 'px ' + family;
       return size;
     }
 
@@ -1916,8 +1917,18 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         var priceText = formatPosterPrice(entry.amount, currency);
-        var fontSize = priceText.length > 10 ? 40 : (priceText.length > 8 ? 48 : 56);
-        ctx.font = 'italic 900 ' + fontSize + 'px "Noto Sans TC", "Arial Black", sans-serif';
+        // NT$ 前綴較長，預設字級縮小並依卡寬再壓字
+        var priceMax = currency === 'TWD' ? 40 : 56;
+        var priceMin = currency === 'TWD' ? 22 : 32;
+        fitPosterTextSize(
+          ctx,
+          priceText,
+          'italic 900',
+          priceMax,
+          priceMin,
+          Math.max(80, cardW - 16),
+          '"Noto Sans TC", "Arial Black", sans-serif'
+        );
         ctx.shadowColor = ink.lightBg ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
         ctx.shadowBlur = 6;
         ctx.shadowOffsetY = 2;
