@@ -55,7 +55,7 @@
     }
     @media (min-width: 720px) {
       .fav-controls {
-        grid-template-columns: minmax(0, 1.5fr) minmax(150px, 0.65fr) auto;
+        grid-template-columns: minmax(0, 1.3fr) minmax(110px, 0.5fr) minmax(140px, 0.6fr) auto;
         align-items: end;
       }
     }
@@ -817,7 +817,13 @@
                 <div class="fav-controls" aria-label="篩選列">
                   <div class="fav-field">
                     <label for="favSearchInput">搜尋</label>
-                    <input id="favSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、稀有度" autocomplete="off">
+                    <input id="favSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品" autocomplete="off">
+                  </div>
+                  <div class="fav-field">
+                    <label for="favRareSelect">稀有度</label>
+                    <select id="favRareSelect" class="form-control" aria-label="依稀有度篩選">
+                      <option value="" selected>全部稀有度</option>
+                    </select>
                   </div>
                   <div class="fav-field">
                     <label for="favSortSelect">排序</label>
@@ -990,6 +996,7 @@
     var allItems = [];
     var checkedSet = {};
     var filterQuery = '';
+    var rareFilter = '';
     var sortMode = 'newest';
     var priceCache = {};
     var setJsonCache = {};
@@ -1002,6 +1009,7 @@
     var countEl = document.getElementById('favCountLabel');
     var statusEl = document.getElementById('favStatus');
     var searchInput = document.getElementById('favSearchInput');
+    var rareSelect = document.getElementById('favRareSelect');
     var sortSelect = document.getElementById('favSortSelect');
     var totalValueEl = document.getElementById('favTotalValue');
     var totalSubEl = document.getElementById('favTotalSub');
@@ -1375,10 +1383,67 @@
       return hay.indexOf(q) >= 0;
     }
 
+    function normalizeRareKey(rare) {
+      return String(rare || '').trim();
+    }
+
+    function matchesRareFilter(item, rare) {
+      if (!rare) return true;
+      var itemRare = normalizeRareKey(item && item.cardRare);
+      if (rare === '__none__') return !itemRare;
+      return itemRare.toUpperCase() === String(rare).toUpperCase();
+    }
+
+    function collectRareOptions() {
+      var seen = {};
+      var hasNone = false;
+      allItems.forEach(function (item) {
+        var rare = normalizeRareKey(item && item.cardRare);
+        if (!rare) {
+          hasNone = true;
+          return;
+        }
+        seen[rare] = true;
+      });
+      var list = Object.keys(seen).sort(function (a, b) {
+        var rr = rareRank(a) - rareRank(b);
+        if (rr !== 0) return rr;
+        return a.localeCompare(b, 'en', { sensitivity: 'base' });
+      });
+      return { list: list, hasNone: hasNone };
+    }
+
+    function refreshRareFilterOptions() {
+      if (!rareSelect) return;
+      var prev = rareFilter;
+      var opts = collectRareOptions();
+      var html = '<option value="">全部稀有度</option>';
+      opts.list.forEach(function (rare) {
+        html += '<option value="' + escapeHtml(rare) + '">' + escapeHtml(rare) + '</option>';
+      });
+      if (opts.hasNone) {
+        html += '<option value="__none__">（無稀有度）</option>';
+      }
+      rareSelect.innerHTML = html;
+
+      var stillValid = false;
+      if (!prev) {
+        stillValid = true;
+      } else if (prev === '__none__') {
+        stillValid = opts.hasNone;
+      } else {
+        stillValid = opts.list.some(function (rare) {
+          return rare.toUpperCase() === String(prev).toUpperCase();
+        });
+      }
+      rareFilter = stillValid ? prev : '';
+      rareSelect.value = rareFilter;
+    }
+
     function getVisibleItems() {
       var q = String(filterQuery || '').trim().toLowerCase();
       var list = allItems.filter(function (item) {
-        return matchesFilter(item, q);
+        return matchesFilter(item, q) && matchesRareFilter(item, rareFilter);
       });
 
       list.sort(function (a, b) {
@@ -2327,6 +2392,7 @@
         }
       });
       applyCachedPrices(allItems);
+      refreshRareFilterOptions();
       renderAlbum();
       loadPricesForItems(allItems);
     }
@@ -2452,6 +2518,13 @@
       filterQuery = searchInput.value || '';
       renderAlbum();
     });
+
+    if (rareSelect) {
+      rareSelect.addEventListener('change', function () {
+        rareFilter = rareSelect.value || '';
+        renderAlbum();
+      });
+    }
 
     sortSelect.addEventListener('change', function () {
       sortMode = sortSelect.value || 'newest';
