@@ -48,39 +48,122 @@
     }
 
     .fav-controls {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.65rem;
+      --fav-control-h: 2.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.65rem 0.75rem;
       margin-bottom: 0.85rem;
     }
-    @media (min-width: 720px) {
-      .fav-controls {
-        grid-template-columns: minmax(0, 1.3fr) minmax(110px, 0.5fr) minmax(140px, 0.6fr) auto;
-        align-items: end;
-      }
+    .fav-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .fav-field-search {
+      flex: 1 1 14rem;
+    }
+    .fav-field-rare {
+      flex: 0 1 8.75rem;
+    }
+    .fav-field-sort {
+      flex: 0 1 9.75rem;
+    }
+    .fav-field-actions {
+      flex: 0 0 auto;
     }
     .fav-field label {
       display: block;
       font-size: 0.78rem;
       font-weight: 600;
       color: #6c757d;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.3rem;
+      line-height: 1.2;
+      white-space: nowrap;
     }
     [data-theme="dark"] .fav-field label {
       color: #a0aec0;
     }
-    .fav-field .form-control {
+    .fav-field-label-spacer {
+      visibility: hidden;
+      user-select: none;
+      pointer-events: none;
+    }
+    .fav-controls .form-control {
+      width: 100%;
+      height: var(--fav-control-h);
+      min-height: var(--fav-control-h);
+      padding: 0.35rem 0.75rem;
       font-size: 0.9rem;
+      line-height: 1.25;
+      border-width: 1px;
+      box-sizing: border-box;
+      transform: none;
+    }
+    .fav-controls .form-control:focus {
+      transform: none;
     }
     .fav-control-actions {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 0.4rem;
       align-items: center;
+      height: var(--fav-control-h);
     }
-    @media (max-width: 719px) {
+    .fav-controls .fav-control-actions .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: var(--fav-control-h);
+      min-height: var(--fav-control-h);
+      padding: 0 0.8rem;
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      white-space: nowrap;
+      border: 1px solid #cbd5e0;
+      background: #fff;
+      color: #4a5568;
+      box-shadow: none;
+      transform: none;
+      box-sizing: border-box;
+    }
+    .fav-controls .fav-control-actions .btn:hover,
+    .fav-controls .fav-control-actions .btn:focus {
+      background: #edf2f7;
+      border-color: #a0aec0;
+      color: #2d3748;
+      box-shadow: none;
+      transform: none;
+    }
+    [data-theme="dark"] .fav-controls .fav-control-actions .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #e2e8f0;
+    }
+    [data-theme="dark"] .fav-controls .fav-control-actions .btn:hover,
+    [data-theme="dark"] .fav-controls .fav-control-actions .btn:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #f7fafc;
+    }
+    @media (max-width: 575px) {
+      .fav-field-search,
+      .fav-field-rare,
+      .fav-field-sort {
+        flex: 1 1 100%;
+      }
+      .fav-field-actions {
+        flex: 1 1 100%;
+      }
       .fav-control-actions {
-        padding-top: 0.1rem;
+        width: 100%;
+      }
+      .fav-controls .fav-control-actions .btn {
+        flex: 1 1 0;
       }
     }
     .fav-status {
@@ -815,17 +898,17 @@
               </div>
               <div class="card-body">
                 <div class="fav-controls" aria-label="篩選列">
-                  <div class="fav-field">
+                  <div class="fav-field fav-field-search">
                     <label for="favSearchInput">搜尋</label>
                     <input id="favSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品" autocomplete="off">
                   </div>
-                  <div class="fav-field">
+                  <div class="fav-field fav-field-rare">
                     <label for="favRareSelect">稀有度</label>
                     <select id="favRareSelect" class="form-control" aria-label="依稀有度篩選">
                       <option value="" selected>全部稀有度</option>
                     </select>
                   </div>
-                  <div class="fav-field">
+                  <div class="fav-field fav-field-sort">
                     <label for="favSortSelect">排序</label>
                     <select id="favSortSelect" class="form-control">
                       <option value="newest" selected>最新收藏</option>
@@ -836,9 +919,12 @@
                       <option value="priceAsc">價格低→高</option>
                     </select>
                   </div>
-                  <div class="fav-control-actions">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favSelectVisibleBtn">全選可見</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="favClearCheckBtn">清除勾選</button>
+                  <div class="fav-field fav-field-actions">
+                    <label class="fav-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                    <div class="fav-control-actions">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="favSelectVisibleBtn">全選可見</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="favClearCheckBtn">清除勾選</button>
+                    </div>
                   </div>
                 </div>
 
