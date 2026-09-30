@@ -47,6 +47,7 @@
       --da-warn: #b07c28;
       --da-bad: #b45d52;
       --da-accent: #2b6cb0;
+      --da-ink: #2d3748;
       --da-muted: #718096;
       --da-border: rgba(38, 50, 71, 0.12);
       --da-panel: #ffffff;
@@ -57,13 +58,64 @@
       --da-warn: #fbbf24;
       --da-bad: #fb7185;
       --da-accent: #63b3ed;
-      --da-muted: #a8a29e;
-      --da-border: rgba(255, 255, 255, 0.12);
-      --da-panel: #1c1b19;
-      --da-soft: rgba(255, 255, 255, 0.04);
+      --da-ink: #e9e7e1;
+      --da-muted: #b8b4a8;
+      --da-border: rgba(255, 255, 255, 0.14);
+      --da-panel: rgba(255, 255, 255, 0.05);
+      --da-soft: rgba(255, 255, 255, 0.06);
     }
+    /* AdminLTE body 在深色模式仍可能是深字；本頁內容區強制改淺色 */
+    [data-theme="dark"] .content-wrapper {
+      color: var(--da-ink);
+    }
+    [data-theme="dark"] .content-wrapper .card-title,
+    [data-theme="dark"] .content-wrapper .filter-label,
+    [data-theme="dark"] .content-wrapper label {
+      color: var(--da-ink) !important;
+    }
+    [data-theme="dark"] .content-wrapper .text-muted,
+    [data-theme="dark"] .content-wrapper small.text-muted,
+    [data-theme="dark"] .card-title .text-muted {
+      color: var(--da-muted) !important;
+    }
+    [data-theme="dark"] .content-wrapper .form-control {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.16);
+      color: var(--da-ink);
+    }
+    [data-theme="dark"] .content-wrapper .form-control::placeholder {
+      color: rgba(233, 231, 225, 0.45);
+    }
+    [data-theme="dark"] .content-wrapper .btn-outline-secondary {
+      color: var(--da-ink);
+      border-color: rgba(255, 255, 255, 0.24);
+      background: transparent;
+    }
+    [data-theme="dark"] .content-wrapper .btn-outline-secondary:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.34);
+    }
+    [data-theme="dark"] .modal-content {
+      background: #24231f;
+      color: var(--da-ink);
+    }
+    [data-theme="dark"] .modal-header,
+    [data-theme="dark"] .modal-footer {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    [data-theme="dark"] .modal-header .close {
+      color: var(--da-ink);
+      text-shadow: none;
+      opacity: 0.8;
+    }
+
     .da-hint { margin-top: 0.5rem; color: var(--da-muted); font-size: 0.85rem; }
-    .da-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; }
+    .da-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: inherit;
+    }
     .da-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
     .da-status { min-height: 1.4em; margin-top: 0.75rem; font-size: 0.88rem; color: var(--da-muted); }
     .da-status.is-ok { color: var(--da-good); font-weight: 600; }
@@ -76,14 +128,20 @@
     @media (max-width: 767px) { .da-rules { grid-template-columns: 1fr; } }
     .da-rule {
       border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
+      color: var(--text-primary, #2d3748);
     }
+    [data-theme="dark"] .da-rule { color: var(--da-ink); }
     .da-rule .label { font-size: 0.8rem; color: var(--da-muted); margin-bottom: 0.25rem; }
-    .da-rule .value { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .da-rule .value {
+      font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--text-primary, #2d3748);
+    }
+    [data-theme="dark"] .da-rule .value { color: var(--da-ink); }
     .da-rule .detail { margin-top: 0.25rem; font-size: 0.8rem; color: var(--da-muted); }
     .da-rule.pass { border-color: rgba(86, 138, 109, 0.45); }
-    .da-rule.pass .value { color: var(--da-good); }
+    .da-rule.pass .value { color: var(--da-good) !important; }
     .da-rule.fail { border-color: rgba(180, 93, 82, 0.45); }
-    .da-rule.fail .value { color: var(--da-bad); }
+    .da-rule.fail .value { color: var(--da-bad) !important; }
     .da-charts { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 991px) { .da-charts { grid-template-columns: 1fr; } }
     .da-chart-panel {
@@ -91,22 +149,28 @@
       background: var(--da-panel); min-height: 250px;
     }
     .da-chart-panel h3, .da-panel h3 {
-      font-size: 0.9rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--text-primary, #2d3748);
+      font-size: 0.9rem; font-weight: 700; margin: 0 0 0.5rem;
+      color: var(--text-primary, #2d3748);
     }
     [data-theme="dark"] .da-chart-panel h3,
-    [data-theme="dark"] .da-panel h3 { color: #e9e7e1; }
+    [data-theme="dark"] .da-panel h3 { color: var(--da-ink); }
     .da-chart-wrap { position: relative; height: 200px; }
     .da-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 767px) { .da-meta { grid-template-columns: 1fr; } }
     .da-panel {
       border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
+      color: var(--text-primary, #2d3748);
     }
+    [data-theme="dark"] .da-panel { color: var(--da-ink); }
     .da-odds-item {
       display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.65rem 0;
       border-bottom: 1px solid var(--da-border); align-items: center;
     }
     .da-odds-item:last-child { border-bottom: none; }
-    .da-odds-item .name { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-odds-item .name {
+      font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      color: inherit;
+    }
     .da-odds-item .meta { font-size: 0.75rem; color: var(--da-muted); }
     .da-odds-item .pct { font-weight: 800; font-size: 1.1rem; color: var(--da-accent); }
     .da-price-main { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.03em; color: #8cc351; }
@@ -114,9 +178,11 @@
     .da-ratio-row {
       display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0;
       border-bottom: 1px solid var(--da-border); font-size: 0.9rem;
+      color: inherit;
     }
     .da-ratio-row:last-child { border-bottom: none; }
     .da-ratio-row .tag, .da-ratio-row .guide { color: var(--da-muted); }
+    .da-ratio-row .num { color: inherit; font-weight: 700; }
     .da-ratio-row .guide { font-size: 0.78rem; }
     .da-swatches { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
     .da-swatch {
@@ -126,10 +192,13 @@
     .da-swatch i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
     .da-table-wrap {
       overflow-x: auto; border: 1px solid var(--da-border); border-radius: 12px; background: var(--da-panel);
+      color: var(--text-primary, #2d3748);
     }
-    .da-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 720px; margin: 0; }
+    [data-theme="dark"] .da-table-wrap { color: var(--da-ink); }
+    .da-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 720px; margin: 0; color: inherit; }
     .da-table-wrap th, .da-table-wrap td {
       padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--da-border); vertical-align: middle; text-align: left;
+      color: inherit;
     }
     .da-table-wrap th {
       font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--da-muted);
@@ -141,6 +210,15 @@
     }
     [data-theme="dark"] .da-thumb { background: #111; }
     .da-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    [data-theme="dark"] .site-footer,
+    [data-theme="dark"] .site-footer-inner,
+    [data-theme="dark"] .site-footer-inner a,
+    [data-theme="dark"] .site-footer-copyright {
+      color: var(--da-muted);
+    }
+    [data-theme="dark"] .site-footer-inner a:hover {
+      color: var(--da-ink);
+    }
 
 </style>
 
@@ -395,6 +473,7 @@
     let priceMap = null;
     let priceMeta = "";
     let charts = {};
+    let lastStats = null;
 
     const el = (id) => document.getElementById(id);
 
@@ -742,16 +821,41 @@
       charts = {};
     }
 
-    function chartDefaults() {
+    function chartTheme() {
       var dark = document.documentElement.getAttribute("data-theme") === "dark";
-      Chart.defaults.color = dark ? "#a8a29e" : "#718096";
-      Chart.defaults.borderColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+      return {
+        dark: dark,
+        color: dark ? "#c4bfb4" : "#718096",
+        grid: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+        legend: dark ? "#e9e7e1" : "#2d3748"
+      };
+    }
+
+    function chartDefaults() {
+      var t = chartTheme();
+      Chart.defaults.color = t.color;
+      Chart.defaults.borderColor = t.grid;
       Chart.defaults.font.family = "'Noto Sans TC', sans-serif";
     }
 
+    function axisOpts(extra) {
+      var t = chartTheme();
+      var base = {
+        ticks: { color: t.color, precision: 0 },
+        grid: { color: t.grid }
+      };
+      if (!extra) return base;
+      return Object.assign({}, base, extra, {
+        ticks: Object.assign({}, base.ticks, extra.ticks || {}),
+        grid: Object.assign({}, base.grid, extra.grid || {})
+      });
+    }
+
     function renderCharts(stats) {
+      lastStats = stats;
       chartDefaults();
       destroyCharts();
+      var t = chartTheme();
 
       const lvLabels = ["Lv0", "Lv1", "Lv2", "Lv3"];
       const lvData = [stats.levelCount[0], stats.levelCount[1], stats.levelCount[2], stats.levelCount[3]];
@@ -771,8 +875,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { precision: 0 } }
+            x: axisOpts({ grid: { display: false } }),
+            y: axisOpts({ beginAtZero: true })
           }
         }
       });
@@ -814,7 +918,12 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 12 } } },
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { boxWidth: 10, padding: 12, color: t.legend }
+            }
+          },
           cutout: "58%"
         }
       });
@@ -840,8 +949,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { precision: 0 } }
+            x: axisOpts({ grid: { display: false } }),
+            y: axisOpts({ beginAtZero: true })
           }
         }
       });
@@ -864,8 +973,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { beginAtZero: true, ticks: { precision: 0 } },
-            y: { grid: { display: false } }
+            x: axisOpts({ beginAtZero: true }),
+            y: axisOpts({ grid: { display: false } })
           }
         }
       });
@@ -1155,6 +1264,7 @@
       el("deckCode").value = "";
       el("deckPaste").value = "";
       deckEntries = [];
+      lastStats = null;
       destroyCharts();
       el("results").style.display = "none";
       el("emptyState").style.display = "block";
@@ -1168,6 +1278,17 @@
     el("deckCode").addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); fetchDecklog(); }
     });
+
+    // 主題切換後重繪圖表軸／圖例顏色
+    if (window.MutationObserver) {
+      var themeObserver = new MutationObserver(function () {
+        if (lastStats) renderCharts(lastStats);
+      });
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+      });
+    }
 
     loadPrices();
   })();
