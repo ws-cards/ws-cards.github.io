@@ -392,6 +392,94 @@
     .da-ai-tree .when { font-weight: 700; font-size: 0.86rem; }
     .da-ai-empty { color: var(--da-muted); font-size: 0.9rem; }
 
+    /* ——— Motion: AI coach + mulligan ——— */
+    @keyframes da-persona-in {
+      from { opacity: 0; transform: translateY(14px) scale(0.92); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes da-bubble-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes da-key-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes da-section-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes da-deal-in {
+      from { opacity: 0; transform: translateY(-28px) scale(0.92); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes da-dump-out {
+      to { opacity: 0; transform: translateY(36px) scale(0.88); }
+    }
+    @keyframes da-select-pop {
+      0% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(-6px) scale(1.03); }
+      100% { transform: translateY(-4px) scale(1.02); }
+    }
+    @keyframes da-chip-in {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .da-ai-persona.is-enter {
+      animation: da-persona-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .da-ai-bubble.is-enter {
+      animation: da-bubble-in 0.45s ease both;
+    }
+    .da-ai-bubble.is-swap {
+      animation: da-bubble-in 0.35s ease both;
+    }
+    .da-ai-keys li.is-stagger {
+      opacity: 0;
+      animation: da-key-in 0.4s ease forwards;
+    }
+    .da-ai-section.is-stagger,
+    .da-ai-tree li.is-stagger,
+    .da-ai-bubble h4.is-stagger {
+      opacity: 0;
+      animation: da-section-in 0.4s ease forwards;
+    }
+    .da-hand-card.is-dealing {
+      opacity: 0;
+      animation: da-deal-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .da-hand-card.is-dumping {
+      pointer-events: none;
+      animation: da-dump-out 0.38s ease forwards;
+      z-index: 2;
+    }
+    .da-hand-card.is-selected {
+      animation: da-select-pop 0.28s ease both;
+    }
+    .da-waiting-chip.is-arrive {
+      animation: da-chip-in 0.35s ease both;
+    }
+    .da-hand-grid.is-busy .da-hand-card { pointer-events: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .da-ai-persona.is-enter,
+      .da-ai-bubble.is-enter,
+      .da-ai-bubble.is-swap,
+      .da-ai-keys li.is-stagger,
+      .da-ai-section.is-stagger,
+      .da-ai-tree li.is-stagger,
+      .da-ai-bubble h4.is-stagger,
+      .da-hand-card.is-dealing,
+      .da-hand-card.is-dumping,
+      .da-hand-card.is-selected,
+      .da-waiting-chip.is-arrive {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+
     [data-theme="dark"] .site-footer,
     [data-theme="dark"] .site-footer-inner,
     [data-theme="dark"] .site-footer-inner a,
@@ -763,8 +851,37 @@
     let lastStats = null;
     let aiMode = "beginner";
     let aiGuideCache = null;
+    let aiPersonaEntered = false;
+    let simAnimating = false;
 
     const el = (id) => document.getElementById(id);
+
+    function prefersReducedMotion() {
+      try {
+        return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function staggerNodes(nodes, stepMs) {
+      const list = Array.prototype.slice.call(nodes || []);
+      const step = prefersReducedMotion() ? 0 : (stepMs || 90);
+      list.forEach(function (node, i) {
+        node.classList.add("is-stagger");
+        node.style.animationDelay = (i * step) + "ms";
+      });
+    }
+
+    function playAiPersonaEnter(force) {
+      const persona = document.querySelector("#aiSuggestPanel .da-ai-persona");
+      if (!persona) return;
+      if (aiPersonaEntered && !force) return;
+      aiPersonaEntered = true;
+      persona.classList.remove("is-enter");
+      void persona.offsetWidth;
+      persona.classList.add("is-enter");
+    }
 
     function setStatus(msg, kind) {
       const s = el("statusLine");
@@ -1478,10 +1595,11 @@
       const hasDeck = deckEntries.length > 0;
       const opening = simState.phase === "opening";
       const done = simState.phase === "done";
-      el("btnSimDeal").disabled = !hasDeck;
-      el("btnSimMulligan").disabled = !opening || simState.selected.size === 0;
-      el("btnSimKeep").disabled = !opening;
-      el("btnSimReset").disabled = !(opening || done);
+      const busy = simAnimating;
+      el("btnSimDeal").disabled = !hasDeck || busy;
+      el("btnSimMulligan").disabled = !opening || simState.selected.size === 0 || busy;
+      el("btnSimKeep").disabled = !opening || busy;
+      el("btnSimReset").disabled = !(opening || done) || busy;
       el("btnMcRun").disabled = !hasDeck;
       const n = simState.selected.size;
       el("btnSimMulligan").innerHTML = n
@@ -1496,16 +1614,18 @@
       el("simSelectedCount").textContent = String(simState.selected.size);
     }
 
-    function handCardHtml(c, selectable) {
+    function handCardHtml(c, selectable, extraClass) {
       const kind = c.kind || classifyKind(c);
       const img = c.imageUrl
         ? '<img class="art" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">'
         : '<div class="art" aria-hidden="true"></div>';
       const lv = (kind !== "CX" && c.level != null && !isNaN(c.level)) ? (" · Lv" + c.level) : "";
       const selected = simState.selected.has(c.simId);
-      return '<button type="button" class="da-hand-card' +
+      const cls = "da-hand-card" +
         (selected ? " is-selected" : "") +
         (selectable ? "" : " is-disabled") +
+        (extraClass ? (" " + extraClass) : "");
+      return '<button type="button" class="' + cls +
         '" data-sim-id="' + escapeHtml(c.simId) + '"' +
         (selectable ? "" : " disabled") +
         ' title="' + escapeHtml(c.name) + (c.cardNo ? (" / " + c.cardNo) : "") + '">' +
@@ -1517,17 +1637,30 @@
         "</div></button>";
     }
 
-    function renderSimHand() {
+    function renderSimHand(opts) {
+      opts = opts || {};
       const grid = el("simHandGrid");
       if (!simState.hand.length) {
         grid.innerHTML = '<p class="da-hint mb-0" style="grid-column:1/-1">尚未抽起手。</p>';
         return;
       }
       const selectable = simState.phase === "opening";
-      grid.innerHTML = simState.hand.map((c) => handCardHtml(c, selectable)).join("");
+      const deal = !!opts.dealAnimate;
+      const dealIds = opts.dealIds instanceof Set ? opts.dealIds : null;
+      grid.innerHTML = simState.hand.map(function (c) {
+        const extra = (deal && (!dealIds || dealIds.has(c.simId))) ? "is-dealing" : "";
+        return handCardHtml(c, selectable, extra);
+      }).join("");
+      if (deal) {
+        const step = prefersReducedMotion() ? 0 : 70;
+        Array.prototype.forEach.call(grid.querySelectorAll(".da-hand-card.is-dealing"), function (node, i) {
+          node.style.animationDelay = (i * step) + "ms";
+        });
+      }
     }
 
-    function renderSimWaiting() {
+    function renderSimWaiting(opts) {
+      opts = opts || {};
       const wrap = el("simWaitingWrap");
       const chips = el("simWaitingChips");
       if (!simState.waiting.length) {
@@ -1536,16 +1669,21 @@
         return;
       }
       wrap.style.display = "block";
-      chips.innerHTML = simState.waiting.map((c) =>
-        '<span class="da-waiting-chip" title="' + escapeHtml(c.cardNo || "") + '">' +
-        escapeHtml(c.name) + "</span>"
-      ).join("");
+      const arriveFrom = opts.arriveCount || 0;
+      const start = Math.max(0, simState.waiting.length - arriveFrom);
+      chips.innerHTML = simState.waiting.map(function (c, i) {
+        const arrive = i >= start ? " is-arrive" : "";
+        const delay = prefersReducedMotion() ? 0 : Math.max(0, i - start) * 60;
+        return '<span class="da-waiting-chip' + arrive + '" style="animation-delay:' + delay +
+          'ms" title="' + escapeHtml(c.cardNo || "") + '">' +
+          escapeHtml(c.name) + "</span>";
+      }).join("");
     }
 
-    function renderSimAll() {
+    function renderSimAll(opts) {
       renderSimStats();
-      renderSimHand();
-      renderSimWaiting();
+      renderSimHand(opts);
+      renderSimWaiting(opts);
       updateSimButtons();
       el("simLog").textContent = simState.log || "";
     }
@@ -1570,6 +1708,7 @@
         setStatus("請先分析牌組。", "err");
         return;
       }
+      if (simAnimating) return;
       simState.deck = buildShuffledDeck(deckEntries);
       simState.hand = drawFromDeck(OPENING_HAND);
       simState.waiting = [];
@@ -1577,18 +1716,49 @@
       simState.phase = "opening";
       simState.log = "已洗牌並抽出起手 " + simState.hand.length + " 張。點選要重抽的卡，或按「保留這手」。";
       setSimPhase("opening", "可 Mulligan");
-      renderSimAll();
+      renderSimAll({ dealAnimate: true });
     }
 
     function toggleSimSelect(simId) {
-      if (simState.phase !== "opening") return;
-      if (simState.selected.has(simId)) simState.selected.delete(simId);
-      else simState.selected.add(simId);
-      renderSimAll();
+      if (simState.phase !== "opening" || simAnimating) return;
+      const card = el("simHandGrid").querySelector('[data-sim-id="' + simId + '"]');
+      if (simState.selected.has(simId)) {
+        simState.selected.delete(simId);
+        if (card) {
+          card.classList.remove("is-selected");
+          void card.offsetWidth;
+        }
+      } else {
+        simState.selected.add(simId);
+        if (card) {
+          card.classList.remove("is-selected");
+          void card.offsetWidth;
+          card.classList.add("is-selected");
+        }
+      }
+      renderSimStats();
+      updateSimButtons();
+    }
+
+    function finishSimMulligan(dump, drawn) {
+      const dealIds = new Set(drawn.map(function (c) { return c.simId; }));
+      simState.waiting = simState.waiting.concat(dump);
+      simState.hand = simState.hand.filter(function (c) {
+        return !simState.selected.has(c.simId);
+      }).concat(drawn);
+      const dumpN = dump.length;
+      simState.selected = new Set();
+      simState.phase = "done";
+      simState.log = "Mulligan 完成：丟棄 " + dumpN + " 張至等待室，補抽 " + drawn.length + " 張。";
+      setSimPhase("done", "Mulligan 完成");
+      renderSimAll({ dealAnimate: true, dealIds: dealIds, arriveCount: dumpN });
+      simAnimating = false;
+      el("simHandGrid").classList.remove("is-busy");
+      updateSimButtons();
     }
 
     function applySimMulligan() {
-      if (simState.phase !== "opening") return;
+      if (simState.phase !== "opening" || simAnimating) return;
       const ids = Array.from(simState.selected);
       if (!ids.length) return;
       if (simState.deck.length < ids.length) {
@@ -1596,24 +1766,31 @@
         renderSimAll();
         return;
       }
-      const keep = [];
       const dump = [];
       for (const c of simState.hand) {
         if (simState.selected.has(c.simId)) dump.push(c);
-        else keep.push(c);
       }
-      simState.waiting = simState.waiting.concat(dump);
       const drawn = drawFromDeck(dump.length);
-      simState.hand = keep.concat(drawn);
-      simState.selected = new Set();
-      simState.phase = "done";
-      simState.log = "Mulligan 完成：丟棄 " + dump.length + " 張至等待室，補抽 " + drawn.length + " 張。";
-      setSimPhase("done", "Mulligan 完成");
-      renderSimAll();
+      const grid = el("simHandGrid");
+      const reduce = prefersReducedMotion();
+      if (reduce) {
+        finishSimMulligan(dump, drawn);
+        return;
+      }
+      simAnimating = true;
+      grid.classList.add("is-busy");
+      updateSimButtons();
+      ids.forEach(function (id) {
+        const node = grid.querySelector('[data-sim-id="' + id + '"]');
+        if (node) node.classList.add("is-dumping");
+      });
+      window.setTimeout(function () {
+        finishSimMulligan(dump, drawn);
+      }, 400);
     }
 
     function keepSimHand() {
-      if (simState.phase !== "opening") return;
+      if (simState.phase !== "opening" || simAnimating) return;
       simState.selected = new Set();
       simState.phase = "done";
       simState.log = "保留起手，未執行 Mulligan。";
@@ -1739,6 +1916,14 @@
     }
 
     /* ——— AI Teaching Guide UI ——— */
+    function animateAiBubble(kind) {
+      const body = el("aiGuideBody");
+      if (!body) return;
+      body.classList.remove("is-enter", "is-swap");
+      void body.offsetWidth;
+      body.classList.add(kind === "swap" ? "is-swap" : "is-enter");
+    }
+
     function resetAiGuideUi() {
       aiGuideCache = null;
       const body = el("aiGuideBody");
@@ -1746,6 +1931,7 @@
         body.innerHTML = deckEntries.length
           ? '<p class="da-ai-empty mb-0">牌組已就緒。選模式後按「產生建議」——新手模式會先給 5 件必記事。</p>'
           : '<p class="da-ai-empty mb-0">先分析牌組，再選模式按「產生建議」。新手模式會先給你 5 件必記的事。</p>';
+        animateAiBubble("enter");
       }
       const badge = el("aiSourceBadge");
       if (badge) {
@@ -1760,6 +1946,7 @@
         el("aiPersonaName").textContent = WSDeckAIGuide.PERSONA.name;
         el("aiPersonaTag").textContent = WSDeckAIGuide.PERSONA.tagline;
       }
+      if (deckEntries.length) playAiPersonaEnter(true);
     }
 
     function setAiMode(mode) {
@@ -1770,20 +1957,23 @@
         btn.setAttribute("aria-selected", on ? "true" : "false");
       });
       if (aiGuideCache && aiGuideCache.mode === mode) {
-        renderAiGuide(aiGuideCache);
+        renderAiGuide(aiGuideCache, { swap: true });
       } else if (deckEntries.length) {
         el("aiGuideBody").innerHTML = '<p class="da-ai-empty mb-0">已切換模式。按「產生建議」取得此模式內容。</p>';
         el("aiSourceBadge").textContent = "待產生";
         el("aiSourceBadge").className = "da-ai-source";
+        animateAiBubble("swap");
       }
     }
 
-    function renderAiGuide(result) {
+    function renderAiGuide(result, opts) {
+      opts = opts || {};
       aiGuideCache = result;
       const guide = (result && result.guide) || {};
       const persona = (result && result.persona) || {};
       if (persona.name) el("aiPersonaName").textContent = persona.name;
       if (persona.tagline) el("aiPersonaTag").textContent = persona.tagline;
+      playAiPersonaEnter(false);
 
       const badge = el("aiSourceBadge");
       const src = result.source || "mock";
@@ -1798,8 +1988,8 @@
 
       if (mode === "beginner" && guide.fiveKeys && guide.fiveKeys.length) {
         html += "<h4>第一次玩這副牌：先記住這 5 件事</h4><ol class=\"da-ai-keys\">";
-        guide.fiveKeys.forEach(function (k, i) {
-          html += "<li><span class=\"num\">" + (i + 1) + "</span><div>" +
+        guide.fiveKeys.forEach(function (k) {
+          html += "<li><span class=\"num\"></span><div>" +
             "<div class=\"ktitle\">" + escapeHtml(k.title || "") + "</div>" +
             "<p class=\"kbody\">" + escapeHtml(k.body || "") + "</p></div></li>";
         });
@@ -1825,6 +2015,19 @@
         html = '<p class="da-ai-empty mb-0">沒有可顯示的建議內容。</p>';
       }
       body.innerHTML = html;
+      animateAiBubble(opts.swap ? "swap" : "enter");
+
+      if (mode === "beginner") {
+        const items = body.querySelectorAll(".da-ai-keys li");
+        items.forEach(function (li, i) {
+          const num = li.querySelector(".num");
+          if (num) num.textContent = String(i + 1);
+        });
+        staggerNodes(items, 120);
+      } else {
+        const bits = body.querySelectorAll("h4, .da-ai-section, .da-ai-tree li");
+        staggerNodes(bits, 80);
+      }
     }
 
     async function generateAiGuide(preferMock) {
