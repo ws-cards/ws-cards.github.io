@@ -12,9 +12,14 @@
 |------|------|
 | `assets/js/firebase-config.js` | 貼上 Firebase Web 設定（你要改的檔） |
 | `assets/js/ws-firebase.js` | Auth / Firestore 封裝（已寫好，通常不用改） |
+| `assets/js/deck-ai-guide.js` | 牌組 AI 建議：Structured Data 契約、mock、Callable stub |
 | `firebase/firestore.rules` | 安全規則（要貼到 Console 並發布） |
+| `firebase/functions/` | Cloud Functions（`generateDeckTeachingGuide` → OpenAI） |
 | `countingDemoNew.html` | 已接好登入按鈕與同步邏輯 |
 | `account.html` | Auth + Firestore 個人資料頁 |
+| `deckAnalysis.html` | 牌組分析 + AI 建議 UI（Callable 未部署時自動用 mock） |
+
+部署 Functions 見 [`firebase/functions/README.md`](functions/README.md)。
 
 ---
 
