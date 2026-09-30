@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>牌組分析 | 卡片雲 WS-Cards</title>
+  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率與行情總額摘要。" />
+  <meta property="og:site_name" content="卡片雲" />
+  <meta property="og:title" content="牌組分析 | 卡片雲 WS-Cards" />
+  <meta property="og:description" content="把牌組拆成曲線與機率，一眼看出結構是否站得住。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ws-cards.cloud/deckAnalysis.html" />
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b1017;
+      --bg-elev: #121923;
+      --bg-panel: #161f2c;
+      --ink: #e9eef5;
+      --muted: #8b9aab;
+      --faint: #5c6b7c;
+      --line: rgba(233, 238, 245, 0.1);
+      --line-strong: rgba(233, 238, 245, 0.22);
+      --scan: #2dd4bf;
+      --scan-dim: rgba(45, 212, 191, 0.14);
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --good: #34d399;
+      --yellow: #eab308;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --brand: #8cc351;
+      --radius: 14px;
+      --font-display: "Syne", "Noto Sans TC", sans-serif;
+      --font-body: "DM Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      --nav-h: 64px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at 8% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
+        radial-gradient(900px 600px at 100% 0%, rgba(59, 130, 246, 0.12), transparent 50%),
+        linear-gradient(180deg, #0b1017 0%, #0a0e14 100%);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(233, 238, 245, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(233, 238, 245, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--scan);
+      outline-offset: 3px;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ——— Nav ——— */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: var(--nav-h);
+      margin: 0 -20px;
+      padding: 0 20px;
+      backdrop-filter: blur(14px);
+      background: rgba(11, 16, 23, 0.78);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      line-height: 1.15;
+    }
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+    }
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover {
+      color: var(--ink);
+      background: rgba(233, 238, 245, 0.06);
+    }
+
+    /* ——— Hero ——— */
+    .hero {
+      padding: 48px 0 28px;
+      animation: rise 0.7s ease both;
+    }
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--scan);
+      margin-bottom: 16px;
+    }
+    .hero-kicker::before {
+      content: "";
+      width: 18px;
+      height: 2px;
+      background: var(--scan);
+      box-shadow: 0 0 12px var(--scan);
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      max-width: 14ch;
+      margin-bottom: 14px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--scan);
+    }
+    .hero p {
+      max-width: 38rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    /* ——— Import ——— */
+    .import-panel {
+      margin-top: 28px;
+      background: linear-gradient(160deg, rgba(45, 212, 191, 0.08), transparent 40%), var(--bg-panel);
+      border: 1px solid var(--line-strong);
+      border-radius: calc(var(--radius) + 4px);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      animation: rise 0.75s ease 0.08s both;
+      position: relative;
+      overflow: hidden;
+    }
+    .import-panel::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--scan), transparent);
+      animation: scan 3.2s ease-in-out infinite;
+    }
+    .import-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 800px) {
+      .import-grid { grid-template-columns: 1fr; }
+      .nav-links a:not(.nav-home) { display: none; }
+    }
+    .field-label {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--scan);
+      box-shadow: 0 0 0 3px var(--scan-dim);
+      outline: none;
+    }
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    .hint {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--faint);
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      padding: 12px 16px;
+      transition: transform 0.15s, background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .btn-primary {
+      background: var(--scan);
+      color: #04201b;
+    }
+    .btn-primary:hover:not(:disabled) { background: #5eead4; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--scan);
+      color: var(--scan);
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .status-line {
+      margin-top: 12px;
+      min-height: 1.4em;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .status-line.is-ok { color: var(--good); }
+    .status-line.is-err { color: var(--bad); }
+
+    /* ——— Results ——— */
+    .results {
+      margin-top: 36px;
+      display: none;
+    }
+    .results.is-visible { display: block; }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .section-title span {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 700px) {
+      .rule-grid { grid-template-columns: 1fr; }
+    }
+    .rule-chip {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      animation: rise 0.55s ease both;
+    }
+    .rule-chip:nth-child(2) { animation-delay: 0.06s; }
+    .rule-chip:nth-child(3) { animation-delay: 0.12s; }
+    .rule-chip .label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .rule-chip .value {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .rule-chip .detail {
+      margin-top: 4px;
+      font-size: 0.82rem;
+      color: var(--faint);
+      font-family: var(--font-mono);
+    }
+    .rule-chip.pass { border-color: rgba(52, 211, 153, 0.35); }
+    .rule-chip.pass .value { color: var(--good); }
+    .rule-chip.fail { border-color: rgba(251, 113, 133, 0.4); }
+    .rule-chip.fail .value { color: var(--bad); }
+    .rule-chip.warn { border-color: rgba(251, 191, 36, 0.4); }
+    .rule-chip.warn .value { color: var(--warn); }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px) {
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+    .chart-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 16px 10px;
+      min-height: 260px;
+      animation: rise 0.6s ease both;
+    }
+    .chart-panel h3 {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .chart-wrap {
+      position: relative;
+      height: 210px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 800px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+
+    .odds-list, .price-box, .ratio-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      animation: rise 0.6s ease both;
+    }
+    .odds-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+    .odds-item:last-child { border-bottom: none; }
+    .odds-item .name {
+      font-size: 0.92rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .odds-item .meta {
+      font-size: 0.75rem;
+      color: var(--faint);
+      font-family: var(--font-mono);
+    }
+    .odds-item .pct {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--scan);
+    }
+    .price-main {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--brand);
+    }
+    .price-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-family: var(--font-mono);
+    }
+    .ratio-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+    .ratio-row:last-child { border-bottom: none; }
+    .ratio-row .tag { color: var(--muted); }
+    .ratio-row .num { font-family: var(--font-mono); }
+    .ratio-row .guide { color: var(--faint); font-size: 0.78rem; }
+
+    .color-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.2);
+    }
+    .swatch i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-panel);
+      animation: rise 0.65s ease both;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      min-width: 720px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    th {
+      color: var(--faint);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 500;
+      background: rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(45, 212, 191, 0.04); }
+    .thumb {
+      width: 36px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--line-strong);
+      background: #000;
+    }
+    .mono { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .footer-note {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--faint);
+      font-size: 0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      justify-content: space-between;
+    }
+    .footer-note a { color: var(--muted); }
+
+    .empty-state {
+      margin-top: 28px;
+      padding: 28px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+      animation: rise 0.6s ease both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scan {
+      0%, 100% { opacity: 0.35; transform: scaleX(0.4); }
+      50% { opacity: 1; transform: scaleX(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topnav">
+      <a class="brand" href="./">
+        <img src="dist/img/logo.png" alt="WS-Cards logo" width="36" height="36" />
+        <span class="brand-text">
+          <span class="brand-name">卡片雲</span>
+          <span class="brand-sub">WS-Cards · Deck Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="相關工具">
+        <a class="nav-home" href="./">首頁</a>
+        <a href="deckPrice.html">牌組總額</a>
+        <a href="demoAndDeckPrice.html">戰況計算</a>
+        <a href="championList.html">優勝牌組</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-kicker">Deck Analysis</div>
+      <h1>卡片雲<em>牌組分析</em></h1>
+      <p>匯入 DeckLog 或貼上牌表，立刻看 Level 曲線、顏色／卡種結構、50／8／4 規則、起手機率與行情總額——把組牌拆成看得見的藍圖。</p>
+    </section>
+
+    <section class="import-panel" aria-label="匯入牌組">
+      <div class="import-grid">
+        <div>
+          <label class="field-label" for="deckCode">DeckLog 代碼</label>
+          <div class="input-row">
+            <input id="deckCode" type="text" placeholder="例：2XXXX 或 en_XXXX" autocomplete="off" spellcheck="false" />
+            <button type="button" class="btn btn-ghost" id="btnFetch">取得</button>
+          </div>
+          <p class="hint">會透過既有代理抓取 DeckLog 卡表；成功後可直接分析，也可先改貼上區再送出。</p>
+        </div>
+        <div>
+          <label class="field-label" for="deckPaste">或貼上牌表／JSON</label>
+          <textarea id="deckPaste" placeholder="支援：DeckLog JSON、數量|卡號|卡名、或純卡號列表"></textarea>
+          <p class="hint">格式例：<span class="mono">4|BD/W54-070|鳥籠の歌姫</span></p>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" id="btnAnalyze">開始分析</button>
+        <button type="button" class="btn btn-ghost" id="btnSample">載入示範牌組</button>
+        <button type="button" class="btn btn-ghost" id="btnClear">清除</button>
+      </div>
+      <div class="status-line" id="statusLine" role="status"></div>
+    </section>
+
+    <div class="empty-state" id="emptyState">
+      匯入牌組後，這裡會展開曲線圖、規則檢查與起手機率。
+    </div>
+
+    <div class="results" id="results" aria-live="polite">
+      <h2 class="section-title">規則檢查 <span>50 / CX8 / 同名4</span></h2>
+      <div class="rule-grid" id="ruleGrid"></div>
+
+      <h2 class="section-title">結構曲線 <span>Level · Color · Kind</span></h2>
+      <div class="chart-grid">
+        <div class="chart-panel">
+          <h3>Level 曲線</h3>
+          <div class="chart-wrap"><canvas id="chartLevel"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <h3>顏色分布</h3>
+          <div class="chart-wrap"><canvas id="chartColor"></canvas></div>
+          <div class="color-legend" id="colorLegend"></div>
+        </div>
+        <div class="chart-panel">
+          <h3>卡種分布</h3>
+          <div class="chart-wrap"><canvas id="chartKind"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid" style="margin-top:12px">
+        <div class="chart-panel">
+          <h3>Cost 分布（非 CX）</h3>
+          <div class="chart-wrap"><canvas id="chartCost"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <h3>Trigger 類型</h3>
+          <div class="chart-wrap"><canvas id="chartTrigger"></canvas></div>
+        </div>
+        <div class="ratio-box">
+          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:10px;font-weight:600">與官方建議對照</h3>
+          <div id="ratioBox"></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">一致性 · 行情 <span>Opening odds · Price</span></h2>
+      <div class="meta-grid">
+        <div class="odds-list">
+          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:4px;font-weight:600">起手 5 張抽到的機率</h3>
+          <p class="hint" style="margin-bottom:8px">超幾何分布：至少 1 張。角色取張數最多的前幾名；並固定顯示 CX。</p>
+          <div id="oddsList"></div>
+        </div>
+        <div class="price-box">
+          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:8px;font-weight:600">行情總額摘要</h3>
+          <div class="price-main" id="priceMain">—</div>
+          <div class="price-meta" id="priceMeta">載入遊遊亭行情中…</div>
+          <div class="btn-row">
+            <a class="btn btn-ghost" id="linkDeckPrice" href="deckPrice.html" style="text-decoration:none">開牌組總額工具</a>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="section-title">牌表 <span id="deckMetaLabel"></span></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>卡號</th>
+              <th>名稱</th>
+              <th>張</th>
+              <th>Lv</th>
+              <th>Cost</th>
+              <th>色</th>
+              <th>種</th>
+              <th>單價</th>
+            </tr>
+          </thead>
+          <tbody id="deckTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer class="footer-note">
+      <span>卡片雲 / WS-Cards · 行情來源為遊遊亭歷史報價呈現，非本站自營售價。</span>
+      <span><a href="deckPrice.html">牌組總額</a> · <a href="championList.html">優勝牌組</a></span>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    const DECKLOG_PROXY = "https://selenium-java-service-669727048059.asia-east1.run.app/view/";
+    const CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
+    const LATEST_BY_CARD_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_";
+    const WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
+    const OPENING_HAND = 5;
+    const LATEST_META_KEYS = new Set(["generatedAt", "generated_at", "date", "asOf", "schemaVersion"]);
+
+    const SAMPLE_DECK = [
+      { cardNo: "BD/W54-089", name: "“二人を繋いで”今井リサ", qty: 4 },
+      { cardNo: "BD/W54-078", name: "“選んでもらった水着”白金燐子", qty: 4 },
+      { cardNo: "BD/W54-016", name: "“ドラムとの出会い”大和麻弥", qty: 4 },
+      { cardNo: "BD/W54-008", name: "“ステージ”北沢はぐみ", qty: 4 },
+      { cardNo: "BD/W54-055", name: "“みんなで遊園地！”戸山香澄", qty: 4 },
+      { cardNo: "BD/W54-011", name: "“はーい、ミッシェルでーす”奥沢美咲", qty: 4 },
+      { cardNo: "BD/W54-044", name: "“フシギなお守り”上原ひまり", qty: 4 },
+      { cardNo: "BD/W54-020", name: "“私を捕まえてごらん”瀬田薫", qty: 4 },
+      { cardNo: "BD/W54-094", name: "“ステージ”市ヶ谷有咲", qty: 2 },
+      { cardNo: "BD/W54-053", name: "“必殺アイドルポーズ☆”丸山彩", qty: 4 },
+      { cardNo: "BD/W54-070", name: "“鳥籠の歌姫”湊友希那", qty: 4 },
+      { cardNo: "BD/W54-048", name: "That Is How I Roll!", qty: 4 },
+      { cardNo: "BD/W54-067", name: "憧れの先", qty: 4 }
+    ];
+
+    const COLOR_MAP = {
+      "黄": "#eab308", "黃": "#eab308", "yellow": "#eab308",
+      "緑": "#22c55e", "綠": "#22c55e", "green": "#22c55e",
+      "赤": "#ef4444", "red": "#ef4444",
+      "青": "#3b82f6", "blue": "#3b82f6",
+      "無": "#94a3b8", "无": "#94a3b8"
+    };
+
+    const KIND_GCS = { "0": "角色", "1": "事件", "2": "CX" };
+    const KIND_DECKLOG = { "2": "角色", "3": "事件", "4": "CX" };
+    const TRIGGER_LABEL = {
+      "0": "無", "1": "靈魂+1", "2": "靈魂+2",
+      "soul": "靈魂", "gate": "門", "book": "書", "treasure": "寶袋",
+      "standby": "待機", "shot": "射擊", "bounce": "彈回", "comeback": "歸來",
+      "draw": "抽牌", "choice": "選擇", "stock": "庫存"
+    };
+
+    const GUIDE = {
+      level0: [14, 18],
+      level1: [10, 14],
+      level2: [2, 8],
+      level3: [8, 10],
+      cx: [8, 8]
+    };
+
+    let deckEntries = [];
+    let priceMap = null;
+    let priceMeta = "";
+    let charts = {};
+
+    const el = (id) => document.getElementById(id);
+
+    function setStatus(msg, kind) {
+      const s = el("statusLine");
+      s.textContent = msg || "";
+      s.className = "status-line" + (kind ? " is-" + kind : "");
+    }
+
+    function normalizeCardNo(cardNo) {
+      return String(cardNo || "").trim().replace(/\\/g, "/");
+    }
+
+    function looksLikeWSCardNo(s) {
+      return /^[A-Za-z0-9]+\/[A-Za-z0-9]+-[A-Za-z0-9]+$/.test(String(s || "").trim());
+    }
+
+    function isDigitsOnly(s) {
+      return /^\d+$/.test(String(s || "").trim());
+    }
+
+    function titleCodeFromCardNo(cardNo) {
+      const m = String(cardNo).match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-/);
+      if (!m) return "";
+      return m[1] + "_" + m[2];
+    }
+
+    function wsImageUrlFromCardNo(cardNo) {
+      const cn = normalizeCardNo(cardNo);
+      const m = cn.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/);
+      if (!m) return "";
+      const series = m[1].toLowerCase();
+      const setId = m[2].toLowerCase();
+      const num = m[3].toLowerCase();
+      const folder = series + "_" + setId;
+      const alpha = series.slice(0, 1) || "x";
+      return WS_CARD_IMAGE_BASE + "/" + alpha + "/" + folder + "/" + folder + "_" + num + ".png";
+    }
+
+    function expandEntries(rows) {
+      const out = [];
+      for (const r of rows) {
+        const qty = Math.max(0, parseInt(r.qty, 10) || 0);
+        const cardNo = normalizeCardNo(r.cardNo);
+        for (let i = 0; i < qty; i++) {
+          out.push({
+            cardNo: cardNo,
+            name: r.name || cardNo || "未命名",
+            kindLabel: r.kindLabel || "",
+            color: r.color || "",
+            level: r.level,
+            cost: r.cost,
+            trigger: r.trigger,
+            features: r.features || [],
+            imageUrl: cardNo ? wsImageUrlFromCardNo(cardNo) : ""
+          });
+        }
+      }
+      return out;
+    }
+
+    function aggregateByCard(cards) {
+      const map = new Map();
+      for (const c of cards) {
+        const key = c.cardNo || ("name:" + c.name);
+        if (!map.has(key)) {
+          map.set(key, Object.assign({}, c, { qty: 0 }));
+        }
+        map.get(key).qty += 1;
+      }
+      return Array.from(map.values()).sort((a, b) => {
+        const la = Number(a.level); const lb = Number(b.level);
+        if (!isNaN(la) && !isNaN(lb) && la !== lb) return la - lb;
+        return String(a.cardNo).localeCompare(String(b.cardNo));
+      });
+    }
+
+    /* ——— Parsers (aligned with demoAndDeckPrice) ——— */
+    function decklogWsTypeFromCardKind(cardKind) {
+      return KIND_DECKLOG[String(cardKind)] || "";
+    }
+
+    function mergeDecklogListParts(data) {
+      if (!data || typeof data !== "object") return [];
+      const a = Array.isArray(data.list) ? data.list : [];
+      const b = Array.isArray(data.sub_list) ? data.sub_list : [];
+      const c = Array.isArray(data.p_list) ? data.p_list : [];
+      return a.concat(b, c).filter((row) => row && row.card_number != null);
+    }
+
+    function cardsFromDecklogPayload(data) {
+      if (data == null || typeof data !== "object") throw new Error("非有效的 Deck Log 資料。");
+      const items = mergeDecklogListParts(data);
+      if (data.message && !items.length) throw new Error(String(data.message));
+      if (!items.length) throw new Error("此牌組沒有卡表清單或為空。");
+      const rows = [];
+      for (const row of items) {
+        const n = Math.max(0, parseInt(row.num, 10) || 0);
+        if (!n) continue;
+        rows.push({
+          cardNo: normalizeCardNo(String(row.card_number || "").replace(/\\/g, "/")),
+          name: String(row.name != null ? row.name : "未命名").trim() || "未命名",
+          qty: n,
+          kindLabel: decklogWsTypeFromCardKind(row.card_kind)
+        });
+      }
+      if (!rows.length) throw new Error("匯出為 0 張。");
+      return expandEntries(rows);
+    }
+
+    function cardsFromSimpleDecklogPayload(data) {
+      if (!data || typeof data !== "object") throw new Error("非有效的資料格式。");
+      const cardList = data.cardList;
+      if (!cardList || typeof cardList !== "object") throw new Error("找不到 cardList。");
+      const rows = [];
+      for (const [cardNo, qtyStr] of Object.entries(cardList)) {
+        const qty = Math.max(0, parseInt(qtyStr, 10) || 0);
+        if (!qty) continue;
+        const cn = normalizeCardNo(String(cardNo).replace(/\\/g, "/"));
+        rows.push({ cardNo: cn, name: cn, qty: qty });
+      }
+      if (!rows.length) throw new Error("解析後為 0 張。");
+      return expandEntries(rows);
+    }
+
+    function parseDeckText(text) {
+      const normalized = String(text || "")
+        .replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+        .replace(/\u2028/g, "\n").replace(/\u2029/g, "\n");
+      const lines = normalized.split("\n").map((s) => s.trim()).filter(Boolean);
+      const rows = [];
+      for (const line of lines) {
+        const parts = line.split("|").map((s) => s.trim());
+        if (parts.length >= 3 && isDigitsOnly(parts[0]) && looksLikeWSCardNo(parts[1])) {
+          rows.push({
+            qty: Math.max(1, parseInt(parts[0], 10) || 1),
+            cardNo: parts[1],
+            name: parts.slice(2).join("|"),
+            kindLabel: ""
+          });
+          continue;
+        }
+        if (parts.length >= 2 && looksLikeWSCardNo(parts[0])) {
+          rows.push({ qty: 1, cardNo: parts[0], name: parts.slice(1).join("|"), kindLabel: "" });
+          continue;
+        }
+        if (looksLikeWSCardNo(line)) {
+          rows.push({ qty: 1, cardNo: line, name: line, kindLabel: "" });
+          continue;
+        }
+        rows.push({ qty: 1, cardNo: "", name: line, kindLabel: "" });
+      }
+      return expandEntries(rows);
+    }
+
+    function resolveDeckCardsFromUserInput(text) {
+      const t = String(text || "").trim();
+      if (!t) return [];
+      if (t.charAt(0) === "{") {
+        let j;
+        try { j = JSON.parse(t); } catch (e) {
+          throw new Error("JSON 解析失敗：" + (e && e.message ? e.message : e));
+        }
+        if (j.cardList && typeof j.cardList === "object") return cardsFromSimpleDecklogPayload(j);
+        if (j.list || j.card_number || (j.list === undefined && (j.sub_list || j.p_list))) {
+          return cardsFromDecklogPayload(j);
+        }
+        if (Array.isArray(j.list) || j.game_title_id != null) return cardsFromDecklogPayload(j);
+      }
+      return parseDeckText(t);
+    }
+
+    /* ——— Enrichment ——— */
+    const setCache = new Map();
+
+    function normalizeMeta(raw, cardNo) {
+      if (!raw) return null;
+      const kindRaw = raw.kind !== undefined ? raw.kind : raw.cardkind;
+      let kindLabel = KIND_GCS[String(kindRaw)] || "";
+      if (!kindLabel && kindRaw != null) kindLabel = KIND_DECKLOG[String(kindRaw)] || String(kindRaw);
+      const features = Array.isArray(raw.features)
+        ? raw.features
+        : String(raw.cardfeatures || "").split(/[・･]/).map((s) => s.trim()).filter(Boolean);
+      return {
+        cardNo: raw.id || raw.cardno || cardNo,
+        name: raw.name || raw.cardname || cardNo,
+        color: raw.color || raw.cardcolor || "",
+        kindLabel: kindLabel,
+        level: raw.level !== undefined ? Number(raw.level) : (raw.cardlevel !== undefined ? Number(raw.cardlevel) : null),
+        cost: raw.cost !== undefined ? Number(raw.cost) : (raw.cardcost !== undefined ? Number(raw.cardcost) : null),
+        trigger: raw.trigger !== undefined ? String(raw.trigger) : (raw.cardtrigger !== undefined ? String(raw.cardtrigger) : ""),
+        features: features,
+        rarity: raw.rarity || raw.cardrare || ""
+      };
+    }
+
+    function indexSetPayload(data) {
+      const byId = new Map();
+      if (!data || typeof data !== "object") return byId;
+      if (data.cards && Array.isArray(data.cards)) {
+        for (const c of data.cards) {
+          if (c && c.id) byId.set(c.id, c);
+          else if (c && c.cardno) byId.set(c.cardno, c);
+        }
+      } else {
+        for (const k of Object.keys(data)) {
+          if (k === "metadata") continue;
+          byId.set(k, data[k]);
+        }
+      }
+      return byId;
+    }
+
+    async function fetchSetByIdMap(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return indexSetPayload(await r.json());
+    }
+
+    async function loadSetJson(titleCode) {
+      if (!titleCode) return null;
+      if (setCache.has(titleCode)) return setCache.get(titleCode);
+      const remote = CONTENT_WS_BASE + encodeURIComponent(titleCode) + ".json";
+      const local = "./json/" + encodeURIComponent(titleCode) + ".json";
+      const p = fetchSetByIdMap(remote)
+        .catch(() => fetchSetByIdMap(local))
+        .catch(() => null);
+      setCache.set(titleCode, p);
+      return p;
+    }
+
+    async function enrichCardsSync(cards) {
+      const codes = new Set();
+      for (const c of cards) {
+        const tc = titleCodeFromCardNo(c.cardNo);
+        if (tc) codes.add(tc);
+      }
+      const maps = {};
+      await Promise.all(Array.from(codes).map(async (tc) => {
+        maps[tc] = await loadSetJson(tc);
+      }));
+      return cards.map((c) => {
+        const tc = titleCodeFromCardNo(c.cardNo);
+        const byId = maps[tc];
+        let raw = byId && byId.get(c.cardNo);
+        if (!raw && byId) {
+          // try base number without rarity suffix (e.g. ...-070SSP → ...-070)
+          const m = c.cardNo.match(/^(.+-\d+[a-z]?)/i);
+          if (m) {
+            for (const [id, v] of byId) {
+              if (id === m[1] || id.startsWith(m[1])) { raw = v; break; }
+            }
+          }
+        }
+        const meta = normalizeMeta(raw, c.cardNo);
+        if (!meta) return c;
+        return {
+          cardNo: c.cardNo,
+          name: meta.name || c.name,
+          kindLabel: meta.kindLabel || c.kindLabel || "",
+          color: meta.color || c.color || "",
+          level: meta.level != null && !isNaN(meta.level) ? meta.level : c.level,
+          cost: meta.cost != null && !isNaN(meta.cost) ? meta.cost : c.cost,
+          trigger: meta.trigger || c.trigger || "",
+          features: meta.features.length ? meta.features : (c.features || []),
+          imageUrl: c.imageUrl || wsImageUrlFromCardNo(c.cardNo),
+          rarity: meta.rarity || ""
+        };
+      });
+    }
+
+    /* ——— Analysis ——— */
+    function classifyKind(c) {
+      const k = String(c.kindLabel || "").toLowerCase();
+      if (/cx|名場|climax|クライ/.test(k)) return "CX";
+      if (/事件|event|イベント/.test(k)) return "事件";
+      if (/角色|character|chara|キャラ/.test(k)) return "角色";
+      // fallback by name heuristics
+      if (/^that is how|^憧れ|^star beat/i.test(c.name || "")) return "CX";
+      return c.kindLabel || "未知";
+    }
+
+    function analyze(cards) {
+      const total = cards.length;
+      const byName = new Map();
+      const levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, other: 0 };
+      const colorCount = {};
+      const kindCount = { "角色": 0, "事件": 0, "CX": 0, "未知": 0 };
+      const costCount = {};
+      const triggerCount = {};
+      let cx = 0;
+      let overName = [];
+
+      for (const c of cards) {
+        const nm = c.name || c.cardNo || "?";
+        byName.set(nm, (byName.get(nm) || 0) + 1);
+        const kind = classifyKind(c);
+        kindCount[kind] = (kindCount[kind] || 0) + 1;
+        if (kind === "CX") cx += 1;
+
+        if (kind !== "CX") {
+          const lv = Number(c.level);
+          if (lv === 0 || lv === 1 || lv === 2 || lv === 3) levelCount[lv] += 1;
+          else levelCount.other += 1;
+          const cost = c.cost != null && !isNaN(Number(c.cost)) ? String(Number(c.cost)) : "?";
+          costCount[cost] = (costCount[cost] || 0) + 1;
+        }
+
+        const color = c.color || "未標";
+        colorCount[color] = (colorCount[color] || 0) + 1;
+
+        const trigKey = String(c.trigger != null ? c.trigger : "?");
+        triggerCount[trigKey] = (triggerCount[trigKey] || 0) + 1;
+      }
+
+      for (const [nm, q] of byName) {
+        if (q > 4) overName.push({ name: nm, qty: q });
+      }
+
+      return { total, cx, levelCount, colorCount, kindCount, costCount, triggerCount, overName, byName };
+    }
+
+    function hyperAtLeastOne(K, N, n) {
+      // P(X >= 1) = 1 - C(N-K, n) / C(N, n) when N-K >= n, else 1 if K>=1 and n>0
+      if (n <= 0 || N <= 0) return 0;
+      if (K <= 0) return 0;
+      if (K >= N) return 1;
+      if (N - K < n) return 1;
+      let pNone = 1;
+      for (let i = 0; i < n; i++) {
+        pNone *= (N - K - i) / (N - i);
+      }
+      return Math.max(0, Math.min(1, 1 - pNone));
+    }
+
+    function formatPct(p) {
+      return (Math.round(p * 1000) / 10).toFixed(1) + "%";
+    }
+
+    /* ——— Charts ——— */
+    function destroyCharts() {
+      for (const k of Object.keys(charts)) {
+        try { charts[k].destroy(); } catch (e) { /* ignore */ }
+      }
+      charts = {};
+    }
+
+    function chartDefaults() {
+      Chart.defaults.color = "#8b9aab";
+      Chart.defaults.borderColor = "rgba(233,238,245,0.08)";
+      Chart.defaults.font.family = "'DM Sans', 'Noto Sans TC', sans-serif";
+    }
+
+    function renderCharts(stats) {
+      chartDefaults();
+      destroyCharts();
+
+      const lvLabels = ["Lv0", "Lv1", "Lv2", "Lv3"];
+      const lvData = [stats.levelCount[0], stats.levelCount[1], stats.levelCount[2], stats.levelCount[3]];
+      charts.level = new Chart(el("chartLevel"), {
+        type: "bar",
+        data: {
+          labels: lvLabels,
+          datasets: [{
+            data: lvData,
+            backgroundColor: ["#2dd4bf", "#5eead4", "#38bdf8", "#818cf8"],
+            borderRadius: 6,
+            maxBarThickness: 42
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+
+      const colorLabels = Object.keys(stats.colorCount);
+      const colorData = colorLabels.map((k) => stats.colorCount[k]);
+      const colorColors = colorLabels.map((k) => COLOR_MAP[k] || "#64748b");
+      charts.color = new Chart(el("chartColor"), {
+        type: "doughnut",
+        data: {
+          labels: colorLabels,
+          datasets: [{ data: colorData, backgroundColor: colorColors, borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: "62%"
+        }
+      });
+      el("colorLegend").innerHTML = colorLabels.map((k) =>
+        '<span class="swatch"><i style="background:' + (COLOR_MAP[k] || "#64748b") + '"></i>' +
+        k + " " + stats.colorCount[k] + "</span>"
+      ).join("");
+
+      const kindOrder = ["角色", "事件", "CX", "未知"];
+      const kindLabels = kindOrder.filter((k) => stats.kindCount[k]);
+      const kindColors = { "角色": "#2dd4bf", "事件": "#fbbf24", "CX": "#f472b6", "未知": "#64748b" };
+      charts.kind = new Chart(el("chartKind"), {
+        type: "doughnut",
+        data: {
+          labels: kindLabels,
+          datasets: [{
+            data: kindLabels.map((k) => stats.kindCount[k]),
+            backgroundColor: kindLabels.map((k) => kindColors[k]),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 12 } } },
+          cutout: "58%"
+        }
+      });
+
+      const costKeys = Object.keys(stats.costCount).sort((a, b) => {
+        if (a === "?") return 1;
+        if (b === "?") return -1;
+        return Number(a) - Number(b);
+      });
+      charts.cost = new Chart(el("chartCost"), {
+        type: "bar",
+        data: {
+          labels: costKeys.map((k) => "C" + k),
+          datasets: [{
+            data: costKeys.map((k) => stats.costCount[k]),
+            backgroundColor: "#38bdf8",
+            borderRadius: 6,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+
+      const trigKeys = Object.keys(stats.triggerCount).sort();
+      charts.trigger = new Chart(el("chartTrigger"), {
+        type: "bar",
+        data: {
+          labels: trigKeys.map((k) => TRIGGER_LABEL[k] || ("T" + k)),
+          datasets: [{
+            data: trigKeys.map((k) => stats.triggerCount[k]),
+            backgroundColor: "#a78bfa",
+            borderRadius: 6,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderRules(stats) {
+      const items = [
+        {
+          label: "總張數",
+          value: stats.total + " / 50",
+          detail: stats.total === 50 ? "符合構築" : (stats.total < 50 ? "少 " + (50 - stats.total) + " 張" : "多 " + (stats.total - 50) + " 張"),
+          state: stats.total === 50 ? "pass" : "fail"
+        },
+        {
+          label: "Climax",
+          value: stats.cx + " / 8",
+          detail: stats.cx === 8 ? "CX 張數正確" : "標準構築應為正好 8 張",
+          state: stats.cx === 8 ? "pass" : "fail"
+        },
+        {
+          label: "同名上限",
+          value: stats.overName.length ? stats.overName.length + " 種超標" : "全部 ≤ 4",
+          detail: stats.overName.length
+            ? stats.overName.slice(0, 3).map((x) => x.name + "×" + x.qty).join("、")
+            : "同名卡未超過 4 張",
+          state: stats.overName.length ? "fail" : "pass"
+        }
+      ];
+      el("ruleGrid").innerHTML = items.map((it) =>
+        '<div class="rule-chip ' + it.state + '">' +
+          '<div class="label">' + it.label + '</div>' +
+          '<div class="value">' + it.value + '</div>' +
+          '<div class="detail">' + it.detail + '</div>' +
+        '</div>'
+      ).join("");
+    }
+
+    function inGuide(n, range) {
+      return n >= range[0] && n <= range[1];
+    }
+
+    function renderRatio(stats) {
+      const rows = [
+        { tag: "Level 0", num: stats.levelCount[0], guide: "建議 14–18", ok: inGuide(stats.levelCount[0], GUIDE.level0) },
+        { tag: "Level 1", num: stats.levelCount[1], guide: "建議 10–14", ok: inGuide(stats.levelCount[1], GUIDE.level1) },
+        { tag: "Level 2", num: stats.levelCount[2], guide: "建議 2–8", ok: inGuide(stats.levelCount[2], GUIDE.level2) },
+        { tag: "Level 3", num: stats.levelCount[3], guide: "建議 8–10", ok: inGuide(stats.levelCount[3], GUIDE.level3) },
+        { tag: "CX", num: stats.cx, guide: "固定 8", ok: stats.cx === 8 }
+      ];
+      el("ratioBox").innerHTML = rows.map((r) =>
+        '<div class="ratio-row">' +
+          '<span class="tag">' + r.tag + '</span>' +
+          '<span class="num" style="color:' + (r.ok ? "var(--good)" : "var(--warn)") + '">' + r.num + "</span>" +
+          '<span class="guide">' + r.guide + "</span>" +
+        "</div>"
+      ).join("");
+    }
+
+    function renderOdds(cards, stats) {
+      const N = cards.length || 50;
+      const aggregated = aggregateByCard(cards);
+      const cxQty = stats.cx;
+      const chars = aggregated
+        .filter((c) => classifyKind(c) === "角色")
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 5);
+      const items = [
+        { name: "任意 Climax", meta: "牌組 CX ×" + cxQty, qty: cxQty }
+      ].concat(chars.map((c) => ({
+        name: c.name,
+        meta: (c.cardNo || "") + " · ×" + c.qty,
+        qty: c.qty
+      })));
+
+      // Level 0 presence
+      const lv0 = stats.levelCount[0];
+      items.splice(1, 0, { name: "任意 Level 0", meta: "Lv0 ×" + lv0, qty: lv0 });
+
+      el("oddsList").innerHTML = items.map((it) => {
+        const p = hyperAtLeastOne(it.qty, N, OPENING_HAND);
+        return '<div class="odds-item">' +
+          '<div><div class="name">' + escapeHtml(it.name) + '</div>' +
+          '<div class="meta">' + escapeHtml(it.meta) + "</div></div>" +
+          '<div class="pct">' + formatPct(p) + "</div></div>";
+      }).join("");
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function colorDot(color) {
+      const hex = COLOR_MAP[color] || "#64748b";
+      return '<span class="dot" style="background:' + hex + '"></span>' + escapeHtml(color || "—");
+    }
+
+    function renderTable(cards) {
+      const agg = aggregateByCard(cards);
+      el("deckMetaLabel").textContent = agg.length + " 種 · " + cards.length + " 張";
+      el("deckTableBody").innerHTML = agg.map((c) => {
+        const row = priceMap && c.cardNo ? priceMap[c.cardNo] : null;
+        const price = row && typeof row.latestPrice === "number"
+          ? "¥" + row.latestPrice.toLocaleString("zh-TW")
+          : "—";
+        const img = c.imageUrl
+          ? '<img class="thumb" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" />'
+          : "";
+        return "<tr>" +
+          "<td>" + img + "</td>" +
+          '<td class="mono">' + escapeHtml(c.cardNo || "—") + "</td>" +
+          "<td>" + escapeHtml(c.name || "—") + "</td>" +
+          "<td>" + c.qty + "</td>" +
+          "<td>" + (c.level != null && !isNaN(c.level) ? c.level : "—") + "</td>" +
+          "<td>" + (c.cost != null && !isNaN(c.cost) ? c.cost : "—") + "</td>" +
+          "<td>" + colorDot(c.color) + "</td>" +
+          "<td>" + escapeHtml(classifyKind(c)) + "</td>" +
+          '<td class="mono">' + price + "</td>" +
+          "</tr>";
+      }).join("");
+    }
+
+    function renderPrice(cards) {
+      if (!priceMap) {
+        el("priceMain").textContent = "—";
+        el("priceMeta").textContent = priceMeta || "尚無行情資料";
+        return;
+      }
+      let total = 0;
+      let missing = 0;
+      const byNo = new Map();
+      for (const c of cards) {
+        if (!c.cardNo) { missing += 1; continue; }
+        byNo.set(c.cardNo, (byNo.get(c.cardNo) || 0) + 1);
+      }
+      for (const [cn, qty] of byNo) {
+        const row = priceMap[cn];
+        if (row && typeof row.latestPrice === "number") total += row.latestPrice * qty;
+        else missing += qty;
+      }
+      el("priceMain").textContent = "¥" + total.toLocaleString("zh-TW");
+      const bits = [];
+      if (priceMeta) bits.push(priceMeta);
+      if (missing) bits.push("無報價 " + missing + " 張");
+      el("priceMeta").textContent = bits.join(" · ") || "遊遊亭參考加總";
+    }
+
+    async function runAnalysis(cards, label) {
+      if (!cards.length) throw new Error("牌組為空。");
+      setStatus("讀取卡牌屬性中…", "");
+      const enriched = await enrichCardsSync(cards);
+      deckEntries = enriched;
+      const stats = analyze(enriched);
+      el("emptyState").style.display = "none";
+      el("results").classList.add("is-visible");
+      renderRules(stats);
+      renderCharts(stats);
+      renderRatio(stats);
+      renderOdds(enriched, stats);
+      renderPrice(enriched);
+      renderTable(enriched);
+      setStatus((label || "分析完成") + " · " + enriched.length + " 張", "ok");
+      el("results").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    /* ——— Price feed ——— */
+    function formatYmd(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return y + m + day;
+    }
+
+    function extractPriceMap(j) {
+      if (!j || typeof j !== "object") return null;
+      if (j.cards && typeof j.cards === "object") return j.cards;
+      const out = {};
+      for (const k of Object.keys(j)) {
+        if (LATEST_META_KEYS.has(k)) continue;
+        const v = j[k];
+        if (!v || typeof v !== "object") continue;
+        const cn = normalizeCardNo(v.cardNo != null ? v.cardNo : k);
+        if (!cn) continue;
+        out[cn] = v;
+      }
+      return Object.keys(out).length ? out : null;
+    }
+
+    async function loadPrices() {
+      const today = new Date();
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(today.getTime() - i * 86400000);
+        const url = LATEST_BY_CARD_BASE + formatYmd(d) + ".json";
+        try {
+          const r = await fetch(url);
+          if (!r.ok) continue;
+          const j = await r.json();
+          const map = extractPriceMap(j);
+          if (!map) continue;
+          priceMap = map;
+          let dateLabel = "";
+          for (const k of Object.keys(map)) {
+            if (map[k] && map[k].latestDate) { dateLabel = String(map[k].latestDate); break; }
+          }
+          priceMeta = "行情日 " + (dateLabel || formatYmd(d));
+          if (deckEntries.length) {
+            renderPrice(deckEntries);
+            renderTable(deckEntries);
+          } else {
+            el("priceMeta").textContent = priceMeta + " · 待命";
+          }
+          return;
+        } catch (e) { /* try older day */ }
+      }
+      priceMeta = "無法載入行情（需於 ws-cards.cloud 開啟，GCS CORS 僅允許正式網域）";
+      el("priceMeta").textContent = priceMeta;
+    }
+
+    /* ——— Actions ——— */
+    async function fetchDecklog() {
+      const code = el("deckCode").value.trim();
+      if (!code) {
+        setStatus("請先輸入 DeckLog 代碼。", "err");
+        return;
+      }
+      const btn = el("btnFetch");
+      btn.disabled = true;
+      setStatus("查詢 DeckLog 中…", "");
+      try {
+        const resp = await fetch(DECKLOG_PROXY + encodeURIComponent(code));
+        if (!resp.ok) throw new Error("伺服器回應 " + resp.status);
+        const json = await resp.json();
+        if (json.cardList && Object.keys(json.cardList).length) {
+          el("deckPaste").value = JSON.stringify(json, null, 2);
+          const count = Object.values(json.cardList).reduce((s, v) => s + (parseInt(v, 10) || 0), 0);
+          setStatus("已取得「" + (json.deckCode || code) + "」共 " + count + " 張，按開始分析。", "ok");
+        } else if (json.list || json.sub_list || json.p_list) {
+          el("deckPaste").value = JSON.stringify(json, null, 2);
+          setStatus("已取得 DeckLog 回應，按開始分析。", "ok");
+        } else {
+          el("deckPaste").value = JSON.stringify(json, null, 2);
+          setStatus("代理有回應但卡表為空，可改貼完整 DeckLog JSON，或使用示範牌組。", "err");
+        }
+      } catch (e) {
+        setStatus("查詢失敗：" + (e && e.message ? e.message : String(e)), "err");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function analyzeClick() {
+      const btn = el("btnAnalyze");
+      btn.disabled = true;
+      try {
+        const text = el("deckPaste").value.trim();
+        if (!text) {
+          setStatus("請先取得 DeckLog 或貼上牌表。", "err");
+          return;
+        }
+        const cards = resolveDeckCardsFromUserInput(text);
+        await runAnalysis(cards, "分析完成");
+      } catch (e) {
+        setStatus("分析失敗：" + (e && e.message ? e.message : String(e)), "err");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function loadSample() {
+      const rows = SAMPLE_DECK.map((r) => ({
+        cardNo: r.cardNo,
+        name: r.name,
+        qty: r.qty
+      }));
+      const text = rows.map((r) => r.qty + "|" + r.cardNo + "|" + r.name).join("\n");
+      el("deckPaste").value = text;
+      el("deckCode").value = "";
+      try {
+        await runAnalysis(expandEntries(rows), "示範牌組");
+      } catch (e) {
+        setStatus("示範載入失敗：" + (e && e.message ? e.message : String(e)), "err");
+      }
+    }
+
+    function clearAll() {
+      el("deckCode").value = "";
+      el("deckPaste").value = "";
+      deckEntries = [];
+      destroyCharts();
+      el("results").classList.remove("is-visible");
+      el("emptyState").style.display = "block";
+      setStatus("", "");
+    }
+
+    el("btnFetch").addEventListener("click", fetchDecklog);
+    el("btnAnalyze").addEventListener("click", analyzeClick);
+    el("btnSample").addEventListener("click", loadSample);
+    el("btnClear").addEventListener("click", clearAll);
+    el("deckCode").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); fetchDecklog(); }
+    });
+
+    loadPrices();
+  })();
+  </script>
+</body>
+</html>
