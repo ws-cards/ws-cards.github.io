@@ -13,9 +13,9 @@
       }
     })();
   </script>
-  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率與行情總額摘要。">
+  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率、洗牌／Mulligan 模擬與行情總額摘要。">
   <meta property="og:title" content="牌組分析｜WS-Cards 卡片雲">
-  <meta property="og:description" content="匯入 DeckLog 或貼上牌表，查看 Level 曲線、顏色／卡種結構、規則檢查與起手機率。">
+  <meta property="og:description" content="匯入 DeckLog 或貼上牌表，查看 Level 曲線、規則檢查、起手機率，並模擬洗牌與 Mulligan。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -210,6 +210,93 @@
     }
     [data-theme="dark"] .da-thumb { background: #111; }
     .da-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+    /* ——— Opening / Mulligan simulator ——— */
+    .da-sim-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.85rem;
+    }
+    .da-sim-stats {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-bottom: 0.85rem;
+      font-size: 0.85rem; color: var(--da-muted);
+    }
+    .da-sim-stats strong { color: var(--da-ink); font-weight: 700; }
+    .da-hand-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+    @media (max-width: 767px) {
+      .da-hand-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 420px) {
+      .da-hand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .da-hand-card {
+      appearance: none; border: 2px solid var(--da-border); border-radius: 10px;
+      background: var(--da-soft); padding: 0.4rem; cursor: pointer; text-align: left;
+      color: inherit; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      position: relative; width: 100%;
+    }
+    .da-hand-card:hover { border-color: var(--da-accent); transform: translateY(-2px); }
+    .da-hand-card.is-selected {
+      border-color: var(--da-warn);
+      box-shadow: 0 0 0 3px rgba(176, 124, 40, 0.22);
+    }
+    [data-theme="dark"] .da-hand-card.is-selected {
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22);
+    }
+    .da-hand-card.is-disabled { cursor: default; opacity: 0.92; }
+    .da-hand-card.is-disabled:hover { transform: none; border-color: var(--da-border); }
+    .da-hand-card .art {
+      width: 100%; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 6px;
+      display: block; background: #ddd; border: 1px solid var(--da-border);
+    }
+    [data-theme="dark"] .da-hand-card .art { background: #111; }
+    .da-hand-card .cap {
+      margin-top: 0.4rem; font-size: 0.72rem; line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .da-hand-card .badge-kind {
+      position: absolute; top: 0.55rem; left: 0.55rem;
+      font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 4px;
+      background: rgba(0,0,0,0.65); color: #fff; letter-spacing: 0.02em;
+    }
+    .da-hand-card .check {
+      position: absolute; top: 0.45rem; right: 0.45rem; width: 1.15rem; height: 1.15rem;
+      border-radius: 50%; background: var(--da-warn); color: #1a1408;
+      display: none; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;
+    }
+    .da-hand-card.is-selected .check { display: inline-flex; }
+    .da-sim-log {
+      margin-top: 0.75rem; font-size: 0.85rem; color: var(--da-muted); min-height: 1.3em;
+    }
+    .da-sim-waiting {
+      margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid var(--da-border);
+    }
+    .da-waiting-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+    .da-waiting-chip {
+      font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--da-border); background: var(--da-soft); color: var(--da-muted);
+      max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .da-mc-grid {
+      display: grid; grid-template-columns: 1fr 1.4fr; gap: 0.75rem; margin-top: 0.75rem;
+    }
+    @media (max-width: 767px) { .da-mc-grid { grid-template-columns: 1fr; } }
+    .da-mc-controls label { display: block; font-size: 0.8rem; color: var(--da-muted); margin-bottom: 0.25rem; }
+    .da-mc-controls .form-control, .da-mc-controls select.form-control {
+      max-width: 100%; margin-bottom: 0.65rem;
+    }
+    .da-mc-result .da-odds-item .pct { font-size: 1rem; }
+    .da-sim-phase {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.78rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px;
+      border: 1px solid var(--da-border); background: var(--da-soft); color: var(--da-muted);
+    }
+    .da-sim-phase.is-ready { color: var(--da-accent); border-color: rgba(43, 108, 176, 0.35); }
+    .da-sim-phase.is-mull { color: var(--da-warn); border-color: rgba(176, 124, 40, 0.4); }
+    .da-sim-phase.is-done { color: var(--da-good); border-color: rgba(86, 138, 109, 0.45); }
+
     [data-theme="dark"] .site-footer,
     [data-theme="dark"] .site-footer-inner,
     [data-theme="dark"] .site-footer-inner a,
@@ -310,7 +397,7 @@
         </div>
 
         <div class="row" id="emptyState">
-          <div class="col-lg-12"><div class="da-empty">匯入牌組後，這裡會展開規則檢查、曲線圖與起手機率。</div></div>
+          <div class="col-lg-12"><div class="da-empty">匯入牌組後，這裡會展開規則檢查、曲線圖、起手機率與洗牌／Mulligan 模擬。</div></div>
         </div>
 
         <div id="results" style="display:none;" aria-live="polite">
@@ -349,6 +436,59 @@
                   <div class="da-price-main" id="priceMain">—</div>
                   <div class="da-price-meta" id="priceMeta">載入遊遊亭行情中…</div>
                   <div class="da-actions"><a class="btn btn-outline-secondary" id="linkDeckPrice" href="deckPrice.html">開牌組總額工具</a></div>
+                </div>
+              </div>
+            </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header">
+              <h5 class="card-title">
+                <i class="fas fa-random mr-2"></i>洗牌 · 起手 · Mulligan 模擬
+                <small class="text-muted">開局 5 張 → 可選任意張進等待室再補抽</small>
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="da-sim-toolbar">
+                <button type="button" class="btn btn-primary" id="btnSimDeal"><i class="fas fa-random mr-1"></i>洗牌並起手</button>
+                <button type="button" class="btn btn-warning" id="btnSimMulligan" disabled><i class="fas fa-sync-alt mr-1"></i>確認 Mulligan</button>
+                <button type="button" class="btn btn-outline-secondary" id="btnSimKeep" disabled>保留這手（結束）</button>
+                <button type="button" class="btn btn-outline-secondary" id="btnSimReset" disabled>再來一次</button>
+                <span class="da-sim-phase" id="simPhase">尚未開始</span>
+              </div>
+              <div class="da-sim-stats" id="simStats" aria-live="polite">
+                <span>牌庫 <strong id="simDeckCount">—</strong></span>
+                <span>手牌 <strong id="simHandCount">—</strong></span>
+                <span>等待室 <strong id="simWaitingCount">—</strong></span>
+                <span>已選重抽 <strong id="simSelectedCount">0</strong></span>
+              </div>
+              <p class="da-hint mb-2" id="simHint">分析牌組後按「洗牌並起手」。點選手牌標記要丟進等待室的卡，再按確認 Mulligan（規則：丟幾張補幾張，僅可一次）。</p>
+              <div class="da-hand-grid" id="simHandGrid" aria-label="起手手牌"></div>
+              <div class="da-sim-log" id="simLog" role="status"></div>
+              <div class="da-sim-waiting" id="simWaitingWrap" style="display:none;">
+                <h3 style="font-size:0.9rem;font-weight:700;margin:0;">Mulligan 丟棄（等待室）</h3>
+                <div class="da-waiting-chips" id="simWaitingChips"></div>
+              </div>
+
+              <hr style="border-color:var(--da-border);margin:1.25rem 0 1rem;">
+              <h3 style="font-size:0.95rem;font-weight:700;margin:0 0 0.35rem;">大量模擬</h3>
+              <p class="da-hint mb-0">用自動策略跑多局，估算起手／mulligan 後達標率（不取代手動體驗）。</p>
+              <div class="da-mc-grid">
+                <div class="da-mc-controls da-panel">
+                  <label for="mcTrials">模擬局數</label>
+                  <input id="mcTrials" class="form-control" type="number" min="100" max="20000" step="100" value="2000">
+                  <label for="mcStrategy">自動 Mulligan 策略</label>
+                  <select id="mcStrategy" class="form-control">
+                    <option value="none">不重抽（只看起手）</option>
+                    <option value="dump_cx" selected>丟掉手牌中所有 CX</option>
+                    <option value="keep_lv0">若無 Lv0 角色則全換；否則只丟 CX</option>
+                    <option value="dump_non_lv0">保留 Lv0 角色，其餘全換</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-primary btn-block" id="btnMcRun"><i class="fas fa-flask mr-1"></i>執行大量模擬</button>
+                </div>
+                <div class="da-mc-result da-panel">
+                  <h3>結果摘要</h3>
+                  <div id="mcResults"><p class="da-hint mb-0">尚無結果。</p></div>
                 </div>
               </div>
             </div>
@@ -1123,6 +1263,332 @@
       el("priceMeta").textContent = bits.join(" · ") || "遊遊亭參考加總";
     }
 
+    /* ——— Shuffle / Opening / Mulligan simulator ——— */
+    let simUid = 0;
+    const simState = {
+      deck: [],
+      hand: [],
+      waiting: [],
+      selected: new Set(),
+      phase: "idle", // idle | opening | done
+      log: ""
+    };
+
+    function cloneSimCard(c) {
+      simUid += 1;
+      return {
+        simId: "s" + simUid,
+        cardNo: c.cardNo || "",
+        name: c.name || c.cardNo || "未命名",
+        kindLabel: c.kindLabel || "",
+        color: c.color || "",
+        level: c.level,
+        cost: c.cost,
+        trigger: c.trigger,
+        imageUrl: c.imageUrl || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : ""),
+        kind: classifyKind(c)
+      };
+    }
+
+    function fisherYates(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
+
+    function buildShuffledDeck(cards) {
+      return fisherYates(cards.map(cloneSimCard));
+    }
+
+    function drawFromDeck(n) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        if (!simState.deck.length) break;
+        out.push(simState.deck.pop());
+      }
+      return out;
+    }
+
+    function setSimPhase(phase, label) {
+      simState.phase = phase;
+      const node = el("simPhase");
+      if (!node) return;
+      node.textContent = label;
+      node.className = "da-sim-phase" + (
+        phase === "opening" ? " is-mull" :
+        phase === "done" ? " is-done" :
+        phase === "idle" && label !== "尚未開始" ? " is-ready" : ""
+      );
+    }
+
+    function updateSimButtons() {
+      const hasDeck = deckEntries.length > 0;
+      const opening = simState.phase === "opening";
+      const done = simState.phase === "done";
+      el("btnSimDeal").disabled = !hasDeck;
+      el("btnSimMulligan").disabled = !opening || simState.selected.size === 0;
+      el("btnSimKeep").disabled = !opening;
+      el("btnSimReset").disabled = !(opening || done);
+      el("btnMcRun").disabled = !hasDeck;
+      const n = simState.selected.size;
+      el("btnSimMulligan").innerHTML = n
+        ? ('<i class="fas fa-sync-alt mr-1"></i>確認 Mulligan（' + n + " 張）")
+        : '<i class="fas fa-sync-alt mr-1"></i>確認 Mulligan';
+    }
+
+    function renderSimStats() {
+      el("simDeckCount").textContent = String(simState.deck.length || (simState.phase === "idle" ? "—" : 0));
+      el("simHandCount").textContent = String(simState.hand.length || (simState.phase === "idle" ? "—" : 0));
+      el("simWaitingCount").textContent = String(simState.waiting.length || (simState.phase === "idle" ? "—" : 0));
+      el("simSelectedCount").textContent = String(simState.selected.size);
+    }
+
+    function handCardHtml(c, selectable) {
+      const kind = c.kind || classifyKind(c);
+      const img = c.imageUrl
+        ? '<img class="art" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">'
+        : '<div class="art" aria-hidden="true"></div>';
+      const lv = (kind !== "CX" && c.level != null && !isNaN(c.level)) ? (" · Lv" + c.level) : "";
+      const selected = simState.selected.has(c.simId);
+      return '<button type="button" class="da-hand-card' +
+        (selected ? " is-selected" : "") +
+        (selectable ? "" : " is-disabled") +
+        '" data-sim-id="' + escapeHtml(c.simId) + '"' +
+        (selectable ? "" : " disabled") +
+        ' title="' + escapeHtml(c.name) + (c.cardNo ? (" / " + c.cardNo) : "") + '">' +
+        '<span class="badge-kind">' + escapeHtml(kind) + lv + "</span>" +
+        '<span class="check" aria-hidden="true">✓</span>' +
+        img +
+        '<div class="cap">' + escapeHtml(c.name) +
+        (c.cardNo ? ('<br><span class="da-mono">' + escapeHtml(c.cardNo) + "</span>") : "") +
+        "</div></button>";
+    }
+
+    function renderSimHand() {
+      const grid = el("simHandGrid");
+      if (!simState.hand.length) {
+        grid.innerHTML = '<p class="da-hint mb-0" style="grid-column:1/-1">尚未抽起手。</p>';
+        return;
+      }
+      const selectable = simState.phase === "opening";
+      grid.innerHTML = simState.hand.map((c) => handCardHtml(c, selectable)).join("");
+    }
+
+    function renderSimWaiting() {
+      const wrap = el("simWaitingWrap");
+      const chips = el("simWaitingChips");
+      if (!simState.waiting.length) {
+        wrap.style.display = "none";
+        chips.innerHTML = "";
+        return;
+      }
+      wrap.style.display = "block";
+      chips.innerHTML = simState.waiting.map((c) =>
+        '<span class="da-waiting-chip" title="' + escapeHtml(c.cardNo || "") + '">' +
+        escapeHtml(c.name) + "</span>"
+      ).join("");
+    }
+
+    function renderSimAll() {
+      renderSimStats();
+      renderSimHand();
+      renderSimWaiting();
+      updateSimButtons();
+      el("simLog").textContent = simState.log || "";
+    }
+
+    function resetSimUi() {
+      simState.deck = [];
+      simState.hand = [];
+      simState.waiting = [];
+      simState.selected = new Set();
+      simState.phase = "idle";
+      simState.log = "";
+      setSimPhase("idle", deckEntries.length ? "可開始模擬" : "尚未開始");
+      el("simHint").textContent = deckEntries.length
+        ? "點「洗牌並起手」抽 5 張。再點選手牌標記要丟進等待室的卡（可 0～5 張），確認後補抽相同張數。"
+        : "分析牌組後按「洗牌並起手」。點選手牌標記要丟進等待室的卡，再按確認 Mulligan（規則：丟幾張補幾張，僅可一次）。";
+      el("mcResults").innerHTML = '<p class="da-hint mb-0">尚無結果。</p>';
+      renderSimAll();
+    }
+
+    function simDealOpening() {
+      if (!deckEntries.length) {
+        setStatus("請先分析牌組。", "err");
+        return;
+      }
+      simState.deck = buildShuffledDeck(deckEntries);
+      simState.hand = drawFromDeck(OPENING_HAND);
+      simState.waiting = [];
+      simState.selected = new Set();
+      simState.phase = "opening";
+      simState.log = "已洗牌並抽出起手 " + simState.hand.length + " 張。點選要重抽的卡，或按「保留這手」。";
+      setSimPhase("opening", "可 Mulligan");
+      renderSimAll();
+    }
+
+    function toggleSimSelect(simId) {
+      if (simState.phase !== "opening") return;
+      if (simState.selected.has(simId)) simState.selected.delete(simId);
+      else simState.selected.add(simId);
+      renderSimAll();
+    }
+
+    function applySimMulligan() {
+      if (simState.phase !== "opening") return;
+      const ids = Array.from(simState.selected);
+      if (!ids.length) return;
+      if (simState.deck.length < ids.length) {
+        simState.log = "牌庫剩餘不足，無法重抽 " + ids.length + " 張（剩 " + simState.deck.length + "）。";
+        renderSimAll();
+        return;
+      }
+      const keep = [];
+      const dump = [];
+      for (const c of simState.hand) {
+        if (simState.selected.has(c.simId)) dump.push(c);
+        else keep.push(c);
+      }
+      simState.waiting = simState.waiting.concat(dump);
+      const drawn = drawFromDeck(dump.length);
+      simState.hand = keep.concat(drawn);
+      simState.selected = new Set();
+      simState.phase = "done";
+      simState.log = "Mulligan 完成：丟棄 " + dump.length + " 張至等待室，補抽 " + drawn.length + " 張。";
+      setSimPhase("done", "Mulligan 完成");
+      renderSimAll();
+    }
+
+    function keepSimHand() {
+      if (simState.phase !== "opening") return;
+      simState.selected = new Set();
+      simState.phase = "done";
+      simState.log = "保留起手，未執行 Mulligan。";
+      setSimPhase("done", "保留起手");
+      renderSimAll();
+    }
+
+    /* Monte Carlo helpers */
+    function handHasKind(hand, kind) {
+      return hand.some((c) => (c.kind || classifyKind(c)) === kind);
+    }
+
+    function handHasLv0Char(hand) {
+      return hand.some((c) => (c.kind || classifyKind(c)) === "角色" && Number(c.level) === 0);
+    }
+
+    function countInHand(hand, pred) {
+      let n = 0;
+      for (const c of hand) if (pred(c)) n += 1;
+      return n;
+    }
+
+    function autoMulliganIds(hand, strategy) {
+      if (strategy === "none") return [];
+      if (strategy === "dump_cx") {
+        return hand.filter((c) => (c.kind || classifyKind(c)) === "CX").map((c) => c.simId);
+      }
+      if (strategy === "keep_lv0") {
+        if (!handHasLv0Char(hand)) return hand.map((c) => c.simId);
+        return hand.filter((c) => (c.kind || classifyKind(c)) === "CX").map((c) => c.simId);
+      }
+      if (strategy === "dump_non_lv0") {
+        return hand.filter((c) => !((c.kind || classifyKind(c)) === "角色" && Number(c.level) === 0))
+          .map((c) => c.simId);
+      }
+      return [];
+    }
+
+    function simulateOneGame(cards, strategy) {
+      let deck = buildShuffledDeck(cards);
+      let hand = [];
+      for (let i = 0; i < OPENING_HAND && deck.length; i++) hand.push(deck.pop());
+      const opening = {
+        hasCx: handHasKind(hand, "CX"),
+        hasLv0: handHasLv0Char(hand),
+        cxCount: countInHand(hand, (c) => (c.kind || classifyKind(c)) === "CX"),
+        lv0Count: countInHand(hand, (c) => (c.kind || classifyKind(c)) === "角色" && Number(c.level) === 0)
+      };
+      const dumpIds = new Set(autoMulliganIds(hand, strategy));
+      if (dumpIds.size && deck.length >= dumpIds.size) {
+        const keep = [];
+        let dumpN = 0;
+        for (const c of hand) {
+          if (dumpIds.has(c.simId)) dumpN += 1;
+          else keep.push(c);
+        }
+        for (let i = 0; i < dumpN && deck.length; i++) keep.push(deck.pop());
+        hand = keep;
+      }
+      return {
+        opening: opening,
+        final: {
+          hasCx: handHasKind(hand, "CX"),
+          hasLv0: handHasLv0Char(hand),
+          cxCount: countInHand(hand, (c) => (c.kind || classifyKind(c)) === "CX"),
+          lv0Count: countInHand(hand, (c) => (c.kind || classifyKind(c)) === "角色" && Number(c.level) === 0)
+        },
+        dumped: dumpIds.size
+      };
+    }
+
+    function runMonteCarlo() {
+      if (!deckEntries.length) {
+        setStatus("請先分析牌組。", "err");
+        return;
+      }
+      let trials = parseInt(el("mcTrials").value, 10);
+      if (!isFinite(trials)) trials = 2000;
+      trials = Math.max(100, Math.min(20000, trials));
+      el("mcTrials").value = String(trials);
+      const strategy = el("mcStrategy").value;
+      const btn = el("btnMcRun");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>模擬中…';
+
+      // Yield to UI then run synchronously (fast enough for ≤20k)
+      setTimeout(function () {
+        let openCx = 0, openLv0 = 0, openBoth = 0, openCxFree = 0;
+        let finCx = 0, finLv0 = 0, finBoth = 0, finCxFree = 0;
+        let dumpSum = 0;
+        for (let i = 0; i < trials; i++) {
+          const g = simulateOneGame(deckEntries, strategy);
+          if (g.opening.hasCx) openCx += 1;
+          if (g.opening.hasLv0) openLv0 += 1;
+          if (g.opening.hasCx && g.opening.hasLv0) openBoth += 1;
+          if (!g.opening.hasCx) openCxFree += 1;
+          if (g.final.hasCx) finCx += 1;
+          if (g.final.hasLv0) finLv0 += 1;
+          if (g.final.hasCx && g.final.hasLv0) finBoth += 1;
+          if (!g.final.hasCx) finCxFree += 1;
+          dumpSum += g.dumped;
+        }
+        const pct = (n) => formatPct(n / trials);
+        const rows = [
+          { name: "起手含至少 1 張 CX", open: openCx, fin: finCx },
+          { name: "起手無 CX（乾淨手）", open: openCxFree, fin: finCxFree },
+          { name: "起手含至少 1 張 Lv0 角色", open: openLv0, fin: finLv0 },
+          { name: "同時有 CX 與 Lv0", open: openBoth, fin: finBoth }
+        ];
+        el("mcResults").innerHTML =
+          '<p class="da-hint" style="margin-bottom:0.5rem">局數 ' + trials.toLocaleString("zh-TW") +
+          " · 平均重抽 " + (Math.round((dumpSum / trials) * 10) / 10).toFixed(1) + " 張</p>" +
+          rows.map((r) =>
+            '<div class="da-odds-item">' +
+              '<div><div class="name">' + escapeHtml(r.name) + "</div>" +
+              '<div class="meta">起手 ' + pct(r.open) + " → Mulligan 後 " + pct(r.fin) + "</div></div>" +
+              '<div class="pct">' + pct(r.fin) + "</div></div>"
+          ).join("");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flask mr-1"></i>執行大量模擬';
+        updateSimButtons();
+      }, 20);
+    }
+
     async function runAnalysis(cards, label) {
       if (!cards.length) throw new Error("牌組為空。");
       setStatus("讀取卡牌屬性中…", "");
@@ -1137,6 +1603,7 @@
       renderOdds(enriched, stats);
       renderPrice(enriched);
       renderTable(enriched);
+      resetSimUi();
       setStatus((label || "分析完成") + " · " + enriched.length + " 張", "ok");
       el("results").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -1268,6 +1735,7 @@
       destroyCharts();
       el("results").style.display = "none";
       el("emptyState").style.display = "block";
+      resetSimUi();
       setStatus("", "");
     }
 
@@ -1278,6 +1746,20 @@
     el("deckCode").addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); fetchDecklog(); }
     });
+
+    el("btnSimDeal").addEventListener("click", simDealOpening);
+    el("btnSimMulligan").addEventListener("click", applySimMulligan);
+    el("btnSimKeep").addEventListener("click", keepSimHand);
+    el("btnSimReset").addEventListener("click", simDealOpening);
+    el("btnMcRun").addEventListener("click", runMonteCarlo);
+    el("simHandGrid").addEventListener("click", function (e) {
+      const btn = e.target.closest(".da-hand-card");
+      if (!btn || btn.disabled) return;
+      const id = btn.getAttribute("data-sim-id");
+      if (id) toggleSimSelect(id);
+    });
+
+    resetSimUi();
 
     // 主題切換後重繪圖表軸／圖例顏色
     if (window.MutationObserver) {
