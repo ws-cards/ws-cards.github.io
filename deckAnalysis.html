@@ -965,26 +965,37 @@
       };
     }
 
+    function indexSetPayload(data) {
+      const byId = new Map();
+      if (!data || typeof data !== "object") return byId;
+      if (data.cards && Array.isArray(data.cards)) {
+        for (const c of data.cards) {
+          if (c && c.id) byId.set(c.id, c);
+          else if (c && c.cardno) byId.set(c.cardno, c);
+        }
+      } else {
+        for (const k of Object.keys(data)) {
+          if (k === "metadata") continue;
+          byId.set(k, data[k]);
+        }
+      }
+      return byId;
+    }
+
+    async function fetchSetByIdMap(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return indexSetPayload(await r.json());
+    }
+
     async function loadSetJson(titleCode) {
       if (!titleCode) return null;
       if (setCache.has(titleCode)) return setCache.get(titleCode);
-      const url = CONTENT_WS_BASE + encodeURIComponent(titleCode) + ".json";
-      const p = fetch(url).then(async (r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        const data = await r.json();
-        const byId = new Map();
-        if (data.cards && Array.isArray(data.cards)) {
-          for (const c of data.cards) {
-            if (c && c.id) byId.set(c.id, c);
-          }
-        } else {
-          for (const k of Object.keys(data)) {
-            if (k === "metadata") continue;
-            byId.set(k, data[k]);
-          }
-        }
-        return byId;
-      }).catch(() => null);
+      const remote = CONTENT_WS_BASE + encodeURIComponent(titleCode) + ".json";
+      const local = "./json/" + encodeURIComponent(titleCode) + ".json";
+      const p = fetchSetByIdMap(remote)
+        .catch(() => fetchSetByIdMap(local))
+        .catch(() => null);
       setCache.set(titleCode, p);
       return p;
     }
@@ -1443,7 +1454,7 @@
           return;
         } catch (e) { /* try older day */ }
       }
-      priceMeta = "無法載入行情檔";
+      priceMeta = "無法載入行情（需於 ws-cards.cloud 開啟，GCS CORS 僅允許正式網域）";
       el("priceMeta").textContent = priceMeta;
     }
 
