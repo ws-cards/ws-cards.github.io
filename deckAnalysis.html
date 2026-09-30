@@ -1,720 +1,346 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>牌組分析 | 卡片雲 WS-Cards</title>
-  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率與行情總額摘要。" />
-  <meta property="og:site_name" content="卡片雲" />
-  <meta property="og:title" content="牌組分析 | 卡片雲 WS-Cards" />
-  <meta property="og:description" content="把牌組拆成曲線與機率，一眼看出結構是否站得住。" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://ws-cards.cloud/deckAnalysis.html" />
-  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png" />
-  <link rel="icon" href="favicon.ico" sizes="any" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0b1017;
-      --bg-elev: #121923;
-      --bg-panel: #161f2c;
-      --ink: #e9eef5;
-      --muted: #8b9aab;
-      --faint: #5c6b7c;
-      --line: rgba(233, 238, 245, 0.1);
-      --line-strong: rgba(233, 238, 245, 0.22);
-      --scan: #2dd4bf;
-      --scan-dim: rgba(45, 212, 191, 0.14);
-      --warn: #fbbf24;
-      --bad: #fb7185;
-      --good: #34d399;
-      --yellow: #eab308;
-      --green: #22c55e;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --brand: #8cc351;
-      --radius: 14px;
-      --font-display: "Syne", "Noto Sans TC", sans-serif;
-      --font-body: "DM Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-      --font-mono: "JetBrains Mono", ui-monospace, monospace;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-      --nav-h: 64px;
-    }
-
-    html { scroll-behavior: smooth; }
-    body {
-      min-height: 100vh;
-      font-family: var(--font-body);
-      color: var(--ink);
-      background:
-        radial-gradient(1200px 700px at 8% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
-        radial-gradient(900px 600px at 100% 0%, rgba(59, 130, 246, 0.12), transparent 50%),
-        linear-gradient(180deg, #0b1017 0%, #0a0e14 100%);
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.35;
-      background-image:
-        linear-gradient(rgba(233, 238, 245, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(233, 238, 245, 0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
       }
-    }
+    })();
+  </script>
+  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率與行情總額摘要。">
+  <meta property="og:title" content="牌組分析｜WS-Cards 卡片雲">
+  <meta property="og:description" content="匯入 DeckLog 或貼上牌表，查看 Level 曲線、顏色／卡種結構、規則檢查與起手機率。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/deckAnalysis.html">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <title>牌組分析｜WS-Cards 卡片雲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
 
-    :focus-visible {
-      outline: 2px solid var(--scan);
-      outline-offset: 3px;
+    body, body button, body input, body select, body textarea, body p, body h3, body h5 {
+      font-family: 'Noto Sans TC', sans-serif;
     }
+    :root {
+      --da-good: #568a6d;
+      --da-warn: #b07c28;
+      --da-bad: #b45d52;
+      --da-accent: #2b6cb0;
+      --da-muted: #718096;
+      --da-border: rgba(38, 50, 71, 0.12);
+      --da-panel: #ffffff;
+      --da-soft: rgba(38, 50, 71, 0.04);
+    }
+    [data-theme="dark"] {
+      --da-good: #34d399;
+      --da-warn: #fbbf24;
+      --da-bad: #fb7185;
+      --da-accent: #63b3ed;
+      --da-muted: #a8a29e;
+      --da-border: rgba(255, 255, 255, 0.12);
+      --da-panel: #1c1b19;
+      --da-soft: rgba(255, 255, 255, 0.04);
+    }
+    .da-hint { margin-top: 0.5rem; color: var(--da-muted); font-size: 0.85rem; }
+    .da-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; }
+    .da-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .da-status { min-height: 1.4em; margin-top: 0.75rem; font-size: 0.88rem; color: var(--da-muted); }
+    .da-status.is-ok { color: var(--da-good); font-weight: 600; }
+    .da-status.is-err { color: var(--da-bad); font-weight: 600; }
+    .da-empty {
+      border: 1px dashed var(--da-border); border-radius: 12px; padding: 1.5rem;
+      text-align: center; color: var(--da-muted); background: var(--da-soft);
+    }
+    .da-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+    @media (max-width: 767px) { .da-rules { grid-template-columns: 1fr; } }
+    .da-rule {
+      border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
+    }
+    .da-rule .label { font-size: 0.8rem; color: var(--da-muted); margin-bottom: 0.25rem; }
+    .da-rule .value { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .da-rule .detail { margin-top: 0.25rem; font-size: 0.8rem; color: var(--da-muted); }
+    .da-rule.pass { border-color: rgba(86, 138, 109, 0.45); }
+    .da-rule.pass .value { color: var(--da-good); }
+    .da-rule.fail { border-color: rgba(180, 93, 82, 0.45); }
+    .da-rule.fail .value { color: var(--da-bad); }
+    .da-charts { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 991px) { .da-charts { grid-template-columns: 1fr; } }
+    .da-chart-panel {
+      border: 1px solid var(--da-border); border-radius: 12px; padding: 0.9rem 1rem 0.6rem;
+      background: var(--da-panel); min-height: 250px;
+    }
+    .da-chart-panel h3, .da-panel h3 {
+      font-size: 0.9rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--text-primary, #2d3748);
+    }
+    [data-theme="dark"] .da-chart-panel h3,
+    [data-theme="dark"] .da-panel h3 { color: #e9e7e1; }
+    .da-chart-wrap { position: relative; height: 200px; }
+    .da-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 767px) { .da-meta { grid-template-columns: 1fr; } }
+    .da-panel {
+      border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
+    }
+    .da-odds-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.65rem 0;
+      border-bottom: 1px solid var(--da-border); align-items: center;
+    }
+    .da-odds-item:last-child { border-bottom: none; }
+    .da-odds-item .name { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-odds-item .meta { font-size: 0.75rem; color: var(--da-muted); }
+    .da-odds-item .pct { font-weight: 800; font-size: 1.1rem; color: var(--da-accent); }
+    .da-price-main { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.03em; color: #8cc351; }
+    .da-price-meta { margin-top: 0.35rem; color: var(--da-muted); font-size: 0.85rem; }
+    .da-ratio-row {
+      display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0;
+      border-bottom: 1px solid var(--da-border); font-size: 0.9rem;
+    }
+    .da-ratio-row:last-child { border-bottom: none; }
+    .da-ratio-row .tag, .da-ratio-row .guide { color: var(--da-muted); }
+    .da-ratio-row .guide { font-size: 0.78rem; }
+    .da-swatches { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .da-swatch {
+      display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--da-muted);
+      padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--da-border); background: var(--da-soft);
+    }
+    .da-swatch i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .da-table-wrap {
+      overflow-x: auto; border: 1px solid var(--da-border); border-radius: 12px; background: var(--da-panel);
+    }
+    .da-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 720px; margin: 0; }
+    .da-table-wrap th, .da-table-wrap td {
+      padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--da-border); vertical-align: middle; text-align: left;
+    }
+    .da-table-wrap th {
+      font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--da-muted);
+      background: var(--da-soft); font-weight: 600;
+    }
+    .da-table-wrap tr:last-child td { border-bottom: none; }
+    .da-thumb {
+      width: 36px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--da-border); background: #eee;
+    }
+    [data-theme="dark"] .da-thumb { background: #111; }
+    .da-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 
-    .shell {
-      position: relative;
-      z-index: 1;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0 20px 80px;
-    }
+</style>
 
-    /* ——— Nav ——— */
-    .topnav {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: var(--nav-h);
-      margin: 0 -20px;
-      padding: 0 20px;
-      backdrop-filter: blur(14px);
-      background: rgba(11, 16, 23, 0.78);
-      border-bottom: 1px solid var(--line);
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--ink);
-    }
-    .brand img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 1px solid var(--line-strong);
-    }
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      line-height: 1.15;
-    }
-    .brand-name {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: 0.02em;
-    }
-    .brand-sub {
-      font-size: 0.72rem;
-      color: var(--muted);
-      font-family: var(--font-mono);
-      letter-spacing: 0.04em;
-    }
-    .nav-links {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.88rem;
-      padding: 8px 12px;
-      border-radius: 999px;
-      transition: color 0.2s, background 0.2s;
-    }
-    .nav-links a:hover {
-      color: var(--ink);
-      background: rgba(233, 238, 245, 0.06);
-    }
-
-    /* ——— Hero ——— */
-    .hero {
-      padding: 48px 0 28px;
-      animation: rise 0.7s ease both;
-    }
-    .hero-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--scan);
-      margin-bottom: 16px;
-    }
-    .hero-kicker::before {
-      content: "";
-      width: 18px;
-      height: 2px;
-      background: var(--scan);
-      box-shadow: 0 0 12px var(--scan);
-    }
-    .hero h1 {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      max-width: 14ch;
-      margin-bottom: 14px;
-    }
-    .hero h1 em {
-      font-style: normal;
-      color: var(--scan);
-    }
-    .hero p {
-      max-width: 38rem;
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
-
-    /* ——— Import ——— */
-    .import-panel {
-      margin-top: 28px;
-      background: linear-gradient(160deg, rgba(45, 212, 191, 0.08), transparent 40%), var(--bg-panel);
-      border: 1px solid var(--line-strong);
-      border-radius: calc(var(--radius) + 4px);
-      padding: 22px;
-      box-shadow: var(--shadow);
-      animation: rise 0.75s ease 0.08s both;
-      position: relative;
-      overflow: hidden;
-    }
-    .import-panel::after {
-      content: "";
-      position: absolute;
-      left: 0; right: 0; top: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--scan), transparent);
-      animation: scan 3.2s ease-in-out infinite;
-    }
-    .import-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 1fr;
-      gap: 18px;
-    }
-    @media (max-width: 800px) {
-      .import-grid { grid-template-columns: 1fr; }
-      .nav-links a:not(.nav-home) { display: none; }
-    }
-    .field-label {
-      display: block;
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--faint);
-      font-family: var(--font-mono);
-      margin-bottom: 8px;
-    }
-    .input-row {
-      display: flex;
-      gap: 8px;
-    }
-    input[type="text"], textarea {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--line-strong);
-      color: var(--ink);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-family: var(--font-mono);
-      font-size: 0.92rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input[type="text"]:focus, textarea:focus {
-      border-color: var(--scan);
-      box-shadow: 0 0 0 3px var(--scan-dim);
-      outline: none;
-    }
-    textarea {
-      min-height: 132px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-    .hint {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: var(--faint);
-    }
-    .btn {
-      appearance: none;
-      border: none;
-      cursor: pointer;
-      font-family: var(--font-body);
-      font-weight: 600;
-      font-size: 0.92rem;
-      border-radius: 10px;
-      padding: 12px 16px;
-      transition: transform 0.15s, background 0.2s, color 0.2s, border-color 0.2s;
-    }
-    .btn:active { transform: translateY(1px); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-    .btn-primary {
-      background: var(--scan);
-      color: #04201b;
-    }
-    .btn-primary:hover:not(:disabled) { background: #5eead4; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--ink);
-      border: 1px solid var(--line-strong);
-    }
-    .btn-ghost:hover:not(:disabled) {
-      border-color: var(--scan);
-      color: var(--scan);
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .status-line {
-      margin-top: 12px;
-      min-height: 1.4em;
-      font-size: 0.88rem;
-      color: var(--muted);
-      font-family: var(--font-mono);
-    }
-    .status-line.is-ok { color: var(--good); }
-    .status-line.is-err { color: var(--bad); }
-
-    /* ——— Results ——— */
-    .results {
-      margin-top: 36px;
-      display: none;
-    }
-    .results.is-visible { display: block; }
-
-    .section-title {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1.35rem;
-      letter-spacing: -0.02em;
-      margin: 28px 0 12px;
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-    }
-    .section-title span {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--faint);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    .rule-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-    @media (max-width: 700px) {
-      .rule-grid { grid-template-columns: 1fr; }
-    }
-    .rule-chip {
-      background: var(--bg-panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px 18px;
-      animation: rise 0.55s ease both;
-    }
-    .rule-chip:nth-child(2) { animation-delay: 0.06s; }
-    .rule-chip:nth-child(3) { animation-delay: 0.12s; }
-    .rule-chip .label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .rule-chip .value {
-      font-family: var(--font-display);
-      font-size: 1.55rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-    .rule-chip .detail {
-      margin-top: 4px;
-      font-size: 0.82rem;
-      color: var(--faint);
-      font-family: var(--font-mono);
-    }
-    .rule-chip.pass { border-color: rgba(52, 211, 153, 0.35); }
-    .rule-chip.pass .value { color: var(--good); }
-    .rule-chip.fail { border-color: rgba(251, 113, 133, 0.4); }
-    .rule-chip.fail .value { color: var(--bad); }
-    .rule-chip.warn { border-color: rgba(251, 191, 36, 0.4); }
-    .rule-chip.warn .value { color: var(--warn); }
-
-    .chart-grid {
-      display: grid;
-      grid-template-columns: 1.3fr 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 900px) {
-      .chart-grid { grid-template-columns: 1fr; }
-    }
-    .chart-panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px 16px 10px;
-      min-height: 260px;
-      animation: rise 0.6s ease both;
-    }
-    .chart-panel h3 {
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 8px;
-      letter-spacing: 0.02em;
-    }
-    .chart-wrap {
-      position: relative;
-      height: 210px;
-    }
-
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 800px) {
-      .meta-grid { grid-template-columns: 1fr; }
-    }
-
-    .odds-list, .price-box, .ratio-box {
-      background: var(--bg-panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px;
-      animation: rise 0.6s ease both;
-    }
-    .odds-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-      align-items: center;
-    }
-    .odds-item:last-child { border-bottom: none; }
-    .odds-item .name {
-      font-size: 0.92rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .odds-item .meta {
-      font-size: 0.75rem;
-      color: var(--faint);
-      font-family: var(--font-mono);
-    }
-    .odds-item .pct {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--scan);
-    }
-    .price-main {
-      font-family: var(--font-display);
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--brand);
-    }
-    .price-meta {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-family: var(--font-mono);
-    }
-    .ratio-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.9rem;
-    }
-    .ratio-row:last-child { border-bottom: none; }
-    .ratio-row .tag { color: var(--muted); }
-    .ratio-row .num { font-family: var(--font-mono); }
-    .ratio-row .guide { color: var(--faint); font-size: 0.78rem; }
-
-    .color-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .swatch {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--muted);
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.2);
-    }
-    .swatch i {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--bg-panel);
-      animation: rise 0.65s ease both;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.86rem;
-      min-width: 720px;
-    }
-    th, td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-      vertical-align: middle;
-    }
-    th {
-      color: var(--faint);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-weight: 500;
-      background: rgba(0,0,0,0.25);
-      position: sticky;
-      top: 0;
-    }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(45, 212, 191, 0.04); }
-    .thumb {
-      width: 36px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 4px;
-      border: 1px solid var(--line-strong);
-      background: #000;
-    }
-    .mono { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-
-    .footer-note {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--line);
-      color: var(--faint);
-      font-size: 0.8rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px 24px;
-      justify-content: space-between;
-    }
-    .footer-note a { color: var(--muted); }
-
-    .empty-state {
-      margin-top: 28px;
-      padding: 28px;
-      border: 1px dashed var(--line-strong);
-      border-radius: var(--radius);
-      color: var(--muted);
-      text-align: center;
-      animation: rise 0.6s ease both;
-    }
-
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes scan {
-      0%, 100% { opacity: 0.35; transform: scaleX(0.4); }
-      50% { opacity: 1; transform: scaleX(1); }
-    }
-  </style>
 </head>
-<body>
-  <div class="shell">
-    <header class="topnav">
-      <a class="brand" href="./">
-        <img src="dist/img/logo.png" alt="WS-Cards logo" width="36" height="36" />
-        <span class="brand-text">
-          <span class="brand-name">卡片雲</span>
-          <span class="brand-sub">WS-Cards · Deck Lab</span>
-        </span>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <div data-navbar data-page-title="牌組分析"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <img src="dist/img/logo.png" alt="" class="brand-image">
+        <span class="brand-text">WS-Cards</span>
       </a>
-      <nav class="nav-links" aria-label="相關工具">
-        <a class="nav-home" href="./">首頁</a>
-        <a href="deckPrice.html">牌組總額</a>
-        <a href="demoAndDeckPrice.html">戰況計算</a>
-        <a href="championList.html">優勝牌組</a>
-      </nav>
-    </header>
-
-    <section class="hero">
-      <div class="hero-kicker">Deck Analysis</div>
-      <h1>卡片雲<em>牌組分析</em></h1>
-      <p>匯入 DeckLog 或貼上牌表，立刻看 Level 曲線、顏色／卡種結構、50／8／4 規則、起手機率與行情總額——把組牌拆成看得見的藍圖。</p>
-    </section>
-
-    <section class="import-panel" aria-label="匯入牌組">
-      <div class="import-grid">
-        <div>
-          <label class="field-label" for="deckCode">DeckLog 代碼</label>
-          <div class="input-row">
-            <input id="deckCode" type="text" placeholder="例：2XXXX 或 en_XXXX" autocomplete="off" spellcheck="false" />
-            <button type="button" class="btn btn-ghost" id="btnFetch">取得</button>
-          </div>
-          <p class="hint">會透過既有代理抓取 DeckLog 卡表；成功後可直接分析，也可先改貼上區再送出。</p>
-        </div>
-        <div>
-          <label class="field-label" for="deckPaste">或貼上牌表／JSON</label>
-          <textarea id="deckPaste" placeholder="支援：DeckLog JSON、數量|卡號|卡名、或純卡號列表"></textarea>
-          <p class="hint">格式例：<span class="mono">4|BD/W54-070|鳥籠の歌姫</span></p>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn btn-primary" id="btnAnalyze">開始分析</button>
-        <button type="button" class="btn btn-ghost" id="btnSample">載入示範牌組</button>
-        <button type="button" class="btn btn-ghost" id="btnClear">清除</button>
-      </div>
-      <div class="status-line" id="statusLine" role="status"></div>
-    </section>
-
-    <div class="empty-state" id="emptyState">
-      匯入牌組後，這裡會展開曲線圖、規則檢查與起手機率。
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
     </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li><a href="line" class="menu-link"><i class="fas fa-chart-line main-icon"></i><span>各卡號漲幅趨勢(WS)</span></a></li>
+            <li><a href="lineWSR" class="menu-link"><i class="fas fa-chart-line main-icon"></i><span>各卡號漲幅趨勢(WSR)</span></a></li>
+            <li><a href="deckPrice" class="menu-link"><i class="fas fa-search-dollar main-icon"></i><span>牌組總額查詢計算機</span></a></li>
+            <li><a href="deckAnalysis.html" class="menu-link active"><i class="fas fa-project-diagram main-icon"></i><span>牌組分析</span></a></li>
+          </ul>
+        </li>
+        <li class="menu-item"><a href="championList" class="menu-link"><i class="fas fa-trophy main-icon"></i><span>優勝牌組查詢 (Beta)</span></a></li>
+        <li class="menu-item"><a href="productTimeline.html" class="menu-link"><i class="fas fa-calendar-alt main-icon"></i><span>商品發售時間軸</span></a></li>
+        <li class="menu-item"><a href="favorites.html" class="menu-link"><i class="fas fa-star main-icon"></i><span>我的收藏</span></a></li>
+        <li class="menu-item"><a href="account.html" class="menu-link"><i class="fas fa-user main-icon"></i><span>個人資料</span></a></li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
 
-    <div class="results" id="results" aria-live="polite">
-      <h2 class="section-title">規則檢查 <span>50 / CX8 / 同名4</span></h2>
-      <div class="rule-grid" id="ruleGrid"></div>
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
 
-      <h2 class="section-title">結構曲線 <span>Level · Color · Kind</span></h2>
-      <div class="chart-grid">
-        <div class="chart-panel">
-          <h3>Level 曲線</h3>
-          <div class="chart-wrap"><canvas id="chartLevel"></canvas></div>
-        </div>
-        <div class="chart-panel">
-          <h3>顏色分布</h3>
-          <div class="chart-wrap"><canvas id="chartColor"></canvas></div>
-          <div class="color-legend" id="colorLegend"></div>
-        </div>
-        <div class="chart-panel">
-          <h3>卡種分布</h3>
-          <div class="chart-wrap"><canvas id="chartKind"></canvas></div>
-        </div>
-      </div>
-
-      <div class="chart-grid" style="margin-top:12px">
-        <div class="chart-panel">
-          <h3>Cost 分布（非 CX）</h3>
-          <div class="chart-wrap"><canvas id="chartCost"></canvas></div>
-        </div>
-        <div class="chart-panel">
-          <h3>Trigger 類型</h3>
-          <div class="chart-wrap"><canvas id="chartTrigger"></canvas></div>
-        </div>
-        <div class="ratio-box">
-          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:10px;font-weight:600">與官方建議對照</h3>
-          <div id="ratioBox"></div>
-        </div>
-      </div>
-
-      <h2 class="section-title">一致性 · 行情 <span>Opening odds · Price</span></h2>
-      <div class="meta-grid">
-        <div class="odds-list">
-          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:4px;font-weight:600">起手 5 張抽到的機率</h3>
-          <p class="hint" style="margin-bottom:8px">超幾何分布：至少 1 張。角色取張數最多的前幾名；並固定顯示 CX。</p>
-          <div id="oddsList"></div>
-        </div>
-        <div class="price-box">
-          <h3 style="font-size:0.84rem;color:var(--muted);margin-bottom:8px;font-weight:600">行情總額摘要</h3>
-          <div class="price-main" id="priceMain">—</div>
-          <div class="price-meta" id="priceMeta">載入遊遊亭行情中…</div>
-          <div class="btn-row">
-            <a class="btn btn-ghost" id="linkDeckPrice" href="deckPrice.html" style="text-decoration:none">開牌組總額工具</a>
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-file-import mr-2"></i>匯入牌組</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-5 mb-3 mb-md-0">
+                    <label class="filter-label" for="deckCode">DeckLog 代碼</label>
+                    <div class="input-group">
+                      <input id="deckCode" type="text" class="form-control" placeholder="例：2XXXX 或 en_XXXX" autocomplete="off" spellcheck="false">
+                      <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="btnFetch">取得</button>
+                      </div>
+                    </div>
+                    <p class="da-hint mb-0">透過既有代理抓取 DeckLog 卡表；也可改貼下方牌表。</p>
+                  </div>
+                  <div class="col-md-7">
+                    <label class="filter-label" for="deckPaste">或貼上牌表／JSON</label>
+                    <textarea id="deckPaste" class="form-control" rows="5" placeholder="支援 DeckLog JSON、數量|卡號|卡名、或純卡號列表"></textarea>
+                    <p class="da-hint mb-0">格式例：<span class="da-mono">4|BD/W54-070|鳥籠の歌姫</span></p>
+                  </div>
+                </div>
+                <div class="da-actions">
+                  <button type="button" class="btn btn-primary" id="btnAnalyze"><i class="fas fa-chart-pie mr-1"></i>開始分析</button>
+                  <button type="button" class="btn btn-outline-secondary" id="btnSample">載入示範牌組</button>
+                  <button type="button" class="btn btn-outline-secondary" id="btnClear">清除</button>
+                </div>
+                <div class="da-status" id="statusLine" role="status"></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <h2 class="section-title">牌表 <span id="deckMetaLabel"></span></h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>卡號</th>
-              <th>名稱</th>
-              <th>張</th>
-              <th>Lv</th>
-              <th>Cost</th>
-              <th>色</th>
-              <th>種</th>
-              <th>單價</th>
-            </tr>
-          </thead>
-          <tbody id="deckTableBody"></tbody>
-        </table>
+        <div class="row" id="emptyState">
+          <div class="col-lg-12"><div class="da-empty">匯入牌組後，這裡會展開規則檢查、曲線圖與起手機率。</div></div>
+        </div>
+
+        <div id="results" style="display:none;" aria-live="polite">
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-clipboard-check mr-2"></i>規則檢查 <small class="text-muted">50 / CX8 / 同名4</small></h5></div>
+            <div class="card-body"><div class="da-rules" id="ruleGrid"></div></div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-chart-bar mr-2"></i>結構曲線 <small class="text-muted">Level · Color · Kind</small></h5></div>
+            <div class="card-body">
+              <div class="da-charts">
+                <div class="da-chart-panel"><h3>Level 曲線</h3><div class="da-chart-wrap"><canvas id="chartLevel"></canvas></div></div>
+                <div class="da-chart-panel"><h3>顏色分布</h3><div class="da-chart-wrap"><canvas id="chartColor"></canvas></div><div class="da-swatches" id="colorLegend"></div></div>
+                <div class="da-chart-panel"><h3>卡種分布</h3><div class="da-chart-wrap"><canvas id="chartKind"></canvas></div></div>
+              </div>
+              <div class="da-charts mt-3">
+                <div class="da-chart-panel"><h3>Cost 分布（非 CX）</h3><div class="da-chart-wrap"><canvas id="chartCost"></canvas></div></div>
+                <div class="da-chart-panel"><h3>Trigger 類型</h3><div class="da-chart-wrap"><canvas id="chartTrigger"></canvas></div></div>
+                <div class="da-panel"><h3>與官方建議對照</h3><div id="ratioBox"></div></div>
+              </div>
+            </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-percentage mr-2"></i>一致性 · 行情</h5></div>
+            <div class="card-body">
+              <div class="da-meta">
+                <div class="da-panel">
+                  <h3>起手 5 張抽到的機率</h3>
+                  <p class="da-hint">超幾何分布：至少 1 張。角色取張數最多的前幾名；並固定顯示 CX。</p>
+                  <div id="oddsList"></div>
+                </div>
+                <div class="da-panel">
+                  <h3>行情總額摘要</h3>
+                  <div class="da-price-main" id="priceMain">—</div>
+                  <div class="da-price-meta" id="priceMeta">載入遊遊亭行情中…</div>
+                  <div class="da-actions"><a class="btn btn-outline-secondary" id="linkDeckPrice" href="deckPrice.html">開牌組總額工具</a></div>
+                </div>
+              </div>
+            </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-th-list mr-2"></i>牌表 <small class="text-muted" id="deckMetaLabel"></small></h5></div>
+            <div class="card-body p-0">
+              <div class="da-table-wrap">
+                <table>
+                  <thead><tr><th></th><th>卡號</th><th>名稱</th><th>張</th><th>Lv</th><th>Cost</th><th>色</th><th>種</th><th>單價</th></tr></thead>
+                  <tbody id="deckTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div></div></div>
+        </div>
+
       </div>
     </div>
-
-    <footer class="footer-note">
-      <span>卡片雲 / WS-Cards · 行情來源為遊遊亭歷史報價呈現，非本站自營售價。</span>
-      <span><a href="deckPrice.html">牌組總額</a> · <a href="championList.html">優勝牌組</a></span>
-    </footer>
   </div>
 
-  <script>
-  (function () {
+  <aside class="control-sidebar" id="rightSideBar">
+    <div class="p-3">
+      <h5>利用規約及免責聲明</h5>
+      <p>使用 ws-cards.cloud 前請先閱讀。</p>
+      <button type="button" id="annButton">閱讀全文</button>
+    </div>
+  </aside>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <a href="#" onclick="$('#announceexampleModalCenter').modal('show'); return false;">利用規約及免責聲明</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<div id="card-modal-announce">
+  <div class="modal fade" id="announceexampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="announceexampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="announceexampleModalLongTitle">利用規約及免責聲明</h5>
+          <button type="button" class="close" aria-label="關閉" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <ul>
+            <li>本網站為非官方資訊網站，僅作為玩家間學術資訊交流使用，任何相關與遊戲資訊、版權等等皆為原官方所有。</li>
+            <li>本網站所刊載的所有價格資訊、文字資料、圖片、影片、連結、商標及其他資料等，僅供參考做使用。</li>
+            <li>若因本網站資訊而導致日後造成相關損失，您需對自行的任何決策負責。</li>
+            <li>雖本網站盡力確保資料的準確性，但如內容有錯誤或是紕漏，本網站不會承擔任何賠償責任。</li>
+            <li>所有本網站之內容，可隨時停止服務或是修改，而不會另行做通知。</li>
+          </ul>
+          <p class="text-muted">最後更新：2020 年 12 月 11 日</p>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="dist/js/adminlte.min.js"></script>
+<script>
+(function () {
     "use strict";
 
     const DECKLOG_PROXY = "https://selenium-java-service-669727048059.asia-east1.run.app/view/";
@@ -775,7 +401,7 @@
     function setStatus(msg, kind) {
       const s = el("statusLine");
       s.textContent = msg || "";
-      s.className = "status-line" + (kind ? " is-" + kind : "");
+      s.className = "da-status" + (kind ? " is-" + kind : "");
     }
 
     function normalizeCardNo(cardNo) {
@@ -1117,9 +743,10 @@
     }
 
     function chartDefaults() {
-      Chart.defaults.color = "#8b9aab";
-      Chart.defaults.borderColor = "rgba(233,238,245,0.08)";
-      Chart.defaults.font.family = "'DM Sans', 'Noto Sans TC', sans-serif";
+      var dark = document.documentElement.getAttribute("data-theme") === "dark";
+      Chart.defaults.color = dark ? "#a8a29e" : "#718096";
+      Chart.defaults.borderColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+      Chart.defaults.font.family = "'Noto Sans TC', sans-serif";
     }
 
     function renderCharts(stats) {
@@ -1167,7 +794,7 @@
         }
       });
       el("colorLegend").innerHTML = colorLabels.map((k) =>
-        '<span class="swatch"><i style="background:' + (COLOR_MAP[k] || "#64748b") + '"></i>' +
+        '<span class="da-swatch"><i style="background:' + (COLOR_MAP[k] || "#64748b") + '"></i>' +
         k + " " + stats.colorCount[k] + "</span>"
       ).join("");
 
@@ -1268,7 +895,7 @@
         }
       ];
       el("ruleGrid").innerHTML = items.map((it) =>
-        '<div class="rule-chip ' + it.state + '">' +
+        '<div class="da-rule ' + it.state + '">' +
           '<div class="label">' + it.label + '</div>' +
           '<div class="value">' + it.value + '</div>' +
           '<div class="detail">' + it.detail + '</div>' +
@@ -1289,9 +916,9 @@
         { tag: "CX", num: stats.cx, guide: "固定 8", ok: stats.cx === 8 }
       ];
       el("ratioBox").innerHTML = rows.map((r) =>
-        '<div class="ratio-row">' +
+        '<div class="da-ratio-row">' +
           '<span class="tag">' + r.tag + '</span>' +
-          '<span class="num" style="color:' + (r.ok ? "var(--good)" : "var(--warn)") + '">' + r.num + "</span>" +
+          '<span class="num" style="color:' + (r.ok ? "var(--da-good)" : "var(--da-warn)") + '">' + r.num + "</span>" +
           '<span class="guide">' + r.guide + "</span>" +
         "</div>"
       ).join("");
@@ -1319,7 +946,7 @@
 
       el("oddsList").innerHTML = items.map((it) => {
         const p = hyperAtLeastOne(it.qty, N, OPENING_HAND);
-        return '<div class="odds-item">' +
+        return '<div class="da-odds-item">' +
           '<div><div class="name">' + escapeHtml(it.name) + '</div>' +
           '<div class="meta">' + escapeHtml(it.meta) + "</div></div>" +
           '<div class="pct">' + formatPct(p) + "</div></div>";
@@ -1334,7 +961,7 @@
 
     function colorDot(color) {
       const hex = COLOR_MAP[color] || "#64748b";
-      return '<span class="dot" style="background:' + hex + '"></span>' + escapeHtml(color || "—");
+      return '<span class="da-dot" style="background:' + hex + '"></span>' + escapeHtml(color || "—");
     }
 
     function renderTable(cards) {
@@ -1346,18 +973,18 @@
           ? "¥" + row.latestPrice.toLocaleString("zh-TW")
           : "—";
         const img = c.imageUrl
-          ? '<img class="thumb" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" />'
+          ? '<img class="da-thumb" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" />'
           : "";
         return "<tr>" +
           "<td>" + img + "</td>" +
-          '<td class="mono">' + escapeHtml(c.cardNo || "—") + "</td>" +
+          '<td class="da-mono">' + escapeHtml(c.cardNo || "—") + "</td>" +
           "<td>" + escapeHtml(c.name || "—") + "</td>" +
           "<td>" + c.qty + "</td>" +
           "<td>" + (c.level != null && !isNaN(c.level) ? c.level : "—") + "</td>" +
           "<td>" + (c.cost != null && !isNaN(c.cost) ? c.cost : "—") + "</td>" +
           "<td>" + colorDot(c.color) + "</td>" +
           "<td>" + escapeHtml(classifyKind(c)) + "</td>" +
-          '<td class="mono">' + price + "</td>" +
+          '<td class="da-mono">' + price + "</td>" +
           "</tr>";
       }).join("");
     }
@@ -1394,7 +1021,7 @@
       deckEntries = enriched;
       const stats = analyze(enriched);
       el("emptyState").style.display = "none";
-      el("results").classList.add("is-visible");
+      el("results").style.display = "block";
       renderRules(stats);
       renderCharts(stats);
       renderRatio(stats);
@@ -1529,7 +1156,7 @@
       el("deckPaste").value = "";
       deckEntries = [];
       destroyCharts();
-      el("results").classList.remove("is-visible");
+      el("results").style.display = "none";
       el("emptyState").style.display = "block";
       setStatus("", "");
     }
@@ -1544,6 +1171,40 @@
 
     loadPrices();
   })();
-  </script>
+
+  function toggleCustomDrawer(e) {
+    if (e) e.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      var btn = document.getElementById('leftbar');
+      if (btn) {
+        var opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+  function toggleSubmenu(element, e) {
+    if (e) e.preventDefault();
+    var parent = element.parentElement;
+    if (parent) {
+      parent.classList.toggle('open');
+      var submenu = parent.querySelector('.submenu');
+      if (submenu) submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var annButton = document.getElementById('annButton');
+    if (annButton) {
+      annButton.addEventListener('click', function () {
+        $('#announceexampleModalCenter').modal('show');
+      });
+    }
+  });
+</script>
 </body>
 </html>
