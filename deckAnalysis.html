@@ -420,6 +420,108 @@
     .da-sim-phase.is-mull { color: var(--da-warn); border-color: rgba(176, 124, 40, 0.4); }
     .da-sim-phase.is-done { color: var(--da-good); border-color: rgba(86, 138, 109, 0.45); }
 
+    .da-top-summary {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem;
+    }
+    @media (max-width: 767px) { .da-top-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .da-top-stat {
+      border: 1px solid var(--da-border); border-radius: 12px; background: var(--da-soft);
+      padding: 0.7rem 0.85rem; min-width: 0;
+    }
+    .da-top-stat .k { font-size: 0.75rem; color: var(--da-muted); }
+    .da-top-stat .v {
+      font-size: 1.15rem; font-weight: 800; color: var(--da-ink); line-height: 1.3; margin-top: 0.1rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .da-top-stat .v small { font-size: 0.75rem; font-weight: 600; color: var(--da-muted); margin-left: 0.25rem; }
+    .da-top-grid {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; margin-bottom: 1rem;
+    }
+    @media (max-width: 767px) { .da-top-grid { grid-template-columns: minmax(0, 1fr); } }
+    .da-top-panel {
+      border: 1px solid var(--da-border); border-radius: 12px; padding: 0.85rem 0.95rem; background: var(--da-panel);
+      min-width: 0;
+    }
+    .da-top-panel h3 { font-size: 0.85rem; font-weight: 700; color: var(--da-muted); margin: 0 0 0.65rem; }
+    .da-top-years {
+      display: flex; align-items: flex-end; gap: 0.45rem; height: 150px; padding-top: 1.1rem;
+    }
+    .da-top-years .yr {
+      flex: 1; min-width: 0; height: 100%;
+      display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 0.25rem;
+    }
+    .da-top-years .bar {
+      width: 100%; max-width: 42px; border-radius: 6px 6px 2px 2px;
+      background: rgba(43, 108, 176, 0.35); position: relative; min-height: 2px;
+      transform-origin: bottom; animation: da-top-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    [data-theme="dark"] .da-top-years .bar { background: rgba(99, 179, 237, 0.35); }
+    .da-top-years .yr.is-peak .bar { background: var(--da-accent); }
+    .da-top-years .bar .n {
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      font-size: 0.72rem; font-weight: 700; color: var(--da-ink); padding-bottom: 2px; white-space: nowrap;
+    }
+    .da-top-years .lbl { font-size: 0.72rem; color: var(--da-muted); }
+    @keyframes da-top-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .da-top-axes { list-style: none; padding: 0; margin: 0; }
+    .da-top-axes li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) 3rem; gap: 0.55rem; align-items: center; padding: 0.3rem 0; font-size: 0.86rem; }
+    .da-top-axes .name { font-weight: 700; color: var(--da-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-top-axes .track { height: 8px; border-radius: 999px; background: var(--da-border); overflow: hidden; }
+    .da-top-axes .fill { display: block; height: 100%; border-radius: inherit; background: rgba(43, 108, 176, 0.45); }
+    [data-theme="dark"] .da-top-axes .fill { background: rgba(99, 179, 237, 0.45); }
+    .da-top-axes .pct { text-align: right; color: var(--da-muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+    .da-top-axes li.is-mine .fill { background: var(--da-good); }
+    .da-top-axes li.is-mine .name::after {
+      content: "你的牌組"; margin-left: 0.4rem; font-size: 0.68rem; font-weight: 700;
+      color: var(--da-good); border: 1px solid currentColor; border-radius: 999px; padding: 0 0.35rem;
+    }
+    .da-top-cores {
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.65rem;
+    }
+    @media (max-width: 991px) { .da-top-cores { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .da-top-core {
+      border: 1px solid var(--da-border); border-radius: 10px; background: var(--da-soft);
+      padding: 0.45rem; min-width: 0; text-align: center;
+    }
+    .da-top-core img {
+      width: 100%; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 6px; display: block;
+      background: #e9edf2;
+    }
+    [data-theme="dark"] .da-top-core img { background: #111; }
+    .da-top-core.is-missing img { filter: grayscale(0.85); opacity: 0.6; }
+    .da-top-core .nm {
+      font-size: 0.75rem; font-weight: 700; color: var(--da-ink); margin-top: 0.35rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .da-top-core .meta { font-size: 0.7rem; color: var(--da-muted); }
+    .da-top-core .own {
+      display: inline-block; margin-top: 0.25rem; font-size: 0.7rem; font-weight: 700;
+      border-radius: 999px; padding: 0.05rem 0.45rem; border: 1px solid currentColor;
+    }
+    .da-top-core .own.is-in { color: var(--da-good); }
+    .da-top-core .own.is-out { color: var(--da-muted); }
+    .da-top-recent { list-style: none; padding: 0; margin: 0; }
+    .da-top-recent li {
+      display: grid; grid-template-columns: 5.6rem minmax(0, 1fr) auto auto; gap: 0.65rem; align-items: center;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--da-border); font-size: 0.86rem;
+    }
+    .da-top-recent li:last-child { border-bottom: none; }
+    .da-top-recent .d { color: var(--da-muted); font-variant-numeric: tabular-nums; }
+    .da-top-recent .ev { color: var(--da-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-top-recent .ax {
+      font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--da-border); color: var(--da-muted); white-space: nowrap;
+    }
+    .da-top-recent a { color: var(--da-accent); }
+    @media (max-width: 575px) {
+      .da-top-recent li { grid-template-columns: 4.8rem minmax(0, 1fr) auto; }
+      .da-top-recent .ax { display: none; }
+    }
+    .da-top-foot { margin-top: 0.85rem; font-size: 0.78rem; color: var(--da-muted); }
+    @media (prefers-reduced-motion: reduce) {
+      .da-top-years .bar { animation: none; }
+    }
+
     .da-ai-layout {
       display: grid;
       grid-template-columns: 140px minmax(0, 1fr);
@@ -899,6 +1001,18 @@
                   <div id="mcResults"><p class="da-hint mb-0">尚無結果。</p></div>
                 </div>
               </div>
+            </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card" id="topCompareCard">
+            <div class="card-header">
+              <h5 class="card-title">
+                <i class="fas fa-trophy mr-2"></i>上位對照
+                <small class="text-muted" id="topCompareSubtitle">歷年上位紀錄</small>
+              </h5>
+            </div>
+            <div class="card-body" id="topCompareBody" aria-live="polite">
+              <p class="da-hint mt-0">分析牌組後，這裡會拿同作品的歷年上位紀錄跟你的牌組比較。</p>
             </div>
           </div></div></div>
 
@@ -2139,6 +2253,299 @@
       }, 20);
     }
 
+    /* ——— Top records compare ——— */
+    const TOP_SHEET_URL = "https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/gviz/tq";
+    const TOP_SHEET_TAB = "牌組清單";
+    const TOP_TRIGGER_AXIS = {
+      "2": "二爆", "C": "木門", "1G": "凱旋門", "B": "金磚", "1H": "開機",
+      "I": "箭頭", "D": "書", "1E": "火燒", "1A": "風吹", "F": "寶袋"
+    };
+    const TOP_AXIS_TOKENS = ["凱旋門", "二爆", "木門", "金磚", "開機", "箭頭", "火燒", "風吹", "寶袋", "書"];
+    const TOP_AXIS_ALIAS = [["二暴", "二爆"], ["城門", "凱旋門"], ["燒", "火燒"]];
+    let topCompareToken = 0;
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (quoted) {
+          if (ch === '"') {
+            if (text[i + 1] === '"') { field += '"'; i++; }
+            else quoted = false;
+          } else field += ch;
+        } else if (ch === '"') quoted = true;
+        else if (ch === ",") { row.push(field); field = ""; }
+        else if (ch === "\n" || ch === "\r") {
+          if (ch === "\r" && text[i + 1] === "\n") i++;
+          row.push(field); rows.push(row); row = []; field = "";
+        } else field += ch;
+      }
+      if (field || row.length) { row.push(field); rows.push(row); }
+      return rows;
+    }
+
+    function gvizLiteral(s) {
+      const v = String(s);
+      if (v.indexOf("'") === -1) return "'" + v + "'";
+      return '"' + v.replace(/"/g, "") + '"';
+    }
+
+    async function topSheetQuery(tq) {
+      const url = TOP_SHEET_URL + "?tqx=out:csv&sheet=" + encodeURIComponent(TOP_SHEET_TAB) + "&tq=" + encodeURIComponent(tq);
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("上位紀錄讀取失敗（HTTP " + r.status + "）");
+      return parseCsv(await r.text()).slice(1).filter(function (row) { return row.some(Boolean); });
+    }
+
+    function cardBaseKey(cardNo) {
+      return normalizeCardNo(cardNo).toUpperCase().replace(/-([A-Z]*\d+)[A-Z]*$/, "-$1");
+    }
+
+    function axisKeyFromTokens(tokens, eight) {
+      if (!tokens.length) return "";
+      if (eight && tokens.length === 1) return "8:" + tokens[0];
+      return tokens.slice().sort().join("+");
+    }
+
+    function parseAxis(raw) {
+      let s = String(raw || "").replace(/\s+/g, "");
+      TOP_AXIS_ALIAS.forEach(function (a) {
+        if (s.indexOf(a[1]) === -1) s = s.split(a[0]).join(a[1]);
+      });
+      const eight = s.indexOf("八") !== -1;
+      const tokens = [];
+      TOP_AXIS_TOKENS.forEach(function (t) {
+        if (s.indexOf(t) !== -1) { tokens.push(t); s = s.split(t).join(""); }
+      });
+      return axisKeyFromTokens(tokens, eight);
+    }
+
+    function deckAxis(cards) {
+      const count = {};
+      cards.forEach(function (c) {
+        if (classifyKind(c) !== "CX") return;
+        const name = TOP_TRIGGER_AXIS[String(c.trigger || "").toUpperCase()];
+        if (name) count[name] = (count[name] || 0) + 1;
+      });
+      const sorted = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; });
+      if (!sorted.length) return { key: "", label: "" };
+      const total = sorted.reduce(function (s, k) { return s + count[k]; }, 0);
+      if (count[sorted[0]] >= total - 1 && count[sorted[0]] >= 6) {
+        return { key: "8:" + sorted[0], label: "八" + sorted[0] };
+      }
+      const main = sorted.filter(function (k) { return count[k] >= 2; }).slice(0, 3);
+      const use = main.length ? main : sorted.slice(0, 2);
+      return { key: axisKeyFromTokens(use, false), label: use.join("") };
+    }
+
+    function parseTopDate(s) {
+      const m = String(s || "").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+      if (!m) return null;
+      return { y: +m[1], t: Date.UTC(+m[1], +m[2] - 1, +m[3]), text: m[1] + "/" + m[2].padStart(2, "0") + "/" + m[3].padStart(2, "0") };
+    }
+
+    async function fetchTopRecords(cards) {
+      const prefixCount = {};
+      cards.forEach(function (c) {
+        const m = normalizeCardNo(c.cardNo).match(/^([A-Za-z0-9]+)\//);
+        if (m) prefixCount[m[1].toUpperCase()] = (prefixCount[m[1].toUpperCase()] || 0) + 1;
+      });
+      const prefixes = Object.keys(prefixCount).sort(function (a, b) { return prefixCount[b] - prefixCount[a]; }).slice(0, 3);
+      if (!prefixes.length) return null;
+      const where = prefixes.map(function (p) { return "upper(G) starts with " + gvizLiteral(p + "/"); }).join(" or ");
+      const series = await topSheetQuery("select B, count(B) where " + where + " group by B order by count(B) desc");
+      const name = series.length ? series[0][0] : "";
+      if (!name) return null;
+      const rows = await topSheetQuery("select C, D, E, F, G, I where B = " + gvizLiteral(name));
+      return {
+        series: name,
+        records: rows.map(function (r) {
+          return { event: r[0] || "", region: r[1] || "", date: parseTopDate(r[2]), axisRaw: r[3] || "", axis: parseAxis(r[3]), core: r[4] || "", link: r[5] || "" };
+        })
+      };
+    }
+
+    function topCacheKey(cards) {
+      const set = new Set();
+      cards.forEach(function (c) {
+        const m = normalizeCardNo(c.cardNo).match(/^([A-Za-z0-9]+)\//);
+        if (m) set.add(m[1].toUpperCase());
+      });
+      return "da-top:v1:" + Array.from(set).sort().join(",");
+    }
+
+    async function loadTopRecords(cards) {
+      const key = topCacheKey(cards);
+      try {
+        const hit = sessionStorage.getItem(key);
+        if (hit) return JSON.parse(hit);
+      } catch (e) { /* ignore */ }
+      const data = await fetchTopRecords(cards);
+      try { if (data) sessionStorage.setItem(key, JSON.stringify(data)); } catch (e) { /* quota */ }
+      return data;
+    }
+
+    async function topCoreNames(cardNos) {
+      const out = {};
+      await Promise.all(cardNos.map(async function (no) {
+        try {
+          const map = await loadSetJson(titleCodeFromCardNo(no));
+          const raw = map && (map.get(no) || map.get(no.toUpperCase()));
+          if (raw) out[no] = raw.name || raw.cardname || "";
+        } catch (e) { /* ignore */ }
+      }));
+      return out;
+    }
+
+    function resetTopCompare() {
+      topCompareToken++;
+      el("topCompareSubtitle").textContent = "歷年上位紀錄";
+      el("topCompareBody").innerHTML = '<p class="da-hint mt-0">分析牌組後，這裡會拿同作品的歷年上位紀錄跟你的牌組比較。</p>';
+    }
+
+    async function renderTopCompare(cards) {
+      const token = ++topCompareToken;
+      const body = el("topCompareBody");
+      body.innerHTML = '<p class="da-hint mt-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取同作品的上位紀錄…</p>';
+      let data;
+      try {
+        data = await loadTopRecords(cards);
+      } catch (e) {
+        if (token !== topCompareToken) return;
+        body.innerHTML = '<p class="da-hint mt-0">上位紀錄暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
+        return;
+      }
+      if (token !== topCompareToken) return;
+      if (!data || !data.records || !data.records.length) {
+        body.innerHTML = '<p class="da-hint mt-0">目前的上位紀錄裡還沒有這個作品。</p>';
+        return;
+      }
+
+      const recs = data.records.map(function (r) {
+        return Object.assign({}, r, { date: r.date && typeof r.date === "object" ? r.date : parseTopDate(r.date) });
+      });
+      const dated = recs.filter(function (r) { return r.date; }).sort(function (a, b) { return b.date.t - a.date.t; });
+      const mine = deckAxis(cards);
+
+      const years = {};
+      dated.forEach(function (r) { years[r.date.y] = (years[r.date.y] || 0) + 1; });
+      const yearKeys = Object.keys(years).map(Number).sort();
+      const yMin = yearKeys[0];
+      const yMax = yearKeys[yearKeys.length - 1];
+      const yearList = [];
+      for (let y = yMin; y <= yMax; y++) yearList.push({ y: y, n: years[y] || 0 });
+      const peak = Math.max.apply(null, yearList.map(function (x) { return x.n; }).concat([1]));
+
+      const axisCount = {};
+      const axisLabel = {};
+      recs.forEach(function (r) {
+        if (!r.axis) return;
+        axisCount[r.axis] = (axisCount[r.axis] || 0) + 1;
+        const lbl = axisLabel[r.axis] || (axisLabel[r.axis] = {});
+        lbl[r.axisRaw] = (lbl[r.axisRaw] || 0) + 1;
+      });
+      const axisTotal = Object.keys(axisCount).reduce(function (s, k) { return s + axisCount[k]; }, 0);
+      const axisTop = Object.keys(axisCount).sort(function (a, b) { return axisCount[b] - axisCount[a]; });
+      const labelOf = function (k) {
+        const m = axisLabel[k] || {};
+        return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; })[0] || k;
+      };
+      let shown = axisTop.slice(0, 6);
+      if (mine.key && axisCount[mine.key] && shown.indexOf(mine.key) === -1) shown = shown.slice(0, 5).concat([mine.key]);
+      const minePct = mine.key && axisTotal ? (axisCount[mine.key] || 0) / axisTotal : 0;
+      const mineRank = mine.key ? axisTop.indexOf(mine.key) + 1 : 0;
+
+      const own = {};
+      cards.forEach(function (c) {
+        const k = cardBaseKey(c.cardNo);
+        if (!own[k]) own[k] = { qty: 0, name: c.name, imageUrl: c.imageUrl };
+        own[k].qty += 1;
+      });
+      const coreCount = {};
+      const coreSample = {};
+      recs.forEach(function (r) {
+        if (!looksLikeWSCardNo(r.core)) return;
+        const k = cardBaseKey(r.core);
+        coreCount[k] = (coreCount[k] || 0) + 1;
+        if (!coreSample[k]) coreSample[k] = normalizeCardNo(r.core);
+      });
+      const cores = Object.keys(coreCount).sort(function (a, b) { return coreCount[b] - coreCount[a]; }).slice(0, 6);
+      const coreHits = cores.filter(function (k) { return own[k]; }).length;
+
+      const latest = dated[0];
+      el("topCompareSubtitle").textContent = data.series + " · " + yMin + "–" + (latest ? latest.date.text : yMax);
+
+      const stat = function (k, v, small) {
+        return '<div class="da-top-stat"><div class="k">' + k + '</div><div class="v">' + v +
+          (small ? "<small>" + small + "</small>" : "") + "</div></div>";
+      };
+      let html = '<div class="da-top-summary">' +
+        stat("作品", escapeHtml(data.series)) +
+        stat("上位紀錄", recs.length.toLocaleString(), "筆") +
+        stat("最近入賞", latest ? latest.date.text : "—") +
+        stat("你的軸心", mine.label ? escapeHtml(mine.label) : "—",
+          mine.key ? (axisCount[mine.key] ? "上位 " + formatPct(minePct) + (mineRank ? " · 第 " + mineRank + " 名" : "") : "上位少見") : "") +
+        "</div>";
+
+      html += '<div class="da-top-grid"><div class="da-top-panel"><h3>每年上位次數</h3><div class="da-top-years">' +
+        yearList.map(function (x, i) {
+          return '<div class="yr' + (x.n === peak ? " is-peak" : "") + '"><div class="bar" style="height:' +
+            Math.max(2, Math.round(x.n / peak * 100)) + "%;animation-delay:" + (i * 50) + 'ms"><span class="n">' + x.n +
+            '</span></div><div class="lbl">' + String(x.y).slice(2) + "</div></div>";
+        }).join("") + "</div></div>";
+
+      html += '<div class="da-top-panel"><h3>上位常見軸心</h3>' + (shown.length
+        ? '<ul class="da-top-axes">' + shown.map(function (k) {
+          const pct = axisCount[k] / axisTotal;
+          return '<li class="' + (k === mine.key ? "is-mine" : "") + '"><span class="name">' + escapeHtml(labelOf(k)) +
+            '</span><span class="track"><span class="fill" style="width:' + (pct * 100).toFixed(1) + '%"></span></span>' +
+            '<span class="pct">' + formatPct(pct) + "</span></li>";
+        }).join("") + "</ul>"
+        : '<p class="da-hint mt-0">紀錄裡沒有軸心資料。</p>') + "</div></div>";
+
+      if (cores.length) {
+        html += '<div class="da-top-panel mb-3"><h3>上位常見核心卡 · 你放了 ' + coreHits + " / " + cores.length + ' 張</h3><div class="da-top-cores">' +
+          cores.map(function (k) {
+            const no = coreSample[k];
+            const mineCard = own[k];
+            const img = (mineCard && mineCard.imageUrl) || wsImageUrlFromCardNo(no);
+            return '<div class="da-top-core' + (mineCard ? "" : " is-missing") + '" data-core="' + escapeHtml(no) + '">' +
+              '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">' +
+              '<div class="nm">' + escapeHtml((mineCard && mineCard.name) || no) + "</div>" +
+              '<div class="meta">' + escapeHtml(no) + " · " + coreCount[k] + " 筆</div>" +
+              (mineCard ? '<span class="own is-in">已放 ×' + mineCard.qty + "</span>" : '<span class="own is-out">未放</span>') +
+              "</div>";
+          }).join("") + "</div></div>";
+      }
+
+      html += '<div class="da-top-panel"><h3>最近上位紀錄</h3><ul class="da-top-recent">' +
+        dated.slice(0, 5).map(function (r) {
+          const link = /^https?:\/\//.test(r.link)
+            ? '<a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener" aria-label="查看紀錄"><i class="fas fa-external-link-alt"></i></a>'
+            : "<span></span>";
+          return '<li><span class="d">' + r.date.text + '</span><span class="ev" title="' + escapeHtml(r.event) + '">' +
+            escapeHtml((r.region ? r.region + " · " : "") + (r.event || "大會")) + '</span><span class="ax">' +
+            escapeHtml(r.axisRaw || "—") + "</span>" + link + "</li>";
+        }).join("") + "</ul></div>";
+
+      html += '<p class="da-top-foot mb-0">資料來源：卡片雲上位紀錄（社群整理，以店舖大會為主）。之後會改接 WS 官方大會結果，並加入逐卡比較。</p>';
+      body.innerHTML = html;
+
+      const missing = cores.filter(function (k) { return !own[k]; }).map(function (k) { return coreSample[k]; });
+      if (missing.length) {
+        const names = await topCoreNames(missing);
+        if (token !== topCompareToken) return;
+        Object.keys(names).forEach(function (no) {
+          if (!names[no]) return;
+          const node = body.querySelector('.da-top-core[data-core="' + CSS.escape(no) + '"] .nm');
+          if (node) node.textContent = names[no];
+        });
+      }
+    }
+
     /* ——— AI Teaching Guide UI ——— */
     function animateAiBubble(kind) {
       const body = el("aiGuideBody");
@@ -2454,6 +2861,7 @@
       renderTable(enriched);
       resetSimUi();
       resetAiGuideUi();
+      renderTopCompare(enriched).catch(function () { /* handled inside */ });
       setAnalyzeStep("render", "done");
       setStatus((label || "分析完成") + " · " + enriched.length + " 張", "ok");
       hideAnalyzeProgress({ delay: 420 });
@@ -2613,6 +3021,7 @@
       el("emptyState").style.display = "block";
       resetSimUi();
       resetAiGuideUi();
+      resetTopCompare();
       setStatus("", "");
     }
 
