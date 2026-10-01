@@ -434,6 +434,8 @@
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .da-top-stat .v small { font-size: 0.75rem; font-weight: 600; color: var(--da-muted); margin-left: 0.25rem; }
+    .da-top-stat .s { font-size: 0.75rem; color: var(--da-muted); margin-top: 0.1rem; }
+    .da-top-stat .s.is-good { color: var(--da-good); font-weight: 700; }
     .da-top-grid {
       display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; margin-bottom: 1rem;
     }
@@ -464,15 +466,16 @@
     .da-top-years .lbl { font-size: 0.72rem; color: var(--da-muted); }
     @keyframes da-top-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
     .da-top-axes { list-style: none; padding: 0; margin: 0; }
-    .da-top-axes li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) 3rem; gap: 0.55rem; align-items: center; padding: 0.3rem 0; font-size: 0.86rem; }
-    .da-top-axes .name { font-weight: 700; color: var(--da-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-top-axes li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 3rem; gap: 0.55rem; align-items: center; padding: 0.3rem 0; font-size: 0.86rem; }
+    .da-top-axes .name { display: flex; align-items: center; gap: 0.3rem; min-width: 0; font-weight: 700; color: var(--da-ink); }
+    .da-top-axes .name .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .da-top-axes .track { height: 8px; border-radius: 999px; background: var(--da-border); overflow: hidden; }
     .da-top-axes .fill { display: block; height: 100%; border-radius: inherit; background: rgba(43, 108, 176, 0.45); }
     [data-theme="dark"] .da-top-axes .fill { background: rgba(99, 179, 237, 0.45); }
     .da-top-axes .pct { text-align: right; color: var(--da-muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
     .da-top-axes li.is-mine .fill { background: var(--da-good); }
-    .da-top-axes li.is-mine .name::after {
-      content: "你的牌組"; margin-left: 0.4rem; font-size: 0.68rem; font-weight: 700;
+    .da-top-axes .me {
+      flex-shrink: 0; font-style: normal; font-size: 0.68rem; font-weight: 700; line-height: 1.35;
       color: var(--da-good); border: 1px solid currentColor; border-radius: 999px; padding: 0 0.35rem;
     }
     .da-top-cores {
@@ -2478,16 +2481,18 @@
       const latest = dated[0];
       el("topCompareSubtitle").textContent = data.series + " · " + yMin + "–" + (latest ? latest.date.text : yMax);
 
-      const stat = function (k, v, small) {
+      const stat = function (k, v, small, sub, subCls) {
         return '<div class="da-top-stat"><div class="k">' + k + '</div><div class="v">' + v +
-          (small ? "<small>" + small + "</small>" : "") + "</div></div>";
+          (small ? "<small>" + small + "</small>" : "") + "</div>" +
+          (sub ? '<div class="s' + (subCls ? " " + subCls : "") + '">' + sub + "</div>" : "") + "</div>";
       };
       let html = '<div class="da-top-summary">' +
         stat("作品", escapeHtml(data.series)) +
         stat("上位紀錄", recs.length.toLocaleString(), "筆") +
         stat("最近入賞", latest ? latest.date.text : "—") +
-        stat("你的軸心", mine.label ? escapeHtml(mine.label) : "—",
-          mine.key ? (axisCount[mine.key] ? "上位 " + formatPct(minePct) + (mineRank ? " · 第 " + mineRank + " 名" : "") : "上位少見") : "") +
+        stat("你的軸心", mine.label ? escapeHtml(mine.label) : "—", "",
+          mine.key ? (axisCount[mine.key] ? "上位占 " + formatPct(minePct) + (mineRank ? " · 第 " + mineRank + " 名" : "") : "上位紀錄中少見") : "牌組裡沒有可辨識的 CX",
+          mineRank && mineRank <= 3 ? "is-good" : "") +
         "</div>";
 
       html += '<div class="da-top-grid"><div class="da-top-panel"><h3>每年上位次數</h3><div class="da-top-years">' +
@@ -2500,8 +2505,8 @@
       html += '<div class="da-top-panel"><h3>上位常見軸心</h3>' + (shown.length
         ? '<ul class="da-top-axes">' + shown.map(function (k) {
           const pct = axisCount[k] / axisTotal;
-          return '<li class="' + (k === mine.key ? "is-mine" : "") + '"><span class="name">' + escapeHtml(labelOf(k)) +
-            '</span><span class="track"><span class="fill" style="width:' + (pct * 100).toFixed(1) + '%"></span></span>' +
+          return '<li class="' + (k === mine.key ? "is-mine" : "") + '"><span class="name"><span class="t">' + escapeHtml(labelOf(k)) + "</span>" +
+            (k === mine.key ? '<em class="me">你</em>' : "") + '</span><span class="track"><span class="fill" style="width:' + (pct * 100).toFixed(1) + '%"></span></span>' +
             '<span class="pct">' + formatPct(pct) + "</span></li>";
         }).join("") + "</ul>"
         : '<p class="da-hint mt-0">紀錄裡沒有軸心資料。</p>') + "</div></div>";
@@ -2515,7 +2520,7 @@
             return '<div class="da-top-core' + (mineCard ? "" : " is-missing") + '" data-core="' + escapeHtml(no) + '">' +
               '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">' +
               '<div class="nm">' + escapeHtml((mineCard && mineCard.name) || no) + "</div>" +
-              '<div class="meta">' + escapeHtml(no) + " · " + coreCount[k] + " 筆</div>" +
+              '<div class="meta">' + (mineCard ? escapeHtml(no) + " · " : "") + coreCount[k] + " 筆</div>" +
               (mineCard ? '<span class="own is-in">已放 ×' + mineCard.qty + "</span>" : '<span class="own is-out">未放</span>') +
               "</div>";
           }).join("") + "</div></div>";
@@ -2540,8 +2545,11 @@
         if (token !== topCompareToken) return;
         Object.keys(names).forEach(function (no) {
           if (!names[no]) return;
-          const node = body.querySelector('.da-top-core[data-core="' + CSS.escape(no) + '"] .nm');
-          if (node) node.textContent = names[no];
+          const tile = body.querySelector('.da-top-core[data-core="' + CSS.escape(no) + '"]');
+          if (!tile) return;
+          tile.querySelector(".nm").textContent = names[no];
+          const meta = tile.querySelector(".meta");
+          meta.textContent = no + " · " + meta.textContent;
         });
       }
     }
