@@ -422,13 +422,19 @@
 
     .da-ai-layout {
       display: grid;
-      grid-template-columns: 140px 1fr;
+      grid-template-columns: 140px minmax(0, 1fr);
       gap: 1rem;
       align-items: start;
     }
     @media (max-width: 700px) {
-      .da-ai-layout { grid-template-columns: 1fr; }
+      .da-ai-layout { grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
     }
+    .da-ai-controls {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 0.5rem 1rem; margin-bottom: 0.9rem;
+    }
+    .da-ai-controls .da-ai-modes,
+    .da-ai-controls .da-ai-toolbar { margin-bottom: 0; }
     .da-ai-persona {
       text-align: center;
       padding: 0.75rem 0.5rem;
@@ -494,7 +500,7 @@
     }
     .da-ai-bubble::before {
       content: "";
-      position: absolute; left: -8px; top: 2.4rem;
+      position: absolute; left: -8px; top: 2.8rem;
       width: 14px; height: 14px;
       background: var(--da-bubble-bg);
       border-left: 1px solid var(--da-bubble-line);
@@ -581,7 +587,12 @@
       }
       .da-ai-avatar { width: 56px; height: 56px; margin: 0; flex-shrink: 0; }
       .da-ai-avatar svg { width: 40px; height: 40px; }
-      .da-ai-bubble::before { display: none; }
+      .da-ai-bubble::before {
+        left: 2.1rem; top: -8px;
+        border-left: 1px solid var(--da-bubble-line);
+        border-top: 1px solid var(--da-bubble-line);
+        border-bottom: 0;
+      }
     }
     .da-ai-section {
       padding: 0.65rem 0; border-bottom: 1px solid var(--da-border);
@@ -899,6 +910,22 @@
               </h5>
             </div>
             <div class="card-body">
+              <div class="da-ai-controls">
+                <div class="da-ai-modes" role="tablist" aria-label="教學模式">
+                  <button type="button" class="is-active" data-ai-mode="beginner" role="tab" aria-selected="true">新手模式</button>
+                  <button type="button" data-ai-mode="standard" role="tab" aria-selected="false">標準模式</button>
+                  <button type="button" data-ai-mode="advanced" role="tab" aria-selected="false">進階模式</button>
+                </div>
+                <div class="da-ai-toolbar">
+                  <button type="button" class="btn btn-primary btn-sm" id="btnAiGenerate" disabled>
+                    <i class="fas fa-magic mr-1"></i>產生建議
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAiMock" disabled>
+                    只用本地範例
+                  </button>
+                  <span class="da-ai-source" id="aiSourceBadge">尚未產生</span>
+                </div>
+              </div>
               <div class="da-ai-layout" id="aiSuggestPanel" aria-live="polite">
                 <aside class="da-ai-persona">
                   <div class="da-ai-avatar" aria-hidden="true">
@@ -920,24 +947,8 @@
                     <div class="da-ai-persona-tag" id="aiPersonaTag">卡片雲牌組教練</div>
                   </div>
                 </aside>
-                <div>
-                  <div class="da-ai-modes" role="tablist" aria-label="教學模式">
-                    <button type="button" class="is-active" data-ai-mode="beginner" role="tab" aria-selected="true">新手模式</button>
-                    <button type="button" data-ai-mode="standard" role="tab" aria-selected="false">標準模式</button>
-                    <button type="button" data-ai-mode="advanced" role="tab" aria-selected="false">進階模式</button>
-                  </div>
-                  <div class="da-ai-toolbar">
-                    <button type="button" class="btn btn-primary btn-sm" id="btnAiGenerate" disabled>
-                      <i class="fas fa-magic mr-1"></i>產生建議
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAiMock" disabled>
-                      只用本地範例
-                    </button>
-                    <span class="da-ai-source" id="aiSourceBadge">尚未產生</span>
-                  </div>
-                  <div class="da-ai-bubble" id="aiGuideBody">
-                    <p class="da-ai-say">嗨，我是小雲！先分析牌組，再選模式按「產生建議」。新手模式我會先告訴你 5 件必記的事。</p>
-                  </div>
+                <div class="da-ai-bubble" id="aiGuideBody">
+                  <p class="da-ai-say">嗨，我是小雲！先分析牌組，再選模式按「產生建議」。新手模式我會先告訴你 5 件必記的事。</p>
                 </div>
               </div>
             </div>
