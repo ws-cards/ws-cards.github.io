@@ -15,7 +15,7 @@
   </script>
   <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率、洗牌／Mulligan 模擬與行情總額摘要。">
   <meta property="og:title" content="牌組分析｜WS-Cards 卡片雲">
-  <meta property="og:description" content="匯入 DeckLog 或貼上牌表，查看 Level 曲線、規則檢查、起手機率，並模擬洗牌與 Mulligan。">
+  <meta property="og:description" content="輸入 DeckLog 代碼一鍵取得並分析：Level 曲線、規則檢查、起手機率，並模擬洗牌與 Mulligan。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -593,20 +593,10 @@
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div class="col-md-5 mb-3 mb-md-0">
+                  <div class="col-12">
                     <label class="filter-label" for="deckCode">DeckLog 代碼</label>
-                    <div class="input-group">
-                      <input id="deckCode" type="text" class="form-control" placeholder="例：2XXXX 或 en_XXXX" autocomplete="off" spellcheck="false">
-                      <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" id="btnFetch">取得</button>
-                      </div>
-                    </div>
-                    <p class="da-hint mb-0">透過既有代理抓取 DeckLog 卡表；也可改貼下方牌表。</p>
-                  </div>
-                  <div class="col-md-7">
-                    <label class="filter-label" for="deckPaste">或貼上牌表／JSON</label>
-                    <textarea id="deckPaste" class="form-control" rows="5" placeholder="支援 DeckLog JSON、數量|卡號|卡名、或純卡號列表"></textarea>
-                    <p class="da-hint mb-0">格式例：<span class="da-mono">4|BD/W54-070|鳥籠の歌姫</span></p>
+                    <input id="deckCode" type="text" class="form-control" placeholder="例：2XXXX 或 en_XXXX" autocomplete="off" spellcheck="false">
+                    <p class="da-hint mb-0">輸入代碼後按「開始分析」：會先透過代理取得 DeckLog 卡表，再自動分析。</p>
                   </div>
                 </div>
                 <div class="da-actions">
@@ -2181,50 +2171,42 @@
     }
 
     /* ——— Actions ——— */
-    async function fetchDecklog() {
+    /** Fetch DeckLog by code; returns { text, label } for analysis. */
+    async function fetchDecklogPayload(code) {
+      const resp = await fetch(DECKLOG_PROXY + encodeURIComponent(code));
+      if (!resp.ok) throw new Error("伺服器回應 " + resp.status);
+      const json = await resp.json();
+      const text = JSON.stringify(json);
+      if (json.cardList && Object.keys(json.cardList).length) {
+        const count = Object.values(json.cardList).reduce((s, v) => s + (parseInt(v, 10) || 0), 0);
+        return {
+          text: text,
+          label: "已取得「" + (json.deckCode || code) + "」共 " + count + " 張"
+        };
+      }
+      if (json.list || json.sub_list || json.p_list) {
+        return { text: text, label: "已取得 DeckLog「" + code + "」" };
+      }
+      throw new Error("代理有回應但卡表為空，請確認代碼或改用示範牌組。");
+    }
+
+    async function analyzeClick() {
+      const btn = el("btnAnalyze");
       const code = el("deckCode").value.trim();
       if (!code) {
         setStatus("請先輸入 DeckLog 代碼。", "err");
         return;
       }
-      const btn = el("btnFetch");
-      btn.disabled = true;
-      setStatus("查詢 DeckLog 中…", "");
-      try {
-        const resp = await fetch(DECKLOG_PROXY + encodeURIComponent(code));
-        if (!resp.ok) throw new Error("伺服器回應 " + resp.status);
-        const json = await resp.json();
-        if (json.cardList && Object.keys(json.cardList).length) {
-          el("deckPaste").value = JSON.stringify(json, null, 2);
-          const count = Object.values(json.cardList).reduce((s, v) => s + (parseInt(v, 10) || 0), 0);
-          setStatus("已取得「" + (json.deckCode || code) + "」共 " + count + " 張，按開始分析。", "ok");
-        } else if (json.list || json.sub_list || json.p_list) {
-          el("deckPaste").value = JSON.stringify(json, null, 2);
-          setStatus("已取得 DeckLog 回應，按開始分析。", "ok");
-        } else {
-          el("deckPaste").value = JSON.stringify(json, null, 2);
-          setStatus("代理有回應但卡表為空，可改貼完整 DeckLog JSON，或使用示範牌組。", "err");
-        }
-      } catch (e) {
-        setStatus("查詢失敗：" + (e && e.message ? e.message : String(e)), "err");
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function analyzeClick() {
-      const btn = el("btnAnalyze");
       btn.disabled = true;
       try {
-        const text = el("deckPaste").value.trim();
-        if (!text) {
-          setStatus("請先取得 DeckLog 或貼上牌表。", "err");
-          return;
-        }
-        const cards = resolveDeckCardsFromUserInput(text);
-        await runAnalysis(cards, "分析完成");
+        setStatus("查詢 DeckLog 中…", "");
+        const fetched = await fetchDecklogPayload(code);
+        setStatus(fetched.label + "，分析中…", "");
+        const cards = resolveDeckCardsFromUserInput(fetched.text);
+        await runAnalysis(cards, fetched.label);
       } catch (e) {
-        setStatus("分析失敗：" + (e && e.message ? e.message : String(e)), "err");
+        const msg = e && e.message ? e.message : String(e);
+        setStatus(/查詢|伺服器|代理|卡表/.test(msg) ? ("查詢失敗：" + msg) : ("分析失敗：" + msg), "err");
       } finally {
         btn.disabled = false;
       }
@@ -2236,8 +2218,6 @@
         name: r.name,
         qty: r.qty
       }));
-      const text = rows.map((r) => r.qty + "|" + r.cardNo + "|" + r.name).join("\n");
-      el("deckPaste").value = text;
       el("deckCode").value = "";
       try {
         await runAnalysis(expandEntries(rows), "示範牌組");
@@ -2248,7 +2228,6 @@
 
     function clearAll() {
       el("deckCode").value = "";
-      el("deckPaste").value = "";
       deckEntries = [];
       lastStats = null;
       aiGuideCache = null;
@@ -2260,12 +2239,11 @@
       setStatus("", "");
     }
 
-    el("btnFetch").addEventListener("click", fetchDecklog);
     el("btnAnalyze").addEventListener("click", analyzeClick);
     el("btnSample").addEventListener("click", loadSample);
     el("btnClear").addEventListener("click", clearAll);
     el("deckCode").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); fetchDecklog(); }
+      if (e.key === "Enter") { e.preventDefault(); analyzeClick(); }
     });
 
     el("btnSimDeal").addEventListener("click", simDealOpening);
