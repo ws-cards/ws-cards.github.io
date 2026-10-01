@@ -112,18 +112,26 @@
     };
   }
 
+  function cardRefs(rows, limit) {
+    return (rows || []).slice(0, limit || 2).map(function (r) {
+      return { cardNo: r.cardNo || "", name: r.name || "" };
+    });
+  }
+
   function mockBeginner(deck) {
     var lv0 = namesList(deck.topLv0, 2);
     var lv1 = namesList(deck.topLv1, 2);
     var cx = namesList(deck.climax, 2);
     var lv3 = namesList(deck.topLv3, 2);
+    var lv2 = deck.topLv2 && deck.topLv2.length ? deck.topLv2 : deck.topLv3;
     return {
+      intro: "第一次玩這副牌嗎？先別急著背全部，記住這 5 件事就能上場。",
       fiveKeys: [
-        { title: "Lv0 找誰", body: "起手優先找能站場／搜尋的 Lv0：" + lv0 + "。沒有就 mulligan 換。" },
-        { title: "Lv1 做什麼 Combo", body: "升到 Lv1 後主線看：" + lv1 + "。先搞懂它們怎麼連，再記細節。" },
-        { title: "哪些卡不能亂丟", body: "CX（" + cx + "）與關鍵 Lv3 不要當一般資源亂燒；事件也先確認時機。" },
-        { title: "什麼時候準備終盤", body: "約 Lv2～轉 Lv3 前開始囤 stock／等關鍵 Lv3。本副 Lv3 張數約 " + deck.levelCount[3] + "。" },
-        { title: "Lv3 最後怎麼收尾", body: "終盤主力：" + lv3 + "。記住誰要先下、誰要配合 CX 斬。" }
+        { title: "Lv0 找誰", body: "起手優先找能站場／搜尋的 Lv0：" + lv0 + "。沒有就 mulligan 換。", cards: cardRefs(deck.topLv0) },
+        { title: "Lv1 做什麼 Combo", body: "升到 Lv1 後主線看：" + lv1 + "。先搞懂它們怎麼連，再記細節。", cards: cardRefs(deck.topLv1) },
+        { title: "哪些卡不能亂丟", body: "CX（" + cx + "）與關鍵 Lv3 不要當一般資源亂燒；事件也先確認時機。", cards: cardRefs(deck.climax) },
+        { title: "什麼時候準備終盤", body: "約 Lv2～轉 Lv3 前開始囤 stock／等關鍵 Lv3。本副 Lv3 張數約 " + deck.levelCount[3] + "。", cards: cardRefs(lv2) },
+        { title: "Lv3 最後怎麼收尾", body: "終盤主力：" + lv3 + "。記住誰要先下、誰要配合 CX 斬。", cards: cardRefs(deck.topLv3) }
       ]
     };
   }

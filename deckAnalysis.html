@@ -479,28 +479,109 @@
     .da-ai-source.is-llm { color: var(--da-good); border-color: rgba(86,138,109,0.45); }
     .da-ai-source.is-mock { color: var(--da-warn); border-color: rgba(176,124,40,0.4); }
     .da-ai-bubble {
-      border: 1px solid var(--da-border); border-radius: 12px;
-      background: var(--da-panel); padding: 1rem 1.1rem;
-      color: var(--da-ink); min-height: 8rem;
+      --da-bubble-bg: #ffffff;
+      --da-bubble-line: #e3e6ec;
+      position: relative;
+      border: 1px solid var(--da-bubble-line); border-radius: 16px;
+      background: var(--da-bubble-bg); padding: 1rem 1.1rem;
+      color: var(--da-ink); min-height: 6rem;
+      box-shadow: 0 6px 18px rgba(38, 50, 71, 0.06);
+    }
+    [data-theme="dark"] .da-ai-bubble {
+      --da-bubble-bg: #22211e;
+      --da-bubble-line: #3a3833;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .da-ai-bubble::before {
+      content: "";
+      position: absolute; left: -8px; top: 2.4rem;
+      width: 14px; height: 14px;
+      background: var(--da-bubble-bg);
+      border-left: 1px solid var(--da-bubble-line);
+      border-bottom: 1px solid var(--da-bubble-line);
+      transform: rotate(45deg);
     }
     .da-ai-bubble h4 {
       font-size: 0.95rem; font-weight: 800; margin: 0 0 0.5rem; color: var(--da-ink);
     }
-    .da-ai-keys { list-style: none; padding: 0; margin: 0; }
-    .da-ai-keys li {
-      display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.55rem;
-      padding: 0.55rem 0; border-bottom: 1px solid var(--da-border);
+    .da-ai-say {
+      font-size: 0.95rem; line-height: 1.6; color: var(--da-ink); margin: 0 0 0.85rem;
     }
-    .da-ai-keys li:last-child { border-bottom: none; }
+    .da-ai-say:last-child { margin-bottom: 0; }
+    .da-ai-typing { display: inline-flex; align-items: center; gap: 0.55rem; color: var(--da-muted); font-size: 0.9rem; }
+    .da-ai-typing .dots { display: inline-flex; gap: 4px; }
+    .da-ai-typing .dots i {
+      width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+      animation: da-typing 1.1s ease-in-out infinite;
+    }
+    .da-ai-typing .dots i:nth-child(2) { animation-delay: 0.15s; }
+    .da-ai-typing .dots i:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes da-typing {
+      0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    .da-ai-keys {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem;
+    }
+    @media (max-width: 1199px) {
+      .da-ai-keys {
+        grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr);
+        overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 0.4rem;
+        -webkit-overflow-scrolling: touch;
+      }
+      .da-ai-keys li { scroll-snap-align: start; }
+    }
+    .da-ai-keys li {
+      display: flex; flex-direction: column;
+      border: 1px solid var(--da-border); border-radius: 12px; overflow: hidden;
+      background: var(--da-soft);
+    }
+    .da-ai-keys .kart {
+      position: relative; height: 150px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(180deg, rgba(43, 108, 176, 0.08), rgba(43, 108, 176, 0.02));
+      border-bottom: 1px solid var(--da-border);
+      overflow: hidden;
+    }
+    [data-theme="dark"] .da-ai-keys .kart {
+      background: linear-gradient(180deg, rgba(99, 179, 237, 0.1), rgba(99, 179, 237, 0.02));
+    }
+    .da-ai-keys .kart img {
+      height: 124px; aspect-ratio: 63 / 88; object-fit: cover;
+      border-radius: 5px; background: #e9edf2;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    [data-theme="dark"] .da-ai-keys .kart img { background: #111; }
+    .da-ai-keys .kart.is-pair img { position: absolute; top: 13px; }
+    .da-ai-keys .kart.is-pair img:first-of-type { transform: translateX(-24%) rotate(-7deg); }
+    .da-ai-keys .kart.is-pair img:last-of-type { transform: translateX(24%) rotate(6deg); }
+    .da-ai-keys li:hover .kart.is-pair img:first-of-type { transform: translateX(-30%) rotate(-9deg); }
+    .da-ai-keys li:hover .kart.is-pair img:last-of-type { transform: translateX(30%) rotate(8deg); }
+    .da-ai-keys li:hover .kart:not(.is-pair) img { transform: translateY(-3px); }
+    .da-ai-keys .kart .kempty { font-size: 1.8rem; color: var(--da-muted); opacity: 0.5; }
     .da-ai-keys .num {
-      width: 1.5rem; height: 1.5rem; border-radius: 50%;
-      background: var(--da-accent); color: #fff; font-size: 0.75rem; font-weight: 800;
+      position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2;
+      width: 1.6rem; height: 1.6rem; border-radius: 50%;
+      background: var(--da-accent); color: #fff; font-size: 0.8rem; font-weight: 800;
       display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
     [data-theme="dark"] .da-ai-keys .num { color: #0b1017; }
-    .da-ai-keys .ktitle { font-weight: 700; font-size: 0.9rem; }
+    .da-ai-keys .ktext { padding: 0.65rem 0.75rem 0.75rem; }
+    .da-ai-keys .ktitle { font-weight: 800; font-size: 0.92rem; color: var(--da-ink); }
     .da-ai-keys .kbody, .da-ai-section p, .da-ai-tree .then {
-      font-size: 0.88rem; color: var(--da-muted); margin: 0.15rem 0 0; line-height: 1.5;
+      font-size: 0.85rem; color: var(--da-muted); margin: 0.2rem 0 0; line-height: 1.5;
+    }
+    @media (max-width: 700px) {
+      .da-ai-persona {
+        display: flex; align-items: center; gap: 0.75rem; text-align: left; padding: 0.5rem 0.75rem;
+      }
+      .da-ai-avatar { width: 56px; height: 56px; margin: 0; flex-shrink: 0; }
+      .da-ai-avatar svg { width: 40px; height: 40px; }
+      .da-ai-bubble::before { display: none; }
     }
     .da-ai-section {
       padding: 0.65rem 0; border-bottom: 1px solid var(--da-border);
@@ -525,8 +606,8 @@
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes da-key-in {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     @keyframes da-section-in {
       from { opacity: 0; transform: translateY(8px); }
@@ -564,6 +645,7 @@
     }
     .da-ai-section.is-stagger,
     .da-ai-tree li.is-stagger,
+    .da-ai-say.is-stagger,
     .da-ai-bubble h4.is-stagger {
       opacity: 0;
       animation: da-section-in 0.4s ease forwards;
@@ -589,7 +671,9 @@
       .da-ai-keys li.is-stagger,
       .da-ai-section.is-stagger,
       .da-ai-tree li.is-stagger,
+      .da-ai-say.is-stagger,
       .da-ai-bubble h4.is-stagger,
+      .da-ai-typing .dots i,
       .da-hand-card.is-dealing,
       .da-hand-card.is-dumping,
       .da-hand-card.is-selected,
@@ -831,8 +915,10 @@
                       <path d="M26 44c3 2.5 9 2.5 12 0" fill="none" stroke="#c45c4a" stroke-width="1.6" stroke-linecap="round"/>
                     </svg>
                   </div>
-                  <div class="da-ai-persona-name" id="aiPersonaName">小雲</div>
-                  <div class="da-ai-persona-tag" id="aiPersonaTag">卡片雲牌組教練</div>
+                  <div>
+                    <div class="da-ai-persona-name" id="aiPersonaName">小雲</div>
+                    <div class="da-ai-persona-tag" id="aiPersonaTag">卡片雲牌組教練</div>
+                  </div>
                 </aside>
                 <div>
                   <div class="da-ai-modes" role="tablist" aria-label="教學模式">
@@ -850,7 +936,7 @@
                     <span class="da-ai-source" id="aiSourceBadge">尚未產生</span>
                   </div>
                   <div class="da-ai-bubble" id="aiGuideBody">
-                    <p class="da-ai-empty mb-0">先分析牌組，再選模式按「產生建議」。新手模式會先給你 5 件必記的事。</p>
+                    <p class="da-ai-say">嗨，我是小雲！先分析牌組，再選模式按「產生建議」。新手模式我會先告訴你 5 件必記的事。</p>
                   </div>
                 </div>
               </div>
@@ -2056,8 +2142,8 @@
       const body = el("aiGuideBody");
       if (body) {
         body.innerHTML = deckEntries.length
-          ? '<p class="da-ai-empty mb-0">牌組已就緒。選模式後按「產生建議」——新手模式會先給 5 件必記事。</p>'
-          : '<p class="da-ai-empty mb-0">先分析牌組，再選模式按「產生建議」。新手模式會先給你 5 件必記的事。</p>';
+          ? aiSay("牌組我看過了！選個模式按「產生建議」，新手模式我會先挑 5 件必記的事給你。")
+          : aiSay("嗨，我是小雲！先分析牌組，再選模式按「產生建議」。新手模式我會先告訴你 5 件必記的事。");
         animateAiBubble("enter");
       }
       const badge = el("aiSourceBadge");
@@ -2086,11 +2172,52 @@
       if (aiGuideCache && aiGuideCache.mode === mode) {
         renderAiGuide(aiGuideCache, { swap: true });
       } else if (deckEntries.length) {
-        el("aiGuideBody").innerHTML = '<p class="da-ai-empty mb-0">已切換模式。按「產生建議」取得此模式內容。</p>';
+        el("aiGuideBody").innerHTML = aiSay("換模式了！按「產生建議」，我用這個模式重新講一次。");
         el("aiSourceBadge").textContent = "待產生";
         el("aiSourceBadge").className = "da-ai-source";
         animateAiBubble("swap");
       }
+    }
+
+    function aiSay(text) {
+      return '<p class="da-ai-say">' + escapeHtml(text) + "</p>";
+    }
+
+    const AI_MODE_INTRO = {
+      standard: "這副牌我照「核心 → 結構 → 各等級 → 流程 → 進階」幫你整理好了：",
+      advanced: "進階篇：流程之外，再加上幾個常見局面該怎麼判斷。"
+    };
+
+    function aiKeyCards(k) {
+      const raw = Array.isArray(k.cards) && k.cards.length
+        ? k.cards
+        : (Array.isArray(k.cardNos) ? k.cardNos.map(function (no) { return { cardNo: no }; }) : []);
+      const seen = new Set();
+      const out = [];
+      raw.forEach(function (r) {
+        const no = normalizeCardNo(String((r && r.cardNo) || ""));
+        if (!no || seen.has(no)) return;
+        seen.add(no);
+        const hit = deckEntries.find(function (c) { return normalizeCardNo(c.cardNo || "") === no; });
+        out.push({
+          cardNo: no,
+          name: (hit && hit.name) || (r && r.name) || no,
+          imageUrl: (hit && hit.imageUrl) || wsImageUrlFromCardNo(no)
+        });
+      });
+      return out.slice(0, 2);
+    }
+
+    function aiKeyArtMarkup(cards, n) {
+      const num = '<span class="num">' + n + "</span>";
+      if (!cards.length) {
+        return '<div class="kart">' + num + '<i class="fas fa-layer-group kempty" aria-hidden="true"></i></div>';
+      }
+      const imgs = cards.map(function (c) {
+        return '<img src="' + escapeHtml(c.imageUrl) + '" alt="' + escapeHtml(c.name) + '" title="' +
+          escapeHtml(c.name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">';
+      }).join("");
+      return '<div class="kart' + (cards.length > 1 ? " is-pair" : "") + '">' + num + imgs + "</div>";
     }
 
     function renderAiGuide(result, opts) {
@@ -2114,14 +2241,16 @@
       let html = "";
 
       if (mode === "beginner" && guide.fiveKeys && guide.fiveKeys.length) {
-        html += "<h4>第一次玩這副牌：先記住這 5 件事</h4><ol class=\"da-ai-keys\">";
-        guide.fiveKeys.forEach(function (k) {
-          html += "<li><span class=\"num\"></span><div>" +
-            "<div class=\"ktitle\">" + escapeHtml(k.title || "") + "</div>" +
+        html += aiSay(guide.intro || "第一次玩這副牌嗎？先記住這 5 件事就能上場。");
+        html += "<ol class=\"da-ai-keys\">";
+        guide.fiveKeys.forEach(function (k, i) {
+          html += "<li>" + aiKeyArtMarkup(aiKeyCards(k), i + 1) +
+            "<div class=\"ktext\"><div class=\"ktitle\">" + escapeHtml(k.title || "") + "</div>" +
             "<p class=\"kbody\">" + escapeHtml(k.body || "") + "</p></div></li>";
         });
         html += "</ol>";
       } else {
+        html += aiSay(guide.intro || AI_MODE_INTRO[mode] || AI_MODE_INTRO.standard);
         if (guide.sections && guide.sections.length) {
           html += guide.sections.map(function (s) {
             return '<div class="da-ai-section"><div class="stitle">' + escapeHtml(s.title || "") +
@@ -2139,20 +2268,15 @@
       }
 
       if (!html) {
-        html = '<p class="da-ai-empty mb-0">沒有可顯示的建議內容。</p>';
+        html = aiSay("這次沒整理出內容，換個模式或再試一次看看？");
       }
       body.innerHTML = html;
       animateAiBubble(opts.swap ? "swap" : "enter");
 
       if (mode === "beginner") {
-        const items = body.querySelectorAll(".da-ai-keys li");
-        items.forEach(function (li, i) {
-          const num = li.querySelector(".num");
-          if (num) num.textContent = String(i + 1);
-        });
-        staggerNodes(items, 120);
+        staggerNodes(body.querySelectorAll(".da-ai-say, .da-ai-keys li"), 110);
       } else {
-        const bits = body.querySelectorAll("h4, .da-ai-section, .da-ai-tree li");
+        const bits = body.querySelectorAll(".da-ai-say, h4, .da-ai-section, .da-ai-tree li");
         staggerNodes(bits, 80);
       }
     }
@@ -2171,7 +2295,7 @@
       btn.disabled = true;
       btnMock.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>產生中…';
-      el("aiGuideBody").innerHTML = '<p class="da-ai-empty mb-0">小雲正在整理這副牌的重點…</p>';
+      el("aiGuideBody").innerHTML = '<div class="da-ai-typing" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>小雲正在整理這副牌的重點…</div>';
       try {
         const deck = WSDeckAIGuide.buildStructuredDeck(deckEntries, lastStats);
         const result = await WSDeckAIGuide.requestGuide({
@@ -2182,8 +2306,7 @@
         });
         renderAiGuide(result);
       } catch (e) {
-        el("aiGuideBody").innerHTML = '<p class="da-ai-empty mb-0">產生失敗：' +
-          escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
+        el("aiGuideBody").innerHTML = aiSay("抱歉，我這邊出了點狀況：" + (e && e.message ? e.message : String(e)));
       } finally {
         btn.disabled = !deckEntries.length;
         btnMock.disabled = !deckEntries.length;

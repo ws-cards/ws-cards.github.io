@@ -49,6 +49,11 @@ function namesList(rows, limit) {
     .join("、") || "（待補）";
 }
 
+function cardNos(rows, limit) {
+  if (!Array.isArray(rows)) return [];
+  return rows.slice(0, limit || 2).map((r) => (r && r.cardNo) || "").filter(Boolean);
+}
+
 function mockGuide(mode, deck) {
   const lv = (deck && deck.levelCount) || {};
   const d = {
@@ -61,13 +66,15 @@ function mockGuide(mode, deck) {
   };
 
   if (mode === "beginner") {
+    const lv2 = deck && Array.isArray(deck.topLv2) && deck.topLv2.length ? deck.topLv2 : d.topLv3;
     return {
+      intro: "第一次玩這副牌嗎？先記住這 5 件事就能上場。",
       fiveKeys: [
-        { title: "Lv0 找誰", body: "起手找：" + namesList(d.topLv0, 2) },
-        { title: "Lv1 做什麼 Combo", body: "主線：" + namesList(d.topLv1, 2) },
-        { title: "哪些卡不能亂丟", body: "CX：" + namesList(d.climax, 2) },
-        { title: "什麼時候準備終盤", body: "Lv3 約 " + d.levelCount[3] + " 張，Lv2 起開始囤資源。" },
-        { title: "Lv3 最後怎麼收尾", body: "終盤：" + namesList(d.topLv3, 2) }
+        { title: "Lv0 找誰", body: "起手找：" + namesList(d.topLv0, 2), cardNos: cardNos(d.topLv0) },
+        { title: "Lv1 做什麼 Combo", body: "主線：" + namesList(d.topLv1, 2), cardNos: cardNos(d.topLv1) },
+        { title: "哪些卡不能亂丟", body: "CX：" + namesList(d.climax, 2), cardNos: cardNos(d.climax) },
+        { title: "什麼時候準備終盤", body: "Lv3 約 " + d.levelCount[3] + " 張，Lv2 起開始囤資源。", cardNos: cardNos(lv2) },
+        { title: "Lv3 最後怎麼收尾", body: "終盤：" + namesList(d.topLv3, 2), cardNos: cardNos(d.topLv3) }
       ]
     };
   }
@@ -118,13 +125,13 @@ function buildSystemPrompt(mode) {
     "用繁體中文（台灣），語氣親切簡潔，不要捏造不存在的卡效。",
     "只能根據使用者提供的 structured deck JSON 與 ragHints 回答。",
     mode === "beginner"
-      ? "輸出新手模式：剛好 5 個重點（Lv0／Lv1 combo／不能亂丟／終盤準備／Lv3 收尾）。"
+      ? "輸出新手模式：一句開場白 intro + 剛好 5 個重點（Lv0／Lv1 combo／不能亂丟／終盤準備／Lv3 收尾）；每個重點的 cardNos 只能填 deck.cards 裡存在的 cardNo。"
       : mode === "advanced"
         ? "輸出進階模式：完整流程章節 + decision tree（when/then）。"
         : "輸出標準模式：核心玩法、結構、各等級、標準流程、進階決策預覽。",
     "請只回傳 JSON，格式：",
     mode === "beginner"
-      ? '{"guide":{"fiveKeys":[{"title":"...","body":"..."}]}}'
+      ? '{"guide":{"intro":"一句開場白","fiveKeys":[{"title":"...","body":"...","cardNos":["deck 內的 cardNo，最多 2 張"]}]}}'
       : mode === "advanced"
         ? '{"guide":{"sections":[{"id":"core|structure|levels|flow|advanced","title":"...","body":"..."}],"decisionTree":[{"when":"...","then":"..."}]}}'
         : '{"guide":{"sections":[{"id":"core|structure|levels|flow|advanced","title":"...","body":"..."}]}}'
