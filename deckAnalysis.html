@@ -124,6 +124,144 @@
       border: 1px dashed var(--da-border); border-radius: 12px; padding: 1.5rem;
       text-align: center; color: var(--da-muted); background: var(--da-soft);
     }
+
+    /* ——— Analyze progress (overlay + stage) ——— */
+    .da-analyze-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background:
+        radial-gradient(900px 480px at 50% 30%, rgba(43, 108, 176, 0.22), transparent 60%),
+        rgba(15, 18, 24, 0.62);
+      backdrop-filter: blur(3px);
+      display: none;
+    }
+    .da-analyze-overlay.is-open { display: block; }
+    [data-theme="dark"] .da-analyze-overlay {
+      background:
+        radial-gradient(900px 480px at 50% 30%, rgba(99, 179, 237, 0.16), transparent 60%),
+        rgba(8, 10, 14, 0.72);
+    }
+    body.is-analyzing { overflow: hidden; }
+    .da-analyze-panel {
+      width: min(520px, 100%);
+      border: 1px solid var(--da-border);
+      border-radius: 16px;
+      background: var(--da-panel);
+      color: var(--da-ink);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+      padding: 1.5rem 1.4rem 1.35rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .da-analyze-panel::before {
+      content: "";
+      position: absolute; left: 0; right: 0; top: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--da-accent), transparent);
+      animation: da-scan-x 1.8s ease-in-out infinite;
+    }
+    .da-analyze-kicker {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--da-accent); font-weight: 700; margin-bottom: 0.35rem;
+    }
+    .da-analyze-title {
+      font-size: 1.35rem; font-weight: 900; letter-spacing: -0.02em;
+      margin: 0 0 0.35rem; line-height: 1.2;
+    }
+    .da-analyze-sub {
+      font-size: 0.9rem; color: var(--da-muted); margin-bottom: 1.1rem;
+    }
+    .da-analyze-radar {
+      width: 64px; height: 64px; border-radius: 50%;
+      margin: 0 auto 1rem;
+      border: 2px solid rgba(43, 108, 176, 0.35);
+      background:
+        repeating-radial-gradient(circle, transparent 0 8px, rgba(43,108,176,0.12) 8px 9px);
+      position: relative;
+    }
+    .da-analyze-radar::after {
+      content: "";
+      position: absolute; inset: 8px; border-radius: 50%;
+      border-top: 2px solid var(--da-accent);
+      animation: da-spin 1s linear infinite;
+    }
+    .da-analyze-steps {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; gap: 0.55rem;
+    }
+    .da-analyze-steps li {
+      display: grid;
+      grid-template-columns: 1.7rem 1fr auto;
+      gap: 0.65rem; align-items: center;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid var(--da-border);
+      background: var(--da-soft);
+      color: var(--da-muted);
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .da-analyze-steps li .idx {
+      width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800;
+      border: 1px solid var(--da-border); background: var(--da-panel);
+    }
+    .da-analyze-steps li .label { font-weight: 700; font-size: 0.92rem; color: inherit; }
+    .da-analyze-steps li .state {
+      font-size: 0.72rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0.04em;
+    }
+    .da-analyze-steps li.is-active {
+      border-color: rgba(43, 108, 176, 0.45);
+      background: rgba(43, 108, 176, 0.1);
+      color: var(--da-ink);
+      box-shadow: inset 3px 0 0 var(--da-accent);
+    }
+    .da-analyze-steps li.is-active .idx {
+      background: var(--da-accent); color: #fff; border-color: var(--da-accent);
+    }
+    [data-theme="dark"] .da-analyze-steps li.is-active .idx { color: #0b1017; }
+    .da-analyze-steps li.is-active .state { color: var(--da-accent); }
+    .da-analyze-steps li.is-done {
+      color: var(--da-ink);
+      border-color: rgba(86, 138, 109, 0.4);
+    }
+    .da-analyze-steps li.is-done .idx {
+      background: var(--da-good); color: #fff; border-color: var(--da-good);
+    }
+    .da-analyze-steps li.is-done .state { color: var(--da-good); }
+    .da-analyze-steps li.is-error {
+      border-color: rgba(180, 93, 82, 0.5);
+      color: var(--da-bad);
+    }
+    .da-analyze-inline {
+      display: none;
+      margin-top: 0;
+      position: relative;
+      z-index: 2001;
+    }
+    .da-analyze-inline.is-open { display: block; }
+    .da-analyze-inline .da-analyze-panel {
+      width: 100%;
+      max-width: none;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+    }
+    .btn.is-busy {
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    @keyframes da-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes da-scan-x {
+      0%, 100% { opacity: 0.35; transform: scaleX(0.45); }
+      50% { opacity: 1; transform: scaleX(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .da-analyze-panel::before,
+      .da-analyze-radar::after {
+        animation: none !important;
+      }
+    }
     .da-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
     @media (max-width: 767px) { .da-rules { grid-template-columns: 1fr; } }
     .da-rule {
@@ -613,6 +751,20 @@
         <div class="row" id="emptyState">
           <div class="col-lg-12"><div class="da-empty">匯入牌組後，這裡會展開規則檢查、曲線圖、起手機率與洗牌／Mulligan 模擬。</div></div>
         </div>
+
+        <div class="row da-analyze-inline" id="analyzeInline" aria-live="assertive">
+          <div class="col-lg-12">
+            <div class="da-analyze-panel" id="analyzeInlinePanel" role="status" aria-labelledby="analyzeInlineTitle">
+              <div class="da-analyze-radar" aria-hidden="true"></div>
+              <div class="da-analyze-kicker">Deck Lab · Scanning</div>
+              <h3 class="da-analyze-title" id="analyzeInlineTitle">正在分析牌組</h3>
+              <p class="da-analyze-sub" id="analyzeInlineSub">請稍候，完成前頁面會暫時鎖定。</p>
+              <ol class="da-analyze-steps" id="analyzeInlineSteps"></ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="da-analyze-overlay" id="analyzeOverlay" hidden aria-hidden="true"></div>
 
         <div id="results" style="display:none;" aria-live="polite">
           <div class="row"><div class="col-lg-12"><div class="card">
@@ -2096,10 +2248,98 @@
       }
     }
 
+    /* ——— Analyze progress UI (overlay + inline stage) ——— */
+    let analyzeProgressOpen = false;
+
+    function analyzeStepMarkup(steps) {
+      return steps.map(function (s, i) {
+        return '<li data-step-id="' + escapeHtml(s.id) + '" class="is-pending">' +
+          '<span class="idx">' + (i + 1) + "</span>" +
+          '<span class="label">' + escapeHtml(s.label) + "</span>" +
+          '<span class="state">等待</span></li>';
+      }).join("");
+    }
+
+    function showAnalyzeProgress(opts) {
+      opts = opts || {};
+      const steps = opts.steps || [];
+      const title = opts.title || "正在分析牌組";
+      const sub = opts.sub || "請稍候，完成前頁面會暫時鎖定。";
+      el("analyzeInlineTitle").textContent = title;
+      el("analyzeInlineSub").textContent = sub;
+      el("analyzeInlineSteps").innerHTML = analyzeStepMarkup(steps);
+
+      el("emptyState").style.display = "none";
+      el("analyzeInline").classList.add("is-open");
+      const overlay = el("analyzeOverlay");
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      overlay.classList.add("is-open");
+      document.body.classList.add("is-analyzing");
+      analyzeProgressOpen = true;
+      el("analyzeInline").scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
+    }
+
+    function setAnalyzeStep(id, state) {
+      if (!analyzeProgressOpen) return;
+      const stateLabel = state === "active" ? "進行中" : state === "done" ? "完成" : state === "error" ? "失敗" : "等待";
+      const list = el("analyzeInlineSteps");
+      if (!list) return;
+      const item = list.querySelector('[data-step-id="' + id + '"]');
+      if (!item) return;
+      item.classList.remove("is-pending", "is-active", "is-done", "is-error");
+      item.classList.add(state === "active" ? "is-active" : state === "done" ? "is-done" : state === "error" ? "is-error" : "is-pending");
+      const st = item.querySelector(".state");
+      if (st) st.textContent = stateLabel;
+      const idx = item.querySelector(".idx");
+      if (idx && state === "done") idx.textContent = "✓";
+      const labelNode = item.querySelector(".label");
+      if (state === "active" && labelNode) setStatus("進行中：" + labelNode.textContent, "");
+      else if (state === "error") setStatus("分析中斷", "err");
+    }
+
+    function hideAnalyzeProgress(opts) {
+      opts = opts || {};
+      const overlay = el("analyzeOverlay");
+      const finish = function () {
+        overlay.classList.remove("is-open");
+        overlay.hidden = true;
+        overlay.setAttribute("aria-hidden", "true");
+        el("analyzeInline").classList.remove("is-open");
+        document.body.classList.remove("is-analyzing");
+        analyzeProgressOpen = false;
+      };
+      if (opts.delay && !prefersReducedMotion()) {
+        window.setTimeout(finish, opts.delay);
+      } else {
+        finish();
+      }
+    }
+
+    function setAnalyzeBusy(busy) {
+      const btn = el("btnAnalyze");
+      const sample = el("btnSample");
+      const clear = el("btnClear");
+      if (btn) {
+        btn.disabled = !!busy;
+        btn.classList.toggle("is-busy", !!busy);
+        btn.innerHTML = busy
+          ? '<i class="fas fa-spinner fa-spin mr-1"></i>分析中…'
+          : '<i class="fas fa-chart-pie mr-1"></i>開始分析';
+      }
+      if (sample) sample.disabled = !!busy;
+      if (clear) clear.disabled = !!busy;
+      const code = el("deckCode");
+      if (code) code.disabled = !!busy;
+    }
+
     async function runAnalysis(cards, label) {
       if (!cards.length) throw new Error("牌組為空。");
+      setAnalyzeStep("enrich", "active");
       setStatus("讀取卡牌屬性中…", "");
       const enriched = await enrichCardsSync(cards);
+      setAnalyzeStep("enrich", "done");
+      setAnalyzeStep("render", "active");
       deckEntries = enriched;
       const stats = analyze(enriched);
       lastStats = stats;
@@ -2113,8 +2353,10 @@
       renderTable(enriched);
       resetSimUi();
       resetAiGuideUi();
+      setAnalyzeStep("render", "done");
       setStatus((label || "分析完成") + " · " + enriched.length + " 張", "ok");
-      el("results").scrollIntoView({ behavior: "smooth", block: "start" });
+      hideAnalyzeProgress({ delay: 420 });
+      el("results").scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
     }
 
     /* ——— Price feed ——— */
@@ -2191,24 +2433,38 @@
     }
 
     async function analyzeClick() {
-      const btn = el("btnAnalyze");
       const code = el("deckCode").value.trim();
       if (!code) {
         setStatus("請先輸入 DeckLog 代碼。", "err");
         return;
       }
-      btn.disabled = true;
+      setAnalyzeBusy(true);
+      showAnalyzeProgress({
+        title: "正在分析牌組",
+        sub: "先取得 DeckLog，再讀取屬性並產生報告。",
+        steps: [
+          { id: "fetch", label: "取得 DeckLog 卡表" },
+          { id: "enrich", label: "讀取卡牌屬性" },
+          { id: "render", label: "產生圖表與報告" }
+        ]
+      });
       try {
+        setAnalyzeStep("fetch", "active");
         setStatus("查詢 DeckLog 中…", "");
         const fetched = await fetchDecklogPayload(code);
+        setAnalyzeStep("fetch", "done");
         setStatus(fetched.label + "，分析中…", "");
         const cards = resolveDeckCardsFromUserInput(fetched.text);
         await runAnalysis(cards, fetched.label);
       } catch (e) {
         const msg = e && e.message ? e.message : String(e);
-        setStatus(/查詢|伺服器|代理|卡表/.test(msg) ? ("查詢失敗：" + msg) : ("分析失敗：" + msg), "err");
+        const onFetch = /伺服器|代理|卡表|查詢|HTTP|Failed to fetch|NetworkError/i.test(msg);
+        setAnalyzeStep(onFetch ? "fetch" : (analyzeProgressOpen ? "enrich" : "fetch"), "error");
+        setStatus(onFetch ? ("查詢失敗：" + msg) : ("分析失敗：" + msg), "err");
+        hideAnalyzeProgress({ delay: 900 });
+        if (!deckEntries.length) el("emptyState").style.display = "block";
       } finally {
-        btn.disabled = false;
+        setAnalyzeBusy(false);
       }
     }
 
@@ -2219,14 +2475,34 @@
         qty: r.qty
       }));
       el("deckCode").value = "";
+      setAnalyzeBusy(true);
+      showAnalyzeProgress({
+        title: "正在載入示範牌組",
+        sub: "讀取卡牌屬性後產生分析報告。",
+        steps: [
+          { id: "load", label: "載入示範牌組" },
+          { id: "enrich", label: "讀取卡牌屬性" },
+          { id: "render", label: "產生圖表與報告" }
+        ]
+      });
       try {
+        setAnalyzeStep("load", "active");
+        await new Promise(function (r) { setTimeout(r, prefersReducedMotion() ? 0 : 180); });
+        setAnalyzeStep("load", "done");
         await runAnalysis(expandEntries(rows), "示範牌組");
       } catch (e) {
+        setAnalyzeStep("enrich", "error");
         setStatus("示範載入失敗：" + (e && e.message ? e.message : String(e)), "err");
+        hideAnalyzeProgress({ delay: 900 });
+        if (!deckEntries.length) el("emptyState").style.display = "block";
+      } finally {
+        setAnalyzeBusy(false);
       }
     }
 
     function clearAll() {
+      hideAnalyzeProgress();
+      setAnalyzeBusy(false);
       el("deckCode").value = "";
       deckEntries = [];
       lastStats = null;
