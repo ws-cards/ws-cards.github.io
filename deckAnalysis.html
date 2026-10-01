@@ -128,139 +128,77 @@
     /* ——— Analyze progress (overlay + stage) ——— */
     .da-analyze-overlay {
       position: fixed; inset: 0; z-index: 2000;
-      background:
-        radial-gradient(900px 480px at 50% 30%, rgba(43, 108, 176, 0.22), transparent 60%),
-        rgba(15, 18, 24, 0.62);
-      backdrop-filter: blur(3px);
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(2px);
       display: none;
     }
     .da-analyze-overlay.is-open { display: block; }
-    [data-theme="dark"] .da-analyze-overlay {
-      background:
-        radial-gradient(900px 480px at 50% 30%, rgba(99, 179, 237, 0.16), transparent 60%),
-        rgba(8, 10, 14, 0.72);
-    }
+    [data-theme="dark"] .da-analyze-overlay { background: rgba(0, 0, 0, 0.5); }
     body.is-analyzing { overflow: hidden; }
-    .da-analyze-panel {
-      width: min(520px, 100%);
-      border: 1px solid var(--da-border);
-      border-radius: 16px;
-      background: var(--da-panel);
-      color: var(--da-ink);
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
-      padding: 1.5rem 1.4rem 1.35rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .da-analyze-panel::before {
-      content: "";
-      position: absolute; left: 0; right: 0; top: 0; height: 3px;
-      background: linear-gradient(90deg, transparent, var(--da-accent), transparent);
-      animation: da-scan-x 1.8s ease-in-out infinite;
-    }
-    .da-analyze-kicker {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--da-accent); font-weight: 700; margin-bottom: 0.35rem;
-    }
-    .da-analyze-title {
-      font-size: 1.35rem; font-weight: 900; letter-spacing: -0.02em;
-      margin: 0 0 0.35rem; line-height: 1.2;
-    }
-    .da-analyze-sub {
-      font-size: 0.9rem; color: var(--da-muted); margin-bottom: 1.1rem;
-    }
-    .da-analyze-radar {
-      width: 64px; height: 64px; border-radius: 50%;
-      margin: 0 auto 1rem;
-      border: 2px solid rgba(43, 108, 176, 0.35);
-      background:
-        repeating-radial-gradient(circle, transparent 0 8px, rgba(43,108,176,0.12) 8px 9px);
-      position: relative;
-    }
-    .da-analyze-radar::after {
-      content: "";
-      position: absolute; inset: 8px; border-radius: 50%;
-      border-top: 2px solid var(--da-accent);
-      animation: da-spin 1s linear infinite;
-    }
-    .da-analyze-steps {
-      list-style: none; padding: 0; margin: 0;
-      display: grid; gap: 0.55rem;
-    }
-    .da-analyze-steps li {
-      display: grid;
-      grid-template-columns: 1.7rem 1fr auto;
-      gap: 0.65rem; align-items: center;
-      padding: 0.7rem 0.8rem;
-      border-radius: 10px;
-      border: 1px solid var(--da-border);
-      background: var(--da-soft);
-      color: var(--da-muted);
-      transition: border-color 0.2s, background 0.2s, color 0.2s;
-    }
-    .da-analyze-steps li .idx {
-      width: 1.5rem; height: 1.5rem; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; font-weight: 800;
-      border: 1px solid var(--da-border); background: var(--da-panel);
-    }
-    .da-analyze-steps li .label { font-weight: 700; font-size: 0.92rem; color: inherit; }
-    .da-analyze-steps li .state {
-      font-size: 0.72rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      letter-spacing: 0.04em;
-    }
-    .da-analyze-steps li.is-active {
-      border-color: rgba(43, 108, 176, 0.45);
-      background: rgba(43, 108, 176, 0.1);
-      color: var(--da-ink);
-      box-shadow: inset 3px 0 0 var(--da-accent);
-    }
-    .da-analyze-steps li.is-active .idx {
-      background: var(--da-accent); color: #fff; border-color: var(--da-accent);
-    }
-    [data-theme="dark"] .da-analyze-steps li.is-active .idx { color: #0b1017; }
-    .da-analyze-steps li.is-active .state { color: var(--da-accent); }
-    .da-analyze-steps li.is-done {
-      color: var(--da-ink);
-      border-color: rgba(86, 138, 109, 0.4);
-    }
-    .da-analyze-steps li.is-done .idx {
-      background: var(--da-good); color: #fff; border-color: var(--da-good);
-    }
-    .da-analyze-steps li.is-done .state { color: var(--da-good); }
-    .da-analyze-steps li.is-error {
-      border-color: rgba(180, 93, 82, 0.5);
-      color: var(--da-bad);
-    }
     .da-analyze-inline {
       display: none;
-      margin-top: 0;
       position: relative;
       z-index: 2001;
     }
     .da-analyze-inline.is-open { display: block; }
-    .da-analyze-inline .da-analyze-panel {
-      width: 100%;
-      max-width: none;
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+    .da-analyze-card {
+      --da-progress: #b07c28;
+      position: relative;
+      z-index: 2001;
     }
+    [data-theme="dark"] .da-analyze-card { --da-progress: #cbb083; }
+    .da-analyze-card .card-title small { margin-left: 0.5rem; font-weight: 500; }
+    .da-analyze-card #analyzeInlineIcon { color: var(--da-progress); }
+    .da-analyze-card.is-error #analyzeInlineIcon { color: var(--da-bad); }
+    .da-analyze-bar {
+      height: 4px; border-radius: 999px; overflow: hidden;
+      background: var(--da-border);
+      margin: 0.85rem 0 0.35rem;
+    }
+    .da-analyze-bar span {
+      display: block; height: 100%; width: 0;
+      border-radius: inherit;
+      background-color: var(--da-progress);
+      background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
+      background-size: 40% 100%;
+      background-repeat: no-repeat;
+      animation: da-bar-sheen 1.6s ease-in-out infinite;
+      transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .da-analyze-card.is-error .da-analyze-bar span { background-color: var(--da-bad); animation: none; background-image: none; }
+    .da-analyze-steps { list-style: none; padding: 0; margin: 0; }
+    .da-analyze-steps li {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--da-border);
+      font-size: 0.9rem;
+      color: var(--da-muted);
+      transition: color 0.2s;
+    }
+    .da-analyze-steps li:last-child { border-bottom: none; }
+    .da-analyze-steps .da-step-icon { width: 1.1rem; text-align: center; flex-shrink: 0; }
+    .da-analyze-steps .label { flex: 1; min-width: 0; }
+    .da-analyze-steps .state { font-size: 0.8rem; }
+    .da-analyze-steps li.is-active { color: var(--da-ink); }
+    .da-analyze-steps li.is-active .label { font-weight: 700; }
+    .da-analyze-steps li.is-active .da-step-icon,
+    .da-analyze-steps li.is-active .state { color: var(--da-progress); }
+    .da-analyze-steps li.is-done { color: var(--da-ink); }
+    .da-analyze-steps li.is-done .da-step-icon,
+    .da-analyze-steps li.is-done .state { color: var(--da-good); }
+    .da-analyze-steps li.is-error { color: var(--da-bad); }
+    .da-analyze-steps li.is-error .label { font-weight: 700; }
     .btn.is-busy {
       pointer-events: none;
       opacity: 0.85;
     }
-    @keyframes da-spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes da-scan-x {
-      0%, 100% { opacity: 0.35; transform: scaleX(0.45); }
-      50% { opacity: 1; transform: scaleX(1); }
+    @keyframes da-bar-sheen {
+      0% { background-position: -60% 0; }
+      100% { background-position: 160% 0; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .da-analyze-panel::before,
-      .da-analyze-radar::after {
-        animation: none !important;
-      }
+      .da-analyze-bar span { animation: none; background-image: none; transition: none; }
+      .da-analyze-card .fa-spin { animation: none; }
     }
     .da-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
     @media (max-width: 767px) { .da-rules { grid-template-columns: 1fr; } }
@@ -754,12 +692,18 @@
 
         <div class="row da-analyze-inline" id="analyzeInline" aria-live="assertive">
           <div class="col-lg-12">
-            <div class="da-analyze-panel" id="analyzeInlinePanel" role="status" aria-labelledby="analyzeInlineTitle">
-              <div class="da-analyze-radar" aria-hidden="true"></div>
-              <div class="da-analyze-kicker">Deck Lab · Scanning</div>
-              <h3 class="da-analyze-title" id="analyzeInlineTitle">正在分析牌組</h3>
-              <p class="da-analyze-sub" id="analyzeInlineSub">請稍候，完成前頁面會暫時鎖定。</p>
-              <ol class="da-analyze-steps" id="analyzeInlineSteps"></ol>
+            <div class="card da-analyze-card" id="analyzeInlinePanel" role="status" aria-labelledby="analyzeInlineTitle">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-circle-notch fa-spin mr-2" id="analyzeInlineIcon" aria-hidden="true"></i><span id="analyzeInlineTitle">正在分析牌組</span>
+                  <small class="text-muted" id="analyzeInlineCount"></small>
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="da-hint mt-0" id="analyzeInlineSub">請稍候，完成前頁面會暫時鎖定。</p>
+                <div class="da-analyze-bar" aria-hidden="true"><span id="analyzeInlineBar"></span></div>
+                <ul class="da-analyze-steps" id="analyzeInlineSteps"></ul>
+              </div>
             </div>
           </div>
         </div>
@@ -2245,13 +2189,35 @@
     /* ——— Analyze progress UI (overlay + inline stage) ——— */
     let analyzeProgressOpen = false;
 
+    const ANALYZE_STEP_ICONS = {
+      pending: "far fa-circle",
+      active: "fas fa-circle-notch fa-spin",
+      done: "fas fa-check-circle",
+      error: "fas fa-times-circle"
+    };
+    const ANALYZE_STEP_LABELS = { pending: "等待", active: "進行中", done: "完成", error: "失敗" };
+
     function analyzeStepMarkup(steps) {
-      return steps.map(function (s, i) {
+      return steps.map(function (s) {
         return '<li data-step-id="' + escapeHtml(s.id) + '" class="is-pending">' +
-          '<span class="idx">' + (i + 1) + "</span>" +
+          '<i class="da-step-icon ' + ANALYZE_STEP_ICONS.pending + '" aria-hidden="true"></i>' +
           '<span class="label">' + escapeHtml(s.label) + "</span>" +
-          '<span class="state">等待</span></li>';
+          '<span class="state">' + ANALYZE_STEP_LABELS.pending + "</span></li>";
       }).join("");
+    }
+
+    function syncAnalyzeProgress() {
+      const items = Array.prototype.slice.call(el("analyzeInlineSteps").children);
+      const total = items.length;
+      const done = items.filter(function (li) { return li.classList.contains("is-done"); }).length;
+      const activeIdx = items.findIndex(function (li) { return li.classList.contains("is-active"); });
+      const errored = items.some(function (li) { return li.classList.contains("is-error"); });
+      const current = activeIdx >= 0 ? activeIdx + 1 : Math.min(done + (errored ? 1 : 0), total);
+      el("analyzeInlineCount").textContent = total ? "步驟 " + Math.max(current, 1) + " / " + total : "";
+      const filled = done + (activeIdx >= 0 ? 0.5 : 0);
+      el("analyzeInlineBar").style.width = total ? (filled / total * 100) + "%" : "0%";
+      el("analyzeInlinePanel").classList.toggle("is-error", errored);
+      el("analyzeInlineIcon").className = (errored ? "fas fa-exclamation-circle" : "fas fa-circle-notch fa-spin") + " mr-2";
     }
 
     function showAnalyzeProgress(opts) {
@@ -2262,6 +2228,7 @@
       el("analyzeInlineTitle").textContent = title;
       el("analyzeInlineSub").textContent = sub;
       el("analyzeInlineSteps").innerHTML = analyzeStepMarkup(steps);
+      syncAnalyzeProgress();
 
       el("emptyState").style.display = "none";
       el("analyzeInline").classList.add("is-open");
@@ -2276,17 +2243,18 @@
 
     function setAnalyzeStep(id, state) {
       if (!analyzeProgressOpen) return;
-      const stateLabel = state === "active" ? "進行中" : state === "done" ? "完成" : state === "error" ? "失敗" : "等待";
+      if (!ANALYZE_STEP_LABELS[state]) state = "pending";
       const list = el("analyzeInlineSteps");
       if (!list) return;
       const item = list.querySelector('[data-step-id="' + id + '"]');
       if (!item) return;
       item.classList.remove("is-pending", "is-active", "is-done", "is-error");
-      item.classList.add(state === "active" ? "is-active" : state === "done" ? "is-done" : state === "error" ? "is-error" : "is-pending");
+      item.classList.add("is-" + state);
       const st = item.querySelector(".state");
-      if (st) st.textContent = stateLabel;
-      const idx = item.querySelector(".idx");
-      if (idx && state === "done") idx.textContent = "✓";
+      if (st) st.textContent = ANALYZE_STEP_LABELS[state];
+      const icon = item.querySelector(".da-step-icon");
+      if (icon) icon.className = "da-step-icon " + ANALYZE_STEP_ICONS[state];
+      syncAnalyzeProgress();
       const labelNode = item.querySelector(".label");
       if (state === "active" && labelNode) setStatus("進行中：" + labelNode.textContent, "");
       else if (state === "error") setStatus("分析中斷", "err");
