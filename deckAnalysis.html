@@ -810,16 +810,14 @@
           <div class="row"><div class="col-lg-12"><div class="card">
             <div class="card-header">
               <h5 class="card-title">
-                <i class="fas fa-random mr-2"></i>洗牌 · 起手 · Mulligan 模擬
-                <small class="text-muted">開局 5 張 → 可選任意張進等待室再補抽</small>
+                <i class="fas fa-random mr-2"></i>洗牌 · 起手 · 調度模擬
+                <small class="text-muted">開局 5 張 → 選要換的牌進等待室再補抽（Mulligan）</small>
               </h5>
             </div>
             <div class="card-body">
               <div class="da-sim-toolbar">
                 <button type="button" class="btn btn-primary" id="btnSimDeal"><i class="fas fa-random mr-1"></i>洗牌並起手</button>
-                <button type="button" class="btn btn-warning" id="btnSimMulligan" disabled><i class="fas fa-sync-alt mr-1"></i>確認 Mulligan</button>
-                <button type="button" class="btn btn-outline-secondary" id="btnSimKeep" disabled>保留這手（結束）</button>
-                <button type="button" class="btn btn-outline-secondary" id="btnSimReset" disabled>再來一次</button>
+                <button type="button" class="btn btn-warning" id="btnSimMulligan" hidden disabled><i class="fas fa-sync-alt mr-1"></i>確認調度</button>
                 <span class="da-sim-phase" id="simPhase">尚未開始</span>
               </div>
               <div class="da-sim-stats" id="simStats" aria-live="polite">
@@ -828,11 +826,11 @@
                 <span>等待室 <strong id="simWaitingCount">—</strong></span>
                 <span>已選重抽 <strong id="simSelectedCount">0</strong></span>
               </div>
-              <p class="da-hint mb-2" id="simHint">分析牌組後按「洗牌並起手」。點選手牌標記要丟進等待室的卡，再按確認 Mulligan（規則：丟幾張補幾張，僅可一次）。</p>
+              <p class="da-hint mb-2" id="simHint">分析牌組後按「洗牌並起手」。起手出現後，點選要換掉的牌，再按「確認調度」（丟幾張補幾張，僅一次）。</p>
               <div class="da-hand-grid" id="simHandGrid" aria-label="起手手牌"></div>
               <div class="da-sim-log" id="simLog" role="status"></div>
               <div class="da-sim-waiting" id="simWaitingWrap" style="display:none;">
-                <h3 style="font-size:0.9rem;font-weight:700;margin:0;">Mulligan 丟棄（等待室）</h3>
+                <h3 style="font-size:0.9rem;font-weight:700;margin:0;">調度丟棄（等待室）</h3>
                 <div class="da-waiting-chips" id="simWaitingChips"></div>
               </div>
 
@@ -1777,15 +1775,20 @@
       const opening = simState.phase === "opening";
       const done = simState.phase === "done";
       const busy = simAnimating;
-      el("btnSimDeal").disabled = !hasDeck || busy;
-      el("btnSimMulligan").disabled = !opening || simState.selected.size === 0 || busy;
-      el("btnSimKeep").disabled = !opening || busy;
-      el("btnSimReset").disabled = !(opening || done) || busy;
+      const deal = el("btnSimDeal");
+      const mull = el("btnSimMulligan");
+      deal.disabled = !hasDeck || busy;
+      deal.innerHTML = (opening || done)
+        ? '<i class="fas fa-random mr-1"></i>重新洗牌起手'
+        : '<i class="fas fa-random mr-1"></i>洗牌並起手';
+      // 確認調度：只在起手後顯示
+      mull.hidden = !opening;
+      mull.disabled = !opening || simState.selected.size === 0 || busy;
       el("btnMcRun").disabled = !hasDeck;
       const n = simState.selected.size;
-      el("btnSimMulligan").innerHTML = n
-        ? ('<i class="fas fa-sync-alt mr-1"></i>確認 Mulligan（' + n + " 張）")
-        : '<i class="fas fa-sync-alt mr-1"></i>確認 Mulligan';
+      mull.innerHTML = n
+        ? ('<i class="fas fa-sync-alt mr-1"></i>確認調度（' + n + " 張）")
+        : '<i class="fas fa-sync-alt mr-1"></i>確認調度';
     }
 
     function renderSimStats() {
@@ -1879,8 +1882,8 @@
       simState.log = "";
       setSimPhase("idle", deckEntries.length ? "可開始模擬" : "尚未開始");
       el("simHint").textContent = deckEntries.length
-        ? "點「洗牌並起手」抽 5 張。再點選手牌標記要丟進等待室的卡（可 0～5 張），確認後補抽相同張數。"
-        : "分析牌組後按「洗牌並起手」。點選手牌標記要丟進等待室的卡，再按確認 Mulligan（規則：丟幾張補幾張，僅可一次）。";
+        ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 → 按「確認調度」補抽相同張數。不滿意可再按「重新洗牌起手」。"
+        : "分析牌組後按「洗牌並起手」。起手出現後才會顯示「確認調度」。";
       el("mcResults").innerHTML = '<p class="da-hint mb-0">尚無結果。</p>';
       renderSimAll();
     }
@@ -1896,8 +1899,8 @@
       simState.waiting = [];
       simState.selected = new Set();
       simState.phase = "opening";
-      simState.log = "已洗牌並抽出起手 " + simState.hand.length + " 張。點選要重抽的卡，或按「保留這手」。";
-      setSimPhase("opening", "可 Mulligan");
+      simState.log = "已洗牌並抽出起手 " + simState.hand.length + " 張。點選要換掉的牌，再按「確認調度」。";
+      setSimPhase("opening", "可調度");
       renderSimAll({ dealAnimate: true });
     }
 
@@ -1933,8 +1936,8 @@
       const dumpN = dump.length;
       simState.selected = new Set();
       simState.phase = "done";
-      simState.log = "Mulligan 完成：丟棄 " + dumpN + " 張至等待室，補抽 " + drawn.length + " 張。";
-      setSimPhase("done", "Mulligan 完成");
+      simState.log = "調度完成：丟棄 " + dumpN + " 張至等待室，補抽 " + drawn.length + " 張。可按「重新洗牌起手」再試一局。";
+      setSimPhase("done", "調度完成");
       renderSimAll({ dealAnimate: true, dealIds: dealIds, arriveCount: dumpN });
       simAnimating = false;
       el("simHandGrid").classList.remove("is-busy");
@@ -1971,15 +1974,6 @@
       window.setTimeout(function () {
         finishSimMulligan(dump, drawn);
       }, 400);
-    }
-
-    function keepSimHand() {
-      if (simState.phase !== "opening" || simAnimating) return;
-      simState.selected = new Set();
-      simState.phase = "done";
-      simState.log = "保留起手，未執行 Mulligan。";
-      setSimPhase("done", "保留起手");
-      renderSimAll();
     }
 
     /* Monte Carlo helpers */
@@ -2524,8 +2518,6 @@
 
     el("btnSimDeal").addEventListener("click", simDealOpening);
     el("btnSimMulligan").addEventListener("click", applySimMulligan);
-    el("btnSimKeep").addEventListener("click", keepSimHand);
-    el("btnSimReset").addEventListener("click", simDealOpening);
     el("btnMcRun").addEventListener("click", runMonteCarlo);
     el("simHandGrid").addEventListener("click", function (e) {
       const btn = e.target.closest(".da-hand-card");
