@@ -555,16 +555,18 @@ select:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    /* Match navbar chrome in both themes; no border chip. */
+    border: none;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.5) !important;
+    background: transparent !important;
     box-shadow: none;
-    transition: background 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Only animate press scale — background/border transitions flash on theme switch. */
+    transition: transform 0.15s ease;
 }
 
 #leftbar:hover {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border-color: rgba(0, 0, 0, 0.14);
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: none;
     border-radius: 12px !important;
 }
 
@@ -610,16 +612,8 @@ select:focus {
     transform: rotate(-45deg);
 }
 
-[data-theme="dark"] #leftbar {
-    /* Blend into the dark navbar chrome instead of reading as a bordered chip. */
-    background: transparent !important;
-    border: none;
-    box-shadow: none;
-}
-
 [data-theme="dark"] #leftbar:hover {
     background: rgba(255, 255, 255, 0.08) !important;
-    border: none;
 }
 
 /* Navbar 版面 & 品牌標題 */
@@ -690,7 +684,8 @@ select:focus {
     background: rgba(255, 255, 255, 0.85);
     color: #1f2937;
     cursor: pointer;
-    transition: all 0.25s ease;
+    /* Avoid transitioning theme colors — `all` made the button flash on light/dark switch. */
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
