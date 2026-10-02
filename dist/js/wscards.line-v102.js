@@ -541,10 +541,163 @@ function fetchCardDictionary(callback) {
         });
 }
 
-// 點擊卡片彈窗外時關閉
+// ── 手機搜尋全螢幕 sheet（≤768px）：輸入框 + 建議列放大，可關閉 ──
+var _mobileSearchActive = false;
+var _ignoreDocClickUntil = 0;
+var _MOBILE_SEARCH_MQ = '(max-width: 768px)';
+
+function isMobileSearchViewport() {
+    return window.matchMedia && window.matchMedia(_MOBILE_SEARCH_MQ).matches;
+}
+
+function ensureMobileSearchOverlay() {
+    var overlay = document.getElementById('mobileSearchOverlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'mobileSearchOverlay';
+    overlay.className = 'mobile-search-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML =
+        '<div class="mobile-search-sheet" role="dialog" aria-modal="true" aria-label="搜尋作品或卡號">' +
+        '  <div class="mobile-search-sheet-bar">' +
+        '    <button type="button" class="mobile-search-close" aria-label="關閉搜尋">' +
+        '      <i class="fas fa-times" aria-hidden="true"></i>' +
+        '      <span class="mobile-search-close-label">關閉</span>' +
+        '    </button>' +
+        '    <div class="mobile-search-sheet-input-slot" id="mobileSearchInputSlot"></div>' +
+        '  </div>' +
+        '  <div class="mobile-search-sheet-body" id="mobileSearchBodySlot">' +
+        '    <p class="mobile-search-hint">輸入作品名稱、系列代碼或卡號</p>' +
+        '  </div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('.mobile-search-close').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeMobileSearchOverlay();
+    });
+    return overlay;
+}
+
+function syncMobileSearchHint() {
+    if (!_mobileSearchActive) return;
+    var bodySlot = document.getElementById('mobileSearchBodySlot');
+    if (!bodySlot) return;
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    var showing = searchDiv && searchDiv.style.display !== 'none' && searchDiv.innerHTML.trim();
+    var hint = bodySlot.querySelector('.mobile-search-hint');
+    if (!hint) {
+        hint = document.createElement('p');
+        hint.className = 'mobile-search-hint';
+        hint.textContent = '輸入作品名稱、系列代碼或卡號';
+        bodySlot.insertBefore(hint, bodySlot.firstChild);
+    }
+    hint.hidden = !!showing;
+}
+
+function openMobileSearchOverlay() {
+    if (!isMobileSearchViewport() || _mobileSearchActive) return;
+    var inputEl = document.getElementById('xxxx');
+    if (!inputEl) return;
+    var inputGroup = inputEl.closest('.market-search-group') || inputEl.closest('.input-group');
+    if (!inputGroup || !inputGroup.parentNode) return;
+
+    var overlay = ensureMobileSearchOverlay();
+    var slot = document.getElementById('mobileSearchInputSlot');
+    var bodySlot = document.getElementById('mobileSearchBodySlot');
+    if (!slot || !bodySlot) return;
+
+    var placeholder = document.createElement('div');
+    placeholder.id = 'mobileSearchInputPlaceholder';
+    placeholder.className = 'mobile-search-input-placeholder';
+    placeholder.setAttribute('aria-hidden', 'true');
+    inputGroup.parentNode.insertBefore(placeholder, inputGroup);
+    slot.appendChild(inputGroup);
+
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (searchDiv) {
+        bodySlot.appendChild(searchDiv);
+        searchDiv.classList.add('is-mobile-sheet');
+        searchDiv.style.top = '';
+        searchDiv.style.left = '';
+        searchDiv.style.width = '';
+        searchDiv.style.maxHeight = '';
+        searchDiv.style.position = '';
+    }
+
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('mobile-search-open');
+    document.body.classList.add('mobile-search-open');
+    _mobileSearchActive = true;
+    _ignoreDocClickUntil = Date.now() + 450;
+    syncMobileSearchHint();
+    // 等 DOM 搬移完成再 focus，避免鍵盤閃爍
+    setTimeout(function() {
+        if (_mobileSearchActive && inputEl) inputEl.focus();
+    }, 0);
+}
+
+function closeMobileSearchOverlay() {
+    if (!_mobileSearchActive) {
+        hideCardNameSearchResults();
+        return;
+    }
+    var overlay = document.getElementById('mobileSearchOverlay');
+    var placeholder = document.getElementById('mobileSearchInputPlaceholder');
+    var slot = document.getElementById('mobileSearchInputSlot');
+    var inputGroup = slot && (slot.querySelector('.market-search-group') || slot.querySelector('.input-group'));
+
+    if (placeholder && inputGroup && placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(inputGroup, placeholder);
+        placeholder.parentNode.removeChild(placeholder);
+    } else if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+    }
+
+    var searchDiv = document.getElementById('cardNameSearchContainer');
+    if (searchDiv) {
+        searchDiv.classList.remove('is-mobile-sheet');
+        searchDiv.style.position = 'fixed';
+        searchDiv.style.zIndex = '99999';
+        if (!searchDiv.parentNode || searchDiv.parentNode.id === 'mobileSearchBodySlot') {
+            document.body.appendChild(searchDiv);
+        }
+    }
+
+    if (overlay) {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+    document.documentElement.classList.remove('mobile-search-open');
+    document.body.classList.remove('mobile-search-open');
+    _mobileSearchActive = false;
+    hideCardNameSearchResults();
+}
+
+$input.on('focus', function() {
+    if (isMobileSearchViewport()) openMobileSearchOverlay();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && _mobileSearchActive) {
+        e.preventDefault();
+        closeMobileSearchOverlay();
+    }
+});
+
+// 點擊建議框外時關閉（手機 sheet 僅點遮罩外／關閉鈕／選取後才關）
 document.addEventListener('click', function(e) {
+    if (Date.now() < _ignoreDocClickUntil) return;
+    if (_mobileSearchActive) {
+        var overlay = document.getElementById('mobileSearchOverlay');
+        if (overlay && overlay.contains(e.target)) return;
+        closeMobileSearchOverlay();
+        return;
+    }
     var searchDiv = document.getElementById('cardNameSearchContainer');
     if (searchDiv && e.target.id !== 'xxxx' && !searchDiv.contains(e.target)) {
+        if (e.target.closest && e.target.closest('.market-search-group')) return;
         hideCardNameSearchResults();
     }
 });
@@ -553,6 +706,7 @@ document.addEventListener('click', function(e) {
 function _updateCardNameSearchPos() {
     var searchDiv = document.getElementById('cardNameSearchContainer');
     if (!searchDiv || searchDiv.style.display === 'none') return;
+    if (_mobileSearchActive) return;
     var inputEl = document.getElementById('xxxx');
     if (!inputEl) return;
     var rect = inputEl.getBoundingClientRect();
@@ -561,7 +715,13 @@ function _updateCardNameSearchPos() {
     searchDiv.style.width = rect.width + 'px';
 }
 window.addEventListener('scroll', _updateCardNameSearchPos, true);
-window.addEventListener('resize', _updateCardNameSearchPos);
+window.addEventListener('resize', function() {
+    if (_mobileSearchActive && !isMobileSearchViewport()) {
+        closeMobileSearchOverlay();
+        return;
+    }
+    _updateCardNameSearchPos();
+});
 
 function hideCardNameSearchResults() {
     _typeaheadSuggestions = [];
@@ -574,6 +734,7 @@ function hideCardNameSearchResults() {
     if (searchDiv) {
         searchDiv.style.display = 'none';
     }
+    syncMobileSearchHint();
 }
 
 function searchByCardName(keyword) {
@@ -623,6 +784,10 @@ function renderUnifiedSearchContainer() {
         return;
     }
 
+    if (isMobileSearchViewport() && !_mobileSearchActive) {
+        openMobileSearchOverlay();
+    }
+
     var searchDiv = document.getElementById('cardNameSearchContainer');
     if (!searchDiv) {
         searchDiv = document.createElement('div');
@@ -636,13 +801,34 @@ function renderUnifiedSearchContainer() {
         searchDiv.style.maxHeight = '360px';
         searchDiv.style.overflowY = 'auto';
         searchDiv.style.display = 'none';
-        document.body.appendChild(searchDiv);
+        var bodySlot = document.getElementById('mobileSearchBodySlot');
+        if (_mobileSearchActive && bodySlot) {
+            bodySlot.appendChild(searchDiv);
+            searchDiv.classList.add('is-mobile-sheet');
+            searchDiv.style.position = '';
+            searchDiv.style.maxHeight = '';
+        } else {
+            document.body.appendChild(searchDiv);
+        }
+    } else if (_mobileSearchActive) {
+        var bodySlotExisting = document.getElementById('mobileSearchBodySlot');
+        if (bodySlotExisting && searchDiv.parentNode !== bodySlotExisting) {
+            bodySlotExisting.appendChild(searchDiv);
+        }
+        searchDiv.classList.add('is-mobile-sheet');
+        searchDiv.style.top = '';
+        searchDiv.style.left = '';
+        searchDiv.style.width = '';
+        searchDiv.style.maxHeight = '';
+        searchDiv.style.position = '';
     }
 
-    var rect = inputEl.getBoundingClientRect();
-    searchDiv.style.top   = (rect.bottom + 2) + 'px';
-    searchDiv.style.left  = rect.left + 'px';
-    searchDiv.style.width = rect.width + 'px';
+    if (!_mobileSearchActive) {
+        var rect = inputEl.getBoundingClientRect();
+        searchDiv.style.top   = (rect.bottom + 2) + 'px';
+        searchDiv.style.left  = rect.left + 'px';
+        searchDiv.style.width = rect.width + 'px';
+    }
 
     var html = '';
 
@@ -735,6 +921,7 @@ function renderUnifiedSearchContainer() {
 
     searchDiv.innerHTML = html;
     searchDiv.style.display = 'block';
+    syncMobileSearchHint();
 
     // hover 效果（深／淺色各用一組，避免蓋掉 CSS）
     var hoverBg = document.documentElement.getAttribute('data-theme') === 'dark'
@@ -783,7 +970,8 @@ function renderCardNameSearchResults(results) {
 
 window.handleTypeaheadItemClick = function(itemName) {
     console.log('選擇作品/系列:', itemName);
-    hideCardNameSearchResults();
+    if (_mobileSearchActive) closeMobileSearchOverlay();
+    else hideCardNameSearchResults();
     var inputEl = document.getElementById('xxxx');
     if (inputEl) inputEl.value = itemName;
     if (typeof changeStandardForSuggest === 'function') changeStandardForSuggest(itemName);
@@ -792,7 +980,8 @@ window.handleTypeaheadItemClick = function(itemName) {
 
 window.handleCardNameResultClick = function(cardNumber) {
     console.log("選擇卡片:", cardNumber);
-    hideCardNameSearchResults();
+    if (_mobileSearchActive) closeMobileSearchOverlay();
+    else hideCardNameSearchResults();
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
