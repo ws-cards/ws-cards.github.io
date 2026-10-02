@@ -101,6 +101,18 @@ var _typeaheadVisibleCount = 20;
 var _cardNameVisibleCount = 30;
 var _typeaheadBatchSize = 20;
 var _cardNameBatchSize = 30;
+// 選取建議後暫時封鎖建議重開（避免填入卡號的 input 事件又把 sheet 打開）
+var _blockSuggestionRender = false;
+var _suggestionSearchSeq = 0;
+
+function suppressSuggestionsAfterSelect() {
+    _blockSuggestionRender = true;
+    _suggestionSearchSeq += 1;
+    if (_searchDebounceTimer) {
+        clearTimeout(_searchDebounceTimer);
+        _searchDebounceTimer = null;
+    }
+}
 
 // ====================================================
 // 圖表時間篩選 - 儲存原始圖表資料
@@ -509,11 +521,13 @@ var inputValue = $input.val().trim();
 _handleSearchInputState(inputValue);
 
 if (inputValue && inputValue.length > 0) {
+// 選取建議後填值觸發的 input 不要重跑建議
+if (_blockSuggestionRender) return;
 // 名稱、作品關鍵字、完整卡號都走字典建議（完整卡號需出現精確結果）
 _searchDebounceTimer = setTimeout(function() {
     _searchDebounceTimer = null;
     var currentValue = $input.val().trim();
-    if (currentValue === inputValue) {
+    if (currentValue === inputValue && !_blockSuggestionRender) {
         searchByCardName(inputValue);
     }
 }, 500); // 模糊搜尋的反應時間可以設短一點
@@ -681,6 +695,8 @@ function closeMobileSearchOverlay() {
 }
 
 $input.on('focus', function() {
+    // 使用者再次點進輸入框時，才解除「選取後封鎖建議」
+    _blockSuggestionRender = false;
     if (isMobileSearchViewport()) openMobileSearchOverlay();
 });
 
@@ -743,6 +759,7 @@ function hideCardNameSearchResults() {
 }
 
 function searchByCardName(keyword) {
+    if (_blockSuggestionRender) return;
     if (!keyword) {
         _cardNameSuggestions = [];
         _cardNameMatches = [];
@@ -751,8 +768,11 @@ function searchByCardName(keyword) {
         return;
     }
 
+    var searchSeq = _suggestionSearchSeq;
     fetchCardDictionary(function() {
         if (!_cardDictionary) return;
+        // 選取建議／新輸入已讓這次回調失效
+        if (searchSeq !== _suggestionSearchSeq || _blockSuggestionRender) return;
         
         var lowerKeyword = keyword.toLowerCase();
         // 保留完整比對結果，讓下拉選單能揭露總數並逐批載入。
@@ -779,7 +799,7 @@ function searchByCardName(keyword) {
         _cardNameSuggestions = _cardNameMatches.slice(0, _cardNameVisibleCount);
 
         // 字典載入可能晚於使用者下一次輸入，不要把舊關鍵字的結果塞回來。
-        if ($input.val().trim() === keyword) renderUnifiedSearchContainer();
+        if ($input.val().trim() === keyword && !_blockSuggestionRender) renderUnifiedSearchContainer();
     });
 }
 
@@ -792,6 +812,10 @@ function searchByCardName(keyword) {
 function renderUnifiedSearchContainer() {
     var inputEl = document.getElementById('xxxx');
     if (!inputEl) return;
+    if (_blockSuggestionRender) {
+        hideCardNameSearchResults();
+        return;
+    }
 
     _typeaheadSuggestions = _typeaheadMatches.slice(0, _typeaheadVisibleCount);
     _cardNameSuggestions = _cardNameMatches.slice(0, _cardNameVisibleCount);
@@ -1004,6 +1028,7 @@ function renderCardNameSearchResults(results) {
 
 window.handleTypeaheadItemClick = function(itemName) {
     console.log('選擇作品/系列:', itemName);
+    suppressSuggestionsAfterSelect();
     if (_mobileSearchActive) closeMobileSearchOverlay();
     else hideCardNameSearchResults();
     var inputEl = document.getElementById('xxxx');
@@ -1014,11 +1039,13 @@ window.handleTypeaheadItemClick = function(itemName) {
 
 window.handleCardNameResultClick = function(cardNumber) {
     console.log("選擇卡片:", cardNumber);
+    suppressSuggestionsAfterSelect();
     if (_mobileSearchActive) closeMobileSearchOverlay();
     else hideCardNameSearchResults();
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
+        // 更新搜尋鈕狀態；建議搜尋已被 _blockSuggestionRender 擋下
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
     if (typeof searchByCardNumber === 'function') {
