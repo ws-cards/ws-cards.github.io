@@ -4352,7 +4352,7 @@ function _formatStatsChartXTick(value) {
 }
 
 /**
-* 匯出圖的色彩系統。
+* 匯出圖的色彩系統（固定深色海報色票，不跟隨頁面淺／深模式）。
 *
 * 這張圖的使用場景是被貼進 LINE 群組、被縮到拇指大小掃一眼，所以它是一張
 * 海報而不是頁面截圖。整張圖只有一個色相（金），加上漲跌兩色；階層靠
@@ -4363,8 +4363,8 @@ function _formatStatsChartXTick(value) {
 * 方向定義跟隨台／日市場慣例：漲為紅、跌為綠。
 */
 function getStatsExportTheme() {
-    var dark = isDarkTheme();
-    return dark ? {
+    // 固定深色海報色票，避免貼到 LINE／社群時因使用者主題不同而長得不一樣。
+    return {
         isDark: true,
         ink: '#14110d',
         inkDeep: '#0b0907',
@@ -4388,30 +4388,6 @@ function getStatsExportTheme() {
         down: '#72c79b',
         upOnPaper: '#ff9a91',
         downOnPaper: '#7fd0a6'
-    } : {
-        isDark: false,
-        ink: '#1d1710',
-        inkDeep: '#120e09',
-        inkText: '#f6efe0',
-        inkMuted: '#cdc3ad',
-        inkGold: '#e2bd77',
-        inkGoldSoft: '#b99f6d',
-        inkHairline: 'rgba(226, 189, 119, 0.34)',
-        inkHairlineSoft: 'rgba(226, 189, 119, 0.16)',
-        paper: '#f3f0e8',
-        paperText: '#1d2637',
-        paperMuted: '#5a6472',
-        paperSubtle: '#626b78',
-        paperGold: '#8a5f14',
-        paperHairline: 'rgba(29, 38, 55, 0.14)',
-        paperRule: 'rgba(138, 95, 20, 0.42)',
-        line: '#a9761a',
-        lineRgb: '169, 118, 26',
-        column: 'rgba(29, 38, 55, 0.11)',
-        up: '#ff8b82',
-        down: '#72c79b',
-        upOnPaper: '#b3282c',
-        downOnPaper: '#1c6b47'
     };
 }
 
