@@ -675,7 +675,7 @@ function renderUnifiedSearchContainer() {
                 var safePrimary = (coverUrls.primary || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 var safeFallback = (coverUrls.fallback || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 if (safePrimary) {
-                    html += '<img class="series-suggest-cover-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async"'
+                    html += '<img class="series-suggest-cover-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"'
                           + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
                 }
             }
@@ -717,7 +717,7 @@ function renderUnifiedSearchContainer() {
                   + ' onclick="handleCardNameResultClick(\'' + safeArg + '\')">';
             html += '<div class="card-name-search-thumb" aria-hidden="true">';
             if (safePrimary) {
-                html += '<img class="card-name-search-thumb-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async"'
+                html += '<img class="card-name-search-thumb-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"'
                       + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
             }
             html += '</div>';
