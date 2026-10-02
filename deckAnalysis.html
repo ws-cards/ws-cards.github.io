@@ -527,7 +527,15 @@
     }
     .da-top-section small { font-size: 0.78rem; font-weight: 500; color: var(--da-muted); }
     #topCommunity:not(:empty) { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--da-border); }
-    .da-top-range { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+    .da-top-filters { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 0.85rem; }
+    .da-top-range { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .da-top-basis {
+      font-size: 0.82rem; color: var(--da-muted); background: var(--da-soft);
+      border: 1px solid var(--da-border); border-radius: 10px; padding: 0.5rem 0.75rem; margin: 0 0 0.85rem;
+    }
+    .da-top-basis.is-thin { color: var(--da-ink); border-color: var(--da-warn); background: color-mix(in srgb, var(--da-warn) 12%, transparent); }
+    .da-top-basis.is-thin i { color: var(--da-warn); }
+    .da-top-panel h3 small { font-size: 0.72rem; font-weight: 500; color: var(--da-muted); margin-left: 0.35rem; }
     .da-top-range button {
       appearance: none; border: 1px solid var(--da-border); background: var(--da-soft);
       color: var(--da-muted); border-radius: 999px; padding: 0.3rem 0.75rem;
@@ -2449,6 +2457,16 @@
       { id: "2y", label: "近 2 年", days: 730 },
       { id: "all", label: "全部", days: 0 }
     ];
+    const OFFICIAL_FORMATS = [
+      { id: "neo", label: "ネオスタンダード" },
+      { id: "title", label: "タイトル限定" },
+      { id: "other", label: "其他賽制" },
+      { id: "all", label: "全部賽制" }
+    ];
+    const OFFICIAL_PEER_MIN_OVERLAP = 25;
+    const OFFICIAL_PEER_MAX = 15;
+    const OFFICIAL_PEER_MIN = 5;
+    const OFFICIAL_THIN_SAMPLE = 8;
     const officialCache = new Map();
     let officialState = null;
 
@@ -2478,20 +2496,42 @@
       return ev ? ev.date : "";
     }
 
-    function officialWindow(data, rangeId) {
+    // 特殊ネオ is checked first because it also contains ネオスタンダード.
+    function officialFormat(d) {
+      const k = String(d.k || "");
+      if (/特殊/.test(k)) return "other";
+      if (/^ネオスタンダード/.test(k)) return "neo";
+      if (/タイトル|限定/.test(k)) return "title";
+      return "other";
+    }
+
+    function officialFormatDecks(data, formatId) {
+      if (formatId === "all") return data.decks.slice();
+      return data.decks.filter(function (d) { return officialFormat(d) === formatId; });
+    }
+
+    function officialWindow(data, rangeId, formatId) {
       const range = OFFICIAL_RANGES.find(function (r) { return r.id === rangeId; }) || OFFICIAL_RANGES[2];
+      const decks = officialFormatDecks(data, formatId || "all");
       const latest = data.decks.reduce(function (m, d) {
         const t = officialDeckDate(data, d);
         return t > m ? t : m;
       }, "");
-      if (!range.days || !latest) return data.decks.slice();
+      if (!range.days || !latest) return decks;
       const cut = new Date(Date.parse(latest) - range.days * 86400000).toISOString().slice(0, 10);
-      return data.decks.filter(function (d) { return officialDeckDate(data, d) >= cut; });
+      return decks.filter(function (d) { return officialDeckDate(data, d) >= cut; });
     }
 
-    function pickOfficialRange(data) {
+    function pickOfficialFormat(data) {
+      const counts = {};
+      data.decks.forEach(function (d) { const f = officialFormat(d); counts[f] = (counts[f] || 0) + 1; });
+      if (counts.neo) return "neo";
+      return Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })[0] || "all";
+    }
+
+    function pickOfficialRange(data, formatId) {
       for (let i = 0; i < OFFICIAL_RANGES.length; i++) {
-        if (officialWindow(data, OFFICIAL_RANGES[i].id).length >= 8) return OFFICIAL_RANGES[i].id;
+        if (officialWindow(data, OFFICIAL_RANGES[i].id, formatId).length >= OFFICIAL_THIN_SAMPLE) return OFFICIAL_RANGES[i].id;
       }
       return "all";
     }
@@ -2506,8 +2546,8 @@
       };
     }
 
-    function computeOfficialCompare(data, cards, rangeId) {
-      const decks = officialWindow(data, rangeId);
+    function computeOfficialCompare(data, cards, formatId, rangeId) {
+      const pool = officialWindow(data, rangeId, formatId);
       const mine = {};
       cards.forEach(function (c) {
         const k = cardBaseKey(c.cardNo);
@@ -2523,16 +2563,21 @@
         });
         return theirs;
       };
-      const similar = data.decks.map(function (d) {
-        const theirs = deckMap(d);
-        let overlap = 0;
-        Object.keys(theirs).forEach(function (k) { if (mine[k]) overlap += Math.min(theirs[k], mine[k].qty); });
-        return { deck: d, overlap: overlap, theirs: theirs };
-      }).filter(function (x) { return x.overlap > 0; });
-      similar.sort(function (a, b) {
-        return b.overlap - a.overlap || a.deck.rs - b.deck.rs ||
-          (officialDeckDate(data, b.deck) > officialDeckDate(data, a.deck) ? 1 : -1);
-      });
+      const scored = function (list) {
+        return list.map(function (d) {
+          const theirs = deckMap(d);
+          let overlap = 0;
+          Object.keys(theirs).forEach(function (k) { if (mine[k]) overlap += Math.min(theirs[k], mine[k].qty); });
+          return { deck: d, overlap: overlap, theirs: theirs };
+        }).filter(function (x) { return x.overlap > 0; }).sort(function (a, b) {
+          return b.overlap - a.overlap || a.deck.rs - b.deck.rs ||
+            (officialDeckDate(data, b.deck) > officialDeckDate(data, a.deck) ? 1 : -1);
+        });
+      };
+      const similar = scored(officialFormatDecks(data, formatId));
+      const peers = scored(pool).filter(function (x) { return x.overlap >= OFFICIAL_PEER_MIN_OVERLAP; }).slice(0, OFFICIAL_PEER_MAX);
+      const usePeers = peers.length >= OFFICIAL_PEER_MIN;
+      const decks = usePeers ? peers.map(function (x) { return x.deck; }) : pool;
 
       const adopt = {};
       const curveSum = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
@@ -2553,17 +2598,19 @@
       });
 
       const n = decks.length || 1;
+      const thin = decks.length < OFFICIAL_THIN_SAMPLE;
+      const common = function (r) { return r.rate >= 0.3 && (!thin || r.count >= 2); };
       const rows = Object.keys(adopt).map(function (k) {
         const a = adopt[k];
-        return { key: k, no: a.no, rate: a.decks / n, avg: a.total / a.decks, mineQty: mine[k] ? mine[k].qty : 0 };
+        return { key: k, no: a.no, count: a.decks, rate: a.decks / n, avg: a.total / a.decks, mineQty: mine[k] ? mine[k].qty : 0 };
       });
-      const missing = rows.filter(function (r) { return !r.mineQty && r.rate >= 0.3; })
+      const missing = rows.filter(function (r) { return !r.mineQty && common(r); })
         .sort(function (a, b) { return b.rate - a.rate; }).slice(0, 6);
-      const qtyGap = rows.filter(function (r) { return r.mineQty && r.rate >= 0.3 && Math.abs(r.avg - r.mineQty) >= 1.5; })
+      const qtyGap = rows.filter(function (r) { return r.mineQty && common(r) && Math.abs(r.avg - r.mineQty) >= 1.5; })
         .sort(function (a, b) { return Math.abs(b.avg - b.mineQty) * b.rate - Math.abs(a.avg - a.mineQty) * a.rate; }).slice(0, 5);
       const rare = Object.keys(mine).map(function (k) {
         const a = adopt[k];
-        return { key: k, no: mine[k].no, rate: a ? a.decks / n : 0, mineQty: mine[k].qty };
+        return { key: k, no: mine[k].no, count: a ? a.decks : 0, rate: a ? a.decks / n : 0, mineQty: mine[k].qty };
       }).filter(function (r) { return r.rate < 0.1; })
         .sort(function (a, b) { return b.mineQty - a.mineQty || a.rate - b.rate; }).slice(0, 6);
 
@@ -2577,8 +2624,12 @@
       Object.keys(curveSum).forEach(function (k) { avgCurve[k] = decks.length ? curveSum[k] / decks.length : 0; });
 
       return {
+        pool: pool,
         decks: decks,
-        wins: decks.filter(function (d) { return d.rs === 1; }).length,
+        usePeers: usePeers,
+        peerCount: peers.length,
+        thin: thin,
+        wins: pool.filter(function (d) { return d.rs === 1; }).length,
         similar: similar.slice(0, 3),
         missing: missing,
         qtyGap: qtyGap,
@@ -2605,25 +2656,38 @@
       if (!st) return;
       const data = st.data;
       const cards = st.cards;
-      const res = computeOfficialCompare(data, cards, st.range);
+      const res = computeOfficialCompare(data, cards, st.format, st.range);
       const box = el("topOfficial");
       const title = (data.decks[0] && data.decks[0].t) || data.prefix;
       el("topCompareSubtitle").textContent = title + " · 官方入賞 · 社群上位紀錄";
 
+      const formats = OFFICIAL_FORMATS.filter(function (f) {
+        return f.id === "all" || officialFormatDecks(data, f.id).length;
+      });
+      const pills = function (attr, label, list, current, count) {
+        return '<div class="da-top-range" role="tablist" aria-label="' + label + '">' + list.map(function (x) {
+          const on = x.id === current;
+          return '<button type="button" role="tab" ' + attr + '="' + x.id + '" aria-selected="' + on + '" class="' + (on ? "is-active" : "") + '">' +
+            x.label + " <span>" + count(x.id) + "</span></button>";
+        }).join("") + "</div>";
+      };
       let html = '<h3 class="da-top-section">官方入賞牌表 <small>' + escapeHtml(title) + " · WS 官方入賞者デッキレシピ</small></h3>";
-      html += '<div class="da-top-range" role="tablist" aria-label="比較範圍">' + OFFICIAL_RANGES.map(function (r) {
-        const on = r.id === st.range;
-        return '<button type="button" role="tab" data-official-range="' + r.id + '" aria-selected="' + on + '" class="' + (on ? "is-active" : "") + '">' +
-          r.label + " <span>" + officialWindow(data, r.id).length + "</span></button>";
-      }).join("") + "</div>";
+      html += '<div class="da-top-filters">' +
+        (formats.length > 2 ? pills("data-official-format", "賽制", formats, st.format, function (id) { return officialWindow(data, st.range, id).length; }) : "") +
+        pills("data-official-range", "比較範圍", OFFICIAL_RANGES, st.range, function (id) { return officialWindow(data, id, st.format).length; }) +
+        "</div>";
 
-      if (!res.decks.length) {
-        box.innerHTML = html + '<p class="da-hint mt-0">這個範圍內沒有入賞牌組。</p>';
+      if (!res.pool.length) {
+        box.innerHTML = html + '<p class="da-hint mt-0">這個賽制與期間內沒有入賞牌組，試試切換上面的條件。</p>';
         return;
       }
 
       const best = res.similar[0];
-      const latestDate = res.decks.reduce(function (m, d) {
+      const n = res.decks.length;
+      const basisText = res.usePeers
+        ? "跟你重疊 " + OFFICIAL_PEER_MIN_OVERLAP + " 張以上的 " + n + " 副入賞牌組（同打法）"
+        : "整個作品的 " + n + " 副入賞牌組（重疊 " + OFFICIAL_PEER_MIN_OVERLAP + " 張以上的只有 " + res.peerCount + " 副，不到 " + OFFICIAL_PEER_MIN + " 副）";
+      const latestDate = res.pool.reduce(function (m, d) {
         const t = officialDeckDate(data, d);
         return t > m ? t : m;
       }, "");
@@ -2632,11 +2696,15 @@
           (small ? "<small>" + small + "</small>" : "") + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>";
       };
       html += '<div class="da-top-summary">' +
-        stat("入賞牌組", res.decks.length, "副") +
+        stat("入賞牌組", res.pool.length, "副", latestDate ? "最近 " + latestDate.replace(/-/g, "/") : "") +
         stat("其中優勝", res.wins, "副") +
         stat("最像的一副", best ? best.overlap : 0, "/ 50 張", best ? "跟你重疊（全部期間）" : "沒有重疊的入賞牌組") +
-        stat("最近入賞", latestDate ? latestDate.replace(/-/g, "/") : "—") +
+        stat("比較基準", n, "副", res.usePeers ? "同打法的入賞牌組" : "整個作品（像你的不夠）") +
         "</div>";
+      html += '<p class="da-top-basis' + (res.thin ? " is-thin" : "") + '"><i class="fas ' + (res.thin ? "fa-exclamation-triangle" : "fa-filter") + ' mr-1"></i>' +
+        "下面的曲線與逐卡比較，是拿" + escapeHtml(basisText) + "來算。" +
+        (res.thin ? "樣本少，結果僅供參考；採用率之外，還要求至少 2 副有放才算「常放」。" : "") + "</p>";
+      const basisTag = " <small>依 " + n + " 副</small>";
 
       html += '<div class="da-top-grid"><div class="da-top-panel"><h3>最像你的入賞牌組 · 全部期間</h3>' +
         (res.similar.length ? "" : '<p class="da-hint mt-0">歷年入賞牌組裡沒有跟你共用的卡。</p>') + '<ul class="da-top-similar">' +
@@ -2670,7 +2738,7 @@
         return '<div class="da-ratio-row"><span class="tag">' + label + '</span><span class="num">你 ' + mineV +
           ' <span class="guide">· 入賞平均 ' + avgV.toFixed(1) + '</span> <span class="da-top-diff ' + cls + '">' + note + "</span></span></div>";
       };
-      html += '<div class="da-top-panel"><h3>等級曲線與 CX</h3>' +
+      html += '<div class="da-top-panel"><h3>等級曲線與 CX' + basisTag + '</h3>' +
         curveRow("Lv0", res.myCurve[0], res.avgCurve[0]) +
         curveRow("Lv1", res.myCurve[1], res.avgCurve[1]) +
         curveRow("Lv2", res.myCurve[2], res.avgCurve[2]) +
@@ -2679,25 +2747,25 @@
         "</div></div>";
 
       if (res.missing.length) {
-        html += '<div class="da-top-panel mb-3"><h3>入賞常放、你沒放</h3><div class="da-top-cores">' +
+        html += '<div class="da-top-panel mb-3"><h3>入賞常放、你沒放' + basisTag + '</h3><div class="da-top-cores">' +
           res.missing.map(function (r) {
             return officialTile(data, r, res.mine,
-              '<div class="meta">採用 ' + Math.round(r.rate * 100) + "% · 平均 " + r.avg.toFixed(1) + ' 張</div><span class="own is-out">你 0 張</span>');
+              '<div class="meta">' + r.count + "/" + n + " 副有放 · 平均 " + r.avg.toFixed(1) + ' 張</div><span class="own is-out">你 0 張</span>');
           }).join("") + "</div></div>";
       }
       if (res.qtyGap.length) {
-        html += '<div class="da-top-panel mb-3"><h3>張數跟入賞差很多</h3>' + res.qtyGap.map(function (r) {
+        html += '<div class="da-top-panel mb-3"><h3>張數跟入賞差很多' + basisTag + '</h3>' + res.qtyGap.map(function (r) {
           const m = res.mine[r.key];
           return '<div class="da-ratio-row"><span class="tag">' + escapeHtml((m && m.name) || officialCardInfo(data, r.no).name) +
-            '</span><span class="num">你 ' + r.mineQty + ' 張 <span class="guide">· 入賞平均 ' + r.avg.toFixed(1) + " 張（採用 " +
-            Math.round(r.rate * 100) + "%）</span></span></div>";
+            '</span><span class="num">你 ' + r.mineQty + ' 張 <span class="guide">· 入賞平均 ' + r.avg.toFixed(1) + " 張（" +
+            r.count + "/" + n + " 副有放）</span></span></div>";
         }).join("") + "</div>";
       }
       if (res.rare.length) {
-        html += '<div class="da-top-panel mb-3"><h3>你有、但入賞很少見</h3><div class="da-top-cores">' +
+        html += '<div class="da-top-panel mb-3"><h3>你有、但入賞很少見' + basisTag + '</h3><div class="da-top-cores">' +
           res.rare.map(function (r) {
             return officialTile(data, r, res.mine,
-              '<div class="meta">採用 ' + Math.round(r.rate * 100) + '%</div><span class="own is-in">你 ' + r.mineQty + " 張</span>");
+              '<div class="meta">' + r.count + "/" + n + ' 副有放</div><span class="own is-in">你 ' + r.mineQty + " 張</span>");
           }).join("") + "</div></div>";
       }
 
@@ -2721,7 +2789,8 @@
         box.innerHTML = '<p class="da-hint mt-0">官方入賞牌表裡還沒有這個作品（卡號前綴 ' + escapeHtml(prefix) + "）。</p>";
         return;
       }
-      officialState = { data: data, cards: cards, range: pickOfficialRange(data) };
+      const format = pickOfficialFormat(data);
+      officialState = { data: data, cards: cards, format: format, range: pickOfficialRange(data, format) };
       renderOfficialView();
     }
 
@@ -3391,9 +3460,17 @@
     resetAiGuideUi();
 
     el("topOfficial").addEventListener("click", function (e) {
-      const btn = e.target.closest("[data-official-range]");
-      if (!btn || !officialState) return;
-      officialState.range = btn.getAttribute("data-official-range");
+      if (!officialState) return;
+      const fmt = e.target.closest("[data-official-format]");
+      const range = e.target.closest("[data-official-range]");
+      if (fmt) {
+        officialState.format = fmt.getAttribute("data-official-format");
+        officialState.range = pickOfficialRange(officialState.data, officialState.format);
+      } else if (range) {
+        officialState.range = range.getAttribute("data-official-range");
+      } else {
+        return;
+      }
       renderOfficialView();
     });
 
