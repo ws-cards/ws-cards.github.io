@@ -673,13 +673,29 @@ function renderUnifiedSearchContainer() {
     if (hasCards) {
         html += '<div role="status" aria-live="polite" style="padding:5px 10px;background:#f0fdf4;color:#15803d;font-size:0.72em;font-weight:700;letter-spacing:0.5px;border-bottom:1px solid #dcfce7;">卡片名稱　顯示 ' + _cardNameSuggestions.length + ' / 共 ' + _cardNameMatches.length + ' 筆</div>';
         _cardNameSuggestions.forEach(function(item) {
-            var cardNo   = item[0];
-            var cardName = item[1];
+            var cardNo   = item[0] || '';
+            var cardName = item[1] || '';
+            var safeName = cardName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            var safeNo   = cardNo.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            var safeArg  = cardNo.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            var thumbs = (typeof buildCardImageUrls === 'function')
+                ? buildCardImageUrls(cardNo)
+                : { primary: '', fallback: '' };
+            var safePrimary = (thumbs.primary || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            var safeFallback = (thumbs.fallback || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
             html += '<div class="unified-search-item card-name-search-item"'
-                  + ' style="padding:9px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"'
-                  + ' onclick="handleCardNameResultClick(\'' + cardNo + '\')">';
-            html += '<span style="font-weight:bold;font-size:0.88em;flex:1;margin-right:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + cardName + '">' + cardName + '</span>';
-            html += '<span style="color:#667eea;font-size:0.78em;flex-shrink:0;">' + cardNo + '</span>';
+                  + ' onclick="handleCardNameResultClick(\'' + safeArg + '\')">';
+            html += '<div class="card-name-search-thumb" aria-hidden="true">';
+            if (safePrimary) {
+                html += '<img class="card-name-search-thumb-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async"'
+                      + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
+            }
+            html += '</div>';
+            html += '<div class="card-name-search-meta">';
+            html += '<span class="card-name-search-name" title="' + safeName + '">' + safeName + '</span>';
+            html += '<span class="card-name-search-no">' + safeNo + '</span>';
+            html += '</div>';
             html += '</div>';
         });
         if (_cardNameSuggestions.length < _cardNameMatches.length) {
@@ -692,9 +708,12 @@ function renderUnifiedSearchContainer() {
     searchDiv.innerHTML = html;
     searchDiv.style.display = 'block';
 
-    // hover 效果
+    // hover 效果（深／淺色各用一組，避免蓋掉 CSS）
+    var hoverBg = document.documentElement.getAttribute('data-theme') === 'dark'
+        ? 'rgba(255,255,255,0.06)'
+        : '#f8fafc';
     searchDiv.querySelectorAll('.unified-search-item').forEach(function(el) {
-        el.addEventListener('mouseover', function() { this.style.backgroundColor = '#f8fafc'; });
+        el.addEventListener('mouseover', function() { this.style.backgroundColor = hoverBg; });
         el.addEventListener('mouseout',  function() { this.style.backgroundColor = 'transparent'; });
     });
     searchDiv.querySelectorAll('.unified-search-load-more').forEach(function(button) {
