@@ -432,12 +432,16 @@ loadTypeaheadSuggestions();
     };
 
     // 覆寫 hide：清除 typeahead 建議並更新統一容器
+    // 延遲重繪，避免點「載入更多」時 blur→hide 先銷毀按鈕導致 click 遺失
     ta.hide = function() {
         this.shown = false;
         _typeaheadSuggestions = [];
         _typeaheadMatches = [];
         _typeaheadVisibleCount = _typeaheadBatchSize;
-        renderUnifiedSearchContainer();
+        var self = this;
+        setTimeout(function() {
+            if (!self.shown) renderUnifiedSearchContainer();
+        }, 0);
         return this;
     };
 })();
@@ -501,21 +505,20 @@ _searchDebounceTimer = null;
 }
 
 var inputValue = $input.val().trim();
-var isCardFormat = inputValue && inputValue.length >= 8 && isCardNumberFormat(inputValue);
 
 _handleSearchInputState(inputValue);
 
-if (inputValue && inputValue.length > 0 && !isCardFormat) {
-// 啟動名稱搜尋的防抖
+if (inputValue && inputValue.length > 0) {
+// 名稱、作品關鍵字、完整卡號都走字典建議（完整卡號需出現精確結果）
 _searchDebounceTimer = setTimeout(function() {
     _searchDebounceTimer = null;
     var currentValue = $input.val().trim();
-    if (currentValue === inputValue && !isCardNumberFormat(inputValue)) {
+    if (currentValue === inputValue) {
         searchByCardName(inputValue);
     }
 }, 500); // 模糊搜尋的反應時間可以設短一點
 } else {
-    // 卡號模式或空白時隱藏名稱搜尋結果
+    // 空白時隱藏名稱搜尋結果
     hideCardNameSearchResults();
 }
 });
@@ -757,6 +760,21 @@ function searchByCardName(keyword) {
             return (item[1] && item[1].toLowerCase().includes(lowerKeyword)) || 
                    (item[0] && item[0].toLowerCase().includes(lowerKeyword));
         });
+        // 完整／前綴卡號、完全符合卡名排最前，避免精準卡號被模糊結果淹沒
+        _cardNameMatches.sort(function(a, b) {
+            function rank(item) {
+                var no = String(item[0] || '').toLowerCase();
+                var name = String(item[1] || '').toLowerCase();
+                if (no === lowerKeyword || name === lowerKeyword) return 0;
+                if (no.indexOf(lowerKeyword) === 0) return 1;
+                if (name.indexOf(lowerKeyword) === 0) return 2;
+                return 3;
+            }
+            var ra = rank(a);
+            var rb = rank(b);
+            if (ra !== rb) return ra - rb;
+            return String(a[0] || '').localeCompare(String(b[0] || ''));
+        });
         _cardNameVisibleCount = _cardNameBatchSize;
         _cardNameSuggestions = _cardNameMatches.slice(0, _cardNameVisibleCount);
 
@@ -934,14 +952,28 @@ function renderUnifiedSearchContainer() {
         el.addEventListener('mouseout',  function() { this.style.backgroundColor = 'transparent'; });
     });
     searchDiv.querySelectorAll('.unified-search-load-more').forEach(function(button) {
-        button.addEventListener('click', function() {
-            if (this.getAttribute('data-search-source') === 'typeahead') {
+        // 桌面：阻止 mousedown 搶走 input focus，避免 typeahead hide 與 click 競態
+        button.addEventListener('mousedown', function(e) { e.preventDefault(); });
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var prevScroll = searchDiv.scrollTop;
+            var source = this.getAttribute('data-search-source');
+            if (source === 'typeahead') {
                 _typeaheadVisibleCount += _typeaheadBatchSize;
             } else {
                 _cardNameVisibleCount += _cardNameBatchSize;
             }
             renderUnifiedSearchContainer();
-            inputEl.focus();
+            // 維持捲動位置，讓新載入的列出現在視線附近（勿 focus 輸入框，手機會跳回頂端）
+            var fresh = document.getElementById('cardNameSearchContainer');
+            if (fresh) {
+                fresh.scrollTop = prevScroll;
+                var nextBtn = fresh.querySelector('.unified-search-load-more[data-search-source="' + source + '"]');
+                if (nextBtn && typeof nextBtn.scrollIntoView === 'function') {
+                    nextBtn.scrollIntoView({ block: 'nearest' });
+                }
+            }
         });
         button.addEventListener('mouseover', function() {
             var isSeries = this.getAttribute('data-search-source') === 'typeahead';
