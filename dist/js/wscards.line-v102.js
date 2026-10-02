@@ -385,7 +385,7 @@ selectOnBlur:false     // 失去焦點時不自動選擇
 });
 
 // 作品建議清單以背景方式載入：頁面與卡號搜尋不必等它完成。
-// 本地 JSON（含 coverCard）；遠端同名檔尚未含封面欄位時以此為準
+// 本地 JSON（coverImage / coverUrl 自製封面，或 coverCard 卡圖）；遠端同名檔尚未含封面欄位時以此為準
 var _typeaheadSourceUrl = 'json/wsSeriesSuggestions.json';
 function loadTypeaheadSuggestions() {
     fetch(_typeaheadSourceUrl)
@@ -652,7 +652,9 @@ function renderUnifiedSearchContainer() {
         _typeaheadSuggestions.forEach(function(item) {
             var rawName = item.name || '';
             var rawCname = item.cname || '';
-            var coverCard = item.coverCard || '';
+            var coverUrls = (typeof resolveSeriesCoverUrls === 'function')
+                ? resolveSeriesCoverUrls(item)
+                : { primary: '', fallback: '' };
             var safeName = rawName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             var safeCname = rawCname.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             var safeArg = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -670,14 +672,11 @@ function renderUnifiedSearchContainer() {
             html += '<div class="unified-search-item typeahead-suggest-item series-suggest-item"'
                   + ' onclick="handleTypeaheadItemClick(\'' + safeArg + '\')">';
             html += '<div class="series-suggest-cover" aria-hidden="true">';
-            if (coverCard && typeof buildCardImageUrls === 'function') {
-                var coverUrls = buildCardImageUrls(coverCard);
-                var safePrimary = (coverUrls.primary || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-                var safeFallback = (coverUrls.fallback || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                if (safePrimary) {
-                    html += '<img class="series-suggest-cover-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"'
-                          + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
-                }
+            var safePrimary = (coverUrls.primary || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            var safeFallback = (coverUrls.fallback || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            if (safePrimary) {
+                html += '<img class="series-suggest-cover-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"'
+                      + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
             }
             if (safeBadge) {
                 html += '<span class="series-suggest-badge">' + safeBadge + '</span>';
@@ -1336,6 +1335,24 @@ function buildCardImageUrls(cardId) {
         primary: 'https://imgs.devilfox.net/ws/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png',
         fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' + card_first.toLowerCase() + '/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png'
     };
+}
+
+/** 作品封面：coverImage（站內路徑）或 coverUrl 優先；失敗時 onerror 改走 coverCard 卡圖 */
+function resolveSeriesCoverUrls(item) {
+    if (!item) return { primary: '', fallback: '' };
+    var custom = String(item.coverImage || item.coverUrl || '').trim();
+    var fromCard = { primary: '', fallback: '' };
+    var coverCard = item.coverCard || '';
+    if (coverCard && typeof buildCardImageUrls === 'function') {
+        fromCard = buildCardImageUrls(coverCard);
+    }
+    if (custom) {
+        return {
+            primary: custom,
+            fallback: fromCard.primary || fromCard.fallback || ''
+        };
+    }
+    return fromCard;
 }
 
 function fillSelectOptions(selectEl, values, valueMapper) {
