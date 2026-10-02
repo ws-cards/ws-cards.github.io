@@ -205,7 +205,7 @@
       .da-analyze-bar span { animation: none; background-image: none; transition: none; }
       .da-analyze-card .fa-spin { animation: none; }
     }
-    .da-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+    .da-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
     @media (max-width: 767px) { .da-rules { grid-template-columns: 1fr; } }
     .da-rule {
       border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
@@ -962,7 +962,7 @@
 
         <div id="results" style="display:none;" aria-live="polite">
           <div class="row"><div class="col-lg-12"><div class="card">
-            <div class="card-header"><h5 class="card-title"><i class="fas fa-clipboard-check mr-2"></i>規則檢查 <small class="text-muted">50 / CX8 / 同名4</small></h5></div>
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-clipboard-check mr-2"></i>規則檢查 <small class="text-muted">50 / CX8</small></h5></div>
             <div class="card-body"><div class="da-rules" id="ruleGrid"></div></div>
           </div></div></div>
 
@@ -1561,7 +1561,6 @@
       const costCount = {};
       const triggerCount = {};
       let cx = 0;
-      let overName = [];
 
       for (const c of cards) {
         const nm = c.name || c.cardNo || "?";
@@ -1585,11 +1584,7 @@
         triggerCount[trigKey] = (triggerCount[trigKey] || 0) + 1;
       }
 
-      for (const [nm, q] of byName) {
-        if (q > 4) overName.push({ name: nm, qty: q });
-      }
-
-      return { total, cx, levelCount, colorCount, kindCount, costCount, triggerCount, overName, byName };
+      return { total, cx, levelCount, colorCount, kindCount, costCount, triggerCount, byName };
     }
 
     function hyperAtLeastOne(K, N, n) {
@@ -1789,14 +1784,6 @@
           value: stats.cx + " / 8",
           detail: stats.cx === 8 ? "CX 張數正確" : "標準構築應為正好 8 張",
           state: stats.cx === 8 ? "pass" : "fail"
-        },
-        {
-          label: "同名上限",
-          value: stats.overName.length ? stats.overName.length + " 種超標" : "全部 ≤ 4",
-          detail: stats.overName.length
-            ? stats.overName.slice(0, 3).map((x) => x.name + "×" + x.qty).join("、")
-            : "同名卡未超過 4 張",
-          state: stats.overName.length ? "fail" : "pass"
         }
       ];
       el("ruleGrid").innerHTML = items.map((it) =>
