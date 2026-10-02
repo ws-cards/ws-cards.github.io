@@ -385,7 +385,8 @@ selectOnBlur:false     // 失去焦點時不自動選擇
 });
 
 // 作品建議清單以背景方式載入：頁面與卡號搜尋不必等它完成。
-var _typeaheadSourceUrl = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/wsSeriesSuggestions.json';
+// 本地 JSON（含 coverCard）；遠端同名檔尚未含封面欄位時以此為準
+var _typeaheadSourceUrl = 'json/wsSeriesSuggestions.json';
 function loadTypeaheadSuggestions() {
     fetch(_typeaheadSourceUrl)
         .then(function(response) {
@@ -645,27 +646,55 @@ function renderUnifiedSearchContainer() {
 
     var html = '';
 
-    // ── 作品/系列區塊 ──
+    // ── 作品/系列區塊（封面列，與卡名直立縮圖區隔） ──
     if (hasTypeahead) {
-        html += '<div role="status" aria-live="polite" style="padding:5px 10px;background:#eef2ff;color:#4f46e5;font-size:0.72em;font-weight:700;letter-spacing:0.5px;border-bottom:1px solid #e0e7ff;">作品 / 系列　顯示 ' + _typeaheadSuggestions.length + ' / 共 ' + _typeaheadMatches.length + ' 筆</div>';
+        html += '<div class="unified-search-section-label unified-search-section-series" role="status" aria-live="polite">作品 / 系列　顯示 ' + _typeaheadSuggestions.length + ' / 共 ' + _typeaheadMatches.length + ' 筆</div>';
         _typeaheadSuggestions.forEach(function(item) {
-            var displayName = (item.name || '').replace(/'/g, '&#39;');
-            var cname       = (item.cname || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            // onclick 使用單引號包裹字串，並跳脫 ' 和 \ 避免 HTML attribute 截斷
-            var safeArg = (item.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            html += '<div class="unified-search-item typeahead-suggest-item"'
-                  + ' style="padding:8px 10px;border-bottom:1px solid #f0f0f0;cursor:pointer;"'
-                  + ' onclick="handleTypeaheadItemClick(\'' + safeArg + '\')">';
-            html += '<div style="font-size:0.88em;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + displayName + '">' + displayName + '</div>';
-            if (cname) {
-                html += '<div style="font-size:0.75em;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + cname + '">' + cname + '</div>';
+            var rawName = item.name || '';
+            var rawCname = item.cname || '';
+            var coverCard = item.coverCard || '';
+            var safeName = rawName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            var safeCname = rawCname.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            var safeArg = rawName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            // 作品碼徽章：cname 最後一段（如 PRD / AB,KW）
+            var codeBadge = '';
+            var cnameParts = rawCname.split('|');
+            if (cnameParts.length) {
+                var lastPart = cnameParts[cnameParts.length - 1].trim();
+                if (/^[A-Za-z0-9]{1,6}(\s*,\s*[A-Za-z0-9]{1,6})*$/.test(lastPart)) {
+                    codeBadge = lastPart.split(',')[0].trim().toUpperCase();
+                }
             }
+            var safeBadge = codeBadge.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            html += '<div class="unified-search-item typeahead-suggest-item series-suggest-item"'
+                  + ' onclick="handleTypeaheadItemClick(\'' + safeArg + '\')">';
+            html += '<div class="series-suggest-cover" aria-hidden="true">';
+            if (coverCard && typeof buildCardImageUrls === 'function') {
+                var coverUrls = buildCardImageUrls(coverCard);
+                var safePrimary = (coverUrls.primary || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                var safeFallback = (coverUrls.fallback || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                if (safePrimary) {
+                    html += '<img class="series-suggest-cover-img" src="' + safePrimary + '" alt="" loading="lazy" decoding="async"'
+                          + ' onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + safeFallback + '\';}else{this.classList.add(\'is-broken\');}">';
+                }
+            }
+            if (safeBadge) {
+                html += '<span class="series-suggest-badge">' + safeBadge + '</span>';
+            }
+            html += '</div>';
+            html += '<div class="series-suggest-meta">';
+            html += '<span class="series-suggest-name" title="' + safeName + '">' + safeName + '</span>';
+            if (safeCname) {
+                html += '<span class="series-suggest-cname" title="' + safeCname + '">' + safeCname + '</span>';
+            }
+            html += '</div>';
             html += '</div>';
         });
         if (_typeaheadSuggestions.length < _typeaheadMatches.length) {
             var typeaheadRemaining = _typeaheadMatches.length - _typeaheadSuggestions.length;
             var typeaheadNextBatch = Math.min(_typeaheadBatchSize, typeaheadRemaining);
-            html += '<button type="button" class="unified-search-load-more" data-search-source="typeahead" aria-label="載入另外 ' + typeaheadNextBatch + ' 筆作品或系列建議，尚餘 ' + typeaheadRemaining + ' 筆" style="display:block;width:100%;padding:9px 10px;border:0;border-bottom:1px solid #e0e7ff;background:#f8faff;color:#4338ca;font-size:0.82em;font-weight:700;text-align:left;cursor:pointer;">載入更多作品 / 系列（尚餘 ' + typeaheadRemaining + ' 筆）</button>';
+            html += '<button type="button" class="unified-search-load-more" data-search-source="typeahead" aria-label="載入另外 ' + typeaheadNextBatch + ' 筆作品或系列建議，尚餘 ' + typeaheadRemaining + ' 筆">載入更多作品 / 系列（尚餘 ' + typeaheadRemaining + ' 筆）</button>';
         }
     }
 
@@ -726,11 +755,21 @@ function renderUnifiedSearchContainer() {
             renderUnifiedSearchContainer();
             inputEl.focus();
         });
-        button.addEventListener('mouseover', function() { this.style.backgroundColor = '#eef2ff'; });
-        button.addEventListener('mouseout', function() {
-            this.style.backgroundColor = this.getAttribute('data-search-source') === 'typeahead' ? '#f8faff' : '#f6fdf8';
+        button.addEventListener('mouseover', function() {
+            var isSeries = this.getAttribute('data-search-source') === 'typeahead';
+            var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isSeries) {
+                this.style.backgroundColor = dark ? 'rgba(208,178,122,0.16)' : '#f0e6d4';
+            } else {
+                this.style.backgroundColor = dark ? 'rgba(143,197,164,0.14)' : '#eaf7ef';
+            }
         });
-        button.addEventListener('focus', function() { this.style.outline = '2px solid #4f46e5'; });
+        button.addEventListener('mouseout', function() {
+            this.style.backgroundColor = '';
+        });
+        button.addEventListener('focus', function() {
+            this.style.outline = '2px solid ' + (document.documentElement.getAttribute('data-theme') === 'dark' ? '#d0b27a' : '#6e5832');
+        });
         button.addEventListener('blur', function() { this.style.outline = 'none'; });
     });
 }
