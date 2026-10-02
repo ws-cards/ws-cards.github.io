@@ -32,8 +32,8 @@
   <title>各卡號漲幅趨勢（WS）｜WS-Cards 卡片雲</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Google Font -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
+    <!-- Google Font：首屏品牌字 + 歷史卡號 mono -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Old+Mincho:wght@500;600;700;900&display=swap">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
@@ -54,7 +54,7 @@
     }
   </style>
 </head>
-<body class="hold-transition sidebar-mini  layout-fixed layout-navbar-fixed">
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed market-desk-page">
 <div class="wrapper">
 
   <!-- Navbar -->
@@ -154,105 +154,110 @@
       <div class="content">
         <div class="container-fluid">
           <div class="row">
-            <!-- 輸入 -->
+            <!-- 首屏：箔金標 + 品牌字 + 英雄搜尋 + 最近查看縮圖軌道 -->
             <div class="col-lg-12">
-              <div class="card search-card">
-                <div class="card-header">
-                  <h5 class="card-title">
-                    <i class="fas fa-search mr-2"></i>
-                    快速搜尋
-                  </h5>
-                </div>
-                <div class="card-body">
-                  <!-- Search Input with Modern Design -->
-                  <div class="search-container">
-                      <!-- Input form -->
-                    <div class="input-group">
+              <section class="market-desk desk-reveal desk-reveal-1" aria-label="卡號行情搜尋">
+                <header class="market-desk-brand">
+                  <div class="market-desk-brand-lockup">
+                    <span class="market-desk-mark" aria-hidden="true">WS</span>
+                    <div class="market-desk-brand-text">
+                      <p class="market-desk-kicker">WS-Cards 卡片雲</p>
+                      <h1 class="market-desk-title">各卡號漲幅趨勢</h1>
+                    </div>
+                  </div>
+                  <p class="market-desk-lede">貼上卡號，立刻讀取遊遊亭行情與庫存走勢。</p>
+                </header>
+
+                <div class="card search-card market-desk-search">
+                  <div class="card-body">
+                    <div class="search-container">
+                      <label class="market-search-label" for="xxxx">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        快速搜尋
+                      </label>
+                      <div class="input-group market-search-group">
                         <label for="xxxx" class="sr-only">搜尋作品名稱、作品代碼或卡號</label>
-                        <input id="xxxx" type="text" name="pattern" placeholder="作品名稱、作品代碼或卡號（例：PRD/W01-001）" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist" >
-                            <div class="input-group-append">
-                          <button class="btn btn-outline-secondary" type="button" id="pasteButton" title="貼上" aria-label="貼上剪貼簿的卡號" data-action-state="copy">
+                        <input id="xxxx" type="text" name="pattern" placeholder="作品名稱、作品代碼或卡號（例：PRD/W01-001）" value="" autocomplete="off" style="display: block" class="form-control typeahead" list="mylist">
+                        <div class="input-group-append">
+                          <button class="btn btn-outline-secondary market-search-action" type="button" id="pasteButton" title="貼上" aria-label="貼上剪貼簿的卡號" data-action-state="copy">
                             <span class="action-icon-flip" aria-hidden="true">
                               <i class="fas fa-paste action-icon-face action-icon-front"></i>
                               <i class="fas fa-search action-icon-face action-icon-back"></i>
                             </span>
-                                </button>
-                            </div>
+                          </button>
+                        </div>
                       </div>
 
-                        <div class="search-hint">
-                            <i class="fas fa-lightbulb mr-2" aria-hidden="true"></i>
-                        <small class="form-text text-muted">小提示：<span id="searchHintText" style="transition: opacity 0.4s ease;">貼上完整卡號可直接查詢，例如 PRD/W01-001。</span></small>
-                        </div>
+                      <div class="market-status-bar" role="note">
+                        <span class="market-status-chip"><i class="fas fa-store" aria-hidden="true"></i>遊遊亭</span>
+                        <span class="market-status-chip market-status-mono">JPY</span>
+                        <span class="market-status-note">尚未換算新台幣 · <span id="searchHintText">貼上完整卡號可直接查詢</span></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>	
-            </div>
 
-            <!-- 搜尋歷史紀錄 -->
-            <div class="col-lg-12">
-              <div id="searchHistoryWrapper" class="search-history-wrapper" style="display:none;">
-                <div class="search-history-header">
-                  <div class="search-history-title">
-                    <i class="fas fa-history mr-2"></i>
-                    <span>最近查看</span>
-                    <span class="history-count" id="historyCount"></span>
+                <!-- 最近查看：縮圖軌道 -->
+                <div id="searchHistoryWrapper" class="search-history-wrapper market-history-rail" style="display:none;">
+                  <div class="search-history-header">
+                    <div class="search-history-title">
+                      <span class="market-rail-label">最近查看</span>
+                      <span class="history-count" id="historyCount"></span>
+                    </div>
+                    <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部查詢紀錄" aria-label="清除全部查詢紀錄">
+                      <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>清除
+                    </button>
                   </div>
-                  <button class="history-clear-btn" onclick="SearchHistory.clearAll()" title="清除全部查詢紀錄" aria-label="清除全部查詢紀錄">
-                    <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>清除
-                  </button>
+                  <div class="search-history-list" id="searchHistoryContainer">
+                    <!-- 歷史紀錄項目由 JS 動態生成 -->
+                  </div>
                 </div>
-                <div class="search-history-list" id="searchHistoryContainer">
-                  <!-- 歷史紀錄項目由 JS 動態生成 -->
-                </div>
-              </div>
+              </section>
             </div>
 
-            <!-- 選單 -->
+            <!-- 篩選：薄型次要區 -->
             <div class="col-lg-12">
-              <div class="card filter-card" id="filter-card-tag">
-                <div class="card-header">
-                  <h5 class="card-title">
-                    <i class="fas fa-filter mr-2"></i>
-                    篩選條件
-                  </h5>
-                </div>              
-                  <div class="card-body">
-                    <div class="filter-container">
-                      <div class="filter-group">
-                        <label class="filter-label" for="cardStandard">
-                          <i class="fas fa-layer-group mr-2" aria-hidden="true"></i>作品系列
-                        </label>
-                        <select name="cardStandard" id="cardStandard" onclick="removeTitle();" onchange="changeStandard();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
+              <div class="card filter-card market-filter-strip desk-reveal desk-reveal-2" id="filter-card-tag">
+                <div class="card-body">
+                  <div class="market-filter-heading">
+                    <span class="market-rail-label">篩選條件</span>
+                    <span class="market-filter-hint">或由上方直接搜尋卡號</span>
+                  </div>
+                  <div class="filter-container">
+                    <div class="filter-group">
+                      <label class="filter-label" for="cardStandard">
+                        <i class="fas fa-layer-group mr-2" aria-hidden="true"></i>作品系列
+                      </label>
+                      <select name="cardStandard" id="cardStandard" onclick="removeTitle();" onchange="changeStandard();" style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
                         <optgroup label="ヴァイスサイド" id="Weiss" style="background-color: white">
                           <option value="000/000-000" id="notuse">選擇作品系列</option>
                         </optgroup>
                         <optgroup label="シュヴァルツサイド" id="Schwarz" style="background-color: gray">
                           <option value="000/000-000"></option>
                         </optgroup>
-                        </select>
-                      </div>
-                      <div class="filter-group">
-                        <label class="filter-label" for="cardTitle">
-                          <i class="fas fa-bookmark mr-2" aria-hidden="true"></i>產品
-                        </label>
-                        <select name="cardTitle" id="cardTitle" onchange="changeTitle();"  style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
-                          <option value="000/000-000">選擇產品</option>
-                        </select>
-                        <button type="button" id="advancedFilterBtn" class="btn advanced-filter-btn" style="display:none;" onclick="openAdvancedFilterModal();">
-                          <i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>進階選項
-                        </button>
-                      </div>
-                      <div class="filter-group">
-                        <label class="filter-label" for="cardNumber">
-                          <i class="fas fa-hashtag mr-2" aria-hidden="true"></i>卡號
-                        </label>
-                        <select name="cardNumber" id="cardNumber" onchange="changeNumber();"  style="font-family: 'Noto Sans TC', sans-serif;">
-                          <option value="000/000-000">選擇卡號</option>
-                        </select>
-                      </div>
-                    </div>  
+                      </select>
+                    </div>
+                    <div class="filter-group">
+                      <label class="filter-label" for="cardTitle">
+                        <i class="fas fa-bookmark mr-2" aria-hidden="true"></i>產品
+                      </label>
+                      <select name="cardTitle" id="cardTitle" onchange="changeTitle();" style="font-family: 'Noto Sans TC', sans-serif;width:300px;">
+                        <option value="000/000-000">選擇產品</option>
+                      </select>
+                      <button type="button" id="advancedFilterBtn" class="btn advanced-filter-btn" style="display:none;" onclick="openAdvancedFilterModal();">
+                        <i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>進階選項
+                      </button>
+                    </div>
+                    <div class="filter-group">
+                      <label class="filter-label" for="cardNumber">
+                        <i class="fas fa-hashtag mr-2" aria-hidden="true"></i>卡號
+                      </label>
+                      <select name="cardNumber" id="cardNumber" onchange="changeNumber();" style="font-family: 'Noto Sans TC', sans-serif;">
+                        <option value="000/000-000">選擇卡號</option>
+                      </select>
+                    </div>
                   </div>
+                </div>
               </div>
             </div>
             <!-- 左邊欄位 -->
