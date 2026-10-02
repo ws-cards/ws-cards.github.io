@@ -3313,3 +3313,646 @@ background: rgba(0, 0, 0, 0.6);
 color: #e2e8f0;
 background: rgba(30, 30, 30, 0.9);
 }
+
+/* =========================================================
+   Market Desk (v102) — 首屏英雄搜尋 + 最近查看縮圖軌道
+   ========================================================= */
+
+:root {
+    --desk-foil: #9a7b45;
+    --desk-foil-deep: #6e5832;
+    --desk-surface: rgba(255, 255, 255, 0.86);
+    --desk-surface-strong: #ffffff;
+    --desk-line: rgba(23, 25, 29, 0.12);
+    --font-display: 'Zen Old Mincho', 'Noto Serif TC', serif;
+    --font-ui: 'Noto Sans TC', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --desk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] {
+    --desk-foil: #d0b27a;
+    --desk-foil-deep: #b8955a;
+    --desk-surface: rgba(28, 27, 24, 0.92);
+    --desk-surface-strong: #1c1b18;
+    --desk-line: rgba(240, 238, 230, 0.12);
+}
+
+@keyframes deskRise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes railSlide {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes foilSweep {
+    0% { background-position: 120% 0; }
+    100% { background-position: -20% 0; }
+}
+
+.desk-reveal {
+    animation: deskRise 0.72s var(--desk-ease) both;
+}
+
+.desk-reveal-1 { animation-delay: 0.04s; }
+.desk-reveal-2 { animation-delay: 0.18s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .desk-reveal,
+    body.market-desk-page .history-item {
+        animation: none !important;
+    }
+}
+
+body.market-desk-page .content-wrapper {
+    padding-top: 1.1rem !important;
+}
+
+@media (max-width: 768px) {
+    body.market-desk-page .content-wrapper {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 0.75rem !important;
+    }
+}
+
+/* —— 品牌 lockup —— */
+.market-desk {
+    margin: 0 0 1.15rem;
+}
+
+.market-desk-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    padding: 0.15rem 0.1rem 0;
+}
+
+.market-desk-brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.market-desk-mark {
+    position: relative;
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #1a140a;
+    background: linear-gradient(135deg, #f0d7a0 0%, var(--desk-foil) 42%, var(--desk-foil-deep) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 8px 18px rgba(143, 112, 64, 0.28);
+    overflow: hidden;
+}
+
+.market-desk-mark::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+    background-size: 220% 100%;
+    animation: foilSweep 2.8s var(--desk-ease) 0.4s 1 both;
+    pointer-events: none;
+}
+
+.market-desk-kicker {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--desk-foil-deep);
+}
+
+[data-theme="dark"] .market-desk-kicker {
+    color: var(--desk-foil);
+}
+
+.market-desk-title {
+    margin: 0.1rem 0 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.55rem, 4.8vw, 2.05rem);
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    color: var(--text-primary);
+}
+
+.market-desk-lede {
+    margin: 0;
+    max-width: 34rem;
+    font-family: var(--font-ui);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+/* —— 英雄搜尋 —— */
+body.market-desk-page .search-card.market-desk-search {
+    margin-bottom: 0.85rem;
+    background: var(--desk-surface) !important;
+    border: 1px solid var(--desk-line) !important;
+    border-radius: 16px !important;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35) inset,
+        0 14px 34px rgba(28, 26, 23, 0.08);
+    backdrop-filter: blur(18px) saturate(1.05);
+    overflow: hidden;
+}
+
+body.market-desk-page .search-card.market-desk-search:hover {
+    transform: none;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35) inset,
+        0 16px 38px rgba(28, 26, 23, 0.1);
+}
+
+[data-theme="dark"] body.market-desk-page .search-card.market-desk-search {
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+body.market-desk-page .market-desk-search .card-body {
+    padding: 1.15rem 1.15rem 1rem;
+}
+
+body.market-desk-page .market-desk-search .search-container {
+    padding: 0;
+}
+
+.market-search-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.65rem;
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.market-search-label i {
+    color: var(--desk-foil-deep);
+    font-size: 0.85rem;
+}
+
+[data-theme="dark"] .market-search-label i {
+    color: var(--desk-foil);
+}
+
+body.market-desk-page .market-search-group {
+    gap: 0.55rem;
+}
+
+body.market-desk-page .market-desk-search .form-control {
+    min-height: 3.35rem;
+    padding: 0.95rem 1.15rem !important;
+    font-family: var(--font-ui);
+    font-size: 1.02rem;
+    font-weight: 500;
+    background: var(--desk-surface-strong) !important;
+    border: 1px solid var(--desk-line) !important;
+    border-radius: 12px !important;
+    box-shadow: none;
+    transform: none !important;
+}
+
+body.market-desk-page .market-desk-search .form-control::placeholder {
+    color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
+    font-weight: 400;
+}
+
+body.market-desk-page .market-desk-search .form-control:focus {
+    border-color: var(--desk-foil) !important;
+    box-shadow:
+        0 0 0 1px var(--desk-foil),
+        inset 0 0 0 1px rgba(184, 149, 90, 0.15) !important;
+    background: var(--desk-surface-strong) !important;
+    transform: none !important;
+}
+
+body.market-desk-page .market-search-action {
+    width: 3.35rem !important;
+    min-width: 3.35rem !important;
+    height: 3.35rem !important;
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+    background: linear-gradient(160deg, #d4b57a 0%, var(--desk-foil-deep) 100%) !important;
+    color: #1a140a !important;
+    box-shadow: 0 8px 18px rgba(143, 112, 64, 0.28) !important;
+    text-transform: none !important;
+}
+
+body.market-desk-page .market-search-action:hover,
+body.market-desk-page .market-search-action:focus {
+    color: #1a140a !important;
+    filter: brightness(1.05);
+    box-shadow: 0 10px 22px rgba(143, 112, 64, 0.34) !important;
+}
+
+body.market-desk-page .market-search-action:focus-visible {
+    outline: 2px solid var(--desk-foil);
+    outline-offset: 2px;
+}
+
+.market-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    margin-top: 0.85rem;
+    padding: 0.55rem 0.15rem 0.1rem;
+    border-top: 1px solid var(--desk-line);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.market-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--desk-line);
+    background: color-mix(in srgb, var(--desk-surface-strong) 80%, transparent);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.market-status-chip i {
+    font-size: 0.72rem;
+    color: var(--desk-foil-deep);
+}
+
+[data-theme="dark"] .market-status-chip i {
+    color: var(--desk-foil);
+}
+
+.market-status-mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+}
+
+.market-status-note {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+body.market-desk-page .market-desk-search .search-hint {
+    display: none;
+}
+
+[data-theme="dark"] body.market-desk-page .market-desk-search .form-control {
+    background: #161512 !important;
+    border-color: rgba(240, 238, 230, 0.12) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] body.market-desk-page .market-desk-search .form-control:focus {
+    background: #1a1814 !important;
+}
+
+/* —— 最近查看縮圖軌道 —— */
+body.market-desk-page .search-history-wrapper.market-history-rail {
+    margin: 0;
+    padding: 0.85rem 0.15rem 0.2rem;
+}
+
+body.market-desk-page .market-history-rail .search-history-header {
+    margin-bottom: 0.65rem;
+    padding: 0;
+}
+
+.market-rail-label {
+    font-family: var(--font-ui);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+body.market-desk-page .history-count {
+    margin-left: 0.45rem;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--desk-foil) 18%, transparent);
+    color: var(--desk-foil-deep);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--desk-foil) 35%, transparent);
+}
+
+[data-theme="dark"] body.market-desk-page .history-count {
+    color: var(--desk-foil);
+}
+
+body.market-desk-page .history-clear-btn {
+    border-radius: 8px;
+    border: 1px solid var(--desk-line);
+    background: transparent;
+    backdrop-filter: none;
+    font-family: var(--font-ui);
+    text-transform: none;
+}
+
+body.market-desk-page .search-history-list {
+    gap: 0.7rem;
+    padding: 0.15rem 0.15rem 0.55rem;
+    margin: 0 -0.15rem;
+    scroll-snap-type: x mandatory;
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+    scrollbar-color: color-mix(in srgb, var(--desk-foil) 45%, transparent) transparent;
+}
+
+body.market-desk-page .search-history-list::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--desk-foil) 45%, transparent);
+}
+
+body.market-desk-page .history-item {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    gap: 0;
+    min-width: 168px;
+    max-width: 196px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid var(--desk-line);
+    background: var(--desk-surface);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 20px rgba(28, 26, 23, 0.06);
+    overflow: hidden;
+    scroll-snap-align: start;
+    animation: railSlide 0.55s var(--desk-ease) both;
+    animation-delay: var(--rail-delay, 0ms);
+}
+
+body.market-desk-page .history-item:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--desk-foil) 55%, var(--desk-line));
+    box-shadow: 0 14px 28px rgba(28, 26, 23, 0.12);
+}
+
+[data-theme="dark"] body.market-desk-page .history-item {
+    background: rgba(28, 27, 24, 0.92);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+body.market-desk-page .history-item-main {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 0.55rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.45rem 0.35rem 0.45rem 0.45rem;
+    min-width: 0;
+}
+
+.history-thumb {
+    position: relative;
+    width: 58px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--rare-color, var(--desk-foil)) 35%, #222) 0%, #1a1a1a 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.history-thumb::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--rare-color, var(--desk-foil));
+    z-index: 2;
+}
+
+.history-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+.history-thumb-img.is-broken {
+    opacity: 0;
+}
+
+body.market-desk-page .history-rare-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.02em;
+    padding: 0.12rem 0.28rem;
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+body.market-desk-page .history-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+    padding-right: 0.15rem;
+}
+
+body.market-desk-page .history-card-number {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+body.market-desk-page .history-card-name {
+    font-size: 0.68rem;
+    max-width: none;
+    opacity: 0.9;
+}
+
+body.market-desk-page .history-time {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    opacity: 0.75;
+    margin-top: 0.1rem;
+}
+
+body.market-desk-page .history-item-left,
+body.market-desk-page .history-item-right {
+    display: contents;
+}
+
+body.market-desk-page .history-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    opacity: 0;
+    z-index: 3;
+    width: 1.4rem;
+    height: 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+}
+
+body.market-desk-page .history-item:hover .history-remove-btn,
+body.market-desk-page .history-item:focus-within .history-remove-btn {
+    opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+    body.market-desk-page .history-item {
+        min-width: 156px;
+        max-width: 180px;
+    }
+
+    body.market-desk-page .history-remove-btn {
+        opacity: 0.55;
+    }
+
+    .market-desk-brand-lockup {
+        align-items: flex-start;
+    }
+
+    .market-desk-mark {
+        width: 2.65rem;
+        height: 2.65rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* —— 薄型篩選帶 —— */
+body.market-desk-page .filter-card.market-filter-strip {
+    margin-bottom: 1.35rem;
+    background: color-mix(in srgb, var(--desk-surface) 70%, transparent) !important;
+    border: 1px solid var(--desk-line) !important;
+    border-radius: 14px !important;
+    box-shadow: none;
+    backdrop-filter: blur(10px);
+}
+
+body.market-desk-page .filter-card.market-filter-strip:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+body.market-desk-page .market-filter-strip .card-body {
+    padding: 0.95rem 1.05rem 1.05rem;
+}
+
+.market-filter-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.market-filter-hint {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .market-filter-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .market-filter-hint {
+        white-space: normal;
+    }
+}
+
+body.market-desk-page .market-filter-strip .filter-container {
+    gap: 1rem;
+    padding: 0;
+}
+
+body.market-desk-page .market-filter-strip .filter-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--text-secondary);
+}
+
+body.market-desk-page .market-filter-strip select {
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 2.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--desk-line);
+    background: var(--desk-surface-strong);
+    color: var(--text-primary);
+    padding: 0.45rem 0.7rem;
+}
+
+body.market-desk-page .market-filter-strip select:focus {
+    outline: none;
+    border-color: var(--desk-foil);
+    box-shadow: 0 0 0 1px var(--desk-foil);
+}
+
+[data-theme="dark"] body.market-desk-page .market-filter-strip select {
+    background: #161512;
+    border-color: rgba(240, 238, 230, 0.12);
+}
+
+body.market-desk-page .advanced-filter-btn {
+    border-color: color-mix(in srgb, var(--desk-foil) 40%, transparent) !important;
+    background: color-mix(in srgb, var(--desk-foil) 12%, transparent) !important;
+    color: var(--text-primary) !important;
+    text-transform: none !important;
+}
+
+body.market-desk-page .advanced-filter-btn:hover {
+    border-color: var(--desk-foil) !important;
+    background: color-mix(in srgb, var(--desk-foil) 20%, transparent) !important;
+}
+
+body.market-desk-page #filter-card-tag.dimmed {
+    opacity: 0.45;
+    filter: none;
+}
+
+body.market-desk-page .navbar-title-badge {
+    font-family: var(--font-mono);
+    background: linear-gradient(135deg, #f0d7a0 0%, var(--desk-foil) 45%, var(--desk-foil-deep) 100%) !important;
+    color: #1a140a !important;
+    border: none !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}

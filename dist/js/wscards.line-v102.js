@@ -3395,6 +3395,27 @@ function getRareColor(rare) {
 }
 
 /**
+ * 依卡號組出縮圖網址（與 buildCardImageUrls 相同邏輯，避免依賴宣告順序）
+ */
+function getHistoryThumbUrls(cardId) {
+    if (!cardId || cardId.indexOf('-') < 0) {
+        return { primary: '', fallback: '' };
+    }
+    if (typeof buildCardImageUrls === 'function') {
+        return buildCardImageUrls(cardId);
+    }
+    var card_Num = cardId;
+    var card_first = card_Num.substr(0, 1);
+    var card_second = card_Num.substr(0, card_Num.indexOf('-'));
+    card_second = card_second.replace('/', '_');
+    var card_third = card_Num.replace('/', '_').replace('-', '_');
+    return {
+        primary: 'https://imgs.devilfox.net/ws/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png',
+        fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' + card_first.toLowerCase() + '/' + card_second.toLowerCase() + '/' + card_third.toLowerCase() + '.png'
+    };
+}
+
+/**
  * 渲染歷史紀錄到 DOM
  */
 function renderHistory() {
@@ -3421,18 +3442,21 @@ function renderHistory() {
     history.forEach(function(item, index) {
         var rareColor = getRareColor(item.cardRare);
         var timeAgo = formatTimeAgo(item.timestamp);
-        
-        // 標題描述結果（查詢哪張卡），而不是動作（點擊）
-        html += '<div class="history-item" data-card-number="' + escapeHtml(item.cardNumber) + '" title="查詢 ' + escapeHtml(item.cardNumber) + '">';
+        var thumbs = getHistoryThumbUrls(item.cardNumber);
+        var delay = Math.min(index, 8) * 45;
+
+        // 縮圖軌道：卡面縮圖 + 稀有度角標 + mono 卡號
+        html += '<div class="history-item" data-card-number="' + escapeHtml(item.cardNumber) + '" title="查詢 ' + escapeHtml(item.cardNumber) + '" style="--rail-delay:' + delay + 'ms">';
         html += '  <div class="history-item-main" role="button" tabindex="0" aria-label="查詢 ' + escapeHtml(item.cardNumber) + (item.cardName ? ' ' + escapeHtml(item.cardName) : '') + '" onclick="SearchHistory.clickItem(\'' + escapeJsString(item.cardNumber) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();SearchHistory.clickItem(\'' + escapeJsString(item.cardNumber) + '\');}">';
-        html += '    <div class="history-item-left">';
+        html += '    <div class="history-thumb" style="--rare-color:' + rareColor + '">';
+        if (thumbs.primary) {
+            html += '      <img class="history-thumb-img" src="' + escapeHtml(thumbs.primary) + '" alt="" loading="lazy" decoding="async" onerror="if(this.dataset.fb!==\'1\'){this.dataset.fb=\'1\';this.src=\'' + escapeJsString(thumbs.fallback) + '\';}else{this.classList.add(\'is-broken\');}">';
+        }
         html += '      <span class="history-rare-badge" style="background:' + rareColor + '">' + escapeHtml(item.cardRare || '?') + '</span>';
-        html += '      <div class="history-item-info">';
-        html += '        <span class="history-card-number">' + escapeHtml(item.cardNumber) + '</span>';
-        html += '        <span class="history-card-name">' + escapeHtml(item.cardName || '') + '</span>';
-        html += '      </div>';
         html += '    </div>';
-        html += '    <div class="history-item-right">';
+        html += '    <div class="history-item-info">';
+        html += '      <span class="history-card-number">' + escapeHtml(item.cardNumber) + '</span>';
+        html += '      <span class="history-card-name">' + escapeHtml(item.cardName || '') + '</span>';
         html += '      <span class="history-time">' + timeAgo + '</span>';
         html += '    </div>';
         html += '  </div>';
