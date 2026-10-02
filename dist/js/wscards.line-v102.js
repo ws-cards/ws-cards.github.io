@@ -673,6 +673,8 @@ function closeMobileSearchOverlay() {
     document.body.classList.remove('mobile-search-open');
     _mobileSearchActive = false;
     hideCardNameSearchResults();
+    var restoredInput = document.getElementById('xxxx');
+    if (restoredInput) restoredInput.blur();
 }
 
 $input.on('focus', function() {
