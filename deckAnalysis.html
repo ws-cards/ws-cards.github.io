@@ -521,6 +521,41 @@
       .da-top-recent .ax { display: none; }
     }
     .da-top-foot { margin-top: 0.85rem; font-size: 0.78rem; color: var(--da-muted); }
+    .da-top-section {
+      font-size: 1rem; font-weight: 800; color: var(--da-ink); margin: 0 0 0.75rem;
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem;
+    }
+    .da-top-section small { font-size: 0.78rem; font-weight: 500; color: var(--da-muted); }
+    #topCommunity:not(:empty) { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--da-border); }
+    .da-top-range { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+    .da-top-range button {
+      appearance: none; border: 1px solid var(--da-border); background: var(--da-soft);
+      color: var(--da-muted); border-radius: 999px; padding: 0.3rem 0.75rem;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .da-top-range button span { font-weight: 500; opacity: 0.75; margin-left: 0.15rem; }
+    .da-top-range button.is-active { background: var(--da-accent); border-color: var(--da-accent); color: #fff; }
+    [data-theme="dark"] .da-top-range button.is-active { color: #0b1017; }
+    .da-top-similar { list-style: none; padding: 0; margin: 0; }
+    .da-top-similar li { padding: 0.6rem 0; border-bottom: 1px solid var(--da-border); min-width: 0; }
+    .da-top-similar li:first-child { padding-top: 0; }
+    .da-top-similar li:last-child { border-bottom: none; padding-bottom: 0; }
+    .da-top-similar .hd { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+    .da-top-similar .rk {
+      flex-shrink: 0; font-size: 0.72rem; font-weight: 700; padding: 0.05rem 0.45rem; border-radius: 999px;
+      border: 1px solid var(--da-border); color: var(--da-muted);
+    }
+    .da-top-similar .rk.is-win { color: var(--da-warn); border-color: currentColor; }
+    .da-top-similar .dn { flex: 1; min-width: 0; font-weight: 700; color: var(--da-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-top-similar .ov { flex-shrink: 0; font-weight: 800; color: var(--da-ink); font-variant-numeric: tabular-nums; font-size: 0.86rem; }
+    .da-top-similar .track { height: 6px; border-radius: 999px; background: var(--da-border); overflow: hidden; margin: 0.4rem 0 0.35rem; }
+    .da-top-similar .fill { display: block; height: 100%; border-radius: inherit; background: var(--da-accent); }
+    .da-top-similar .ev, .da-top-similar .ex { font-size: 0.78rem; color: var(--da-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .da-top-similar .lk { font-size: 0.78rem; margin-top: 0.2rem; }
+    .da-top-similar .lk a { color: var(--da-accent); }
+    .da-top-diff { font-size: 0.72rem; font-weight: 700; margin-left: 0.25rem; }
+    .da-top-diff.is-ok { color: var(--da-good); }
+    .da-top-diff.is-more, .da-top-diff.is-less { color: var(--da-warn); }
     @media (prefers-reduced-motion: reduce) {
       .da-top-years .bar { animation: none; }
     }
@@ -1015,7 +1050,10 @@
               </h5>
             </div>
             <div class="card-body" id="topCompareBody" aria-live="polite">
-              <p class="da-hint mt-0">分析牌組後，這裡會拿同作品的歷年上位紀錄跟你的牌組比較。</p>
+              <div id="topOfficial">
+                <p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>
+              </div>
+              <div id="topCommunity"></div>
             </div>
           </div></div></div>
 
@@ -2403,27 +2441,323 @@
       return out;
     }
 
+    const OFFICIAL_BASE = "json/official-decks/";
+    const OFFICIAL_RANGES = [
+      { id: "1y", label: "近 1 年", days: 365 },
+      { id: "2y", label: "近 2 年", days: 730 },
+      { id: "all", label: "全部", days: 0 }
+    ];
+    const officialCache = new Map();
+    let officialState = null;
+
+    function deckMainPrefix(cards) {
+      const count = {};
+      cards.forEach(function (c) {
+        const m = normalizeCardNo(c.cardNo).match(/^([A-Za-z0-9]+)\//);
+        if (m) count[m[1].toUpperCase()] = (count[m[1].toUpperCase()] || 0) + 1;
+      });
+      return Object.keys(count).sort(function (a, b) { return count[b] - count[a]; })[0] || "";
+    }
+
+    function loadOfficialDecks(prefix) {
+      if (officialCache.has(prefix)) return officialCache.get(prefix);
+      const p = fetch(OFFICIAL_BASE + encodeURIComponent(prefix) + ".json").then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      });
+      officialCache.set(prefix, p);
+      p.catch(function () { officialCache.delete(prefix); });
+      return p;
+    }
+
+    function officialDeckDate(data, d) {
+      const ev = data.events && data.events[d.e];
+      return ev ? ev.date : "";
+    }
+
+    function officialWindow(data, rangeId) {
+      const range = OFFICIAL_RANGES.find(function (r) { return r.id === rangeId; }) || OFFICIAL_RANGES[2];
+      const latest = data.decks.reduce(function (m, d) {
+        const t = officialDeckDate(data, d);
+        return t > m ? t : m;
+      }, "");
+      if (!range.days || !latest) return data.decks.slice();
+      const cut = new Date(Date.parse(latest) - range.days * 86400000).toISOString().slice(0, 10);
+      return data.decks.filter(function (d) { return officialDeckDate(data, d) >= cut; });
+    }
+
+    function pickOfficialRange(data) {
+      for (let i = 0; i < OFFICIAL_RANGES.length; i++) {
+        if (officialWindow(data, OFFICIAL_RANGES[i].id).length >= 8) return OFFICIAL_RANGES[i].id;
+      }
+      return "all";
+    }
+
+    function officialCardInfo(data, no) {
+      const raw = data.cards && data.cards[no];
+      const lc = raw && String(raw[1] || "").match(/^(\d+)\s*\/\s*(\d+)/);
+      return {
+        name: raw ? raw[0] : no,
+        lv: lc ? +lc[1] : null,
+        type: raw ? raw[2] : "?"
+      };
+    }
+
+    function computeOfficialCompare(data, cards, rangeId) {
+      const decks = officialWindow(data, rangeId);
+      const mine = {};
+      cards.forEach(function (c) {
+        const k = cardBaseKey(c.cardNo);
+        if (!mine[k]) mine[k] = { qty: 0, name: c.name, no: normalizeCardNo(c.cardNo), imageUrl: c.imageUrl, level: c.level, kind: classifyKind(c) };
+        mine[k].qty += 1;
+      });
+
+      const deckMap = function (d) {
+        const theirs = {};
+        d.c.forEach(function (pair) {
+          const k = cardBaseKey(pair[0]);
+          theirs[k] = (theirs[k] || 0) + pair[1];
+        });
+        return theirs;
+      };
+      const similar = data.decks.map(function (d) {
+        const theirs = deckMap(d);
+        let overlap = 0;
+        Object.keys(theirs).forEach(function (k) { if (mine[k]) overlap += Math.min(theirs[k], mine[k].qty); });
+        return { deck: d, overlap: overlap, theirs: theirs };
+      }).filter(function (x) { return x.overlap > 0; });
+      similar.sort(function (a, b) {
+        return b.overlap - a.overlap || a.deck.rs - b.deck.rs ||
+          (officialDeckDate(data, b.deck) > officialDeckDate(data, a.deck) ? 1 : -1);
+      });
+
+      const adopt = {};
+      const curveSum = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
+      decks.forEach(function (d) {
+        const theirs = deckMap(d);
+        d.c.forEach(function (pair) {
+          const k = cardBaseKey(pair[0]);
+          const a = adopt[k] || (adopt[k] = { decks: 0, total: 0, no: pair[0] });
+          if (cardBaseKey(pair[0]) === pair[0].toUpperCase()) a.no = pair[0];
+          const info = officialCardInfo(data, pair[0]);
+          if (info.type === "X") curveSum.cx += pair[1];
+          else if (info.lv != null && info.lv <= 3) curveSum[info.lv] += pair[1];
+        });
+        Object.keys(theirs).forEach(function (k) {
+          adopt[k].decks += 1;
+          adopt[k].total += theirs[k];
+        });
+      });
+
+      const n = decks.length || 1;
+      const rows = Object.keys(adopt).map(function (k) {
+        const a = adopt[k];
+        return { key: k, no: a.no, rate: a.decks / n, avg: a.total / a.decks, mineQty: mine[k] ? mine[k].qty : 0 };
+      });
+      const missing = rows.filter(function (r) { return !r.mineQty && r.rate >= 0.3; })
+        .sort(function (a, b) { return b.rate - a.rate; }).slice(0, 6);
+      const qtyGap = rows.filter(function (r) { return r.mineQty && r.rate >= 0.3 && Math.abs(r.avg - r.mineQty) >= 1.5; })
+        .sort(function (a, b) { return Math.abs(b.avg - b.mineQty) * b.rate - Math.abs(a.avg - a.mineQty) * a.rate; }).slice(0, 5);
+      const rare = Object.keys(mine).map(function (k) {
+        const a = adopt[k];
+        return { key: k, no: mine[k].no, rate: a ? a.decks / n : 0, mineQty: mine[k].qty };
+      }).filter(function (r) { return r.rate < 0.1; })
+        .sort(function (a, b) { return b.mineQty - a.mineQty || a.rate - b.rate; }).slice(0, 6);
+
+      const myCurve = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
+      Object.keys(mine).forEach(function (k) {
+        const m = mine[k];
+        if (m.kind === "CX") myCurve.cx += m.qty;
+        else if (m.level != null && !isNaN(m.level) && m.level <= 3) myCurve[m.level] += m.qty;
+      });
+      const avgCurve = {};
+      Object.keys(curveSum).forEach(function (k) { avgCurve[k] = decks.length ? curveSum[k] / decks.length : 0; });
+
+      return {
+        decks: decks,
+        wins: decks.filter(function (d) { return d.rs === 1; }).length,
+        similar: similar.slice(0, 3),
+        missing: missing,
+        qtyGap: qtyGap,
+        rare: rare,
+        mine: mine,
+        myCurve: myCurve,
+        avgCurve: avgCurve
+      };
+    }
+
+    function officialTile(data, r, mine, foot) {
+      const info = officialCardInfo(data, r.no);
+      const m = mine[r.key];
+      const name = (m && m.name) || info.name || r.no;
+      const img = (m && m.imageUrl) || wsImageUrlFromCardNo(r.no);
+      return '<div class="da-top-core' + (r.mineQty ? "" : " is-missing") + '">' +
+        '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">' +
+        '<div class="nm" title="' + escapeHtml(name) + '">' + escapeHtml(name) + "</div>" +
+        '<div class="meta">' + escapeHtml(r.no) + "</div>" + foot + "</div>";
+    }
+
+    function renderOfficialView() {
+      const st = officialState;
+      if (!st) return;
+      const data = st.data;
+      const cards = st.cards;
+      const res = computeOfficialCompare(data, cards, st.range);
+      const box = el("topOfficial");
+      const title = (data.decks[0] && data.decks[0].t) || data.prefix;
+      el("topCompareSubtitle").textContent = title + " · 官方入賞 · 社群上位紀錄";
+
+      let html = '<h3 class="da-top-section">官方入賞牌表 <small>' + escapeHtml(title) + " · WS 官方入賞者デッキレシピ</small></h3>";
+      html += '<div class="da-top-range" role="tablist" aria-label="比較範圍">' + OFFICIAL_RANGES.map(function (r) {
+        const on = r.id === st.range;
+        return '<button type="button" role="tab" data-official-range="' + r.id + '" aria-selected="' + on + '" class="' + (on ? "is-active" : "") + '">' +
+          r.label + " <span>" + officialWindow(data, r.id).length + "</span></button>";
+      }).join("") + "</div>";
+
+      if (!res.decks.length) {
+        box.innerHTML = html + '<p class="da-hint mt-0">這個範圍內沒有入賞牌組。</p>';
+        return;
+      }
+
+      const best = res.similar[0];
+      const latestDate = res.decks.reduce(function (m, d) {
+        const t = officialDeckDate(data, d);
+        return t > m ? t : m;
+      }, "");
+      const stat = function (k, v, small, sub) {
+        return '<div class="da-top-stat"><div class="k">' + k + '</div><div class="v">' + v +
+          (small ? "<small>" + small + "</small>" : "") + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>";
+      };
+      html += '<div class="da-top-summary">' +
+        stat("入賞牌組", res.decks.length, "副") +
+        stat("其中優勝", res.wins, "副") +
+        stat("最像的一副", best ? best.overlap : 0, "/ 50 張", best ? "跟你重疊（全部期間）" : "沒有重疊的入賞牌組") +
+        stat("最近入賞", latestDate ? latestDate.replace(/-/g, "/") : "—") +
+        "</div>";
+
+      html += '<div class="da-top-grid"><div class="da-top-panel"><h3>最像你的入賞牌組 · 全部期間</h3>' +
+        (res.similar.length ? "" : '<p class="da-hint mt-0">歷年入賞牌組裡沒有跟你共用的卡。</p>') + '<ul class="da-top-similar">' +
+        res.similar.map(function (s) {
+          const d = s.deck;
+          const ev = data.events[d.e] || {};
+          const extra = Object.keys(s.theirs).map(function (k) {
+            const diff = s.theirs[k] - (res.mine[k] ? res.mine[k].qty : 0);
+            return { k: k, diff: diff };
+          }).filter(function (x) { return x.diff > 0; })
+            .sort(function (a, b) { return b.diff - a.diff; }).slice(0, 3)
+            .map(function (x) {
+              const pair = d.c.find(function (p) { return cardBaseKey(p[0]) === x.k; });
+              return "+" + x.diff + " " + officialCardInfo(data, pair ? pair[0] : x.k).name;
+            });
+          const links = '<a href="https://ws-tcg.com/deckrecipe/' + encodeURIComponent(d.e) + '/" target="_blank" rel="noopener">官方頁面</a>' +
+            (d.code ? ' · <a href="https://decklog.bushiroad.com/view/' + encodeURIComponent(d.code) + '" target="_blank" rel="noopener">DeckLog</a>' : "");
+          return '<li><div class="hd"><span class="rk' + (d.rs === 1 ? " is-win" : "") + '">' + escapeHtml(d.r || "入賞") + '</span>' +
+            '<span class="dn">' + escapeHtml(d.n || "（未命名）") + "</span>" +
+            '<span class="ov">' + s.overlap + " / 50</span></div>" +
+            '<div class="track"><span class="fill" style="width:' + (s.overlap / 50 * 100).toFixed(1) + '%"></span></div>' +
+            '<div class="ev">' + escapeHtml((ev.date || "").replace(/-/g, "/") + " · " + (d.b || ev.title || "")) + "</div>" +
+            (extra.length ? '<div class="ex">他們多放：' + escapeHtml(extra.join("、")) + "</div>" : "") +
+            '<div class="lk">' + links + "</div></li>";
+        }).join("") + "</ul></div>";
+
+      const curveRow = function (label, mineV, avgV) {
+        const diff = mineV - avgV;
+        const cls = Math.abs(diff) < 1.5 ? "is-ok" : (diff > 0 ? "is-more" : "is-less");
+        const note = Math.abs(diff) < 1.5 ? "接近" : (diff > 0 ? "多 " + diff.toFixed(1) : "少 " + (-diff).toFixed(1));
+        return '<div class="da-ratio-row"><span class="tag">' + label + '</span><span class="num">你 ' + mineV +
+          ' <span class="guide">· 入賞平均 ' + avgV.toFixed(1) + '</span> <span class="da-top-diff ' + cls + '">' + note + "</span></span></div>";
+      };
+      html += '<div class="da-top-panel"><h3>等級曲線與 CX</h3>' +
+        curveRow("Lv0", res.myCurve[0], res.avgCurve[0]) +
+        curveRow("Lv1", res.myCurve[1], res.avgCurve[1]) +
+        curveRow("Lv2", res.myCurve[2], res.avgCurve[2]) +
+        curveRow("Lv3", res.myCurve[3], res.avgCurve[3]) +
+        curveRow("CX", res.myCurve.cx, res.avgCurve.cx) +
+        "</div></div>";
+
+      if (res.missing.length) {
+        html += '<div class="da-top-panel mb-3"><h3>入賞常放、你沒放</h3><div class="da-top-cores">' +
+          res.missing.map(function (r) {
+            return officialTile(data, r, res.mine,
+              '<div class="meta">採用 ' + Math.round(r.rate * 100) + "% · 平均 " + r.avg.toFixed(1) + ' 張</div><span class="own is-out">你 0 張</span>');
+          }).join("") + "</div></div>";
+      }
+      if (res.qtyGap.length) {
+        html += '<div class="da-top-panel mb-3"><h3>張數跟入賞差很多</h3>' + res.qtyGap.map(function (r) {
+          const m = res.mine[r.key];
+          return '<div class="da-ratio-row"><span class="tag">' + escapeHtml((m && m.name) || officialCardInfo(data, r.no).name) +
+            '</span><span class="num">你 ' + r.mineQty + ' 張 <span class="guide">· 入賞平均 ' + r.avg.toFixed(1) + " 張（採用 " +
+            Math.round(r.rate * 100) + "%）</span></span></div>";
+        }).join("") + "</div>";
+      }
+      if (res.rare.length) {
+        html += '<div class="da-top-panel mb-3"><h3>你有、但入賞很少見</h3><div class="da-top-cores">' +
+          res.rare.map(function (r) {
+            return officialTile(data, r, res.mine,
+              '<div class="meta">採用 ' + Math.round(r.rate * 100) + '%</div><span class="own is-in">你 ' + r.mineQty + " 張</span>");
+          }).join("") + "</div></div>";
+      }
+
+      html += '<p class="da-top-foot mb-0">資料來源：WS 官方「入賞者デッキレシピ」（2019 年起），更新於 ' + escapeHtml(data.updated || "—") +
+        "。比較時忽略稀有度（例如 SP、OLR 視為同一張）。</p>";
+      box.innerHTML = html;
+    }
+
+    async function renderOfficialCompare(cards, token) {
+      const box = el("topOfficial");
+      const prefix = deckMainPrefix(cards);
+      if (!prefix) {
+        box.innerHTML = '<p class="da-hint mt-0">這副牌的卡號無法判斷作品，無法比對官方入賞牌表。</p>';
+        return;
+      }
+      box.innerHTML = '<p class="da-hint mt-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取官方入賞牌表…</p>';
+      const data = await loadOfficialDecks(prefix);
+      if (token !== topCompareToken) return;
+      if (!data || !data.decks || !data.decks.length) {
+        officialState = null;
+        box.innerHTML = '<p class="da-hint mt-0">官方入賞牌表裡還沒有這個作品（卡號前綴 ' + escapeHtml(prefix) + "）。</p>";
+        return;
+      }
+      officialState = { data: data, cards: cards, range: pickOfficialRange(data) };
+      renderOfficialView();
+    }
+
     function resetTopCompare() {
       topCompareToken++;
-      el("topCompareSubtitle").textContent = "歷年上位紀錄";
-      el("topCompareBody").innerHTML = '<p class="da-hint mt-0">分析牌組後，這裡會拿同作品的歷年上位紀錄跟你的牌組比較。</p>';
+      officialState = null;
+      el("topCompareSubtitle").textContent = "官方入賞 · 社群上位紀錄";
+      el("topOfficial").innerHTML = '<p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>';
+      el("topCommunity").innerHTML = "";
     }
 
     async function renderTopCompare(cards) {
       const token = ++topCompareToken;
-      const body = el("topCompareBody");
-      body.innerHTML = '<p class="da-hint mt-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取同作品的上位紀錄…</p>';
+      el("topCompareSubtitle").textContent = "官方入賞 · 社群上位紀錄";
+      await Promise.all([
+        renderOfficialCompare(cards, token).catch(function (e) {
+          if (token === topCompareToken) {
+            el("topOfficial").innerHTML = '<p class="da-hint mt-0">官方入賞牌表暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
+          }
+        }),
+        renderCommunityCompare(cards, token)
+      ]);
+    }
+
+    async function renderCommunityCompare(cards, token) {
+      const body = el("topCommunity");
+      body.innerHTML = '<p class="da-hint mt-3 mb-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取社群上位紀錄…</p>';
       let data;
       try {
         data = await loadTopRecords(cards);
       } catch (e) {
         if (token !== topCompareToken) return;
-        body.innerHTML = '<p class="da-hint mt-0">上位紀錄暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
+        body.innerHTML = '<p class="da-hint mt-3 mb-0">社群上位紀錄暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
         return;
       }
       if (token !== topCompareToken) return;
       if (!data || !data.records || !data.records.length) {
-        body.innerHTML = '<p class="da-hint mt-0">目前的上位紀錄裡還沒有這個作品。</p>';
+        body.innerHTML = '<p class="da-hint mt-3 mb-0">社群上位紀錄裡還沒有這個作品。</p>';
         return;
       }
 
@@ -2479,14 +2813,15 @@
       const coreHits = cores.filter(function (k) { return own[k]; }).length;
 
       const latest = dated[0];
-      el("topCompareSubtitle").textContent = data.series + " · " + yMin + "–" + (latest ? latest.date.text : yMax);
 
       const stat = function (k, v, small, sub, subCls) {
         return '<div class="da-top-stat"><div class="k">' + k + '</div><div class="v">' + v +
           (small ? "<small>" + small + "</small>" : "") + "</div>" +
           (sub ? '<div class="s' + (subCls ? " " + subCls : "") + '">' + sub + "</div>" : "") + "</div>";
       };
-      let html = '<div class="da-top-summary">' +
+      let html = '<h3 class="da-top-section">社群上位紀錄 <small>' + escapeHtml(data.series) + " · " + yMin + "–" +
+        (latest ? latest.date.text : yMax) + " · 以店舖大會為主</small></h3>" +
+        '<div class="da-top-summary">' +
         stat("作品", escapeHtml(data.series)) +
         stat("上位紀錄", recs.length.toLocaleString(), "筆") +
         stat("最近入賞", latest ? latest.date.text : "—") +
@@ -2536,7 +2871,7 @@
             escapeHtml(r.axisRaw || "—") + "</span>" + link + "</li>";
         }).join("") + "</ul></div>";
 
-      html += '<p class="da-top-foot mb-0">資料來源：卡片雲上位紀錄（社群整理，以店舖大會為主）。之後會改接 WS 官方大會結果，並加入逐卡比較。</p>';
+      html += '<p class="da-top-foot mb-0">資料來源：卡片雲上位紀錄（社群整理，以店舖大會為主，更新至 2025/3）。</p>';
       body.innerHTML = html;
 
       const missing = cores.filter(function (k) { return !own[k]; }).map(function (k) { return coreSample[k]; });
@@ -3052,6 +3387,13 @@
 
     resetSimUi();
     resetAiGuideUi();
+
+    el("topOfficial").addEventListener("click", function (e) {
+      const btn = e.target.closest("[data-official-range]");
+      if (!btn || !officialState) return;
+      officialState.range = btn.getAttribute("data-official-range");
+      renderOfficialView();
+    });
 
     el("btnAiGenerate").addEventListener("click", function () { generateAiGuide(false); });
     el("btnAiMock").addEventListener("click", function () { generateAiGuide(true); });
