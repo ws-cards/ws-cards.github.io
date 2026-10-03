@@ -12,10 +12,15 @@ WS 官方「入賞者デッキレシピ」爬蟲
   index.json        已抓過的大會清單、各作品前綴的牌組數
   <PREFIX>.json     依卡號前綴（例如 BD、HOL）分檔的入賞牌組，供 deckAnalysis.html 讀取
 
+cards 的每一筆是 [卡名, 等級/費用, 種類 C/E/X, 連動]。
+連動（第 4 欄）用卡片雲的卡片效果文判斷：等級 2 或 3、效果有【CXコンボ】的角色卡，
+值為連動的 CX 卡名（認不出卡名時是 "*"）；不是連動是 ""；查不到效果文時省略這一欄，下次執行會再查。
+
 用法:
   python scrapy/ws_official_decks.py              # 增量：只抓新的大會
   python scrapy/ws_official_decks.py --full       # 全部重抓
   python scrapy/ws_official_decks.py --max-pages 2 --delay 2
+  python scrapy/ws_official_decks.py --links-only # 不抓大會，只補連動標記
 
 依存: 只用 Python 標準函式庫
 """
@@ -28,14 +33,18 @@ import os
 import re
 import sys
 import time
+import urllib.parse
 import urllib.request
 
 BASE = "https://ws-tcg.com/deckrecipe/"
 LIST_URL = BASE + "recipe_prize/"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/129.0 Safari/537.36")
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MIN_DATE = "2019-01-01"
+CARD_TEXT_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/"
+LINK_LEVELS = (2, 3)
+CX_NAME_RE = re.compile(r"(?:クライマックス|CX)置場(?:に|の)「(.+?)」")
 
 CARD_TYPE = {"キャラカード": "C", "イベントカード": "E", "クライマックスカード": "X"}
 RANK_SCORE = [
@@ -129,6 +138,68 @@ def deck_prefix(cards):
     return c.most_common(1)[0][0] if c else ""
 
 
+def base_no(no):
+    return re.sub(r"-([A-Z]*\d+)[A-Z]*$", r"-\1", no.upper())
+
+
+_set_text = {}
+
+
+def set_card_text(code):
+    """卡片雲的單一卡包效果文，以去掉稀有度的卡號為 key；讀不到回傳 None。"""
+    if code not in _set_text:
+        try:
+            raw = json.loads(fetch(CARD_TEXT_BASE + urllib.parse.quote(code) + ".json", retries=2))
+        except (RuntimeError, ValueError) as e:
+            print("  card text unavailable: %s (%s)" % (code, e), flush=True)
+            _set_text[code] = None
+            return None
+        rows = raw if isinstance(raw, list) else raw.get("cards") or [
+            dict(v, id=k) for k, v in raw.items() if k != "metadata" and isinstance(v, dict)]
+        by_base = {}
+        for c in rows:
+            cid = c.get("id") or c.get("cardno")
+            if cid:
+                by_base.setdefault(base_no(cid), c)
+        _set_text[code] = by_base
+    return _set_text[code]
+
+
+def link_tag(no, ctype):
+    """連動標記：CX 卡名 / "*"（是連動但認不出 CX）/ ""（不是）；查不到回傳 None。"""
+    if ctype != "C":
+        return ""
+    by_base = set_card_text(no.split("-")[0].replace("/", "_"))
+    card = by_base and by_base.get(base_no(no))
+    if not card:
+        return None
+    texts = card.get("text") or card.get("cardtext") or []
+    if isinstance(texts, str):
+        texts = [texts]
+    combo = [t for t in texts if "CXコンボ" in t]
+    level = card.get("level", card.get("cardlevel"))
+    try:
+        level = int(level)
+    except (TypeError, ValueError):
+        return None
+    if level not in LINK_LEVELS or not combo:
+        return ""
+    m = CX_NAME_RE.search(combo[0])
+    return m.group(1) if m else "*"
+
+
+def tag_links(bucket):
+    tagged = 0
+    for no, entry in bucket["cards"].items():
+        if len(entry) >= 4:
+            continue
+        tag = link_tag(no, entry[2])
+        if tag is not None:
+            entry.append(tag)
+            tagged += 1
+    return tagged
+
+
 def load_json(path, default):
     try:
         with open(path, encoding="utf-8") as f:
@@ -150,7 +221,10 @@ def main():
     ap.add_argument("--full", action="store_true", help="忽略已抓過的大會，全部重抓")
     ap.add_argument("--max-pages", type=int, default=0, help="最多讀幾頁列表（0 = 讀到 2019 為止）")
     ap.add_argument("--delay", type=float, default=1.5, help="每次請求間隔秒數")
+    ap.add_argument("--links-only", action="store_true", help="不抓大會，只替現有資料補連動標記")
     args = ap.parse_args()
+    if args.full and args.links_only:
+        ap.error("--full 與 --links-only 不能一起用")
 
     out = os.path.abspath(args.out)
     os.makedirs(out, exist_ok=True)
@@ -166,7 +240,7 @@ def main():
 
     todo = []
     page, last_page = 1, 1
-    while True:
+    while not args.links_only:
         src = fetch(LIST_URL if page == 1 else "%spage/%d/" % (LIST_URL, page))
         rows, last_page = parse_list_page(src)
         fresh = [r for r in rows if r[0] not in events and r[1] >= MIN_DATE]
@@ -211,9 +285,11 @@ def main():
             added += 1
         print("[%d/%d] %s %s %s: %d decks" % (i, len(todo), eid, date, title, len(decks)), flush=True)
 
-    updated = time.strftime("%Y-%m-%d")
+    updated = time.strftime("%Y-%m-%d") if not args.links_only else index.get("updated", time.strftime("%Y-%m-%d"))
     prefixes = {}
+    tagged = 0
     for p, bucket in by_prefix.items():
+        tagged += tag_links(bucket)
         bucket["decks"].sort(key=lambda d: (bucket["events"].get(d["e"], {}).get("date", ""), -d["rs"]), reverse=True)
         bucket["schemaVersion"] = SCHEMA_VERSION
         bucket["updated"] = updated
@@ -229,7 +305,9 @@ def main():
         "prefixes": dict(sorted(prefixes.items())),
         "events": dict(sorted(events.items(), key=lambda kv: kv[1]["date"], reverse=True)),
     })
-    print("done: %d new decks, %d prefixes, %d events" % (added, len(prefixes), len(events)))
+    untagged = sum(1 for b in by_prefix.values() for e in b["cards"].values() if len(e) < 4)
+    print("done: %d new decks, %d prefixes, %d events, %d cards link-tagged, %d still untagged"
+          % (added, len(prefixes), len(events), tagged, untagged))
     return 0
 
 
