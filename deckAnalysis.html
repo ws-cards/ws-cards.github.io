@@ -13,7 +13,7 @@
       }
     })();
   </script>
-  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8／4 規則檢查、起手機率、洗牌／Mulligan 模擬與行情總額摘要。">
+  <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8 規則檢查、起手機率、洗牌／Mulligan 模擬與行情總額摘要。">
   <meta property="og:title" content="牌組分析｜WS-Cards 卡片雲">
   <meta property="og:description" content="輸入 DeckLog 代碼一鍵取得並分析：Level 曲線、規則檢查、起手機率，並模擬洗牌與 Mulligan。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
@@ -236,8 +236,6 @@
     [data-theme="dark"] .da-chart-panel h3,
     [data-theme="dark"] .da-panel h3 { color: var(--da-ink); }
     .da-chart-wrap { position: relative; height: 200px; }
-    .da-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    @media (max-width: 767px) { .da-meta { grid-template-columns: 1fr; } }
     .da-panel {
       border: 1px solid var(--da-border); border-radius: 12px; padding: 1rem 1.1rem; background: var(--da-panel);
       color: var(--text-primary, #2d3748);
@@ -256,6 +254,8 @@
     .da-odds-item .pct { font-weight: 800; font-size: 1.1rem; color: var(--da-accent); }
     .da-price-main { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.03em; color: #8cc351; }
     .da-price-meta { margin-top: 0.35rem; color: var(--da-muted); font-size: 0.85rem; }
+    .da-price-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; }
+    .da-price-body .da-actions { margin-top: 0; }
     .da-ratio-row {
       display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0;
       border-bottom: 1px solid var(--da-border); font-size: 0.9rem;
@@ -521,14 +521,19 @@
       .da-top-recent .ax { display: none; }
     }
     .da-top-foot { margin-top: 0.85rem; font-size: 0.78rem; color: var(--da-muted); }
-    .da-top-section {
-      font-size: 1rem; font-weight: 800; color: var(--da-ink); margin: 0 0 0.75rem;
-      display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem;
+    .da-src {
+      display: inline-block; vertical-align: middle; margin: 0 0.35rem 0 0.15rem; padding: 0.1rem 0.5rem;
+      border-radius: 999px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.02em; border: 1px solid;
     }
-    .da-top-section small { font-size: 0.78rem; font-weight: 500; color: var(--da-muted); }
-    #topCommunity:not(:empty) { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--da-border); }
+    .da-src.is-official { color: var(--da-accent); border-color: var(--da-accent); background: color-mix(in srgb, var(--da-accent) 10%, transparent); }
+    .da-src.is-community { color: var(--da-warn); border-color: var(--da-warn); background: color-mix(in srgb, var(--da-warn) 10%, transparent); }
+    .da-top-note {
+      font-size: 0.8rem; color: var(--da-muted); margin: 0 0 1rem; padding: 0.5rem 0.75rem;
+      border-left: 3px solid var(--da-warn); background: var(--da-soft); border-radius: 0 8px 8px 0;
+    }
     .da-top-filters { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 0.85rem; }
     .da-top-range { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .da-top-filters-note { align-self: center; font-size: 0.75rem; color: var(--da-muted); }
     .da-top-basis {
       font-size: 0.82rem; color: var(--da-muted); background: var(--da-soft);
       border: 1px solid var(--da-border); border-radius: 10px; padding: 0.5rem 0.75rem; margin: 0 0 0.85rem;
@@ -1005,28 +1010,28 @@
               <div class="da-charts mt-3">
                 <div class="da-chart-panel"><h3>Cost 分布（非 CX）</h3><div class="da-chart-wrap"><canvas id="chartCost"></canvas></div></div>
                 <div class="da-chart-panel"><h3>Trigger 類型</h3><div class="da-chart-wrap"><canvas id="chartTrigger"></canvas></div></div>
-                <div class="da-panel"><h3>與官方建議對照</h3><div id="ratioBox"></div></div>
+                <div class="da-panel"><h3>玩家習慣放入數量</h3><div id="ratioBox"></div></div>
               </div>
             </div>
           </div></div></div>
 
           <div class="row"><div class="col-lg-12"><div class="card">
-            <div class="card-header"><h5 class="card-title"><i class="fas fa-percentage mr-2"></i>一致性 · 行情</h5></div>
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-percentage mr-2"></i>一致性 <small class="text-muted">起手 5 張抽到的機率</small></h5></div>
             <div class="card-body">
-              <div class="da-meta">
-                <div class="da-panel">
-                  <h3>起手 5 張抽到的機率</h3>
-                  <p class="da-hint">超幾何分布：至少 1 張。角色取張數最多的前幾名；並固定顯示 CX。</p>
-                  <div id="oddsList"></div>
-                </div>
-                <div class="da-panel">
-                  <h3>行情總額摘要</h3>
-                  <div class="da-price-main" id="priceMain">—</div>
-                  <div class="da-price-meta" id="priceMeta">載入遊遊亭行情中…</div>
-                  <div class="da-actions"><a class="btn btn-outline-secondary" id="linkDeckPrice" href="deckPrice.html">開牌組總額工具</a></div>
-                </div>
-              </div>
+              <p class="da-hint">超幾何分布：至少 1 張。角色取張數最多的前幾名；並固定顯示 CX。</p>
+              <div id="oddsList"></div>
             </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card">
+            <div class="card-header"><h5 class="card-title"><i class="fas fa-coins mr-2"></i>行情 <small class="text-muted">牌組總額摘要</small></h5></div>
+            <div class="card-body"><div class="da-price-body">
+              <div>
+                <div class="da-price-main" id="priceMain">—</div>
+                <div class="da-price-meta" id="priceMeta">載入遊遊亭行情中…</div>
+              </div>
+              <div class="da-actions"><a class="btn btn-outline-secondary" id="linkDeckPrice" href="deckPrice.html">開牌組總額工具</a></div>
+            </div></div>
           </div></div></div>
 
           <div class="row"><div class="col-lg-12"><div class="card">
@@ -1083,15 +1088,31 @@
           <div class="row"><div class="col-lg-12"><div class="card" id="topCompareCard">
             <div class="card-header">
               <h5 class="card-title">
-                <i class="fas fa-trophy mr-2"></i>上位對照
-                <small class="text-muted" id="topCompareSubtitle">歷年上位紀錄</small>
+                <i class="fas fa-trophy mr-2"></i>官方大會入賞對照
+                <span class="da-src is-official">官方資料</span>
+                <small class="text-muted" id="topCompareSubtitle">WS 官方入賞者デッキレシピ · 2019 年起</small>
               </h5>
             </div>
             <div class="card-body" id="topCompareBody" aria-live="polite">
               <div id="topOfficial">
                 <p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>
               </div>
-              <div id="topCommunity"></div>
+            </div>
+          </div></div></div>
+
+          <div class="row"><div class="col-lg-12"><div class="card" id="topCommunityCard">
+            <div class="card-header">
+              <h5 class="card-title">
+                <i class="fas fa-users mr-2"></i>社群上位紀錄
+                <span class="da-src is-community">社群整理</span>
+                <small class="text-muted" id="topCommunitySubtitle">卡片雲上位紀錄 · 以店舖大會為主</small>
+              </h5>
+            </div>
+            <div class="card-body" aria-live="polite">
+              <p class="da-top-note"><i class="fas fa-info-circle mr-1"></i>這裡是玩家社群整理的店舖大會上位紀錄，跟上面的 WS 官方入賞是不同來源、分開統計；這裡的「CX 軸心」指 CX 的組合（例如八門、二爆），不是上面的連動軸。</p>
+              <div id="topCommunity">
+                <p class="da-hint mb-0">分析牌組後，這裡會列出社群上位紀錄的 CX 軸心與核心卡。</p>
+              </div>
             </div>
           </div></div></div>
 
@@ -1648,7 +1669,8 @@
         dark: dark,
         color: dark ? "#c4bfb4" : "#718096",
         grid: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-        legend: dark ? "#e9e7e1" : "#2d3748"
+        legend: dark ? "#e9e7e1" : "#2d3748",
+        surface: dark ? "#24231f" : "#ffffff"
       };
     }
 
@@ -1725,15 +1747,16 @@
 
       const kindOrder = ["角色", "事件", "CX", "未知"];
       const kindLabels = kindOrder.filter((k) => stats.kindCount[k]);
-      const kindColors = { "角色": "#2dd4bf", "事件": "#fbbf24", "CX": "#f472b6", "未知": "#64748b" };
+      const kindColors = { "角色": "#3b82f6", "事件": "#f59e0b", "CX": "#e11d48", "未知": "#94a3b8" };
       charts.kind = new Chart(el("chartKind"), {
         type: "doughnut",
         data: {
-          labels: kindLabels,
+          labels: kindLabels.map((k) => k + " " + stats.kindCount[k]),
           datasets: [{
             data: kindLabels.map((k) => stats.kindCount[k]),
             backgroundColor: kindLabels.map((k) => kindColors[k]),
-            borderWidth: 0
+            borderColor: t.surface,
+            borderWidth: 2
           }]
         },
         options: {
@@ -1831,10 +1854,10 @@
 
     function renderRatio(stats) {
       const rows = [
-        { tag: "Level 0", num: stats.levelCount[0], guide: "建議 14–18", ok: inGuide(stats.levelCount[0], GUIDE.level0) },
-        { tag: "Level 1", num: stats.levelCount[1], guide: "建議 10–14", ok: inGuide(stats.levelCount[1], GUIDE.level1) },
-        { tag: "Level 2", num: stats.levelCount[2], guide: "建議 2–8", ok: inGuide(stats.levelCount[2], GUIDE.level2) },
-        { tag: "Level 3", num: stats.levelCount[3], guide: "建議 8–10", ok: inGuide(stats.levelCount[3], GUIDE.level3) },
+        { tag: "Level 0", num: stats.levelCount[0], guide: "常見 14–18", ok: inGuide(stats.levelCount[0], GUIDE.level0) },
+        { tag: "Level 1", num: stats.levelCount[1], guide: "常見 10–14", ok: inGuide(stats.levelCount[1], GUIDE.level1) },
+        { tag: "Level 2", num: stats.levelCount[2], guide: "常見 2–8", ok: inGuide(stats.levelCount[2], GUIDE.level2) },
+        { tag: "Level 3", num: stats.levelCount[3], guide: "常見 8–10", ok: inGuide(stats.levelCount[3], GUIDE.level3) },
         { tag: "CX", num: stats.cx, guide: "固定 8", ok: stats.cx === 8 }
       ];
       el("ratioBox").innerHTML = rows.map((r) =>
@@ -2790,7 +2813,7 @@
       const res = computeOfficialCompare(data, st.cards, ctx, st.format, st.range, st.axis);
       const box = el("topOfficial");
       const title = (data.decks[0] && data.decks[0].t) || data.prefix;
-      el("topCompareSubtitle").textContent = title + " · 官方入賞 · 社群上位紀錄";
+      el("topCompareSubtitle").textContent = title + " · WS 官方入賞者デッキレシピ · 只比同軸（2–3 等連動相同）";
 
       const formats = OFFICIAL_FORMATS.filter(function (f) {
         return f.id === "all" || officialFormatDecks(data, f.id).length;
@@ -2805,11 +2828,10 @@
             x.label + " <span>" + count(x.id) + "</span></button>";
         }).join("") + "</div>";
       };
-      let html = '<h3 class="da-top-section">官方入賞牌表 <small>' + escapeHtml(title) + " · WS 官方入賞者デッキレシピ" +
-        (st.axis != null ? " · 括號內是同軸副數" : "") + "</small></h3>";
-      html += '<div class="da-top-filters">' +
+      let html = '<div class="da-top-filters">' +
         (formats.length > 2 ? pills("data-official-format", "賽制", formats, st.format, function (id) { return axisCount(officialWindow(data, st.range, id)); }) : "") +
         pills("data-official-range", "比較範圍", OFFICIAL_RANGES, st.range, function (id) { return axisCount(officialWindow(data, id, st.format)); }) +
+        (st.axis != null ? '<span class="da-top-filters-note">數字是同軸副數</span>' : "") +
         "</div>";
 
       if (!res.pool.length) {
@@ -2948,14 +2970,14 @@
     function resetTopCompare() {
       topCompareToken++;
       officialState = null;
-      el("topCompareSubtitle").textContent = "官方入賞 · 社群上位紀錄";
+      el("topCompareSubtitle").textContent = "WS 官方入賞者デッキレシピ · 2019 年起";
+      el("topCommunitySubtitle").textContent = "卡片雲上位紀錄 · 以店舖大會為主";
       el("topOfficial").innerHTML = '<p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>';
-      el("topCommunity").innerHTML = "";
+      el("topCommunity").innerHTML = '<p class="da-hint mb-0">分析牌組後，這裡會列出社群上位紀錄的 CX 軸心與核心卡。</p>';
     }
 
     async function renderTopCompare(cards) {
       const token = ++topCompareToken;
-      el("topCompareSubtitle").textContent = "官方入賞 · 社群上位紀錄";
       await Promise.all([
         renderOfficialCompare(cards, token).catch(function (e) {
           if (token === topCompareToken) {
@@ -2968,18 +2990,18 @@
 
     async function renderCommunityCompare(cards, token) {
       const body = el("topCommunity");
-      body.innerHTML = '<p class="da-hint mt-3 mb-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取社群上位紀錄…</p>';
+      body.innerHTML = '<p class="da-hint mb-0"><i class="fas fa-circle-notch fa-spin mr-1"></i>正在讀取社群上位紀錄…</p>';
       let data;
       try {
         data = await loadTopRecords(cards);
       } catch (e) {
         if (token !== topCompareToken) return;
-        body.innerHTML = '<p class="da-hint mt-3 mb-0">社群上位紀錄暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
+        body.innerHTML = '<p class="da-hint mb-0">社群上位紀錄暫時讀不到：' + escapeHtml(e && e.message ? e.message : String(e)) + "</p>";
         return;
       }
       if (token !== topCompareToken) return;
       if (!data || !data.records || !data.records.length) {
-        body.innerHTML = '<p class="da-hint mt-3 mb-0">社群上位紀錄裡還沒有這個作品。</p>';
+        body.innerHTML = '<p class="da-hint mb-0">社群上位紀錄裡還沒有這個作品。</p>';
         return;
       }
 
@@ -3041,13 +3063,13 @@
           (small ? "<small>" + small + "</small>" : "") + "</div>" +
           (sub ? '<div class="s' + (subCls ? " " + subCls : "") + '">' + sub + "</div>" : "") + "</div>";
       };
-      let html = '<h3 class="da-top-section">社群上位紀錄 <small>' + escapeHtml(data.series) + " · " + yMin + "–" +
-        (latest ? latest.date.text : yMax) + " · 以店舖大會為主</small></h3>" +
-        '<div class="da-top-summary">' +
+      el("topCommunitySubtitle").textContent = data.series + " · " + yMin + "–" +
+        (latest ? latest.date.text : yMax) + " · 以店舖大會為主";
+      let html = '<div class="da-top-summary">' +
         stat("作品", escapeHtml(data.series)) +
         stat("上位紀錄", recs.length.toLocaleString(), "筆") +
         stat("最近入賞", latest ? latest.date.text : "—") +
-        stat("你的軸心", mine.label ? escapeHtml(mine.label) : "—", "",
+        stat("你的 CX 軸心", mine.label ? escapeHtml(mine.label) : "—", "",
           mine.key ? (axisCount[mine.key] ? "上位占 " + formatPct(minePct) + (mineRank ? " · 第 " + mineRank + " 名" : "") : "上位紀錄中少見") : "牌組裡沒有可辨識的 CX",
           mineRank && mineRank <= 3 ? "is-good" : "") +
         "</div>";
@@ -3059,14 +3081,14 @@
             '</span></div><div class="lbl">' + String(x.y).slice(2) + "</div></div>";
         }).join("") + "</div></div>";
 
-      html += '<div class="da-top-panel"><h3>上位常見軸心</h3>' + (shown.length
+      html += '<div class="da-top-panel"><h3>上位常見 CX 軸心</h3>' + (shown.length
         ? '<ul class="da-top-axes">' + shown.map(function (k) {
           const pct = axisCount[k] / axisTotal;
           return '<li class="' + (k === mine.key ? "is-mine" : "") + '"><span class="name"><span class="t">' + escapeHtml(labelOf(k)) + "</span>" +
             (k === mine.key ? '<em class="me">你</em>' : "") + '</span><span class="track"><span class="fill" style="width:' + (pct * 100).toFixed(1) + '%"></span></span>' +
             '<span class="pct">' + formatPct(pct) + "</span></li>";
         }).join("") + "</ul>"
-        : '<p class="da-hint mt-0">紀錄裡沒有軸心資料。</p>') + "</div></div>";
+        : '<p class="da-hint mt-0">紀錄裡沒有 CX 軸心資料。</p>') + "</div></div>";
 
       if (cores.length) {
         html += '<div class="da-top-panel mb-3"><h3>上位常見核心卡 · 你放了 ' + coreHits + " / " + cores.length + ' 張</h3><div class="da-top-cores">' +
