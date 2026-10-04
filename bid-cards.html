@@ -3,19 +3,21 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>商品拍賣資訊與出價頁</title>
+	<title>商品拍賣資訊與出價頁｜WS-Cards</title>
 	<script>
-		// 於首次繪製前決定主題，避免淺色閃爍
+		// 首次繪製前套用共用主題（ws-theme），避免閃爍
 		(function () {
 			try {
-				var saved = localStorage.getItem("bid-theme");
-				var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-				document.documentElement.setAttribute("data-theme", theme);
+				var saved = localStorage.getItem("ws-theme");
+				document.documentElement.setAttribute("data-theme", saved === "dark" ? "dark" : "light");
 			} catch (e) {
-				document.documentElement.setAttribute("data-theme", "dark");
+				document.documentElement.setAttribute("data-theme", "light");
 			}
 		})();
 	</script>
+	<link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+	<link rel="stylesheet" href="dist/css/adminlte.min.css">
+	<link rel="stylesheet" href="dist/css/wscards.newline_v103.css">
 	<style>
 		/* --- 畫廊左右切換箭頭 (毛玻璃擬物化) --- */
 		.gallery-arrow {
@@ -268,13 +270,18 @@
 			color: #ffffff;
 		}
 
-		body {
+		body.bid-cards-page {
 			margin: 0;
 			min-height: 100vh;
 			font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
 			color: var(--text);
 			background: var(--body-bg);
 			background-attachment: fixed;
+		}
+
+		/* 避免 AdminLTE 把內容往右推（本頁無左側固定 sidebar） */
+		body.bid-cards-page.layout-fixed .main-header {
+			margin-left: 0 !important;
 		}
 
 		.page {
@@ -285,92 +292,18 @@
 			gap: 16px;
 		}
 
-		.auction-nav {
+		/* 頂部導覽列由 assets/partials/navbar.html 注入 */
+		.bid-cards-page .main-header {
 			position: sticky;
 			top: 0;
-			z-index: 20;
-			width: min(100%, 1160px);
-			margin: 0 auto;
-			background: var(--nav-bg);
-			border: 1px solid var(--line);
-			border-top: none;
-			border-radius: 0 0 12px 12px;
-			box-shadow: var(--nav-shadow);
-			backdrop-filter: var(--nav-blur);
+			z-index: 100;
+			min-height: 56px;
 		}
 
-		.auction-nav-list {
-			margin: 0;
-			padding: 10px 12px;
-			list-style: none;
-			display: flex;
-			align-items: center;
-			gap: 8px;
-			overflow-x: auto;
-		}
-
-		.auction-nav-list li {
-			display: inline-flex;
-			align-items: center;
-			white-space: nowrap;
-		}
-
-		.auction-nav a {
-			display: inline-flex;
-			align-items: center;
-			height: 32px;
-			padding: 0 10px;
-			border-radius: 999px;
-			text-decoration: none;
-			color: var(--nav-link);
-			font-size: 0.89rem;
-			font-weight: 700;
-			transition: background 0.2s ease, color 0.2s ease;
-		}
-
-		.auction-nav a:hover {
-			background: var(--nav-link-hover-bg);
-			color: var(--nav-link-hover-color);
-		}
-
-		.auction-nav .is-current {
-			background: var(--primary);
-			color: var(--nav-current-color);
-			box-shadow: var(--nav-current-shadow);
-		}
-
-		.auction-nav-sep {
-			color: var(--nav-sep);
-			font-size: 0.8rem;
-		}
-
-		.nav-theme-toggle {
-			margin-left: auto;
-		}
-
-		#theme-toggle {
-			height: 34px;
-			width: 34px;
-			padding: 0;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			border-radius: 50%;
-			background: transparent;
-			color: var(--nav-link);
-			border: 1px solid var(--line);
-			box-shadow: none;
-			font-size: 1rem;
-			line-height: 1;
-			cursor: pointer;
-			transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-		}
-
-		#theme-toggle:hover {
-			box-shadow: none;
-			border-color: var(--primary);
-			color: var(--primary);
-			background: var(--nav-link-hover-bg);
+		.bid-cards-page .navbar-title-text {
+			max-width: min(52vw, 18rem);
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
 		.product-gallery {
@@ -916,28 +849,24 @@
 		}
 
 		.modal-body,
-		.auction-nav-list,
 		.gallery-thumbs {
 			scrollbar-width: thin;
 			scrollbar-color: var(--scrollbar-thumb) transparent;
 		}
 
 		.modal-body::-webkit-scrollbar,
-		.auction-nav-list::-webkit-scrollbar,
 		.gallery-thumbs::-webkit-scrollbar {
 			width: 8px;
 			height: 8px;
 		}
 
 		.modal-body::-webkit-scrollbar-thumb,
-		.auction-nav-list::-webkit-scrollbar-thumb,
 		.gallery-thumbs::-webkit-scrollbar-thumb {
 			background: var(--scrollbar-thumb);
 			border-radius: 999px;
 		}
 
 		.modal-body::-webkit-scrollbar-track,
-		.auction-nav-list::-webkit-scrollbar-track,
 		.gallery-thumbs::-webkit-scrollbar-track {
 			background: transparent;
 		}
@@ -948,13 +877,9 @@
 				align-items: start;
 			}
 
-			.auction-nav {
-				grid-column: 1 / -1;
-			}
-
 			.product-gallery {
 				position: sticky;
-				top: 72px; /* 稍微加大 top，避開上方導覽列 */
+				top: calc(56px + 16px); /* 避開共用頂部導覽列 */
 				height: calc(100vh - 88px); /* 確定高度：讓子層 flex 高度可解析，圖片 max-height:100% 才會生效 */
 				display: flex;
 				flex-direction: column;
@@ -988,21 +913,6 @@
 				gap: 12px;
 			}
 
-			.auction-nav {
-				border-radius: 0 0 10px 10px;
-			}
-
-			.auction-nav-list {
-				padding: 10px;
-				gap: 6px;
-			}
-
-			.auction-nav a {
-				height: 30px;
-				padding: 0 9px;
-				font-size: 0.82rem;
-			}
-
 			.product-gallery,
 			.product-summary,
 			.section {
@@ -1034,19 +944,90 @@
 		}
 	</style>
 </head>
-<body>
-	<nav class="auction-nav" aria-label="頁面導覽">
-		<ul class="auction-nav-list">
-			<li><a href="#" aria-label="返回拍賣列表">返回拍賣列表</a></li>
-			<li class="auction-nav-sep" aria-hidden="true">/</li>
-			<li><a href="#" aria-label="卡牌拍賣分類">卡牌拍賣</a></li>
-			<li class="auction-nav-sep" aria-hidden="true">/</li>
-			<li><a href="#" class="is-current" aria-current="page">商品資訊與出價</a></li>
-			<li class="nav-theme-toggle">
-				<button type="button" id="theme-toggle" aria-label="切換主題" title="切換主題"></button>
-			</li>
-		</ul>
-	</nav>
+<body class="bid-cards-page hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+	<!-- Navbar：共用 assets/partials/navbar.html -->
+	<div data-navbar data-page-title="商品拍賣資訊與出價"></div>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+	<script src="assets/js/firebase-config.js"></script>
+	<script src="assets/js/ws-firebase.js"></script>
+	<script src="dist/js/include-navbar.js"></script>
+
+	<div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+	<aside class="custom-drawer" id="customDrawer">
+		<div class="custom-drawer-header">
+			<a href="./" class="brand-link">
+				<img src="dist/img/logo.png" alt="" class="brand-image">
+				<span class="brand-text">WS-Cards</span>
+			</a>
+			<button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+				<i class="fas fa-times" aria-hidden="true"></i>
+			</button>
+		</div>
+		<nav class="custom-drawer-nav" aria-label="網站導覽">
+			<ul>
+				<li class="menu-item open">
+					<a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+						<i class="fas fa-tachometer-alt main-icon"></i>
+						<span>遊遊亭價格查詢</span>
+						<i class="fas fa-angle-left right-icon"></i>
+					</a>
+					<ul class="submenu">
+						<li>
+							<a href="line" class="menu-link">
+								<i class="fas fa-chart-line main-icon"></i>
+								<span>各卡號漲幅趨勢(WS)</span>
+							</a>
+						</li>
+						<li>
+							<a href="lineWSR" class="menu-link">
+								<i class="fas fa-chart-line main-icon"></i>
+								<span>各卡號漲幅趨勢(WSR)</span>
+							</a>
+						</li>
+						<li>
+							<a href="deckPrice" class="menu-link">
+								<i class="fas fa-search-dollar main-icon"></i>
+								<span>牌組總額查詢計算機</span>
+							</a>
+						</li>
+					</ul>
+				</li>
+				<li class="menu-item">
+					<a href="championList" class="menu-link">
+						<i class="fas fa-trophy main-icon"></i>
+						<span>優勝牌組查詢 (Beta)</span>
+					</a>
+				</li>
+				<li class="menu-item">
+					<a href="productTimeline.html" class="menu-link">
+						<i class="fas fa-calendar-alt main-icon"></i>
+						<span>商品發售時間軸</span>
+					</a>
+				</li>
+				<li class="menu-item">
+					<a href="bid-cards.html" class="menu-link active">
+						<i class="fas fa-gavel main-icon"></i>
+						<span>商品拍賣資訊與出價</span>
+					</a>
+				</li>
+				<li class="menu-item">
+					<a href="favorites.html" class="menu-link">
+						<i class="fas fa-star main-icon"></i>
+						<span>我的收藏</span>
+					</a>
+				</li>
+				<li class="menu-item">
+					<a href="account.html" class="menu-link">
+						<i class="fas fa-user main-icon"></i>
+						<span>個人資料</span>
+					</a>
+				</li>
+			</ul>
+		</nav>
+		<div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+	</aside>
+
 	<main class="page">
 		<article class="product-gallery" aria-label="商品圖片畫廊">
 			<div class="gallery-stage">
@@ -1250,8 +1231,7 @@
 			bidAmount: document.getElementById("bid-amount"),
 			submitBid: document.getElementById("submit-bid"),
 			errorMsg: document.getElementById("error-msg"),
-			okMsg: document.getElementById("ok-msg"),
-			themeToggle: document.getElementById("theme-toggle")
+			okMsg: document.getElementById("ok-msg")
 		};
 
 		function formatYen(value) {
@@ -1445,25 +1425,6 @@
 			el.bidAmount.focus();
 		}
 
-		function applyThemeIcon(theme) {
-			const isDark = theme !== "light";
-			el.themeToggle.textContent = isDark ? "☀" : "🌙";
-			el.themeToggle.setAttribute("aria-label", isDark ? "切換為淺色主題" : "切換為深色主題");
-			el.themeToggle.setAttribute("title", isDark ? "切換為淺色主題" : "切換為深色主題");
-		}
-
-		function toggleTheme() {
-			const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-			const next = current === "light" ? "dark" : "light";
-			document.documentElement.setAttribute("data-theme", next);
-			try {
-				localStorage.setItem("bid-theme", next);
-			} catch (e) {
-				/* localStorage 不可用時仍可切換，只是不記住 */
-			}
-			applyThemeIcon(next);
-		}
-
 		function startClock() {
 			function tick() {
 				el.currentTime.textContent = formatDateTime(new Date().toISOString());
@@ -1472,7 +1433,6 @@
 			setInterval(tick, 1000);
 		}
 
-		el.themeToggle.addEventListener("click", toggleTheme);
 		el.submitBid.addEventListener("click", submitBid);
 		el.bidAmount.addEventListener("keydown", (event) => {
 			if (event.key === "Enter") {
@@ -1505,7 +1465,6 @@
 			}
 		});
 
-		applyThemeIcon(document.documentElement.getAttribute("data-theme") || "dark");
 		renderAuctionInfo();
 		startClock();
 		// --- 圖片放大燈箱與放大鏡功能 ---
@@ -1769,6 +1728,30 @@
 
 		stageForSwipe.addEventListener("pointerup", onPointerUp);
 		stageForSwipe.addEventListener("pointercancel", onPointerUp);
+	</script>
+	<script>
+		function toggleCustomDrawer(e) {
+			if (e) e.preventDefault();
+			var drawer = document.getElementById("customDrawer");
+			var overlay = document.getElementById("customDrawerOverlay");
+			if (!drawer || !overlay) return;
+			drawer.classList.toggle("open");
+			overlay.classList.toggle("active");
+			var btn = document.getElementById("leftbar");
+			if (btn) {
+				var opened = drawer.classList.contains("open");
+				btn.classList.toggle("is-open", opened);
+				btn.setAttribute("aria-expanded", opened ? "true" : "false");
+				btn.setAttribute("aria-label", opened ? "關閉選單" : "開啟選單");
+			}
+		}
+
+		function toggleSubmenu(element, e) {
+			if (e) e.preventDefault();
+			var parent = element.closest(".menu-item");
+			if (!parent) return;
+			parent.classList.toggle("open");
+		}
 	</script>
 </body>
 </html>
