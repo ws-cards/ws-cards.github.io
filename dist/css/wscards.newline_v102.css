@@ -2357,20 +2357,61 @@ transform: scale(0.98);
 }
 
 .download-coach-mark {
-    max-width: min(17rem, calc(100vw - 2.5rem));
-    padding: 0.75rem 0.85rem 0.7rem;
-    border-radius: 12px;
-    border: 1px solid rgba(110, 88, 50, 0.28);
-    background: rgba(255, 252, 245, 0.96);
-    color: #3d3428;
-    font-size: 0.82rem;
-    line-height: 1.45;
-    box-shadow: 0 14px 36px rgba(26, 20, 10, 0.18);
+    --coach-bg: rgba(255, 255, 255, 0.94);
+    --coach-border: rgba(23, 25, 29, 0.12);
+    --coach-text: #2a3140;
+    --coach-muted: #687385;
+    --coach-strong: var(--desk-foil-deep, #6e5832);
+    --coach-accent: var(--desk-foil, #9a7b45);
+    --coach-shadow: 0 18px 40px rgba(30, 45, 90, 0.14), 0 4px 12px rgba(30, 45, 90, 0.06);
+    --coach-dismiss-bg: #2a3140;
+    --coach-dismiss-text: #ffffff;
+    --coach-dismiss-hover: #1c222d;
+    position: relative;
+    max-width: min(17.5rem, calc(100vw - 2.5rem));
+    padding: 0.78rem 0.9rem 0.75rem;
+    border-radius: 14px;
+    border: 1px solid var(--coach-border);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 252, 0.96) 100%);
+    color: var(--coach-text);
+    font-family: var(--font-ui, 'Noto Sans TC', sans-serif);
+    font-size: 0.84rem;
+    line-height: 1.5;
+    box-shadow: var(--coach-shadow);
+    backdrop-filter: blur(14px) saturate(1.05);
+    -webkit-backdrop-filter: blur(14px) saturate(1.05);
     opacity: 0;
     visibility: hidden;
     transform: translateY(8px);
     transition: opacity 0.28s ease, visibility 0.28s ease, transform 0.28s ease;
     pointer-events: none;
+}
+
+.download-coach-mark::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--coach-accent) 0%, var(--coach-strong) 100%);
+}
+
+.download-coach-mark::after {
+    content: '';
+    position: absolute;
+    right: 18px;
+    bottom: -7px;
+    width: 12px;
+    height: 12px;
+    background: inherit;
+    background-color: #fff;
+    border-right: 1px solid var(--coach-border);
+    border-bottom: 1px solid var(--coach-border);
+    transform: rotate(45deg);
+    box-shadow: 2px 2px 6px rgba(30, 45, 90, 0.06);
 }
 
 .download-coach-mark.visible {
@@ -2380,12 +2421,22 @@ transform: scale(0.98);
     pointer-events: auto;
 }
 
+.download-coach-kicker {
+    margin: 0 0 0.28rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--coach-muted);
+}
+
 .download-coach-text {
-    margin: 0 0 0.55rem;
+    margin: 0 0 0.65rem 0.55rem;
+    color: var(--coach-text);
 }
 
 .download-coach-text strong {
-    color: #6e5832;
+    color: var(--coach-strong);
     font-weight: 800;
 }
 
@@ -2394,29 +2445,63 @@ transform: scale(0.98);
     align-items: center;
     justify-content: center;
     min-height: 2rem;
-    padding: 0 0.75rem;
+    margin-left: 0.55rem;
+    padding: 0 0.85rem;
     border: 0;
-    border-radius: 8px;
-    background: linear-gradient(160deg, #d4b57a 0%, var(--desk-foil-deep, #6e5832) 100%);
-    color: #1a140a;
+    border-radius: 9px;
+    background: var(--coach-dismiss-bg);
+    color: var(--coach-dismiss-text);
     font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .download-coach-dismiss:hover {
-    filter: brightness(1.05);
+    background: var(--coach-dismiss-hover);
+}
+
+.download-coach-dismiss:active {
+    transform: translateY(1px);
+}
+
+.download-coach-dismiss:focus-visible {
+    outline: 2px solid var(--coach-accent);
+    outline-offset: 2px;
 }
 
 [data-theme="dark"] .download-coach-mark {
-    background: rgba(22, 20, 16, 0.96);
-    border-color: rgba(208, 178, 122, 0.35);
-    color: #e8e4d8;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --coach-bg: rgba(18, 16, 13, 0.94);
+    --coach-border: rgba(208, 178, 122, 0.34);
+    --coach-text: #efece3;
+    --coach-muted: #b2a994;
+    --coach-strong: #e0c493;
+    --coach-accent: #d0b27a;
+    --coach-shadow: 0 18px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(208, 178, 122, 0.08);
+    --coach-dismiss-bg: linear-gradient(160deg, #d4b57a 0%, #9a7b45 100%);
+    --coach-dismiss-text: #1a140a;
+    --coach-dismiss-hover: linear-gradient(160deg, #e0c493 0%, #b8955a 100%);
+    background:
+        radial-gradient(120% 90% at 100% 0%, rgba(208, 178, 122, 0.14) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(28, 25, 20, 0.96) 0%, rgba(16, 14, 12, 0.94) 100%);
 }
 
-[data-theme="dark"] .download-coach-text strong {
-    color: #e0c493;
+[data-theme="dark"] .download-coach-mark::after {
+    background-color: #181510;
+    border-right-color: rgba(208, 178, 122, 0.34);
+    border-bottom-color: rgba(208, 178, 122, 0.34);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .download-coach-dismiss {
+    background: linear-gradient(160deg, #d4b57a 0%, #9a7b45 100%);
+    color: #1a140a;
+}
+
+[data-theme="dark"] .download-coach-dismiss:hover {
+    background: linear-gradient(160deg, #e0c493 0%, #b8955a 100%);
+    filter: none;
 }
 
 /* 手機版：下載／置頂浮動鈕同尺寸 */
