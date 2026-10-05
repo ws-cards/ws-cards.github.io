@@ -594,9 +594,15 @@
 
   <!-- 在 body 結束標籤前添加浮動按鈕 -->
   <div id="download-card-tag" style="display: none;">
-    <button type="button" id="downloadStatsBtn" onclick="generateStatsImage()" title="下載價格統計圖" aria-label="下載價格統計圖">
-      <i class="fas fa-download" aria-hidden="true"></i>
-    </button>
+    <div class="download-fab-cluster">
+      <div id="downloadCoachMark" class="download-coach-mark" aria-hidden="true" role="status">
+        <p class="download-coach-text">可將這張卡的<strong>行情統計圖</strong>下載成圖片分享</p>
+        <button type="button" class="download-coach-dismiss">知道了</button>
+      </div>
+      <button type="button" id="downloadStatsBtn" onclick="generateStatsImage()" title="下載價格統計圖" aria-label="下載價格統計圖">
+        <i class="fas fa-download" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
     <div id="scrollToTopBtn" class="scroll-to-top-btn" role="button" tabindex="0" aria-label="回到頁面頂端" title="回到頁面頂端">
@@ -1085,6 +1091,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             scrollToTopBtn.classList.remove('visible');
       if (downloadStatsBtn) downloadStatsBtn.classList.remove('visible');
+        }
+        if (typeof maybeShowDownloadCoachMark === 'function') {
+            maybeShowDownloadCoachMark();
         }
     }
     

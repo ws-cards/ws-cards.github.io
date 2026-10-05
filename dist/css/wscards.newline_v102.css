@@ -2290,76 +2290,163 @@ transform: scale(0.98);
 }
 
 /*****************下載統計圖片按鈕******************/
+.download-fab-cluster {
+    position: fixed;
+    bottom: 130px;
+    right: 30px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.55rem;
+    pointer-events: none;
+}
+
 #downloadStatsBtn {
-position: fixed;
-bottom: 130px;
-right: 30px;
-width: 50px;
-height: 50px;
-color: black;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-box-shadow: rgba(247, 239, 255, 0.2);
-z-index: 1000;
-opacity: 0;
-visibility: hidden;
-pointer-events: none;
-transform: translateY(20px);
-transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-backdrop-filter: blur(10px);
-border: 2px solid rgba(56, 52, 61, 0.2);
-background-color: white; /* 備用背景色 */
+    position: relative;
+    width: 50px;
+    height: 50px;
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: rgba(247, 239, 255, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(56, 52, 61, 0.2);
+    background-color: white;
 }
 
 #downloadStatsBtn.visible {
-opacity: 1;
-visibility: visible;
-pointer-events: auto;
-transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 #downloadStatsBtn:hover {
-transform: translateY(-5px) scale(1.1);
-box-shadow: 0 25px 50px rgba(211, 215, 237, 0.4) !important;
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 25px 50px rgba(211, 215, 237, 0.4) !important;
 }
+
 #downloadStatsBtn:active {
-transform: translateY(-2px) scale(1.05);
+    transform: translateY(-2px) scale(1.05);
 }
 
 [data-theme="dark"] #downloadStatsBtn {
-background: rgba(12, 10, 7, 0.9) !important;
-border: 2px solid rgba(191, 160, 106, 0.45);
-color: #cbb083;
+    background: rgba(12, 10, 7, 0.9) !important;
+    border: 2px solid rgba(191, 160, 106, 0.45);
+    color: #cbb083;
 }
 
 [data-theme="dark"] #downloadStatsBtn:hover {
-background: rgba(33, 25, 13, 0.95) !important;
-box-shadow: 0 25px 50px rgba(191, 160, 106, 0.5) !important;
+    background: rgba(33, 25, 13, 0.95) !important;
+    box-shadow: 0 25px 50px rgba(191, 160, 106, 0.5) !important;
+}
+
+.download-coach-mark {
+    max-width: min(17rem, calc(100vw - 2.5rem));
+    padding: 0.75rem 0.85rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid rgba(110, 88, 50, 0.28);
+    background: rgba(255, 252, 245, 0.96);
+    color: #3d3428;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    box-shadow: 0 14px 36px rgba(26, 20, 10, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.28s ease, visibility 0.28s ease, transform 0.28s ease;
+    pointer-events: none;
+}
+
+.download-coach-mark.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.download-coach-text {
+    margin: 0 0 0.55rem;
+}
+
+.download-coach-text strong {
+    color: #6e5832;
+    font-weight: 800;
+}
+
+.download-coach-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0 0.75rem;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(160deg, #d4b57a 0%, var(--desk-foil-deep, #6e5832) 100%);
+    color: #1a140a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.download-coach-dismiss:hover {
+    filter: brightness(1.05);
+}
+
+[data-theme="dark"] .download-coach-mark {
+    background: rgba(22, 20, 16, 0.96);
+    border-color: rgba(208, 178, 122, 0.35);
+    color: #e8e4d8;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .download-coach-text strong {
+    color: #e0c493;
 }
 
 /* 手機版調整 */
 @media (max-width: 768px) {
-#downloadStatsBtn {
+.download-fab-cluster {
     bottom: 105px;
     right: 20px;
-    width: 45px;
-    height: 45px;
+}
+
+#downloadStatsBtn.download-stats-fab {
+    min-height: 45px;
+    padding: 0 0.85rem 0 0.75rem;
+    font-size: 0.82rem;
 }
 }
 
 /* 超小螢幕調整 */
 @media (max-width: 480px) {
-#downloadStatsBtn {
+.download-fab-cluster {
     bottom: 105px;
     right: 15px;
-    width: 40px;
-    height: 40px;
+}
+
+#downloadStatsBtn.download-stats-fab {
+    min-height: 40px;
+    font-size: 0.78rem;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+.download-coach-mark,
+#downloadStatsBtn.download-stats-fab {
+    transition: none;
 }
 }
 

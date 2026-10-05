@@ -2263,6 +2263,9 @@ console.log("進入繪圖區:"+cardNum);
                 if (downloadCardTag) {
                     downloadCardTag.style.display = 'block';
                 }
+                if (typeof notifyDownloadStatsReady === 'function') {
+                    notifyDownloadStatsReady();
+                }
             }
 }
 
@@ -4686,6 +4689,9 @@ function _drawStatsCardPlaceholder(ctx, x, y, w, h, theme) {
 * 版面：墨底頁首（卡面 + 卡名 + 現價）／紙底走勢／數據條／墨底頁尾。
 */
 function generateStatsImage() {
+    if (typeof dismissDownloadCoachMark === 'function') {
+        dismissDownloadCoachMark(true);
+    }
     if (!myChart) {
         showWsAlert({ icon: 'warning', title: '還沒有可下載的圖表', text: '請先查詢一張卡號，載入價格走勢後再下載。', confirmButtonText: '知道了' });
         return;
@@ -6192,5 +6198,112 @@ return {
             });
             return _refreshChartThemeColors.apply(this, arguments);
         };
+    }
+})();
+
+// ── 下載行情圖：首次可用時的一次性 coach mark ──
+(function() {
+    var COACH_STORAGE_KEY = 'ws-v102-download-coach-seen';
+    var _downloadCoachPending = false;
+    var _downloadCoachVisible = false;
+    var _downloadCoachTimer = null;
+
+    function hasSeenDownloadCoach() {
+        try {
+            return localStorage.getItem(COACH_STORAGE_KEY) === 'true';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function markDownloadCoachSeen() {
+        try {
+            localStorage.setItem(COACH_STORAGE_KEY, 'true');
+        } catch (e) { /* ignore */ }
+    }
+
+    function getCoachEl() {
+        return document.getElementById('downloadCoachMark');
+    }
+
+    function isDownloadFabVisible() {
+        var btn = document.getElementById('downloadStatsBtn');
+        return !!(btn && btn.classList.contains('visible'));
+    }
+
+    function isDownloadFeatureReady() {
+        var tag = document.getElementById('download-card-tag');
+        return !!(tag && tag.style.display !== 'none' && myChart);
+    }
+
+    window.dismissDownloadCoachMark = function(markSeen) {
+        var coach = getCoachEl();
+        if (coach) {
+            coach.classList.remove('visible');
+            coach.setAttribute('aria-hidden', 'true');
+        }
+        _downloadCoachVisible = false;
+        _downloadCoachPending = false;
+        if (_downloadCoachTimer) {
+            clearTimeout(_downloadCoachTimer);
+            _downloadCoachTimer = null;
+        }
+        if (markSeen) markDownloadCoachSeen();
+    };
+
+    window.maybeShowDownloadCoachMark = function() {
+        if (hasSeenDownloadCoach()) return;
+
+        if (_downloadCoachVisible && !isDownloadFabVisible()) {
+            var hiddenCoach = getCoachEl();
+            if (hiddenCoach) {
+                hiddenCoach.classList.remove('visible');
+                hiddenCoach.setAttribute('aria-hidden', 'true');
+            }
+            _downloadCoachVisible = false;
+            if (!hasSeenDownloadCoach()) _downloadCoachPending = true;
+            return;
+        }
+
+        if (_downloadCoachVisible) return;
+        if (!_downloadCoachPending || !isDownloadFeatureReady() || !isDownloadFabVisible()) return;
+
+        var coach = getCoachEl();
+        if (!coach) return;
+
+        coach.classList.add('visible');
+        coach.setAttribute('aria-hidden', 'false');
+        _downloadCoachVisible = true;
+        _downloadCoachPending = false;
+
+        _downloadCoachTimer = setTimeout(function() {
+            window.dismissDownloadCoachMark(true);
+        }, 12000);
+    };
+
+    window.notifyDownloadStatsReady = function() {
+        if (hasSeenDownloadCoach()) return;
+        _downloadCoachPending = true;
+        window.maybeShowDownloadCoachMark();
+    };
+
+    function bindCoachDismiss() {
+        var coach = getCoachEl();
+        if (!coach || coach.dataset.bound === '1') return;
+        coach.dataset.bound = '1';
+        var dismissBtn = coach.querySelector('.download-coach-dismiss');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.dismissDownloadCoachMark(true);
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindCoachDismiss);
+    } else {
+        bindCoachDismiss();
     }
 })();
