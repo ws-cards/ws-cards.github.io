@@ -188,7 +188,7 @@
                       <div class="market-status-bar" role="note">
                         <span class="market-status-chip"><i class="fas fa-store" aria-hidden="true"></i>遊遊亭</span>
                         <span class="market-status-chip market-status-mono">JPY</span>
-                        <span class="market-status-note">尚未換算新台幣 · <span id="searchHintText">貼上完整卡號可直接查詢</span></span>
+                        <span class="market-status-note">尚未換算新台幣</span>
                       </div>
                     </div>
                   </div>
@@ -303,7 +303,7 @@
                       </div>					
                     </div>
                     <div class="card-body">
-                        <div class="info-swiper" id="infoSwiper">           
+                        <div class="info-swiper hint-hidden" id="infoSwiper">           
                             <!-- 無資料遮罩 -->
                             <div class="info-swiper-mask" id="infoSwiperMask">
                                 <div class="info-swiper-mask-text" id="infoSwiperMaskText"><i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>此卡號查無詳細資料</div>
@@ -950,8 +950,6 @@ class InfoSwiper {
         // 初始化按鈕狀態
         this.updateButtons();
 
-        // 自動播放提示
-        this.startHintAnimation();
     }
     
     goTo(index) {
@@ -1180,36 +1178,6 @@ document.addEventListener('DOMContentLoaded', function() {
     adjustGradingCardPosition();
 })();
 
-// 小提示輪替：每 10 秒替換一則（先顯示 10 秒後才開始輪替）
-(function() {
-    var hintEl = document.getElementById('searchHintText');
-    if (!hintEl) return;
-
-    var hints = [
-        '貼上完整卡號可直接查詢，例如 PRD/W01-001。',
-        '不知道卡號嗎？直接輸入卡名關鍵字也能找到卡片。',		
-        '可依作品系列、產品等條件篩選，輕鬆找到目標卡片。',
-        '走勢圖可切換不同時間區間，快速掌握價格長期趨勢與短期波動。',
-        '價格資料來自遊遊亭，顯示金額為日圓，尚未換算為新台幣。'
-    ];
-
-    var index = 0;
-    setInterval(function() {
-        // 隨機挑選下一則，避免與目前同一則
-        var next = index;
-        if (hints.length > 1) {
-            while (next === index) {
-                next = Math.floor(Math.random() * hints.length);
-            }
-        }
-        index = next;
-        hintEl.style.opacity = '0';
-        setTimeout(function() {
-            hintEl.textContent = hints[index];
-            hintEl.style.opacity = '1';
-        }, 400);
-    }, 10000);
-})();
 </script>
 
 </body>
