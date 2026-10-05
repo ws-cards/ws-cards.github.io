@@ -949,7 +949,7 @@ function renderUnifiedSearchContainer() {
 
     // ── 卡片名稱區塊 ──
     if (hasCards) {
-        html += '<div role="status" aria-live="polite" style="padding:5px 10px;background:#f0fdf4;color:#15803d;font-size:0.72em;font-weight:700;letter-spacing:0.5px;border-bottom:1px solid #dcfce7;">卡片名稱　顯示 ' + _cardNameSuggestions.length + ' / 共 ' + _cardNameMatches.length + ' 筆</div>';
+        html += '<div class="unified-search-section-label unified-search-section-cardname" role="status" aria-live="polite">卡片名稱　顯示 ' + _cardNameSuggestions.length + ' / 共 ' + _cardNameMatches.length + ' 筆</div>';
         _cardNameSuggestions.forEach(function(item) {
             var cardNo   = item[0] || '';
             var cardName = item[1] || '';
@@ -979,7 +979,7 @@ function renderUnifiedSearchContainer() {
         if (_cardNameSuggestions.length < _cardNameMatches.length) {
             var cardNameRemaining = _cardNameMatches.length - _cardNameSuggestions.length;
             var cardNameNextBatch = Math.min(_cardNameBatchSize, cardNameRemaining);
-            html += '<button type="button" class="unified-search-load-more" data-search-source="card-name" aria-label="載入另外 ' + cardNameNextBatch + ' 筆卡片名稱結果，尚餘 ' + cardNameRemaining + ' 筆" style="display:block;width:100%;padding:9px 10px;border:0;border-bottom:1px solid #dcfce7;background:#f6fdf8;color:#166534;font-size:0.82em;font-weight:700;text-align:left;cursor:pointer;">載入更多卡片名稱（尚餘 ' + cardNameRemaining + ' 筆）</button>';
+            html += '<button type="button" class="unified-search-load-more" data-search-source="card-name" aria-label="載入另外 ' + cardNameNextBatch + ' 筆卡片名稱結果，尚餘 ' + cardNameRemaining + ' 筆">載入更多卡片名稱（尚餘 ' + cardNameRemaining + ' 筆）</button>';
         }
     }
 
@@ -987,14 +987,6 @@ function renderUnifiedSearchContainer() {
     searchDiv.style.display = 'block';
     syncMobileSearchHint();
 
-    // hover 效果（深／淺色各用一組，避免蓋掉 CSS）
-    var hoverBg = document.documentElement.getAttribute('data-theme') === 'dark'
-        ? 'rgba(255,255,255,0.06)'
-        : '#f8fafc';
-    searchDiv.querySelectorAll('.unified-search-item').forEach(function(el) {
-        el.addEventListener('mouseover', function() { this.style.backgroundColor = hoverBg; });
-        el.addEventListener('mouseout',  function() { this.style.backgroundColor = 'transparent'; });
-    });
     searchDiv.querySelectorAll('.unified-search-load-more').forEach(function(button) {
         // 桌面：阻止 mousedown 搶走 input focus，避免 typeahead hide 與 click 競態
         button.addEventListener('mousedown', function(e) { e.preventDefault(); });
@@ -1009,32 +1001,12 @@ function renderUnifiedSearchContainer() {
                 _cardNameVisibleCount += _cardNameBatchSize;
             }
             renderUnifiedSearchContainer();
-            // 維持捲動位置，讓新載入的列出現在視線附近（勿 focus 輸入框，手機會跳回頂端）
+            // 維持下拉內捲動位置；勿 scrollIntoView，避免整份清單被拉到最底
             var fresh = document.getElementById('cardNameSearchContainer');
             if (fresh) {
                 fresh.scrollTop = prevScroll;
-                var nextBtn = fresh.querySelector('.unified-search-load-more[data-search-source="' + source + '"]');
-                if (nextBtn && typeof nextBtn.scrollIntoView === 'function') {
-                    nextBtn.scrollIntoView({ block: 'nearest' });
-                }
             }
         });
-        button.addEventListener('mouseover', function() {
-            var isSeries = this.getAttribute('data-search-source') === 'typeahead';
-            var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-            if (isSeries) {
-                this.style.backgroundColor = dark ? 'rgba(208,178,122,0.16)' : '#f0e6d4';
-            } else {
-                this.style.backgroundColor = dark ? 'rgba(143,197,164,0.14)' : '#eaf7ef';
-            }
-        });
-        button.addEventListener('mouseout', function() {
-            this.style.backgroundColor = '';
-        });
-        button.addEventListener('focus', function() {
-            this.style.outline = '2px solid ' + (document.documentElement.getAttribute('data-theme') === 'dark' ? '#d0b27a' : '#6e5832');
-        });
-        button.addEventListener('blur', function() { this.style.outline = 'none'; });
     });
 }
 
@@ -1110,8 +1082,7 @@ console.log('開始解析卡號:', cardNumber);
 _isSearching = true;
 _lastSearchedValue = cardNumber;
 
-// 顯示搜尋提示（整段查詢只有這一則進度提示）
-showSearchNotification('查詢 ' + cardNumber + '…');
+// 查詢進度改由畫面 loading 狀態呈現，不再彈右上角 toast
 
 // 拆解卡號
 var cardParts = parseCardNumber(cardNumber);
@@ -1151,6 +1122,11 @@ if (typeof Swal === 'undefined') return;
 // 成功不再彈窗，避免一次查詢連續蓋出多個提示
 if (type === 'success') {
   Swal.close();
+  return;
+}
+
+// 查詢中不再顯示右上角 toast，避免打斷搜尋體驗
+if (type === 'info') {
   return;
 }
 
