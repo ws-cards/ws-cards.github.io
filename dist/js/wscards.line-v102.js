@@ -81,11 +81,62 @@ var _searchDebounceTimer = null;
 var _cardAutoSearchTimer = null;
 var _cardAutoSearchDelayMs = 30000;
 var _isSearching = false;
+var _searchBusyShowTimer = null;
+var _searchBusyShowDelayMs = 200;
 var _lastSearchedValue = '';
 var _cardDictionary = null; // 暫存卡片字典的陣列
 // cardStandard 下拉選單原生就帶 2 個預留 option，options.length 判斷不出載入狀態，需另外追蹤
 var _standardWLoaded = false;
 var _standardSLoaded = false;
+
+/**
+ * 搜尋框旁局部「搜尋中」狀態（非全頁 overlay）
+ * true：約 200ms 後才顯示，避免極快路徑閃爍
+ * false：立刻隱藏並清掉延遲 timer
+ */
+function setSearchBusy(isBusy) {
+    _isSearching = !!isBusy;
+
+    var group = document.getElementById('market-search-group');
+    var busyEl = document.getElementById('market-search-busy');
+    var inputEl = document.getElementById('xxxx');
+
+    if (_searchBusyShowTimer) {
+        clearTimeout(_searchBusyShowTimer);
+        _searchBusyShowTimer = null;
+    }
+
+    function applyVisible(visible) {
+        if (group) {
+            group.classList.toggle('is-busy', visible);
+            group.setAttribute('aria-busy', visible ? 'true' : 'false');
+        }
+        if (inputEl) {
+            inputEl.setAttribute('aria-busy', visible ? 'true' : 'false');
+        }
+        if (busyEl) {
+            if (visible) {
+                busyEl.hidden = false;
+                busyEl.removeAttribute('hidden');
+            } else {
+                busyEl.hidden = true;
+                busyEl.setAttribute('hidden', '');
+            }
+        }
+    }
+
+    if (!_isSearching) {
+        applyVisible(false);
+        return;
+    }
+
+    _searchBusyShowTimer = setTimeout(function() {
+        _searchBusyShowTimer = null;
+        if (_isSearching) {
+            applyVisible(true);
+        }
+    }, _searchBusyShowDelayMs);
+}
 
 // ====================================================
 // 統一下拉容器的資料快取
@@ -982,8 +1033,8 @@ if (cardNumber === _lastSearchedValue) {
 
 console.log('開始解析卡號:', cardNumber);
 
-// 鎖定搜尋狀態
-_isSearching = true;
+// 鎖定搜尋狀態（輸入框旁局部 busy）
+setSearchBusy(true);
 _lastSearchedValue = cardNumber;
 
 // 查詢進度改由畫面 loading 狀態呈現，不再彈右上角 toast
@@ -993,7 +1044,7 @@ var cardParts = parseCardNumber(cardNumber);
 if (!cardParts) {
   console.warn('無法解析卡號格式:', cardNumber);
   showSearchNotification('卡號格式看起來不對，正確格式像 PRD/W01-001。', 'error');
-  _isSearching = false;
+  setSearchBusy(false);
   return;
 }
 
@@ -1005,7 +1056,7 @@ setSelectorsFromCardParts(cardParts);
 } catch (error) {
 console.error('搜尋卡號時發生錯誤:', error);
 showSearchNotification('查詢時發生問題，請再試一次。', 'error');
-_isSearching = false;
+setSearchBusy(false);
 }
 }
 
@@ -1078,7 +1129,7 @@ try {
 // 所以不再播報內部步驟，只在真的失敗時說明原因與下一步。
 var notFound = function(target) {
     showSearchNotification(target + ' 不在遊遊亭的收錄範圍，或卡號有誤。可改用下方「篩選條件」逐步尋找。', 'error');
-    _isSearching = false;
+    setSearchBusy(false);
 };
 
 // 1. 首先找到並設置 cardStandard
@@ -1140,7 +1191,7 @@ console.log('✓ 卡號搜尋完成:', cardParts.fullNumber);
 showSearchNotification('', 'success');
 
 // 搜尋完成，釋放鎖定
-_isSearching = false;
+setSearchBusy(false);
 
 // 搜尋成功後平滑滾動到結果區域
 setTimeout(() => {
@@ -1150,7 +1201,7 @@ setTimeout(() => {
 } catch (error) {
 console.error('設置選擇器時發生錯誤:', error);
 showSearchNotification('查詢時發生問題，請再試一次。', 'error');
-_isSearching = false;
+setSearchBusy(false);
 }
 }
 
@@ -1728,7 +1779,7 @@ function selectAdvancedCard(cardId) {
 
     // 允許重新搜尋與目前相同的卡號
     _lastSearchedValue = '';
-    _isSearching = false;
+    setSearchBusy(false);
 
     if (typeof searchByCardNumber === 'function') {
         searchByCardNumber(cardId);
