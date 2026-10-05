@@ -347,10 +347,13 @@ select {
     backdrop-filter: blur(10px);
     /*padding: 1rem !important;*/
     font-size: 1rem !important;
-    transition: all 0.3s ease;
-    min-width: 300px;
-    margin: 0.5rem;
+    /* 勿 transition transform：focus 位移會與原生下拉搶 scroll，造成不斷跳動 */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    min-width: 0;
+    width: 100%;
     max-width: 100%;
+    margin: 0.5rem 0;
+    box-sizing: border-box;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -375,7 +378,8 @@ select option:hover {
 select:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
-    transform: translateY(-2px);
+    /* 原生 select 開下拉時不位移，避免 viewport 來回校正 */
+    transform: none;
 }
 
 
@@ -749,9 +753,9 @@ select:focus {
         /*padding: 0.75rem !important;*/
     }
     
-    /* 針對長文字選項的處理 */
+    /* 針對長文字選項的處理：相對父層，勿用 100vw 以免超出容器 */
     #cardStandard, #cardTitle {
-        max-width: calc(100vw - 4rem) !important;
+        max-width: 100% !important;
     }
     
     select option {
@@ -947,14 +951,18 @@ select:focus {
 /* 篩選卡片 */
 .filter-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* min(100%, 240px) 避免窄螢幕被 300px 撐出橫向溢出 */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
     gap: 2rem;
     padding: 1rem;
+    min-width: 0;
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .filter-label {
@@ -1653,7 +1661,7 @@ html {
     }
     
     #cardStandard, #cardTitle {
-        max-width: calc(100vw - 2rem) !important;
+        max-width: 100% !important;
     }
     
     .filter-container {
@@ -2180,12 +2188,12 @@ box-shadow: 0 25px 50px rgba(191, 160, 106, 0.5);
 
 /* 當搜尋框被 focus 時，篩選卡片變成半透明 */
 #filter-card-tag {
-transition: opacity 0.3s ease, transform 0.3s ease;
+transition: opacity 0.3s ease;
 }
 
 #filter-card-tag.dimmed {
 opacity: 0.6;
-transform: scale(0.98);
+/* 勿 scale：嵌在搜尋卡內時位移會讓 select 下拉跳動 */
 }
 /* 或者也可以添加模糊效果（可選） */
 #filter-card-tag.dimmed-blur {
@@ -3532,7 +3540,8 @@ body.market-desk-page .search-card.market-desk-search {
         0 1px 0 rgba(255, 255, 255, 0.35) inset,
         0 14px 34px rgba(28, 26, 23, 0.08);
     backdrop-filter: blur(18px) saturate(1.05);
-    overflow: hidden;
+    /* 篩選 select 已嵌在此卡內：overflow:hidden 會裁切下拉並觸發跳動 */
+    overflow: visible;
 }
 
 body.market-desk-page .search-card.market-desk-search:hover {
@@ -3886,23 +3895,26 @@ body.market-desk-page .history-item:focus-within .history-remove-btn {
 
 }
 
-/* —— 薄型篩選帶 —— */
-body.market-desk-page .filter-card.market-filter-strip {
-    margin-bottom: 1.35rem;
-    background: color-mix(in srgb, var(--desk-surface) 70%, transparent) !important;
-    border: 1px solid var(--desk-line) !important;
-    border-radius: 14px !important;
+/* —— 薄型篩選帶（可獨立或嵌在搜尋卡內） —— */
+body.market-desk-page .market-filter-strip {
+    margin-bottom: 0;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
     box-shadow: none;
-    backdrop-filter: blur(10px);
+    backdrop-filter: none;
+    overflow: visible;
+    min-width: 0;
+    max-width: 100%;
 }
 
-body.market-desk-page .filter-card.market-filter-strip:hover {
+body.market-desk-page .market-filter-strip:hover {
     transform: none;
     box-shadow: none;
 }
 
 body.market-desk-page .market-filter-strip .card-body {
-    padding: 0.95rem 1.05rem 1.05rem;
+    padding: 0.55rem 0 0;
 }
 
 .market-filter-heading {
@@ -3945,19 +3957,23 @@ body.market-desk-page .market-filter-strip .filter-label {
 
 body.market-desk-page .market-filter-strip select {
     width: 100% !important;
+    min-width: 0 !important;
     max-width: 100%;
+    margin: 0 !important;
     min-height: 2.65rem;
     border-radius: 10px;
     border: 1px solid var(--desk-line);
     background: var(--desk-surface-strong);
     color: var(--text-primary);
     padding: 0.45rem 0.7rem;
+    box-sizing: border-box;
 }
 
 body.market-desk-page .market-filter-strip select:focus {
     outline: none;
     border-color: var(--desk-foil);
     box-shadow: 0 0 0 1px var(--desk-foil);
+    transform: none !important;
 }
 
 [data-theme="dark"] body.market-desk-page .market-filter-strip select {
