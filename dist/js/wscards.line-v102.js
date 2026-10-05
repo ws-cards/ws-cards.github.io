@@ -101,13 +101,11 @@ var _typeaheadVisibleCount = 20;
 var _cardNameVisibleCount = 30;
 var _typeaheadBatchSize = 20;
 var _cardNameBatchSize = 30;
-// 選取建議後只略過「下一次」input 觸發的建議搜尋（避免填值又把 sheet 打開）。
-// 不要做成黏住的封鎖旗標，否則輸入框若未 blur 再點一次不會觸發 focus，建議就永遠不重跑。
-var _skipNextSuggestionInput = false;
+// 選取建議後作廢進行中的建議搜尋；不要用「略過下一次 input」旗標，
+// 否則選系列後若沒有程式觸發 input，使用者第一個模糊字會被吃掉。
 var _suggestionSearchSeq = 0;
 
 function suppressSuggestionsAfterSelect() {
-    _skipNextSuggestionInput = true;
     _suggestionSearchSeq += 1;
     if (_searchDebounceTimer) {
         clearTimeout(_searchDebounceTimer);
@@ -530,11 +528,6 @@ var inputValue = $input.val().trim();
 _handleSearchInputState(inputValue);
 
 if (inputValue && inputValue.length > 0) {
-// 選取建議後程式填值的那一次 input：更新按鈕狀態即可，不要重跑建議
-if (_skipNextSuggestionInput) {
-    _skipNextSuggestionInput = false;
-    return;
-}
 // 名稱、作品關鍵字、完整卡號都走字典建議（完整卡號需出現精確結果）
 _searchDebounceTimer = setTimeout(function() {
     _searchDebounceTimer = null;
@@ -1072,8 +1065,8 @@ window.handleCardNameResultClick = function(cardNumber) {
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
-        // 更新搜尋鈕狀態；這一次 input 會被 _skipNextSuggestionInput 略過建議重跑
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        // 直接更新搜尋鈕／自動搜尋計時，避免 dispatch input 又把建議重開
+        _handleSearchInputState(cardNumber);
     }
     if (typeof searchByCardNumber === 'function') {
         searchByCardNumber(cardNumber);
