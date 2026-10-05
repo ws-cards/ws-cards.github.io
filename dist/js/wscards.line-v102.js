@@ -3833,20 +3833,23 @@ function escapeJsString(str) {
 
 /**
  * 點擊歷史紀錄項目 → 觸發搜尋
+ * 已是明確卡號，不要彈出建議干擾操作。
  * @param {string} cardNumber - 卡號
  */
 function clickItem(cardNumber) {
     console.log('從歷史紀錄快速搜尋:', cardNumber);
 
-    // 填入搜尋框
+    suppressSuggestionsAfterSelect();
+    if (_mobileSearchActive) closeMobileSearchOverlay();
+    else hideCardNameSearchResults();
+
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
-        // 觸發 input 事件讓 typeahead 處理
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        // 更新搜尋鈕狀態，但不 dispatch input（避免建議／手機 sheet 重開）
+        _handleSearchInputState(cardNumber);
     }
 
-    // 直接呼叫卡號搜尋
     if (typeof searchByCardNumber === 'function') {
         searchByCardNumber(cardNumber);
     }
