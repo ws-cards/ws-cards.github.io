@@ -698,6 +698,13 @@ $input.on('focus', function() {
     // 使用者再次點進輸入框時，才解除「選取後封鎖建議」
     _blockSuggestionRender = false;
     if (isMobileSearchViewport()) openMobileSearchOverlay();
+
+    // 輸入框仍有前次卡號／關鍵字時，重跑建議（選取後結果已被清空）
+    var value = ($input.val() || '').trim();
+    if (!value) return;
+    var ta = $input.data('typeahead');
+    if (ta && typeof ta.lookup === 'function') ta.lookup();
+    searchByCardName(value);
 });
 
 document.addEventListener('keydown', function(e) {
