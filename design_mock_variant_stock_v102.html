@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0">
+  <title>設計示意｜同卡變體並列 × 庫存語意</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Old+Mincho:wght@500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --desk-foil: #9a7b45;
+      --desk-foil-deep: #6e5832;
+      --desk-surface: rgba(255, 255, 255, 0.9);
+      --desk-surface-strong: #ffffff;
+      --desk-line: rgba(23, 25, 29, 0.12);
+      --desk-ink: #1c1a17;
+      --desk-muted: #6f6a60;
+      --desk-bg: #ece8e0;
+      --desk-up: #2f6b4f;
+      --desk-down: #8a4b3a;
+      --desk-warn: #9a6b2f;
+      --desk-gone: #6a6560;
+      --font-display: 'Zen Old Mincho', 'Noto Serif TC', serif;
+      --font-ui: 'Noto Sans TC', sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+      --desk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    [data-theme="dark"] {
+      --desk-foil: #d0b27a;
+      --desk-foil-deep: #b8955a;
+      --desk-surface: rgba(28, 27, 24, 0.94);
+      --desk-surface-strong: #1c1b18;
+      --desk-line: rgba(240, 238, 230, 0.12);
+      --desk-ink: #f0eee6;
+      --desk-muted: #a8a296;
+      --desk-bg: #121110;
+      --desk-up: #8fC5a4;
+      --desk-down: #d4a090;
+      --desk-warn: #e0c493;
+      --desk-gone: #8a857c;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--font-ui);
+      color: var(--desk-ink);
+      background:
+        radial-gradient(1200px 600px at 12% -10%, rgba(154, 123, 69, 0.12), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(28, 26, 23, 0.06), transparent 50%),
+        var(--desk-bg);
+    }
+
+    .page {
+      width: min(720px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+    }
+
+    .mock-kicker {
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--desk-foil-deep);
+    }
+    [data-theme="dark"] .mock-kicker { color: var(--desk-foil); }
+
+    .mock-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 5vw, 2.1rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .mock-lede {
+      margin: 0.65rem 0 1.4rem;
+      max-width: 36rem;
+      color: var(--desk-muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .toolbar button {
+      appearance: none;
+      border: 1px solid var(--desk-line);
+      background: var(--desk-surface-strong);
+      color: var(--desk-ink);
+      border-radius: 999px;
+      padding: 0.4rem 0.85rem;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .toolbar button[aria-pressed="true"] {
+      border-color: var(--desk-foil);
+      background: color-mix(in srgb, var(--desk-foil) 16%, transparent);
+    }
+
+    .panel {
+      background: var(--desk-surface);
+      border: 1px solid var(--desk-line);
+      border-radius: 16px;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35) inset,
+        0 14px 34px rgba(28, 26, 23, 0.08);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      animation: rise 0.7s var(--desk-ease) both;
+    }
+    [data-theme="dark"] .panel {
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel + .panel { margin-top: 1rem; }
+    .panel-pad { padding: 1.05rem 1.1rem 1.15rem; }
+
+    .section-label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .section-label h2 {
+      margin: 0;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--desk-muted);
+    }
+    .section-label .base-no {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--desk-foil-deep);
+      letter-spacing: 0.02em;
+    }
+    [data-theme="dark"] .section-label .base-no { color: var(--desk-foil); }
+
+    /* —— 同卡變體軌道 —— */
+    .variant-rail {
+      display: flex;
+      gap: 0.65rem;
+      overflow-x: auto;
+      padding: 0.15rem 0.1rem 0.45rem;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .variant-rail:focus-within { outline: none; }
+
+    .variant-tile {
+      flex: 0 0 auto;
+      width: 7.6rem;
+      scroll-snap-align: start;
+      border: 1px solid var(--desk-line);
+      border-radius: 12px;
+      background: var(--desk-surface-strong);
+      padding: 0.7rem 0.75rem 0.8rem;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+      font: inherit;
+      position: relative;
+      transition:
+        border-color 0.25s var(--desk-ease),
+        transform 0.35s var(--desk-ease),
+        box-shadow 0.35s var(--desk-ease),
+        background 0.25s ease;
+    }
+    .variant-tile:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--desk-foil) 55%, var(--desk-line));
+    }
+    .variant-tile[aria-current="true"] {
+      border-color: var(--desk-foil);
+      box-shadow:
+        0 0 0 1px var(--desk-foil),
+        0 10px 24px rgba(110, 88, 50, 0.14);
+      background:
+        linear-gradient(165deg, color-mix(in srgb, var(--desk-foil) 14%, transparent), transparent 55%),
+        var(--desk-surface-strong);
+    }
+    .variant-tile[aria-current="true"]::after {
+      content: '';
+      position: absolute;
+      left: 0.75rem;
+      right: 0.75rem;
+      bottom: 0;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+      background: var(--desk-foil);
+    }
+
+    .variant-rare {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.25rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--desk-foil) 40%, transparent);
+      background: color-mix(in srgb, var(--desk-foil) 12%, transparent);
+      color: var(--desk-foil-deep);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    [data-theme="dark"] .variant-rare { color: var(--desk-foil); }
+    .variant-rare.is-sp,
+    .variant-rare.is-ssp {
+      border-color: color-mix(in srgb, #8a4b3a 45%, transparent);
+      background: color-mix(in srgb, #8a4b3a 12%, transparent);
+      color: var(--desk-down);
+    }
+
+    .variant-no {
+      margin: 0.45rem 0 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--desk-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .variant-price {
+      font-family: var(--font-mono);
+      font-size: 1.02rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .variant-price .yen {
+      font-size: 0.72rem;
+      font-weight: 500;
+      margin-right: 0.1rem;
+      color: var(--desk-muted);
+    }
+
+    .variant-delta {
+      margin-top: 0.4rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--desk-muted);
+    }
+    .variant-delta.is-cheaper { color: var(--desk-up); }
+    .variant-delta.is-pricier { color: var(--desk-down); }
+    .variant-delta.is-same { color: var(--desk-muted); }
+
+    .variant-note {
+      margin: 0.7rem 0 0;
+      font-size: 0.78rem;
+      color: var(--desk-muted);
+      line-height: 1.45;
+    }
+    .variant-note strong {
+      color: var(--desk-ink);
+      font-weight: 700;
+    }
+
+    /* —— 庫存語意 —— */
+    .stock-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .stock-head h2 {
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .stock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--desk-line);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      animation: pillIn 0.45s var(--desk-ease) both;
+    }
+    @keyframes pillIn {
+      from { opacity: 0; transform: translateY(4px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .stock-pill .dot {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+    }
+    .stock-pill[data-state="restocking"] { color: var(--desk-up); border-color: color-mix(in srgb, var(--desk-up) 35%, transparent); background: color-mix(in srgb, var(--desk-up) 10%, transparent); }
+    .stock-pill[data-state="draining"] { color: var(--desk-warn); border-color: color-mix(in srgb, var(--desk-warn) 35%, transparent); background: color-mix(in srgb, var(--desk-warn) 10%, transparent); }
+    .stock-pill[data-state="stable"] { color: var(--desk-foil-deep); border-color: color-mix(in srgb, var(--desk-foil) 40%, transparent); background: color-mix(in srgb, var(--desk-foil) 10%, transparent); }
+    .stock-pill[data-state="out"] { color: var(--desk-gone); border-color: color-mix(in srgb, var(--desk-gone) 35%, transparent); background: color-mix(in srgb, var(--desk-gone) 10%, transparent); }
+    .stock-pill[data-state="scarce"] { color: var(--desk-down); border-color: color-mix(in srgb, var(--desk-down) 35%, transparent); background: color-mix(in srgb, var(--desk-down) 10%, transparent); }
+    [data-theme="dark"] .stock-pill[data-state="stable"] { color: var(--desk-foil); }
+
+    .stock-sentence {
+      margin: 0 0 0.95rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--desk-ink);
+      max-width: 34rem;
+    }
+    .stock-sentence span {
+      color: var(--desk-muted);
+      font-size: 0.8rem;
+    }
+
+    .spark {
+      height: 88px;
+      border: 1px solid var(--desk-line);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--desk-foil) 6%, transparent), transparent 40%),
+        var(--desk-surface-strong);
+      position: relative;
+      overflow: hidden;
+    }
+    .spark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .spark-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--desk-muted);
+    }
+
+    .scenario-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.9rem;
+    }
+    .scenario-row button {
+      appearance: none;
+      border: 1px dashed var(--desk-line);
+      background: transparent;
+      color: var(--desk-muted);
+      border-radius: 8px;
+      padding: 0.35rem 0.6rem;
+      font: inherit;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+    .scenario-row button[aria-pressed="true"] {
+      border-style: solid;
+      border-color: var(--desk-foil);
+      color: var(--desk-ink);
+      background: color-mix(in srgb, var(--desk-foil) 10%, transparent);
+    }
+
+    .design-notes {
+      margin-top: 1.5rem;
+      padding: 1rem 1.05rem;
+      border-left: 2px solid var(--desk-foil);
+      color: var(--desk-muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+    .design-notes h3 {
+      margin: 0 0 0.4rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--desk-ink);
+      font-weight: 700;
+    }
+    .design-notes ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .design-notes li + li { margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="mock-kicker">WS-Cards · Market Desk 設計示意</p>
+    <h1 class="mock-title">同卡變體並列 × 庫存語意</h1>
+    <p class="mock-lede">延續行情室語彙：箔金、細線、mono 價碼。變體是「橫向比價軌道」，庫存語意是「圖表上方的一句人話」——都不是新卡片牆。</p>
+
+    <div class="toolbar" role="group" aria-label="主題">
+      <button type="button" id="themeLight" aria-pressed="true">淺色</button>
+      <button type="button" id="themeDark" aria-pressed="false">深色</button>
+    </div>
+
+    <!-- 同卡變體 -->
+    <section class="panel" aria-labelledby="variantHeading">
+      <div class="panel-pad">
+        <div class="section-label">
+          <h2 id="variantHeading">同卡變體</h2>
+          <span class="base-no" id="variantBase">KC/S25-003</span>
+        </div>
+
+        <div class="variant-rail" id="variantRail" role="listbox" aria-label="同卡號變體"></div>
+        <p class="variant-note" id="variantNote"></p>
+      </div>
+    </section>
+
+    <!-- 庫存語意 -->
+    <section class="panel" aria-labelledby="stockHeading" style="animation-delay: 80ms;">
+      <div class="panel-pad">
+        <div class="stock-head">
+          <h2 id="stockHeading">庫存走勢</h2>
+          <span class="stock-pill" id="stockPill" data-state="draining">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="stockPillText">在消化</span>
+          </span>
+        </div>
+        <p class="stock-sentence" id="stockSentence"></p>
+        <div class="spark" aria-hidden="true">
+          <svg id="sparkSvg" viewBox="0 0 320 88" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="spark-meta">
+          <span id="sparkNow">現況 —</span>
+          <span>近 30 日示意</span>
+        </div>
+        <div class="scenario-row" role="group" aria-label="庫存情境示意">
+          <button type="button" data-scenario="draining" aria-pressed="true">在消化</button>
+          <button type="button" data-scenario="restocking" aria-pressed="false">補貨中</button>
+          <button type="button" data-scenario="stable" aria-pressed="false">穩定有貨</button>
+          <button type="button" data-scenario="scarce" aria-pressed="false">緊俏</button>
+          <button type="button" data-scenario="out" aria-pressed="false">斷貨</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="design-notes">
+      <h3>落地方式（對 v102）</h3>
+      <ul>
+        <li><strong>變體</strong>：從目前卡號剝出 base（如 <code>KC/S25-003</code>），在同套價／庫存 JSON 找同族；插在價格摘要下方、走勢圖上方。</li>
+        <li><strong>點選</strong>：等同改 <code>#cardNumber</code> 並觸發既有 <code>changeNumber()</code>，不另開頁。</li>
+        <li><strong>庫存語意</strong>：用近 N 點斜率＋零庫存持續天數規則引擎，輸出狀態碼＋一句話；放在庫存圖標題列，不取代圖表。</li>
+        <li><strong>過多變體</strong>（μ's 全員等）：軌道橫滑，預設排序「目前選中 → 價高 → 其餘」，尾端「還有 n 張」。</li>
+      </ul>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      var variants = [
+        { id: 'KC/S25-003', rare: 'R', price: 150, cls: '' },
+        { id: 'KC/S25-003S', rare: 'SR', price: 300, cls: '' },
+        { id: 'KC/S25-003SP', rare: 'SP', price: 2480, cls: 'is-sp' },
+        { id: 'KC/S25-003SSP', rare: 'SSP', price: 3980, cls: 'is-ssp' }
+      ];
+      var selected = 'KC/S25-003SP';
+
+      var scenarios = {
+        draining: {
+          label: '在消化',
+          state: 'draining',
+          sentence: '近兩週庫存持續下滑，流通盤在被收走。',
+          sub: '若你在等更低價，空間可能變少',
+          series: [42, 41, 39, 38, 36, 34, 33, 31, 29, 27, 26, 24, 22, 20, 18]
+        },
+        restocking: {
+          label: '補貨中',
+          state: 'restocking',
+          sentence: '低點後出現明顯回補，賣家剛把貨推上架。',
+          sub: '短線價格不一定立刻回落',
+          series: [3, 2, 2, 1, 1, 0, 0, 4, 9, 14, 18, 22, 25, 28, 30]
+        },
+        stable: {
+          label: '穩定有貨',
+          state: 'stable',
+          sentence: '庫存水位平穩，沒有急漲急跌的補貨痕跡。',
+          sub: '適合用價格曲線決定進場點',
+          series: [20, 21, 20, 19, 20, 21, 20, 20, 19, 20, 21, 20, 20, 21, 20]
+        },
+        scarce: {
+          label: '緊俏',
+          state: 'scarce',
+          sentence: '長期維持極低庫存，偶爾才冒出少量。',
+          sub: '有貨時節奏通常偏快',
+          series: [2, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1, 0, 1]
+        },
+        out: {
+          label: '斷貨',
+          state: 'out',
+          sentence: '已連續多日看不到庫存，等於市場暫時沒貨。',
+          sub: '現價參考意義下降，成交要靠其他管道',
+          series: [8, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+      };
+
+      function yen(n) {
+        return '¥' + Number(n).toLocaleString('en-US');
+      }
+
+      function renderVariants() {
+        var rail = document.getElementById('variantRail');
+        var current = variants.find(function (v) { return v.id === selected; });
+        rail.innerHTML = '';
+        variants.forEach(function (v) {
+          var delta = v.price - current.price;
+          var deltaCls = 'is-same';
+          var deltaText = '目前選中';
+          if (v.id !== selected) {
+            if (delta === 0) {
+              deltaText = '同價';
+            } else if (delta < 0) {
+              deltaCls = 'is-cheaper';
+              deltaText = '便宜 ' + yen(Math.abs(delta));
+            } else {
+              deltaCls = 'is-pricier';
+              deltaText = '貴 ' + yen(delta);
+            }
+          }
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'variant-tile';
+          btn.setAttribute('role', 'option');
+          btn.setAttribute('aria-current', v.id === selected ? 'true' : 'false');
+          btn.dataset.id = v.id;
+          btn.innerHTML =
+            '<span class="variant-rare ' + v.cls + '">' + v.rare + '</span>' +
+            '<div class="variant-no">' + v.id + '</div>' +
+            '<div class="variant-price"><span class="yen">¥</span>' + Number(v.price).toLocaleString('en-US') + '</div>' +
+            '<div class="variant-delta ' + deltaCls + '">' + deltaText + '</div>';
+          btn.addEventListener('click', function () {
+            selected = v.id;
+            renderVariants();
+          });
+          rail.appendChild(btn);
+        });
+
+        var siblings = variants.filter(function (v) { return v.id !== selected; });
+        var cheapest = siblings.slice().sort(function (a, b) { return a.price - b.price; })[0];
+        var note = document.getElementById('variantNote');
+        note.innerHTML = '以 <strong>' + selected + '</strong> 為主視圖。同族還有 ' + siblings.length +
+          ' 張可切換' + (cheapest ? '；最低變體是 <strong>' + cheapest.rare + '</strong>（' + yen(cheapest.price) + '）' : '') + '。';
+      }
+
+      function drawSpark(series) {
+        var svg = document.getElementById('sparkSvg');
+        var w = 320, h = 88, pad = 10;
+        var min = Math.min.apply(null, series);
+        var max = Math.max.apply(null, series);
+        var span = Math.max(max - min, 1);
+        var pts = series.map(function (v, i) {
+          var x = pad + (i / (series.length - 1)) * (w - pad * 2);
+          var y = pad + (1 - (v - min) / span) * (h - pad * 2);
+          return [x, y];
+        });
+        var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        var last = pts[pts.length - 1];
+        svg.innerHTML =
+          '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--desk-foil); opacity:0.9" />' +
+          '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="3.5" fill="var(--desk-foil-deep)" />';
+      }
+
+      function applyScenario(key) {
+        var s = scenarios[key];
+        var pill = document.getElementById('stockPill');
+        pill.dataset.state = s.state;
+        // retrigger animation
+        pill.style.animation = 'none';
+        void pill.offsetHeight;
+        pill.style.animation = '';
+        document.getElementById('stockPillText').textContent = s.label;
+        document.getElementById('stockSentence').innerHTML = s.sentence + ' <span>' + s.sub + '</span>';
+        document.getElementById('sparkNow').textContent = '現況 ' + s.series[s.series.length - 1] + ' 張';
+        drawSpark(s.series);
+        document.querySelectorAll('.scenario-row button').forEach(function (b) {
+          b.setAttribute('aria-pressed', b.dataset.scenario === key ? 'true' : 'false');
+        });
+      }
+
+      document.getElementById('themeLight').addEventListener('click', function () {
+        document.documentElement.setAttribute('data-theme', 'light');
+        this.setAttribute('aria-pressed', 'true');
+        document.getElementById('themeDark').setAttribute('aria-pressed', 'false');
+      });
+      document.getElementById('themeDark').addEventListener('click', function () {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        this.setAttribute('aria-pressed', 'true');
+        document.getElementById('themeLight').setAttribute('aria-pressed', 'false');
+      });
+
+      document.querySelectorAll('.scenario-row button').forEach(function (b) {
+        b.addEventListener('click', function () { applyScenario(b.dataset.scenario); });
+      });
+
+      renderVariants();
+      applyScenario('draining');
+    })();
+  </script>
+</body>
+</html>
