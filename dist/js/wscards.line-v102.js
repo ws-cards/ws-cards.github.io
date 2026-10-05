@@ -80,7 +80,6 @@ if (typeof MutationObserver !== 'undefined') {
 var _searchDebounceTimer = null;
 var _cardAutoSearchTimer = null;
 var _cardAutoSearchDelayMs = 30000;
-var _searchActionState = 'copy';
 var _isSearching = false;
 var _lastSearchedValue = '';
 var _cardDictionary = null; // 暫存卡片字典的陣列
@@ -137,32 +136,6 @@ function _clearCardAutoSearchTimer() {
     }
 }
 
-function _setSearchActionButtonState(state) {
-    var button = document.getElementById('pasteButton');
-    if (!button) return;
-
-    var nextState = state === 'search' ? 'search' : 'copy';
-    var stateChanged = _searchActionState !== nextState;
-    _searchActionState = nextState;
-
-    button.dataset.actionState = nextState;
-    button.classList.toggle('search-armed', nextState === 'search');
-    // 這顆按鈕在「貼上」與「搜尋」兩種行為間切換，名稱必須跟著實際行為走
-    button.title = nextState === 'search' ? '搜尋' : '貼上';
-    button.setAttribute('aria-label', nextState === 'search' ? '搜尋這個卡號' : '貼上剪貼簿的卡號');
-
-    if (stateChanged) {
-        button.classList.remove('flip-attention');
-        void button.offsetWidth;
-        button.classList.add('flip-attention');
-    }
-}
-
-function _syncSearchActionStateFromValue(inputValue) {
-    var value = (inputValue || '').trim();
-    _setSearchActionButtonState(value.length > 0 ? 'search' : 'copy');
-}
-
 function _scheduleCardAutoSearch(inputValue) {
     _clearCardAutoSearchTimer();
     _cardAutoSearchTimer = setTimeout(function() {
@@ -179,80 +152,11 @@ function _handleSearchInputState(inputValue) {
     var value = (inputValue || '').trim();
     var isCardFormat = value && value.length >= 8 && isCardNumberFormat(value);
 
-    _syncSearchActionStateFromValue(value);
-
     if (isCardFormat) {
         _scheduleCardAutoSearch(value);
     } else {
         _clearCardAutoSearchTimer();
     }
-}
-
-async function handleSearchActionButtonClick() {
-    var inputElement = document.getElementById('xxxx');
-    if (!inputElement) return;
-
-    var inputValue = inputElement.value.trim();
-
-    // 搜尋狀態：只在完整卡號時才立即搜尋
-    if (_searchActionState === 'search' && inputValue.length > 0) {
-        if (_isSearching) {
-            console.log('搜尋進行中，略過搜尋按鈕點擊');
-            return;
-        }
-
-        if (isCardNumberFormat(inputValue)) {
-            _clearCardAutoSearchTimer();
-            if (inputValue !== _lastSearchedValue) {
-                searchByCardNumber(inputValue);
-            }
-        }
-        return;
-    }
-
-    // 複製狀態：讀取剪貼簿並貼到輸入框
-    if (navigator.clipboard && navigator.clipboard.readText) {
-        try {
-            var text = await navigator.clipboard.readText();
-            inputElement.value = text;
-            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-            return;
-        } catch (err) {
-            console.log('Clipboard API failed, fallback to manual paste');
-        }
-    }
-
-    if (typeof Swal !== 'undefined') {
-        showWsAlert({
-            icon: 'info',
-            title: '瀏覽器不允許讀取剪貼簿',
-            text: '請直接長按輸入框貼上；電腦版可按 Ctrl + V。',
-            showConfirmButton: true,
-            confirmButtonText: '知道了'
-        }).then(function() {
-            inputElement.focus();
-        });
-    } else {
-        inputElement.focus();
-    }
-}
-
-function setupSearchActionButton() {
-    var button = document.getElementById('pasteButton');
-    var inputElement = document.getElementById('xxxx');
-    if (!button || !inputElement) return;
-
-    button.removeEventListener('click', handleSearchActionButtonClick);
-    button.addEventListener('click', handleSearchActionButtonClick);
-    _syncSearchActionStateFromValue(inputElement.value);
-}
-
-window.handleSearchActionButtonClick = handleSearchActionButtonClick;
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupSearchActionButton);
-} else {
-    setupSearchActionButton();
 }
 
 // 支援外部連結 ?card=BD/W54-070SSP 或 ?cardno=BD_W54-070SSP（底線代表斜線）。
@@ -271,7 +175,7 @@ function searchCardNumberFromUrl() {
 
     var inputElement = document.getElementById('xxxx');
     if (inputElement) inputElement.value = cardNumber;
-    _syncSearchActionStateFromValue(cardNumber);
+    _handleSearchInputState(cardNumber);
     searchByCardNumber(cardNumber);
 }
 
@@ -1037,7 +941,7 @@ window.handleCardNameResultClick = function(cardNumber) {
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
-        // 直接更新搜尋鈕／自動搜尋計時，避免 dispatch input 又把建議重開
+        // 直接更新自動搜尋計時，避免 dispatch input 又把建議重開
         _handleSearchInputState(cardNumber);
     }
     if (typeof searchByCardNumber === 'function') {
@@ -3825,7 +3729,7 @@ function clickItem(cardNumber) {
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
-        // 更新搜尋鈕狀態，但不 dispatch input（避免建議／手機 sheet 重開）
+        // 更新自動搜尋計時，但不 dispatch input（避免建議／手機 sheet 重開）
         _handleSearchInputState(cardNumber);
     }
 
