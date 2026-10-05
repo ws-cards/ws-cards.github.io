@@ -4024,16 +4024,9 @@ var CardFavorites = (function() {
         updateButtonDom(isFavorite(cardNumber));
     }
 
+    // 收藏／雲端同步改為靜默：星形狀態與 favorites 頁面本身就是回饋
     function showSyncToast(title, ok) {
-        if (typeof showWsAlert !== 'function') return;
-        showWsAlert({
-            icon: ok ? 'success' : 'info',
-            title: title,
-            timer: 2000,
-            showConfirmButton: false,
-            toast: true,
-            position: 'top-end'
-        });
+        console.log('[收藏同步]', ok ? 'ok' : 'info', title || '');
     }
 
     /** 本機與雲端聯集；同一卡號取較新 timestamp 的中繼資料 */
@@ -4181,17 +4174,7 @@ var CardFavorites = (function() {
             } else {
                 detail += ' · 已存本機（雲端同步失敗）';
             }
-            if (typeof showWsAlert === 'function') {
-                showWsAlert({
-                    icon: 'success',
-                    title: nowFavorited ? '已加入收藏' : '已取消收藏',
-                    text: detail,
-                    timer: 1800,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-            }
+            console.log(nowFavorited ? '[已加入收藏]' : '[已取消收藏]', detail);
         });
     }
 
