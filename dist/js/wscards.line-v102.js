@@ -101,17 +101,26 @@ var _typeaheadVisibleCount = 20;
 var _cardNameVisibleCount = 30;
 var _typeaheadBatchSize = 20;
 var _cardNameBatchSize = 30;
-// 選取建議後暫時封鎖建議重開（避免填入卡號的 input 事件又把 sheet 打開）
-var _blockSuggestionRender = false;
+// 選取建議後只略過「下一次」input 觸發的建議搜尋（避免填值又把 sheet 打開）。
+// 不要做成黏住的封鎖旗標，否則輸入框若未 blur 再點一次不會觸發 focus，建議就永遠不重跑。
+var _skipNextSuggestionInput = false;
 var _suggestionSearchSeq = 0;
 
 function suppressSuggestionsAfterSelect() {
-    _blockSuggestionRender = true;
+    _skipNextSuggestionInput = true;
     _suggestionSearchSeq += 1;
     if (_searchDebounceTimer) {
         clearTimeout(_searchDebounceTimer);
         _searchDebounceTimer = null;
     }
+}
+
+function refreshSuggestionsForCurrentInput() {
+    var value = ($input.val() || '').trim();
+    if (!value) return;
+    var ta = $input.data('typeahead');
+    if (ta && typeof ta.lookup === 'function') ta.lookup();
+    searchByCardName(value);
 }
 
 // ====================================================
@@ -521,13 +530,16 @@ var inputValue = $input.val().trim();
 _handleSearchInputState(inputValue);
 
 if (inputValue && inputValue.length > 0) {
-// 選取建議後填值觸發的 input 不要重跑建議
-if (_blockSuggestionRender) return;
+// 選取建議後程式填值的那一次 input：更新按鈕狀態即可，不要重跑建議
+if (_skipNextSuggestionInput) {
+    _skipNextSuggestionInput = false;
+    return;
+}
 // 名稱、作品關鍵字、完整卡號都走字典建議（完整卡號需出現精確結果）
 _searchDebounceTimer = setTimeout(function() {
     _searchDebounceTimer = null;
     var currentValue = $input.val().trim();
-    if (currentValue === inputValue && !_blockSuggestionRender) {
+    if (currentValue === inputValue) {
         searchByCardName(inputValue);
     }
 }, 500); // 模糊搜尋的反應時間可以設短一點
@@ -647,11 +659,14 @@ function openMobileSearchOverlay() {
     document.documentElement.classList.add('mobile-search-open');
     document.body.classList.add('mobile-search-open');
     _mobileSearchActive = true;
-    _ignoreDocClickUntil = Date.now() + 450;
+    // 搬移 input 後同一次 tap 的 click 可能落在 placeholder 上；加長忽略並在開啟後重跑建議
+    _ignoreDocClickUntil = Date.now() + 900;
     syncMobileSearchHint();
     // 等 DOM 搬移完成再 focus，避免鍵盤閃爍
     setTimeout(function() {
-        if (_mobileSearchActive && inputEl) inputEl.focus();
+        if (!_mobileSearchActive) return;
+        if (inputEl) inputEl.focus();
+        refreshSuggestionsForCurrentInput();
     }, 0);
 }
 
@@ -695,16 +710,20 @@ function closeMobileSearchOverlay() {
 }
 
 $input.on('focus', function() {
-    // 使用者再次點進輸入框時，才解除「選取後封鎖建議」
-    _blockSuggestionRender = false;
-    if (isMobileSearchViewport()) openMobileSearchOverlay();
+    if (isMobileSearchViewport()) {
+        openMobileSearchOverlay(); // 內部會在搬移後 refresh
+        return;
+    }
+    refreshSuggestionsForCurrentInput();
+});
 
-    // 輸入框仍有前次卡號／關鍵字時，重跑建議（選取後結果已被清空）
-    var value = ($input.val() || '').trim();
-    if (!value) return;
-    var ta = $input.data('typeahead');
-    if (ta && typeof ta.lookup === 'function') ta.lookup();
-    searchByCardName(value);
+// 已 focus 時再點一次不會重觸 focus；用 click 補跑建議
+$input.on('click', function() {
+    if (isMobileSearchViewport() && !_mobileSearchActive) {
+        openMobileSearchOverlay();
+        return;
+    }
+    refreshSuggestionsForCurrentInput();
 });
 
 document.addEventListener('keydown', function(e) {
@@ -720,6 +739,12 @@ document.addEventListener('click', function(e) {
     if (_mobileSearchActive) {
         var overlay = document.getElementById('mobileSearchOverlay');
         if (overlay && overlay.contains(e.target)) return;
+        // 開啟 sheet 時 input 被搬走，同一次點擊可能落在佔位元素上
+        if (e.target && (e.target.id === 'mobileSearchInputPlaceholder' ||
+            (e.target.closest && e.target.closest('#mobileSearchInputPlaceholder')))) {
+            return;
+        }
+        if (e.target && e.target.closest && e.target.closest('.market-search-group')) return;
         closeMobileSearchOverlay();
         return;
     }
@@ -766,7 +791,6 @@ function hideCardNameSearchResults() {
 }
 
 function searchByCardName(keyword) {
-    if (_blockSuggestionRender) return;
     if (!keyword) {
         _cardNameSuggestions = [];
         _cardNameMatches = [];
@@ -779,7 +803,7 @@ function searchByCardName(keyword) {
     fetchCardDictionary(function() {
         if (!_cardDictionary) return;
         // 選取建議／新輸入已讓這次回調失效
-        if (searchSeq !== _suggestionSearchSeq || _blockSuggestionRender) return;
+        if (searchSeq !== _suggestionSearchSeq) return;
         
         var lowerKeyword = keyword.toLowerCase();
         // 保留完整比對結果，讓下拉選單能揭露總數並逐批載入。
@@ -806,7 +830,7 @@ function searchByCardName(keyword) {
         _cardNameSuggestions = _cardNameMatches.slice(0, _cardNameVisibleCount);
 
         // 字典載入可能晚於使用者下一次輸入，不要把舊關鍵字的結果塞回來。
-        if ($input.val().trim() === keyword && !_blockSuggestionRender) renderUnifiedSearchContainer();
+        if ($input.val().trim() === keyword) renderUnifiedSearchContainer();
     });
 }
 
@@ -819,10 +843,6 @@ function searchByCardName(keyword) {
 function renderUnifiedSearchContainer() {
     var inputEl = document.getElementById('xxxx');
     if (!inputEl) return;
-    if (_blockSuggestionRender) {
-        hideCardNameSearchResults();
-        return;
-    }
 
     _typeaheadSuggestions = _typeaheadMatches.slice(0, _typeaheadVisibleCount);
     _cardNameSuggestions = _cardNameMatches.slice(0, _cardNameVisibleCount);
@@ -1052,7 +1072,7 @@ window.handleCardNameResultClick = function(cardNumber) {
     var inputEl = document.getElementById('xxxx');
     if (inputEl) {
         inputEl.value = cardNumber;
-        // 更新搜尋鈕狀態；建議搜尋已被 _blockSuggestionRender 擋下
+        // 更新搜尋鈕狀態；這一次 input 會被 _skipNextSuggestionInput 略過建議重跑
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
     if (typeof searchByCardNumber === 'function') {
