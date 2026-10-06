@@ -6182,7 +6182,7 @@ return {
 // ====================================================
 
 var FancySelectModule = (function() {
-var SELECTOR = '.market-filter-strip select, select.chart-period';
+var SELECTOR = '.market-filter-strip select';
 var instances = new WeakMap();
 var _docBound = false;
 
