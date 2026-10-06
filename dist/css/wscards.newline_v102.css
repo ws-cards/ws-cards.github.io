@@ -3938,6 +3938,14 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     height: auto;
 }
 
+/* 展開時抬高搜尋卡 stacking，避免被下方左右欄蓋住（JS 也會 portal panel） */
+body.market-desk-page .market-desk-search.has-fancy-open,
+body.market-desk-page .market-desk.has-fancy-open,
+body.market-desk-page .col-lg-12.has-fancy-open {
+    position: relative;
+    z-index: 60;
+}
+
 .fancy-select-native {
     position: absolute !important;
     width: 1px !important;
@@ -4002,7 +4010,8 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     z-index: 3;
 }
 
-/* 展開列：緊貼選中列下方，無圓角／陰影／外框 */
+/* 展開列：緊貼選中列下方，無圓角／陰影／外框
+   開啟時由 JS 改為 position:fixed 並掛到 body，避開欄位遮擋 */
 .fancy-select-panel {
     position: absolute;
     left: 0;
@@ -4017,6 +4026,10 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     background: #333;
     color: #fff;
     box-shadow: none;
+}
+
+.fancy-select-panel:not([hidden]) {
+    z-index: 10050;
 }
 
 .fancy-select-group {

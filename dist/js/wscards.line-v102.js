@@ -6184,7 +6184,9 @@ return {
 var FancySelectModule = (function() {
 var SELECTOR = '.market-filter-strip select';
 var instances = new WeakMap();
+var openWraps = [];
 var _docBound = false;
+var _repositionBound = false;
 
 function escapeHtml(str) {
     return String(str == null ? '' : str)
@@ -6205,11 +6207,85 @@ function isDisabled(select) {
     return !!(select && (select.disabled || select.classList.contains('is-cascade-pending')));
 }
 
+function clearPanelPlacement(panel) {
+    if (!panel) return;
+    panel.style.position = '';
+    panel.style.left = '';
+    panel.style.top = '';
+    panel.style.width = '';
+    panel.style.right = '';
+    panel.style.zIndex = '';
+}
+
+function placePanelFixed(trigger, panel) {
+    if (!trigger || !panel) return;
+    var rect = trigger.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left = Math.round(rect.left) + 'px';
+    panel.style.top = Math.round(rect.bottom) + 'px';
+    panel.style.width = Math.round(rect.width) + 'px';
+    panel.style.right = 'auto';
+    panel.style.zIndex = '10050';
+}
+
+function setHostOpenState(wrap, isOpen) {
+    var host = wrap && (wrap.closest('.market-desk-search') || wrap.closest('.market-desk') || wrap.closest('.col-lg-12'));
+    if (!host) return;
+    if (isOpen) {
+        host.classList.add('has-fancy-open');
+        return;
+    }
+    if (!host.querySelector('.fancy-select.is-open')) {
+        host.classList.remove('has-fancy-open');
+    }
+}
+
+function trackOpen(wrap, add) {
+    var idx = openWraps.indexOf(wrap);
+    if (add) {
+        if (idx === -1) openWraps.push(wrap);
+    } else if (idx !== -1) {
+        openWraps.splice(idx, 1);
+    }
+    if (openWraps.length && !_repositionBound) {
+        _repositionBound = true;
+        window.addEventListener('resize', repositionOpenPanels, true);
+        window.addEventListener('scroll', repositionOpenPanels, true);
+    } else if (!openWraps.length && _repositionBound) {
+        _repositionBound = false;
+        window.removeEventListener('resize', repositionOpenPanels, true);
+        window.removeEventListener('scroll', repositionOpenPanels, true);
+    }
+}
+
+function repositionOpenPanels() {
+    openWraps.forEach(function(wrap) {
+        var selectId = wrap.getAttribute('data-fancy-for');
+        var select = selectId ? document.getElementById(selectId) : null;
+        var inst = select && instances.get(select);
+        if (inst && typeof inst.reposition === 'function') inst.reposition();
+    });
+}
+
 function closeAll(except) {
     document.querySelectorAll('.fancy-select.is-open').forEach(function(el) {
         if (except && el === except) return;
+        var selectId = el.getAttribute('data-fancy-for');
+        var select = selectId ? document.getElementById(selectId) : null;
+        var inst = select && instances.get(select);
+        if (inst && typeof inst.close === 'function') {
+            inst.close();
+            return;
+        }
         el.classList.remove('is-open');
         el.setAttribute('aria-expanded', 'false');
+        var panel = el.querySelector('.fancy-select-panel');
+        if (panel) {
+            panel.hidden = true;
+            clearPanelPlacement(panel);
+        }
+        setHostOpenState(el, false);
+        trackOpen(el, false);
     });
 }
 
@@ -6311,13 +6387,16 @@ function enhance(select) {
         var disabled = isDisabled(select);
         wrap.classList.toggle('is-disabled', disabled);
         wrap.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-        if (disabled) {
-            wrap.classList.remove('is-open');
-            wrap.setAttribute('aria-expanded', 'false');
-            panel.hidden = true;
+        if (disabled && wrap.classList.contains('is-open')) {
+            close();
         }
         trigger.textContent = selectedLabel(select) || '—';
         panel.innerHTML = buildOptionsHtml(select);
+    }
+
+    function reposition() {
+        if (!wrap.classList.contains('is-open') || panel.hidden) return;
+        placePanelFixed(trigger, panel);
     }
 
     function open() {
@@ -6325,7 +6404,14 @@ function enhance(select) {
         closeAll(wrap);
         wrap.classList.add('is-open');
         wrap.setAttribute('aria-expanded', 'true');
+        // 掛到 body + fixed，避開搜尋卡 backdrop-filter／左右欄 stacking 蓋住
+        if (panel.parentNode !== document.body) {
+            document.body.appendChild(panel);
+        }
         panel.hidden = false;
+        placePanelFixed(trigger, panel);
+        setHostOpenState(wrap, true);
+        trackOpen(wrap, true);
         var selectedBtn = panel.querySelector('.fancy-select-option.is-selected');
         if (selectedBtn) {
             selectedBtn.scrollIntoView({ block: 'nearest' });
@@ -6333,9 +6419,16 @@ function enhance(select) {
     }
 
     function close() {
+        if (!wrap.classList.contains('is-open') && panel.hidden) return;
         wrap.classList.remove('is-open');
         wrap.setAttribute('aria-expanded', 'false');
         panel.hidden = true;
+        clearPanelPlacement(panel);
+        if (panel.parentNode === document.body) {
+            wrap.insertBefore(panel, select);
+        }
+        trackOpen(wrap, false);
+        setHostOpenState(wrap, false);
     }
 
     function toggle() {
@@ -6394,11 +6487,11 @@ function enhance(select) {
         attributeFilter: ['disabled', 'class', 'selected']
     });
 
-    // 點外面關閉
+    // 點外面關閉（panel 展開時掛在 body，需一併判斷）
     if (!_docBound) {
         _docBound = true;
         document.addEventListener('click', function(e) {
-            if (e.target.closest('.fancy-select')) return;
+            if (e.target.closest('.fancy-select') || e.target.closest('.fancy-select-panel')) return;
             closeAll();
         });
         document.addEventListener('keydown', function(e) {
@@ -6407,7 +6500,13 @@ function enhance(select) {
     }
 
     refresh();
-    instances.set(select, { wrap: wrap, refresh: refresh, open: open, close: close });
+    instances.set(select, {
+        wrap: wrap,
+        refresh: refresh,
+        open: open,
+        close: close,
+        reposition: reposition
+    });
 }
 
 function enhanceAll(root) {
