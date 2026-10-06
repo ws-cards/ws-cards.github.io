@@ -85,6 +85,10 @@ var _searchBusyShowTimer = null;
 var _searchBusyShowDelayMs = 200;
 var _lastSearchedValue = '';
 var _cardDictionary = null; // 暫存卡片字典的陣列
+var _dictNameIndex = null; // 卡名 → [卡號…]（由字典建立）
+var _currentSetNameIndex = null; // 目前產品卡表：卡名 → [卡號…]
+var _currentCardSetPrefix = ''; // 例如 BD/W54，用來優先挑同系列印刷
+var _cardtextNamePopoverBound = false;
 // cardStandard 下拉選單原生就帶 2 個預留 option，options.length 判斷不出載入狀態，需另外追蹤
 var _standardWLoaded = false;
 var _standardSLoaded = false;
@@ -3265,7 +3269,7 @@ elementCardNumber.addEventListener('change', function() {
 }
 
 /**
-* 將效果文字轉成可閱讀 HTML：跳脫 XSS、分段 <hr>、能力標記上色
+* 將效果文字轉成可閱讀 HTML：跳脫 XSS、分段 <hr>、能力標記上色、可點卡名
 * @param {string} cardText
 * @returns {string}
 */
@@ -3295,9 +3299,237 @@ function formatCardTextHtml(cardText) {
                 var cls = tagClassMap[tag] || 'misc';
                 return '<span class="cardtext-tag cardtext-tag-' + cls + '">【' + tag + '】</span>';
             });
+            highlighted = linkQuotedCardNamesInHtml(highlighted);
             return '<p class="cardtext-block">' + highlighted + '</p>';
         })
         .join('<hr class="cardtext-sep">');
+}
+
+/** 由目前產品卡表建立「卡名 → 卡號」索引 */
+function rebuildCurrentSetNameIndex(cards, currentCardId) {
+    _currentSetNameIndex = Object.create(null);
+    _currentCardSetPrefix = '';
+    if (currentCardId && String(currentCardId).indexOf('-') !== -1) {
+        _currentCardSetPrefix = String(currentCardId).split('-')[0];
+    }
+    (cards || []).forEach(function (c) {
+        if (!c) return;
+        var name = c.name || c.cardname;
+        var id = c.id || c.cardno;
+        if (!name || !id) return;
+        if (!_currentSetNameIndex[name]) _currentSetNameIndex[name] = [];
+        _currentSetNameIndex[name].push(id);
+    });
+}
+
+/** 由全站字典建立卡名索引（懶建一次） */
+function ensureDictNameIndex() {
+    if (_dictNameIndex || !_cardDictionary || !Array.isArray(_cardDictionary)) return;
+    _dictNameIndex = Object.create(null);
+    for (var i = 0; i < _cardDictionary.length; i++) {
+        var row = _cardDictionary[i];
+        if (!row || !row[0] || !row[1]) continue;
+        var id = row[0];
+        var name = row[1];
+        if (!_dictNameIndex[name]) _dictNameIndex[name] = [];
+        _dictNameIndex[name].push(id);
+    }
+}
+
+function resolveCardIdsByName(name) {
+    if (!name) return [];
+    if (_currentSetNameIndex && _currentSetNameIndex[name] && _currentSetNameIndex[name].length) {
+        return _currentSetNameIndex[name];
+    }
+    ensureDictNameIndex();
+    if (_dictNameIndex && _dictNameIndex[name] && _dictNameIndex[name].length) {
+        return _dictNameIndex[name];
+    }
+    return [];
+}
+
+/** 多印刷時優先同系列、再偏好一般稀有度（非 SP/SSP） */
+function pickPreferredCardId(ids, preferPrefix) {
+    if (!ids || !ids.length) return '';
+    var list = ids.slice();
+    if (preferPrefix) {
+        var same = list.filter(function (id) {
+            return String(id).indexOf(preferPrefix) === 0;
+        });
+        if (same.length) list = same;
+    }
+    function rarityScore(id) {
+        var m = String(id).match(/-(\d+)([A-Za-z_]*)$/);
+        if (!m) return 50;
+        var suf = m[2] || '';
+        if (!suf) return 0;
+        if (suf === '_' || /^[a-z]$/.test(suf)) return 1;
+        if (/^(C|U|R|RR|RRR|CR|CC|TD|PR|HN|N)$/i.test(suf)) return 2;
+        return 10;
+    }
+    list.sort(function (a, b) {
+        return rarityScore(a) - rarityScore(b) || a.length - b.length;
+    });
+    return list[0];
+}
+
+function unescapeBasicHtmlEntities(str) {
+    return String(str || '')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+}
+
+/** 將效果中可對到卡表的「卡名」變成可點連結（只做精確卡名，不連短稱） */
+function linkQuotedCardNamesInHtml(escapedHtml) {
+    return String(escapedHtml || '').replace(/「([^」]+)」/g, function (full, escapedName) {
+        var lookup = unescapeBasicHtmlEntities(escapedName);
+        var ids = resolveCardIdsByName(lookup);
+        if (!ids.length) return full;
+        var cardId = pickPreferredCardId(ids, _currentCardSetPrefix);
+        if (!cardId) return full;
+        var safeId = String(cardId)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;');
+        return '<button type="button" class="cardtext-name-link" data-card-id="' + safeId +
+            '" data-card-name="' + escapedName + '" aria-label="預覽卡片「' + escapedName + '」">' +
+            full + '</button>';
+    });
+}
+
+function ensureCardtextNamePopover() {
+    var el = document.getElementById('cardtextNamePopover');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'cardtextNamePopover';
+    el.className = 'cardtext-name-popover';
+    el.setAttribute('hidden', '');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', '卡片預覽');
+    el.innerHTML =
+        '<button type="button" class="cardtext-name-popover-close" aria-label="關閉預覽">' +
+        '<i class="fas fa-times" aria-hidden="true"></i></button>' +
+        '<div class="cardtext-name-popover-media">' +
+        '<img class="cardtext-name-popover-img" alt="" decoding="async">' +
+        '<div class="cardtext-name-popover-loading" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></div>' +
+        '</div>' +
+        '<div class="cardtext-name-popover-meta">' +
+        '<div class="cardtext-name-popover-name"></div>' +
+        '<div class="cardtext-name-popover-no"></div>' +
+        '</div>';
+    document.body.appendChild(el);
+    return el;
+}
+
+function hideCardtextNamePopover() {
+    var el = document.getElementById('cardtextNamePopover');
+    if (!el) return;
+    el.setAttribute('hidden', '');
+    el.classList.remove('is-open');
+    var img = el.querySelector('.cardtext-name-popover-img');
+    if (img) {
+        img.removeAttribute('src');
+        img.onload = null;
+        img.onerror = null;
+    }
+}
+
+function positionCardtextNamePopover(popover, anchorEl) {
+    var rect = anchorEl.getBoundingClientRect();
+    var pad = 10;
+    var width = Math.min(220, window.innerWidth - pad * 2);
+    popover.style.width = width + 'px';
+    // 先顯示才能量高度
+    popover.removeAttribute('hidden');
+    popover.classList.add('is-open');
+    var height = popover.offsetHeight || 320;
+    var left = rect.left + rect.width / 2 - width / 2;
+    left = Math.max(pad, Math.min(left, window.innerWidth - width - pad));
+    var top = rect.bottom + 8;
+    if (top + height > window.innerHeight - pad && rect.top - 8 - height > pad) {
+        top = rect.top - 8 - height;
+    }
+    top = Math.max(pad, Math.min(top, window.innerHeight - height - pad));
+    popover.style.left = Math.round(left) + 'px';
+    popover.style.top = Math.round(top) + 'px';
+}
+
+function showCardtextNamePopover(anchorEl) {
+    var cardId = anchorEl.getAttribute('data-card-id');
+    var cardName = unescapeBasicHtmlEntities(anchorEl.getAttribute('data-card-name') || '');
+    if (!cardId) return;
+
+    var popover = ensureCardtextNamePopover();
+    var img = popover.querySelector('.cardtext-name-popover-img');
+    var loading = popover.querySelector('.cardtext-name-popover-loading');
+    var nameEl = popover.querySelector('.cardtext-name-popover-name');
+    var noEl = popover.querySelector('.cardtext-name-popover-no');
+    if (nameEl) nameEl.textContent = cardName ? ('「' + cardName + '」') : '';
+    if (noEl) noEl.textContent = cardId;
+
+    var urls = (typeof buildCardImageUrls === 'function')
+        ? buildCardImageUrls(cardId)
+        : { primary: '', fallback: '' };
+
+    if (loading) loading.hidden = false;
+    if (img) {
+        img.style.opacity = '0';
+        img.onload = function () {
+            if (loading) loading.hidden = true;
+            img.style.opacity = '1';
+            positionCardtextNamePopover(popover, anchorEl);
+        };
+        img.onerror = function () {
+            if (urls.fallback && img.src !== urls.fallback) {
+                img.src = urls.fallback;
+                return;
+            }
+            if (loading) loading.hidden = true;
+            img.alt = '找不到卡圖';
+            positionCardtextNamePopover(popover, anchorEl);
+        };
+        img.alt = cardName || cardId;
+        img.src = urls.primary || urls.fallback || '';
+    }
+
+    positionCardtextNamePopover(popover, anchorEl);
+}
+
+function bindCardtextNamePopover() {
+    if (_cardtextNamePopoverBound) return;
+    _cardtextNamePopoverBound = true;
+
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('.cardtext-name-link');
+        if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            showCardtextNamePopover(link);
+            return;
+        }
+        var popover = document.getElementById('cardtextNamePopover');
+        if (popover && !popover.hasAttribute('hidden')) {
+            if (e.target.closest && e.target.closest('.cardtext-name-popover-close')) {
+                hideCardtextNamePopover();
+                return;
+            }
+            if (!(e.target.closest && e.target.closest('#cardtextNamePopover'))) {
+                hideCardtextNamePopover();
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') hideCardtextNamePopover();
+    });
+
+    window.addEventListener('scroll', function () {
+        hideCardtextNamePopover();
+    }, true);
+    window.addEventListener('resize', hideCardtextNamePopover);
 }
 
 /**
@@ -3374,6 +3606,7 @@ document.getElementById('cardfeatures').textContent = cardData.cardfeatures || '
 
 // 更新效果（分段 + 能力標記高亮，需先防範 XSS）
 document.getElementById('cardtext').innerHTML = formatCardTextHtml(cardData.cardtext || '-');
+bindCardtextNamePopover();
 
 console.log('卡片資訊已更新:', cardData.cardno);
 
@@ -3431,10 +3664,34 @@ fetch(jsonUrl)
         if (data.cards && Array.isArray(data.cards)) {
             // 參照 BAV_W129.json 的格式
             rawCardData = data.cards.find(c => c.id === cardNumber);
+            rebuildCurrentSetNameIndex(data.cards, cardNumber);
         } else {
             // 相容舊格式
             rawCardData = data[cardNumber];
+            var legacyCards = Object.keys(data).map(function (k) {
+                var item = data[k] || {};
+                if (!item.id && !item.cardno) item.id = k;
+                if (!item.name && item.cardname) item.name = item.cardname;
+                return item;
+            });
+            rebuildCurrentSetNameIndex(legacyCards, cardNumber);
         }
+
+        // 預載全站字典，補齊跨作品卡名；載入後重繪一次效果文字
+        var requestedCardNumber = cardNumber;
+        fetchCardDictionary(function () {
+            ensureDictNameIndex();
+            var textEl = document.getElementById('cardtext');
+            var noEl = document.getElementById('cardno');
+            if (!textEl || !rawCardData) return;
+            // 使用者已換卡則略過舊回應
+            if (noEl && noEl.textContent && noEl.textContent !== requestedCardNumber) return;
+            var latestText = Array.isArray(rawCardData.text)
+                ? rawCardData.text.join('\n')
+                : (rawCardData.cardtext || '');
+            if (!latestText || latestText.indexOf('「') === -1) return;
+            textEl.innerHTML = formatCardTextHtml(latestText);
+        });
 
         if (rawCardData) {
             // 將新格式轉換為 updateCardInfo 需要的格式
