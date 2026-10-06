@@ -1274,6 +1274,34 @@ function syncCascadeSelectEnabled(selectEl) {
     selectEl.setAttribute('aria-disabled', hasReal ? 'false' : 'true');
     // 不再用 visibility 隱藏：禁用態保留版面，避免「空一塊」
     selectEl.style.visibility = 'visible';
+    refreshFancySelect(selectEl);
+}
+
+/**
+ * 程式設定 option.selected 不會觸發 change，FancySelect 外觀不會更新。
+ * 統一用此函式選取並派送 change（連動 onchange + FancySelect.refresh）。
+ */
+function setNativeSelectOption(selectEl, optionEl) {
+    if (!selectEl || !optionEl) return false;
+    optionEl.selected = true;
+    try {
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (e) {
+        var ev = document.createEvent('HTMLEvents');
+        ev.initEvent('change', true, false);
+        selectEl.dispatchEvent(ev);
+    }
+    // 雙保險：即使 listener 尚未綁定也強制同步外觀
+    refreshFancySelect(selectEl);
+    return true;
+}
+
+function refreshFancySelect(selectOrId) {
+    if (typeof FancySelectModule !== 'undefined' &&
+        FancySelectModule &&
+        typeof FancySelectModule.refresh === 'function') {
+        FancySelectModule.refresh(selectOrId);
+    }
 }
 
 function setCascadePlaceholder(selectEl, value, text) {
@@ -1502,8 +1530,14 @@ changeStandardAfterChangeNumber();
 * 用於 Typeahead 選擇後自動設置
 */
 function changeStandardForSuggest(productName){
-document.getElementById(productName).selected=true
-changeStandard();		  
+    var opt = document.getElementById(productName);
+    var select = document.getElementById('cardStandard');
+    if (!opt || !select) {
+        console.warn('找不到作品選項，無法同步 FancySelect:', productName);
+        return;
+    }
+    // 派送 change → onchange=changeStandard + FancySelect 外觀同步
+    setNativeSelectOption(select, opt);
 }	
 
 /**
@@ -2864,11 +2898,8 @@ var checkInterval = setInterval(() => {
     // 檢查值是否包含我們的前綴
     if (value && value.toLowerCase().includes(searchTarget)) {
       console.log('找到匹配的作品標準:', option.text, 'value:', value);
-      option.selected = true;
-      
-      // 觸發變更事件
       removeTitle();
-      changeStandard();
+      setNativeSelectOption(cardStandardSelect, option);
       
       resolve(true);
       return;
@@ -2909,10 +2940,7 @@ var checkInterval = setInterval(() => {
 
     if (value && value.toLowerCase() === searchTarget) {
       console.log('找到匹配的主題:', option.text, 'value:', value);
-      option.selected = true;
-      
-      // 觸發變更事件
-      changeTitle();
+      setNativeSelectOption(cardTitleSelect, option);
       
       resolve(true);
       return;
@@ -2962,7 +2990,7 @@ var checkInterval = setInterval(async () => {
         var hasMatchingNumber = await checkTitleOfCardNumberList(suffix);
         if (hasMatchingNumber) {
           console.log('檢測到匹配的卡號，變更主題...'+suffix.toLowerCase());
-          changeTitle();
+          setNativeSelectOption(cardTitleSelect, option);
           resolve(true);
           return;
         }
@@ -3038,15 +3066,11 @@ var checkInterval = setInterval(() => {
 
     if (value && value.toLowerCase() === searchTarget) {
       console.log('找到匹配的卡號:', option.text, 'value:', value);
-      option.selected = true;
-      
       window._hasUserModified = true;
 
-      // 先銷毀現有圖表再觸发變更事件
+      // 先銷毀現有圖表再觸發變更事件
       destroyAllCharts();
-      
-      // 觸發變更事件
-      changeNumber();
+      setNativeSelectOption(cardNumberSelect, option);
       
       resolve(true);
       return;
@@ -3088,15 +3112,11 @@ var checkInterval = setInterval(() => {
     // console.log('findAndSetCardNumberBySuffix value.toLowerCase():'+value.toLowerCase());  
     if (value && value.toLowerCase().includes(searchTarget)) {
       console.log('找到匹配的卡號:', option.text, 'value:', value);
-      option.selected = true;
-      
       window._hasUserModified = true;
 
       // 先銷毀現有圖表再觸發變更事件
       destroyAllCharts();
-      
-      // 觸發變更事件
-      changeNumber();
+      setNativeSelectOption(cardNumberSelect, option);
       
       resolve(true);
       return;
