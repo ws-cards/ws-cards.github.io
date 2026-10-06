@@ -3923,6 +3923,174 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     border-color: rgba(240, 238, 230, 0.12);
 }
 
+/* —— FancySelect（對齊 CodePen KVdYjz 實圖） —— */
+.fancy-select {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    outline: none;
+    z-index: 1;
+}
+
+.fancy-select.is-open {
+    z-index: 50;
+    height: auto;
+}
+
+.fancy-select-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* 選中列：#666 + 右側三角（與 CodePen checked label 相同） */
+.fancy-select-trigger {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 40px 0 10px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    border: 0;
+    border-radius: 0;
+    background: #666;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.fancy-select-trigger::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    background: #666;
+    pointer-events: none;
+}
+
+.fancy-select-trigger::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #fff;
+    position: absolute;
+    right: 10px;
+    top: calc(50% - 2.5px);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* 展開列：緊貼選中列下方，無圓角／陰影／外框 */
+.fancy-select-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40px;
+    z-index: 1;
+    max-height: min(280px, 50vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 0;
+    border-radius: 0;
+    background: #333;
+    color: #fff;
+    box-shadow: none;
+}
+
+.fancy-select-group {
+    padding: 0.4rem 10px 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    background: #2a2a2a;
+    border-top: 1px solid #222;
+}
+
+.fancy-select-option {
+    width: 100%;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 30px 0 10px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    border: 0;
+    border-top: 1px solid #222;
+    border-radius: 0;
+    background: #333;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: background 0.4s ease-in-out;
+}
+
+.fancy-select-option:hover,
+.fancy-select-option:focus-visible {
+    outline: none;
+    background: #666;
+}
+
+/* 選中項已在 trigger 顯示，面板內不再重複 */
+.fancy-select-option.is-selected {
+    display: none;
+}
+
+.fancy-select.is-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.fancy-select.is-disabled .fancy-select-trigger {
+    cursor: not-allowed;
+    background: #555;
+}
+
+.fancy-select.is-disabled .fancy-select-trigger::before {
+    background: #555;
+}
+
+.chart-time-wrap .fancy-select {
+    width: auto;
+    min-width: 7.5rem;
+}
+
+.chart-time-wrap .fancy-select-trigger {
+    font-size: 0.82rem;
+}
+
+body.market-desk-page .market-filter-strip .fancy-select {
+    margin: 0;
+}
+
 body.market-desk-page .advanced-filter-btn {
     border-color: color-mix(in srgb, var(--desk-foil) 40%, transparent) !important;
     background: color-mix(in srgb, var(--desk-foil) 12%, transparent) !important;

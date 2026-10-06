@@ -6173,3 +6173,268 @@ return {
         bindCoachDismiss();
     }
 })();
+
+
+// ====================================================
+// FancySelect — CodePen 風格自訂下拉（同步原生 select）
+// 參考: https://codepen.io/cssinate/pen/KVdYjz
+// 篩選條件與圖表時間選單套用；選項很多時面板可捲動。
+// ====================================================
+
+var FancySelectModule = (function() {
+var SELECTOR = '.market-filter-strip select, select.chart-period';
+var instances = new WeakMap();
+var _docBound = false;
+
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function selectedLabel(select) {
+    if (!select || select.selectedIndex < 0) return '';
+    var opt = select.options[select.selectedIndex];
+    return (opt && (opt.textContent || opt.label || opt.value)) || '';
+}
+
+function isDisabled(select) {
+    return !!(select && (select.disabled || select.classList.contains('is-cascade-pending')));
+}
+
+function closeAll(except) {
+    document.querySelectorAll('.fancy-select.is-open').forEach(function(el) {
+        if (except && el === except) return;
+        el.classList.remove('is-open');
+        el.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function buildOptionsHtml(select) {
+    var html = '';
+    var children = select.children;
+    for (var i = 0; i < children.length; i++) {
+        var node = children[i];
+        if (node.tagName === 'OPTGROUP') {
+            var label = node.getAttribute('label') || '';
+            if (label) {
+                html += '<div class="fancy-select-group" role="presentation">' + escapeHtml(label) + '</div>';
+            }
+            var opts = node.children;
+            for (var j = 0; j < opts.length; j++) {
+                html += optionButtonHtml(opts[j], select);
+            }
+        } else if (node.tagName === 'OPTION') {
+            html += optionButtonHtml(node, select);
+        }
+    }
+    return html;
+}
+
+function optionButtonHtml(opt, select) {
+    if (!opt) return '';
+    var text = (opt.textContent || '').trim();
+    // 空文字的占位 option（Schwarz 預留）略過顯示
+    if (!text && opt.value === '000/000-000') return '';
+    var value = opt.value;
+    var selected = opt.selected || (select && select.value === value && opt === select.options[select.selectedIndex]);
+    var disabled = !!opt.disabled;
+    return '<button type="button" class="fancy-select-option' + (selected ? ' is-selected' : '') + '"' +
+        ' role="option"' +
+        ' data-value="' + escapeHtml(value) + '"' +
+        ' aria-selected="' + (selected ? 'true' : 'false') + '"' +
+        (disabled ? ' disabled' : '') +
+        '>' + escapeHtml(text || value) + '</button>';
+}
+
+function syncNativeValue(select, value) {
+    if (!select) return;
+    var prev = select.value;
+    var found = false;
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === value) {
+            select.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+    if (!found) return;
+    if (select.value !== prev) {
+        // 觸發既有 onchange / addEventListener('change')
+        var ev;
+        try {
+            ev = new Event('change', { bubbles: true });
+        } catch (e) {
+            ev = document.createEvent('HTMLEvents');
+            ev.initEvent('change', true, false);
+        }
+        select.dispatchEvent(ev);
+    }
+}
+
+function enhance(select) {
+    if (!select || select.dataset.fancySelect === '1') return;
+    select.dataset.fancySelect = '1';
+    select.classList.add('fancy-select-native');
+
+    var wrap = document.createElement('div');
+    wrap.className = 'fancy-select';
+    wrap.setAttribute('tabindex', '0');
+    wrap.setAttribute('role', 'combobox');
+    wrap.setAttribute('aria-haspopup', 'listbox');
+    wrap.setAttribute('aria-expanded', 'false');
+    if (select.id) {
+        wrap.setAttribute('data-fancy-for', select.id);
+        wrap.id = 'fancy-' + select.id;
+    }
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'fancy-select-trigger option';
+    trigger.setAttribute('aria-label', (select.getAttribute('aria-label') || select.name || '選擇項目'));
+
+    var panel = document.createElement('div');
+    panel.className = 'fancy-select-panel';
+    panel.setAttribute('role', 'listbox');
+    panel.hidden = true;
+
+    // 把 wrap 插在 select 前，再把 select 移入 wrap（維持 DOM 可查）
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(trigger);
+    wrap.appendChild(panel);
+    wrap.appendChild(select);
+
+    function refresh() {
+        var disabled = isDisabled(select);
+        wrap.classList.toggle('is-disabled', disabled);
+        wrap.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        if (disabled) {
+            wrap.classList.remove('is-open');
+            wrap.setAttribute('aria-expanded', 'false');
+            panel.hidden = true;
+        }
+        trigger.textContent = selectedLabel(select) || '—';
+        panel.innerHTML = buildOptionsHtml(select);
+    }
+
+    function open() {
+        if (isDisabled(select)) return;
+        closeAll(wrap);
+        wrap.classList.add('is-open');
+        wrap.setAttribute('aria-expanded', 'true');
+        panel.hidden = false;
+        var selectedBtn = panel.querySelector('.fancy-select-option.is-selected');
+        if (selectedBtn) {
+            selectedBtn.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function close() {
+        wrap.classList.remove('is-open');
+        wrap.setAttribute('aria-expanded', 'false');
+        panel.hidden = true;
+    }
+
+    function toggle() {
+        if (wrap.classList.contains('is-open')) close();
+        else open();
+    }
+
+    trigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (select.id === 'cardStandard' && typeof removeTitle === 'function') {
+            removeTitle();
+        }
+        toggle();
+    });
+
+    wrap.addEventListener('keydown', function(e) {
+        if (isDisabled(select)) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggle();
+        } else if (e.key === 'Escape') {
+            close();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!wrap.classList.contains('is-open')) open();
+            var first = panel.querySelector('.fancy-select-option:not([disabled])');
+            if (first) first.focus();
+        }
+    });
+
+    panel.addEventListener('click', function(e) {
+        var btn = e.target.closest('.fancy-select-option');
+        if (!btn || btn.disabled) return;
+        e.preventDefault();
+        var value = btn.getAttribute('data-value');
+        syncNativeValue(select, value);
+        refresh();
+        close();
+        // 與 CodePen 相同：選完後焦點回到容器
+        wrap.focus();
+    });
+
+    // 原生 change（含既有 onchange 屬性觸發後）同步外觀
+    select.addEventListener('change', function() {
+        refresh();
+    });
+
+    var mo = new MutationObserver(function() {
+        refresh();
+    });
+    mo.observe(select, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['disabled', 'class', 'selected']
+    });
+
+    // 點外面關閉
+    if (!_docBound) {
+        _docBound = true;
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.fancy-select')) return;
+            closeAll();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAll();
+        });
+    }
+
+    refresh();
+    instances.set(select, { wrap: wrap, refresh: refresh, open: open, close: close });
+}
+
+function enhanceAll(root) {
+    var scope = root || document;
+    scope.querySelectorAll(SELECTOR).forEach(enhance);
+}
+
+function refresh(selectOrId) {
+    var select = typeof selectOrId === 'string' ? document.getElementById(selectOrId) : selectOrId;
+    var inst = select && instances.get(select);
+    if (inst) inst.refresh();
+}
+
+function init() {
+    enhanceAll(document);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+return {
+    init: init,
+    enhanceAll: enhanceAll,
+    enhance: enhance,
+    refresh: refresh
+};
+})();
