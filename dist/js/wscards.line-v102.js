@@ -3265,6 +3265,42 @@ elementCardNumber.addEventListener('change', function() {
 }
 
 /**
+* 將效果文字轉成可閱讀 HTML：跳脫 XSS、分段 <hr>、能力標記上色
+* @param {string} cardText
+* @returns {string}
+*/
+function formatCardTextHtml(cardText) {
+    var raw = (cardText == null || cardText === '') ? '-' : String(cardText);
+    var escaped = raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    var tagClassMap = {
+        '永': 'cont',
+        '自': 'auto',
+        '起': 'act',
+        'カウンター': 'counter',
+        'CXコンボ': 'cx'
+    };
+    var tagPattern = /【(永|自|起|カウンター|CXコンボ)】/g;
+
+    return escaped
+        .split(/\n+/)
+        .map(function (part) { return part.trim(); })
+        .filter(Boolean)
+        .map(function (part) {
+            var highlighted = part.replace(tagPattern, function (_match, tag) {
+                var cls = tagClassMap[tag] || 'misc';
+                return '<span class="cardtext-tag cardtext-tag-' + cls + '">【' + tag + '】</span>';
+            });
+            return '<p class="cardtext-block">' + highlighted + '</p>';
+        })
+        .join('<hr class="cardtext-sep">');
+}
+
+/**
 * 更新卡片資訊函數
 * @param {object} cardData - 卡片資料物件
 * 
@@ -3336,20 +3372,8 @@ document.getElementById('cardtrigger').textContent = cardData.cardtrigger || '-'
 // 更新特徵
 document.getElementById('cardfeatures').textContent = cardData.cardfeatures || '-' ;
 
-// 更新效果（每段以 <hr> 分隔，但需先防範 XSS）
-const cardText = cardData.cardtext || '-';
-const escapedCardText = cardText
-  .replace(/&/g, "&amp;")
-  .replace(/</g, "&lt;")
-  .replace(/>/g, "&gt;")
-  .replace(/"/g, "&quot;")
-  .replace(/'/g, "&#039;");
-// 各效果段落（JSON text[] 以 \n 接合）用主題感知的分隔線切開，方便閱讀
-document.getElementById('cardtext').innerHTML = escapedCardText
-  .split(/\n+/)
-  .map(function (part) { return part.trim(); })
-  .filter(Boolean)
-  .join('<hr class="cardtext-sep">');
+// 更新效果（分段 + 能力標記高亮，需先防範 XSS）
+document.getElementById('cardtext').innerHTML = formatCardTextHtml(cardData.cardtext || '-');
 
 console.log('卡片資訊已更新:', cardData.cardno);
 
