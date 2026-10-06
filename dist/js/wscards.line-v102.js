@@ -1240,7 +1240,6 @@ mappingRep = requestMapping.response;
  * 級聯篩選：產品／卡號在尚無資料時保持可見但禁用，避免空白洞。
  */
 var CASCADE_PLACEHOLDER = {
-    titleWaiting: '請先選擇作品系列',
     titleReady: '選擇產品',
     numberWaiting: '請先選擇產品'
 };
@@ -1256,9 +1255,9 @@ function isCascadePlaceholderText(text) {
         || t === '選擇主題'
         || t === '選擇產品'
         || t === '選擇卡號'
-        || t === CASCADE_PLACEHOLDER.titleWaiting
         || t === CASCADE_PLACEHOLDER.titleReady
-        || t === CASCADE_PLACEHOLDER.numberWaiting;
+        || t === CASCADE_PLACEHOLDER.numberWaiting
+        || t === '請先選擇作品系列';
 }
 
 function syncCascadeSelectEnabled(selectEl) {
@@ -1290,14 +1289,6 @@ function setCascadePlaceholder(selectEl, value, text) {
     syncCascadeSelectEnabled(selectEl);
 }
 
-function resetCardTitleWaiting() {
-    setCascadePlaceholder(
-        document.getElementById('cardTitle'),
-        '000/000-000',
-        CASCADE_PLACEHOLDER.titleWaiting
-    );
-}
-
 function resetCardTitleReady() {
     setCascadePlaceholder(
         document.getElementById('cardTitle'),
@@ -1327,8 +1318,9 @@ var selectStandard = document.getElementById("cardStandard");
 selectStandard.length = 1;
 selectStandard.options[0].selected = true;	
 
-// 產品／卡號：可見但禁用，等上層有資料再啟用
-resetCardTitleWaiting();
+// 產品可直接選（進站載入全部產品）；卡號等產品有資料再啟用
+var selectTitle = document.getElementById("cardTitle");
+resetCardTitleReady();
 resetCardNumberWaiting();
           
 // 載入 Weiss 作品標準
@@ -1396,16 +1388,18 @@ requestTitle.send();
 
 /**
  * 主題資料載入完成後
- * - 填充主題選擇器
+ * - 填充主題選擇器（可不先選作品系列）
  */	
 requestTitle.onload = function(){
     var cardsTitle = requestTitle.response;
+    resetCardTitleReady();
     for(var key in cardsTitle){	 
         var option = document.createElement("option");
         option.setAttribute("value",key);
         option.appendChild(document.createTextNode(cardsTitle[key])); 
         selectTitle.appendChild(option);				
     }
+    syncCascadeSelectEnabled(selectTitle);
 }
 
 /**
@@ -1460,8 +1454,8 @@ var cardStandard=document.getElementById('cardStandard').value;
 var cardStandardEle=document.getElementById('cardStandard');
 var selectTitle = document.getElementById("cardTitle"); 
 
-// 清空主題選擇器，先回到「請先選擇作品系列」禁用態
-resetCardTitleWaiting();
+// 清空主題選擇器，保留「選擇產品」；卡號先禁用等待
+resetCardTitleReady();
 resetCardNumberWaiting();
 
 // 重新載入主題資料
@@ -3220,7 +3214,7 @@ smoothScrollToAnchor('myChart', 'smooth', 'start');
 */
 function reGenTitle(){
           var selectTitle = document.getElementById("cardTitle"); 
-          resetCardTitleWaiting();
+          resetCardTitleReady();
           
           requestTitle.open('GET', requestURLCardTitle);
           requestTitle.responseType = 'json';
