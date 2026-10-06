@@ -1968,11 +1968,12 @@ background: rgba(255, 255, 255, 0.08);
 color: var(--text-primary);
 }
 
-/* 滑動指示器 */
+/* 滑動指示器（文字分頁：屬性／效果） */
 .swipe-indicators {
 display: flex;
 justify-content: center;
-gap: 0.5rem;
+align-items: center;
+gap: 0.4rem;
 margin-top: 1rem;
 }
 
@@ -1980,14 +1981,51 @@ margin-top: 1rem;
 width: 8px;
 height: 8px;
 border-radius: 50%;
-background: rgba(255, 255, 255, 0.3);
+background: rgba(113, 128, 150, 0.28);
 cursor: pointer;
 transition: all 0.3s ease;
+border: 0;
+padding: 0;
+}
+
+.swipe-dot.swipe-tab {
+width: auto;
+height: auto;
+min-width: 3.25rem;
+padding: 0.28rem 0.75rem;
+border-radius: 999px;
+font-size: 0.78rem;
+font-weight: 600;
+line-height: 1.2;
+color: var(--text-secondary);
+background: rgba(113, 128, 150, 0.12);
+transform: none;
 }
 
 .swipe-dot.active {
 background: var(--primary-gradient);
 transform: scale(1.2);
+}
+
+.swipe-dot.swipe-tab.active {
+color: #fff;
+transform: none;
+box-shadow: 0 2px 8px rgba(102, 126, 234, 0.28);
+}
+
+[data-theme="dark"] .swipe-dot {
+background: rgba(233, 231, 225, 0.22);
+}
+
+[data-theme="dark"] .swipe-dot.swipe-tab {
+color: var(--text-secondary);
+background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .swipe-dot.swipe-tab.active {
+color: #1a1206;
+background: var(--primary-gradient);
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 /* 手機版優化 */
@@ -2096,15 +2134,47 @@ text-align: left; /* 長文字左對齊更好讀 */
 margin-left: 0.5rem;
 }
 
-/* 效果欄：多段效果以分隔線切開；淺／深色對比不同 */
-.info-item.single-column .info-row {
-align-items: flex-start;
+/* 效果欄：標題在上、全文滿寬；分段 + 能力標記協助掃讀 */
+.info-item.single-column .info-row.cardtext-row {
+flex-direction: column;
+align-items: stretch;
+gap: 0.45rem;
+}
+
+.cardtext-heading {
+display: inline-flex;
+align-items: center;
+gap: 0.15rem;
+color: var(--text-secondary);
+font-weight: 600;
+font-size: 0.85rem;
+}
+
+.cardtext-heading i {
+color: #667eea;
+width: 20px;
+text-align: center;
+}
+
+[data-theme="dark"] .cardtext-heading i {
+color: #cbb083;
 }
 
 #cardtext.long-text {
+display: block;
+width: 100%;
+max-width: none;
+margin-left: 0;
 flex: 1;
 min-width: 0;
-line-height: 1.45;
+line-height: 1.55;
+text-align: left;
+padding: 0.55rem 0.7rem;
+}
+
+#cardtext .cardtext-block {
+margin: 0;
+padding: 0;
 }
 
 #cardtext .cardtext-sep {
@@ -2118,6 +2188,70 @@ background: transparent;
 
 [data-theme="dark"] #cardtext .cardtext-sep {
 border-top-color: rgba(233, 231, 225, 0.22);
+}
+
+/* 能力類型標記：永／自／起／CX／カウンター */
+#cardtext .cardtext-tag {
+display: inline-block;
+margin: 0 0.2rem 0.15rem 0;
+padding: 0.08rem 0.35rem;
+border-radius: 5px;
+font-size: 0.78em;
+font-weight: 700;
+line-height: 1.35;
+letter-spacing: 0.02em;
+vertical-align: baseline;
+white-space: nowrap;
+}
+
+#cardtext .cardtext-tag-cont {
+color: #1f4f8a;
+background: rgba(31, 79, 138, 0.12);
+}
+
+#cardtext .cardtext-tag-auto {
+color: #8a4b12;
+background: rgba(176, 124, 40, 0.16);
+}
+
+#cardtext .cardtext-tag-act {
+color: #1f6b45;
+background: rgba(31, 107, 69, 0.14);
+}
+
+#cardtext .cardtext-tag-cx {
+color: #6b2f7a;
+background: rgba(107, 47, 122, 0.14);
+}
+
+#cardtext .cardtext-tag-counter {
+color: #8a2f2f;
+background: rgba(180, 93, 82, 0.16);
+}
+
+[data-theme="dark"] #cardtext .cardtext-tag-cont {
+color: #9ec0ef;
+background: rgba(145, 169, 199, 0.18);
+}
+
+[data-theme="dark"] #cardtext .cardtext-tag-auto {
+color: #e0c493;
+background: rgba(203, 176, 131, 0.18);
+}
+
+[data-theme="dark"] #cardtext .cardtext-tag-act {
+color: #8fc5a4;
+background: rgba(143, 197, 164, 0.16);
+}
+
+[data-theme="dark"] #cardtext .cardtext-tag-cx {
+color: #d4b0e0;
+background: rgba(180, 140, 200, 0.18);
+}
+
+[data-theme="dark"] #cardtext .cardtext-tag-counter {
+color: #dc8a80;
+background: rgba(220, 138, 128, 0.18);
 }
 
 

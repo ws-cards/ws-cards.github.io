@@ -369,18 +369,20 @@
                                     </div>                                 
                             </div>            
                             <div class="info-item single-column"> 
-                                <div class="info-row">
-                                    <i class="fas fa-users mr-2"></i>
-                                    <span>效果</span>
-                                    <div class="info-value long-text" id="cardtext">【永】 あなたのターン中、他のあなたの《音楽》のキャラ1枚につき、このカードのパワーを＋500。<hr class="cardtext-sep">【自】 このカードが手札から舞台に置かれた時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。<hr class="cardtext-sep">【自】【CXコンボ】［(3) 手札を2枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたのクライマックス置場に「激しいシャウト」があるなら、あなたはコストを払ってよい。そうしたら、次の行動を2回行う。『相手に2ダメージを与える。』（ダメージキャンセルは発生する）</div>
+                                <div class="info-row cardtext-row">
+                                    <div class="cardtext-heading">
+                                        <i class="fas fa-scroll mr-2" aria-hidden="true"></i>
+                                        <span>效果</span>
+                                    </div>
+                                    <div class="info-value long-text" id="cardtext"><p class="cardtext-block"><span class="cardtext-tag cardtext-tag-cont">【永】</span> あなたのターン中、他のあなたの《音楽》のキャラ1枚につき、このカードのパワーを＋500。</p><hr class="cardtext-sep"><p class="cardtext-block"><span class="cardtext-tag cardtext-tag-auto">【自】</span> このカードが手札から舞台に置かれた時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。</p><hr class="cardtext-sep"><p class="cardtext-block"><span class="cardtext-tag cardtext-tag-auto">【自】</span><span class="cardtext-tag cardtext-tag-cx">【CXコンボ】</span>［(3) 手札を2枚控え室に置く］ このカードのバトル相手が【リバース】した時、あなたのクライマックス置場に「激しいシャウト」があるなら、あなたはコストを払ってよい。そうしたら、次の行動を2回行う。『相手に2ダメージを与える。』（ダメージキャンセルは発生する）</p></div>
                                 </div>				  
                             </div>
                         </div>
               
-                        <!-- 滑動指示器 -->
-                        <div class="swipe-indicators" id="swipeIndicators">
-                            <div class="swipe-dot active" data-index="0"></div>
-                            <div class="swipe-dot" data-index="1"></div>
+                        <!-- 滑動指示器：標成「屬性／效果」，讓使用者知道第二頁有什麼 -->
+                        <div class="swipe-indicators" id="swipeIndicators" role="tablist" aria-label="卡片資訊分頁">
+                            <button type="button" class="swipe-dot swipe-tab active" data-index="0" role="tab" aria-selected="true">屬性</button>
+                            <button type="button" class="swipe-dot swipe-tab" data-index="1" role="tab" aria-selected="false">效果</button>
                         </div>
                     </div>
                 </div>	  
@@ -965,7 +967,11 @@ class InfoSwiper {
 
     updateIndicators() {
         this.indicators.forEach((dot, index) => {
-            dot.classList.toggle('active', index === this.currentIndex);
+            const isActive = index === this.currentIndex;
+            dot.classList.toggle('active', isActive);
+            if (dot.hasAttribute('aria-selected')) {
+                dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            }
         });
     }
     
