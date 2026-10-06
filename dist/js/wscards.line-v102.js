@@ -1411,10 +1411,6 @@ requestPrice.onload = function(){
     getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
     //loadCardData 預設
     loadCardData('BD/W54-070SSP');
-    // 載入預設鑑定卡資料
-    if (typeof GradingModule !== 'undefined') {
-        GradingModule.loadGradingData('BD_W54', 'BD/W54-070SSP');
-    }
     searchCardNumberFromUrl();
 }
 
@@ -2039,7 +2035,7 @@ requestStock.onload = function() {
 }				
 
 /**
- * update 卡片資訊 & 鑑定卡資料
+ * update 卡片資訊
 */
 var cardNumberSelect_info = document.getElementById('cardNumber');
 var cardNumberValue = cardNumberSelect_info.value;
@@ -2050,10 +2046,6 @@ if (cardNumberSelect_info.selectedIndex >= 0) {
 
 if (cardNumberValue && cardNumberValue !== '000/000-000') {
     loadCardData(cardNumberValue);
-
-    if (typeof GradingModule !== 'undefined') {
-        GradingModule.loadGradingData(cardTilteReplaceSpare, cardNumberDisplayText);
-    }
 }
 
 
@@ -2255,6 +2247,11 @@ console.log("進入繪圖區:"+cardNum);
 
             // 5. 更新價格摘要統計卡片
             updatePriceSummary(cardData);
+
+            // 5.5 快取產品價格包，供「此卡其他稀有度」顯示現價（不另打 API）
+            if (typeof RarityVariantsModule !== 'undefined') {
+                RarityVariantsModule.cacheProductPrices(jsonObj);
+            }
 
             // 6. 記錄到搜尋歷史 (有變動才寫入)
             if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
@@ -3422,7 +3419,7 @@ fetch(jsonUrl)
             updateCardInfo(cardData);
             hideInfoMask();
             
-            // ===== 判斷並生成稀有度下拉選單 =====
+            // ===== 此卡其他稀有度：圖片橫滑（篩選條件下拉仍保留） =====
             let baseCardNumber = cardNumber;
             const baseMatch = cardNumber.match(/^(.+-\d+)/);
             if (baseMatch) {
@@ -3433,86 +3430,47 @@ fetch(jsonUrl)
             if (data.cards && Array.isArray(data.cards)) {
                 relatedCards = data.cards.filter(c => c.id && c.id.startsWith(baseCardNumber));
             } else {
-                relatedCards = Object.keys(data).filter(k => k.startsWith(baseCardNumber)).map(k => data[k]);
+                relatedCards = Object.keys(data).filter(k => k.startsWith(baseCardNumber)).map(k => {
+                    var item = data[k] || {};
+                    if (!item.id && !item.cardno) item.id = k;
+                    return item;
+                });
             }
 
             // 過濾掉可能因為數字前綴相同但長度不同的卡號 (例如 097 和 0970)
             relatedCards = relatedCards.filter(c => {
                 const id = c.id || c.cardno;
-                // 確保緊接在 baseCardNumber 後面的字元不是數字
+                if (!id) return false;
                 if (id === baseCardNumber) return true;
                 const rest = id.substring(baseCardNumber.length);
                 return !/^\d/.test(rest);
             });
 
-            // 取得 filter-container
-            const filterContainer = document.querySelector('.filter-container');
-            if (filterContainer) {
-                // 如果已經有稀有度下拉選單，先移除
-                const existingGroup = document.getElementById('rareFilterGroup');
-                if (existingGroup) {
-                    existingGroup.remove();
-                }
+            // 不再把稀有度塞進篩選條件下拉；改由左欄圖片橫滑挑選
+            const existingGroup = document.getElementById('rareFilterGroup');
+            if (existingGroup) {
+                existingGroup.remove();
+            }
 
-                // 如果有超過一種稀有度，才顯示下拉選單
-                if (relatedCards.length > 1) {
-                    const rareGroup = document.createElement('div');
-                    rareGroup.className = 'filter-group';
-                    rareGroup.id = 'rareFilterGroup';
-                    
-                    const label = document.createElement('label');
-                    label.className = 'filter-label';
-                    label.innerHTML = '<i class="fas fa-star mr-2"></i>此卡其他稀有度(普版、高版)';
-                    
-                    const select = document.createElement('select');
-                    select.name = 'cardRareFilter';
-                    select.id = 'cardRareFilter';
-                    select.style.fontFamily = "'Noto Sans TC', sans-serif";
-                    select.style.width = "300px";
-
-                    relatedCards.forEach(c => {
-                        const id = c.id || c.cardno;
-                        const rare = c.rarity || c.cardrare || '未知';
-                        const option = document.createElement('option');
-                        option.value = id;
-                        // 處理如果 baseNumber 完全等於 id 時，通常是標準稀有度
-                        const displayRare = rare; 
-                        option.textContent = displayRare;
-                        if (id === cardNumber) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-
-                    select.addEventListener('change', function() {
-                        const selectedId = this.value;
-                        // 當切換稀有度時，我們把查詢框和下拉等狀態設好，然後再載入卡片
-                        var inputEl = document.getElementById('xxxx');
-                        if (inputEl) {
-                            inputEl.value = selectedId;
-                        }
-                        if (typeof searchByCardNumber === 'function') {
-                            searchByCardNumber(selectedId);
-                        } else {
-                            loadCardData(selectedId);
-                        }
-                    });
-
-                    rareGroup.appendChild(label);
-                    rareGroup.appendChild(select);
-                    filterContainer.appendChild(rareGroup);
-                }
+            if (typeof RarityVariantsModule !== 'undefined') {
+                RarityVariantsModule.renderVariants(relatedCards, cardNumber);
             }
             // =====================================
 
         } else {
             console.error('找不到卡號:', cardNumber);
             showInfoMask('notfound');
+            if (typeof RarityVariantsModule !== 'undefined') {
+                RarityVariantsModule.resetUI();
+            }
         }
     })
     .catch(error => {
         console.error('載入卡片資料失敗:', error);
         showInfoMask('error');
+        if (typeof RarityVariantsModule !== 'undefined') {
+            RarityVariantsModule.resetUI();
+        }
     })
     .finally(() => {
         // 隱藏載入動畫
@@ -5558,291 +5516,198 @@ ctx.closePath();
 }
 
 // ====================================================
-// 鑑定卡資訊模組
-// - 顯示 PSA / BGS / ARS 鑑定等級分佈
-// - 計算 10 分率
+// 此卡其他稀有度
+// - 資料來自 content JSON 的同 base 卡號變體
+// - 以圖片橫滑挑選；價格若已有產品包則一併顯示
 // ====================================================
 
-var GradingModule = (function() {
-var currentCompany = 'PSA';
-var gradingData = null;
-var selectedGrade = null;
-var requestURLGradingBase = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/gradingJson/';
+var RarityVariantsModule = (function() {
+var _productPrices = null;
+var _bound = false;
+var _currentId = '';
 
-var GRADING_COMPANIES = ['PSA', 'BGS', 'ARS'];
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-function gradeToNumber(grade) {
-    if (grade === '10+') return 10.5;
-    if (grade === '黑10') return 10.2;
-    if (grade === '金10') return 10.1;
-    var num = parseFloat(grade);
-    if (!isNaN(num)) return num;
-    if (grade.indexOf('以下') > -1) {
-        var base = parseFloat(grade);
-        return isNaN(base) ? -1 : base - 0.5;
+function cacheProductPrices(productJson) {
+    _productPrices = productJson && typeof productJson === 'object' ? productJson : null;
+}
+
+function getLatestPrice(cardId) {
+    if (!_productPrices || !cardId) return null;
+    var entry = _productPrices[cardId];
+    if (!entry || !entry.cardPrice || !entry.cardPrice.length) return null;
+    for (var i = entry.cardPrice.length - 1; i >= 0; i--) {
+        var n = Number(entry.cardPrice[i]);
+        if (!isNaN(n)) return n;
     }
-    return -1;
+    return null;
 }
 
-function calculateSummaryStats(allGrades, totalCount, grade) {
-    var selectedCount = 0;
-    var higherCount = 0;
-    var selectedNum = gradeToNumber(grade);
-    allGrades.forEach(function(g) {
-        if (g.grade === grade) selectedCount = g.count;
-        if (gradeToNumber(g.grade) > selectedNum) higherCount += g.count;
-    });
-    var gradeRate = totalCount > 0 ? ((selectedCount / totalCount) * 100).toFixed(2) : '0.00';
-    return { selectedCount: selectedCount, higherCount: higherCount, gradeRate: gradeRate };
+function formatYen(value) {
+    if (value == null || isNaN(value)) return '';
+    return '¥' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
-function init() {
-    var buttons = document.querySelectorAll('.grading-toggle-btn');
-    buttons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var company = btn.getAttribute('data-company');
-            switchCompany(company);
-        });
-    });
+function imageUrlsFor(cardId) {
+    if (typeof buildCardImageUrls === 'function') {
+        return buildCardImageUrls(cardId);
+    }
+    return { primary: '', fallback: '' };
 }
 
-function switchCompany(company) {
-    currentCompany = company;
-    selectedGrade = null;
-    var buttons = document.querySelectorAll('.grading-toggle-btn');
-    buttons.forEach(function(btn) {
-        var isCurrent = btn.getAttribute('data-company') === company;
-        btn.classList.toggle('active', isCurrent);
-        // 目前選了哪一家不能只靠顏色表示
-        btn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
-    });
-    renderGradingData();
+function resetUI(message) {
+    var container = document.getElementById('rarityVariantsContent');
+    if (!container) return;
+    _currentId = '';
+    container.innerHTML =
+        '<div class="rarity-variants-placeholder">' +
+        '<p>' + escapeHtml(message || '選擇卡號後顯示此卡其他稀有度') + '</p>' +
+        '</div>';
 }
 
-/**
- * 讀取單一鑑定公司 JSON
- * URL 格式: {base}{titleCode}_{company}.json
- * JSON 格式: { "卡號": { "等級": 數量 } } 或 { "卡號": null }
- */
-function fetchCompanyData(titleCode, cardNumber, company) {
-    var url = requestURLGradingBase + titleCode + '_' + company + '.json';
-    return fetch(url)
-        .then(function(response) {
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data[cardNumber] && typeof data[cardNumber] === 'object') {
-                var cardData = data[cardNumber];
-                if (data.updateDate) {
-                    cardData._updateDate = data.updateDate;
-                }
-                return cardData;
-            }
-            return null;
-        })
-        .catch(function() {
-            return null;
-        });
-}
+function selectVariant(cardId) {
+    if (!cardId || cardId === _currentId) return;
 
-/**
- * 載入鑑定資料（分別讀取 PSA / BGS / ARS 三個 JSON）
- * @param {string} titleCode - 作品代碼（已替換 / 為 _）
- * @param {string} cardNumber - 顯示用卡號（如 BD/W54-070SSP）
- */
-function loadGradingData(titleCode, cardNumber) {
-    if (!titleCode || !cardNumber || isCascadePlaceholderValue(cardNumber) || isCascadePlaceholderText(cardNumber)) {
-        resetUI();
-        return;
+    window._hasUserModified = true;
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) inputEl.value = cardId;
+
+    // 允許切到同系列不同稀有度（避免被 lastSearched 擋住）
+    if (typeof _lastSearchedValue !== 'undefined') {
+        _lastSearchedValue = '';
     }
 
-    console.log('載入鑑定資料, titleCode:', titleCode, '卡號:', cardNumber);
+    if (typeof searchByCardNumber === 'function') {
+        searchByCardNumber(cardId);
+    } else if (typeof loadCardData === 'function') {
+        loadCardData(cardId);
+    }
+}
 
-    var promises = GRADING_COMPANIES.map(function(company) {
-        return fetchCompanyData(titleCode, cardNumber, company);
-    });
+function scrollByDir(dir) {
+    var track = document.getElementById('rarityVariantsTrack');
+    if (!track) return;
+    var delta = Math.max(160, Math.floor(track.clientWidth * 0.8)) * dir;
+    track.scrollBy({ left: delta, behavior: 'smooth' });
+}
 
-    Promise.all(promises).then(function(results) {
-        gradingData = {};
-        GRADING_COMPANIES.forEach(function(company, index) {
-            gradingData[company] = results[index];
-        });
+function bindOnce() {
+    if (_bound) return;
+    var container = document.getElementById('rarityVariantsContent');
+    if (!container) return;
+    _bound = true;
 
-        var hasAny = GRADING_COMPANIES.some(function(c) { return gradingData[c] !== null; });
-        if (!hasAny) {
-            gradingData = null;
-            console.log('此卡片無鑑定資料:', cardNumber);
-        } else {
-            console.log('鑑定資料載入完成:', cardNumber, gradingData);
+    container.addEventListener('click', function(e) {
+        var nav = e.target.closest('[data-rarity-nav]');
+        if (nav) {
+            e.preventDefault();
+            scrollByDir(nav.getAttribute('data-rarity-nav') === 'next' ? 1 : -1);
+            return;
         }
-
-        updateButtonStates();
-        renderGradingData();
+        var item = e.target.closest('[data-rarity-id]');
+        if (!item) return;
+        e.preventDefault();
+        selectVariant(item.getAttribute('data-rarity-id'));
     });
 }
 
-function updateButtonStates() {
-    var companies = ['PSA', 'BGS', 'ARS'];
-    companies.forEach(function(company) {
-        var btn = document.getElementById('btn' + company);
-        if (!btn) return;
-        btn.disabled = false;
-    });
-}
-
-function renderGradingData() {
-    var container = document.getElementById('gradingContent');
-    var tenRateContainer = document.getElementById('gradingTenRate');
+function renderVariants(relatedCards, currentCardId) {
+    bindOnce();
+    var container = document.getElementById('rarityVariantsContent');
     if (!container) return;
 
-    if (tenRateContainer) tenRateContainer.style.display = 'none';
+    _currentId = String(currentCardId || '');
+    var cards = Array.isArray(relatedCards) ? relatedCards.slice() : [];
 
-    if (!gradingData || !gradingData[currentCompany] ||
-        typeof gradingData[currentCompany] !== 'object' ||
-        Object.keys(gradingData[currentCompany]).length === 0) {
-        // 「暫無」會讓人以為之後就會有 —— 這是系統無法保證的承諾
-        container.innerHTML =
-            '<div class="grading-placeholder">' +
-            '<p>此卡號沒有 ' + currentCompany + ' 的鑑定紀錄</p>' +
-            '<p class="text-muted" style="font-size:0.8rem;">可切換上方其他鑑定公司查看</p>' +
-            '</div>';
+    // 正規化
+    cards = cards.map(function(c) {
+        var id = c && (c.id || c.cardno);
+        if (!id) return null;
+        return {
+            id: String(id),
+            rare: String((c.rarity || c.cardrare || '未知')).trim() || '未知',
+            name: String(c.name || c.cardname || '').trim()
+        };
+    }).filter(Boolean);
+
+    // 去重
+    var seen = {};
+    cards = cards.filter(function(c) {
+        if (seen[c.id]) return false;
+        seen[c.id] = true;
+        return true;
+    });
+
+    if (cards.length <= 1) {
+        resetUI(cards.length === 1 ? '此卡目前沒有其他稀有度版本' : '選擇卡號後顯示此卡其他稀有度');
         return;
     }
 
-    var companyData = gradingData[currentCompany];
-
-    var allGrades = [];
-    var totalCount = 0;
-    Object.keys(companyData).forEach(function(key) {
-        if (key === '_updateDate') return;
-        var count = parseInt(companyData[key], 10) || 0;
-        allGrades.push({ grade: key, count: count });
-        totalCount += count;
+    cards.sort(function(a, b) {
+        return String(a.rare).localeCompare(String(b.rare), 'zh-Hant') || String(a.id).localeCompare(String(b.id));
     });
 
-    allGrades.sort(function(a, b) {
-        return gradeToNumber(b.grade) - gradeToNumber(a.grade);
+    var html = '<div class="rarity-variants-shell">';
+    html += '<button type="button" class="rarity-variants-nav is-prev" data-rarity-nav="prev" aria-label="查看上一張稀有度">';
+    html += '<i class="fas fa-chevron-left" aria-hidden="true"></i></button>';
+    html += '<div class="rarity-variants-track" id="rarityVariantsTrack" tabindex="0" role="list" aria-label="此卡其他稀有度">';
+
+    cards.forEach(function(card) {
+        var urls = imageUrlsFor(card.id);
+        var price = getLatestPrice(card.id);
+        var isCurrent = card.id === _currentId;
+        html += '<button type="button" class="rarity-variant-item' + (isCurrent ? ' is-current' : '') + '"';
+        html += ' data-rarity-id="' + escapeHtml(card.id) + '" role="listitem"';
+        html += ' aria-current="' + (isCurrent ? 'true' : 'false') + '"';
+        html += ' aria-label="' + escapeHtml(card.rare + ' ' + card.id) + '">';
+        html += '<span class="rarity-variant-shot">';
+        html += '<img class="rarity-variant-img" src="' + escapeHtml(urls.primary) + '" alt=""';
+        html += ' loading="lazy" decoding="async" referrerpolicy="no-referrer"';
+        if (urls.fallback) {
+            html += ' data-fallback="' + escapeHtml(urls.fallback) + '"';
+            html += ' onerror="if(this.dataset.fb!==\'1\'&&this.dataset.fallback){this.dataset.fb=\'1\';this.src=this.dataset.fallback;}else{this.classList.add(\'is-broken\');}"';
+        } else {
+            html += ' onerror="this.classList.add(\'is-broken\')"';
+        }
+        html += '>';
+        html += '</span>';
+        html += '<span class="rarity-variant-meta">';
+        html += '<span class="rarity-variant-rare">' + escapeHtml(card.rare) + '</span>';
+        if (price != null) {
+            html += '<span class="rarity-variant-price">' + escapeHtml(formatYen(price)) + '</span>';
+        }
+        html += '</span>';
+        html += '</button>';
     });
 
-    var visibleGrades = allGrades.filter(function(g) { return g.count > 0; });
-    var topGrades = visibleGrades.slice(0, 4);
-
-    if (!selectedGrade || !visibleGrades.find(function(g) { return g.grade === selectedGrade; })) {
-        selectedGrade = topGrades.length > 0 ? topGrades[0].grade : null;
-    }
-
-    var stats = calculateSummaryStats(allGrades, totalCount, selectedGrade);
-    var html = '';
-
-    if (companyData._updateDate) {
-        html += '<div style="font-size:0.75rem; color:var(--text-secondary); text-align:right; margin-bottom:0.5rem;">' +
-                '<i class="fas fa-clock mr-1" aria-hidden="true"></i>鑑定資料更新：' + companyData._updateDate + '</div>';
-    }
-
-    html += '<div class="grading-grade-cards">';
-    topGrades.forEach(function(g) {
-        var sel = g.grade === selectedGrade ? ' selected' : '';
-        html += '<div class="grading-grade-card' + sel + '" data-grade="' + g.grade + '">';
-        html += '<div class="grading-grade-card-label">' + currentCompany + ' ' + g.grade + '</div>';
-        html += '<div class="grading-grade-card-count">' + g.count.toLocaleString() + '</div>';
-        html += '</div>';
-    });
     html += '</div>';
-
-    html += '<div class="grading-summary-grid">';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Total Population</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryTotal">' + totalCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label" id="gradingSummaryGradeLabel">' + currentCompany + ' ' + (selectedGrade || '-') + ' Population</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryGradeCount">' + stats.selectedCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Population Higher</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryHigher">' + stats.higherCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Grade Rate <span class="grade-rate-info" title="此等級佔總鑑定數的比例">&#9432;</span></div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryRate">' + stats.gradeRate + '%</div></div>';
+    html += '<button type="button" class="rarity-variants-nav is-next" data-rarity-nav="next" aria-label="查看下一張稀有度">';
+    html += '<i class="fas fa-chevron-right" aria-hidden="true"></i></button>';
     html += '</div>';
-
-    html += '<div class="grading-detail-table-wrap">';
-    html += '<table class="grading-detail-table">';
-    html += '<thead><tr><th>Grade</th><th>Quantity</th></tr></thead>';
-    html += '<tbody>';
-    visibleGrades.forEach(function(g) {
-        html += '<tr><td><strong>' + g.grade + '</strong></td><td>' + g.count.toLocaleString() + '</td></tr>';
-    });
-    html += '<tr class="grading-detail-total-row"><td><strong>Total</strong></td><td><strong>' + totalCount.toLocaleString() + '</strong></td></tr>';
-    html += '</tbody></table>';
-    html += '</div>';
-
+    html += '<p class="rarity-variants-hint">左右滑動或點選圖片切換稀有度</p>';
     container.innerHTML = html;
 
-    container.querySelectorAll('.grading-grade-card').forEach(function(card) {
-        card.addEventListener('click', function() {
-            selectGradeCard(card.getAttribute('data-grade'));
-        });
-    });
-}
-
-function selectGradeCard(grade) {
-    selectedGrade = grade;
-
-    document.querySelectorAll('.grading-grade-card').forEach(function(card) {
-        card.classList.toggle('selected', card.getAttribute('data-grade') === grade);
-    });
-
-    var companyData = gradingData[currentCompany];
-    var allGrades = [];
-    var totalCount = 0;
-    Object.keys(companyData).forEach(function(key) {
-        if (key === '_updateDate') return;
-        var count = parseInt(companyData[key], 10) || 0;
-        allGrades.push({ grade: key, count: count });
-        totalCount += count;
-    });
-
-    var stats = calculateSummaryStats(allGrades, totalCount, grade);
-
-    var labelEl = document.getElementById('gradingSummaryGradeLabel');
-    var countEl = document.getElementById('gradingSummaryGradeCount');
-    var higherEl = document.getElementById('gradingSummaryHigher');
-    var rateEl = document.getElementById('gradingSummaryRate');
-    if (labelEl) labelEl.textContent = currentCompany + ' ' + grade + ' Population';
-    if (countEl) countEl.textContent = stats.selectedCount.toLocaleString();
-    if (higherEl) higherEl.textContent = stats.higherCount.toLocaleString();
-    if (rateEl) rateEl.textContent = stats.gradeRate + '%';
-}
-
-function resetUI() {
-    gradingData = null;
-    currentCompany = 'PSA';
-    selectedGrade = null;
-
-    var container = document.getElementById('gradingContent');
-    var tenRateContainer = document.getElementById('gradingTenRate');
-
-    if (container) {
-        container.innerHTML =
-            '<div class="grading-placeholder">' +
-            '<p>選擇卡號後顯示鑑定數量</p>' +
-            '</div>';
+    // 把目前這張捲到可視區中央
+    var track = document.getElementById('rarityVariantsTrack');
+    var currentBtn = container.querySelector('.rarity-variant-item.is-current');
+    if (track && currentBtn) {
+        var left = currentBtn.offsetLeft - (track.clientWidth - currentBtn.clientWidth) / 2;
+        track.scrollLeft = Math.max(0, left);
     }
-    if (tenRateContainer) {
-        tenRateContainer.style.display = 'none';
-    }
-
-    ['PSA', 'BGS', 'ARS'].forEach(function(company) {
-        var btn = document.getElementById('btn' + company);
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.toggle('active', company === 'PSA');
-            btn.setAttribute('aria-pressed', company === 'PSA' ? 'true' : 'false');
-        }
-    });
 }
 
 return {
-    init: init,
-    loadGradingData: loadGradingData,
-    switchCompany: switchCompany,
-    resetUI: resetUI
+    cacheProductPrices: cacheProductPrices,
+    renderVariants: renderVariants,
+    resetUI: resetUI,
+    selectVariant: selectVariant
 };
 
 })();
