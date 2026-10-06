@@ -3336,7 +3336,7 @@ document.getElementById('cardtrigger').textContent = cardData.cardtrigger || '-'
 // 更新特徵
 document.getElementById('cardfeatures').textContent = cardData.cardfeatures || '-' ;
 
-// 更新效果（支援HTML換行，但需先防範 XSS）
+// 更新效果（每段以 <hr> 分隔，但需先防範 XSS）
 const cardText = cardData.cardtext || '-';
 const escapedCardText = cardText
   .replace(/&/g, "&amp;")
@@ -3344,7 +3344,12 @@ const escapedCardText = cardText
   .replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
-document.getElementById('cardtext').innerHTML = escapedCardText.replace(/\n/g, '<br>');
+// 各效果段落（JSON text[] 以 \n 接合）用主題感知的分隔線切開，方便閱讀
+document.getElementById('cardtext').innerHTML = escapedCardText
+  .split(/\n+/)
+  .map(function (part) { return part.trim(); })
+  .filter(Boolean)
+  .join('<hr class="cardtext-sep">');
 
 console.log('卡片資訊已更新:', cardData.cardno);
 
