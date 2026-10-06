@@ -3421,6 +3421,15 @@ function ensureCardtextNamePopover() {
         '<div class="cardtext-name-popover-no"></div>' +
         '</div>';
     document.body.appendChild(el);
+    // 直接綁在關閉鈕上，避免被卡圖層蓋住後只靠 document 委派失效
+    var closeBtn = el.querySelector('.cardtext-name-popover-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideCardtextNamePopover();
+        });
+    }
     return el;
 }
 
