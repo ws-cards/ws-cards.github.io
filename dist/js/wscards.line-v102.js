@@ -1237,6 +1237,84 @@ mappingRep = requestMapping.response;
 
 
 /**
+ * 級聯篩選：產品／卡號在尚無資料時保持可見但禁用，避免空白洞。
+ */
+var CASCADE_PLACEHOLDER = {
+    titleWaiting: '請先選擇作品系列',
+    titleReady: '選擇產品',
+    numberWaiting: '請先選擇產品'
+};
+
+function isCascadePlaceholderValue(value) {
+    var v = String(value == null ? '' : value).trim();
+    return !v || v === '000/000-000' || v === '0';
+}
+
+function isCascadePlaceholderText(text) {
+    var t = String(text == null ? '' : text).trim();
+    return !t
+        || t === '選擇主題'
+        || t === '選擇產品'
+        || t === '選擇卡號'
+        || t === CASCADE_PLACEHOLDER.titleWaiting
+        || t === CASCADE_PLACEHOLDER.titleReady
+        || t === CASCADE_PLACEHOLDER.numberWaiting;
+}
+
+function syncCascadeSelectEnabled(selectEl) {
+    if (!selectEl) return;
+    var hasReal = false;
+    for (var i = 0; i < selectEl.options.length; i++) {
+        if (!isCascadePlaceholderValue(selectEl.options[i].value)) {
+            hasReal = true;
+            break;
+        }
+    }
+    selectEl.disabled = !hasReal;
+    selectEl.classList.toggle('is-cascade-pending', !hasReal);
+    selectEl.setAttribute('aria-disabled', hasReal ? 'false' : 'true');
+    // 不再用 visibility 隱藏：禁用態保留版面，避免「空一塊」
+    selectEl.style.visibility = 'visible';
+}
+
+function setCascadePlaceholder(selectEl, value, text) {
+    if (!selectEl) return;
+    while (selectEl.firstChild) {
+        selectEl.removeChild(selectEl.firstChild);
+    }
+    var option = document.createElement('option');
+    option.setAttribute('value', value);
+    option.appendChild(document.createTextNode(text));
+    selectEl.appendChild(option);
+    selectEl.selectedIndex = 0;
+    syncCascadeSelectEnabled(selectEl);
+}
+
+function resetCardTitleWaiting() {
+    setCascadePlaceholder(
+        document.getElementById('cardTitle'),
+        '000/000-000',
+        CASCADE_PLACEHOLDER.titleWaiting
+    );
+}
+
+function resetCardTitleReady() {
+    setCascadePlaceholder(
+        document.getElementById('cardTitle'),
+        '000/000-000',
+        CASCADE_PLACEHOLDER.titleReady
+    );
+}
+
+function resetCardNumberWaiting() {
+    setCascadePlaceholder(
+        document.getElementById('cardNumber'),
+        '000/000-000',
+        CASCADE_PLACEHOLDER.numberWaiting
+    );
+}
+
+/**
 * 初始化設定函數
 * - 載入作品標準資料 (Weiss 和 Schwarz)
 * - 載入主題資料
@@ -1248,15 +1326,10 @@ function setFun(){
 var selectStandard = document.getElementById("cardStandard");
 selectStandard.length = 1;
 selectStandard.options[0].selected = true;	
-          
-var selectPrice = document.getElementById("cardNumber"); 
-selectPrice.length = 1;
-selectPrice.options[0].selected = true;	
-selectPrice.style.visibility = 'hidden';
 
-var selectTitle = document.getElementById("cardTitle"); 
-selectTitle.length = 1;
-selectTitle.options[0].selected = true;	
+// 產品／卡號：可見但禁用，等上層有資料再啟用
+resetCardTitleWaiting();
+resetCardNumberWaiting();
           
 // 載入 Weiss 作品標準
 requestStandardW.open('GET', standardWURL);
@@ -1387,11 +1460,9 @@ var cardStandard=document.getElementById('cardStandard').value;
 var cardStandardEle=document.getElementById('cardStandard');
 var selectTitle = document.getElementById("cardTitle"); 
 
-// 清空主題選擇器	
-while (selectTitle.firstChild) {
-    selectTitle.removeChild(selectTitle.firstChild);
-}			  
-
+// 清空主題選擇器，先回到「請先選擇作品系列」禁用態
+resetCardTitleWaiting();
+resetCardNumberWaiting();
 
 // 重新載入主題資料
 requestTitle.open('GET', requestURLCardTitle);
@@ -1405,6 +1476,9 @@ requestTitle.send();
 requestTitle.onload = function(){
     var cardsTitle = requestTitle.response;
     var cardStandardArray = cardStandard.split(",");
+
+    // 先放可選提示，再填真實產品
+    resetCardTitleReady();
 
     for(var key in cardsTitle){	 
         // 提取主題前綴
@@ -1426,6 +1500,7 @@ requestTitle.onload = function(){
         option.appendChild(document.createTextNode(cardsTitle[key])); 
         selectTitle.appendChild(option);				
     }
+    syncCascadeSelectEnabled(selectTitle);
 }		
 changeStandardAfterChangeNumber();			  
 }
@@ -1456,20 +1531,8 @@ document.getElementById('notuse').style.display='none';
 * - 添加預設選項
 */
 function changeStandardAfterChangeNumber(){
-var selectPrice = document.getElementById("cardNumber"); 
-selectPrice.style.visibility = 'visible';		
-
-while (selectPrice.firstChild) {
-    selectPrice.removeChild(selectPrice.firstChild);
-}		
-
-var cardTitle = document.getElementById('cardTitle').value;
-var selectTitle = document.getElementById("cardTitle"); 			  
-var option = document.createElement("option"); 
-option.setAttribute("value",0);
-option.appendChild(document.createTextNode("選擇產品")); 				  
-selectTitle.appendChild(option);	
-selectTitle.insertBefore(option,selectTitle.childNodes[0]);
+// 換作品系列後卡號尚無資料：保持可見但禁用
+resetCardNumberWaiting();
 
 removeTitle();
 if (typeof syncAdvancedFilterButton === 'function') {
@@ -1499,8 +1562,8 @@ function isProductSelected() {
     if (!select || select.selectedIndex < 0) return false;
     var value = String(select.value || '').trim();
     var text = (select.options[select.selectedIndex] && select.options[select.selectedIndex].text || '').trim();
-    if (!value || value === '000/000-000' || value === '0') return false;
-    if (!text || text === '選擇主題' || text === '選擇產品') return false;
+    if (isCascadePlaceholderValue(value)) return false;
+    if (isCascadePlaceholderText(text)) return false;
     return true;
 }
 
@@ -1857,16 +1920,15 @@ if (typeof syncAdvancedFilterButton === 'function') {
     syncAdvancedFilterButton();
 }
 
-// 設定卡號選擇器
-var selectPrice = document.getElementById("cardNumber"); 
-selectPrice.style.visibility = 'visible';
-selectPrice.length = 1;
-selectPrice.options[0].selected = true;	
+// 尚未選到真實產品時，卡號維持禁用佔位
+if (!isProductSelected()) {
+    resetCardNumberWaiting();
+    return;
+}
 
-// 清空卡號選擇器
-while (selectPrice.firstChild) {
-    selectPrice.removeChild(selectPrice.firstChild);
-}					  
+// 設定卡號選擇器：載入前先禁用佔位，避免空洞
+var selectPrice = document.getElementById("cardNumber"); 
+resetCardNumberWaiting();
           
 var cardTitle = document.getElementById('cardTitle').value;	  	
 var cardTilteReplaceSpare = cardTitle.replace('/','_');
@@ -1886,6 +1948,10 @@ requestPrice.send();
 requestPrice.onload = function() {
     var cards = requestPrice.response;
 
+    while (selectPrice.firstChild) {
+        selectPrice.removeChild(selectPrice.firstChild);
+    }
+
     for(var key in cards){
         if(key.indexOf('/')<0&&key.indexOf('S')==0){
             // 特殊格式卡號，使用對應表顯示					
@@ -1904,8 +1970,11 @@ requestPrice.onload = function() {
     
     //重新排列option
     sortOption();
-    selectPrice.options[0].selected=true;
-    changeNumber();
+    syncCascadeSelectEnabled(selectPrice);
+    if (selectPrice.options.length > 0) {
+        selectPrice.options[0].selected=true;
+        changeNumber();
+    }
     if (typeof syncAdvancedFilterButton === 'function') {
         syncAdvancedFilterButton();
     }
@@ -3151,15 +3220,14 @@ smoothScrollToAnchor('myChart', 'smooth', 'start');
 */
 function reGenTitle(){
           var selectTitle = document.getElementById("cardTitle"); 
-          while (selectTitle.firstChild) {
-            selectTitle.removeChild(selectTitle.firstChild);
-          }			  
+          resetCardTitleWaiting();
           
           requestTitle.open('GET', requestURLCardTitle);
           requestTitle.responseType = 'json';
           requestTitle.send();					
           requestTitle.onload = function(){
             var cardsTitle = requestTitle.response;
+            resetCardTitleReady();
 
             for(var key in cardsTitle){	 
 
@@ -3171,6 +3239,7 @@ function reGenTitle(){
                 option.appendChild(document.createTextNode(cardsTitle[key])); 
                 selectTitle.appendChild(option);				
             }
+            syncCascadeSelectEnabled(selectTitle);
           }	
 }
 var elementCardNumber = document.getElementById('cardNumber');
@@ -3808,7 +3877,7 @@ function collectCurrentCardInfo() {
         }
     }
 
-    if (!cardNumber || cardNumber === '選擇卡號' || cardNumber === '000/000-000') {
+    if (!cardNumber || isCascadePlaceholderValue(cardNumber) || isCascadePlaceholderText(cardNumber)) {
         return null;
     }
 
@@ -3898,18 +3967,18 @@ var CardFavorites = (function() {
         var selectEl = document.getElementById('cardNumber');
         if (selectEl && selectEl.selectedIndex >= 0) {
             var selected = normalizeText(selectEl.options[selectEl.selectedIndex].text);
-            if (selected && selected !== '選擇卡號' && selected !== '000/000-000') {
+            if (selected && !isCascadePlaceholderText(selected) && !isCascadePlaceholderValue(selected)) {
                 return selected.indexOf(' ') >= 0 ? selected.substr(0, selected.indexOf(' ')) : selected;
             }
             var selectedValue = normalizeText(selectEl.value);
-            if (selectedValue && selectedValue !== '000/000-000') {
+            if (selectedValue && !isCascadePlaceholderValue(selectedValue)) {
                 return selectedValue;
             }
         }
 
         var cardNoEl = document.getElementById('cardno');
         var fromInfo = cardNoEl ? normalizeText(cardNoEl.textContent) : '';
-        if (fromInfo && fromInfo !== '選擇卡號' && fromInfo !== '000/000-000') {
+        if (fromInfo && !isCascadePlaceholderText(fromInfo) && !isCascadePlaceholderValue(fromInfo)) {
             return fromInfo;
         }
         return '';
@@ -5589,7 +5658,7 @@ function fetchCompanyData(titleCode, cardNumber, company) {
  * @param {string} cardNumber - 顯示用卡號（如 BD/W54-070SSP）
  */
 function loadGradingData(titleCode, cardNumber) {
-    if (!titleCode || !cardNumber || cardNumber === '000/000-000' || cardNumber === '選擇卡號') {
+    if (!titleCode || !cardNumber || isCascadePlaceholderValue(cardNumber) || isCascadePlaceholderText(cardNumber)) {
         resetUI();
         return;
     }
