@@ -388,23 +388,23 @@
                 </div>	  
             </div>   
                           
-            <!-- 同產品其他卡號（沿用已載入的價格 JSON，不另打 API） -->
-            <div class="card sibling-cards-card" id="sibling-cards-tag">
+            <!-- 此卡其他稀有度：圖片橫滑挑選（篩選條件下拉仍保留） -->
+            <div class="card rarity-variants-card" id="rarity-variants-tag">
                 <div class="card-header">
                   <h5 class="card-title">
-                    <i class="fas fa-layer-group mr-2" aria-hidden="true"></i>
-                    同產品其他卡號
+                    <i class="fas fa-star mr-2" aria-hidden="true"></i>
+                    此卡其他稀有度
                   </h5>
                   <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500" aria-label="收合同產品其他卡號">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-animation-speed="500" aria-label="收合此卡其他稀有度">
                       <i class="fas fa-minus" aria-hidden="true"></i>
                     </button>
                   </div>
                 </div>
                 <div class="card-body">
-                  <div id="siblingCardsContent">
-                    <div class="sibling-cards-placeholder">
-                      <p>選擇卡號後顯示同產品其他卡號</p>
+                  <div id="rarityVariantsContent">
+                    <div class="rarity-variants-placeholder">
+                      <p>選擇卡號後顯示此卡其他稀有度</p>
                     </div>
                   </div>
                 </div>
@@ -812,10 +812,10 @@ window.updateExternalSearchLinks('BD/W54-070SSP', '“鳥籠の歌姫”湊友�
                     icon.classList.add('fa-plus');
                 }
                 
-                // 2. 移動到同產品其他卡號下方
-                var siblingCard = document.getElementById('sibling-cards-tag');
-                if (siblingCard && siblingCard.parentNode) {
-                    siblingCard.parentNode.insertBefore(otherInfo, siblingCard.nextSibling);
+                // 2. 移動到此卡其他稀有度下方
+                var rarityCard = document.getElementById('rarity-variants-tag');
+                if (rarityCard && rarityCard.parentNode) {
+                    rarityCard.parentNode.insertBefore(otherInfo, rarityCard.nextSibling);
                 }
             }
         }
@@ -1137,11 +1137,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 })();
 
-// 依據螢幕寬度移動同產品其他卡號區塊 (在手機版顯示於最下方)
+// 依據螢幕寬度移動此卡其他稀有度區塊 (在手機版顯示於最下方)
 (function() {
-    function adjustSiblingCardsPosition() {
-        const siblingCard = document.getElementById('sibling-cards-tag');
-        if (!siblingCard) return;
+    function adjustRarityVariantsPosition() {
+        const rarityCard = document.getElementById('rarity-variants-tag');
+        if (!rarityCard) return;
         
         const leftCol = document.getElementById('preview-card-tag')?.closest('.col-lg-6');
         const rightCol = document.getElementById('priceSummaryCard')?.closest('.col-lg-6');
@@ -1149,21 +1149,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!leftCol || !rightCol) return;
         
         if (window.innerWidth < 992) {
-            // 手機、平板尺寸時(col-lg 斷點以下)，移到右側欄位最後面
-            if (siblingCard.parentElement !== rightCol) {
-                rightCol.appendChild(siblingCard);
+            if (rarityCard.parentElement !== rightCol) {
+                rightCol.appendChild(rarityCard);
             }
         } else {
-            // 桌面尺寸時，移回左側欄位
-            if (siblingCard.parentElement !== leftCol) {
-                leftCol.appendChild(siblingCard);
+            if (rarityCard.parentElement !== leftCol) {
+                leftCol.appendChild(rarityCard);
             }
         }
     }
     
-    // 綁定 Resize 事件，並於載入完成後執行一次
-    window.addEventListener('resize', adjustSiblingCardsPosition);
-    adjustSiblingCardsPosition();
+    window.addEventListener('resize', adjustRarityVariantsPosition);
+    adjustRarityVariantsPosition();
 })();
 
 </script>

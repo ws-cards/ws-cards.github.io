@@ -2473,12 +2473,12 @@ transform: scale(0.98);
 }
 }
 
-/*****************同產品其他卡號******************/
-.sibling-cards-card {
+/*****************此卡其他稀有度（圖片橫滑）******************/
+.rarity-variants-card {
     margin-bottom: 1.25rem;
 }
 
-.sibling-cards-placeholder {
+.rarity-variants-placeholder {
     margin: 0;
     padding: 0.85rem 0.15rem;
     color: var(--text-secondary);
@@ -2486,94 +2486,161 @@ transform: scale(0.98);
     line-height: 1.5;
 }
 
-.sibling-cards-placeholder p {
+.rarity-variants-placeholder p {
     margin: 0;
 }
 
-.sibling-cards-hint {
-    margin: 0 0 0.65rem;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
-}
-
-.sibling-cards-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
+.rarity-variants-shell {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
     gap: 0.35rem;
 }
 
-.sibling-card-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.7rem 0.85rem;
+.rarity-variants-nav {
+    width: 2.1rem;
+    height: 2.1rem;
     border: 1px solid var(--desk-line, #e2e8f0);
-    border-radius: 10px;
-    background: var(--desk-surface-strong, rgba(255, 255, 255, 0.72));
-    color: var(--text-primary);
-    text-align: left;
+    border-radius: 999px;
+    background: var(--desk-surface-strong, #fff);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
-.sibling-card-item:hover,
-.sibling-card-item:focus-visible {
+.rarity-variants-nav:hover,
+.rarity-variants-nav:focus-visible {
     outline: none;
     border-color: var(--desk-foil, #b8955a);
-    background: color-mix(in srgb, var(--desk-surface-strong, #fff) 88%, var(--desk-foil, #b8955a));
-}
-
-.sibling-card-id {
-    font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace;
-    font-size: 0.88rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sibling-card-price {
-    flex: 0 0 auto;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.92rem;
-    font-weight: 700;
     color: var(--desk-foil-deep, #8a6a35);
 }
 
-.sibling-cards-more {
-    margin: 0.7rem 0 0;
+.rarity-variants-track {
+    display: flex;
+    gap: 0.65rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.2rem 0.15rem 0.45rem;
+    scrollbar-width: thin;
+}
+
+.rarity-variants-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.rarity-variants-track::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+    border-radius: 999px;
+}
+
+.rarity-variant-item {
+    flex: 0 0 auto;
+    width: 7.25rem;
+    padding: 0;
+    border: 1px solid var(--desk-line, #e2e8f0);
+    border-radius: 12px;
+    background: var(--desk-surface-strong, rgba(255, 255, 255, 0.8));
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    scroll-snap-align: center;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.rarity-variant-item:hover,
+.rarity-variant-item:focus-visible {
+    outline: none;
+    border-color: var(--desk-foil, #b8955a);
+    transform: translateY(-1px);
+}
+
+.rarity-variant-item.is-current {
+    border-color: var(--desk-foil, #b8955a);
+    box-shadow: 0 0 0 1px var(--desk-foil, #b8955a);
+}
+
+.rarity-variant-shot {
+    display: block;
+    aspect-ratio: 63 / 88;
+    background: color-mix(in srgb, var(--desk-line, #e2e8f0) 55%, transparent);
+    overflow: hidden;
+}
+
+.rarity-variant-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rarity-variant-img.is-broken {
+    opacity: 0.25;
+}
+
+.rarity-variant-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.45rem 0.5rem 0.55rem;
+}
+
+.rarity-variant-rare {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.rarity-variant-price {
+    font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--desk-foil-deep, #8a6a35);
+}
+
+.rarity-variants-hint {
+    margin: 0.55rem 0 0;
     font-size: 0.76rem;
     color: var(--text-secondary);
 }
 
-[data-theme="dark"] .sibling-card-item {
+[data-theme="dark"] .rarity-variants-nav,
+[data-theme="dark"] .rarity-variant-item {
     background: #161512;
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-[data-theme="dark"] .sibling-card-item:hover,
-[data-theme="dark"] .sibling-card-item:focus-visible {
-    border-color: var(--desk-foil, #b8955a);
-    background: color-mix(in srgb, #161512 86%, var(--desk-foil, #b8955a));
+[data-theme="dark"] .rarity-variant-item.is-current {
+    border-color: var(--desk-foil, #d4b57a);
+    box-shadow: 0 0 0 1px var(--desk-foil, #d4b57a);
 }
 
-[data-theme="dark"] .sibling-card-price {
+[data-theme="dark"] .rarity-variant-price {
     color: var(--desk-foil, #d4b57a);
 }
 
-body.market-desk-page .sibling-cards-card {
+body.market-desk-page .rarity-variants-card {
     background: var(--desk-surface);
     border: 1px solid var(--desk-line);
     border-radius: 16px;
     box-shadow: 0 14px 34px rgba(28, 26, 23, 0.06);
+}
+
+@media (max-width: 575.98px) {
+    .rarity-variant-item {
+        width: 6.35rem;
+    }
+    .rarity-variants-nav {
+        width: 1.85rem;
+        height: 1.85rem;
+    }
 }
 
 /*****************價格摘要統計卡片 (Monochrome Glass)******************/
