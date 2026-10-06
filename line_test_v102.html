@@ -379,10 +379,10 @@
                             </div>
                         </div>
               
-                        <!-- 滑動指示器：標成「屬性／效果」，讓使用者知道第二頁有什麼 -->
-                        <div class="swipe-indicators" id="swipeIndicators" role="tablist" aria-label="卡片資訊分頁">
-                            <button type="button" class="swipe-dot swipe-tab active" data-index="0" role="tab" aria-selected="true">屬性</button>
-                            <button type="button" class="swipe-dot swipe-tab" data-index="1" role="tab" aria-selected="false">效果</button>
+                        <!-- 滑動指示器 -->
+                        <div class="swipe-indicators" id="swipeIndicators">
+                            <div class="swipe-dot active" data-index="0"></div>
+                            <div class="swipe-dot" data-index="1"></div>
                         </div>
                     </div>
                 </div>	  
@@ -967,11 +967,7 @@ class InfoSwiper {
 
     updateIndicators() {
         this.indicators.forEach((dot, index) => {
-            const isActive = index === this.currentIndex;
-            dot.classList.toggle('active', isActive);
-            if (dot.hasAttribute('aria-selected')) {
-                dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            }
+            dot.classList.toggle('active', index === this.currentIndex);
         });
     }
     
