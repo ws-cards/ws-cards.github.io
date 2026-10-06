@@ -3437,7 +3437,8 @@ function hideCardtextNamePopover() {
     var el = document.getElementById('cardtextNamePopover');
     if (!el) return;
     el.setAttribute('hidden', '');
-    el.classList.remove('is-open');
+    el.classList.remove('is-open', 'is-landscape');
+    el.style.width = '';
     var img = el.querySelector('.cardtext-name-popover-img');
     if (img) {
         img.removeAttribute('src');
@@ -3446,10 +3447,18 @@ function hideCardtextNamePopover() {
     }
 }
 
+function applyCardtextPopoverOrientation(popover, img) {
+    if (!popover) return;
+    var isLandscape = !!(img && img.naturalWidth > 0 && img.naturalHeight > 0 &&
+        img.naturalWidth > img.naturalHeight);
+    popover.classList.toggle('is-landscape', isLandscape);
+}
+
 function positionCardtextNamePopover(popover, anchorEl) {
     var rect = anchorEl.getBoundingClientRect();
     var pad = 10;
-    var width = Math.min(220, window.innerWidth - pad * 2);
+    var preferLandscape = popover.classList.contains('is-landscape');
+    var width = Math.min(preferLandscape ? 280 : 220, window.innerWidth - pad * 2);
     popover.style.width = width + 'px';
     // 先顯示才能量高度
     popover.removeAttribute('hidden');
@@ -3479,6 +3488,9 @@ function showCardtextNamePopover(anchorEl) {
     if (nameEl) nameEl.textContent = cardName ? ('「' + cardName + '」') : '';
     if (noEl) noEl.textContent = cardId;
 
+    // 換卡時先回到直向外框，等圖片載入後再依實際長寬調整
+    popover.classList.remove('is-landscape');
+
     var urls = (typeof buildCardImageUrls === 'function')
         ? buildCardImageUrls(cardId)
         : { primary: '', fallback: '' };
@@ -3489,6 +3501,7 @@ function showCardtextNamePopover(anchorEl) {
         img.onload = function () {
             if (loading) loading.hidden = true;
             img.style.opacity = '1';
+            applyCardtextPopoverOrientation(popover, img);
             positionCardtextNamePopover(popover, anchorEl);
         };
         img.onerror = function () {
@@ -3498,10 +3511,17 @@ function showCardtextNamePopover(anchorEl) {
             }
             if (loading) loading.hidden = true;
             img.alt = '找不到卡圖';
+            applyCardtextPopoverOrientation(popover, img);
             positionCardtextNamePopover(popover, anchorEl);
         };
         img.alt = cardName || cardId;
         img.src = urls.primary || urls.fallback || '';
+        // 快取命中時 onload 可能不觸發
+        if (img.complete && img.naturalWidth > 0) {
+            if (loading) loading.hidden = true;
+            img.style.opacity = '1';
+            applyCardtextPopoverOrientation(popover, img);
+        }
     }
 
     positionCardtextNamePopover(popover, anchorEl);
