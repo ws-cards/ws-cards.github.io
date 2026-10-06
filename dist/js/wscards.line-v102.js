@@ -3418,7 +3418,7 @@ function ensureCardtextNamePopover() {
         '</div>' +
         '<div class="cardtext-name-popover-meta">' +
         '<div class="cardtext-name-popover-name"></div>' +
-        '<div class="cardtext-name-popover-no"></div>' +
+        '<button type="button" class="cardtext-name-popover-no" data-card-id="" aria-label="以此卡號查詢"></button>' +
         '</div>';
     document.body.appendChild(el);
     // 直接綁在關閉鈕上，避免被卡圖層蓋住後只靠 document 委派失效
@@ -3430,7 +3430,34 @@ function ensureCardtextNamePopover() {
             hideCardtextNamePopover();
         });
     }
+    var noBtn = el.querySelector('.cardtext-name-popover-no');
+    if (noBtn) {
+        noBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var id = noBtn.getAttribute('data-card-id') || (noBtn.textContent || '').trim();
+            searchCardFromNamePopover(id);
+        });
+    }
     return el;
+}
+
+/** 從效果卡名預覽以卡號查詢（不需重打） */
+function searchCardFromNamePopover(cardId) {
+    if (!cardId) return;
+    hideCardtextNamePopover();
+    window._hasUserModified = true;
+    var inputEl = document.getElementById('xxxx');
+    if (inputEl) inputEl.value = cardId;
+    // 允許與目前／上次相同卡號再查（使用者明確點了「查這張」）
+    if (typeof _lastSearchedValue !== 'undefined') {
+        _lastSearchedValue = '';
+    }
+    if (typeof searchByCardNumber === 'function') {
+        searchByCardNumber(cardId);
+    } else if (typeof loadCardData === 'function') {
+        loadCardData(cardId);
+    }
 }
 
 function hideCardtextNamePopover() {
@@ -3486,7 +3513,12 @@ function showCardtextNamePopover(anchorEl) {
     var nameEl = popover.querySelector('.cardtext-name-popover-name');
     var noEl = popover.querySelector('.cardtext-name-popover-no');
     if (nameEl) nameEl.textContent = cardName ? ('「' + cardName + '」') : '';
-    if (noEl) noEl.textContent = cardId;
+    if (noEl) {
+        noEl.textContent = cardId;
+        noEl.setAttribute('data-card-id', cardId);
+        noEl.setAttribute('aria-label', '查詢卡號 ' + cardId);
+        noEl.title = '點此查詢此卡';
+    }
 
     // 換卡時先回到直向外框，等圖片載入後再依實際長寬調整
     popover.classList.remove('is-landscape');
