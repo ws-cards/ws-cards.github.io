@@ -6693,6 +6693,32 @@ function optionButtonHtml(opt, select) {
         '>' + escapeHtml(text || value) + '</button>';
 }
 
+/** 選項清單指紋（忽略 selected；清單不變才還原捲動） */
+function optionsFingerprint(select) {
+    if (!select) return '';
+    var parts = [];
+    var children = select.children;
+    for (var i = 0; i < children.length; i++) {
+        var node = children[i];
+        if (node.tagName === 'OPTGROUP') {
+            parts.push('g:' + (node.getAttribute('label') || ''));
+            var opts = node.children;
+            for (var j = 0; j < opts.length; j++) {
+                var gOpt = opts[j];
+                if (!gOpt || gOpt.tagName !== 'OPTION') continue;
+                var gText = (gOpt.textContent || '').trim();
+                if (!gText && gOpt.value === '000/000-000') continue;
+                parts.push((gOpt.value || '') + '\t' + gText);
+            }
+        } else if (node.tagName === 'OPTION') {
+            var text = (node.textContent || '').trim();
+            if (!text && node.value === '000/000-000') continue;
+            parts.push((node.value || '') + '\t' + text);
+        }
+    }
+    return parts.join('\n');
+}
+
 function syncNativeValue(select, value) {
     if (!select) return;
     var prev = select.value;
@@ -6750,6 +6776,17 @@ function enhance(select) {
     wrap.appendChild(panel);
     wrap.appendChild(select);
 
+    // 清單不變時記住關閉前捲動；清單指紋變了則不還原
+    var scrollMemory = { fingerprint: '', scrollTop: 0, valid: false };
+    var skipCloseRemember = false;
+
+    function rememberPanelScroll() {
+        if (panel.hidden) return;
+        scrollMemory.fingerprint = optionsFingerprint(select);
+        scrollMemory.scrollTop = panel.scrollTop;
+        scrollMemory.valid = true;
+    }
+
     function refresh() {
         var disabled = isDisabled(select);
         wrap.classList.toggle('is-disabled', disabled);
@@ -6779,14 +6816,27 @@ function enhance(select) {
         placePanelFixed(trigger, panel);
         setHostOpenState(wrap, true);
         trackOpen(wrap, true);
-        var selectedBtn = panel.querySelector('.fancy-select-option.is-selected');
-        if (selectedBtn) {
-            selectedBtn.scrollIntoView({ block: 'nearest' });
+
+        var fp = optionsFingerprint(select);
+        if (scrollMemory.valid && scrollMemory.fingerprint === fp) {
+            // 清單不變：還原關閉前位置，不再 scrollIntoView 搶位置
+            panel.scrollTop = scrollMemory.scrollTop;
+        } else {
+            // 清單已換（或首次）：照舊對齊已選項
+            var selectedBtn = panel.querySelector('.fancy-select-option.is-selected');
+            if (selectedBtn) {
+                selectedBtn.scrollIntoView({ block: 'nearest' });
+            }
         }
     }
 
-    function close() {
+    function close(opts) {
         if (!wrap.classList.contains('is-open') && panel.hidden) return;
+        // 選完後 refresh 已把 scrollTop 清成 0，不可再覆蓋記憶
+        if (!(opts && opts.keepMemory) && !skipCloseRemember) {
+            rememberPanelScroll();
+        }
+        skipCloseRemember = false;
         wrap.classList.remove('is-open');
         wrap.setAttribute('aria-expanded', 'false');
         panel.hidden = true;
@@ -6832,9 +6882,12 @@ function enhance(select) {
         if (!btn || btn.disabled) return;
         e.preventDefault();
         var value = btn.getAttribute('data-value');
+        // refresh 會重畫 HTML 並清掉 scrollTop，必須先記住
+        rememberPanelScroll();
+        skipCloseRemember = true;
         syncNativeValue(select, value);
         refresh();
-        close();
+        close({ keepMemory: true });
         // 與 CodePen 相同：選完後焦點回到容器
         wrap.focus();
     });
