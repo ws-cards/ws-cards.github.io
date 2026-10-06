@@ -1411,10 +1411,6 @@ requestPrice.onload = function(){
     getCardData(cards,'BD/W54-070SSP','BD/W54-070SSP');			
     //loadCardData 預設
     loadCardData('BD/W54-070SSP');
-    // 載入預設鑑定卡資料
-    if (typeof GradingModule !== 'undefined') {
-        GradingModule.loadGradingData('BD_W54', 'BD/W54-070SSP');
-    }
     searchCardNumberFromUrl();
 }
 
@@ -2039,7 +2035,7 @@ requestStock.onload = function() {
 }				
 
 /**
- * update 卡片資訊 & 鑑定卡資料
+ * update 卡片資訊
 */
 var cardNumberSelect_info = document.getElementById('cardNumber');
 var cardNumberValue = cardNumberSelect_info.value;
@@ -2050,10 +2046,6 @@ if (cardNumberSelect_info.selectedIndex >= 0) {
 
 if (cardNumberValue && cardNumberValue !== '000/000-000') {
     loadCardData(cardNumberValue);
-
-    if (typeof GradingModule !== 'undefined') {
-        GradingModule.loadGradingData(cardTilteReplaceSpare, cardNumberDisplayText);
-    }
 }
 
 
@@ -2255,6 +2247,11 @@ console.log("進入繪圖區:"+cardNum);
 
             // 5. 更新價格摘要統計卡片
             updatePriceSummary(cardData);
+
+            // 5.5 同產品其他卡號（沿用本包 JSON，不另打 API）
+            if (typeof SiblingCardsModule !== 'undefined') {
+                SiblingCardsModule.renderFromProductJson(jsonObj, internalCardNumber, cardNum);
+            }
 
             // 6. 記錄到搜尋歷史 (有變動才寫入)
             if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardNum && cardNum !== '000/000-000') {
@@ -5558,291 +5555,166 @@ ctx.closePath();
 }
 
 // ====================================================
-// 鑑定卡資訊模組
-// - 顯示 PSA / BGS / ARS 鑑定等級分佈
-// - 計算 10 分率
+// 同產品其他卡號
+// - 沿用已載入的產品價格 JSON，不另打 API
+// - 依最新價格排序，點擊可切換卡號
 // ====================================================
 
-var GradingModule = (function() {
-var currentCompany = 'PSA';
-var gradingData = null;
-var selectedGrade = null;
-var requestURLGradingBase = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/gradingJson/';
+var SiblingCardsModule = (function() {
+var MAX_ITEMS = 8;
+var _lastProductJson = null;
+var _bound = false;
 
-var GRADING_COMPANIES = ['PSA', 'BGS', 'ARS'];
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-function gradeToNumber(grade) {
-    if (grade === '10+') return 10.5;
-    if (grade === '黑10') return 10.2;
-    if (grade === '金10') return 10.1;
-    var num = parseFloat(grade);
-    if (!isNaN(num)) return num;
-    if (grade.indexOf('以下') > -1) {
-        var base = parseFloat(grade);
-        return isNaN(base) ? -1 : base - 0.5;
+function getLatestPrice(entry) {
+    if (!entry || !entry.cardPrice || !entry.cardPrice.length) return null;
+    for (var i = entry.cardPrice.length - 1; i >= 0; i--) {
+        var n = Number(entry.cardPrice[i]);
+        if (!isNaN(n)) return n;
     }
-    return -1;
+    return null;
 }
 
-function calculateSummaryStats(allGrades, totalCount, grade) {
-    var selectedCount = 0;
-    var higherCount = 0;
-    var selectedNum = gradeToNumber(grade);
-    allGrades.forEach(function(g) {
-        if (g.grade === grade) selectedCount = g.count;
-        if (gradeToNumber(g.grade) > selectedNum) higherCount += g.count;
-    });
-    var gradeRate = totalCount > 0 ? ((selectedCount / totalCount) * 100).toFixed(2) : '0.00';
-    return { selectedCount: selectedCount, higherCount: higherCount, gradeRate: gradeRate };
-}
-
-function init() {
-    var buttons = document.querySelectorAll('.grading-toggle-btn');
-    buttons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var company = btn.getAttribute('data-company');
-            switchCompany(company);
-        });
-    });
-}
-
-function switchCompany(company) {
-    currentCompany = company;
-    selectedGrade = null;
-    var buttons = document.querySelectorAll('.grading-toggle-btn');
-    buttons.forEach(function(btn) {
-        var isCurrent = btn.getAttribute('data-company') === company;
-        btn.classList.toggle('active', isCurrent);
-        // 目前選了哪一家不能只靠顏色表示
-        btn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
-    });
-    renderGradingData();
-}
-
-/**
- * 讀取單一鑑定公司 JSON
- * URL 格式: {base}{titleCode}_{company}.json
- * JSON 格式: { "卡號": { "等級": 數量 } } 或 { "卡號": null }
- */
-function fetchCompanyData(titleCode, cardNumber, company) {
-    var url = requestURLGradingBase + titleCode + '_' + company + '.json';
-    return fetch(url)
-        .then(function(response) {
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data[cardNumber] && typeof data[cardNumber] === 'object') {
-                var cardData = data[cardNumber];
-                if (data.updateDate) {
-                    cardData._updateDate = data.updateDate;
-                }
-                return cardData;
+function displayLabelForKey(key) {
+    if (typeof mappingRep !== 'undefined' && mappingRep && mappingRep[key]) {
+        return String(mappingRep[key]);
+    }
+    var select = document.getElementById('cardNumber');
+    if (select) {
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === key) {
+                return select.options[i].text || key;
             }
-            return null;
-        })
-        .catch(function() {
-            return null;
-        });
+        }
+    }
+    return key;
 }
 
-/**
- * 載入鑑定資料（分別讀取 PSA / BGS / ARS 三個 JSON）
- * @param {string} titleCode - 作品代碼（已替換 / 為 _）
- * @param {string} cardNumber - 顯示用卡號（如 BD/W54-070SSP）
- */
-function loadGradingData(titleCode, cardNumber) {
-    if (!titleCode || !cardNumber || isCascadePlaceholderValue(cardNumber) || isCascadePlaceholderText(cardNumber)) {
+function formatYen(value) {
+    if (value == null || isNaN(value)) return '—';
+    return '¥' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function resetUI() {
+    var container = document.getElementById('siblingCardsContent');
+    if (!container) return;
+    container.innerHTML =
+        '<div class="sibling-cards-placeholder">' +
+        '<p>選擇卡號後顯示同產品其他卡號</p>' +
+        '</div>';
+}
+
+function selectSibling(internalId) {
+    if (!internalId) return;
+    var select = document.getElementById('cardNumber');
+    if (!select) return;
+
+    var found = false;
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === internalId) {
+            select.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+    if (!found) return;
+
+    window._hasUserModified = true;
+    if (typeof changeNumber === 'function') {
+        changeNumber();
+    }
+    setTimeout(function() {
+        if (typeof scrollToResults === 'function') scrollToResults();
+    }, 200);
+}
+
+function bindOnce() {
+    if (_bound) return;
+    var container = document.getElementById('siblingCardsContent');
+    if (!container) return;
+    _bound = true;
+    container.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-sibling-id]');
+        if (!btn) return;
+        e.preventDefault();
+        selectSibling(btn.getAttribute('data-sibling-id'));
+    });
+}
+
+function renderFromProductJson(productJson, currentInternalId, currentDisplayId) {
+    bindOnce();
+    var container = document.getElementById('siblingCardsContent');
+    if (!container) return;
+
+    if (!productJson || typeof productJson !== 'object') {
         resetUI();
         return;
     }
 
-    console.log('載入鑑定資料, titleCode:', titleCode, '卡號:', cardNumber);
+    _lastProductJson = productJson;
+    var currentKey = String(currentInternalId || '');
+    var rows = [];
 
-    var promises = GRADING_COMPANIES.map(function(company) {
-        return fetchCompanyData(titleCode, cardNumber, company);
-    });
-
-    Promise.all(promises).then(function(results) {
-        gradingData = {};
-        GRADING_COMPANIES.forEach(function(company, index) {
-            gradingData[company] = results[index];
+    Object.keys(productJson).forEach(function(key) {
+        if (!key || key === currentKey) return;
+        var entry = productJson[key];
+        if (!entry || typeof entry !== 'object') return;
+        var price = getLatestPrice(entry);
+        rows.push({
+            id: key,
+            label: displayLabelForKey(key),
+            price: price
         });
-
-        var hasAny = GRADING_COMPANIES.some(function(c) { return gradingData[c] !== null; });
-        if (!hasAny) {
-            gradingData = null;
-            console.log('此卡片無鑑定資料:', cardNumber);
-        } else {
-            console.log('鑑定資料載入完成:', cardNumber, gradingData);
-        }
-
-        updateButtonStates();
-        renderGradingData();
     });
-}
 
-function updateButtonStates() {
-    var companies = ['PSA', 'BGS', 'ARS'];
-    companies.forEach(function(company) {
-        var btn = document.getElementById('btn' + company);
-        if (!btn) return;
-        btn.disabled = false;
-    });
-}
-
-function renderGradingData() {
-    var container = document.getElementById('gradingContent');
-    var tenRateContainer = document.getElementById('gradingTenRate');
-    if (!container) return;
-
-    if (tenRateContainer) tenRateContainer.style.display = 'none';
-
-    if (!gradingData || !gradingData[currentCompany] ||
-        typeof gradingData[currentCompany] !== 'object' ||
-        Object.keys(gradingData[currentCompany]).length === 0) {
-        // 「暫無」會讓人以為之後就會有 —— 這是系統無法保證的承諾
+    if (!rows.length) {
         container.innerHTML =
-            '<div class="grading-placeholder">' +
-            '<p>此卡號沒有 ' + currentCompany + ' 的鑑定紀錄</p>' +
-            '<p class="text-muted" style="font-size:0.8rem;">可切換上方其他鑑定公司查看</p>' +
+            '<div class="sibling-cards-placeholder">' +
+            '<p>此產品目前沒有其他可比較的卡號</p>' +
             '</div>';
         return;
     }
 
-    var companyData = gradingData[currentCompany];
-
-    var allGrades = [];
-    var totalCount = 0;
-    Object.keys(companyData).forEach(function(key) {
-        if (key === '_updateDate') return;
-        var count = parseInt(companyData[key], 10) || 0;
-        allGrades.push({ grade: key, count: count });
-        totalCount += count;
+    rows.sort(function(a, b) {
+        var ap = a.price == null ? -1 : a.price;
+        var bp = b.price == null ? -1 : b.price;
+        if (bp !== ap) return bp - ap;
+        return String(a.label).localeCompare(String(b.label), 'zh-Hant');
     });
 
-    allGrades.sort(function(a, b) {
-        return gradeToNumber(b.grade) - gradeToNumber(a.grade);
+    var total = rows.length;
+    var shown = rows.slice(0, MAX_ITEMS);
+    var html = '<p class="sibling-cards-hint">依最新售價排序' +
+        (currentDisplayId ? ' · 目前：' + escapeHtml(currentDisplayId) : '') +
+        '</p>';
+    html += '<ul class="sibling-cards-list" role="list">';
+    shown.forEach(function(row) {
+        html += '<li>';
+        html += '<button type="button" class="sibling-card-item" data-sibling-id="' + escapeHtml(row.id) + '">';
+        html += '<span class="sibling-card-id">' + escapeHtml(row.label) + '</span>';
+        html += '<span class="sibling-card-price">' + escapeHtml(formatYen(row.price)) + '</span>';
+        html += '</button>';
+        html += '</li>';
     });
-
-    var visibleGrades = allGrades.filter(function(g) { return g.count > 0; });
-    var topGrades = visibleGrades.slice(0, 4);
-
-    if (!selectedGrade || !visibleGrades.find(function(g) { return g.grade === selectedGrade; })) {
-        selectedGrade = topGrades.length > 0 ? topGrades[0].grade : null;
+    html += '</ul>';
+    if (total > MAX_ITEMS) {
+        html += '<p class="sibling-cards-more">另有 ' + (total - MAX_ITEMS) + ' 張，可從上方卡號選單查看</p>';
     }
-
-    var stats = calculateSummaryStats(allGrades, totalCount, selectedGrade);
-    var html = '';
-
-    if (companyData._updateDate) {
-        html += '<div style="font-size:0.75rem; color:var(--text-secondary); text-align:right; margin-bottom:0.5rem;">' +
-                '<i class="fas fa-clock mr-1" aria-hidden="true"></i>鑑定資料更新：' + companyData._updateDate + '</div>';
-    }
-
-    html += '<div class="grading-grade-cards">';
-    topGrades.forEach(function(g) {
-        var sel = g.grade === selectedGrade ? ' selected' : '';
-        html += '<div class="grading-grade-card' + sel + '" data-grade="' + g.grade + '">';
-        html += '<div class="grading-grade-card-label">' + currentCompany + ' ' + g.grade + '</div>';
-        html += '<div class="grading-grade-card-count">' + g.count.toLocaleString() + '</div>';
-        html += '</div>';
-    });
-    html += '</div>';
-
-    html += '<div class="grading-summary-grid">';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Total Population</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryTotal">' + totalCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label" id="gradingSummaryGradeLabel">' + currentCompany + ' ' + (selectedGrade || '-') + ' Population</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryGradeCount">' + stats.selectedCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Population Higher</div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryHigher">' + stats.higherCount.toLocaleString() + '</div></div>';
-    html += '<div class="grading-summary-item"><div class="grading-summary-label">Grade Rate <span class="grade-rate-info" title="此等級佔總鑑定數的比例">&#9432;</span></div>';
-    html += '<div class="grading-summary-value" id="gradingSummaryRate">' + stats.gradeRate + '%</div></div>';
-    html += '</div>';
-
-    html += '<div class="grading-detail-table-wrap">';
-    html += '<table class="grading-detail-table">';
-    html += '<thead><tr><th>Grade</th><th>Quantity</th></tr></thead>';
-    html += '<tbody>';
-    visibleGrades.forEach(function(g) {
-        html += '<tr><td><strong>' + g.grade + '</strong></td><td>' + g.count.toLocaleString() + '</td></tr>';
-    });
-    html += '<tr class="grading-detail-total-row"><td><strong>Total</strong></td><td><strong>' + totalCount.toLocaleString() + '</strong></td></tr>';
-    html += '</tbody></table>';
-    html += '</div>';
-
     container.innerHTML = html;
-
-    container.querySelectorAll('.grading-grade-card').forEach(function(card) {
-        card.addEventListener('click', function() {
-            selectGradeCard(card.getAttribute('data-grade'));
-        });
-    });
-}
-
-function selectGradeCard(grade) {
-    selectedGrade = grade;
-
-    document.querySelectorAll('.grading-grade-card').forEach(function(card) {
-        card.classList.toggle('selected', card.getAttribute('data-grade') === grade);
-    });
-
-    var companyData = gradingData[currentCompany];
-    var allGrades = [];
-    var totalCount = 0;
-    Object.keys(companyData).forEach(function(key) {
-        if (key === '_updateDate') return;
-        var count = parseInt(companyData[key], 10) || 0;
-        allGrades.push({ grade: key, count: count });
-        totalCount += count;
-    });
-
-    var stats = calculateSummaryStats(allGrades, totalCount, grade);
-
-    var labelEl = document.getElementById('gradingSummaryGradeLabel');
-    var countEl = document.getElementById('gradingSummaryGradeCount');
-    var higherEl = document.getElementById('gradingSummaryHigher');
-    var rateEl = document.getElementById('gradingSummaryRate');
-    if (labelEl) labelEl.textContent = currentCompany + ' ' + grade + ' Population';
-    if (countEl) countEl.textContent = stats.selectedCount.toLocaleString();
-    if (higherEl) higherEl.textContent = stats.higherCount.toLocaleString();
-    if (rateEl) rateEl.textContent = stats.gradeRate + '%';
-}
-
-function resetUI() {
-    gradingData = null;
-    currentCompany = 'PSA';
-    selectedGrade = null;
-
-    var container = document.getElementById('gradingContent');
-    var tenRateContainer = document.getElementById('gradingTenRate');
-
-    if (container) {
-        container.innerHTML =
-            '<div class="grading-placeholder">' +
-            '<p>選擇卡號後顯示鑑定數量</p>' +
-            '</div>';
-    }
-    if (tenRateContainer) {
-        tenRateContainer.style.display = 'none';
-    }
-
-    ['PSA', 'BGS', 'ARS'].forEach(function(company) {
-        var btn = document.getElementById('btn' + company);
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.toggle('active', company === 'PSA');
-            btn.setAttribute('aria-pressed', company === 'PSA' ? 'true' : 'false');
-        }
-    });
 }
 
 return {
-    init: init,
-    loadGradingData: loadGradingData,
-    switchCompany: switchCompany,
-    resetUI: resetUI
+    renderFromProductJson: renderFromProductJson,
+    resetUI: resetUI,
+    selectSibling: selectSibling
 };
 
 })();
