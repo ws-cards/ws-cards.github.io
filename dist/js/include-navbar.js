@@ -24,7 +24,11 @@
       'display:flex;align-items:center;gap:8px;min-width:0;',
       'margin-left:0!important;pointer-events:none;z-index:1;',
       '}',
-      '.main-header .navbar-title-text{pointer-events:auto;}'
+      '.main-header .navbar-title-text{',
+      'pointer-events:auto;',
+      "font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;",
+      'font-size:1.05rem;font-weight:700;letter-spacing:0.06em;',
+      '}'
     ].join('');
     document.head.appendChild(style);
   }
