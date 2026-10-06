@@ -3880,52 +3880,8 @@ body.market-desk-page .market-filter-strip .filter-label {
     color: var(--text-secondary);
 }
 
-body.market-desk-page .market-filter-strip select {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100%;
-    margin: 0 !important;
-    min-height: 2.65rem;
-    border-radius: 10px;
-    border: 1px solid var(--desk-line);
-    background: var(--desk-surface-strong);
-    color: var(--text-primary);
-    padding: 0.45rem 0.7rem;
-    box-sizing: border-box;
-}
-
-body.market-desk-page .market-filter-strip select:focus {
-    outline: none;
-    border-color: var(--desk-foil);
-    box-shadow: 0 0 0 1px var(--desk-foil);
-    transform: none !important;
-}
-
-body.market-desk-page .market-filter-strip select:disabled,
-body.market-desk-page .market-filter-strip select.is-cascade-pending {
-    cursor: not-allowed;
-    opacity: 0.62;
-    color: var(--text-secondary);
-    background: color-mix(in srgb, var(--desk-surface-strong) 82%, var(--desk-line));
-    border-color: color-mix(in srgb, var(--desk-line) 80%, transparent);
-    box-shadow: none;
-}
-
-[data-theme="dark"] body.market-desk-page .market-filter-strip select:disabled,
-[data-theme="dark"] body.market-desk-page .market-filter-strip select.is-cascade-pending {
-    opacity: 0.55;
-    background: color-mix(in srgb, #161512 88%, #000);
-    color: color-mix(in srgb, var(--text-secondary) 90%, transparent);
-}
-
-[data-theme="dark"] body.market-desk-page .market-filter-strip select {
-    background: #161512;
-    border-color: rgba(240, 238, 230, 0.12);
-}
-
-/* —— FancySelect（結構對齊 CodePen KVdYjz；淺色另調色） —— */
+/* —— FancySelect 色票（原生 select 在 JS enhance 前也共用，避免換皮閃爍） —— */
 :root {
-    /* 淺色：冷灰石板，對齊 desk 白底／--text-primary，避免偏黃米 */
     --fancy-trigger-bg: #e8eaee;
     --fancy-trigger-fg: #2d3748;
     --fancy-arrow: #4a5568;
@@ -3938,6 +3894,7 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     --fancy-disabled-bg: #f0f1f4;
     --fancy-panel-shadow: 0 10px 28px rgba(23, 25, 29, 0.12);
     --fancy-trigger-ring: rgba(23, 25, 29, 0.08);
+    --fancy-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a5568' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
 }
 
 [data-theme="dark"] {
@@ -3953,8 +3910,71 @@ body.market-desk-page .market-filter-strip select.is-cascade-pending {
     --fancy-disabled-bg: #555;
     --fancy-panel-shadow: none;
     --fancy-trigger-ring: transparent;
+    --fancy-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23ffffff' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
 }
 
+/* 原生 select：外觀對齊 FancySelect trigger，enhance 前後幾乎無換皮感
+   （全域 select 有多處 !important，此處必須對齊覆蓋） */
+body.market-desk-page .market-filter-strip select {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    margin: 0 !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: inset 0 0 0 1px var(--fancy-trigger-ring) !important;
+    background-color: var(--fancy-trigger-bg) !important;
+    background-image: var(--fancy-arrow-svg) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 10px 6px !important;
+    color: var(--fancy-trigger-fg) !important;
+    padding: 0 40px 0 10px !important;
+    font-family: sans-serif !important;
+    font-size: 0.95rem !important;
+    font-weight: 400;
+    line-height: 40px;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transform: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.market-desk-page .market-filter-strip select:focus {
+    outline: none;
+    border: 0 !important;
+    box-shadow: inset 0 0 0 1px var(--fancy-trigger-ring) !important;
+    transform: none !important;
+}
+
+body.market-desk-page .market-filter-strip select:disabled,
+body.market-desk-page .market-filter-strip select.is-cascade-pending {
+    cursor: not-allowed;
+    opacity: 0.55;
+    color: var(--text-secondary, #718096) !important;
+    background-color: var(--fancy-disabled-bg) !important;
+    background-image: var(--fancy-arrow-svg) !important;
+    box-shadow: inset 0 0 0 1px var(--fancy-trigger-ring) !important;
+}
+
+[data-theme="dark"] body.market-desk-page .market-filter-strip select:disabled,
+[data-theme="dark"] body.market-desk-page .market-filter-strip select.is-cascade-pending {
+    opacity: 0.55;
+    color: color-mix(in srgb, var(--text-secondary) 90%, transparent) !important;
+    background-color: var(--fancy-disabled-bg) !important;
+}
+
+[data-theme="dark"] body.market-desk-page .market-filter-strip select {
+    background-color: var(--fancy-trigger-bg) !important;
+    color: var(--fancy-trigger-fg) !important;
+}
+
+/* —— FancySelect（結構對齊 CodePen KVdYjz；色票見上方變數） —— */
 .fancy-select {
     position: relative;
     width: 100%;
@@ -3989,9 +4009,12 @@ body.market-desk-page .col-lg-12.has-fancy-open {
     border: 0 !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    /* 覆蓋上方原生外觀規則，避免隱藏後仍佔視覺 */
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
-/* 選中列：右側三角；淺色為暖石色、深色維持 CodePen #666 */
+/* 選中列：右側三角；色票與原生 select 共用 */
 .fancy-select-trigger {
     position: relative;
     width: 100%;
