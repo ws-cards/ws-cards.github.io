@@ -11,9 +11,23 @@
   if (!container) return;
 
   var templatePath = container.getAttribute('data-navbar-template') || '/assets/partials/navbar.html';
-  var pageTitle = container.getAttribute('data-page-title') || document.title;
   var menuOpen = false;
   var currentAuthUser = null;
+
+  function ensureNavbarLayoutStyles() {
+    if (document.getElementById('nav-layout-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'nav-layout-styles';
+    style.textContent = [
+      '.main-header .navbar-title-block{',
+      'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);',
+      'display:flex;align-items:center;gap:8px;min-width:0;',
+      'margin-left:0!important;pointer-events:none;z-index:1;',
+      '}',
+      '.main-header .navbar-title-text{pointer-events:auto;}'
+    ].join('');
+    document.head.appendChild(style);
+  }
 
   function ensureAuthMenuStyles() {
     if (document.getElementById('nav-auth-menu-styles')) return;
@@ -354,11 +368,9 @@
   }
 
   function initializeNavbar() {
-    var title = container.querySelector('[data-navbar-title]');
     var button = container.querySelector('#themeToggleBtn');
     var icon = container.querySelector('#themeToggleIcon');
     var themeItem = container.querySelector('#navThemeToggleItem') || (button && button.parentElement);
-    if (title) title.textContent = pageTitle;
     if (!button || !icon) return;
 
     var currentTheme = resolveThemeHint();
@@ -379,6 +391,7 @@
     })
     .then(function (html) {
       var theme = resolveThemeHint();
+      ensureNavbarLayoutStyles();
       container.innerHTML = applyThemeHintToNavbarHtml(html, theme);
       initializeNavbar();
       initializeAuth();
