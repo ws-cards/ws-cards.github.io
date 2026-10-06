@@ -14,8 +14,29 @@
   var menuOpen = false;
   var currentAuthUser = null;
 
+  function ensureIansuiFont() {
+    if (document.getElementById('nav-iansui-font')) return;
+    var preconnectGoogle = document.createElement('link');
+    preconnectGoogle.rel = 'preconnect';
+    preconnectGoogle.href = 'https://fonts.googleapis.com';
+    document.head.appendChild(preconnectGoogle);
+
+    var preconnectGstatic = document.createElement('link');
+    preconnectGstatic.rel = 'preconnect';
+    preconnectGstatic.href = 'https://fonts.gstatic.com';
+    preconnectGstatic.crossOrigin = 'anonymous';
+    document.head.appendChild(preconnectGstatic);
+
+    var link = document.createElement('link');
+    link.id = 'nav-iansui-font';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Iansui&display=swap';
+    document.head.appendChild(link);
+  }
+
   function ensureNavbarLayoutStyles() {
     if (document.getElementById('nav-layout-styles')) return;
+    ensureIansuiFont();
     var style = document.createElement('style');
     style.id = 'nav-layout-styles';
     style.textContent = [
@@ -26,8 +47,9 @@
       '}',
       '.main-header .navbar-title-text{',
       'pointer-events:auto;',
-      "font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;",
-      'font-size:1.05rem;font-weight:700;letter-spacing:0.06em;',
+      /* 芫荽（Iansui）僅有 400 字重，避免偽粗體 */
+      "font-family:'Iansui','Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;",
+      'font-size:1.15rem;font-weight:400;letter-spacing:0.08em;',
       '}'
     ].join('');
     document.head.appendChild(style);
