@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#141820">
+  <meta name="description" content="Weiss Schwarz 攻擊階段紀錄：DeckLog 匯入、前排布陣、直攻／正面／側面與吃傷結算。">
+  <meta property="og:title" content="攻擊記錄｜WS-Cards 卡片雲">
+  <meta property="og:description" content="用 DeckLog 匯入雙方牌組，快速記錄攻擊宣告、取消與用牌總結。">
+  <title>攻擊記錄｜WS-Cards 卡片雲</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #e8ecf2;
+      --muted: #8b95a8;
+      --panel: #1c222d;
+      --panel-2: #252c3a;
+      --line: rgba(232, 236, 242, 0.12);
+      --amber: #f0a202;
+      --teal: #2ec4b6;
+      --coral: #e85d4c;
+      --good: #5dce8a;
+      --danger: #ff6b6b;
+      --bg: #141820;
+      --display: "Chakra Petch", "Noto Sans TC", sans-serif;
+      --body: "Noto Sans TC", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--body);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #pixi-host {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    #pixi-host canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .agl-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      background: rgba(8, 10, 14, 0.55);
+      backdrop-filter: blur(6px);
+    }
+    .agl-overlay.is-open { display: flex; }
+    .agl-sheet {
+      width: min(440px, 100%);
+      background: linear-gradient(165deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 18px 18px 14px 14px;
+      padding: 18px 16px 14px;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+      animation: sheetUp 0.28s ease;
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .agl-sheet h2 {
+      margin: 0 0 6px;
+      font-family: var(--display);
+      font-size: 1.15rem;
+      letter-spacing: 0.02em;
+    }
+    .agl-sheet p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    .agl-field { margin-bottom: 12px; }
+    .agl-field label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-family: var(--display);
+    }
+    .agl-field input, .agl-field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 12px 12px;
+      font-size: 1rem;
+      font-family: var(--body);
+      outline: none;
+    }
+    .agl-field input:focus, .agl-field textarea:focus {
+      border-color: rgba(240, 162, 2, 0.65);
+    }
+    .agl-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .agl-actions button {
+      flex: 1;
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .agl-btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line) !important;
+    }
+    .agl-btn-primary {
+      background: var(--amber);
+      color: #1a1200;
+    }
+    .agl-status {
+      min-height: 1.2em;
+      margin: 0 0 8px;
+      font-size: 0.85rem;
+      color: var(--teal);
+    }
+    .agl-status.is-err { color: var(--danger); }
+    .agl-boot {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(46, 196, 182, 0.18), transparent 45%),
+        radial-gradient(ellipse at 90% 80%, rgba(240, 162, 2, 0.14), transparent 40%),
+        var(--bg);
+      font-family: var(--display);
+      letter-spacing: 0.04em;
+    }
+    .agl-boot[hidden] { display: none !important; }
+    .agl-boot strong { font-size: 1.4rem; }
+    .agl-boot span { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="agl-boot" class="agl-boot" aria-live="polite">
+    <strong>ATTACK LOG</strong>
+    <span>載入戰場介面…</span>
+  </div>
+  <div id="pixi-host" aria-label="攻擊記錄主畫面"></div>
+
+  <div id="overlay-setup" class="agl-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <div class="agl-sheet">
+      <h2 id="setupTitle">匯入雙方牌組</h2>
+      <p>輸入 DeckLog 代碼後匯入；也可載入示範牌組開始練習。</p>
+      <div class="agl-field">
+        <label for="firstCode">先攻 DeckLog</label>
+        <input id="firstCode" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="例：2XXXX">
+      </div>
+      <div class="agl-field">
+        <label for="secondCode">後攻 DeckLog</label>
+        <input id="secondCode" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="例：2YYYY">
+      </div>
+      <p id="setupStatus" class="agl-status"></p>
+      <div class="agl-actions">
+        <button type="button" class="agl-btn-ghost" id="btnSample">示範牌組</button>
+        <button type="button" class="agl-btn-primary" id="btnImport">匯入並開始</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay-number" class="agl-overlay" role="dialog" aria-modal="true">
+    <div class="agl-sheet">
+      <h2 id="numberTitle">輸入點數</h2>
+      <p id="numberHint">請輸入正整數（可為 0）。</p>
+      <div class="agl-field">
+        <label for="numberInput">點數</label>
+        <input id="numberInput" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+      </div>
+      <div class="agl-actions">
+        <button type="button" class="agl-btn-ghost" id="btnNumberCancel">返回</button>
+        <button type="button" class="agl-btn-primary" id="btnNumberOk">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay-text" class="agl-overlay" role="dialog" aria-modal="true">
+    <div class="agl-sheet">
+      <h2 id="textTitle">打誰（文字）</h2>
+      <p>選填：也可直接留空略過。</p>
+      <div class="agl-field">
+        <label for="textInput">對手角色／備註</label>
+        <input id="textInput" type="text" autocomplete="off" placeholder="例：對手中央 Lv3">
+      </div>
+      <div class="agl-actions">
+        <button type="button" class="agl-btn-ghost" id="btnTextSkip">略過</button>
+        <button type="button" class="agl-btn-primary" id="btnTextOk">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.9.2/dist/pixi.min.js"></script>
+  <script src="assets/js/ws-decklog.js"></script>
+  <script src="assets/js/attack-game-log.js"></script>
+</body>
+</html>
