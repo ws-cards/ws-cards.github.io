@@ -277,11 +277,231 @@
       color: var(--amber);
     }
 
+    /* —— Summary dashboard (match-report style) —— */
+    .agl-summary {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      background: #d8d8d8;
+      color: #1a1a1a;
+      font-family: var(--body);
+      overflow: hidden;
+    }
+    .agl-summary.is-open { display: flex; }
+    .agl-summary-head {
+      display: grid;
+      grid-template-columns: 1.2fr 1.4fr 1fr;
+      gap: 8px;
+      padding: 10px 14px 8px;
+      background: #efefef;
+      border-bottom: 1px solid #bdbdbd;
+      align-items: center;
+    }
+    .agl-summary-vs {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(1.25rem, 3.2vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.15;
+    }
+    .agl-summary-vs .p1 { color: #1d4ed8; }
+    .agl-summary-vs .p2 { color: #dc2626; }
+    .agl-summary-vs .sep { color: #444; margin: 0 0.25em; font-weight: 600; }
+    .agl-summary-times {
+      font-size: 0.82rem;
+      color: #333;
+      line-height: 1.45;
+    }
+    .agl-summary-meta {
+      text-align: right;
+      font-size: 0.9rem;
+      color: #222;
+      line-height: 1.45;
+      font-weight: 600;
+    }
+    .agl-summary-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid #aaa;
+      background: #cfcfcf;
+    }
+    .agl-summary-tabs button {
+      border: 0;
+      border-right: 1px solid #aaa;
+      background: #f5f5f5;
+      min-height: 40px;
+      font-family: var(--body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #222;
+    }
+    .agl-summary-tabs button:last-child { border-right: 0; }
+    .agl-summary-tabs button.is-active {
+      background: #fff;
+      box-shadow: inset 0 -3px 0 #1d4ed8;
+    }
+    .agl-summary-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      background: #ececec;
+      padding: 10px 12px;
+    }
+    .agl-summary-pane { display: none; height: 100%; }
+    .agl-summary-pane.is-active { display: block; }
+    .agl-stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid #9a9a9a;
+      font-size: 0.92rem;
+    }
+    .agl-stat-table th,
+    .agl-stat-table td {
+      border: 1px solid #b5b5b5;
+      padding: 8px 10px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .agl-stat-table th {
+      background: #f0f0f0;
+      font-weight: 700;
+    }
+    .agl-stat-table th.p1 { color: #1d4ed8; }
+    .agl-stat-table th.p2 { color: #dc2626; }
+    .agl-stat-table td.label {
+      text-align: left;
+      background: #f3f3f3;
+      font-weight: 600;
+      width: 28%;
+      color: #333;
+    }
+    .agl-stat-table tbody tr:nth-child(even) td:not(.label) { background: #fafafa; }
+    .agl-stat-table td.p1 { color: #1d4ed8; font-weight: 600; }
+    .agl-stat-table td.p2 { color: #dc2626; font-weight: 600; }
+    .agl-stat-table td.small { font-size: 0.78rem; font-weight: 500; }
+    .agl-chart-wrap {
+      height: calc(100% - 8px);
+      min-height: 220px;
+      background: #fff;
+      border: 1px solid #9a9a9a;
+      padding: 10px 12px 8px;
+      display: flex;
+      flex-direction: column;
+    }
+    .agl-chart-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .agl-chart-toolbar h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #333;
+    }
+    .agl-chart-toolbar label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 8px;
+      color: #1d4ed8;
+    }
+    .agl-chart-toolbar label.p2 { color: #dc2626; }
+    .agl-chart-toolbar select {
+      border: 1px solid #888;
+      background: #fff;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+    .agl-chart-canvas-box { flex: 1; min-height: 0; position: relative; }
+    .agl-decklists {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      height: 100%;
+      min-height: 200px;
+    }
+    .agl-deck-col {
+      background: #fff;
+      border: 1px solid #9a9a9a;
+      overflow: auto;
+      padding: 8px 10px;
+    }
+    .agl-deck-col h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .agl-deck-col h3.p1 { color: #1d4ed8; }
+    .agl-deck-col h3.p2 { color: #dc2626; }
+    .agl-deck-col ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .agl-deck-col li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid #e5e5e5;
+      font-size: 0.82rem;
+    }
+    .agl-deck-col .code {
+      color: #666;
+      font-size: 0.75rem;
+      margin-bottom: 8px;
+    }
+    .agl-summary-footmeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      padding: 7px 12px;
+      background: #5a5a5a;
+      color: #f3f3f3;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .agl-summary-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px 10px;
+      background: #d0d0d0;
+      border-top: 1px solid #aaa;
+    }
+    .agl-summary-actions .left,
+    .agl-summary-actions .right { display: flex; gap: 8px; }
+    .agl-summary-actions button {
+      min-height: 40px;
+      padding: 0 16px;
+      border: 1px solid #333;
+      background: #fff;
+      font-family: var(--body);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+    .agl-summary-actions .primary {
+      background: #f0a202;
+      border-color: #b57900;
+      color: #1a1200;
+      min-width: 140px;
+    }
+
     /* Block game chrome while portrait */
     @media (orientation: portrait) {
       .agl-orient-gate { display: flex; }
       #pixi-host,
       .agl-overlay,
+      .agl-summary,
       .agl-boot {
         visibility: hidden !important;
         pointer-events: none !important;
@@ -374,6 +594,84 @@
     </div>
   </div>
 
+  <div id="overlay-summary" class="agl-summary" role="dialog" aria-modal="true" aria-label="雙方總結算">
+    <header class="agl-summary-head">
+      <h1 class="agl-summary-vs" id="sumVs"><span class="p1">先攻</span><span class="sep">vs.</span><span class="p2">後攻</span></h1>
+      <div class="agl-summary-times" id="sumTimes">
+        <div>Started: —</div>
+        <div>Ended: —</div>
+      </div>
+      <div class="agl-summary-meta" id="sumMeta">
+        <div>模式：攻擊記錄</div>
+        <div>勝者：—</div>
+      </div>
+    </header>
+    <nav class="agl-summary-tabs" aria-label="結算分頁">
+      <button type="button" class="is-active" data-sum-tab="stats">快速統計</button>
+      <button type="button" data-sum-tab="chart">回合圖表</button>
+      <button type="button" data-sum-tab="decks">Decklists</button>
+    </nav>
+    <div class="agl-summary-body">
+      <section class="agl-summary-pane is-active" id="sumPaneStats" data-pane="stats">
+        <table class="agl-stat-table" id="sumStatTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="p1" id="sumHeadP1">玩家 1</th>
+              <th class="p2" id="sumHeadP2">玩家 2</th>
+            </tr>
+          </thead>
+          <tbody id="sumStatBody"></tbody>
+        </table>
+      </section>
+      <section class="agl-summary-pane" id="sumPaneChart" data-pane="chart">
+        <div class="agl-chart-wrap">
+          <div class="agl-chart-toolbar">
+            <div>
+              <label><input type="checkbox" id="sumChartP1" checked> 玩家 1</label>
+              <label class="p2"><input type="checkbox" id="sumChartP2" checked> 玩家 2</label>
+            </div>
+            <h3 id="sumChartTitle">受到傷害</h3>
+            <select id="sumChartMetric" aria-label="圖表指標">
+              <option value="damageReceived">受到傷害</option>
+              <option value="cancelDamage">取消傷害</option>
+              <option value="attacks">Attacks</option>
+            </select>
+          </div>
+          <div class="agl-chart-canvas-box">
+            <canvas id="sumChartCanvas"></canvas>
+          </div>
+        </div>
+      </section>
+      <section class="agl-summary-pane" id="sumPaneDecks" data-pane="decks">
+        <div class="agl-decklists">
+          <div class="agl-deck-col">
+            <h3 class="p1" id="sumDeckTitle1">玩家 1</h3>
+            <div class="code" id="sumDeckCode1"></div>
+            <ul id="sumDeckList1"></ul>
+          </div>
+          <div class="agl-deck-col">
+            <h3 class="p2" id="sumDeckTitle2">玩家 2</h3>
+            <div class="code" id="sumDeckCode2"></div>
+            <ul id="sumDeckList2"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="agl-summary-footmeta" id="sumFootMeta"></div>
+    <div class="agl-summary-actions">
+      <div class="left">
+        <button type="button" id="btnSumLoad">讀取</button>
+        <button type="button" id="btnSumExport">Export</button>
+        <input type="file" id="sumLoadFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="right">
+        <button type="button" class="primary" id="btnSumHome">回到主界面</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js"></script>
   <script src="assets/js/attack-game-log.js"></script>

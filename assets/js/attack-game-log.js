@@ -31,6 +31,8 @@
   var resolvedTextures = new Map();
   var numberResolver = null;
   var textResolver = null;
+  var summaryChart = null;
+  var summaryTab = "stats";
 
   var state = createEmptyState();
   var uiState = {
@@ -56,7 +58,9 @@
       stages: { first: emptyStage(), second: emptyStage() },
       logs: [],
       lastUndo: null,
-      ended: false
+      ended: false,
+      startedAt: null,
+      endedAt: null
     };
   }
 
@@ -162,6 +166,142 @@
     };
   }
 
+  function playerShortName(side) {
+    return side === "first" ? "先攻" : "後攻";
+  }
+
+  function formatDateTime(ts) {
+    if (!ts) return "—";
+    try {
+      return new Date(ts).toLocaleString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "numeric", minute: "2-digit"
+      });
+    } catch (e) {
+      return "—";
+    }
+  }
+
+  function formatDuration(ms) {
+    if (!ms || ms < 0) return "—";
+    var s = Math.floor(ms / 1000);
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var sec = s % 60;
+    return h + "h " + m + "m " + sec + "s";
+  }
+
+  /** Stats from the receiving player's perspective (like reference report). */
+  function receivedStatsFor(side) {
+    var opp = side === "first" ? "second" : "first";
+    var logs = state.logs.filter(function (l) { return l.side === opp; });
+    var damageReceived = 0;
+    var damageReceivedTimes = 0;
+    var cancelDamage = 0;
+    var cancelTimes = 0;
+    var attacksAgainst = logs.length;
+    for (var i = 0; i < logs.length; i++) {
+      var l = logs[i];
+      var declared = Number(l.declaredDamage) || 0;
+      var actual = Number(l.actualDamage) || 0;
+      damageReceived += actual;
+      if (actual > 0) damageReceivedTimes += 1;
+      var cancelled = 0;
+      if (l.result === "cancel") cancelled = declared;
+      else if (l.result === "other") cancelled = Math.max(0, declared - actual);
+      if (cancelled > 0 || l.result === "cancel" || (l.result === "other" && actual === 0)) {
+        cancelDamage += cancelled;
+        cancelTimes += 1;
+      }
+    }
+    var denom = cancelDamage + damageReceived;
+    var cancelRate = denom > 0 ? (cancelDamage / denom) * 100 : 0;
+    var attackTot = totalsFor(side);
+    return {
+      damageReceived: damageReceived,
+      damageReceivedTimes: damageReceivedTimes,
+      cancelDamage: cancelDamage,
+      cancelTimes: cancelTimes,
+      cancelRate: cancelRate,
+      attacks: attackTot.declared,
+      byType: attackTot.byType,
+      cards: attackTot.cards,
+      attacksAgainst: attacksAgainst
+    };
+  }
+
+  function turnSeries(metric) {
+    var maxTurn = Math.max(1, state.turn || 1);
+    for (var i = 0; i < state.logs.length; i++) {
+      if (state.logs[i].turn > maxTurn) maxTurn = state.logs[i].turn;
+    }
+    var labels = [];
+    var p1 = [];
+    var p2 = [];
+    var c1 = 0;
+    var c2 = 0;
+    for (var t = 0; t <= maxTurn; t++) labels.push(t);
+    p1.push(0);
+    p2.push(0);
+    for (var turn = 1; turn <= maxTurn; turn++) {
+      var add1 = 0;
+      var add2 = 0;
+      for (var li = 0; li < state.logs.length; li++) {
+        var l = state.logs[li];
+        if (l.turn !== turn) continue;
+        var declared = Number(l.declaredDamage) || 0;
+        var actual = Number(l.actualDamage) || 0;
+        var cancelled = 0;
+        if (l.result === "cancel") cancelled = declared;
+        else if (l.result === "other") cancelled = Math.max(0, declared - actual);
+        // metric accumulates on the RECEIVING side
+        var recvSide = l.side === "first" ? "second" : "first";
+        var val = 0;
+        if (metric === "damageReceived") val = actual;
+        else if (metric === "cancelDamage") val = cancelled;
+        else if (metric === "attacks") val = 1;
+        if (metric === "attacks") {
+          // attacks counted for attacker
+          if (l.side === "first") add1 += 1;
+          else add2 += 1;
+        } else {
+          if (recvSide === "first") add1 += val;
+          else add2 += val;
+        }
+      }
+      c1 += add1;
+      c2 += add2;
+      p1.push(c1);
+      p2.push(c2);
+    }
+    return { labels: labels, first: p1, second: p2, maxTurn: maxTurn };
+  }
+
+  function buildMatchReport() {
+    var s1 = receivedStatsFor("first");
+    var s2 = receivedStatsFor("second");
+    var winner = "平手";
+    if (s1.damageReceived < s2.damageReceived) winner = "玩家 1（先攻）";
+    else if (s2.damageReceived < s1.damageReceived) winner = "玩家 2（後攻）";
+    var maxTurn = 1;
+    for (var i = 0; i < state.logs.length; i++) {
+      if (state.logs[i].turn > maxTurn) maxTurn = state.logs[i].turn;
+    }
+    if (state.turn > maxTurn) maxTurn = state.turn;
+    return {
+      p1Name: playerShortName("first"),
+      p2Name: playerShortName("second"),
+      startedAt: state.startedAt,
+      endedAt: state.endedAt,
+      winner: winner,
+      first: s1,
+      second: s2,
+      turns: maxTurn,
+      decisions: state.logs.length,
+      durationMs: (state.endedAt && state.startedAt) ? (state.endedAt - state.startedAt) : 0
+    };
+  }
+
   /* ——— DOM overlays ——— */
   function $(id) { return document.getElementById(id); }
 
@@ -237,6 +377,258 @@
     };
     $("btnSample").onclick = onSample;
     $("btnImport").onclick = onImport;
+    bindSummaryUI();
+  }
+
+  function bindSummaryUI() {
+    var tabs = document.querySelectorAll("[data-sum-tab]");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].addEventListener("click", function (ev) {
+        var tab = ev.currentTarget.getAttribute("data-sum-tab");
+        setSummaryTab(tab);
+      });
+    }
+    var metric = $("sumChartMetric");
+    if (metric) metric.addEventListener("change", function () { renderSummaryChart(); });
+    var c1 = $("sumChartP1");
+    var c2 = $("sumChartP2");
+    if (c1) c1.addEventListener("change", function () { renderSummaryChart(); });
+    if (c2) c2.addEventListener("change", function () { renderSummaryChart(); });
+    if ($("btnSumHome")) $("btnSumHome").onclick = resetGame;
+    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchJson;
+    if ($("btnSumLoad")) {
+      $("btnSumLoad").onclick = function () {
+        var f = $("sumLoadFile");
+        if (f) f.click();
+      };
+    }
+    if ($("sumLoadFile")) {
+      $("sumLoadFile").addEventListener("change", function (ev) {
+        var file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var parsed = JSON.parse(String(reader.result || ""));
+            var next = parsed.state || parsed;
+            if (!next || !next.logs) throw new Error("格式不符");
+            state = next;
+            state.ended = true;
+            state.phase = "summary";
+            if (!state.endedAt) state.endedAt = Date.now();
+            persist();
+            render();
+          } catch (e) {
+            alert("讀取失敗：" + (e.message || e));
+          }
+        };
+        reader.readAsText(file);
+        ev.target.value = "";
+      });
+    }
+  }
+
+  function setSummaryTab(tab) {
+    summaryTab = tab || "stats";
+    var tabs = document.querySelectorAll("[data-sum-tab]");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle("is-active", tabs[i].getAttribute("data-sum-tab") === summaryTab);
+    }
+    var panes = document.querySelectorAll(".agl-summary-pane");
+    for (var p = 0; p < panes.length; p++) {
+      panes[p].classList.toggle("is-active", panes[p].getAttribute("data-pane") === summaryTab);
+    }
+    if (summaryTab === "chart") renderSummaryChart();
+  }
+
+  function hideSummaryUI() {
+    var el = $("overlay-summary");
+    if (el) el.classList.remove("is-open");
+    if (summaryChart) {
+      try { summaryChart.destroy(); } catch (e) { /* */ }
+      summaryChart = null;
+    }
+  }
+
+  function showSummaryUI() {
+    var el = $("overlay-summary");
+    if (!el) return;
+    el.classList.add("is-open");
+    var report = buildMatchReport();
+    $("sumVs").innerHTML =
+      '<span class="p1">' + escapeHtml(report.p1Name) + '</span>' +
+      '<span class="sep"> vs. </span>' +
+      '<span class="p2">' + escapeHtml(report.p2Name) + '</span>';
+    $("sumTimes").innerHTML =
+      "<div>Started: " + escapeHtml(formatDateTime(report.startedAt)) + "</div>" +
+      "<div>Ended: " + escapeHtml(formatDateTime(report.endedAt)) + "</div>";
+    var code1 = state.first && state.first.code ? state.first.code : "—";
+    var code2 = state.second && state.second.code ? state.second.code : "—";
+    $("sumMeta").innerHTML =
+      "<div>模式：攻擊記錄</div>" +
+      "<div>勝者：" + escapeHtml(report.winner) + "</div>" +
+      "<div style=\"font-size:0.75rem;font-weight:500;opacity:.85\">" +
+      escapeHtml(code1) + " / " + escapeHtml(code2) + "</div>";
+    $("sumHeadP1").textContent = "玩家 1（先攻）";
+    $("sumHeadP2").textContent = "玩家 2（後攻）";
+
+    var rows = [
+      ["受到傷害", report.first.damageReceived, report.second.damageReceived],
+      ["受到傷害次數", report.first.damageReceivedTimes, report.second.damageReceivedTimes],
+      ["取消傷害", report.first.cancelDamage, report.second.cancelDamage],
+      ["取消傷害次數", report.first.cancelTimes, report.second.cancelTimes],
+      ["取消率", report.first.cancelRate.toFixed(2) + "%", report.second.cancelRate.toFixed(2) + "%"],
+      ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
+      ["Attacks", report.first.attacks, report.second.attacks],
+      [
+        "直 / 正 / 側",
+        report.first.byType.direct + "/" + report.first.byType.front + "/" + report.first.byType.side,
+        report.second.byType.direct + "/" + report.second.byType.front + "/" + report.second.byType.side
+      ]
+    ];
+    var body = $("sumStatBody");
+    body.innerHTML = "";
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="label">' + escapeHtml(row[0]) + "</td>" +
+        '<td class="p1' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[1])) + "</td>" +
+        '<td class="p2' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[2])) + "</td>";
+      body.appendChild(tr);
+    }
+
+    $("sumFootMeta").textContent =
+      "Duration: " + formatDuration(report.durationMs) +
+      "　總回合數: " + report.turns +
+      "　玩家總決策數: " + report.decisions +
+      "　總洗牌次數: —";
+
+    fillDeckList("first", "sumDeckTitle1", "sumDeckCode1", "sumDeckList1", report.p1Name);
+    fillDeckList("second", "sumDeckTitle2", "sumDeckCode2", "sumDeckList2", report.p2Name);
+    setSummaryTab(summaryTab || "stats");
+  }
+
+  function fillDeckList(side, titleId, codeId, listId, name) {
+    $(titleId).textContent = name + "（" + sideLabel(side) + "）";
+    var p = state[side];
+    $(codeId).textContent = p && p.code ? ("DeckLog: " + p.code) : "DeckLog: —";
+    var ul = $(listId);
+    ul.innerHTML = "";
+    var used = totalsFor(side).cards;
+    var keys = Object.keys(used);
+    if (!keys.length) {
+      var empty = document.createElement("li");
+      empty.innerHTML = "<span>（本局未宣告攻擊）</span><span></span>";
+      ul.appendChild(empty);
+      return;
+    }
+    keys.sort(function (a, b) { return used[b] - used[a]; });
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var display = key;
+      for (var li = 0; li < state.logs.length; li++) {
+        var ac = state.logs[li].attackerCard;
+        if (ac && (ac.cardNo === key || ac.name === key)) {
+          display = ac.name || ac.cardNo || key;
+          break;
+        }
+      }
+      var item = document.createElement("li");
+      item.innerHTML =
+        "<span>" + escapeHtml(display) + "</span>" +
+        "<strong>×" + used[key] + "</strong>";
+      ul.appendChild(item);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderSummaryChart() {
+    if (typeof Chart === "undefined") return;
+    var metric = ($("sumChartMetric") && $("sumChartMetric").value) || "damageReceived";
+    var titles = {
+      damageReceived: "受到傷害",
+      cancelDamage: "取消傷害",
+      attacks: "Attacks"
+    };
+    if ($("sumChartTitle")) $("sumChartTitle").textContent = titles[metric] || metric;
+    var series = turnSeries(metric);
+    var show1 = !$("sumChartP1") || $("sumChartP1").checked;
+    var show2 = !$("sumChartP2") || $("sumChartP2").checked;
+    var canvas = $("sumChartCanvas");
+    if (!canvas) return;
+    if (summaryChart) {
+      try { summaryChart.destroy(); } catch (e) { /* */ }
+      summaryChart = null;
+    }
+    var datasets = [];
+    if (show1) {
+      datasets.push({
+        label: "玩家 1",
+        data: series.first,
+        borderColor: "#1d4ed8",
+        backgroundColor: "rgba(29,78,216,0.12)",
+        tension: 0.15,
+        pointRadius: 3,
+        borderWidth: 2
+      });
+    }
+    if (show2) {
+      datasets.push({
+        label: "玩家 2",
+        data: series.second,
+        borderColor: "#dc2626",
+        backgroundColor: "rgba(220,38,38,0.12)",
+        tension: 0.15,
+        pointRadius: 3,
+        borderWidth: 2
+      });
+    }
+    summaryChart = new Chart(canvas.getContext("2d"), {
+      type: "line",
+      data: { labels: series.labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "Turn" },
+            ticks: { stepSize: 1 }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: metric === "attacks" ? "Attacks" : "Damage" }
+          }
+        }
+      }
+    });
+  }
+
+  function exportMatchJson() {
+    var payload = {
+      exportedAt: Date.now(),
+      report: buildMatchReport(),
+      state: state
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "attack-game-log-" + Date.now() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
   }
 
   function setSetupStatus(msg, isErr) {
@@ -285,12 +677,15 @@
     state.logs = [];
     state.lastUndo = null;
     state.ended = false;
+    state.startedAt = Date.now();
+    state.endedAt = null;
     uiState.attackStep = null;
     uiState.draft = null;
     uiState.pickerSlot = null;
     uiState.redeployMode = false;
     uiState.sidePanelOpen = false;
     closeOverlay("overlay-setup");
+    hideSummaryUI();
     persist();
     render();
     toast("記錄開始・先攻布陣");
@@ -613,6 +1008,7 @@
   function endGame() {
     state.ended = true;
     state.phase = "summary";
+    state.endedAt = Date.now();
     uiState.draft = null;
     uiState.attackStep = null;
     persist();
@@ -620,6 +1016,7 @@
   }
 
   function resetGame() {
+    hideSummaryUI();
     state = createEmptyState();
     uiState = {
       filterLevel: "all",
@@ -633,6 +1030,7 @@
       toast: "",
       toastUntil: 0
     };
+    summaryTab = "stats";
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* */ }
     openOverlay("overlay-setup");
     render();
@@ -653,6 +1051,7 @@
     root.addChild(bg);
 
     if (state.phase === "setup") {
+      hideSummaryUI();
       drawIdleBrand(w, h);
       return;
     }
@@ -661,6 +1060,7 @@
       return;
     }
 
+    hideSummaryUI();
     drawHeader(w);
     if (state.phase === "deploy") drawDeploy(w, h);
     else if (state.phase === "attack") drawAttack(w, h);
@@ -1566,90 +1966,13 @@
   }
 
   function drawSummary(w, h) {
-    var title = makeText("雙方總結算", { size: 26, weight: "700", fill: COLORS.ink, display: true });
-    title.x = 16;
-    title.y = 20;
+    // HTML dashboard owns the summary UI; keep a quiet Pixi backdrop.
+    var title = makeText("MATCH REPORT", { size: 22, weight: "700", fill: COLORS.muted, display: true });
+    title.anchor.set(0.5);
+    title.x = w / 2;
+    title.y = h / 2;
     root.addChild(title);
-
-    var colW = Math.floor((w - 40) / 2);
-    drawSummaryCol(16, 64, colW, h - 140, "first");
-    drawSummaryCol(24 + colW, 64, colW, h - 140, "second");
-
-    var again = makeBtn("新對局", Math.min(w - 32, 240), 48, COLORS.amber, {
-      textFill: 0x1a1200, size: 16, radius: 14
-    });
-    again.x = (w - again._w) / 2;
-    again.y = h - 72;
-    hit(again, resetGame);
-    root.addChild(again);
-  }
-
-  function drawSummaryCol(x, y, w, h, side) {
-    var c = new PIXI.Container();
-    c.x = x;
-    c.y = y;
-    var bg = new PIXI.Graphics();
-    gFillRound(bg, 0, 0, w, h, 14, COLORS.panel, 1);
-    gStrokeRound(bg, 0, 0, w, h, 14, side === "first" ? COLORS.teal : COLORS.amber, 1.5);
-    c.addChild(bg);
-
-    var tot = totalsFor(side);
-    var head = makeText(sideLabel(side), {
-      size: 18, weight: "700", fill: side === "first" ? COLORS.teal : COLORS.amber, display: true
-    });
-    head.x = 12;
-    head.y = 12;
-    c.addChild(head);
-
-    var lines = [
-      "宣告 " + tot.declared,
-      "吃傷 " + tot.damageHits,
-      "取消 " + tot.cancels,
-      "其他 " + tot.others,
-      "總傷 " + tot.actualDamage,
-      "直/正/側 " + tot.byType.direct + "/" + tot.byType.front + "/" + tot.byType.side
-    ];
-    for (var i = 0; i < lines.length; i++) {
-      var ln = makeText(lines[i], { size: 13, fill: COLORS.ink });
-      ln.x = 12;
-      ln.y = 44 + i * 22;
-      c.addChild(ln);
-    }
-
-    var cardTitle = makeText("使用牌", { size: 13, fill: COLORS.muted, display: true });
-    cardTitle.x = 12;
-    cardTitle.y = 44 + lines.length * 22 + 8;
-    c.addChild(cardTitle);
-
-    var keys = Object.keys(tot.cards);
-    var cy = cardTitle.y + 22;
-    for (var k = 0; k < Math.min(keys.length, 8); k++) {
-      var nm = keys[k];
-      // find name from logs
-      var display = nm;
-      for (var li = 0; li < state.logs.length; li++) {
-        var ac = state.logs[li].attackerCard;
-        if (ac && (ac.cardNo === nm || ac.name === nm)) {
-          display = (ac.name || ac.cardNo || nm).slice(0, 14);
-          break;
-        }
-      }
-      var row = makeText("×" + tot.cards[nm] + " " + display, {
-        size: 12, fill: COLORS.ink, wrap: true, wrapWidth: w - 20
-      });
-      row.x = 12;
-      row.y = cy;
-      c.addChild(row);
-      cy += 20;
-    }
-    if (!keys.length) {
-      var none = makeText("（尚無）", { size: 12, fill: COLORS.muted });
-      none.x = 12;
-      none.y = cy;
-      c.addChild(none);
-    }
-
-    root.addChild(c);
+    showSummaryUI();
   }
 
   function drawToast(w, h, msg) {
