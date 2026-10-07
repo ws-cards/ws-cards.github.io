@@ -424,13 +424,26 @@
     if (!url) return Promise.resolve(null);
     if (resolvedTextures.has(url)) return Promise.resolve(resolvedTextures.get(url));
     if (textureCache.has(url)) return textureCache.get(url);
-    PIXI.Texture.CROSS_ORIGIN = "anonymous";
-    var p = PIXI.Assets.load(url).then(function (tex) {
-      resolvedTextures.set(url, tex || null);
-      return tex;
-    }).catch(function () {
-      resolvedTextures.set(url, null);
-      return null;
+    // imgs.devilfox.net has no CORS ACAO — load via <img> without crossOrigin
+    // so Canvas/WebGL can still display (readPixels / toDataURL may taint).
+    var p = new Promise(function (resolve) {
+      var img = new Image();
+      img.decoding = "async";
+      img.onload = function () {
+        try {
+          var tex = PIXI.Texture.from(img);
+          resolvedTextures.set(url, tex);
+          resolve(tex);
+        } catch (e) {
+          resolvedTextures.set(url, null);
+          resolve(null);
+        }
+      };
+      img.onerror = function () {
+        resolvedTextures.set(url, null);
+        resolve(null);
+      };
+      img.src = url;
     });
     textureCache.set(url, p);
     return p;
@@ -474,6 +487,11 @@
     if (!card) stage[slotKey].resolvedOnce = false;
     persist();
     render();
+    if (card && card.imageUrl) {
+      loadCardTexture(card.imageUrl).then(function (tex) {
+        if (tex) render();
+      });
+    }
   }
 
   function startAttackOnSlot(slotKey) {
