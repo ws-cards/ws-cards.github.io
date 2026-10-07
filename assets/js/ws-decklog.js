@@ -7,7 +7,8 @@
 
   var DECKLOG_PROXY = "https://selenium-java-service-669727048059.asia-east1.run.app/view/";
   var CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
-  var WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
+  // e.g. BD/W54-070SSP → https://imgs.devilfox.net/ws/bd_w54/bd_w54_070ssp.png
+  var WS_CARD_IMAGE_BASE = "https://imgs.devilfox.net/ws";
   var KIND_GCS = { "0": "角色", "1": "事件", "2": "CX" };
   var KIND_DECKLOG = { "2": "角色", "3": "事件", "4": "CX" };
 
@@ -39,8 +40,7 @@
     var setId = m[2].toLowerCase();
     var num = m[3].toLowerCase();
     var folder = series + "_" + setId;
-    var alpha = series.slice(0, 1) || "x";
-    return WS_CARD_IMAGE_BASE + "/" + alpha + "/" + folder + "/" + folder + "_" + num + ".png";
+    return WS_CARD_IMAGE_BASE + "/" + folder + "/" + folder + "_" + num + ".png";
   }
 
   function expandEntries(rows) {
