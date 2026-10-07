@@ -27,8 +27,6 @@
   var app = null;
   var root = null;
   var ui = { layers: {}, nodes: {} };
-  var textureCache = new Map();
-  var resolvedTextures = new Map();
   var numberResolver = null;
   var textResolver = null;
   var summaryChart = null;
@@ -847,33 +845,42 @@
     document.body.classList.toggle("is-landscape", !portrait);
   }
 
-  function loadCardTexture(url) {
-    if (!url) return Promise.resolve(null);
-    if (resolvedTextures.has(url)) return Promise.resolve(resolvedTextures.get(url));
-    if (textureCache.has(url)) return textureCache.get(url);
-    // imgs.devilfox.net has no CORS ACAO — load via <img> without crossOrigin
-    // so Canvas/WebGL can still display (readPixels / toDataURL may taint).
-    var p = new Promise(function (resolve) {
-      var img = new Image();
-      img.decoding = "async";
-      img.onload = function () {
-        try {
-          var tex = PIXI.Texture.from(img);
-          resolvedTextures.set(url, tex);
-          resolve(tex);
-        } catch (e) {
-          resolvedTextures.set(url, null);
-          resolve(null);
-        }
-      };
-      img.onerror = function () {
-        resolvedTextures.set(url, null);
-        resolve(null);
-      };
-      img.src = url;
-    });
-    textureCache.set(url, p);
-    return p;
+  function clearCardArtLayer() {
+    var layer = $("agl-card-layer");
+    if (layer) layer.innerHTML = "";
+  }
+
+  function syncCardArtLayer(rects) {
+    var layer = $("agl-card-layer");
+    if (!layer) return;
+    layer.innerHTML = "";
+    if (!rects || !rects.length) return;
+    if (state.phase !== "deploy" && state.phase !== "attack") return;
+    if (state.phase === "summary" || state.ended) return;
+
+    var panelLeft = Infinity;
+    if (state.phase === "deploy" && isSidePanelOpen()) {
+      var w = app.screen.width;
+      var panelW = isLandscape() ? Math.floor(Math.min(w * 0.4, 360)) : w;
+      panelLeft = isLandscape() ? (w - panelW) : 0;
+    }
+
+    for (var i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      if (!r || !r.url) continue;
+      // Hide art under the open side panel
+      if (r.x + r.w * 0.45 > panelLeft) continue;
+      var img = document.createElement("img");
+      img.className = "agl-slot-art";
+      img.alt = "";
+      img.draggable = false;
+      img.src = r.url;
+      img.style.left = Math.round(r.x + 6) + "px";
+      img.style.top = Math.round(r.y + 22) + "px";
+      img.style.width = Math.max(8, Math.round(r.w - 12)) + "px";
+      img.style.height = Math.max(8, Math.round(r.h - 44)) + "px";
+      layer.appendChild(img);
+    }
   }
 
   function colorTint(color) {
@@ -914,11 +921,6 @@
     if (!card) stage[slotKey].resolvedOnce = false;
     persist();
     render();
-    if (card && card.imageUrl) {
-      loadCardTexture(card.imageUrl).then(function (tex) {
-        if (tex) render();
-      });
-    }
   }
 
   function startAttackOnSlot(slotKey) {
@@ -1059,10 +1061,12 @@
 
     if (state.phase === "setup") {
       hideSummaryUI();
+      clearCardArtLayer();
       drawIdleBrand(w, h);
       return;
     }
     if (state.phase === "summary" || state.ended) {
+      clearCardArtLayer();
       drawSummary(w, h);
       return;
     }
@@ -1154,6 +1158,7 @@
       : Math.floor((app.screen.width - totalW) / 2);
     var stage = activeStage();
     var draftSlot = uiState.draft && uiState.draft.slot;
+    var artRects = [];
 
     for (var i = 0; i < SLOT_KEYS.length; i++) {
       var key = SLOT_KEYS[i];
@@ -1182,6 +1187,16 @@
 
       if (slot.card) {
         drawCardFace(box, slot.card, dim.slotW, dim.slotH);
+        if (slot.card.imageUrl) {
+          artRects.push({
+            key: key,
+            x: x,
+            y: y,
+            w: dim.slotW,
+            h: dim.slotH,
+            url: slot.card.imageUrl
+          });
+        }
       } else {
         var empty = makeText("點擊放卡", { size: 13, fill: COLORS.muted });
         empty.anchor.set(0.5);
@@ -1203,35 +1218,24 @@
 
       root.addChild(box);
     }
+    syncCardArtLayer(artRects);
     return y + dim.slotH;
   }
 
   function drawCardFace(parent, card, w, h) {
-    var tex = card.imageUrl ? resolvedTextures.get(card.imageUrl) : null;
-    if (tex) {
-      var sprite = new PIXI.Sprite(tex);
-      var scale = Math.min((w - 8) / tex.width, (h - 28) / tex.height);
-      sprite.scale.set(scale);
-      sprite.x = (w - sprite.width) / 2;
-      sprite.y = 24;
-      parent.addChild(sprite);
-    } else {
-      if (card.imageUrl && !resolvedTextures.has(card.imageUrl)) {
-        loadCardTexture(card.imageUrl).then(function (loaded) {
-          if (loaded) render();
-        });
-      }
-      var stripe = new PIXI.Graphics();
-      gFillRect(stripe, 0, 22, w, 4, colorTint(card.color), 1);
-      parent.addChild(stripe);
+    // Art is shown via #agl-card-layer (DOM) to avoid WebGL CORS texImage2D errors.
+    var stripe = new PIXI.Graphics();
+    gFillRect(stripe, 0, 22, w, 4, colorTint(card.color), 1);
+    parent.addChild(stripe);
 
-      var name = makeText(card.name || card.cardNo || "", {
-        size: 11, fill: COLORS.ink, wrap: true, wrapWidth: w - 12
-      });
-      name.x = 6;
-      name.y = 32;
-      parent.addChild(name);
-    }
+    // Keep name lightly for when art is clipped by side panel
+    var name = makeText(card.name || card.cardNo || "", {
+      size: 11, fill: COLORS.muted, wrap: true, wrapWidth: w - 12
+    });
+    name.x = 6;
+    name.y = 32;
+    name.alpha = 0.35;
+    parent.addChild(name);
 
     var meta = makeText(
       "Lv" + (card.level != null ? card.level : "?") + " · " + (card.color || "—"),

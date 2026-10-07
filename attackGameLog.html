@@ -52,6 +52,20 @@
       width: 100% !important;
       height: 100% !important;
     }
+    /* Card art via DOM — avoids WebGL cross-origin texImage2D errors */
+    #agl-card-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #agl-card-layer .agl-slot-art {
+      position: absolute;
+      object-fit: contain;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.2);
+    }
     .agl-overlay {
       position: fixed;
       inset: 0;
@@ -521,6 +535,7 @@
     @media (orientation: portrait) {
       .agl-orient-gate { display: flex; }
       #pixi-host,
+      #agl-card-layer,
       .agl-overlay,
       .agl-summary,
       .agl-boot {
@@ -564,6 +579,7 @@
     <span>載入戰場介面…</span>
   </div>
   <div id="pixi-host" aria-label="攻擊記錄主畫面"></div>
+  <div id="agl-card-layer" aria-hidden="true"></div>
 
   <div id="overlay-setup" class="agl-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
     <div class="agl-sheet">
