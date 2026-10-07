@@ -829,10 +829,63 @@
     try {
       var ori = screen.orientation || screen.mozOrientation || screen.msOrientation;
       if (ori && typeof ori.lock === "function") {
-        return ori.lock("landscape").catch(function () { /* iOS / denied */ });
+        return Promise.resolve(ori.lock("landscape")).catch(function () { /* iOS / denied */ });
       }
     } catch (e) { /* ignore */ }
     return Promise.resolve();
+  }
+
+  function isAppFullscreen() {
+    return !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  }
+
+  function requestAppFullscreen() {
+    if (isAppFullscreen()) return Promise.resolve(true);
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen;
+    if (!req) return Promise.resolve(false);
+    try {
+      var ret;
+      try {
+        ret = req.call(el, { navigationUI: "hide" });
+      } catch (e1) {
+        ret = req.call(el);
+      }
+      return Promise.resolve(ret).then(function () { return true; }).catch(function () { return false; });
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  function exitAppFullscreen() {
+    if (!isAppFullscreen()) return Promise.resolve(true);
+    var exit = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen || document.msExitFullscreen;
+    if (!exit) return Promise.resolve(false);
+    try {
+      return Promise.resolve(exit.call(document)).then(function () { return true; }).catch(function () { return false; });
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  /** Landscape → enter fullscreen; portrait → exit. May need a user gesture. */
+  function syncFullscreenForOrientation() {
+    if (isLandscape()) {
+      tryLockLandscape();
+      return requestAppFullscreen().then(function (ok) {
+        document.body.classList.toggle("is-fullscreen", isAppFullscreen());
+        return ok;
+      });
+    }
+    return exitAppFullscreen().then(function () {
+      document.body.classList.toggle("is-fullscreen", isAppFullscreen());
+      return true;
+    });
   }
 
   function syncOrientGate() {
@@ -843,6 +896,8 @@
     gate.setAttribute("aria-hidden", portrait ? "false" : "true");
     document.body.classList.toggle("is-portrait", portrait);
     document.body.classList.toggle("is-landscape", !portrait);
+    document.body.classList.toggle("is-fullscreen", isAppFullscreen());
+    syncFullscreenForOrientation();
   }
 
   function clearCardArtLayer() {
@@ -2010,14 +2065,30 @@
       setTimeout(function () {
         syncOrientGate();
         if (app) render();
-      }, 120);
+      }, 180);
     });
     window.addEventListener("resize", function () {
       syncOrientGate();
     });
+    // Fullscreen usually needs a user gesture; retry on every tap while landscape.
     document.addEventListener("pointerdown", function () {
-      tryLockLandscape();
-    }, { once: true, passive: true });
+      syncFullscreenForOrientation();
+    }, { passive: true });
+    ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach(function (ev) {
+      document.addEventListener(ev, function () {
+        document.body.classList.toggle("is-fullscreen", isAppFullscreen());
+        // If user leaves FS while still landscape, next tap will re-enter.
+        if (!isAppFullscreen() && isLandscape()) {
+          /* wait for gesture */
+        }
+        if (isAppFullscreen() && !isLandscape()) {
+          exitAppFullscreen();
+        }
+        if (app) {
+          setTimeout(function () { render(); }, 60);
+        }
+      });
+    });
 
     var bootEl = $("agl-boot");
     try {
@@ -2087,6 +2158,8 @@
     getUi: function () { return uiState; },
     isLandscape: isLandscape,
     syncOrientGate: syncOrientGate,
+    syncFullscreenForOrientation: syncFullscreenForOrientation,
+    isAppFullscreen: isAppFullscreen,
     render: render,
     setCardOnSlot: setCardOnSlot,
     openPicker: openPicker,
