@@ -119,8 +119,13 @@
 
   function toast(msg, ms) {
     uiState.toast = msg;
-    uiState.toastUntil = performance.now() + (ms || 1600);
+    uiState.toastUntil = performance.now() + (ms || 1400);
     render();
+  }
+
+  function clearToast() {
+    uiState.toast = "";
+    uiState.toastUntil = 0;
   }
 
   function totalsFor(side) {
@@ -282,6 +287,7 @@
     uiState.attackStep = null;
     uiState.draft = null;
     uiState.pickerSlot = null;
+    uiState.redeployMode = false;
     closeOverlay("overlay-setup");
     persist();
     render();
@@ -291,19 +297,40 @@
   /* ——— Pixi helpers ——— */
   function makeText(str, opts) {
     opts = opts || {};
-    return new PIXI.Text({
-      text: String(str == null ? "" : str),
-      style: {
-        fontFamily: opts.display ? ' "Chakra Petch", "Noto Sans TC", sans-serif' : '"Noto Sans TC", sans-serif',
-        fontSize: opts.size || 14,
-        fontWeight: opts.weight || "500",
-        fill: opts.fill != null ? opts.fill : COLORS.ink,
-        align: opts.align || "left",
-        wordWrap: !!opts.wrap,
-        wordWrapWidth: opts.wrapWidth || 200,
-        breakWords: true
-      }
+    var style = new PIXI.TextStyle({
+      fontFamily: opts.display ? '"Chakra Petch", "Noto Sans TC", sans-serif' : '"Noto Sans TC", sans-serif',
+      fontSize: opts.size || 14,
+      fontWeight: opts.weight || "500",
+      fill: opts.fill != null ? opts.fill : COLORS.ink,
+      align: opts.align || "left",
+      wordWrap: !!opts.wrap,
+      wordWrapWidth: opts.wrapWidth || 200,
+      breakWords: true
     });
+    return new PIXI.Text(String(str == null ? "" : str), style);
+  }
+
+  function gFillRect(g, x, y, w, h, color, alpha) {
+    g.beginFill(color, alpha == null ? 1 : alpha);
+    g.drawRect(x, y, w, h);
+    g.endFill();
+  }
+
+  function gFillRound(g, x, y, w, h, r, color, alpha) {
+    g.beginFill(color, alpha == null ? 1 : alpha);
+    g.drawRoundedRect(x, y, w, h, r);
+    g.endFill();
+  }
+
+  function gStrokeRound(g, x, y, w, h, r, color, width) {
+    g.lineStyle(width || 1, color, 1);
+    g.drawRoundedRect(x, y, w, h, r);
+  }
+
+  function gFillEllipse(g, x, y, rw, rh, color, alpha) {
+    g.beginFill(color, alpha == null ? 1 : alpha);
+    g.drawEllipse(x, y, rw, rh);
+    g.endFill();
   }
 
   function makeBtn(label, w, h, fill, opts) {
@@ -313,12 +340,8 @@
     c.cursor = "pointer";
     var g = new PIXI.Graphics();
     var radius = opts.radius != null ? opts.radius : 12;
-    g.roundRect(0, 0, w, h, radius);
-    g.fill(fill);
-    if (opts.stroke) {
-      g.roundRect(0, 0, w, h, radius);
-      g.stroke({ width: 1.5, color: opts.stroke });
-    }
+    gFillRound(g, 0, 0, w, h, radius, fill, 1);
+    if (opts.stroke) gStrokeRound(g, 0, 0, w, h, radius, opts.stroke, 1.5);
     c.addChild(g);
     var t = makeText(label, {
       size: opts.size || 15,
@@ -364,11 +387,8 @@
     if (!url) return Promise.resolve(null);
     if (resolvedTextures.has(url)) return Promise.resolve(resolvedTextures.get(url));
     if (textureCache.has(url)) return textureCache.get(url);
-    var p = PIXI.Assets.load({
-      src: url,
-      loadParser: "loadTextures",
-      data: { crossOrigin: "anonymous" }
-    }).then(function (tex) {
+    PIXI.Texture.CROSS_ORIGIN = "anonymous";
+    var p = PIXI.Assets.load(url).then(function (tex) {
       resolvedTextures.set(url, tex || null);
       return tex;
     }).catch(function () {
@@ -545,15 +565,10 @@
     var h = app.screen.height;
 
     var bg = new PIXI.Graphics();
-    bg.rect(0, 0, w, h);
-    bg.fill(COLORS.bg);
-    // atmosphere bands
-    bg.rect(0, 0, w, h * 0.35);
-    bg.fill({ color: 0x1a2433, alpha: 0.9 });
-    bg.ellipse(w * 0.15, 0, w * 0.45, h * 0.28);
-    bg.fill({ color: 0x2ec4b6, alpha: 0.08 });
-    bg.ellipse(w * 0.9, h * 0.85, w * 0.4, h * 0.3);
-    bg.fill({ color: 0xf0a202, alpha: 0.07 });
+    gFillRect(bg, 0, 0, w, h, COLORS.bg, 1);
+    gFillRect(bg, 0, 0, w, h * 0.35, 0x1a2433, 0.9);
+    gFillEllipse(bg, w * 0.15, 0, w * 0.45, h * 0.28, 0x2ec4b6, 0.08);
+    gFillEllipse(bg, w * 0.9, h * 0.85, w * 0.4, h * 0.3, 0xf0a202, 0.07);
     root.addChild(bg);
 
     if (state.phase === "setup") {
@@ -651,13 +666,10 @@
 
       var g = new PIXI.Graphics();
       var selected = draftSlot === key || uiState.pickerSlot === key;
-      g.roundRect(0, 0, dim.slotW, dim.slotH, 12);
-      g.fill(COLORS.panel);
-      g.roundRect(0, 0, dim.slotW, dim.slotH, 12);
-      g.stroke({
-        width: selected ? 2.5 : 1.5,
-        color: selected ? COLORS.amber : (slot.resolvedOnce ? COLORS.good : COLORS.line)
-      });
+      gFillRound(g, 0, 0, dim.slotW, dim.slotH, 12, COLORS.panel, 1);
+      gStrokeRound(g, 0, 0, dim.slotW, dim.slotH, 12,
+        selected ? COLORS.amber : (slot.resolvedOnce ? COLORS.good : COLORS.line),
+        selected ? 2.5 : 1.5);
       box.addChild(g);
 
       var tag = makeText(SLOT_LABELS[key] + (slot.resolvedOnce ? " ✓" : ""), {
@@ -709,8 +721,7 @@
         });
       }
       var stripe = new PIXI.Graphics();
-      stripe.rect(0, 22, w, 4);
-      stripe.fill(colorTint(card.color));
+      gFillRect(stripe, 0, 22, w, 4, colorTint(card.color), 1);
       parent.addChild(stripe);
 
       var name = makeText(card.name || card.cardNo || "", {
@@ -763,6 +774,8 @@
     startBtn.y = h - 72;
     hit(startBtn, function () {
       uiState.pickerSlot = null;
+      uiState.redeployMode = false;
+      clearToast();
       state.phase = "attack";
       persist();
       render();
@@ -849,10 +862,8 @@
     panel.y = y;
 
     var bg = new PIXI.Graphics();
-    bg.roundRect(0, 0, w, panelH, 14);
-    bg.fill(COLORS.panel2);
-    bg.roundRect(0, 0, w, panelH, 14);
-    bg.stroke({ width: 1, color: COLORS.line });
+    gFillRound(bg, 0, 0, w, panelH, 14, COLORS.panel2, 1);
+    gStrokeRound(bg, 0, 0, w, panelH, 14, COLORS.line, 1);
     panel.addChild(bg);
 
     var head = makeText("選卡 → " + SLOT_LABELS[uiState.pickerSlot], {
@@ -880,8 +891,7 @@
     var listTop = 40;
     var listH = panelH - listTop - 8;
     var mask = new PIXI.Graphics();
-    mask.rect(0, listTop, w, listH);
-    mask.fill(0xffffff);
+    gFillRect(mask, 0, listTop, w, listH, 0xffffff, 1);
 
     var listC = new PIXI.Container();
     listC.y = listTop - uiState.listScroll;
@@ -903,12 +913,10 @@
       row.eventMode = "static";
       row.cursor = "pointer";
       var rg = new PIXI.Graphics();
-      rg.rect(0, 0, w, rowH - 2);
-      rg.fill(i % 2 ? 0x1a2030 : 0x222a3a);
+      gFillRect(rg, 0, 0, w, rowH - 2, i % 2 ? 0x1a2030 : 0x222a3a, 1);
       row.addChild(rg);
       var sw = new PIXI.Graphics();
-      sw.rect(0, 0, 5, rowH - 2);
-      sw.fill(colorTint(card.color));
+      gFillRect(sw, 0, 0, 5, rowH - 2, colorTint(card.color), 1);
       row.addChild(sw);
       var nm = makeText(card.name || card.cardNo, {
         size: 13, fill: COLORS.ink, wrap: true, wrapWidth: w - 100
@@ -1036,10 +1044,8 @@
     panel.x = x;
     panel.y = y;
     var bg = new PIXI.Graphics();
-    bg.roundRect(0, 0, w, Math.min(maxH, 360), 14);
-    bg.fill(COLORS.panel);
-    bg.roundRect(0, 0, w, Math.min(maxH, 360), 14);
-    bg.stroke({ width: 1, color: COLORS.amber });
+    gFillRound(bg, 0, 0, w, Math.min(maxH, 360), 14, COLORS.panel, 1);
+    gStrokeRound(bg, 0, 0, w, Math.min(maxH, 360), 14, COLORS.amber, 1);
     panel.addChild(bg);
 
     var slotCard = activeStage()[d.slot].card;
@@ -1344,10 +1350,8 @@
     c.x = x;
     c.y = y;
     var bg = new PIXI.Graphics();
-    bg.roundRect(0, 0, w, h, 14);
-    bg.fill(COLORS.panel);
-    bg.roundRect(0, 0, w, h, 14);
-    bg.stroke({ width: 1.5, color: side === "first" ? COLORS.teal : COLORS.amber });
+    gFillRound(bg, 0, 0, w, h, 14, COLORS.panel, 1);
+    gStrokeRound(bg, 0, 0, w, h, 14, side === "first" ? COLORS.teal : COLORS.amber, 1.5);
     c.addChild(bg);
 
     var tot = totalsFor(side);
@@ -1410,39 +1414,61 @@
   }
 
   function drawToast(w, h, msg) {
-    var t = makeText(msg, { size: 14, fill: 0x1a1200, display: true });
-    var padX = 16;
-    var tw = Math.min(w - 40, t.width + padX * 2);
+    var t = makeText(msg, { size: 13, fill: COLORS.ink, display: true });
+    var padX = 14;
+    var tw = Math.min(w - 48, Math.ceil(t.width) + padX * 2);
     var box = new PIXI.Graphics();
-    box.roundRect(0, 0, tw, 40, 20);
-    box.fill(COLORS.amber);
+    gFillRound(box, 0, 0, tw, 36, 10, COLORS.panel2, 0.96);
+    gStrokeRound(box, 0, 0, tw, 36, 10, COLORS.teal, 1);
     box.x = (w - tw) / 2;
-    box.y = h - 100;
+    box.y = h - 88;
     root.addChild(box);
     t.anchor.set(0.5);
     t.x = box.x + tw / 2;
-    t.y = box.y + 20;
+    t.y = box.y + 18;
     root.addChild(t);
   }
 
   /* ——— Boot ——— */
   async function boot() {
     bindOverlays();
-    app = new PIXI.Application();
-    await app.init({
-      resizeTo: window,
-      background: COLORS.bg,
-      antialias: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
-      autoDensity: true,
-      preference: "webgl"
-    });
-    $("pixi-host").appendChild(app.canvas);
+    var bootEl = $("agl-boot");
+    try {
+      app = new PIXI.Application({
+        resizeTo: window,
+        backgroundColor: COLORS.bg,
+        antialias: true,
+        resolution: Math.min(window.devicePixelRatio || 1, 2),
+        autoDensity: true,
+        forceCanvas: false
+      });
+    } catch (err1) {
+      try {
+        app = new PIXI.Application({
+          resizeTo: window,
+          backgroundColor: COLORS.bg,
+          antialias: false,
+          resolution: 1,
+          autoDensity: true,
+          forceCanvas: true
+        });
+      } catch (err2) {
+        if (bootEl) {
+          bootEl.hidden = false;
+          bootEl.innerHTML = "<strong>無法啟動畫面</strong><span>" +
+            String((err2 && err2.message) || err2 || err1) +
+            "</span>";
+        }
+        console.error(err1, err2);
+        return;
+      }
+    }
+    $("pixi-host").appendChild(app.view);
     root = new PIXI.Container();
     app.stage.addChild(root);
 
     var restored = restore();
-    if (restored && state.phase !== "setup" && state.first && state.second) {
+    if (restored && state.first && state.second && state.phase !== "setup") {
       closeOverlay("overlay-setup");
       toast("已還原本機紀錄");
     } else {
@@ -1450,13 +1476,12 @@
       openOverlay("overlay-setup");
     }
 
-    $("agl-boot").hidden = true;
+    if (bootEl) bootEl.hidden = true;
 
     window.addEventListener("resize", function () {
       render();
     });
 
-    // toast ticker
     app.ticker.add(function () {
       if (uiState.toast && performance.now() >= uiState.toastUntil) {
         uiState.toast = "";
@@ -1466,6 +1491,38 @@
 
     render();
   }
+
+  // Test / debug hooks (used by automated checks; no UI dependency)
+  window.__AGL = {
+    getState: function () { return state; },
+    getUi: function () { return uiState; },
+    render: render,
+    setCardOnSlot: setCardOnSlot,
+    openPicker: openPicker,
+    startAttackOnSlot: startAttackOnSlot,
+    beginRecording: beginRecording,
+    endAttackPhase: endAttackPhase,
+    endGame: endGame,
+    undoLast: undoLast,
+    resetGame: resetGame,
+    commitDraft: function (partial) {
+      if (!uiState.draft) return false;
+      Object.assign(uiState.draft, partial || {});
+      if (uiState.draft.actualDamage == null && uiState.draft.result === "damage") {
+        uiState.draft.actualDamage = uiState.draft.declaredDamage;
+      }
+      if (uiState.draft.actualDamage == null && (uiState.draft.result === "cancel" || uiState.draft.otherKind === "triggerCancel" || uiState.draft.otherKind === "block")) {
+        uiState.draft.actualDamage = 0;
+      }
+      commitAttack();
+      return true;
+    },
+    forcePhase: function (phase) {
+      state.phase = phase;
+      persist();
+      render();
+    }
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
