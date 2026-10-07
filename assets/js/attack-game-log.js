@@ -375,6 +375,11 @@
     };
     $("btnSample").onclick = onSample;
     $("btnImport").onclick = onImport;
+    if ($("btnCollapseChrome")) {
+      $("btnCollapseChrome").onclick = function () {
+        enterImmersiveMode();
+      };
+    }
     bindSummaryUI();
   }
 
@@ -877,6 +882,29 @@
     );
   }
 
+  function canRequestFullscreen() {
+    var el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen);
+  }
+
+  function requestAppFullscreen() {
+    if (isAppFullscreen()) return Promise.resolve(true);
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen;
+    if (!req) return Promise.resolve(false);
+    try {
+      var ret;
+      try {
+        ret = req.call(el, { navigationUI: "hide" });
+      } catch (e1) {
+        ret = req.call(el);
+      }
+      return Promise.resolve(ret).then(function () { return true; }).catch(function () { return false; });
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
   function exitAppFullscreen() {
     if (!isAppFullscreen()) return Promise.resolve(true);
     var exit = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen || document.msExitFullscreen;
@@ -909,61 +937,95 @@
     document.body.classList.toggle("is-chrome-compact", isLandscape() && height >= (window.outerHeight || height) * 0.92);
   }
 
+  function syncChromeBar() {
+    var bar = $("agl-chrome-bar");
+    var landscape = isLandscape();
+    var fs = isAppFullscreen();
+    var need = landscape && !fs;
+    document.body.classList.toggle("is-fullscreen", fs);
+    document.body.classList.toggle("needs-chrome-collapse", need);
+    if (bar) {
+      bar.classList.toggle("is-visible", need);
+      bar.setAttribute("aria-hidden", need ? "false" : "true");
+    }
+  }
+
   var chromeCollapseTimer = 0;
   var chromeCollapseBusy = false;
 
   /**
-   * Landscape: do NOT force Fullscreen API.
-   * Soft-scroll so mobile browsers collapse URL / tab bars, then pin to visualViewport.
+   * Soft-scroll best-effort (Chrome Android may shrink toolbar).
+   * Safari tab bars will not collapse this way — use enterImmersiveMode on tap.
    */
-  function collapseBrowserChrome() {
+  function softCollapseBrowserChrome() {
     applyVisualViewport();
-    if (!isLandscape()) return Promise.resolve(false);
+    syncChromeBar();
+    if (!isLandscape() || isAppFullscreen()) return Promise.resolve(false);
     if (chromeCollapseBusy) return Promise.resolve(false);
     chromeCollapseBusy = true;
     tryLockLandscape();
-    // Leave any leftover fullscreen from older builds.
-    return exitAppFullscreen().then(function () {
-      return new Promise(function (resolve) {
-        var html = document.documentElement;
-        var body = document.body;
-        var prevHtmlOverflow = html.style.overflow;
-        var prevBodyOverflow = body.style.overflow;
-        var prevHtmlHeight = html.style.height;
-        var target = Math.max(
-          window.outerHeight || 0,
-          (window.screen && screen.height) || 0,
-          window.innerHeight + 96
-        );
-        html.style.overflow = "auto";
-        body.style.overflow = "auto";
-        html.style.height = target + "px";
-        window.scrollTo(0, 0);
+    return new Promise(function (resolve) {
+      var html = document.documentElement;
+      var body = document.body;
+      var prevHtmlOverflow = html.style.overflow;
+      var prevBodyOverflow = body.style.overflow;
+      var prevHtmlHeight = html.style.height;
+      var target = Math.max(
+        window.outerHeight || 0,
+        (window.screen && screen.height) || 0,
+        window.innerHeight + 96
+      );
+      html.style.overflow = "auto";
+      body.style.overflow = "auto";
+      html.style.height = target + "px";
+      window.scrollTo(0, 0);
+      requestAnimationFrame(function () {
+        window.scrollTo(0, Math.min(80, Math.max(1, target - window.innerHeight)));
         requestAnimationFrame(function () {
-          window.scrollTo(0, Math.min(80, Math.max(1, target - window.innerHeight)));
-          requestAnimationFrame(function () {
-            window.scrollTo(0, 0);
-            html.style.overflow = prevHtmlOverflow;
-            body.style.overflow = prevBodyOverflow;
-            html.style.height = prevHtmlHeight;
-            applyVisualViewport();
-            chromeCollapseBusy = false;
-            resolve(true);
-          });
+          window.scrollTo(0, 0);
+          html.style.overflow = prevHtmlOverflow;
+          body.style.overflow = prevBodyOverflow;
+          html.style.height = prevHtmlHeight;
+          applyVisualViewport();
+          syncChromeBar();
+          chromeCollapseBusy = false;
+          resolve(true);
         });
       });
-    }).catch(function () {
-      chromeCollapseBusy = false;
+    });
+  }
+
+  /** User-gesture immersive mode — only reliable way to hide Safari URL/tab bars. */
+  function enterImmersiveMode() {
+    if (!isLandscape()) {
+      toast("請先轉為橫向");
+      return Promise.resolve(false);
+    }
+    tryLockLandscape();
+    if (!canRequestFullscreen()) {
+      toast("此瀏覽器無法沉浸，請用「分享→加入主畫面」");
+      softCollapseBrowserChrome();
+      return Promise.resolve(false);
+    }
+    return requestAppFullscreen().then(function (ok) {
       applyVisualViewport();
+      syncChromeBar();
+      if (ok && isAppFullscreen()) {
+        toast("已收合網址列／分頁");
+        if (app) render();
+        return true;
+      }
+      softCollapseBrowserChrome();
+      toast("無法自動收合，請加入主畫面或手動隱藏分頁列");
       return false;
     });
   }
 
-  function scheduleCollapseBrowserChrome(delay) {
+  function scheduleSoftCollapse(delay) {
     if (chromeCollapseTimer) clearTimeout(chromeCollapseTimer);
     chromeCollapseTimer = setTimeout(function () {
       chromeCollapseTimer = 0;
-      collapseBrowserChrome().then(function () {
+      softCollapseBrowserChrome().then(function () {
         if (app) render();
       });
     }, delay == null ? 60 : delay);
@@ -977,9 +1039,11 @@
     gate.setAttribute("aria-hidden", portrait ? "false" : "true");
     document.body.classList.toggle("is-portrait", portrait);
     document.body.classList.toggle("is-landscape", !portrait);
-    document.body.classList.remove("is-fullscreen");
     applyVisualViewport();
-    if (!portrait) scheduleCollapseBrowserChrome(120);
+    syncChromeBar();
+    if (!portrait && !isAppFullscreen()) scheduleSoftCollapse(120);
+    // Leaving landscape: exit immersive so portrait gate isn't stuck under FS.
+    if (portrait && isAppFullscreen()) exitAppFullscreen();
   }
 
   function clearCardArtLayer() {
@@ -2163,10 +2227,13 @@
         applyVisualViewport();
       });
     }
-    // Tap while landscape: collapse URL / tab bars (no Fullscreen API).
-    document.addEventListener("pointerdown", function () {
-      if (isLandscape()) scheduleCollapseBrowserChrome(0);
-    }, { passive: true });
+    ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach(function (ev) {
+      document.addEventListener(ev, function () {
+        applyVisualViewport();
+        syncChromeBar();
+        if (app) setTimeout(function () { render(); }, 60);
+      });
+    });
 
     var bootEl = $("agl-boot");
     var host = $("pixi-host");
@@ -2239,7 +2306,9 @@
     isLandscape: isLandscape,
     syncOrientGate: syncOrientGate,
     applyVisualViewport: applyVisualViewport,
-    collapseBrowserChrome: collapseBrowserChrome,
+    softCollapseBrowserChrome: softCollapseBrowserChrome,
+    enterImmersiveMode: enterImmersiveMode,
+    syncChromeBar: syncChromeBar,
     isAppFullscreen: isAppFullscreen,
     render: render,
     setCardOnSlot: setCardOnSlot,
