@@ -41,6 +41,7 @@
     draft: null,
     listScroll: 0,
     redeployMode: false,
+    sidePanelOpen: false,
     toast: "",
     toastUntil: 0
   };
@@ -288,6 +289,7 @@
     uiState.draft = null;
     uiState.pickerSlot = null;
     uiState.redeployMode = false;
+    uiState.sidePanelOpen = false;
     closeOverlay("overlay-setup");
     persist();
     render();
@@ -380,19 +382,42 @@
     return window.innerWidth >= window.innerHeight;
   }
 
+  function isSidePanelOpen() {
+    return !!uiState.sidePanelOpen;
+  }
+
   function stageColWidth() {
     var w = app.screen.width;
     if (!isLandscape()) return Math.min(w, 430);
+    // Attack / split layout keeps a left stage column
     return Math.floor(Math.min(w * 0.44, 420));
   }
 
-  function cardAspect() {
+  function cardAspect(mode) {
     var h = app.screen.height;
+    var w = app.screen.width;
+    var land = isLandscape();
+    var deployHero = mode === "hero" || (state.phase === "deploy" && mode !== "split");
+    var gap = deployHero ? 14 : 8;
+
+    if (deployHero && land) {
+      // leave room for title + bottom CTA
+      var maxH = Math.max(170, h - 118);
+      var maxStageW = Math.floor(w * 0.9);
+      var slotH = maxH;
+      var slotW = Math.floor(slotH / 1.4);
+      var totalW = slotW * 3 + gap * 2;
+      if (totalW > maxStageW) {
+        slotW = Math.floor((maxStageW - gap * 2) / 3);
+        slotH = Math.floor(slotW * 1.4);
+      }
+      return { slotW: slotW, slotH: slotH, gap: gap, colW: slotW * 3 + gap * 2 };
+    }
+
     var colW = stageColWidth();
-    var gap = 8;
     var slotW = Math.floor((colW - 24) / 3);
     var slotH = Math.floor(slotW * 1.4);
-    var maxH = Math.max(120, h - (isLandscape() ? 78 : 96));
+    var maxH = Math.max(120, h - (land ? 78 : 96));
     if (slotH > maxH) {
       slotH = maxH;
       slotW = Math.floor(slotH / 1.4);
@@ -604,6 +629,7 @@
       draft: null,
       listScroll: 0,
       redeployMode: false,
+      sidePanelOpen: false,
       toast: "",
       toastUntil: 0
     };
@@ -714,7 +740,7 @@
 
   function drawSlotsRow(y, interactiveMode, opts) {
     opts = opts || {};
-    var dim = cardAspect();
+    var dim = opts.dim || cardAspect();
     var totalW = dim.slotW * 3 + dim.gap * 2;
     var startX = opts.startX != null
       ? opts.startX
@@ -811,44 +837,41 @@
 
   function drawDeploy(w, h) {
     var land = isLandscape();
-    var headerH = land ? 52 : 86;
-    var dim = cardAspect();
-    var leftPad = 12;
+    var dim = cardAspect("hero");
+    var totalW = dim.slotW * 3 + dim.gap * 2;
+    var panelOpen = isSidePanelOpen();
+
     var title = makeText("前排布陣", { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true });
-    title.x = leftPad;
-    title.y = headerH;
+    title.anchor.set(0.5, 0);
+    title.x = w / 2;
+    title.y = land ? 50 : 86;
     root.addChild(title);
 
-    var slotsY = headerH + 28;
-    var slotsStartX = land
-      ? leftPad
-      : Math.floor((w - (dim.slotW * 3 + dim.gap * 2)) / 2);
-    drawSlotsRow(slotsY, "deploy", { startX: slotsStartX });
+    var sub = makeText(
+      panelOpen
+        ? (uiState.pickerSlot ? ("選卡中・" + SLOT_LABELS[uiState.pickerSlot] + "槽") : "選卡面板已展開")
+        : "點槽位選卡・右側「選卡」可展開篩選",
+      { size: 12, fill: COLORS.muted }
+    );
+    sub.anchor.set(0.5, 0);
+    sub.x = w / 2;
+    sub.y = title.y + 24;
+    root.addChild(sub);
 
-    var rightX = land ? Math.floor(w * 0.46) : 14;
-    var rightW = land ? w - rightX - 12 : w - 28;
-    var rightY = land ? headerH : slotsY + dim.slotH + 14;
+    var slotsStartX = Math.floor((w - totalW) / 2);
+    var slotsY = land
+      ? Math.max(title.y + 44, Math.floor((h - dim.slotH - 58) / 2))
+      : title.y + 48;
+    drawSlotsRow(slotsY, "deploy", { startX: slotsStartX, dim: dim });
 
-    rightY = drawFilters(rightX, rightY) + 8;
-
-    if (uiState.pickerSlot) {
-      drawCardPicker(rightX, rightY, rightW, h - rightY - (land ? 58 : 90));
-    } else {
-      var hint = makeText("點選方塊 → 篩選角色 → 放入；可重選或清空。", {
-        size: 13, fill: COLORS.muted, wrap: true, wrapWidth: rightW
-      });
-      hint.x = rightX;
-      hint.y = rightY;
-      root.addChild(hint);
-    }
-
-    var startBtn = makeBtn("戰階開始", land ? Math.min(rightW, 260) : Math.min(w - 28, 280), 44, COLORS.amber, {
+    var startBtn = makeBtn("戰階開始", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
       textFill: 0x1a1200, size: 16, radius: 12
     });
-    startBtn.x = land ? rightX + Math.max(0, (rightW - startBtn._w) / 2) : (w - startBtn._w) / 2;
+    startBtn.x = (w - startBtn._w) / 2;
     startBtn.y = h - 56;
     hit(startBtn, function () {
       uiState.pickerSlot = null;
+      uiState.sidePanelOpen = false;
       uiState.redeployMode = false;
       clearToast();
       state.phase = "attack";
@@ -857,9 +880,128 @@
       toast("戰階開始・任選槽攻擊");
     });
     root.addChild(startBtn);
+
+    if (panelOpen) drawDeploySidePanel(w, h);
+    drawSidePanelTab(w, h, panelOpen);
   }
 
-  function drawFilters(x, y) {
+  function drawSidePanelTab(w, h, panelOpen) {
+    var tabW = 36;
+    var tabH = 112;
+    var land = isLandscape();
+    var panelW = land ? Math.floor(Math.min(w * 0.4, 360)) : Math.floor(w * 0.92);
+    var tab = new PIXI.Container();
+    tab.eventMode = "static";
+    tab.cursor = "pointer";
+    tab.x = panelOpen ? (w - panelW - tabW + 2) : (w - tabW);
+    tab.y = Math.floor((h - tabH) / 2);
+
+    var g = new PIXI.Graphics();
+    gFillRound(g, 0, 0, tabW, tabH, 10, panelOpen ? COLORS.amber : COLORS.panel2, 1);
+    gStrokeRound(g, 0, 0, tabW, tabH, 10, panelOpen ? 0x1a1200 : COLORS.teal, 1.5);
+    tab.addChild(g);
+
+    var t1 = makeText(panelOpen ? "◂" : "▸", {
+      size: 16, weight: "700", fill: panelOpen ? 0x1a1200 : COLORS.teal, display: true
+    });
+    t1.anchor.set(0.5);
+    t1.x = tabW / 2;
+    t1.y = 28;
+    tab.addChild(t1);
+    var t2 = makeText(panelOpen ? "收合" : "選卡", {
+      size: 12, weight: "700", fill: panelOpen ? 0x1a1200 : COLORS.ink, display: true
+    });
+    t2.anchor.set(0.5);
+    t2.x = tabW / 2;
+    t2.y = 64;
+    tab.addChild(t2);
+
+    hit(tab, function () {
+      if (isSidePanelOpen()) {
+        uiState.sidePanelOpen = false;
+        render();
+      } else {
+        uiState.sidePanelOpen = true;
+        if (!uiState.pickerSlot) uiState.pickerSlot = "left";
+        render();
+      }
+    });
+    root.addChild(tab);
+  }
+
+  function drawDeploySidePanel(w, h) {
+    var land = isLandscape();
+    var panelW = land ? Math.floor(Math.min(w * 0.4, 360)) : Math.floor(w * 0.92);
+    var panelX = land ? w - panelW : Math.floor((w - panelW) / 2);
+    var panelY = land ? 44 : 70;
+    var panelH = h - panelY - 10;
+
+    var backdrop = new PIXI.Graphics();
+    gFillRect(backdrop, 0, 0, Math.max(0, panelX), h, 0x000000, 0.32);
+    backdrop.eventMode = "static";
+    backdrop.cursor = "pointer";
+    hit(backdrop, function () {
+      uiState.sidePanelOpen = false;
+      render();
+    });
+    root.addChild(backdrop);
+
+    var panel = new PIXI.Container();
+    panel.x = panelX;
+    panel.y = panelY;
+    panel.eventMode = "static";
+
+    var bg = new PIXI.Graphics();
+    gFillRound(bg, 0, 0, panelW, panelH, 16, COLORS.panel, 0.98);
+    gStrokeRound(bg, 0, 0, panelW, panelH, 16, COLORS.amber, 1.5);
+    panel.addChild(bg);
+
+    var head = makeText(
+      uiState.pickerSlot ? ("選卡・" + SLOT_LABELS[uiState.pickerSlot]) : "篩選／選卡",
+      { size: 15, weight: "700", fill: COLORS.amber, display: true }
+    );
+    head.x = 14;
+    head.y = 12;
+    panel.addChild(head);
+
+    var closeBtn = makeBtn("×", 34, 30, COLORS.panel2, {
+      size: 16, stroke: COLORS.line, textFill: COLORS.muted, radius: 8
+    });
+    closeBtn.x = panelW - 46;
+    closeBtn.y = 10;
+    hit(closeBtn, function () {
+      uiState.sidePanelOpen = false;
+      render();
+    });
+    panel.addChild(closeBtn);
+
+    var contentX = 12;
+    var contentY = 48;
+    var contentW = panelW - 24;
+    var afterFilters = drawFilters(contentX, contentY, panel);
+
+    if (uiState.pickerSlot) {
+      drawCardPicker(
+        contentX,
+        afterFilters + 6,
+        contentW,
+        panelH - (afterFilters + 6) - 12,
+        panel
+      );
+    } else {
+      var hint = makeText("點場上槽位後，在此篩選並放入角色。", {
+        size: 13, fill: COLORS.muted, wrap: true, wrapWidth: contentW
+      });
+      hint.x = contentX;
+      hint.y = afterFilters + 10;
+      panel.addChild(hint);
+    }
+
+    root.addChild(panel);
+  }
+
+  function drawFilters(x, y, parent) {
+    parent = parent || root;
     var levels = [
       { id: "all", label: "全部" },
       { id: "0", label: "0" },
@@ -878,7 +1020,7 @@
     var label = makeText("等級", { size: 12, fill: COLORS.muted, display: true });
     label.x = x;
     label.y = y;
-    root.addChild(label);
+    parent.addChild(label);
     var bx = x + 36;
     for (var i = 0; i < levels.length; i++) {
       var lv = levels[i];
@@ -894,7 +1036,7 @@
       (function (id) {
         hit(b, function () { uiState.filterLevel = id; uiState.listScroll = 0; render(); });
       })(lv.id);
-      root.addChild(b);
+      parent.addChild(b);
       bx += 46;
     }
 
@@ -902,7 +1044,7 @@
     var cl = makeText("顏色", { size: 12, fill: COLORS.muted, display: true });
     cl.x = x;
     cl.y = y;
-    root.addChild(cl);
+    parent.addChild(cl);
     bx = x + 36;
     for (var j = 0; j < colors.length; j++) {
       var col = colors[j];
@@ -918,7 +1060,7 @@
       (function (id) {
         hit(cb, function () { uiState.filterColor = id; uiState.listScroll = 0; render(); });
       })(col.id);
-      root.addChild(cb);
+      parent.addChild(cb);
       bx += 46;
     }
     return y + 34;
@@ -926,11 +1068,18 @@
 
   function openPicker(slotKey) {
     uiState.pickerSlot = slotKey;
+    uiState.sidePanelOpen = true;
     uiState.listScroll = 0;
     render();
   }
 
-  function drawCardPicker(x, y, w, maxH) {
+  function toggleSidePanel(force) {
+    uiState.sidePanelOpen = typeof force === "boolean" ? force : !isSidePanelOpen();
+    render();
+  }
+
+  function drawCardPicker(x, y, w, maxH, parent) {
+    parent = parent || root;
     var panelH = Math.min(maxH, 280);
     var panel = new PIXI.Container();
     panel.x = x;
@@ -1036,7 +1185,7 @@
     });
     panel.addChild(down);
 
-    root.addChild(panel);
+    parent.addChild(panel);
     return y + panelH;
   }
 
