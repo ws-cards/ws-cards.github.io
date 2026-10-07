@@ -14,8 +14,8 @@
   var menuOpen = false;
   var currentAuthUser = null;
 
-  function ensureIansuiFont() {
-    if (document.getElementById('nav-iansui-font')) return;
+  function ensureBrandTitleFont() {
+    if (document.getElementById('nav-brand-title-font')) return;
     var preconnectGoogle = document.createElement('link');
     preconnectGoogle.rel = 'preconnect';
     preconnectGoogle.href = 'https://fonts.googleapis.com';
@@ -28,32 +28,51 @@
     document.head.appendChild(preconnectGstatic);
 
     var link = document.createElement('link');
-    link.id = 'nav-iansui-font';
+    link.id = 'nav-brand-title-font';
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Iansui&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Zen+Old+Mincho:wght@500;600&display=swap';
     document.head.appendChild(link);
   }
 
   function ensureNavbarLayoutStyles() {
     if (document.getElementById('nav-layout-styles')) return;
-    ensureIansuiFont();
+    ensureBrandTitleFont();
     var style = document.createElement('style');
     style.id = 'nav-layout-styles';
     style.textContent = [
       '.main-header .navbar-title-block{',
       'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);',
-      'display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;',
+      'display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;',
       'margin-left:0!important;pointer-events:none;z-index:1;',
       '}',
-      '.main-header .navbar-title-logo{',
-      'display:block;width:32px;height:32px;object-fit:contain;',
-      'pointer-events:auto;flex-shrink:0;',
+      '.main-header .navbar-title-mark{',
+      'display:block;width:12px;height:1px;flex-shrink:0;',
+      'background:linear-gradient(90deg,transparent,#9a7b45,transparent);',
+      'opacity:.85;',
+      '}',
+      '[data-theme="dark"] .main-header .navbar-title-mark{',
+      'background:linear-gradient(90deg,transparent,#c4a46a,transparent);',
       '}',
       '.main-header .navbar-title-text{',
       'pointer-events:auto;',
-      /* 芫荽（Iansui）僅有 400 字重，避免偽粗體 */
-      "font-family:'Iansui','Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;",
-      'font-size:1.15rem;font-weight:400;letter-spacing:0.08em;',
+      /* 明朝體＋寬字距：導覽列品牌名的金屬箔氣質 */
+      "font-family:'Zen Old Mincho','Noto Serif TC','Songti TC',serif;",
+      'font-size:1.18rem;font-weight:500;letter-spacing:0.3em;',
+      'padding-right:0.3em;line-height:1;white-space:nowrap;',
+      'color:#17191d;',
+      'animation:navbarTitleIn .7s cubic-bezier(.16,1,.3,1) both;',
+      '}',
+      '[data-theme="dark"] .main-header .navbar-title-text{color:#efe6d4;}',
+      '@keyframes navbarTitleIn{',
+      'from{opacity:0;letter-spacing:.48em;transform:translateY(2px);}',
+      'to{opacity:1;letter-spacing:.3em;transform:translateY(0);}',
+      '}',
+      '@media (prefers-reduced-motion:reduce){',
+      '.main-header .navbar-title-text{animation:none;}',
+      '}',
+      '@media (max-width:768px){',
+      '.main-header .navbar-title-text{font-size:1.05rem;letter-spacing:.22em;padding-right:.22em;}',
+      '.main-header .navbar-title-mark{width:8px;}',
       '}'
     ].join('');
     document.head.appendChild(style);
