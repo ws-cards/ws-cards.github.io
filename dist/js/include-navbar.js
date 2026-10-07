@@ -73,7 +73,26 @@
       '@media (max-width:768px){',
       '.main-header .navbar-title-text{font-size:1.05rem;letter-spacing:.22em;padding-right:.22em;}',
       '.main-header .navbar-title-mark{width:8px;}',
-      '}'
+      '}',
+      /* 抽屜表頭與導覽列共用高貴感字體語言 */
+      '#customDrawer .custom-drawer-header .brand-link{',
+      'display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;',
+      '}',
+      '#customDrawer .custom-drawer-header .brand-text{',
+      "font-family:'Zen Old Mincho','Noto Serif TC','Songti TC',serif;",
+      'font-size:1.18rem;font-weight:500;letter-spacing:0.3em;',
+      'padding-right:0.3em;line-height:1;white-space:nowrap;color:#17191d;',
+      '}',
+      '[data-theme="dark"] #customDrawer .custom-drawer-header .brand-text{color:#efe6d4;}',
+      '#customDrawer .custom-drawer-header .navbar-title-mark{',
+      'display:block;width:12px;height:1px;flex-shrink:0;',
+      'background:linear-gradient(90deg,transparent,#9a7b45,transparent);opacity:.85;',
+      '}',
+      '[data-theme="dark"] #customDrawer .custom-drawer-header .navbar-title-mark{',
+      'background:linear-gradient(90deg,transparent,#c4a46a,transparent);',
+      '}',
+      '#customDrawer .custom-drawer-header .brand-image,',
+      '#customDrawer .custom-drawer-header img{display:none!important;}'
     ].join('');
     document.head.appendChild(style);
   }
