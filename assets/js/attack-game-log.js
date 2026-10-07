@@ -573,8 +573,8 @@
       datasets.push({
         label: "玩家 1",
         data: series.first,
-        borderColor: "#1d4ed8",
-        backgroundColor: "rgba(29,78,216,0.12)",
+        borderColor: "#2ec4b6",
+        backgroundColor: "rgba(46,196,182,0.14)",
         tension: 0.15,
         pointRadius: 3,
         borderWidth: 2
@@ -584,8 +584,8 @@
       datasets.push({
         label: "玩家 2",
         data: series.second,
-        borderColor: "#dc2626",
-        backgroundColor: "rgba(220,38,38,0.12)",
+        borderColor: "#f0a202",
+        backgroundColor: "rgba(240,162,2,0.14)",
         tension: 0.15,
         pointRadius: 3,
         borderWidth: 2
@@ -602,12 +602,19 @@
         },
         scales: {
           x: {
-            title: { display: true, text: "Turn" },
-            ticks: { stepSize: 1 }
+            title: { display: true, text: "Turn", color: "#8b95a8" },
+            ticks: { stepSize: 1, color: "#8b95a8" },
+            grid: { color: "rgba(232,236,242,0.08)" }
           },
           y: {
             beginAtZero: true,
-            title: { display: true, text: metric === "attacks" ? "Attacks" : "Damage" }
+            title: {
+              display: true,
+              text: metric === "attacks" ? "Attacks" : "Damage",
+              color: "#8b95a8"
+            },
+            ticks: { color: "#8b95a8" },
+            grid: { color: "rgba(232,236,242,0.08)" }
           }
         }
       }
