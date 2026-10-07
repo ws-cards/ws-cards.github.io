@@ -393,7 +393,7 @@
     if (c1) c1.addEventListener("change", function () { renderSummaryChart(); });
     if (c2) c2.addEventListener("change", function () { renderSummaryChart(); });
     if ($("btnSumHome")) $("btnSumHome").onclick = resetGame;
-    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchJson;
+    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchImage;
     if ($("btnSumLoad")) {
       $("btnSumLoad").onclick = function () {
         var f = $("sumLoadFile");
@@ -619,21 +619,54 @@
     });
   }
 
-  function exportMatchJson() {
-    var payload = {
-      exportedAt: Date.now(),
-      report: buildMatchReport(),
-      state: state
-    };
-    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "attack-game-log-" + Date.now() + ".json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  function exportMatchImage() {
+    var root = $("overlay-summary");
+    if (!root || !root.classList.contains("is-open")) {
+      toast("尚無可輸出的結算畫面");
+      return Promise.resolve(false);
+    }
+    if (typeof html2canvas !== "function") {
+      alert("圖片輸出元件尚未載入");
+      return Promise.resolve(false);
+    }
+    var btn = $("btnSumExport");
+    var prevLabel = btn ? btn.textContent : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "輸出中…";
+    }
+    return html2canvas(root, {
+      backgroundColor: "#141820",
+      useCORS: true,
+      allowTaint: false,
+      scale: Math.min(2, window.devicePixelRatio || 2),
+      logging: false,
+      onclone: function (doc) {
+        var cloned = doc.getElementById("overlay-summary");
+        if (!cloned) return;
+        cloned.style.display = "flex";
+        var actions = cloned.querySelector(".agl-summary-actions");
+        if (actions) actions.style.display = "none";
+      }
+    }).then(function (canvas) {
+      var a = document.createElement("a");
+      a.download = "attack-game-log-" + Date.now() + ".png";
+      a.href = canvas.toDataURL("image/png");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast("已輸出圖片");
+      return true;
+    }).catch(function (e) {
+      alert("輸出圖片失敗：" + ((e && e.message) || e));
+      return false;
+    }).then(function (ok) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevLabel || "輸出圖片";
+      }
+      return ok;
+    });
   }
 
   function setSetupStatus(msg, isErr) {
@@ -2169,6 +2202,9 @@
     endGame: endGame,
     undoLast: undoLast,
     resetGame: resetGame,
+    exportMatchImage: exportMatchImage,
+    buildMatchReport: buildMatchReport,
+    showSummaryUI: showSummaryUI,
     commitDraft: function (partial) {
       if (!uiState.draft) return false;
       Object.assign(uiState.draft, partial || {});
