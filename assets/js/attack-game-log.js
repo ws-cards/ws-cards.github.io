@@ -877,24 +877,6 @@
     );
   }
 
-  function requestAppFullscreen() {
-    if (isAppFullscreen()) return Promise.resolve(true);
-    var el = document.documentElement;
-    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen;
-    if (!req) return Promise.resolve(false);
-    try {
-      var ret;
-      try {
-        ret = req.call(el, { navigationUI: "hide" });
-      } catch (e1) {
-        ret = req.call(el);
-      }
-      return Promise.resolve(ret).then(function () { return true; }).catch(function () { return false; });
-    } catch (e) {
-      return Promise.resolve(false);
-    }
-  }
-
   function exitAppFullscreen() {
     if (!isAppFullscreen()) return Promise.resolve(true);
     var exit = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen || document.msExitFullscreen;
@@ -906,19 +888,85 @@
     }
   }
 
-  /** Landscape → enter fullscreen; portrait → exit. May need a user gesture. */
-  function syncFullscreenForOrientation() {
-    if (isLandscape()) {
-      tryLockLandscape();
-      return requestAppFullscreen().then(function (ok) {
-        document.body.classList.toggle("is-fullscreen", isAppFullscreen());
-        return ok;
-      });
+  /** Keep shell inside the visible area (excludes URL / tab bars). */
+  function applyVisualViewport() {
+    var root = document.documentElement;
+    var vv = window.visualViewport;
+    var top = 0;
+    var left = 0;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    if (vv) {
+      top = vv.offsetTop || 0;
+      left = vv.offsetLeft || 0;
+      width = vv.width || width;
+      height = vv.height || height;
     }
+    root.style.setProperty("--vv-top", Math.round(top) + "px");
+    root.style.setProperty("--vv-left", Math.round(left) + "px");
+    root.style.setProperty("--vv-width", Math.round(width) + "px");
+    root.style.setProperty("--vv-height", Math.round(height) + "px");
+    document.body.classList.toggle("is-chrome-compact", isLandscape() && height >= (window.outerHeight || height) * 0.92);
+  }
+
+  var chromeCollapseTimer = 0;
+  var chromeCollapseBusy = false;
+
+  /**
+   * Landscape: do NOT force Fullscreen API.
+   * Soft-scroll so mobile browsers collapse URL / tab bars, then pin to visualViewport.
+   */
+  function collapseBrowserChrome() {
+    applyVisualViewport();
+    if (!isLandscape()) return Promise.resolve(false);
+    if (chromeCollapseBusy) return Promise.resolve(false);
+    chromeCollapseBusy = true;
+    tryLockLandscape();
+    // Leave any leftover fullscreen from older builds.
     return exitAppFullscreen().then(function () {
-      document.body.classList.toggle("is-fullscreen", isAppFullscreen());
-      return true;
+      return new Promise(function (resolve) {
+        var html = document.documentElement;
+        var body = document.body;
+        var prevHtmlOverflow = html.style.overflow;
+        var prevBodyOverflow = body.style.overflow;
+        var prevHtmlHeight = html.style.height;
+        var target = Math.max(
+          window.outerHeight || 0,
+          (window.screen && screen.height) || 0,
+          window.innerHeight + 96
+        );
+        html.style.overflow = "auto";
+        body.style.overflow = "auto";
+        html.style.height = target + "px";
+        window.scrollTo(0, 0);
+        requestAnimationFrame(function () {
+          window.scrollTo(0, Math.min(80, Math.max(1, target - window.innerHeight)));
+          requestAnimationFrame(function () {
+            window.scrollTo(0, 0);
+            html.style.overflow = prevHtmlOverflow;
+            body.style.overflow = prevBodyOverflow;
+            html.style.height = prevHtmlHeight;
+            applyVisualViewport();
+            chromeCollapseBusy = false;
+            resolve(true);
+          });
+        });
+      });
+    }).catch(function () {
+      chromeCollapseBusy = false;
+      applyVisualViewport();
+      return false;
     });
+  }
+
+  function scheduleCollapseBrowserChrome(delay) {
+    if (chromeCollapseTimer) clearTimeout(chromeCollapseTimer);
+    chromeCollapseTimer = setTimeout(function () {
+      chromeCollapseTimer = 0;
+      collapseBrowserChrome().then(function () {
+        if (app) render();
+      });
+    }, delay == null ? 60 : delay);
   }
 
   function syncOrientGate() {
@@ -929,8 +977,9 @@
     gate.setAttribute("aria-hidden", portrait ? "false" : "true");
     document.body.classList.toggle("is-portrait", portrait);
     document.body.classList.toggle("is-landscape", !portrait);
-    document.body.classList.toggle("is-fullscreen", isAppFullscreen());
-    syncFullscreenForOrientation();
+    document.body.classList.remove("is-fullscreen");
+    applyVisualViewport();
+    if (!portrait) scheduleCollapseBrowserChrome(120);
   }
 
   function clearCardArtLayer() {
@@ -2093,6 +2142,7 @@
   /* ——— Boot ——— */
   async function boot() {
     bindOverlays();
+    applyVisualViewport();
     syncOrientGate();
     window.addEventListener("orientationchange", function () {
       setTimeout(function () {
@@ -2101,32 +2151,28 @@
       }, 180);
     });
     window.addEventListener("resize", function () {
+      applyVisualViewport();
       syncOrientGate();
     });
-    // Fullscreen usually needs a user gesture; retry on every tap while landscape.
-    document.addEventListener("pointerdown", function () {
-      syncFullscreenForOrientation();
-    }, { passive: true });
-    ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach(function (ev) {
-      document.addEventListener(ev, function () {
-        document.body.classList.toggle("is-fullscreen", isAppFullscreen());
-        // If user leaves FS while still landscape, next tap will re-enter.
-        if (!isAppFullscreen() && isLandscape()) {
-          /* wait for gesture */
-        }
-        if (isAppFullscreen() && !isLandscape()) {
-          exitAppFullscreen();
-        }
-        if (app) {
-          setTimeout(function () { render(); }, 60);
-        }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", function () {
+        applyVisualViewport();
+        if (app) render();
       });
-    });
+      window.visualViewport.addEventListener("scroll", function () {
+        applyVisualViewport();
+      });
+    }
+    // Tap while landscape: collapse URL / tab bars (no Fullscreen API).
+    document.addEventListener("pointerdown", function () {
+      if (isLandscape()) scheduleCollapseBrowserChrome(0);
+    }, { passive: true });
 
     var bootEl = $("agl-boot");
+    var host = $("pixi-host");
     try {
       app = new PIXI.Application({
-        resizeTo: window,
+        resizeTo: host || window,
         backgroundColor: COLORS.bg,
         antialias: true,
         resolution: Math.min(window.devicePixelRatio || 1, 2),
@@ -2136,7 +2182,7 @@
     } catch (err1) {
       try {
         app = new PIXI.Application({
-          resizeTo: window,
+          resizeTo: host || window,
           backgroundColor: COLORS.bg,
           antialias: false,
           resolution: 1,
@@ -2154,7 +2200,7 @@
         return;
       }
     }
-    $("pixi-host").appendChild(app.view);
+    host.appendChild(app.view);
     root = new PIXI.Container();
     app.stage.addChild(root);
 
@@ -2170,6 +2216,7 @@
     if (bootEl) bootEl.hidden = true;
 
     window.addEventListener("resize", function () {
+      applyVisualViewport();
       syncOrientGate();
       render();
     });
@@ -2191,7 +2238,8 @@
     getUi: function () { return uiState; },
     isLandscape: isLandscape,
     syncOrientGate: syncOrientGate,
-    syncFullscreenForOrientation: syncFullscreenForOrientation,
+    applyVisualViewport: applyVisualViewport,
+    collapseBrowserChrome: collapseBrowserChrome,
     isAppFullscreen: isAppFullscreen,
     render: render,
     setCardOnSlot: setCardOnSlot,
