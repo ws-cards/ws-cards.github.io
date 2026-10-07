@@ -548,19 +548,74 @@
         pointer-events: none !important;
       }
     }
+    .agl-chrome-bar {
+      position: fixed;
+      top: var(--vv-top, 0px);
+      left: var(--vv-left, 0px);
+      width: var(--vv-width, 100%);
+      z-index: 55;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      background: rgba(20, 24, 32, 0.94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+      box-sizing: border-box;
+    }
+    .agl-chrome-bar.is-visible { display: flex; }
+    body.is-fullscreen .agl-chrome-bar { display: none !important; }
+    .agl-chrome-bar .agl-chrome-tip {
+      flex: 1;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.3;
+    }
+    .agl-chrome-bar button {
+      flex: 0 0 auto;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--amber);
+      color: #1a1200;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    body.needs-chrome-collapse .agl-overlay.is-open,
+    body.needs-chrome-collapse .agl-summary.is-open {
+      padding-top: 52px;
+    }
+
     @media (orientation: landscape) {
       .agl-orient-gate { display: none !important; }
       .agl-overlay {
         align-items: center;
-        padding: 12px;
+        padding: 8px;
       }
       .agl-sheet {
-        width: min(520px, 92vw);
-        max-height: min(92vh, 560px);
+        width: min(520px, 94%);
+        max-height: calc(var(--vv-height, 100dvh) - 20px);
         overflow: auto;
-        border-radius: 16px;
+        border-radius: 14px;
+        padding: 12px 14px 10px;
         animation: sheetIn 0.28s ease;
       }
+      body.needs-chrome-collapse .agl-sheet {
+        max-height: calc(var(--vv-height, 100dvh) - 64px);
+      }
+      .agl-sheet h2 { font-size: 1.02rem; margin-bottom: 4px; }
+      .agl-sheet p { margin-bottom: 8px; font-size: 0.8rem; }
+      .agl-field { margin-bottom: 8px; }
+      .agl-field label { margin-bottom: 4px; font-size: 0.7rem; }
+      .agl-field input, .agl-field textarea { padding: 9px 10px; font-size: 0.95rem; }
+      .agl-actions { margin-top: 4px; }
+      .agl-actions button { min-height: 40px; font-size: 0.9rem; }
       @keyframes sheetIn {
         from { transform: scale(0.96) translateY(8px); opacity: 0; }
         to { transform: scale(1) translateY(0); opacity: 1; }
@@ -574,9 +629,14 @@
       <p class="agl-orient-kicker">Attack Log</p>
       <div class="agl-phone" aria-hidden="true"></div>
       <h1 id="orientTitle">請橫持裝置</h1>
-      <p id="orientDesc">攻擊記錄僅支援橫向畫面。轉橫後會收合瀏覽器網址列與分頁列，避免擋住操作。</p>
-      <p class="agl-orient-hint">ROTATE · COLLAPSE BROWSER BARS</p>
+      <p id="orientDesc">攻擊記錄僅支援橫向畫面。轉橫後請點「收合網址列／分頁」進入沉浸畫面（Safari 無法自動縮掉分頁列）。</p>
+      <p class="agl-orient-hint">ROTATE · TAP TO HIDE BARS</p>
     </div>
+  </div>
+
+  <div id="agl-chrome-bar" class="agl-chrome-bar" aria-live="polite">
+    <span class="agl-chrome-tip">Safari 分頁列無法自動縮小，請點右側進入沉浸畫面</span>
+    <button type="button" id="btnCollapseChrome">收合網址列／分頁</button>
   </div>
 
   <div id="agl-boot" class="agl-boot" aria-live="polite">
