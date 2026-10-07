@@ -42,8 +42,12 @@
     style.textContent = [
       '.main-header .navbar-title-block{',
       'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);',
-      'display:flex;align-items:center;gap:8px;min-width:0;',
+      'display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;',
       'margin-left:0!important;pointer-events:none;z-index:1;',
+      '}',
+      '.main-header .navbar-title-logo{',
+      'display:block;width:32px;height:32px;object-fit:contain;',
+      'pointer-events:auto;flex-shrink:0;',
       '}',
       '.main-header .navbar-title-text{',
       'pointer-events:auto;',
