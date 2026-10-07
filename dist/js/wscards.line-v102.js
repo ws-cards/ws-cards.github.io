@@ -5343,13 +5343,14 @@ function _drawStatsInkHead(ctx, W, L, theme, info) {
     }
 
     // ── 身分：卡名是標題本身，不加上方小標 ──
+    // 卡名用角ゴシック：明朝偏老氣，下載分享圖要俐落可掃讀
     var TX = boxX + boxW + 44;
     var RX = W - G;
     var colW = RX - TX;
 
     ctx.textAlign = 'left';
     ctx.fillStyle = theme.inkText;
-    ctx.font = _statsFont(700, 30, STATS_FONT_DISPLAY);
+    ctx.font = _statsFont(700, 30, STATS_FONT_UI);
     var nameLines = _wrapStatsText(ctx, info.cardName || info.cardNo || '卡片資料', colW, 2);
     var nameBaseline = 60;
     for (var n = 0; n < nameLines.length; n++) {
