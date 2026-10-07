@@ -14,6 +14,13 @@
       }
     })();
   </script>
+  <style>
+    /* 字體就緒前先藏內文，避免系統字 → 自訂字的 swap 閃爍 */
+    html { background: #ffffff; }
+    html[data-theme="dark"] { background: #141414; }
+    html:not(.fonts-ready) body { visibility: hidden; }
+    html.fonts-ready body { visibility: visible; }
+  </style>
   <meta name="description" content="查詢黑白雙翼（Weiss Schwarz）各卡號在遊遊亭的價格與庫存走勢，支援卡名、作品名與卡號查詢。">
   <meta property="og:title" content="各卡號漲幅趨勢（WS）｜WS-Cards 卡片雲">
   <meta property="og:description" content="輸入卡號即可查看遊遊亭的價格與庫存走勢，涵蓋近一月至近一年。">
@@ -34,6 +41,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Google Font：顯示明朝／UI 角ゴシック／說明襯線／數據 mono -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@500;600;700;900&display=swap">
+  <script>
+    // 必須放在字體 stylesheet 之後。等首屏關鍵字就緒再開字；
+    // 1.5s 保底，CDN 掛掉也不要永遠白屏。
+    (function () {
+      var root = document.documentElement;
+      var done = false;
+      function markReady() {
+        if (done) return;
+        done = true;
+        root.classList.add('fonts-ready');
+      }
+      if (!document.fonts || !document.fonts.load) {
+        markReady();
+        return;
+      }
+      var jobs = [
+        document.fonts.load('400 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 24px "Zen Old Mincho"')
+      ];
+      Promise.all(jobs)
+        .then(function () { return document.fonts.ready; })
+        .then(markReady)
+        .catch(markReady);
+      setTimeout(markReady, 1500);
+    })();
+  </script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
