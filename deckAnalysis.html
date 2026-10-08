@@ -2936,8 +2936,7 @@
         return g.count >= 2 || g.key === ctx.mine || g.key === st.axis;
       });
       const hidden = res.groups.length - shown.length;
-      let html = '<div class="da-off-section"><div class="da-top-panel">' +
-        officialSectionHd("2", "選要比的類型", "點一種連動軸；預設是你的軸。共 " + total + " 副入賞依軸分組。") +
+      let html = '<p class="da-off-find-tip" style="margin-top:0.75rem">點一種連動軸來比較；標「你的軸」的是系統幫你對到的類型。共 ' + total + " 副入賞依軸分組。</p>" +
         '<div class="da-axes" role="tablist" aria-label="入賞連動軸">';
       html += shown.map(function (g) {
         const label = officialAxisLabel(ctx, g.key, res.mine);
@@ -2960,7 +2959,7 @@
       } else if (st.showAllAxes && res.groups.some(function (g) { return g.count < 2; })) {
         html += '<button type="button" class="da-axes-more" data-official-axes-all="0">只顯示 2 副以上的軸</button>';
       }
-      return html + "</div></div>";
+      return html;
     }
 
     function renderOfficialView() {
@@ -2998,29 +2997,37 @@
         "</div>";
 
       html += '<div class="da-off-section"><div class="da-top-panel">' +
-        officialSectionHd("", "調整比較範圍", "數字＝目前選中軸在該條件下的入賞副數") +
+        officialSectionHd("2", "選比較範圍與類型", "先調賽制／期間，再點下方一種連動軸（數字＝該條件下同軸副數）") +
         '<div class="da-top-filters">' +
         (formats.length > 2 ? pills("data-official-format", "賽制", formats, st.format, function (id) { return axisCount(officialWindow(data, st.range, id)); }) : "") +
         pills("data-official-range", "期間", OFFICIAL_RANGES, st.range, function (id) { return axisCount(officialWindow(data, id, st.format)); }) +
-        "</div></div></div>";
+        "</div>";
 
       if (!res.pool.length) {
-        box.innerHTML = html + '<p class="da-hint mt-0">這個賽制與期間內沒有入賞牌組，試試切換上面的條件。</p>' + foot;
+        html += '<p class="da-hint mb-0" style="margin-top:0.75rem">這個賽制與期間內沒有入賞牌組，試試切換上面的條件。</p></div></div>';
+        box.innerHTML = html + foot;
         return;
       }
-      html += renderOfficialAxes(st, res, ctx);
+      html += renderOfficialAxes(st, res, ctx) + "</div></div>";
 
       if (st.axis == null) {
-        box.innerHTML = html + '<p class="da-top-basis is-thin"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有 2–3 等連動，無法自動對到同軸入賞。點步驟 2 的任一類型，仍可瀏覽該軸的入賞構成分佈。</p>' + foot;
+        html += '<div class="da-off-section">' +
+          officialSectionHd("3", "跟同軸入賞差在哪？", "先選步驟 2 的類型才能比較") +
+          '<p class="da-top-basis is-thin mb-0"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有 2–3 等連動，無法自動對到同軸入賞。點步驟 2 的任一類型，仍可瀏覽該軸的入賞構成分佈。</p></div>';
+        box.innerHTML = html + foot;
         return;
       }
       const picked = st.axis !== ctx.mine;
       const axisLabel = officialAxisLabel(ctx, st.axis, res.mine);
       if (!res.decks.length) {
-        box.innerHTML = html + '<p class="da-top-basis is-thin"><i class="fas fa-info-circle mr-1"></i>' +
+        html += '<div class="da-off-section">' +
+          officialSectionHd("3", "跟同軸入賞差在哪？", "目前條件下沒有可比較的同軸入賞") +
+          '<p class="da-top-basis is-thin mb-0"><i class="fas fa-info-circle mr-1"></i>' +
           (picked ? "「" + escapeHtml(axisLabel.names) + "」" : "你的軸「" + escapeHtml(myLabel.names) + "」") +
           "在這個賽制與期間內沒有同軸的入賞牌組" +
-          (res.similarTotal ? "（同賽制的全部期間有 " + res.similarTotal + " 副，可把期間切到「全部」）" : "") + "。</p>" + foot;
+          (res.similarTotal ? "（同賽制的全部期間有 " + res.similarTotal + " 副，可把期間切到「全部」）" : "。可以點步驟 2 其他較熱門的軸，先看看大會常見構成分佈") +
+          "。</p></div>";
+        box.innerHTML = html + foot;
         return;
       }
 
