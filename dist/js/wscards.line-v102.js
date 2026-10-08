@@ -2964,6 +2964,14 @@ function destroyAllCharts() {
 * @param {string} prefix - 卡號前綴 (例如: PRD)
 * @returns {Promise<boolean>} - 是否找到並設置成功
 */
+function standardValueMatchesPrefix(value, prefix) {
+    var target = String(prefix || '').trim().toLowerCase();
+    if (!target) return false;
+    return String(value || '').split(',').some(function(part) {
+        return part.trim().toLowerCase() === target;
+    });
+}
+
 async function findAndSetCardStandard(prefix) {
 return new Promise((resolve) => {
 // 等待標準資料載入完成
@@ -2976,13 +2984,11 @@ var checkInterval = setInterval(() => {
   
   clearInterval(checkInterval);
   
-  // 遍歷所有選項找到匹配的
+  // 遍歷所有選項找到匹配的（逗號分隔 token 精確比對，避免 FS 誤中 Fsh）
   for (var i = 0; i < cardStandardSelect.options.length; i++) {
     var option = cardStandardSelect.options[i];
     var value = option.value;
-    var searchTarget = prefix.toLowerCase();
-    // 檢查值是否包含我們的前綴
-    if (value && value.toLowerCase().includes(searchTarget)) {
+    if (standardValueMatchesPrefix(value, prefix)) {
       console.log('找到匹配的作品標準:', option.text, 'value:', value);
       removeTitle();
       setNativeSelectOption(cardStandardSelect, option);
