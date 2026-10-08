@@ -92,6 +92,10 @@ var _cardtextNamePopoverBound = false;
 // cardStandard 下拉選單原生就帶 2 個預留 option，options.length 判斷不出載入狀態，需另外追蹤
 var _standardWLoaded = false;
 var _standardSLoaded = false;
+// 程式化級聯設選器時：略過 changeTitle 自動選第一張／重複打 cardTitle.json
+var _programmaticCascade = false;
+var _cardTitleDataCache = null;
+var _cardTitleFetchPromise = null;
 
 /**
  * 搜尋框旁局部「搜尋中」狀態（非全頁 overlay）
@@ -1136,6 +1140,12 @@ var notFound = function(target) {
     setSearchBusy(false);
 };
 
+// 程式化級聯：略過 changeTitle 自動選第一張，避免先載錯卡再載目標卡
+_programmaticCascade = true;
+
+var standardSelect = document.getElementById('cardStandard');
+var prevStandardValue = standardSelect ? standardSelect.value : '';
+
 // 1. 首先找到並設置 cardStandard
 var standardFound = await findAndSetCardStandard(cardParts.prefix);
 if (!standardFound) {
@@ -1145,8 +1155,20 @@ if (!standardFound) {
     notFound(cardParts.fullNumber);
     return;
   }
+  // 找不到作品標準時才載入完整 title 清單（後綴搜尋路徑）
+  // 有標準時 changeStandard 已負責篩選，勿再呼叫 reGenTitle 搶同一個 XHR
+  reGenTitle();
+} else {
+  var nowStandardValue = standardSelect ? standardSelect.value : '';
+  var standardChanged = nowStandardValue !== prevStandardValue;
+  // 同系列且未觸發 changeStandard、title 又是空的才補載；已變系列時 change 已跑過，勿再呼叫
+  if (!standardChanged) {
+    var titleSel = document.getElementById('cardTitle');
+    if (!titleSel || titleSel.options.length <= 1) {
+      changeStandard();
+    }
+  }
 }
-reGenTitle();
 // 等待 cardTitle 選項載入完成
 await waitForTitleOptionsLoaded();
 
@@ -1206,6 +1228,8 @@ setTimeout(() => {
 console.error('設置選擇器時發生錯誤:', error);
 showSearchNotification('查詢時發生問題，請再試一次。', 'error');
 setSearchBusy(false);
+} finally {
+_programmaticCascade = false;
 }
 }
 
@@ -1284,9 +1308,16 @@ function syncCascadeSelectEnabled(selectEl) {
 /**
  * 程式設定 option.selected 不會觸發 change，FancySelect 外觀不會更新。
  * 統一用此函式選取並派送 change（連動 onchange + FancySelect.refresh）。
+ * 若已是該選項則不派送 change，避免跨系列搜尋時重複級聯重載。
  */
 function setNativeSelectOption(selectEl, optionEl) {
     if (!selectEl || !optionEl) return false;
+    var alreadySelected = selectEl.selectedIndex >= 0 &&
+        selectEl.options[selectEl.selectedIndex] === optionEl;
+    if (alreadySelected) {
+        refreshFancySelect(selectEl);
+        return true;
+    }
     optionEl.selected = true;
     try {
         selectEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1305,6 +1336,75 @@ function refreshFancySelect(selectOrId) {
         FancySelectModule &&
         typeof FancySelectModule.refresh === 'function') {
         FancySelectModule.refresh(selectOrId);
+    }
+}
+
+function suspendFancySelectRefresh(suspended) {
+    if (typeof FancySelectModule !== 'undefined' &&
+        FancySelectModule &&
+        typeof FancySelectModule.suspendRefresh === 'function') {
+        FancySelectModule.suspendRefresh(suspended);
+    }
+}
+
+/**
+ * 取得 cardTitle.json（記憶體快取，避免每次換系列都重抓）
+ */
+function fetchCardTitleData() {
+    if (_cardTitleDataCache) {
+        return Promise.resolve(_cardTitleDataCache);
+    }
+    if (_cardTitleFetchPromise) {
+        return _cardTitleFetchPromise;
+    }
+    _cardTitleFetchPromise = new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', requestURLCardTitle);
+        xhr.responseType = 'json';
+        xhr.onload = function() {
+            _cardTitleDataCache = xhr.response;
+            _cardTitleFetchPromise = null;
+            resolve(_cardTitleDataCache);
+        };
+        xhr.onerror = function() {
+            _cardTitleFetchPromise = null;
+            reject(new Error('cardTitle.json 載入失敗'));
+        };
+        xhr.send();
+    });
+    return _cardTitleFetchPromise;
+}
+
+/**
+ * 批次填入 cardTitle 選項（DocumentFragment + 暫停 FancySelect 重繪）
+ * @param {object} cardsTitle - cardTitle.json
+ * @param {string[]|null} filterPrefixes - 僅保留此前綴；null 表示全部
+ */
+function populateCardTitleOptions(cardsTitle, filterPrefixes) {
+    var selectTitle = document.getElementById('cardTitle');
+    if (!selectTitle) return;
+
+    suspendFancySelectRefresh(true);
+    try {
+        resetCardTitleReady();
+        var frag = document.createDocumentFragment();
+        for (var key in cardsTitle) {
+            if (!Object.prototype.hasOwnProperty.call(cardsTitle, key)) continue;
+            var slash = key.indexOf('/');
+            var keyStr = slash >= 0 ? key.substr(0, slash) : key;
+            if (filterPrefixes && filterPrefixes.length) {
+                if (filterPrefixes.indexOf(keyStr) === -1) continue;
+            }
+            var option = document.createElement('option');
+            option.setAttribute('value', key);
+            option.appendChild(document.createTextNode(cardsTitle[key]));
+            frag.appendChild(option);
+        }
+        selectTitle.appendChild(frag);
+        syncCascadeSelectEnabled(selectTitle);
+    } finally {
+        suspendFancySelectRefresh(false);
+        refreshFancySelect(selectTitle);
     }
 }
 
@@ -1414,25 +1514,18 @@ requestStock.open('GET', requestURLCardStock);
 requestStock.responseType = 'json';
 requestStock.send();
           
-requestTitle.open('GET', requestURLCardTitle);
-requestTitle.responseType = 'json';
-requestTitle.send();
+fetchCardTitleData().then(function(cardsTitle) {
+    if (!cardsTitle) return;
+    populateCardTitleOptions(cardsTitle, null);
+}).catch(function(err) {
+    console.error('初始載入 cardTitle 失敗', err);
+});
 
 /**
  * 主題資料載入完成後
  * - 填充主題選擇器（可不先選作品系列）
- */	
-requestTitle.onload = function(){
-    var cardsTitle = requestTitle.response;
-    resetCardTitleReady();
-    for(var key in cardsTitle){	 
-        var option = document.createElement("option");
-        option.setAttribute("value",key);
-        option.appendChild(document.createTextNode(cardsTitle[key])); 
-        selectTitle.appendChild(option);				
-    }
-    syncCascadeSelectEnabled(selectTitle);
-}
+ * （改走 fetchCardTitleData 快取，見上方）
+ */
 
 /**
  * 預設價格資料載入完成後
@@ -1479,51 +1572,23 @@ if (typeof syncAdvancedFilterButton === 'function') {
 */			
 function changeStandard(){
 var cardStandard=document.getElementById('cardStandard').value;
-var cardStandardEle=document.getElementById('cardStandard');
-var selectTitle = document.getElementById("cardTitle"); 
 
 // 清空主題選擇器，保留「選擇產品」；卡號先禁用等待
 resetCardTitleReady();
 resetCardNumberWaiting();
 
-// 重新載入主題資料
-requestTitle.open('GET', requestURLCardTitle);
-requestTitle.responseType = 'json';
-requestTitle.send();	
+var cardStandardArray = String(cardStandard || '').split(',').map(function(s) {
+    return String(s || '').trim();
+}).filter(Boolean);
 
-/**
- * 主題資料載入完成後
- * - 根據作品標準篩選主題
- */			
-requestTitle.onload = function(){
-    var cardsTitle = requestTitle.response;
-    var cardStandardArray = cardStandard.split(",");
+fetchCardTitleData().then(function(cardsTitle) {
+    if (!cardsTitle) return;
+    // 依作品標準篩選主題（快取命中時幾乎同步完成）
+    populateCardTitleOptions(cardsTitle, cardStandardArray);
+}).catch(function(err) {
+    console.error('載入 cardTitle 失敗', err);
+});
 
-    // 先放可選提示，再填真實產品
-    resetCardTitleReady();
-
-    for(var key in cardsTitle){	 
-        // 提取主題前綴
-        var keyStr=key.substr(0,key.indexOf('/'));//2~3
-        var keyStrLength=keyStr.length;
-
-        // 檢查是否符合選擇的作品標準
-        var filtered = cardStandardArray.filter(function(value) {
-            return value === keyStr;
-        });			
-
-        if(filtered==0){
-            //double check
-            continue;
-        }
-
-        var option = document.createElement("option");
-        option.setAttribute("value",key);
-        option.appendChild(document.createTextNode(cardsTitle[key])); 
-        selectTitle.appendChild(option);				
-    }
-    syncCascadeSelectEnabled(selectTitle);
-}		
 changeStandardAfterChangeNumber();			  
 }
 
@@ -1961,52 +2026,69 @@ resetCardNumberWaiting();
 var cardTitle = document.getElementById('cardTitle').value;	  	
 var cardTilteReplaceSpare = cardTitle.replace('/','_');
 console.log(cardTitle+'->'+cardTilteReplaceSpare);
-  
-// 載入對應主題的價格資料			  
-requestPrice.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
-requestPrice.responseType = 'json';
-requestPrice.send();				  
 
+// 用獨立 XHR，避免與 changeNumber 搶全域 requestPrice
+var titleListReq = new XMLHttpRequest();
+titleListReq.open('GET', requestURLCardPricebyPreCode + cardTilteReplaceSpare +'.json');
+titleListReq.responseType = 'json';
+titleListReq.send();
 
 /**
  * 價格資料載入完成後
  * - 填充卡號選項
  * - 處理特殊格式卡號的顯示
  */
-requestPrice.onload = function() {
-    var cards = requestPrice.response;
+titleListReq.onload = function() {
+    var cards = titleListReq.response;
+    if (!cards) return;
 
-    while (selectPrice.firstChild) {
-        selectPrice.removeChild(selectPrice.firstChild);
+    suspendFancySelectRefresh(true);
+    try {
+        while (selectPrice.firstChild) {
+            selectPrice.removeChild(selectPrice.firstChild);
+        }
+
+        var frag = document.createDocumentFragment();
+        for (var key in cards) {
+            if (!Object.prototype.hasOwnProperty.call(cards, key)) continue;
+            var option = document.createElement('option');
+            option.setAttribute('value', key);
+            if (key.indexOf('/') < 0 && key.indexOf('S') === 0) {
+                // 特殊格式卡號，使用對應表顯示
+                option.appendChild(document.createTextNode((mappingRep && mappingRep[key]) || key));
+            } else {
+                option.appendChild(document.createTextNode(key));
+            }
+            frag.appendChild(option);
+        }
+        selectPrice.appendChild(frag);
+
+        //重新排列option
+        sortOption();
+        syncCascadeSelectEnabled(selectPrice);
+    } finally {
+        suspendFancySelectRefresh(false);
+        refreshFancySelect(selectPrice);
     }
 
-    for(var key in cards){
-        if(key.indexOf('/')<0&&key.indexOf('S')==0){
-            // 特殊格式卡號，使用對應表顯示					
-            var option = document.createElement("option"); 
-            option.setAttribute("value",key);
-            option.appendChild(document.createTextNode(mappingRep[key])); 							
-            selectPrice.appendChild(option);					
-        }else{
-            var option = document.createElement("option"); 
-            option.setAttribute("value",key);
-            option.appendChild(document.createTextNode(key)); 							
-            selectPrice.appendChild(option);
-        }					
-    }			
-    
-    
-    //重新排列option
-    sortOption();
-    syncCascadeSelectEnabled(selectPrice);
     if (selectPrice.options.length > 0) {
-        selectPrice.options[0].selected=true;
-        changeNumber();
+        // 程式化級聯（點搜尋結果／歷史）時不自動選第一張、不預載圖表；
+        // 由 findAndSetCardNumber 選目標卡後再 changeNumber，避免雙重請求。
+        if (_programmaticCascade) {
+            selectPrice.selectedIndex = -1;
+            refreshFancySelect(selectPrice);
+        } else {
+            selectPrice.options[0].selected = true;
+            changeNumber();
+        }
     }
     if (typeof syncAdvancedFilterButton === 'function') {
         syncAdvancedFilterButton();
     }
-}
+};
+titleListReq.onerror = function() {
+    console.error('載入卡號清單失敗:', cardTilteReplaceSpare);
+};
 }
                 
 /**
@@ -3144,16 +3226,24 @@ setTimeout(() => {
 */
 async function waitForTitleOptionsLoaded() {
 return new Promise((resolve) => {
-var checkInterval = setInterval(() => {
+function isReady() {
   var cardTitleSelect = document.getElementById('cardTitle');
-  if (cardTitleSelect && cardTitleSelect.options.length > 1) {
+  return !!(cardTitleSelect && cardTitleSelect.options.length > 1);
+}
+if (isReady()) {
+  resolve();
+  return;
+}
+var checkInterval = setInterval(() => {
+  if (isReady()) {
     clearInterval(checkInterval);
+    clearTimeout(timeoutId);
     resolve();
   }
-}, 100);
+}, 50);
 
 // 超時處理
-setTimeout(() => {
+var timeoutId = setTimeout(() => {
   clearInterval(checkInterval);
   resolve();
 }, 5000);
@@ -3166,16 +3256,24 @@ setTimeout(() => {
 */
 async function waitForNumberOptionsLoaded() {
 return new Promise((resolve) => {
-var checkInterval = setInterval(() => {
+function isReady() {
   var cardNumberSelect = document.getElementById('cardNumber');
-  if (cardNumberSelect && cardNumberSelect.options.length > 1) {
+  return !!(cardNumberSelect && cardNumberSelect.options.length > 1);
+}
+if (isReady()) {
+  resolve();
+  return;
+}
+var checkInterval = setInterval(() => {
+  if (isReady()) {
     clearInterval(checkInterval);
+    clearTimeout(timeoutId);
     resolve();
   }
-}, 100);
+}, 50);
 
 // 超時處理
-setTimeout(() => {
+var timeoutId = setTimeout(() => {
   clearInterval(checkInterval);
   resolve();
 }, 5000);
@@ -3231,31 +3329,16 @@ smoothScrollToAnchor('myChart', 'smooth', 'start');
 }
 
 /**
-* 重組title
+* 重組title（完整清單，供找不到作品標準的後綴路徑）
 */
 function reGenTitle(){
-          var selectTitle = document.getElementById("cardTitle"); 
-          resetCardTitleReady();
-          
-          requestTitle.open('GET', requestURLCardTitle);
-          requestTitle.responseType = 'json';
-          requestTitle.send();					
-          requestTitle.onload = function(){
-            var cardsTitle = requestTitle.response;
-            resetCardTitleReady();
-
-            for(var key in cardsTitle){	 
-
-                var keyStr=key.substr(0,key.indexOf('/'));//2~3
-                var keyStrLength=keyStr.length;
-
-                var option = document.createElement("option");
-                option.setAttribute("value",key);
-                option.appendChild(document.createTextNode(cardsTitle[key])); 
-                selectTitle.appendChild(option);				
-            }
-            syncCascadeSelectEnabled(selectTitle);
-          }	
+    resetCardTitleReady();
+    fetchCardTitleData().then(function(cardsTitle) {
+        if (!cardsTitle) return;
+        populateCardTitleOptions(cardsTitle, null);
+    }).catch(function(err) {
+        console.error('reGenTitle 載入失敗', err);
+    });
 }
 var elementCardNumber = document.getElementById('cardNumber');
 if (elementCardNumber) {
@@ -6576,6 +6659,9 @@ var instances = new WeakMap();
 var openWraps = [];
 var _docBound = false;
 var _repositionBound = false;
+// 批次填 option 時暫停 MutationObserver 觸發的全量重繪
+var _refreshSuspended = false;
+var _pendingRefreshSelects = [];
 
 function escapeHtml(str) {
     return String(str == null ? '' : str)
@@ -6810,6 +6896,12 @@ function enhance(select) {
     }
 
     function refresh() {
+        if (_refreshSuspended) {
+            if (_pendingRefreshSelects.indexOf(select) === -1) {
+                _pendingRefreshSelects.push(select);
+            }
+            return;
+        }
         var disabled = isDisabled(select);
         wrap.classList.toggle('is-disabled', disabled);
         wrap.setAttribute('aria-disabled', disabled ? 'true' : 'false');
@@ -6962,6 +7054,16 @@ function refresh(selectOrId) {
     if (inst) inst.refresh();
 }
 
+function suspendRefresh(suspended) {
+    _refreshSuspended = !!suspended;
+    if (_refreshSuspended) return;
+    var pending = _pendingRefreshSelects.slice();
+    _pendingRefreshSelects.length = 0;
+    pending.forEach(function(sel) {
+        refresh(sel);
+    });
+}
+
 function init() {
     enhanceAll(document);
 }
@@ -6976,6 +7078,7 @@ return {
     init: init,
     enhanceAll: enhanceAll,
     enhance: enhance,
-    refresh: refresh
+    refresh: refresh,
+    suspendRefresh: suspendRefresh
 };
 })();
