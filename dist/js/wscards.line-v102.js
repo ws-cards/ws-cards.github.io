@@ -4333,8 +4333,8 @@ var CardFavorites = (function() {
         if (!btn) return;
         btn.classList.toggle('is-favorited', !!favorited);
         btn.setAttribute('aria-pressed', favorited ? 'true' : 'false');
-        btn.setAttribute('aria-label', favorited ? '取消收藏此卡片' : '收藏此卡片');
-        btn.title = favorited ? '取消收藏' : '收藏此卡片';
+        btn.setAttribute('aria-label', favorited ? '移出願望清單' : '加入願望清單');
+        btn.title = favorited ? '移出願望清單' : '加入願望清單';
         var icon = btn.querySelector('i');
         if (icon) {
             icon.className = favorited ? 'fas fa-star' : 'far fa-star';
@@ -4347,8 +4347,8 @@ var CardFavorites = (function() {
         btn.hidden = true;
         btn.classList.remove('is-favorited');
         btn.setAttribute('aria-pressed', 'false');
-        btn.setAttribute('aria-label', '收藏此卡片');
-        btn.title = '收藏此卡片';
+        btn.setAttribute('aria-label', '加入願望清單');
+        btn.title = '加入願望清單';
         var icon = btn.querySelector('i');
         if (icon) icon.className = 'far fa-star';
     }
@@ -4437,17 +4437,17 @@ var CardFavorites = (function() {
                 syncButton();
                 return pushMissingToCloud(merged, remote || []).then(function() {
                     if ((remote || []).length && local.length === 0) {
-                        showSyncToast('已載入雲端收藏', true);
+                        showSyncToast('已載入雲端願望清單', true);
                     } else if (local.length && !(remote || []).length) {
-                        showSyncToast('本機收藏已上傳雲端', true);
+                        showSyncToast('本機願望清單已上傳雲端', true);
                     } else if (local.length || (remote || []).length) {
-                        showSyncToast('收藏已與雲端同步', true);
+                        showSyncToast('願望清單已與雲端同步', true);
                     }
                 });
             })
             .catch(function(err) {
-                console.error('收藏雲端合併失敗:', err);
-                showSyncToast('雲端收藏讀取失敗（繼續用本機）', false);
+                console.error('願望清單雲端合併失敗:', err);
+                showSyncToast('雲端願望清單讀取失敗（繼續用本機）', false);
             })
             .then(function() {
                 mergeInFlight = null;
@@ -4517,7 +4517,7 @@ var CardFavorites = (function() {
             } else {
                 detail += ' · 已存本機（雲端同步失敗）';
             }
-            console.log(nowFavorited ? '[已加入收藏]' : '[已取消收藏]', detail);
+            console.log(nowFavorited ? '[已加入願望清單]' : '[已移出願望清單]', detail);
         });
     }
 

@@ -13,9 +13,9 @@
       }
     })();
   </script>
-  <meta name="description" content="查看已收藏的 Weiss Schwarz 卡片，支援搜尋、排序與勾選合計價格。">
-  <meta property="og:title" content="我的收藏｜WS-Cards 卡片雲">
-  <meta property="og:description" content="以相簿方式瀏覽收藏卡片，搜尋排序並勾選合計最新售價。">
+  <meta name="description" content="查看願望清單中的 Weiss Schwarz 卡片，支援搜尋、排序與勾選合計價格。">
+  <meta property="og:title" content="願望清單｜WS-Cards 卡片雲">
+  <meta property="og:description" content="以相簿方式瀏覽願望清單卡片，搜尋排序並勾選合計最新售價。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
   <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
   <meta name="msapplication-TileColor" content="#fff">
   <link rel="manifest" href="/manifest.json">
-  <title>我的收藏｜WS-Cards 卡片雲</title>
+  <title>願望清單｜WS-Cards 卡片雲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
@@ -816,7 +816,7 @@
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
 <div class="wrapper">
 
-  <div data-navbar data-page-title="我的收藏"></div>
+  <div data-navbar data-page-title="願望清單"></div>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -881,7 +881,7 @@
         <li class="menu-item">
           <a href="favorites.html" class="menu-link active">
             <i class="fas fa-star main-icon"></i>
-            <span>我的收藏</span>
+            <span>願望清單</span>
           </a>
         </li>
         <li class="menu-item">
@@ -904,7 +904,7 @@
               <div class="card-header">
                 <h5 class="card-title">
                   <i class="fas fa-star mr-2"></i>
-                  我的收藏
+                  願望清單
                 </h5>
               </div>
               <div class="card-body">
@@ -922,8 +922,8 @@
                   <div class="fav-field fav-field-sort">
                     <label for="favSortSelect">排序</label>
                     <select id="favSortSelect" class="form-control">
-                      <option value="newest" selected>最新收藏</option>
-                      <option value="oldest">最早收藏</option>
+                      <option value="newest" selected>最新加入</option>
+                      <option value="oldest">最早加入</option>
                       <option value="cardNumber">卡號 A→Z</option>
                       <option value="rare">稀有度</option>
                       <option value="priceDesc">價格高→低</option>
@@ -961,12 +961,12 @@
                 <div class="fav-status" id="favStatus" role="status" aria-live="polite"></div>
                 <div id="favEmpty" class="fav-empty" style="display:none;">
                   <div><i class="far fa-star" aria-hidden="true"></i></div>
-                  <p id="favEmptyText">尚未收藏任何卡片。</p>
+                  <p id="favEmptyText">願望清單尚無卡片。</p>
                   <a class="btn btn-outline-secondary" href="line_test_v102.html">
-                    <i class="fas fa-chart-line mr-1" aria-hidden="true"></i>前往查價並收藏
+                    <i class="fas fa-chart-line mr-1" aria-hidden="true"></i>前往查價並加入
                   </a>
                 </div>
-                <ul class="fav-album" id="favList" aria-label="收藏卡片相簿"></ul>
+                <ul class="fav-album" id="favList" aria-label="願望清單相簿"></ul>
               </div>
             </div>
           </div>
@@ -989,7 +989,7 @@
   <div class="fav-poster-dialog" role="dialog" aria-modal="true" aria-labelledby="favPosterTitle">
     <div class="fav-poster-body">
       <h3 id="favPosterTitle">買取情報預覽</h3>
-      <p class="fav-poster-hint">可改文案與價格（只影響本次產圖，不會改收藏合計）。</p>
+      <p class="fav-poster-hint">可改文案與價格（只影響本次產圖，不會改願望清單合計）。</p>
       <div class="fav-poster-toolbar">
         <div class="fav-poster-toolbar-row">
           <div class="fav-poster-currency" role="group" aria-label="產圖幣別">
@@ -1206,7 +1206,7 @@
       missing.forEach(function (item) {
         chain = chain.then(function () {
           return fb.addCardFavorite(item).catch(function (err) {
-            console.error('上傳收藏失敗:', item.cardNumber, err);
+            console.error('上傳願望清單失敗:', item.cardNumber, err);
           });
         });
       });
@@ -2410,7 +2410,7 @@
 
       if (!allItems.length) {
         emptyEl.style.display = '';
-        emptyTextEl.textContent = '尚未收藏任何卡片。';
+        emptyTextEl.textContent = '願望清單尚無卡片。';
         listEl.innerHTML = '';
         return;
       }
@@ -2451,10 +2451,10 @@
         html += '      <span class="fav-cardno">' + escapeHtml(cardNumber) + '</span>';
         html += '      <span class="fav-name">' + escapeHtml(name) + '</span>';
         html += '      <div class="fav-price' + (label.muted ? ' is-muted' : '') + '" data-price-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(label.text) + '</div>';
-        html += '      <div class="fav-meta">收藏於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
+        html += '      <div class="fav-meta">加入於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
         html += '    </div>';
         html += '  </div>';
-        html += '  <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="取消收藏" aria-label="取消收藏 ' + escapeHtml(cardNumber) + '">';
+        html += '  <button type="button" class="fav-remove-btn" data-remove="' + escapeHtml(cardNumber) + '" title="移出願望清單" aria-label="移出願望清單 ' + escapeHtml(cardNumber) + '">';
         html += '    <i class="fas fa-trash-alt" aria-hidden="true"></i>';
         html += '  </button>';
         html += '</li>';
@@ -2534,7 +2534,7 @@
       delete checkedSet[cardNumber];
       writeLocal(next);
       setItemsAndRender(next);
-      setStatus('已取消收藏 ' + cardNumber, 'is-ok');
+      setStatus('已移出願望清單 ' + cardNumber, 'is-ok');
 
       if (canUseCloud()) {
         fb.removeCardFavorite(cardNumber).catch(function (err) {
@@ -2549,24 +2549,24 @@
       setItemsAndRender(local);
 
       if (!canUseCloud()) {
-        setStatus(cloudUser ? '雲端未就緒，顯示本機收藏' : '顯示本機收藏（登入後可同步雲端）');
+        setStatus(cloudUser ? '雲端未就緒，顯示本機願望清單' : '顯示本機願望清單（登入後可同步雲端）');
         return Promise.resolve(local);
       }
 
-      setStatus('同步雲端收藏…');
+      setStatus('同步雲端願望清單…');
       return fb.loadCardFavorites()
         .then(function (remote) {
           var merged = mergeLists(local, remote || []);
           writeLocal(merged);
           setItemsAndRender(merged);
           return pushMissingToCloud(merged, remote || []).then(function () {
-            setStatus('已同步雲端收藏', 'is-ok');
+            setStatus('已同步雲端願望清單', 'is-ok');
             return merged;
           });
         })
         .catch(function (err) {
           console.error(err);
-          setStatus('雲端讀取失敗，繼續顯示本機收藏', 'is-error');
+          setStatus('雲端讀取失敗，繼續顯示本機願望清單', 'is-error');
           return local;
         });
     }
@@ -2702,7 +2702,7 @@
       });
     } else {
       setItemsAndRender(readLocal());
-      setStatus((fb && fb.reason) || 'Firebase 未載入，僅顯示本機收藏', 'is-error');
+      setStatus((fb && fb.reason) || 'Firebase 未載入，僅顯示本機願望清單', 'is-error');
     }
   })();
 </script>
