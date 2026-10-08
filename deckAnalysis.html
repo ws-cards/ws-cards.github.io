@@ -1228,13 +1228,13 @@
                 <div class="da-off-guide">
                   <p class="da-off-lead">分析牌組後，這裡會把你的卡表跟 <strong>WS 官方大會入賞牌組</strong>逐張比較——看哪些卡入賞常放、張數差多少、哪一副最像你。</p>
                   <ol class="da-off-steps">
-                    <li data-step="1"><strong>辨認類型</strong><br>依 2–3 等連動角色（軸）判斷你的打法</li>
+                    <li data-step="1"><strong>辨認類型</strong><br>依「連動角色＋對應 CX」判斷你的打法</li>
                     <li data-step="2"><strong>只比同類型</strong><br>避免拿不同打法的入賞牌組硬比</li>
                     <li data-step="3"><strong>看差異</strong><br>常放你沒放、張數差、最像的入賞牌組</li>
                   </ol>
                   <details class="da-off-glossary">
                     <summary>什麼是「連動軸」？新手必看</summary>
-                    <p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把這些連動角色的組合叫「軸」；連動角色完全相同才算<strong>同軸</strong>，這樣比較才有意義（不會拿完全不同打法的優勝牌組來比你）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>
+                    <p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把「連動角色＋牌組內有放對應 CX」的組合叫「軸」；兩邊都湊齊且完全相同才算<strong>同軸</strong>（只放連動角色、沒放那張 CX，不算）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>
                   </details>
                 </div>
               </div>
@@ -1250,7 +1250,7 @@
               </h5>
             </div>
             <div class="card-body" aria-live="polite">
-              <p class="da-top-note"><i class="fas fa-info-circle mr-1"></i>這裡是玩家社群整理的店舖大會上位紀錄，跟上面的「官方入賞」是不同來源、分開統計。這裡的「CX 軸心」指 CX 圖示組合（例如八門、二爆），不是上面用 2–3 等連動角色分的「連動軸」。</p>
+              <p class="da-top-note"><i class="fas fa-info-circle mr-1"></i>這裡是玩家社群整理的店舖大會上位紀錄，跟上面的「官方入賞」是不同來源、分開統計。這裡的「CX 軸心」指 CX 圖示組合（例如八門、二爆），不是上面用「連動角色＋對應 CX」分的「連動軸」。</p>
               <div id="topCommunity">
                 <p class="da-hint mb-0">分析牌組後，這裡會列出社群上位紀錄的 CX 軸心與核心卡。</p>
               </div>
@@ -2722,6 +2722,7 @@
     }
 
     // Same rule as scrapy/ws_official_decks.py link_tag(): Lv2/Lv3 character with 【CXコンボ】.
+    // Returns CX name, "*" (combo but CX name unknown), "" (not a link), or null (not a character to evaluate).
     function ownLinkTag(c) {
       if (!c.text || !c.text.length) return null;
       if (classifyKind(c) !== "角色") return "";
@@ -2740,19 +2741,49 @@
         const t = ownLinkTag(c);
         if (t !== null) own[cardBaseKey(c.cardNo)] = t;
       });
-      const tagOf = function (k) { return idx.tags[k] !== undefined ? idx.tags[k] : own[k]; };
-      const keyOf = function (list) {
+      // Prefer a known CX name from either source; "*" alone cannot verify CX-in-deck.
+      const tagOf = function (k) {
+        const fromIdx = idx.tags[k];
+        const fromOwn = own[k];
+        if (fromIdx && fromIdx !== "*") return fromIdx;
+        if (fromOwn && fromOwn !== "*") return fromOwn;
+        if (fromIdx !== undefined) return fromIdx;
+        return fromOwn;
+      };
+      const userCxNames = new Set();
+      cards.forEach(function (c) {
+        if (classifyKind(c) === "CX" && c.name) userCxNames.add(c.name);
+      });
+      const officialCxNames = function (pairs) {
+        const names = new Set();
+        pairs.forEach(function (pair) {
+          const raw = data.cards && data.cards[pair[0]];
+          if (raw && raw[2] === "X" && raw[0]) names.add(raw[0]);
+        });
+        return names;
+      };
+      // Axis member only if link character's named CX is also in the same deck.
+      const keyOf = function (cardKeys, cxNames) {
         const set = {};
-        list.forEach(function (k) { if (tagOf(k)) set[k] = true; });
+        cardKeys.forEach(function (k) {
+          const tag = tagOf(k);
+          if (!tag || tag === "*") return;
+          if (cxNames.has(tag)) set[k] = true;
+        });
         return Object.keys(set).sort().join("|");
       };
       const deckKeys = new Map();
       return {
         idx: idx,
         tagOf: tagOf,
-        mine: keyOf(cards.map(function (c) { return cardBaseKey(c.cardNo); })),
+        mine: keyOf(cards.map(function (c) { return cardBaseKey(c.cardNo); }), userCxNames),
         deckKey: function (d) {
-          if (!deckKeys.has(d)) deckKeys.set(d, keyOf(d.c.map(function (p) { return cardBaseKey(p[0]); })));
+          if (!deckKeys.has(d)) {
+            deckKeys.set(d, keyOf(
+              d.c.map(function (p) { return cardBaseKey(p[0]); }),
+              officialCxNames(d.c)
+            ));
+          }
           return deckKeys.get(d);
         }
       };
@@ -2896,7 +2927,7 @@
     }
 
     function officialAxisLabel(ctx, key, mine) {
-      if (!key) return { names: "沒有 2–3 等連動", cx: "", imgs: [] };
+      if (!key) return { names: "沒有湊齊的連動軸", cx: "", imgs: [] };
       const parts = key.split("|").map(function (k) {
         const info = ctx.idx.info[k] || { no: k, name: (mine[k] && mine[k].name) || k };
         const tag = ctx.tagOf(k);
@@ -2918,13 +2949,13 @@
       return '<div class="da-off-guide">' +
         '<p class="da-off-lead">分析牌組後，這裡會把你的卡表跟 <strong>WS 官方大會入賞牌組</strong>逐張比較——看哪些卡入賞常放、張數差多少、哪一副最像你。</p>' +
         '<ol class="da-off-steps">' +
-        '<li data-step="1"><strong>辨認類型</strong><br>依 2–3 等連動角色（軸）判斷你的打法</li>' +
+        '<li data-step="1"><strong>辨認類型</strong><br>依「連動角色＋對應 CX」判斷你的打法</li>' +
         '<li data-step="2"><strong>只比同類型</strong><br>避免拿不同打法的入賞牌組硬比</li>' +
         '<li data-step="3"><strong>看差異</strong><br>常放你沒放、張數差、最像的入賞牌組</li>' +
         "</ol>" +
         '<details class="da-off-glossary">' +
         "<summary>什麼是「連動軸」？新手必看</summary>" +
-        "<p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把這些連動角色的組合叫「軸」；連動角色完全相同才算<strong>同軸</strong>，這樣比較才有意義（不會拿完全不同打法的優勝牌組來比你）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>" +
+        "<p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把「連動角色＋牌組內有放對應 CX」的組合叫「軸」；兩邊都湊齊且完全相同才算<strong>同軸</strong>（只放連動角色、沒放那張 CX，不算）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>" +
         "</details></div>";
     }
 
@@ -2934,7 +2965,7 @@
           '<p class="da-off-lead" style="margin-bottom:0.45rem">怎麼讀：先確認你的<strong>連動軸</strong>（打法類型）→ 調整賽制／期間 → 看同軸入賞差在哪。</p>' +
           '<details class="da-off-glossary" style="border-top:none;padding-top:0;margin-top:0">' +
           "<summary>什麼是「連動軸」？</summary>" +
-          "<p>牌組裡所有 <strong>2–3 等、效果有【CXコンボ】</strong>的角色組合。完全相同才算同軸；比較時忽略稀有度（SP、OLR 視為同一張）。下方社群「CX 軸心」是另一套分類。</p>" +
+          "<p>牌組裡 <strong>2–3 等【CXコンボ】角色</strong>，且<strong>對應 CX 也有放進牌組</strong>，才算進軸。兩邊都湊齊且完全相同才算同軸；比較時忽略稀有度（SP、OLR 視為同一張）。下方社群「CX 軸心」是另一套分類。</p>" +
           "</details></div>";
       }
       return officialEmptyGuideHtml();
@@ -2960,7 +2991,7 @@
         '<div class="body"><div class="k">系統辨識到的你的連動軸</div>' +
         '<div class="nm">' + escapeHtml(myLabel.names) + "</div>" +
         (myLabel.cx ? '<div class="cx">' + escapeHtml(myLabel.cx) + "</div>" : "") +
-        (!hasMine ? '<div class="cx">沒有 2–3 等連動時，無法自動對到「同打法」的入賞牌組；你仍可點下方類型去瀏覽。</div>' : "") +
+        (!hasMine ? '<div class="cx">沒有「連動角色＋對應 CX」都湊齊的組合時，無法自動對到同打法入賞；你仍可點下方類型去瀏覽。</div>' : "") +
         "</div>" +
         (hasMine ? '<span class="tag">你的軸</span>' : "") +
         "</div>";
@@ -3028,7 +3059,7 @@
 
       let html = officialGuideHtml(true);
       html += '<div class="da-off-section">' +
-        officialSectionHd("1", "你的牌組是哪種打法？", "用 2–3 等連動角色辨識類型") +
+        officialSectionHd("1", "你的牌組是哪種打法？", "2–3 等連動角色＋對應 CX 都有放才算進軸") +
         renderOfficialIdentity(ctx, res, myLabel) +
         "</div>";
 
@@ -3049,7 +3080,7 @@
       if (st.axis == null) {
         html += '<div class="da-off-section">' +
           officialSectionHd("3", "跟同軸入賞差在哪？", "先選步驟 2 的類型才能比較") +
-          '<p class="da-top-basis is-thin mb-0"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有 2–3 等連動，無法自動對到同軸入賞。點步驟 2 的任一類型，仍可瀏覽該軸的入賞構成分佈。</p></div>';
+          '<p class="da-top-basis is-thin mb-0"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有「連動角色＋對應 CX」都湊齊的組合，無法自動對到同軸入賞。點步驟 2 的任一類型，仍可瀏覽該軸的入賞構成分佈。</p></div>';
         box.innerHTML = html + foot;
         return;
       }
