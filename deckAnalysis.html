@@ -661,6 +661,47 @@
       border-radius: 999px; background: var(--da-good); color: #fff;
     }
     .da-off-identity.is-none .nm { color: var(--da-muted); font-weight: 700; }
+    .da-off-combos {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 0.45rem;
+    }
+    .da-off-combo {
+      display: grid; grid-template-columns: 40px minmax(0, 1fr) auto;
+      gap: 0.65rem; align-items: center;
+      padding: 0.45rem 0.55rem; border-radius: 10px;
+      border: 1px solid var(--da-border); background: var(--da-soft);
+    }
+    @media (max-width: 575px) {
+      .da-off-combo { grid-template-columns: 36px minmax(0, 1fr); }
+      .da-off-combo .flags { grid-column: 2; justify-content: flex-start; }
+    }
+    .da-off-combo.is-axis {
+      border-color: color-mix(in srgb, var(--da-good) 45%, var(--da-border));
+      background: color-mix(in srgb, var(--da-good) 8%, var(--da-soft));
+    }
+    .da-off-combo.is-miss-cx {
+      border-color: color-mix(in srgb, var(--da-warn) 40%, var(--da-border));
+    }
+    .da-off-combo img {
+      width: 40px; aspect-ratio: 5 / 7; object-fit: cover; border-radius: 4px;
+      background: var(--da-panel); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .da-off-combo .body { min-width: 0; }
+    .da-off-combo .nm {
+      font-size: 0.84rem; font-weight: 800; color: var(--da-ink); line-height: 1.3;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .da-off-combo .meta { font-size: 0.74rem; color: var(--da-muted); margin-top: 0.12rem; line-height: 1.4; }
+    .da-off-combo .flags { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; }
+    .da-off-combo .flg {
+      font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.45rem;
+      border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+    }
+    .da-off-combo .flg.is-in { color: var(--da-good); }
+    .da-off-combo .flg.is-out { color: var(--da-warn); }
+    .da-off-combo .flg.is-unk { color: var(--da-muted); }
+    .da-off-combo .flg.is-axis { color: #fff; background: var(--da-good); border-color: var(--da-good); }
+    .da-off-combo .flg.is-low { color: var(--da-accent); }
     .da-off-find-hd {
       display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
       margin: 0 0 0.35rem;
@@ -2721,6 +2762,22 @@
       return data._links;
     }
 
+    // Parse CX name from a 【CXコンボ】 text line. "*" = combo but name unknown.
+    function parseCxComboName(textLine) {
+      if (!textLine || !/CXコンボ/.test(textLine)) return null;
+      const m = String(textLine).match(/(?:クライマックス|CX)置場(?:に|の)「(.+?)」/);
+      return m ? m[1] : "*";
+    }
+
+    // Any-level character with 【CXコンボ】. null = not evaluable / not a combo char.
+    function ownComboTagAnyLevel(c) {
+      if (!c.text || !c.text.length) return null;
+      if (classifyKind(c) !== "角色") return null;
+      const combo = c.text.find(function (t) { return /CXコンボ/.test(t); });
+      if (!combo) return null;
+      return parseCxComboName(combo);
+    }
+
     // Same rule as scrapy/ws_official_decks.py link_tag(): Lv2/Lv3 character with 【CXコンボ】.
     // Returns CX name, "*" (combo but CX name unknown), "" (not a link), or null (not a character to evaluate).
     function ownLinkTag(c) {
@@ -2728,10 +2785,53 @@
       if (classifyKind(c) !== "角色") return "";
       const lv = Number(c.level);
       if (lv !== 2 && lv !== 3) return "";
-      const combo = c.text.find(function (t) { return /CXコンボ/.test(t); });
-      if (!combo) return "";
-      const m = combo.match(/(?:クライマックス|CX)置場(?:に|の)「(.+?)」/);
-      return m ? m[1] : "*";
+      const tag = ownComboTagAnyLevel(c);
+      return tag == null ? "" : tag;
+    }
+
+    // Inventory of all CX-combo characters in the user's deck (includes Lv0–1).
+    function collectDeckCombos(cards, ctx) {
+      const cxNames = new Set();
+      cards.forEach(function (c) {
+        if (classifyKind(c) === "CX" && c.name) cxNames.add(c.name);
+      });
+      const byKey = new Map();
+      cards.forEach(function (c) {
+        if (classifyKind(c) !== "角色") return;
+        const k = cardBaseKey(c.cardNo);
+        let tag = ownComboTagAnyLevel(c);
+        if (tag == null && ctx && ctx.tagOf) {
+          const idxTag = ctx.tagOf(k);
+          if (idxTag) tag = idxTag;
+        }
+        if (!tag) return;
+        const lv = Number(c.level);
+        const row = byKey.get(k) || {
+          key: k,
+          no: normalizeCardNo(c.cardNo),
+          name: c.name || k,
+          level: isNaN(lv) ? null : lv,
+          qty: 0,
+          cx: tag,
+          imageUrl: c.imageUrl || wsImageUrlFromCardNo(c.cardNo)
+        };
+        row.qty += 1;
+        if (c.name) row.name = c.name;
+        if (c.imageUrl) row.imageUrl = c.imageUrl;
+        if (!isNaN(lv)) row.level = lv;
+        if (tag && tag !== "*" && (!row.cx || row.cx === "*")) row.cx = tag;
+        byKey.set(k, row);
+      });
+      return Array.from(byKey.values()).map(function (r) {
+        const cxIn = !!(r.cx && r.cx !== "*" && cxNames.has(r.cx));
+        const axisEligible = (r.level === 2 || r.level === 3) && cxIn;
+        return Object.assign(r, { cxIn: cxIn, axisEligible: axisEligible });
+      }).sort(function (a, b) {
+        return (b.axisEligible - a.axisEligible) ||
+          ((b.level != null ? b.level : -1) - (a.level != null ? a.level : -1)) ||
+          (b.cxIn - a.cxIn) ||
+          String(a.name).localeCompare(String(b.name), "ja");
+      });
     }
 
     function officialLinkContext(data, cards) {
@@ -2997,6 +3097,38 @@
         "</div>";
     }
 
+    function renderOfficialCombos(combos) {
+      if (!combos.length) {
+        return '<div class="da-top-panel" style="margin-top:0.75rem">' +
+          '<div class="da-off-find-hd"><h3>牌組內的連動卡</h3></div>' +
+          '<p class="da-off-find-tip mb-0">沒有偵測到【CXコンボ】角色（含 0–1 等）。</p></div>';
+      }
+      const axisN = combos.filter(function (r) { return r.axisEligible; }).length;
+      return '<div class="da-top-panel" style="margin-top:0.75rem">' +
+        '<div class="da-off-find-hd"><h3>牌組內的連動卡 <small>' + combos.length + " 種 · 進軸 " + axisN + "</small></h3></div>" +
+        '<p class="da-off-find-tip">含 0–1 等；只有 <strong>2–3 等且對應 CX 有放</strong> 的才會進上面的連動軸。</p>' +
+        '<ul class="da-off-combos">' + combos.map(function (r) {
+          const lvLabel = r.level != null ? "Lv" + r.level : "Lv?";
+          const cxLabel = !r.cx || r.cx === "*"
+            ? "連動 CX：無法辨識"
+            : "連動「" + r.cx + "」";
+          const cxFlg = !r.cx || r.cx === "*"
+            ? '<span class="flg is-unk">CX 不明</span>'
+            : (r.cxIn ? '<span class="flg is-in">CX 有放</span>' : '<span class="flg is-out">CX 未放</span>');
+          const roleFlg = r.axisEligible
+            ? '<span class="flg is-axis">進軸</span>'
+            : ((r.level === 0 || r.level === 1)
+              ? '<span class="flg is-low">0–1 等</span>'
+              : "");
+          const cls = r.axisEligible ? " is-axis" : (r.cx && r.cx !== "*" && !r.cxIn ? " is-miss-cx" : "");
+          return '<li class="da-off-combo' + cls + '">' +
+            '<img src="' + escapeHtml(r.imageUrl || wsImageUrlFromCardNo(r.no)) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">' +
+            '<div class="body"><div class="nm" title="' + escapeHtml(r.name) + '">' + escapeHtml(r.name) + "</div>" +
+            '<div class="meta">' + lvLabel + " · " + r.qty + " 張 · " + escapeHtml(cxLabel) + "</div></div>" +
+            '<div class="flags">' + cxFlg + roleFlg + "</div></li>";
+        }).join("") + "</ul></div>";
+    }
+
     function renderOfficialAxes(st, res, ctx) {
       const total = res.pool.length;
       const shown = st.showAllAxes ? res.groups : res.groups.filter(function (g) {
@@ -3057,10 +3189,12 @@
       const foot = '<p class="da-top-foot mb-0">資料來源：WS 官方「入賞者デッキレシピ」（2019 年起），更新於 ' + escapeHtml(data.updated || "—") +
         "。比較時忽略稀有度（例如 SP、OLR 視為同一張）。</p>";
 
+      const combos = collectDeckCombos(st.cards, ctx);
       let html = officialGuideHtml(true);
       html += '<div class="da-off-section">' +
         officialSectionHd("1", "你的牌組是哪種打法？", "2–3 等連動角色＋對應 CX 都有放才算進軸") +
         renderOfficialIdentity(ctx, res, myLabel) +
+        renderOfficialCombos(combos) +
         "</div>";
 
       html += '<div class="da-off-section"><div class="da-top-panel">' +
