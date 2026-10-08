@@ -531,9 +531,13 @@
       font-size: 0.8rem; color: var(--da-muted); margin: 0 0 1rem; padding: 0.5rem 0.75rem;
       border-left: 3px solid var(--da-warn); background: var(--da-soft); border-radius: 0 8px 8px 0;
     }
-    .da-top-filters { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 0.85rem; }
+    .da-top-filters { display: flex; flex-wrap: wrap; gap: 0.65rem 1.5rem; margin-bottom: 0; align-items: flex-end; }
     .da-top-range { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .da-top-filters-note { align-self: center; font-size: 0.75rem; color: var(--da-muted); }
+    .da-top-filter-group { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+    .da-top-filter-group .lbl {
+      font-size: 0.72rem; font-weight: 700; color: var(--da-muted); letter-spacing: 0.02em;
+    }
     .da-top-basis {
       font-size: 0.82rem; color: var(--da-muted); background: var(--da-soft);
       border: 1px solid var(--da-border); border-radius: 10px; padding: 0.5rem 0.75rem; margin: 0 0 0.85rem;
@@ -541,6 +545,94 @@
     .da-top-basis.is-thin { color: var(--da-ink); border-color: var(--da-warn); background: color-mix(in srgb, var(--da-warn) 12%, transparent); }
     .da-top-basis.is-thin i { color: var(--da-warn); }
     .da-top-panel h3 small { font-size: 0.72rem; font-weight: 500; color: var(--da-muted); margin-left: 0.35rem; }
+    .da-off-guide {
+      margin: 0 0 1rem; padding: 0.85rem 1rem; border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--da-accent) 28%, var(--da-border));
+      background: color-mix(in srgb, var(--da-accent) 7%, var(--da-soft));
+    }
+    .da-off-lead { margin: 0 0 0.65rem; font-size: 0.9rem; color: var(--da-ink); line-height: 1.55; }
+    .da-off-lead strong { font-weight: 800; }
+    .da-off-steps {
+      margin: 0; padding: 0; list-style: none;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem;
+    }
+    @media (max-width: 767px) { .da-off-steps { grid-template-columns: minmax(0, 1fr); } }
+    .da-off-steps li {
+      position: relative; padding: 0.55rem 0.65rem 0.55rem 2.35rem;
+      border-radius: 10px; background: var(--da-panel); border: 1px solid var(--da-border);
+      font-size: 0.8rem; color: var(--da-ink); line-height: 1.45;
+    }
+    .da-off-steps li::before {
+      content: attr(data-step); position: absolute; left: 0.55rem; top: 0.55rem;
+      width: 1.35rem; height: 1.35rem; border-radius: 999px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--da-accent);
+    }
+    [data-theme="dark"] .da-off-steps li::before { color: #0b1017; }
+    .da-off-steps strong { font-weight: 800; }
+    .da-off-glossary {
+      margin-top: 0.7rem; font-size: 0.8rem; color: var(--da-muted);
+      border-top: 1px dashed var(--da-border); padding-top: 0.55rem;
+    }
+    .da-off-glossary summary {
+      cursor: pointer; font-weight: 700; color: var(--da-accent); list-style: none;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+    }
+    .da-off-glossary summary::-webkit-details-marker { display: none; }
+    .da-off-glossary summary::before {
+      content: ""; width: 0; height: 0;
+      border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+      transition: transform 0.15s ease;
+    }
+    .da-off-glossary[open] summary::before { transform: rotate(90deg); }
+    .da-off-glossary p { margin: 0.45rem 0 0; line-height: 1.55; color: var(--da-muted); }
+    .da-off-section { margin: 0 0 1rem; }
+    .da-off-section:last-child { margin-bottom: 0; }
+    .da-off-sec-hd {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.65rem;
+      margin: 0 0 0.55rem;
+    }
+    .da-off-sec-hd .step {
+      flex-shrink: 0; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em;
+      color: var(--da-accent); border: 1px solid color-mix(in srgb, var(--da-accent) 40%, transparent);
+      border-radius: 999px; padding: 0.08rem 0.5rem; background: color-mix(in srgb, var(--da-accent) 8%, transparent);
+    }
+    .da-off-sec-hd h3 {
+      margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--da-ink);
+    }
+    .da-off-sec-hd .sub { font-size: 0.78rem; color: var(--da-muted); line-height: 1.4; }
+    .da-off-identity {
+      display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;
+      padding: 0.75rem 0.9rem; border-radius: 12px;
+      border: 1px solid var(--da-border); background: var(--da-panel);
+    }
+    .da-off-identity .th { display: flex; flex-shrink: 0; }
+    .da-off-identity .th img {
+      width: 44px; aspect-ratio: 5 / 7; object-fit: cover; border-radius: 5px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22); background: var(--da-soft);
+    }
+    .da-off-identity .th img + img { margin-left: -16px; }
+    .da-off-identity .th .fa-ban {
+      width: 44px; height: 61.6px; display: flex; align-items: center; justify-content: center;
+      border-radius: 5px; border: 1px dashed var(--da-border); color: var(--da-muted); font-size: 1.15rem;
+    }
+    .da-off-identity .body { flex: 1 1 12rem; min-width: 0; }
+    .da-off-identity .k { font-size: 0.72rem; font-weight: 700; color: var(--da-muted); margin-bottom: 0.15rem; }
+    .da-off-identity .nm { font-size: 0.95rem; font-weight: 800; color: var(--da-ink); line-height: 1.35; }
+    .da-off-identity .cx { font-size: 0.78rem; color: var(--da-muted); margin-top: 0.2rem; line-height: 1.4; }
+    .da-off-identity .tag {
+      flex-shrink: 0; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem;
+      border-radius: 999px; background: var(--da-good); color: #fff;
+    }
+    .da-off-identity.is-none .nm { color: var(--da-muted); font-weight: 700; }
+    .da-off-find-hd {
+      display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+      margin: 0 0 0.35rem;
+    }
+    .da-off-find-hd h3 { margin: 0; }
+    .da-off-find-tip {
+      font-size: 0.74rem; color: var(--da-muted); margin: 0 0 0.65rem; line-height: 1.45;
+    }
     .da-axes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.5rem; }
     .da-axis {
       position: relative; display: flex; align-items: center; gap: 0.6rem; min-width: 0;
@@ -1090,14 +1182,25 @@
           <div class="row"><div class="col-lg-12"><div class="card" id="topCompareCard">
             <div class="card-header">
               <h5 class="card-title">
-                <i class="fas fa-trophy mr-2"></i>官方大會入賞對照
+                <i class="fas fa-trophy mr-2"></i>跟官方入賞牌組比一比
                 <span class="da-src is-official">官方資料</span>
-                <small class="text-muted" id="topCompareSubtitle">WS 官方入賞者デッキレシピ · 2019 年起</small>
+                <small class="text-muted" id="topCompareSubtitle">WS 官方大會入賞者デッキレシピ · 2019 年起</small>
               </h5>
             </div>
             <div class="card-body" id="topCompareBody" aria-live="polite">
               <div id="topOfficial">
-                <p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>
+                <div class="da-off-guide">
+                  <p class="da-off-lead">分析牌組後，這裡會把你的卡表跟 <strong>WS 官方大會入賞牌組</strong>逐張比較——看哪些卡入賞常放、張數差多少、哪一副最像你。</p>
+                  <ol class="da-off-steps">
+                    <li data-step="1"><strong>辨認類型</strong><br>依 2–3 等連動角色（軸）判斷你的打法</li>
+                    <li data-step="2"><strong>只比同類型</strong><br>避免拿不同打法的入賞牌組硬比</li>
+                    <li data-step="3"><strong>看差異</strong><br>常放你沒放、張數差、最像的入賞牌組</li>
+                  </ol>
+                  <details class="da-off-glossary">
+                    <summary>什麼是「連動軸」？新手必看</summary>
+                    <p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把這些連動角色的組合叫「軸」；連動角色完全相同才算<strong>同軸</strong>，這樣比較才有意義（不會拿完全不同打法的優勝牌組來比你）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>
+                  </details>
+                </div>
               </div>
             </div>
           </div></div></div>
@@ -1111,7 +1214,7 @@
               </h5>
             </div>
             <div class="card-body" aria-live="polite">
-              <p class="da-top-note"><i class="fas fa-info-circle mr-1"></i>這裡是玩家社群整理的店舖大會上位紀錄，跟上面的 WS 官方入賞是不同來源、分開統計；這裡的「CX 軸心」指 CX 的組合（例如八門、二爆），不是上面的連動軸。</p>
+              <p class="da-top-note"><i class="fas fa-info-circle mr-1"></i>這裡是玩家社群整理的店舖大會上位紀錄，跟上面的「官方入賞」是不同來源、分開統計。這裡的「CX 軸心」指 CX 圖示組合（例如八門、二爆），不是上面用 2–3 等連動角色分的「連動軸」。</p>
               <div id="topCommunity">
                 <p class="da-hint mb-0">分析牌組後，這裡會列出社群上位紀錄的 CX 軸心與核心卡。</p>
               </div>
@@ -2775,14 +2878,67 @@
       };
     }
 
+    function officialEmptyGuideHtml() {
+      return '<div class="da-off-guide">' +
+        '<p class="da-off-lead">分析牌組後，這裡會把你的卡表跟 <strong>WS 官方大會入賞牌組</strong>逐張比較——看哪些卡入賞常放、張數差多少、哪一副最像你。</p>' +
+        '<ol class="da-off-steps">' +
+        '<li data-step="1"><strong>辨認類型</strong><br>依 2–3 等連動角色（軸）判斷你的打法</li>' +
+        '<li data-step="2"><strong>只比同類型</strong><br>避免拿不同打法的入賞牌組硬比</li>' +
+        '<li data-step="3"><strong>看差異</strong><br>常放你沒放、張數差、最像的入賞牌組</li>' +
+        "</ol>" +
+        '<details class="da-off-glossary">' +
+        "<summary>什麼是「連動軸」？新手必看</summary>" +
+        "<p>Weiss Schwarz 的牌組常靠 <strong>2–3 等角色的【CXコンボ】</strong>決定主打法。系統把這些連動角色的組合叫「軸」；連動角色完全相同才算<strong>同軸</strong>，這樣比較才有意義（不會拿完全不同打法的優勝牌組來比你）。下方社群區的「CX 軸心」是另一套分類，請分開看。</p>" +
+        "</details></div>";
+    }
+
+    function officialGuideHtml(compact) {
+      if (compact) {
+        return '<div class="da-off-guide">' +
+          '<p class="da-off-lead" style="margin-bottom:0.45rem">怎麼讀：先確認你的<strong>連動軸</strong>（打法類型）→ 調整賽制／期間 → 看同軸入賞差在哪。</p>' +
+          '<details class="da-off-glossary" style="border-top:none;padding-top:0;margin-top:0">' +
+          "<summary>什麼是「連動軸」？</summary>" +
+          "<p>牌組裡所有 <strong>2–3 等、效果有【CXコンボ】</strong>的角色組合。完全相同才算同軸；比較時忽略稀有度（SP、OLR 視為同一張）。下方社群「CX 軸心」是另一套分類。</p>" +
+          "</details></div>";
+      }
+      return officialEmptyGuideHtml();
+    }
+
+    function officialSectionHd(step, title, sub) {
+      return '<div class="da-off-sec-hd">' +
+        (step ? '<span class="step">步驟 ' + step + "</span>" : "") +
+        "<h3>" + title + "</h3>" +
+        (sub ? '<span class="sub">' + sub + "</span>" : "") +
+        "</div>";
+    }
+
+    function renderOfficialIdentity(ctx, res, myLabel) {
+      const hasMine = !!ctx.mine;
+      const thumbs = hasMine && myLabel.imgs.length
+        ? myLabel.imgs.slice(0, 3).map(function (src) {
+          return '<img src="' + escapeHtml(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">';
+        }).join("")
+        : '<i class="fas fa-ban" aria-hidden="true"></i>';
+      return '<div class="da-off-identity' + (hasMine ? "" : " is-none") + '">' +
+        '<div class="th">' + thumbs + "</div>" +
+        '<div class="body"><div class="k">系統辨識到的你的連動軸</div>' +
+        '<div class="nm">' + escapeHtml(myLabel.names) + "</div>" +
+        (myLabel.cx ? '<div class="cx">' + escapeHtml(myLabel.cx) + "</div>" : "") +
+        (!hasMine ? '<div class="cx">沒有 2–3 等連動時，無法自動對到「同打法」的入賞牌組；你仍可點下方類型去瀏覽。</div>' : "") +
+        "</div>" +
+        (hasMine ? '<span class="tag">你的軸</span>' : "") +
+        "</div>";
+    }
+
     function renderOfficialAxes(st, res, ctx) {
       const total = res.pool.length;
       const shown = st.showAllAxes ? res.groups : res.groups.filter(function (g) {
         return g.count >= 2 || g.key === ctx.mine || g.key === st.axis;
       });
       const hidden = res.groups.length - shown.length;
-      let html = '<div class="da-top-panel mb-3"><h3>入賞軸分布 <small>依 2–3 等連動分組 · 共 ' + total + " 副</small></h3>" +
-        '<div class="da-axes" role="tablist" aria-label="入賞軸">';
+      let html = '<div class="da-off-section"><div class="da-top-panel">' +
+        officialSectionHd("2", "選要比的類型", "點一種連動軸；預設是你的軸。共 " + total + " 副入賞依軸分組。") +
+        '<div class="da-axes" role="tablist" aria-label="入賞連動軸">';
       html += shown.map(function (g) {
         const label = officialAxisLabel(ctx, g.key, res.mine);
         const on = g.key === st.axis;
@@ -2794,7 +2950,7 @@
             return '<img src="' + escapeHtml(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">';
           }).join("") : '<i class="fas fa-ban"></i>') + "</span>" +
           '<span class="tx"><span class="nm">' + escapeHtml(label.names) + "</span>" +
-          '<span class="ct">' + g.count + " 副 · 優勝 " + g.wins + " · " + pct + "%</span>" +
+          '<span class="ct">' + g.count + " 副 · 優勝 " + g.wins + " · 占 " + pct + "%</span>" +
           '<span class="bar"><i style="width:' + pct + '%"></i></span></span>' +
           (me ? '<em class="me">你的軸</em>' : "") + "</button>";
       }).join("");
@@ -2804,7 +2960,7 @@
       } else if (st.showAllAxes && res.groups.some(function (g) { return g.count < 2; })) {
         html += '<button type="button" class="da-axes-more" data-official-axes-all="0">只顯示 2 副以上的軸</button>';
       }
-      return html + "</div>";
+      return html + "</div></div>";
     }
 
     function renderOfficialView() {
@@ -2815,7 +2971,7 @@
       const res = computeOfficialCompare(data, st.cards, ctx, st.format, st.range, st.axis);
       const box = el("topOfficial");
       const title = (data.decks[0] && data.decks[0].t) || data.prefix;
-      el("topCompareSubtitle").textContent = title + " · WS 官方入賞者デッキレシピ · 只比同軸（2–3 等連動相同）";
+      el("topCompareSubtitle").textContent = title + " · 只比同連動軸的官方入賞牌組";
 
       const formats = OFFICIAL_FORMATS.filter(function (f) {
         return f.id === "all" || officialFormatDecks(data, f.id).length;
@@ -2824,29 +2980,38 @@
         return st.axis == null ? list.length : list.filter(function (d) { return ctx.deckKey(d) === st.axis; }).length;
       };
       const pills = function (attr, label, list, current, count) {
-        return '<div class="da-top-range" role="tablist" aria-label="' + label + '">' + list.map(function (x) {
-          const on = x.id === current;
-          return '<button type="button" role="tab" ' + attr + '="' + x.id + '" aria-selected="' + on + '" class="' + (on ? "is-active" : "") + '">' +
-            x.label + " <span>" + count(x.id) + "</span></button>";
-        }).join("") + "</div>";
+        return '<div class="da-top-filter-group"><span class="lbl">' + label + "</span>" +
+          '<div class="da-top-range" role="tablist" aria-label="' + label + '">' + list.map(function (x) {
+            const on = x.id === current;
+            return '<button type="button" role="tab" ' + attr + '="' + x.id + '" aria-selected="' + on + '" class="' + (on ? "is-active" : "") + '">' +
+              x.label + " <span>" + count(x.id) + "</span></button>";
+          }).join("") + "</div></div>";
       };
-      let html = '<div class="da-top-filters">' +
-        (formats.length > 2 ? pills("data-official-format", "賽制", formats, st.format, function (id) { return axisCount(officialWindow(data, st.range, id)); }) : "") +
-        pills("data-official-range", "比較範圍", OFFICIAL_RANGES, st.range, function (id) { return axisCount(officialWindow(data, id, st.format)); }) +
-        (st.axis != null ? '<span class="da-top-filters-note">數字是同軸副數</span>' : "") +
+      const myLabel = officialAxisLabel(ctx, ctx.mine, res.mine);
+      const foot = '<p class="da-top-foot mb-0">資料來源：WS 官方「入賞者デッキレシピ」（2019 年起），更新於 ' + escapeHtml(data.updated || "—") +
+        "。比較時忽略稀有度（例如 SP、OLR 視為同一張）。</p>";
+
+      let html = officialGuideHtml(true);
+      html += '<div class="da-off-section">' +
+        officialSectionHd("1", "你的牌組是哪種打法？", "用 2–3 等連動角色辨識類型") +
+        renderOfficialIdentity(ctx, res, myLabel) +
         "</div>";
 
+      html += '<div class="da-off-section"><div class="da-top-panel">' +
+        officialSectionHd("", "調整比較範圍", "數字＝目前選中軸在該條件下的入賞副數") +
+        '<div class="da-top-filters">' +
+        (formats.length > 2 ? pills("data-official-format", "賽制", formats, st.format, function (id) { return axisCount(officialWindow(data, st.range, id)); }) : "") +
+        pills("data-official-range", "期間", OFFICIAL_RANGES, st.range, function (id) { return axisCount(officialWindow(data, id, st.format)); }) +
+        "</div></div></div>";
+
       if (!res.pool.length) {
-        box.innerHTML = html + '<p class="da-hint mt-0">這個賽制與期間內沒有入賞牌組，試試切換上面的條件。</p>';
+        box.innerHTML = html + '<p class="da-hint mt-0">這個賽制與期間內沒有入賞牌組，試試切換上面的條件。</p>' + foot;
         return;
       }
       html += renderOfficialAxes(st, res, ctx);
 
-      const foot = '<p class="da-top-foot mb-0">資料來源：WS 官方「入賞者デッキレシピ」（2019 年起），更新於 ' + escapeHtml(data.updated || "—") +
-        "。「軸」是牌組裡所有 2–3 等連動角色（效果有【CXコンボ】）的組合，完全相同才算同軸。比較時忽略稀有度（例如 SP、OLR 視為同一張）。</p>";
-      const myLabel = officialAxisLabel(ctx, ctx.mine, res.mine);
       if (st.axis == null) {
-        box.innerHTML = html + '<p class="da-top-basis is-thin"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有 2–3 等連動，沒有同軸的入賞牌組可以比較。可以點上面的軸，看看那個軸的入賞牌組長怎樣。</p>' + foot;
+        box.innerHTML = html + '<p class="da-top-basis is-thin"><i class="fas fa-info-circle mr-1"></i>你的牌組沒有 2–3 等連動，無法自動對到同軸入賞。點步驟 2 的任一類型，仍可瀏覽該軸的入賞構成分佈。</p>' + foot;
         return;
       }
       const picked = st.axis !== ctx.mine;
@@ -2855,7 +3020,7 @@
         box.innerHTML = html + '<p class="da-top-basis is-thin"><i class="fas fa-info-circle mr-1"></i>' +
           (picked ? "「" + escapeHtml(axisLabel.names) + "」" : "你的軸「" + escapeHtml(myLabel.names) + "」") +
           "在這個賽制與期間內沒有同軸的入賞牌組" +
-          (res.similarTotal ? "（同賽制的全部期間有 " + res.similarTotal + " 副，可以切到「全部」）" : "") + "。</p>" + foot;
+          (res.similarTotal ? "（同賽制的全部期間有 " + res.similarTotal + " 副，可把期間切到「全部」）" : "") + "。</p>" + foot;
         return;
       }
 
@@ -2869,20 +3034,26 @@
         return '<div class="da-top-stat"><div class="k">' + k + '</div><div class="v">' + v +
           (small ? "<small>" + small + "</small>" : "") + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>";
       };
+
+      html += '<div class="da-off-section">';
+      html += officialSectionHd("3", "跟同軸入賞差在哪？", "只拿連動軸相同的入賞牌組來比，共 " + n + " 副");
+      html += '<p class="da-top-basis' + (res.thin || picked ? " is-thin" : "") + '"><i class="fas ' + (res.thin || picked ? "fa-exclamation-triangle" : "fa-link") + ' mr-1"></i>' +
+        (picked
+          ? "目前選的是「" + escapeHtml(axisLabel.names) + "」，跟你自己的軸（" + escapeHtml(myLabel.names) + "）不同——下面是拿<strong>你的牌組</strong>跟這個軸的 " + n + " 副入賞比，方便對照別種打法。"
+          : "下面只拿連動軸跟你完全相同（" + escapeHtml(myLabel.names) + "）的 " + n + " 副入賞牌組來比。") +
+        (res.thin ? " 樣本偏少，結果僅供參考；「常放」除了採用率，還要求至少 2 副有放。" : "") + "</p>";
       html += '<div class="da-top-summary">' +
         stat("同軸入賞", n, "副", latestDate ? "最近 " + latestDate.replace(/-/g, "/") : "") +
         stat("其中優勝", res.wins, "副") +
         stat("最像的一副", best ? best.overlap : 0, "/ 50 張", "同軸 · 全部期間") +
-        stat("佔入賞比例", Math.round(n / res.pool.length * 100), "%", "共 " + res.pool.length + " 副入賞") +
+        stat("占本期入賞", Math.round(n / res.pool.length * 100), "%", "本期共 " + res.pool.length + " 副") +
         "</div>";
-      html += '<p class="da-top-basis' + (res.thin || picked ? " is-thin" : "") + '"><i class="fas ' + (res.thin || picked ? "fa-exclamation-triangle" : "fa-link") + ' mr-1"></i>' +
-        (picked
-          ? "你選的是「" + escapeHtml(axisLabel.names) + "」，跟你的軸（" + escapeHtml(myLabel.names) + "）不同，下面是拿你的牌組跟這個軸的 " + n + " 副入賞牌組比。"
-          : "下面只拿 2–3 等連動跟你完全相同（" + escapeHtml(myLabel.names) + "）的 " + n + " 副入賞牌組來比。") +
-        (res.thin ? "樣本少，結果僅供參考；採用率之外，還要求至少 2 副有放才算「常放」。" : "") + "</p>";
       const basisTag = " <small>依 " + n + " 副</small>";
 
-      html += '<div class="da-top-grid"><div class="da-top-panel"><h3>最像你的同軸入賞牌組 <small>全部期間</small></h3><ul class="da-top-similar">' +
+      html += '<div class="da-top-grid"><div class="da-top-panel">' +
+        '<div class="da-off-find-hd"><h3>最像你的入賞牌組 <small>全部期間</small></h3></div>' +
+        '<p class="da-off-find-tip">重疊張數愈高愈像；可點官方頁面或 DeckLog 看完整卡表。</p>' +
+        '<ul class="da-top-similar">' +
         res.similar.map(function (s) {
           const d = s.deck;
           const ev = data.events[d.e] || {};
@@ -2913,7 +3084,9 @@
         return '<div class="da-ratio-row"><span class="tag">' + label + '</span><span class="num">你 ' + mineV +
           ' <span class="guide">· 入賞平均 ' + avgV.toFixed(1) + '</span> <span class="da-top-diff ' + cls + '">' + note + "</span></span></div>";
       };
-      html += '<div class="da-top-panel"><h3>等級曲線與 CX' + basisTag + '</h3>' +
+      html += '<div class="da-top-panel">' +
+        '<div class="da-off-find-hd"><h3>等級曲線與 CX' + basisTag + "</h3></div>" +
+        '<p class="da-off-find-tip">各等級張數跟同軸入賞平均比；差很多時可想想曲線是否偏慢／偏快。</p>' +
         curveRow("Lv0", res.myCurve[0], res.avgCurve[0]) +
         curveRow("Lv1", res.myCurve[1], res.avgCurve[1]) +
         curveRow("Lv2", res.myCurve[2], res.avgCurve[2]) +
@@ -2922,28 +3095,38 @@
         "</div></div>";
 
       if (res.missing.length) {
-        html += '<div class="da-top-panel mb-3"><h3>入賞常放、你沒放' + basisTag + '</h3><div class="da-top-cores">' +
+        html += '<div class="da-top-panel mb-3">' +
+          '<div class="da-off-find-hd"><h3>入賞常放、你沒放' + basisTag + "</h3></div>" +
+          '<p class="da-off-find-tip">同軸入賞裡常見、你目前 0 張的卡——不一定要補，但值得先問「為什麼他們要放」。</p>' +
+          '<div class="da-top-cores">' +
           res.missing.map(function (r) {
             return officialTile(data, r, res.mine,
               '<div class="meta">' + r.count + "/" + n + " 副有放 · 平均 " + r.avg.toFixed(1) + ' 張</div><span class="own is-out">你 0 張</span>');
           }).join("") + "</div></div>";
       }
       if (res.qtyGap.length) {
-        html += '<div class="da-top-panel mb-3"><h3>張數跟入賞差很多' + basisTag + '</h3>' + res.qtyGap.map(function (r) {
-          const m = res.mine[r.key];
-          return '<div class="da-ratio-row"><span class="tag">' + escapeHtml((m && m.name) || officialCardInfo(data, r.no).name) +
-            '</span><span class="num">你 ' + r.mineQty + ' 張 <span class="guide">· 入賞平均 ' + r.avg.toFixed(1) + " 張（" +
-            r.count + "/" + n + " 副有放）</span></span></div>";
-        }).join("") + "</div>";
+        html += '<div class="da-top-panel mb-3">' +
+          '<div class="da-off-find-hd"><h3>張數跟入賞差很多' + basisTag + "</h3></div>" +
+          '<p class="da-off-find-tip">你有放、但張數跟同軸入賞平均差 ≥ 1.5 張的卡。</p>' +
+          res.qtyGap.map(function (r) {
+            const m = res.mine[r.key];
+            return '<div class="da-ratio-row"><span class="tag">' + escapeHtml((m && m.name) || officialCardInfo(data, r.no).name) +
+              '</span><span class="num">你 ' + r.mineQty + ' 張 <span class="guide">· 入賞平均 ' + r.avg.toFixed(1) + " 張（" +
+              r.count + "/" + n + " 副有放）</span></span></div>";
+          }).join("") + "</div>";
       }
       if (res.rare.length) {
-        html += '<div class="da-top-panel mb-3"><h3>你有、但入賞很少見' + basisTag + '</h3><div class="da-top-cores">' +
+        html += '<div class="da-top-panel mb-3">' +
+          '<div class="da-off-find-hd"><h3>你有、但入賞很少見' + basisTag + "</h3></div>" +
+          '<p class="da-off-find-tip">同軸入賞幾乎不放的卡——可能是個人選擇、舊卡或側路；不一定是錯。</p>' +
+          '<div class="da-top-cores">' +
           res.rare.map(function (r) {
             return officialTile(data, r, res.mine,
               '<div class="meta">' + r.count + "/" + n + ' 副有放</div><span class="own is-in">你 ' + r.mineQty + " 張</span>");
           }).join("") + "</div></div>";
       }
 
+      html += "</div>";
       box.innerHTML = html + foot;
     }
 
@@ -2972,9 +3155,9 @@
     function resetTopCompare() {
       topCompareToken++;
       officialState = null;
-      el("topCompareSubtitle").textContent = "WS 官方入賞者デッキレシピ · 2019 年起";
+      el("topCompareSubtitle").textContent = "WS 官方大會入賞者デッキレシピ · 2019 年起";
       el("topCommunitySubtitle").textContent = "卡片雲上位紀錄 · 以店舖大會為主";
-      el("topOfficial").innerHTML = '<p class="da-hint mt-0">分析牌組後，這裡會拿 WS 官方大會的入賞牌表，逐張跟你的牌組比較。</p>';
+      el("topOfficial").innerHTML = officialEmptyGuideHtml();
       el("topCommunity").innerHTML = '<p class="da-hint mb-0">分析牌組後，這裡會列出社群上位紀錄的 CX 軸心與核心卡。</p>';
     }
 
