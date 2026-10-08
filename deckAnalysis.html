@@ -13,6 +13,13 @@
       }
     })();
   </script>
+  <style>
+    /* 字體就緒前先藏內文，避免系統字 → 自訂字的 swap 閃爍 */
+    html { background: #ffffff; }
+    html[data-theme="dark"] { background: #141414; }
+    html:not(.fonts-ready) body { visibility: hidden; }
+    html.fonts-ready body { visibility: visible; }
+  </style>
   <meta name="description" content="Weiss Schwarz 牌組結構分析：DeckLog 匯入、Level／顏色／卡種曲線、50／8 規則檢查、起手機率、洗牌／Mulligan 模擬與行情總額摘要。">
   <meta property="og:title" content="牌組分析｜WS-Cards 卡片雲">
   <meta property="og:description" content="輸入 DeckLog 代碼一鍵取得並分析：Level 曲線、規則檢查、起手機率，並模擬洗牌與 Mulligan。">
@@ -32,7 +39,36 @@
   <title>牌組分析｜WS-Cards 卡片雲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=optional">
+  <!-- Google Font：UI 角ゴシック／區塊標題宇文天穹／CJK 後備／數據 mono（對齊 line_test_v102 精簡＋標題版） -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <script>
+    // 必須放在字體 stylesheet 之後。等首屏關鍵字就緒再開字；
+    // 1.5s 保底，CDN 掛掉也不要永遠白屏。
+    (function () {
+      var root = document.documentElement;
+      var done = false;
+      function markReady() {
+        if (done) return;
+        done = true;
+        root.classList.add('fonts-ready');
+      }
+      if (!document.fonts || !document.fonts.load) {
+        markReady();
+        return;
+      }
+      var jobs = [
+        document.fonts.load('400 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('400 20px "UoqMunThenKhung"'),
+        document.fonts.load('700 16px "IBM Plex Mono"')
+      ];
+      Promise.all(jobs)
+        .then(function () { return document.fonts.ready; })
+        .then(markReady)
+        .catch(markReady);
+      setTimeout(markReady, 1500);
+    })();
+  </script>
   <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="dist/css/adminlte.min.css">
   <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
@@ -40,7 +76,7 @@
 <style>
 
     body, body button, body input, body select, body textarea, body p, body h3, body h5 {
-      font-family: 'Noto Sans TC', sans-serif;
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
     }
     :root {
       --da-good: #568a6d;
@@ -112,7 +148,7 @@
 
     .da-hint { margin-top: 0.5rem; color: var(--da-muted); font-size: 0.85rem; }
     .da-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 0.82rem;
       color: inherit;
     }
@@ -1783,7 +1819,7 @@
       var t = chartTheme();
       Chart.defaults.color = t.color;
       Chart.defaults.borderColor = t.grid;
-      Chart.defaults.font.family = "'Noto Sans TC', sans-serif";
+      Chart.defaults.font.family = "'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif";
     }
 
     function axisOpts(extra) {
