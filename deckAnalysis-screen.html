@@ -61,8 +61,14 @@
     }
 
     .stage-wrap {
-      width: 100vw; height: 100vh;
-      display: grid; place-items: center;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       background:
         radial-gradient(ellipse 80% 60% at 50% 40%, var(--bg1), transparent 70%),
         linear-gradient(180deg, var(--bg0), #040814 100%);
@@ -73,14 +79,24 @@
         linear-gradient(180deg, #e8f2fc, #c9dceb);
     }
 
+    /* 縮放後真實佔位，避免 transform 仍佔 1920×1080 造成偏移／裁切 */
+    .scale-box {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      flex: 0 0 auto;
+      overflow: hidden;
+    }
+
     .screen {
       width: 1920px; height: 1080px;
-      position: relative;
+      position: absolute;
+      left: 0; top: 0;
       display: grid;
       grid-template-rows: 88px 1fr 72px;
       padding: 12px 22px 10px;
       gap: 10px;
-      transform-origin: center center;
+      transform-origin: 0 0;
       overflow: hidden;
     }
     .screen::before {
@@ -475,13 +491,11 @@
     .screen.is-focus-price .dim-odds,
     .screen.is-focus-price .dim-charts { opacity: .28; filter: saturate(.5); }
 
-    @media (max-aspect-ratio: 16/9) {
-      /* scale handled by JS */
-    }
   </style>
 </head>
 <body>
-  <div class="stage-wrap">
+  <div class="stage-wrap" id="stageWrap">
+    <div class="scale-box" id="scaleBox">
     <div class="screen hud" id="screen">
       <header class="header">
         <div class="header-left">
@@ -498,6 +512,9 @@
           </div>
           <button type="button" class="icon-btn" id="btnTheme" title="切換深淺色" aria-label="切換深淺色">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="btnFullscreen" title="全螢幕（對齊電視／投影）" aria-label="全螢幕">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
           </button>
           <a class="icon-btn" href="deckAnalysis.html" title="回完整分析頁" aria-label="回完整分析頁">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M12 4l8 8-8 8"/></svg>
@@ -581,6 +598,7 @@
       </footer>
 
       <div class="status-toast" id="toast" role="status"></div>
+    </div>
     </div>
   </div>
 
@@ -752,12 +770,37 @@
     toast._timer = setTimeout(function () { t.classList.remove("is-show"); }, 2200);
   }
 
+  const DESIGN_W = 1920;
+  const DESIGN_H = 1080;
+
+  function viewportSize() {
+    // 用 client* 避開捲軸寬度誤差；visualViewport 再校正行動瀏覽器／縮放
+    var w = document.documentElement.clientWidth || window.innerWidth || DESIGN_W;
+    var h = document.documentElement.clientHeight || window.innerHeight || DESIGN_H;
+    try {
+      if (window.visualViewport) {
+        w = window.visualViewport.width || w;
+        h = window.visualViewport.height || h;
+      }
+    } catch (e) { /* ignore */ }
+    return { w: Math.max(1, w), h: Math.max(1, h) };
+  }
+
   function fitScreen() {
-    const screen = el("screen");
-    const w = window.innerWidth / 1920;
-    const h = window.innerHeight / 1080;
-    const s = Math.min(w, h);
+    var screen = el("screen");
+    var box = el("scaleBox");
+    if (!screen || !box) return;
+    var vp = viewportSize();
+    // 等比縮放（letterbox），不拉伸，避免畫面「歪掉」
+    var s = Math.min(vp.w / DESIGN_W, vp.h / DESIGN_H);
+    // 避免浮點造成 1px 縫隙
+    s = Math.floor(s * 1000) / 1000;
+    if (!isFinite(s) || s <= 0) s = 1;
+    box.style.width = Math.round(DESIGN_W * s) + "px";
+    box.style.height = Math.round(DESIGN_H * s) + "px";
     screen.style.transform = "scale(" + s + ")";
+    screen.style.transformOrigin = "0 0";
+    screen.dataset.scale = String(s);
   }
 
   function tickClock() {
@@ -1062,13 +1105,44 @@
     } catch (e) { /* ignore */ }
   }
 
+  function bindFullscreen() {
+    var btn = el("btnFullscreen");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var root = document.documentElement;
+      try {
+        if (!document.fullscreenElement) {
+          (root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen).call(root);
+        } else {
+          (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+        }
+      } catch (e) {
+        toast("此瀏覽器無法進入全螢幕");
+      }
+    });
+  }
+
+  function onViewportChange() {
+    fitScreen();
+    resizeCharts();
+  }
+
   function boot() {
     fitScreen();
     tickClock();
     setInterval(tickClock, 1000);
-    window.addEventListener("resize", function () { fitScreen(); resizeCharts(); });
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("orientationchange", onViewportChange);
+    document.addEventListener("fullscreenchange", onViewportChange);
+    try {
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", onViewportChange);
+        window.visualViewport.addEventListener("scroll", onViewportChange);
+      }
+    } catch (e) { /* ignore */ }
     bindNav();
     bindTheme();
+    bindFullscreen();
 
     deckCards = expandEntries(SAMPLE_ROWS);
     lastStats = analyze(deckCards);
@@ -1078,6 +1152,11 @@
     renderLegend(lastStats);
     renderCharts(lastStats);
     loadPrice(lastStats, deckCards);
+    // 等字體／首幀後再 fit 一次，避免初始量測偏差
+    requestAnimationFrame(function () {
+      onViewportChange();
+      setTimeout(onViewportChange, 120);
+    });
     toast("已載入 BanG Dream! 示範牌組");
   }
 
