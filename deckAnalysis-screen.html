@@ -384,24 +384,40 @@
       background: #0a1528;
       box-shadow: 0 12px 28px rgba(0,0,0,.45), 0 0 18px rgba(34,211,238,.25);
       cursor: pointer;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
+      z-index: 1;
+      transform: translateY(0) scale(1);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease, border-color .2s ease;
+    }
+    .hand-card.is-entering {
       animation: cardIn .55s ease both;
     }
     /* CX／名場為橫向卡，起手時維持橫版 */
     .hand-card.is-cx {
       width: 228px; height: 162px;
     }
-    .hand-card:hover { transform: translateY(-8px) scale(1.04); }
+    .hand-card:hover {
+      z-index: 8;
+      transform: translateY(-22px) scale(1.08);
+      border-color: var(--cyan);
+      box-shadow: 0 22px 36px rgba(0,0,0,.55), 0 0 28px var(--glow);
+    }
     .hand-card.is-selected {
+      z-index: 5;
       border-color: var(--warn);
       box-shadow: 0 0 24px rgba(251,191,36,.45), 0 14px 28px rgba(0,0,0,.5);
-      transform: translateY(-14px) scale(1.06);
+      transform: translateY(-12px) scale(1.05);
+    }
+    .hand-card.is-selected:hover {
+      z-index: 9;
+      transform: translateY(-24px) scale(1.09);
+      box-shadow: 0 24px 40px rgba(0,0,0,.55), 0 0 30px rgba(251,191,36,.5);
     }
     .hand-card.is-selected::after {
       content: "換";
       position: absolute; top: 8px; right: 8px; z-index: 3;
       font-family: var(--font-mono); font-size: 12px; font-weight: 700;
       color: #111; background: var(--warn); padding: 2px 6px;
+      pointer-events: none;
     }
     .hand-card img {
       width: 100%; height: 100%; object-fit: cover; display: block;
@@ -1332,7 +1348,7 @@
     }
   }
 
-  function handCardHtml(c, delay) {
+  function handCardHtml(c, delay, entering) {
     var hex = COLOR_MAP[c.color] || "#64748b";
     var kind = c.kind || classifyKind(c);
     var isCx = kind === "CX";
@@ -1343,8 +1359,11 @@
       : ((c.level != null && !isNaN(c.level)) ? ('<span class="lv">Lv' + c.level + "</span>") : "");
     return '<button type="button" class="hand-card' + (isCx ? " is-cx" : "") +
       (selected ? " is-selected" : "") +
-      '" data-sim-id="' + escapeHtml(c.simId) + '" style="animation-delay:' + delay +
-      'ms;--card-color:' + hex + '" title="' + escapeHtml(c.name) + '">' +
+      (entering ? " is-entering" : "") +
+      '" data-sim-id="' + escapeHtml(c.simId) + '"' +
+      (entering ? (' style="animation-delay:' + delay + 'ms;--card-color:' + hex + '"') : (' style="--card-color:' + hex + '"')) +
+      ' aria-pressed="' + (selected ? "true" : "false") + '"' +
+      ' title="' + escapeHtml(c.name) + '">' +
       badge +
       '<div class="card-face"><div class="fname">' + escapeHtml(shortName) +
       '</div><div class="fmeta">' + escapeHtml(kind + (c.cardNo ? " · " + c.cardNo : "")) + "</div></div>" +
@@ -1354,7 +1373,8 @@
       "</button>";
   }
 
-  function renderSimHand() {
+  function renderSimHand(opts) {
+    opts = opts || {};
     var overlay = el("handOverlay");
     var row = el("handRow");
     if (!overlay || !row) return;
@@ -1364,9 +1384,19 @@
       return;
     }
     overlay.classList.add("is-open");
+    var entering = !!opts.dealAnimate;
     row.innerHTML = simState.hand.map(function (c, i) {
-      return handCardHtml(c, i * 60);
+      return handCardHtml(c, i * 60, entering);
     }).join("");
+    if (entering) {
+      // 進場動畫結束後移除，避免之後 hover／選取被動畫干擾
+      window.setTimeout(function () {
+        Array.prototype.forEach.call(row.querySelectorAll(".hand-card.is-entering"), function (node) {
+          node.classList.remove("is-entering");
+          node.style.animationDelay = "";
+        });
+      }, 700);
+    }
   }
 
   function renderSimWaiting() {
@@ -1392,8 +1422,8 @@
     el("pileWait").textContent = String(simState.waiting.length);
   }
 
-  function renderSimAll() {
-    renderSimHand();
+  function renderSimAll(opts) {
+    renderSimHand(opts);
     renderSimWaiting();
     renderSimPiles();
     updateSimButtons();
@@ -1462,14 +1492,27 @@
     if (nav) nav.classList.add("is-active");
     var screen = el("screen");
     screen.className = "screen hud is-focus-sim";
-    renderSimAll();
+    renderSimAll({ dealAnimate: true });
   }
 
-  function toggleSimSelect(simId) {
+  function toggleSimSelect(simId, cardEl) {
     if (simState.phase !== "opening" || simAnimating) return;
-    if (simState.selected.has(simId)) simState.selected.delete(simId);
-    else simState.selected.add(simId);
-    renderSimAll();
+    var card = cardEl || (el("handRow") && el("handRow").querySelector('[data-sim-id="' + simId + '"]'));
+    if (simState.selected.has(simId)) {
+      simState.selected.delete(simId);
+      if (card) {
+        card.classList.remove("is-selected");
+        card.setAttribute("aria-pressed", "false");
+      }
+    } else {
+      simState.selected.add(simId);
+      if (card) {
+        card.classList.add("is-selected");
+        card.setAttribute("aria-pressed", "true");
+      }
+    }
+    // 只更新按鈕文字，不重繪整排手牌（避免每張卡重新載入／閃爍）
+    updateSimButtons();
   }
 
   function finishSimMulligan(dump, drawn) {
@@ -1483,7 +1526,7 @@
     simState.log = "調度完成：丟棄 " + dumpN + " 張至等待室，補抽 " + drawn.length + " 張。";
     setSimPhase("done", "調度完成");
     simAnimating = false;
-    renderSimAll();
+    renderSimAll({ dealAnimate: true });
   }
 
   function applySimMulligan() {
@@ -1492,7 +1535,7 @@
     if (!ids.length) return;
     if (simState.deck.length < ids.length) {
       simState.log = "牌庫剩餘不足，無法重抽 " + ids.length + " 張（剩 " + simState.deck.length + "）。";
-      renderSimAll();
+      el("simLog").textContent = simState.log;
       return;
     }
     var dump = [];
@@ -1578,9 +1621,9 @@
     el("btnSimEnd").addEventListener("click", endSimSession);
     el("btnSimEndOverlay").addEventListener("click", endSimSession);
     el("handRow").addEventListener("click", function (e) {
-      var btn = e.target.closest("[data-sim-id]");
+      var btn = e.target.closest(".hand-card[data-sim-id]");
       if (!btn) return;
-      toggleSimSelect(btn.getAttribute("data-sim-id"));
+      toggleSimSelect(btn.getAttribute("data-sim-id"), btn);
     });
     // Esc 結束模擬
     document.addEventListener("keydown", function (e) {
