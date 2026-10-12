@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920">
+  <meta name="description" content="Weiss Schwarz 牌組可視化分析平台：16:9 數位大屏展示規則、曲線、起手機率與虛擬牌桌。">
+  <title>牌組可視化分析平台｜WS-Cards 卡片雲</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg0: #060b18;
+      --bg1: #0a1630;
+      --panel: rgba(8, 28, 58, 0.72);
+      --panel-edge: rgba(56, 189, 248, 0.45);
+      --glow: rgba(34, 211, 238, 0.55);
+      --cyan: #22d3ee;
+      --cyan-dim: #0891b2;
+      --ink: #e8f4ff;
+      --muted: #8fb3d1;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --accent: #38bdf8;
+      --table: #0c2744;
+      --table-edge: rgba(56, 189, 248, 0.35);
+      --scan: rgba(34, 211, 238, 0.04);
+      --font-ui: "Noto Sans TC", sans-serif;
+      --font-display: "Orbitron", "Noto Sans TC", sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    [data-theme="light"] {
+      --bg0: #dceaf8;
+      --bg1: #f2f8ff;
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-edge: rgba(14, 116, 144, 0.35);
+      --glow: rgba(8, 145, 178, 0.28);
+      --cyan: #0e7490;
+      --cyan-dim: #155e75;
+      --ink: #0f2744;
+      --muted: #4a6b86;
+      --good: #059669;
+      --warn: #b45309;
+      --bad: #be123c;
+      --accent: #0284c7;
+      --table: #c5daf0;
+      --table-edge: rgba(14, 116, 144, 0.4);
+      --scan: rgba(14, 116, 144, 0.05);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg0);
+      color: var(--ink);
+      font-family: var(--font-ui);
+    }
+
+    .stage-wrap {
+      width: 100vw; height: 100vh;
+      display: grid; place-items: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 40%, var(--bg1), transparent 70%),
+        linear-gradient(180deg, var(--bg0), #040814 100%);
+    }
+    [data-theme="light"] .stage-wrap {
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 30%, #ffffff, transparent 65%),
+        linear-gradient(180deg, #e8f2fc, #c9dceb);
+    }
+
+    .screen {
+      width: 1920px; height: 1080px;
+      position: relative;
+      display: grid;
+      grid-template-rows: 88px 1fr 72px;
+      padding: 12px 22px 10px;
+      gap: 10px;
+      transform-origin: center center;
+      overflow: hidden;
+    }
+    .screen::before {
+      content: "";
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        linear-gradient(var(--scan) 1px, transparent 1px) 0 0 / 100% 4px,
+        radial-gradient(circle at 20% 10%, rgba(56,189,248,.12), transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(34,211,238,.08), transparent 40%);
+      animation: scan 8s linear infinite;
+    }
+    @keyframes scan {
+      0% { background-position: 0 0, 0 0, 0 0; }
+      100% { background-position: 0 80px, 0 0, 0 0; }
+    }
+
+    .hud { position: relative; z-index: 1; }
+
+    /* ——— Header ——— */
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-left, .header-right {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .header-right { justify-content: flex-end; }
+    .brand-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--panel-edge);
+      background: var(--panel);
+      box-shadow: 0 0 24px var(--glow);
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      font-size: 13px; color: var(--muted); letter-spacing: 0.06em;
+    }
+    .brand-chip strong { color: var(--cyan); font-family: var(--font-mono); }
+    .title-block { text-align: center; }
+    .title-block .eyebrow {
+      font-family: var(--font-display);
+      font-size: 11px; letter-spacing: 0.35em;
+      color: var(--cyan-dim); text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .title-block h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 34px; font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--ink);
+      text-shadow: 0 0 18px var(--glow);
+      background: linear-gradient(90deg, transparent, var(--panel-edge), transparent);
+      background-size: 100% 2px;
+      background-repeat: no-repeat;
+      background-position: bottom;
+      padding-bottom: 8px;
+    }
+    .clock {
+      font-family: var(--font-mono);
+      font-size: 22px; font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 12px var(--glow);
+      min-width: 110px; text-align: right;
+    }
+    .date-line { font-size: 12px; color: var(--muted); text-align: right; }
+    .icon-btn {
+      appearance: none; border: 1px solid var(--panel-edge);
+      background: var(--panel); color: var(--ink);
+      width: 40px; height: 40px; border-radius: 8px;
+      cursor: pointer; display: grid; place-items: center;
+      transition: box-shadow .2s, border-color .2s, transform .15s;
+    }
+    .icon-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px var(--glow);
+      transform: translateY(-1px);
+    }
+    .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+    /* ——— Body ——— */
+    .body {
+      display: grid;
+      grid-template-columns: 340px 1fr 360px;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--panel-edge);
+      box-shadow: inset 0 0 40px rgba(34, 211, 238, 0.05), 0 0 20px rgba(0,0,0,.25);
+      backdrop-filter: blur(8px);
+      padding: 14px 16px 16px;
+      overflow: hidden;
+    }
+    .panel::before, .panel::after {
+      content: ""; position: absolute; width: 14px; height: 14px;
+      border: 2px solid var(--cyan); pointer-events: none;
+    }
+    .panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+    .panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+    .panel-title {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin: 0 0 12px;
+      font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
+      color: var(--ink);
+    }
+    .panel-title span {
+      font-family: var(--font-mono); font-size: 11px; color: var(--cyan);
+      letter-spacing: 0.12em;
+    }
+
+    .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .col .panel { flex: 1; min-height: 0; }
+
+    /* Rules */
+    .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rule {
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(56,189,248,.25);
+      background: linear-gradient(160deg, rgba(34,211,238,.08), transparent 60%);
+      position: relative;
+    }
+    .rule .label { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+    .rule .value {
+      font-family: var(--font-mono); font-size: 28px; font-weight: 700;
+      margin: 4px 0 2px; color: var(--ink);
+    }
+    .rule .detail { font-size: 11px; color: var(--muted); }
+    .rule.is-pass .value { color: var(--good); text-shadow: 0 0 10px rgba(52,211,153,.35); }
+    .rule.is-fail .value { color: var(--bad); text-shadow: 0 0 10px rgba(251,113,133,.35); }
+    .level-bars { margin-top: 12px; display: grid; gap: 7px; }
+    .lv-row { display: grid; grid-template-columns: 64px 1fr 36px; align-items: center; gap: 8px; font-size: 12px; }
+    .lv-row .tag { color: var(--muted); }
+    .lv-row .num { font-family: var(--font-mono); text-align: right; font-weight: 700; }
+    .lv-track { height: 8px; background: rgba(56,189,248,.12); border-radius: 999px; overflow: hidden; }
+    .lv-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan-dim), var(--cyan)); box-shadow: 0 0 8px var(--glow); transition: width .8s ease; }
+
+    /* Price */
+    .price-main {
+      font-family: var(--font-display);
+      font-size: 42px; font-weight: 700;
+      color: var(--warn);
+      text-shadow: 0 0 20px rgba(251,191,36,.35);
+      letter-spacing: 0.04em;
+    }
+    .price-meta { margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .kpi {
+      padding: 10px; border: 1px solid rgba(56,189,248,.2);
+      background: rgba(0,0,0,.12);
+    }
+    [data-theme="light"] .kpi { background: rgba(255,255,255,.5); }
+    .kpi .k { font-size: 11px; color: var(--muted); }
+    .kpi .v { font-family: var(--font-mono); font-size: 20px; font-weight: 700; margin-top: 2px; color: var(--cyan); }
+
+    /* Odds */
+    .odds-list { display: flex; flex-direction: column; gap: 8px; overflow: auto; max-height: 100%; }
+    .odds-item {
+      display: grid; grid-template-columns: 1fr 64px; gap: 8px; align-items: center;
+      padding: 8px 10px;
+      border-left: 2px solid var(--cyan);
+      background: linear-gradient(90deg, rgba(34,211,238,.1), transparent);
+    }
+    .odds-item .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .odds-item .meta { font-size: 11px; color: var(--muted); }
+    .odds-item .pct {
+      font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+      text-align: right; color: var(--accent);
+    }
+
+    /* Center table */
+    .center {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      min-height: 0;
+    }
+    .deck-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      border: 1px solid var(--panel-edge);
+      background: var(--panel);
+    }
+    .deck-banner .name {
+      font-size: 18px; font-weight: 700; letter-spacing: 0.06em;
+    }
+    .deck-banner .meta { font-size: 12px; color: var(--muted); }
+    .deck-banner .badge {
+      font-family: var(--font-mono); font-size: 11px;
+      padding: 4px 10px; border: 1px solid var(--cyan);
+      color: var(--cyan); letter-spacing: 0.1em;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .table-arena {
+      position: relative;
+      border: 1px solid var(--table-edge);
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 48%, rgba(34,211,238,.12), transparent 60%),
+        linear-gradient(180deg, rgba(8,24,48,.9), var(--table));
+      box-shadow: inset 0 0 60px rgba(34,211,238,.08), 0 0 30px rgba(0,0,0,.35);
+      overflow: hidden;
+      min-height: 0;
+    }
+    .table-arena::before {
+      content: "";
+      position: absolute; inset: 18px;
+      border: 1px dashed rgba(56,189,248,.28);
+      border-radius: 50% / 18%;
+      pointer-events: none;
+    }
+    .table-glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 50% 100%, rgba(56,189,248,.18), transparent 45%);
+      animation: pulse 4.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: .55; }
+      50% { opacity: 1; }
+    }
+
+    .zones {
+      position: absolute; inset: 0;
+      display: grid;
+      grid-template-rows: 1fr 1.15fr auto;
+      padding: 28px 36px 22px;
+      gap: 8px;
+    }
+    .zone-label {
+      position: absolute; left: 28px; top: 16px;
+      font-family: var(--font-display); font-size: 10px;
+      letter-spacing: 0.28em; color: var(--cyan-dim);
+    }
+    .stage-row, .back-row, .cx-row {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 10px; position: relative; z-index: 1;
+      flex-wrap: nowrap;
+    }
+    .back-row { align-items: center; }
+    .cx-row {
+      padding-top: 6px;
+      border-top: 1px solid rgba(56,189,248,.2);
+      min-height: 148px;
+    }
+
+    .card-slot {
+      position: relative;
+      width: 92px; height: 128px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(56,189,248,.45);
+      box-shadow: 0 8px 20px rgba(0,0,0,.45), 0 0 14px rgba(34,211,238,.25);
+      background: #0a1528;
+      transform: translateY(0);
+      animation: cardIn .7s ease both;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .card-slot:hover {
+      transform: translateY(-10px) scale(1.04);
+      box-shadow: 0 16px 28px rgba(0,0,0,.5), 0 0 22px var(--glow);
+      z-index: 5;
+    }
+    .card-slot img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      background: transparent;
+    }
+    .card-slot img.is-missing { display: none; }
+    .card-face {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 22px 8px 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent 35%),
+        linear-gradient(160deg, #12263f, #0a1528 55%, #07101c);
+    }
+    .card-face::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+      background: var(--card-color, var(--cyan));
+      box-shadow: 0 0 12px var(--card-color, var(--cyan));
+    }
+    .card-face .fname {
+      font-size: 11px; font-weight: 700; line-height: 1.35;
+      color: #f2f8ff; max-height: 4.2em; overflow: hidden;
+      word-break: break-word;
+    }
+    .card-face .fmeta {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+    }
+    .card-slot.has-art .card-face { display: none; }
+    .card-slot .qty {
+      position: absolute; right: 4px; bottom: 4px; z-index: 2;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      background: rgba(6,12,24,.85); color: var(--cyan);
+      border: 1px solid var(--cyan); padding: 1px 5px;
+    }
+    .card-slot .lv {
+      position: absolute; left: 4px; top: 4px; z-index: 2;
+      font-family: var(--font-mono); font-size: 10px;
+      background: rgba(6,12,24,.8); color: #fff; padding: 1px 4px;
+      border-left: 2px solid var(--accent);
+    }
+    .card-slot.is-cx { width: 118px; height: 84px; }
+    .card-slot.is-cx .card-face { padding: 18px 10px 18px 12px; }
+    .card-slot.is-cx img { object-fit: cover; }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(18px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .pile {
+      width: 72px; height: 100px;
+      border-radius: 6px;
+      border: 1px solid rgba(56,189,248,.4);
+      background:
+        repeating-linear-gradient(135deg, rgba(34,211,238,.15) 0 6px, transparent 6px 12px),
+        #0b1c33;
+      box-shadow: 0 6px 16px rgba(0,0,0,.4);
+      display: grid; place-items: center;
+      font-family: var(--font-display); font-size: 10px;
+      letter-spacing: 0.15em; color: var(--cyan);
+      text-align: center; line-height: 1.4;
+    }
+    .side-piles {
+      position: absolute; right: 40px; top: 50%;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 14px; z-index: 2;
+    }
+    .left-piles {
+      position: absolute; left: 40px; top: 50%;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 14px; z-index: 2;
+    }
+
+    .legend-strip {
+      display: flex; gap: 16px; justify-content: center; align-items: center;
+      font-size: 12px; color: var(--muted);
+    }
+    .legend-strip i {
+      display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+      margin-right: 6px; vertical-align: -1px;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Right charts */
+    .chart-box { width: 100%; height: calc(100% - 28px); min-height: 120px; }
+    .panel.chart-sm .chart-box { min-height: 140px; }
+    .panel.chart-md { flex: 1.15; }
+    .panel.chart-lg { flex: 1.35; }
+
+    /* Footer */
+    .footer {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .nav-item {
+      appearance: none; border: 1px solid transparent;
+      background: transparent; color: var(--muted);
+      padding: 10px 18px; cursor: pointer;
+      font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.08em;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+      transition: color .2s, background .2s, border-color .2s, box-shadow .2s;
+    }
+    .nav-item:hover { color: var(--ink); background: rgba(34,211,238,.08); }
+    .nav-item.is-active {
+      color: var(--cyan);
+      background: rgba(34,211,238,.14);
+      border-color: var(--panel-edge);
+      box-shadow: 0 0 18px var(--glow);
+    }
+    .nav-item a { color: inherit; text-decoration: none; }
+
+    .status-toast {
+      position: absolute; left: 50%; bottom: 86px; transform: translateX(-50%);
+      z-index: 5; font-size: 12px; color: var(--muted);
+      padding: 6px 14px; border: 1px solid var(--panel-edge);
+      background: var(--panel); opacity: 0; pointer-events: none;
+      transition: opacity .3s;
+    }
+    .status-toast.is-show { opacity: 1; }
+
+    .dim-target { transition: opacity .35s, filter .35s; }
+    .screen.is-focus-rules .dim-odds,
+    .screen.is-focus-rules .dim-charts,
+    .screen.is-focus-odds .dim-rules,
+    .screen.is-focus-odds .dim-charts,
+    .screen.is-focus-charts .dim-rules,
+    .screen.is-focus-charts .dim-odds,
+    .screen.is-focus-price .dim-odds,
+    .screen.is-focus-price .dim-charts { opacity: .28; filter: saturate(.5); }
+
+    @media (max-aspect-ratio: 16/9) {
+      /* scale handled by JS */
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-wrap">
+    <div class="screen hud" id="screen">
+      <header class="header">
+        <div class="header-left">
+          <div class="brand-chip">WS-CARDS <strong>DEMO</strong> · 示範牌組展示</div>
+        </div>
+        <div class="title-block">
+          <div class="eyebrow">Digital Deck Command</div>
+          <h1>牌組可視化分析平台</h1>
+        </div>
+        <div class="header-right">
+          <div>
+            <div class="clock" id="clock">--:--:--</div>
+            <div class="date-line" id="dateLine">----/--/--</div>
+          </div>
+          <button type="button" class="icon-btn" id="btnTheme" title="切換深淺色" aria-label="切換深淺色">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+          </button>
+          <a class="icon-btn" href="deckAnalysis.html" title="回完整分析頁" aria-label="回完整分析頁">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M12 4l8 8-8 8"/></svg>
+          </a>
+        </div>
+      </header>
+
+      <div class="body">
+        <aside class="col dim-target dim-rules">
+          <section class="panel">
+            <h2 class="panel-title">規則檢查 <span>RULES</span></h2>
+            <div class="rule-grid" id="ruleGrid"></div>
+            <div class="level-bars" id="levelBars"></div>
+          </section>
+          <section class="panel">
+            <h2 class="panel-title">行情摘要 <span>MARKET</span></h2>
+            <div class="price-main" id="priceMain">—</div>
+            <div class="price-meta" id="priceMeta">載入示範行情中…</div>
+            <div class="kpi-row">
+              <div class="kpi"><div class="k">卡種</div><div class="v" id="kpiKinds">—</div></div>
+              <div class="kpi"><div class="k">平均單價</div><div class="v" id="kpiAvg">—</div></div>
+            </div>
+          </section>
+          <section class="panel dim-target dim-odds" style="flex:1.15">
+            <h2 class="panel-title">起手機率 <span>OPENING</span></h2>
+            <div class="odds-list" id="oddsList"></div>
+          </section>
+        </aside>
+
+        <main class="center">
+          <div class="deck-banner">
+            <div>
+              <div class="name" id="deckName">BanG Dream! 示範牌組</div>
+              <div class="meta" id="deckMeta">50 張 · 展示模式</div>
+            </div>
+            <div class="badge">VIRTUAL TABLE</div>
+          </div>
+          <div class="table-arena">
+            <div class="table-glow"></div>
+            <div class="zone-label">STAGE FIELD</div>
+            <div class="left-piles">
+              <div class="pile">STOCK<br><span id="pileStock">0</span></div>
+              <div class="pile">CLOCK<br><span id="pileClock">0</span></div>
+            </div>
+            <div class="side-piles">
+              <div class="pile">DECK<br><span id="pileDeck">50</span></div>
+              <div class="pile">WAIT<br><span id="pileWait">0</span></div>
+            </div>
+            <div class="zones">
+              <div class="back-row" id="rowBack" aria-label="後排角色"></div>
+              <div class="stage-row" id="rowFront" aria-label="前排角色"></div>
+              <div class="cx-row" id="rowCx" aria-label="Climax 區"></div>
+            </div>
+          </div>
+          <div class="legend-strip" id="colorLegend"></div>
+        </main>
+
+        <aside class="col dim-target dim-charts">
+          <section class="panel chart-lg">
+            <h2 class="panel-title">Level 曲線 <span>LEVEL</span></h2>
+            <div class="chart-box" id="chartLevel"></div>
+          </section>
+          <section class="panel chart-md">
+            <h2 class="panel-title">顏色 · 卡種 <span>MIX</span></h2>
+            <div class="chart-box" id="chartMix"></div>
+          </section>
+          <section class="panel chart-sm">
+            <h2 class="panel-title">Cost / Trigger <span>GAUGE</span></h2>
+            <div class="chart-box" id="chartGauge"></div>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="footer">
+        <button type="button" class="nav-item is-active" data-focus="all">總覽</button>
+        <button type="button" class="nav-item" data-focus="rules">規則</button>
+        <button type="button" class="nav-item" data-focus="charts">結構</button>
+        <button type="button" class="nav-item" data-focus="odds">機率</button>
+        <button type="button" class="nav-item" data-focus="price">行情</button>
+        <button type="button" class="nav-item"><a href="deckAnalysis.html">完整分析</a></button>
+      </footer>
+
+      <div class="status-toast" id="toast" role="status"></div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
+  const LATEST_BY_CARD_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_";
+  const OPENING_HAND = 5;
+  const GUIDE = { level0: [14, 18], level1: [10, 14], level2: [2, 8], level3: [8, 10] };
+
+  const COLOR_MAP = {
+    "黄": "#eab308", "黃": "#eab308", "yellow": "#eab308",
+    "緑": "#22c55e", "綠": "#22c55e", "green": "#22c55e",
+    "赤": "#ef4444", "red": "#ef4444",
+    "青": "#3b82f6", "blue": "#3b82f6",
+    "無": "#94a3b8", "未標": "#64748b"
+  };
+
+  const TRIGGER_LABEL = {
+    "0": "無", "1": "魂+1", "2": "魂+2",
+    "B": "門", "C": "書", "A": "魂", "D": "袋",
+    "soul": "魂", "gate": "門", "book": "書"
+  };
+
+  /* 示範牌組（與 deckAnalysis SAMPLE_DECK 對齊，已預填屬性） */
+  const SAMPLE_ROWS = [
+    { cardNo: "BD/W54-089", name: "“二人を繋いで”今井リサ", color: "青", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-078", name: "“選んでもらった水着”白金燐子", color: "青", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-016", name: "“ドラムとの出会い”大和麻弥", color: "黄", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-008", name: "“ステージ”北沢はぐみ", color: "黄", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-055", name: "“みんなで遊園地！”戸山香澄", color: "赤", kindLabel: "角色", level: 1, cost: 0, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-011", name: "“はーい、ミッシェルでーす”奥沢美咲", color: "黄", kindLabel: "角色", level: 1, cost: 1, trigger: "1", qty: 4 },
+    { cardNo: "BD/W54-044", name: "“フシギなお守り”上原ひまり", color: "綠", kindLabel: "角色", level: 1, cost: 1, trigger: "0", qty: 4 },
+    { cardNo: "BD/W54-020", name: "“私を捕まえてごらん”瀬田薫", color: "黄", kindLabel: "角色", level: 2, cost: 1, trigger: "1", qty: 4 },
+    { cardNo: "BD/W54-094", name: "“ステージ”市ヶ谷有咲", color: "青", kindLabel: "角色", level: 2, cost: 1, trigger: "1", qty: 2 },
+    { cardNo: "BD/W54-053", name: "“必殺アイドルポーズ☆”丸山彩", color: "赤", kindLabel: "角色", level: 3, cost: 2, trigger: "1", qty: 4 },
+    { cardNo: "BD/W54-070", name: "“鳥籠の歌姫”湊友希那", color: "青", kindLabel: "角色", level: 3, cost: 2, trigger: "1", qty: 4 },
+    { cardNo: "BD/W54-048", name: "That Is How I Roll!", color: "綠", kindLabel: "CX", level: 0, cost: 0, trigger: "B", qty: 4 },
+    { cardNo: "BD/W54-067", name: "憧れの先", color: "赤", kindLabel: "CX", level: 0, cost: 0, trigger: "C", qty: 4 }
+  ];
+
+  const charts = {};
+  let deckCards = [];
+  let lastStats = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  function normalizeColor(c) {
+    if (c === "緑") return "綠";
+    return c || "未標";
+  }
+
+  function wsImageUrlFromCardNo(cardNo) {
+    const cn = String(cardNo || "").trim();
+    const m = cn.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/);
+    if (!m) return "";
+    const series = m[1].toLowerCase();
+    const setId = m[2].toLowerCase();
+    const num = m[3].toLowerCase();
+    const folder = series + "_" + setId;
+    const alpha = series.slice(0, 1) || "x";
+    return WS_CARD_IMAGE_BASE + "/" + alpha + "/" + folder + "/" + folder + "_" + num + ".png";
+  }
+
+  function expandEntries(rows) {
+    const out = [];
+    rows.forEach(function (r) {
+      const qty = Math.max(0, parseInt(r.qty, 10) || 0);
+      for (let i = 0; i < qty; i++) {
+        out.push({
+          cardNo: r.cardNo,
+          name: r.name,
+          kindLabel: r.kindLabel,
+          color: normalizeColor(r.color),
+          level: r.level,
+          cost: r.cost,
+          trigger: String(r.trigger),
+          imageUrl: wsImageUrlFromCardNo(r.cardNo),
+          qty: qty
+        });
+      }
+    });
+    return out;
+  }
+
+  function aggregateByCard(cards) {
+    const map = new Map();
+    cards.forEach(function (c) {
+      const key = c.cardNo || c.name;
+      if (!map.has(key)) map.set(key, Object.assign({}, c, { qty: 0 }));
+      map.get(key).qty += 1;
+    });
+    return Array.from(map.values()).sort(function (a, b) {
+      const la = Number(a.level), lb = Number(b.level);
+      if (!isNaN(la) && !isNaN(lb) && la !== lb) return la - lb;
+      return String(a.cardNo).localeCompare(String(b.cardNo));
+    });
+  }
+
+  function classifyKind(c) {
+    const k = String(c.kindLabel || "");
+    if (/CX|名場|climax/i.test(k)) return "CX";
+    if (/事件|event/i.test(k)) return "事件";
+    if (/角色|character|chara/i.test(k)) return "角色";
+    return "未知";
+  }
+
+  function analyze(cards) {
+    const total = cards.length;
+    const levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, other: 0 };
+    const colorCount = {};
+    const kindCount = { "角色": 0, "事件": 0, "CX": 0, "未知": 0 };
+    const costCount = {};
+    const triggerCount = {};
+    let cx = 0;
+    cards.forEach(function (c) {
+      const kind = classifyKind(c);
+      kindCount[kind] = (kindCount[kind] || 0) + 1;
+      if (kind === "CX") cx += 1;
+      if (kind !== "CX") {
+        const lv = Number(c.level);
+        if (lv === 0 || lv === 1 || lv === 2 || lv === 3) levelCount[lv] += 1;
+        else levelCount.other += 1;
+        const cost = c.cost != null && !isNaN(Number(c.cost)) ? String(Number(c.cost)) : "?";
+        costCount[cost] = (costCount[cost] || 0) + 1;
+      }
+      const color = c.color || "未標";
+      colorCount[color] = (colorCount[color] || 0) + 1;
+      const trigKey = String(c.trigger != null ? c.trigger : "?");
+      triggerCount[trigKey] = (triggerCount[trigKey] || 0) + 1;
+    });
+    return { total: total, cx: cx, levelCount: levelCount, colorCount: colorCount, kindCount: kindCount, costCount: costCount, triggerCount: triggerCount };
+  }
+
+  function hyperAtLeastOne(K, N, n) {
+    if (n <= 0 || N <= 0 || K <= 0) return 0;
+    if (K >= N) return 1;
+    if (N - K < n) return 1;
+    let pNone = 1;
+    for (let i = 0; i < n; i++) pNone *= (N - K - i) / (N - i);
+    return Math.max(0, Math.min(1, 1 - pNone));
+  }
+
+  function formatPct(p) { return (Math.round(p * 1000) / 10).toFixed(1) + "%"; }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function inGuide(n, range) { return n >= range[0] && n <= range[1]; }
+
+  function themeColors() {
+    const dark = document.documentElement.getAttribute("data-theme") !== "light";
+    return {
+      dark: dark,
+      text: dark ? "#8fb3d1" : "#4a6b86",
+      ink: dark ? "#e8f4ff" : "#0f2744",
+      line: dark ? "rgba(56,189,248,0.2)" : "rgba(14,116,144,0.2)",
+      cyan: dark ? "#22d3ee" : "#0e7490",
+      accent: dark ? "#38bdf8" : "#0284c7"
+    };
+  }
+
+  function toast(msg) {
+    const t = el("toast");
+    t.textContent = msg;
+    t.classList.add("is-show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function () { t.classList.remove("is-show"); }, 2200);
+  }
+
+  function fitScreen() {
+    const screen = el("screen");
+    const w = window.innerWidth / 1920;
+    const h = window.innerHeight / 1080;
+    const s = Math.min(w, h);
+    screen.style.transform = "scale(" + s + ")";
+  }
+
+  function tickClock() {
+    const now = new Date();
+    const pad = function (n) { return String(n).padStart(2, "0"); };
+    el("clock").textContent = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+    const days = ["日", "一", "二", "三", "四", "五", "六"];
+    el("dateLine").textContent = now.getFullYear() + "/" + pad(now.getMonth() + 1) + "/" + pad(now.getDate()) + " 週" + days[now.getDay()];
+  }
+
+  function renderRules(stats) {
+    const items = [
+      {
+        label: "總張數",
+        value: stats.total + " / 50",
+        detail: stats.total === 50 ? "符合構築" : (stats.total < 50 ? "少 " + (50 - stats.total) + " 張" : "多 " + (stats.total - 50) + " 張"),
+        state: stats.total === 50 ? "pass" : "fail"
+      },
+      {
+        label: "Climax",
+        value: stats.cx + " / 8",
+        detail: stats.cx === 8 ? "CX 張數正確" : "標準應為正好 8 張",
+        state: stats.cx === 8 ? "pass" : "fail"
+      }
+    ];
+    el("ruleGrid").innerHTML = items.map(function (it) {
+      return '<div class="rule is-' + it.state + '"><div class="label">' + it.label + '</div><div class="value">' + it.value + '</div><div class="detail">' + it.detail + "</div></div>";
+    }).join("");
+
+    const rows = [
+      { tag: "Level 0", num: stats.levelCount[0], max: 20, ok: inGuide(stats.levelCount[0], GUIDE.level0) },
+      { tag: "Level 1", num: stats.levelCount[1], max: 16, ok: inGuide(stats.levelCount[1], GUIDE.level1) },
+      { tag: "Level 2", num: stats.levelCount[2], max: 12, ok: inGuide(stats.levelCount[2], GUIDE.level2) },
+      { tag: "Level 3", num: stats.levelCount[3], max: 12, ok: inGuide(stats.levelCount[3], GUIDE.level3) }
+    ];
+    el("levelBars").innerHTML = rows.map(function (r) {
+      const pct = Math.min(100, Math.round((r.num / r.max) * 100));
+      return '<div class="lv-row"><span class="tag">' + r.tag + '</span><div class="lv-track"><div class="lv-fill" style="width:' + pct + '%;opacity:' + (r.ok ? 1 : 0.7) + '"></div></div><span class="num" style="color:' + (r.ok ? "var(--good)" : "var(--warn)") + '">' + r.num + "</span></div>";
+    }).join("");
+  }
+
+  function renderOdds(cards, stats) {
+    const N = cards.length || 50;
+    const aggregated = aggregateByCard(cards);
+    const chars = aggregated.filter(function (c) { return classifyKind(c) === "角色"; })
+      .sort(function (a, b) { return b.qty - a.qty; }).slice(0, 4);
+    const items = [
+      { name: "任意 Climax", meta: "CX ×" + stats.cx, qty: stats.cx },
+      { name: "任意 Level 0", meta: "Lv0 ×" + stats.levelCount[0], qty: stats.levelCount[0] }
+    ].concat(chars.map(function (c) {
+      return { name: c.name, meta: c.cardNo + " · ×" + c.qty, qty: c.qty };
+    }));
+    el("oddsList").innerHTML = items.map(function (it) {
+      const p = hyperAtLeastOne(it.qty, N, OPENING_HAND);
+      return '<div class="odds-item"><div><div class="name">' + escapeHtml(it.name) + '</div><div class="meta">' + escapeHtml(it.meta) + '</div></div><div class="pct">' + formatPct(p) + "</div></div>";
+    }).join("");
+  }
+
+  function renderTable(cards) {
+    const agg = aggregateByCard(cards);
+    const chars = agg.filter(function (c) { return classifyKind(c) === "角色"; });
+    const cxs = agg.filter(function (c) { return classifyKind(c) === "CX"; });
+    const front = chars.filter(function (c) { return Number(c.level) >= 2; });
+    const back = chars.filter(function (c) { return Number(c.level) < 2; });
+
+    function slot(c, isCx, delay) {
+      const img = c.imageUrl || "";
+      const hex = COLOR_MAP[c.color] || "#64748b";
+      const shortName = String(c.name || "").replace(/^["“]|["”]$/g, "");
+      return '<div class="card-slot' + (isCx ? " is-cx" : "") + '" style="animation-delay:' + delay + 'ms;--card-color:' + hex + '" title="' + escapeHtml(c.name) + '">' +
+        (isCx ? "" : '<span class="lv">Lv' + c.level + "</span>") +
+        '<div class="card-face"><div class="fname">' + escapeHtml(shortName) + '</div><div class="fmeta">' + escapeHtml(c.cardNo) + "</div></div>" +
+        '<img src="' + img + '" alt="" loading="lazy" referrerpolicy="no-referrer" onload="this.parentElement.classList.add(\'has-art\')" onerror="this.classList.add(\'is-missing\')">' +
+        '<span class="qty">×' + c.qty + "</span></div>";
+    }
+
+    el("rowBack").innerHTML = back.map(function (c, i) { return slot(c, false, 40 + i * 50); }).join("");
+    el("rowFront").innerHTML = front.map(function (c, i) { return slot(c, false, 80 + i * 55); }).join("");
+    el("rowCx").innerHTML = cxs.map(function (c, i) { return slot(c, true, 120 + i * 60); }).join("");
+
+    el("pileDeck").textContent = String(cards.length);
+    el("pileStock").textContent = "—";
+    el("pileClock").textContent = "—";
+    el("pileWait").textContent = "—";
+    el("deckMeta").textContent = agg.length + " 種 · " + cards.length + " 張 · 展示模式（示範牌組）";
+  }
+
+  function renderLegend(stats) {
+    const colors = Object.keys(stats.colorCount);
+    el("colorLegend").innerHTML = colors.map(function (c) {
+      const hex = COLOR_MAP[c] || "#64748b";
+      return '<span><i style="background:' + hex + ";color:" + hex + '"></i>' + escapeHtml(c) + " " + stats.colorCount[c] + "</span>";
+    }).join("");
+  }
+
+  function ensureChart(domId) {
+    const dom = el(domId);
+    if (!charts[domId]) charts[domId] = echarts.init(dom, null, { renderer: "canvas" });
+    return charts[domId];
+  }
+
+  function renderCharts(stats) {
+    const t = themeColors();
+    const level = ensureChart("chartLevel");
+    level.setOption({
+      animationDuration: 900,
+      grid: { left: 36, right: 16, top: 24, bottom: 28 },
+      xAxis: {
+        type: "category",
+        data: ["Lv0", "Lv1", "Lv2", "Lv3"],
+        axisLabel: { color: t.text },
+        axisLine: { lineStyle: { color: t.line } },
+        axisTick: { show: false }
+      },
+      yAxis: {
+        type: "value", minInterval: 1,
+        splitLine: { lineStyle: { color: t.line, type: "dashed" } },
+        axisLabel: { color: t.text }
+      },
+      series: [{
+        type: "bar",
+        data: [stats.levelCount[0], stats.levelCount[1], stats.levelCount[2], stats.levelCount[3]],
+        barWidth: 28,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: t.cyan },
+            { offset: 1, color: t.accent }
+          ]),
+          shadowBlur: 12,
+          shadowColor: t.cyan
+        }
+      }]
+    }, true);
+
+    const mix = ensureChart("chartMix");
+    const colorKeys = Object.keys(stats.colorCount);
+    const kindKeys = ["角色", "事件", "CX"].filter(function (k) { return stats.kindCount[k]; });
+    mix.setOption({
+      animationDuration: 900,
+      tooltip: { trigger: "item" },
+      legend: {
+        bottom: 0, textStyle: { color: t.text, fontSize: 11 },
+        itemWidth: 10, itemHeight: 10
+      },
+      series: [
+        {
+          name: "顏色", type: "pie", radius: ["42%", "62%"], center: ["32%", "46%"],
+          label: { show: false },
+          data: colorKeys.map(function (k) {
+            return { name: k, value: stats.colorCount[k], itemStyle: { color: COLOR_MAP[k] || "#64748b", shadowBlur: 10, shadowColor: COLOR_MAP[k] || "#64748b" } };
+          })
+        },
+        {
+          name: "卡種", type: "pie", radius: ["18%", "34%"], center: ["78%", "46%"],
+          label: { color: t.ink, fontSize: 11, formatter: "{b}\n{c}" },
+          data: kindKeys.map(function (k, i) {
+            const palette = [t.accent, "#a78bfa", t.cyan];
+            return { name: k, value: stats.kindCount[k], itemStyle: { color: palette[i % palette.length], shadowBlur: 8, shadowColor: palette[i % palette.length] } };
+          })
+        }
+      ]
+    }, true);
+
+    const gauge = ensureChart("chartGauge");
+    const costKeys = Object.keys(stats.costCount).sort(function (a, b) {
+      const na = Number(a), nb = Number(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a).localeCompare(String(b));
+    });
+    const trigKeys = Object.keys(stats.triggerCount).sort();
+    gauge.setOption({
+      animationDuration: 900,
+      tooltip: { trigger: "item" },
+      legend: { show: false },
+      grid: [{ left: 36, right: "55%", top: 28, bottom: 24 }, { left: "58%", right: 8, top: 28, bottom: 24 }],
+      title: [
+        { text: "Cost", left: "18%", top: 2, textStyle: { color: t.text, fontSize: 11, fontWeight: 500 } },
+        { text: "Trigger", left: "72%", top: 2, textStyle: { color: t.text, fontSize: 11, fontWeight: 500 } }
+      ],
+      xAxis: [
+        {
+          gridIndex: 0, type: "category", data: costKeys.map(function (k) { return "C" + k; }),
+          axisLabel: { color: t.text, fontSize: 10 }, axisLine: { lineStyle: { color: t.line } }, axisTick: { show: false }
+        },
+        { gridIndex: 1, show: false, type: "category", data: ["t"] }
+      ],
+      yAxis: [
+        {
+          gridIndex: 0, type: "value", minInterval: 1,
+          splitLine: { lineStyle: { color: t.line, type: "dashed" } },
+          axisLabel: { color: t.text, fontSize: 10 }
+        },
+        { gridIndex: 1, show: false }
+      ],
+      series: [
+        {
+          name: "Cost", type: "bar", xAxisIndex: 0, yAxisIndex: 0, barWidth: 14,
+          data: costKeys.map(function (k) { return stats.costCount[k]; }),
+          itemStyle: { color: t.cyan, shadowBlur: 8, shadowColor: t.cyan, borderRadius: [3, 3, 0, 0] }
+        },
+        {
+          name: "Trigger", type: "pie", center: ["79%", "58%"], radius: ["28%", "52%"],
+          label: { color: t.ink, fontSize: 10, formatter: "{b}\n{c}" },
+          data: trigKeys.map(function (k, i) {
+            const palette = [t.cyan, "#fbbf24", "#fb7185", "#a78bfa", t.accent];
+            return {
+              name: TRIGGER_LABEL[k] || k,
+              value: stats.triggerCount[k],
+              itemStyle: { color: palette[i % palette.length], shadowBlur: 8, shadowColor: palette[i % palette.length] }
+            };
+          })
+        }
+      ]
+    }, true);
+  }
+
+  function resizeCharts() {
+    Object.keys(charts).forEach(function (k) {
+      try { charts[k].resize(); } catch (e) { /* ignore */ }
+    });
+  }
+
+  async function loadPrice(stats, cards) {
+    el("priceMain").textContent = "展示中";
+    el("priceMeta").textContent = "大屏示範模式：行情數字為可選加強，連線失敗時仍以結構數據為主。";
+    el("kpiKinds").textContent = ["角色", "事件", "CX"].filter(function (k) { return stats.kindCount[k]; }).length + " 類";
+    el("kpiAvg").textContent = "—";
+
+    try {
+      const titles = new Set();
+      cards.forEach(function (c) {
+        const m = String(c.cardNo).match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-/);
+        if (m) titles.add(m[1] + "_" + m[2]);
+      });
+      const maps = {};
+      await Promise.all(Array.from(titles).map(async function (tc) {
+        try {
+          const r = await fetch(LATEST_BY_CARD_BASE + encodeURIComponent(tc) + ".json", { cache: "no-store" });
+          if (!r.ok) return;
+          maps[tc] = await r.json();
+        } catch (e) { /* ignore */ }
+      }));
+
+      let sum = 0, hit = 0, missing = 0;
+      const seen = new Set();
+      aggregateByCard(cards).forEach(function (c) {
+        if (!c.cardNo || seen.has(c.cardNo)) return;
+        seen.add(c.cardNo);
+        const m = c.cardNo.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-/);
+        if (!m) { missing += c.qty; return; }
+        const tc = m[1] + "_" + m[2];
+        const pack = maps[tc];
+        const row = pack && (pack[c.cardNo] || (pack.cards && pack.cards[c.cardNo]));
+        const price = row && (typeof row.latestPrice === "number" ? row.latestPrice : Number(row.price));
+        if (typeof price === "number" && !isNaN(price)) {
+          sum += price * c.qty;
+          hit += c.qty;
+        } else {
+          missing += c.qty;
+        }
+      });
+
+      if (hit > 0) {
+        el("priceMain").textContent = "¥" + Math.round(sum).toLocaleString("ja-JP");
+        el("priceMeta").textContent = "已對應 " + hit + " 張" + (missing ? " · 缺 " + missing + " 張行情" : "") + " · 遊遊亭 latestByCard";
+        el("kpiAvg").textContent = "¥" + Math.round(sum / hit).toLocaleString("ja-JP");
+      } else {
+        el("priceMain").textContent = "—";
+        el("priceMeta").textContent = "示範展示：行情來源暫時無法取得，結構數據仍完整。";
+        el("kpiAvg").textContent = "—";
+      }
+    } catch (e) {
+      el("priceMeta").textContent = "示範展示：行情略過（" + (e && e.message ? e.message : "error") + "）";
+    }
+  }
+
+  function bindNav() {
+    const screen = el("screen");
+    document.querySelectorAll(".nav-item[data-focus]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+        btn.classList.add("is-active");
+        const focus = btn.getAttribute("data-focus");
+        screen.className = "screen hud" + (focus && focus !== "all" ? " is-focus-" + focus : "");
+      });
+    });
+  }
+
+  function bindTheme() {
+    el("btnTheme").addEventListener("click", function () {
+      const root = document.documentElement;
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("ws-screen-theme", next); } catch (e) { /* ignore */ }
+      if (lastStats) renderCharts(lastStats);
+      toast(next === "dark" ? "已切換深藍霓虹" : "已切換淺色科技風");
+    });
+    try {
+      const saved = localStorage.getItem("ws-screen-theme");
+      if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
+    } catch (e) { /* ignore */ }
+  }
+
+  function boot() {
+    fitScreen();
+    tickClock();
+    setInterval(tickClock, 1000);
+    window.addEventListener("resize", function () { fitScreen(); resizeCharts(); });
+    bindNav();
+    bindTheme();
+
+    deckCards = expandEntries(SAMPLE_ROWS);
+    lastStats = analyze(deckCards);
+    renderRules(lastStats);
+    renderOdds(deckCards, lastStats);
+    renderTable(deckCards);
+    renderLegend(lastStats);
+    renderCharts(lastStats);
+    loadPrice(lastStats, deckCards);
+    toast("已載入 BanG Dream! 示範牌組");
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+  </script>
+</body>
+</html>
