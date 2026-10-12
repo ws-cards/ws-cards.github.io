@@ -3660,8 +3660,16 @@ body.market-desk-page .content-wrapper {
     padding: 0.85rem 1.25rem 1.25rem !important;
 }
 
+/* 建立 BFC，避免 content-wrapper 的 margin-top 塌陷出 body，
+   露出 html 預設白底（手機固定導覽列下方那條「沒處理到」的色帶）。 */
+body.market-desk-page .wrapper {
+    display: flow-root;
+}
+
 @media (max-width: 768px) {
     body.market-desk-page .content-wrapper {
+        /* 對齊實際 navbar 高度（AdminLTE 3.5rem+1px），不要用全域 80px 留白 */
+        margin-top: calc(3.5rem + 1px) !important;
         padding: 0.55rem 0.65rem 0.85rem !important;
     }
 }
@@ -4669,6 +4677,17 @@ body.market-desk-page .external-link-stack > .btn {
    去卡片浮起／圓角／毛玻璃；改以髮絲線、直角、繪圖紙面。
    深色模式刻意不套用此區塊。
    ========================================================= */
+/* 製圖紙底同時畫在 html：頁首 inline 的 html{background:#fff}、
+   固定導覽列下方 margin 空隙、以及 overscroll 都不會再露白。 */
+html[data-theme="light"]:has(body.market-desk-page) {
+    background-color: #f3f3f0;
+    background-image:
+        linear-gradient(rgba(18, 18, 16, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18, 18, 16, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-attachment: fixed;
+}
+
 html[data-theme="light"] body.market-desk-page {
     --desk-surface: transparent;
     --desk-surface-strong: #ffffff;
@@ -5012,6 +5031,7 @@ html[data-theme="light"] body.market-desk-page .image-placeholder {
 
 /* 手機：維持直線，略降格線密度；欄位改為水平線堆疊 */
 @media (max-width: 768px) {
+    html[data-theme="light"]:has(body.market-desk-page),
     html[data-theme="light"] body.market-desk-page {
         background-size: 36px 36px;
     }
