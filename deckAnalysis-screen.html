@@ -349,21 +349,45 @@
     }
     .card-slot img {
       width: 100%; height: 100%; object-fit: cover; display: block;
-      background: linear-gradient(160deg, #123, #234);
+      background: transparent;
     }
+    .card-slot img.is-missing { display: none; }
+    .card-face {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 22px 8px 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent 35%),
+        linear-gradient(160deg, #12263f, #0a1528 55%, #07101c);
+    }
+    .card-face::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+      background: var(--card-color, var(--cyan));
+      box-shadow: 0 0 12px var(--card-color, var(--cyan));
+    }
+    .card-face .fname {
+      font-size: 11px; font-weight: 700; line-height: 1.35;
+      color: #f2f8ff; max-height: 4.2em; overflow: hidden;
+      word-break: break-word;
+    }
+    .card-face .fmeta {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+    }
+    .card-slot.has-art .card-face { display: none; }
     .card-slot .qty {
-      position: absolute; right: 4px; bottom: 4px;
+      position: absolute; right: 4px; bottom: 4px; z-index: 2;
       font-family: var(--font-mono); font-size: 11px; font-weight: 700;
       background: rgba(6,12,24,.85); color: var(--cyan);
       border: 1px solid var(--cyan); padding: 1px 5px;
     }
     .card-slot .lv {
-      position: absolute; left: 4px; top: 4px;
+      position: absolute; left: 4px; top: 4px; z-index: 2;
       font-family: var(--font-mono); font-size: 10px;
       background: rgba(6,12,24,.8); color: #fff; padding: 1px 4px;
       border-left: 2px solid var(--accent);
     }
-    .card-slot.is-cx { width: 110px; height: 78px; }
+    .card-slot.is-cx { width: 118px; height: 84px; }
+    .card-slot.is-cx .card-face { padding: 18px 10px 18px 12px; }
     .card-slot.is-cx img { object-fit: cover; }
     @keyframes cardIn {
       from { opacity: 0; transform: translateY(18px) scale(.94); }
@@ -801,9 +825,12 @@
 
     function slot(c, isCx, delay) {
       const img = c.imageUrl || "";
-      return '<div class="card-slot' + (isCx ? " is-cx" : "") + '" style="animation-delay:' + delay + 'ms" title="' + escapeHtml(c.name) + '">' +
+      const hex = COLOR_MAP[c.color] || "#64748b";
+      const shortName = String(c.name || "").replace(/^["“]|["”]$/g, "");
+      return '<div class="card-slot' + (isCx ? " is-cx" : "") + '" style="animation-delay:' + delay + 'ms;--card-color:' + hex + '" title="' + escapeHtml(c.name) + '">' +
         (isCx ? "" : '<span class="lv">Lv' + c.level + "</span>") +
-        '<img src="' + img + '" alt="' + escapeHtml(c.name) + '" loading="lazy" onerror="this.style.opacity=.25">' +
+        '<div class="card-face"><div class="fname">' + escapeHtml(shortName) + '</div><div class="fmeta">' + escapeHtml(c.cardNo) + "</div></div>" +
+        '<img src="' + img + '" alt="" loading="lazy" referrerpolicy="no-referrer" onload="this.parentElement.classList.add(\'has-art\')" onerror="this.classList.add(\'is-missing\')">' +
         '<span class="qty">×' + c.qty + "</span></div>";
     }
 
@@ -904,33 +931,45 @@
     const trigKeys = Object.keys(stats.triggerCount).sort();
     gauge.setOption({
       animationDuration: 900,
-      grid: { left: 44, right: 12, top: 10, bottom: 24 },
-      tooltip: { trigger: "axis" },
-      legend: { data: ["Cost", "Trigger"], textStyle: { color: t.text, fontSize: 11 }, top: 0, right: 0 },
-      xAxis: {
-        type: "category",
-        data: costKeys.length >= trigKeys.length ? costKeys.map(function (k) { return "C" + k; }) : trigKeys.map(function (k) { return TRIGGER_LABEL[k] || k; }),
-        axisLabel: { color: t.text, fontSize: 10 },
-        axisLine: { lineStyle: { color: t.line } },
-        axisTick: { show: false }
-      },
-      yAxis: {
-        type: "value", minInterval: 1,
-        splitLine: { lineStyle: { color: t.line, type: "dashed" } },
-        axisLabel: { color: t.text, fontSize: 10 }
-      },
+      tooltip: { trigger: "item" },
+      legend: { show: false },
+      grid: [{ left: 36, right: "55%", top: 28, bottom: 24 }, { left: "58%", right: 8, top: 28, bottom: 24 }],
+      title: [
+        { text: "Cost", left: "18%", top: 2, textStyle: { color: t.text, fontSize: 11, fontWeight: 500 } },
+        { text: "Trigger", left: "72%", top: 2, textStyle: { color: t.text, fontSize: 11, fontWeight: 500 } }
+      ],
+      xAxis: [
+        {
+          gridIndex: 0, type: "category", data: costKeys.map(function (k) { return "C" + k; }),
+          axisLabel: { color: t.text, fontSize: 10 }, axisLine: { lineStyle: { color: t.line } }, axisTick: { show: false }
+        },
+        { gridIndex: 1, show: false, type: "category", data: ["t"] }
+      ],
+      yAxis: [
+        {
+          gridIndex: 0, type: "value", minInterval: 1,
+          splitLine: { lineStyle: { color: t.line, type: "dashed" } },
+          axisLabel: { color: t.text, fontSize: 10 }
+        },
+        { gridIndex: 1, show: false }
+      ],
       series: [
         {
-          name: "Cost", type: "bar", barWidth: 12,
+          name: "Cost", type: "bar", xAxisIndex: 0, yAxisIndex: 0, barWidth: 14,
           data: costKeys.map(function (k) { return stats.costCount[k]; }),
           itemStyle: { color: t.cyan, shadowBlur: 8, shadowColor: t.cyan, borderRadius: [3, 3, 0, 0] }
         },
         {
-          name: "Trigger", type: "line", smooth: true,
-          data: trigKeys.map(function (k) { return stats.triggerCount[k]; }),
-          symbol: "circle", symbolSize: 7,
-          lineStyle: { width: 2, color: "#fbbf24", shadowBlur: 8, shadowColor: "#fbbf24" },
-          itemStyle: { color: "#fbbf24" }
+          name: "Trigger", type: "pie", center: ["79%", "58%"], radius: ["28%", "52%"],
+          label: { color: t.ink, fontSize: 10, formatter: "{b}\n{c}" },
+          data: trigKeys.map(function (k, i) {
+            const palette = [t.cyan, "#fbbf24", "#fb7185", "#a78bfa", t.accent];
+            return {
+              name: TRIGGER_LABEL[k] || k,
+              value: stats.triggerCount[k],
+              itemStyle: { color: palette[i % palette.length], shadowBlur: 8, shadowColor: palette[i % palette.length] }
+            };
+          })
         }
       ]
     }, true);
