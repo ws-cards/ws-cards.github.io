@@ -136,6 +136,50 @@
       font-size: 13px; color: var(--muted); letter-spacing: 0.06em;
     }
     .brand-chip strong { color: var(--cyan); font-family: var(--font-mono); }
+    .import-bar {
+      display: flex; align-items: center; gap: 8px;
+      min-width: 0;
+    }
+    .import-bar input {
+      width: 168px;
+      height: 38px;
+      border: 1px solid var(--panel-edge);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+    }
+    .import-bar input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 14px var(--glow);
+    }
+    .import-bar input::placeholder { color: var(--muted); opacity: .7; }
+    .hud-btn {
+      appearance: none; height: 38px; padding: 0 12px;
+      border: 1px solid var(--panel-edge);
+      background: var(--panel); color: var(--ink);
+      font-family: var(--font-ui); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer;
+      white-space: nowrap;
+      transition: box-shadow .2s, border-color .2s, background .2s;
+    }
+    .hud-btn:hover:not(:disabled) {
+      border-color: var(--cyan);
+      box-shadow: 0 0 14px var(--glow);
+    }
+    .hud-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .hud-btn.is-primary {
+      background: rgba(34, 211, 238, 0.16);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .hud-btn.is-warn {
+      background: rgba(251, 191, 36, 0.14);
+      border-color: var(--warn);
+      color: var(--warn);
+    }
     .title-block { text-align: center; }
     .title-block .eyebrow {
       font-family: var(--font-display);
@@ -280,6 +324,7 @@
     }
     .deck-banner {
       display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
       padding: 10px 16px;
       border: 1px solid var(--panel-edge);
       background: var(--panel);
@@ -293,6 +338,82 @@
       padding: 4px 10px; border: 1px solid var(--cyan);
       color: var(--cyan); letter-spacing: 0.1em;
       box-shadow: 0 0 12px var(--glow);
+    }
+    .sim-controls {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .sim-phase {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--muted); min-width: 88px; text-align: right;
+    }
+    .sim-phase.is-mull { color: var(--warn); }
+    .sim-phase.is-done { color: var(--good); }
+    .sim-phase.is-ready { color: var(--cyan); }
+    .sim-log {
+      font-size: 12px; color: var(--muted); text-align: center;
+      min-height: 1.2em;
+    }
+
+    .hand-overlay {
+      position: absolute; inset: 0; z-index: 4;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px;
+      background: rgba(4, 10, 22, 0.72);
+      backdrop-filter: blur(3px);
+      padding: 24px;
+    }
+    .hand-overlay.is-open { display: flex; }
+    [data-theme="light"] .hand-overlay { background: rgba(220, 234, 248, 0.78); }
+    .hand-overlay .hand-title {
+      font-family: var(--font-display); font-size: 12px;
+      letter-spacing: 0.28em; color: var(--cyan);
+    }
+    .hand-row {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    }
+    .hand-card {
+      position: relative;
+      width: 148px; height: 208px;
+      border-radius: 8px; overflow: hidden;
+      border: 1px solid rgba(56,189,248,.5);
+      background: #0a1528;
+      box-shadow: 0 12px 28px rgba(0,0,0,.45), 0 0 18px rgba(34,211,238,.25);
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      animation: cardIn .55s ease both;
+    }
+    .hand-card:hover { transform: translateY(-8px) scale(1.04); }
+    .hand-card.is-selected {
+      border-color: var(--warn);
+      box-shadow: 0 0 24px rgba(251,191,36,.45), 0 14px 28px rgba(0,0,0,.5);
+      transform: translateY(-14px) scale(1.06);
+    }
+    .hand-card.is-selected::after {
+      content: "換";
+      position: absolute; top: 8px; right: 8px;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      color: #111; background: var(--warn); padding: 2px 6px;
+    }
+    .hand-card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .hand-card img.is-missing { display: none; }
+    .hand-card .card-face { padding: 26px 10px 24px; }
+    .hand-card.has-art .card-face { display: none; }
+    .hand-card .lv, .hand-card .qty { z-index: 2; }
+    .hand-card .qty { display: none; }
+    .waiting-strip {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      max-width: 90%;
+    }
+    .waiting-chip {
+      font-size: 11px; padding: 4px 8px;
+      border: 1px solid rgba(56,189,248,.35);
+      background: rgba(0,0,0,.35); color: var(--muted);
+      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
     .table-arena {
@@ -401,7 +522,7 @@
       background: rgba(6,12,24,.85); color: var(--cyan);
       border: 1px solid var(--cyan); padding: 2px 7px;
     }
-    .card-slot .lv {
+    .card-slot .lv, .hand-card .lv {
       position: absolute; left: 6px; top: 6px; z-index: 2;
       font-family: var(--font-mono); font-size: 12px;
       background: rgba(6,12,24,.8); color: #fff; padding: 2px 6px;
@@ -494,6 +615,23 @@
     .screen.is-focus-charts .dim-odds,
     .screen.is-focus-price .dim-odds,
     .screen.is-focus-price .dim-charts { opacity: .28; filter: saturate(.5); }
+    .screen.is-focus-sim .dim-rules,
+    .screen.is-focus-sim .dim-charts,
+    .screen.is-focus-sim .dim-odds { opacity: .28; filter: saturate(.5); }
+    .screen.is-loading { pointer-events: none; }
+    .screen.is-loading::after {
+      content: "LOADING";
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      font-family: var(--font-display);
+      letter-spacing: 0.35em;
+      color: var(--cyan);
+      text-shadow: 0 0 18px var(--glow);
+      padding: 14px 22px;
+      border: 1px solid var(--panel-edge);
+      background: var(--panel);
+    }
 
   </style>
 </head>
@@ -503,7 +641,11 @@
     <div class="screen hud" id="screen">
       <header class="header">
         <div class="header-left">
-          <div class="brand-chip">WS-CARDS <strong>DEMO</strong> · 示範牌組展示</div>
+          <form class="import-bar" id="importForm" autocomplete="off">
+            <input id="deckCode" type="text" placeholder="DeckLog 代碼" spellcheck="false" aria-label="DeckLog 代碼">
+            <button type="submit" class="hud-btn is-primary" id="btnImport">匯入分析</button>
+            <button type="button" class="hud-btn" id="btnSample">示範</button>
+          </form>
         </div>
         <div class="title-block">
           <div class="eyebrow">Digital Deck Command</div>
@@ -554,25 +696,36 @@
               <div class="name" id="deckName">BanG Dream! 示範牌組</div>
               <div class="meta" id="deckMeta">50 張 · 展示模式</div>
             </div>
-            <div class="badge">VIRTUAL TABLE</div>
+            <div class="sim-controls">
+              <span class="sim-phase is-ready" id="simPhase">可開始模擬</span>
+              <button type="button" class="hud-btn is-primary" id="btnSimDeal">洗牌並起手</button>
+              <button type="button" class="hud-btn is-warn" id="btnSimMulligan" hidden disabled>確認調度</button>
+              <span class="badge" id="modeBadge">VIRTUAL TABLE</span>
+            </div>
           </div>
-          <div class="table-arena">
+          <div class="table-arena" id="tableArena">
             <div class="table-glow"></div>
             <div class="zone-label">STAGE FIELD</div>
             <div class="left-piles">
-              <div class="pile">STOCK<br><span id="pileStock">0</span></div>
-              <div class="pile">CLOCK<br><span id="pileClock">0</span></div>
+              <div class="pile">STOCK<br><span id="pileStock">—</span></div>
+              <div class="pile">CLOCK<br><span id="pileClock">—</span></div>
             </div>
             <div class="side-piles">
               <div class="pile">DECK<br><span id="pileDeck">50</span></div>
               <div class="pile">WAIT<br><span id="pileWait">0</span></div>
             </div>
-            <div class="zones">
+            <div class="zones" id="stageZones">
               <div class="back-row" id="rowBack" aria-label="後排角色"></div>
               <div class="stage-row" id="rowFront" aria-label="前排角色"></div>
               <div class="cx-row" id="rowCx" aria-label="Climax 區"></div>
             </div>
+            <div class="hand-overlay" id="handOverlay" aria-label="起手模擬">
+              <div class="hand-title">OPENING HAND · 點選要換掉的牌</div>
+              <div class="hand-row" id="handRow"></div>
+              <div class="waiting-strip" id="waitingStrip"></div>
+            </div>
           </div>
+          <div class="sim-log" id="simLog" role="status"></div>
           <div class="legend-strip" id="colorLegend"></div>
         </main>
 
@@ -598,6 +751,7 @@
         <button type="button" class="nav-item" data-focus="charts">結構</button>
         <button type="button" class="nav-item" data-focus="odds">機率</button>
         <button type="button" class="nav-item" data-focus="price">行情</button>
+        <button type="button" class="nav-item" data-focus="sim" id="navSim">模擬</button>
         <button type="button" class="nav-item"><a href="deckAnalysis.html">完整分析</a></button>
       </footer>
 
@@ -606,11 +760,11 @@
     </div>
   </div>
 
+  <script src="assets/js/ws-decklog.js"></script>
   <script>
 (function () {
   "use strict";
 
-  const WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
   const LATEST_BY_CARD_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_";
   const OPENING_HAND = 5;
   const GUIDE = { level0: [14, 18], level1: [10, 14], level2: [2, 8], level3: [8, 10] };
@@ -629,26 +783,20 @@
     "soul": "魂", "gate": "門", "book": "書"
   };
 
-  /* 示範牌組（與 deckAnalysis SAMPLE_DECK 對齊，已預填屬性） */
-  const SAMPLE_ROWS = [
-    { cardNo: "BD/W54-089", name: "“二人を繋いで”今井リサ", color: "青", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-078", name: "“選んでもらった水着”白金燐子", color: "青", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-016", name: "“ドラムとの出会い”大和麻弥", color: "黄", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-008", name: "“ステージ”北沢はぐみ", color: "黄", kindLabel: "角色", level: 0, cost: 0, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-055", name: "“みんなで遊園地！”戸山香澄", color: "赤", kindLabel: "角色", level: 1, cost: 0, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-011", name: "“はーい、ミッシェルでーす”奥沢美咲", color: "黄", kindLabel: "角色", level: 1, cost: 1, trigger: "1", qty: 4 },
-    { cardNo: "BD/W54-044", name: "“フシギなお守り”上原ひまり", color: "綠", kindLabel: "角色", level: 1, cost: 1, trigger: "0", qty: 4 },
-    { cardNo: "BD/W54-020", name: "“私を捕まえてごらん”瀬田薫", color: "黄", kindLabel: "角色", level: 2, cost: 1, trigger: "1", qty: 4 },
-    { cardNo: "BD/W54-094", name: "“ステージ”市ヶ谷有咲", color: "青", kindLabel: "角色", level: 2, cost: 1, trigger: "1", qty: 2 },
-    { cardNo: "BD/W54-053", name: "“必殺アイドルポーズ☆”丸山彩", color: "赤", kindLabel: "角色", level: 3, cost: 2, trigger: "1", qty: 4 },
-    { cardNo: "BD/W54-070", name: "“鳥籠の歌姫”湊友希那", color: "青", kindLabel: "角色", level: 3, cost: 2, trigger: "1", qty: 4 },
-    { cardNo: "BD/W54-048", name: "That Is How I Roll!", color: "綠", kindLabel: "CX", level: 0, cost: 0, trigger: "B", qty: 4 },
-    { cardNo: "BD/W54-067", name: "憧れの先", color: "赤", kindLabel: "CX", level: 0, cost: 0, trigger: "C", qty: 4 }
-  ];
-
   const charts = {};
   let deckCards = [];
   let lastStats = null;
+  let deckLabel = "BanG Dream! 示範牌組";
+  let simUid = 0;
+  let simAnimating = false;
+  const simState = {
+    deck: [],
+    hand: [],
+    waiting: [],
+    selected: new Set(),
+    phase: "idle",
+    log: ""
+  };
 
   function el(id) { return document.getElementById(id); }
 
@@ -658,36 +806,26 @@
   }
 
   function wsImageUrlFromCardNo(cardNo) {
-    const cn = String(cardNo || "").trim();
-    const m = cn.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/);
-    if (!m) return "";
-    const series = m[1].toLowerCase();
-    const setId = m[2].toLowerCase();
-    const num = m[3].toLowerCase();
-    const folder = series + "_" + setId;
-    const alpha = series.slice(0, 1) || "x";
-    return WS_CARD_IMAGE_BASE + "/" + alpha + "/" + folder + "/" + folder + "_" + num + ".png";
+    if (window.WsDecklog && typeof WsDecklog.wsImageUrlFromCardNo === "function") {
+      return WsDecklog.wsImageUrlFromCardNo(cardNo) || "";
+    }
+    return "";
   }
 
-  function expandEntries(rows) {
-    const out = [];
-    rows.forEach(function (r) {
-      const qty = Math.max(0, parseInt(r.qty, 10) || 0);
-      for (let i = 0; i < qty; i++) {
-        out.push({
-          cardNo: r.cardNo,
-          name: r.name,
-          kindLabel: r.kindLabel,
-          color: normalizeColor(r.color),
-          level: r.level,
-          cost: r.cost,
-          trigger: String(r.trigger),
-          imageUrl: wsImageUrlFromCardNo(r.cardNo),
-          qty: qty
-        });
-      }
+  function normalizeDeckCards(cards) {
+    return (cards || []).map(function (c) {
+      return {
+        cardNo: c.cardNo || "",
+        name: c.name || c.cardNo || "未命名",
+        kindLabel: c.kindLabel || c.kindClass || "",
+        color: normalizeColor(c.color),
+        level: c.level,
+        cost: c.cost,
+        trigger: c.trigger != null ? String(c.trigger) : "",
+        imageUrl: c.imageUrl || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : ""),
+        features: c.features || []
+      };
     });
-    return out;
   }
 
   function aggregateByCard(cards) {
@@ -705,7 +843,10 @@
   }
 
   function classifyKind(c) {
-    const k = String(c.kindLabel || "");
+    if (window.WsDecklog && typeof WsDecklog.classifyKind === "function") {
+      return WsDecklog.classifyKind(c);
+    }
+    const k = String(c.kindLabel || c.kindClass || "");
     if (/CX|名場|climax/i.test(k)) return "CX";
     if (/事件|event/i.test(k)) return "事件";
     if (/角色|character|chara/i.test(k)) return "角色";
@@ -885,11 +1026,13 @@
     el("rowFront").innerHTML = front.map(function (c, i) { return slot(c, false, 80 + i * 55); }).join("");
     el("rowCx").innerHTML = cxs.map(function (c, i) { return slot(c, true, 120 + i * 60); }).join("");
 
-    el("pileDeck").textContent = String(cards.length);
+    if (simState.phase === "idle") {
+      el("pileDeck").textContent = String(cards.length);
+      el("pileWait").textContent = "0";
+    }
     el("pileStock").textContent = "—";
     el("pileClock").textContent = "—";
-    el("pileWait").textContent = "—";
-    el("deckMeta").textContent = agg.length + " 種 · " + cards.length + " 張 · 展示模式（示範牌組）";
+    el("deckMeta").textContent = agg.length + " 種 · " + cards.length + " 張";
   }
 
   function renderLegend(stats) {
@@ -1029,8 +1172,8 @@
   }
 
   async function loadPrice(stats, cards) {
-    el("priceMain").textContent = "展示中";
-    el("priceMeta").textContent = "大屏示範模式：行情數字為可選加強，連線失敗時仍以結構數據為主。";
+    el("priceMain").textContent = "—";
+    el("priceMeta").textContent = "載入行情中…";
     el("kpiKinds").textContent = ["角色", "事件", "CX"].filter(function (k) { return stats.kindCount[k]; }).length + " 類";
     el("kpiAvg").textContent = "—";
 
@@ -1074,11 +1217,11 @@
         el("kpiAvg").textContent = "¥" + Math.round(sum / hit).toLocaleString("ja-JP");
       } else {
         el("priceMain").textContent = "—";
-        el("priceMeta").textContent = "示範展示：行情來源暫時無法取得，結構數據仍完整。";
+        el("priceMeta").textContent = "行情來源暫時無法取得，結構數據仍完整。";
         el("kpiAvg").textContent = "—";
       }
     } catch (e) {
-      el("priceMeta").textContent = "示範展示：行情略過（" + (e && e.message ? e.message : "error") + "）";
+      el("priceMeta").textContent = "行情略過（" + (e && e.message ? e.message : "error") + "）";
     }
   }
 
@@ -1089,8 +1232,298 @@
         document.querySelectorAll(".nav-item").forEach(function (b) { b.classList.remove("is-active"); });
         btn.classList.add("is-active");
         const focus = btn.getAttribute("data-focus");
-        screen.className = "screen hud" + (focus && focus !== "all" ? " is-focus-" + focus : "");
+        var loading = screen.classList.contains("is-loading");
+        screen.className = "screen hud" + (focus && focus !== "all" ? " is-focus-" + focus : "") + (loading ? " is-loading" : "");
+        if (focus === "sim" && simState.phase === "idle" && deckCards.length) {
+          /* keep stage visible until deal */
+        }
       });
+    });
+  }
+
+  /* ——— Shuffle / Opening / Mulligan ——— */
+  function cloneSimCard(c) {
+    simUid += 1;
+    return {
+      simId: "s" + simUid,
+      cardNo: c.cardNo || "",
+      name: c.name || c.cardNo || "未命名",
+      kindLabel: c.kindLabel || "",
+      color: c.color || "",
+      level: c.level,
+      cost: c.cost,
+      trigger: c.trigger,
+      imageUrl: c.imageUrl || (c.cardNo ? wsImageUrlFromCardNo(c.cardNo) : ""),
+      kind: classifyKind(c)
+    };
+  }
+
+  function fisherYates(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
+  }
+
+  function buildShuffledDeck(cards) {
+    return fisherYates(cards.map(cloneSimCard));
+  }
+
+  function drawFromDeck(n) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      if (!simState.deck.length) break;
+      out.push(simState.deck.pop());
+    }
+    return out;
+  }
+
+  function setSimPhase(phase, label) {
+    simState.phase = phase;
+    var node = el("simPhase");
+    if (!node) return;
+    node.textContent = label;
+    node.className = "sim-phase" + (
+      phase === "opening" ? " is-mull" :
+      phase === "done" ? " is-done" :
+      phase === "idle" && label !== "尚未開始" ? " is-ready" : ""
+    );
+  }
+
+  function updateSimButtons() {
+    var hasDeck = deckCards.length > 0;
+    var opening = simState.phase === "opening";
+    var done = simState.phase === "done";
+    var busy = simAnimating;
+    var deal = el("btnSimDeal");
+    var mull = el("btnSimMulligan");
+    if (!deal || !mull) return;
+    deal.disabled = !hasDeck || busy;
+    deal.textContent = (opening || done) ? "重新洗牌起手" : "洗牌並起手";
+    mull.hidden = !opening;
+    mull.disabled = !opening || simState.selected.size === 0 || busy;
+    var n = simState.selected.size;
+    mull.textContent = n ? ("確認調度（" + n + "）") : "確認調度";
+  }
+
+  function handCardHtml(c, delay) {
+    var hex = COLOR_MAP[c.color] || "#64748b";
+    var kind = c.kind || classifyKind(c);
+    var selected = simState.selected.has(c.simId);
+    var shortName = String(c.name || "").replace(/^["“]|["”]$/g, "");
+    var lv = (kind !== "CX" && c.level != null && !isNaN(c.level))
+      ? ('<span class="lv">Lv' + c.level + "</span>") : "";
+    return '<button type="button" class="hand-card' + (selected ? " is-selected" : "") +
+      '" data-sim-id="' + escapeHtml(c.simId) + '" style="animation-delay:' + delay +
+      'ms;--card-color:' + hex + '" title="' + escapeHtml(c.name) + '">' +
+      lv +
+      '<div class="card-face"><div class="fname">' + escapeHtml(shortName) +
+      '</div><div class="fmeta">' + escapeHtml(kind + (c.cardNo ? " · " + c.cardNo : "")) + "</div></div>" +
+      (c.imageUrl
+        ? ('<img src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onload="this.parentElement.classList.add(\'has-art\')" onerror="this.classList.add(\'is-missing\')">')
+        : "") +
+      "</button>";
+  }
+
+  function renderSimHand() {
+    var overlay = el("handOverlay");
+    var row = el("handRow");
+    if (!overlay || !row) return;
+    if (!simState.hand.length || simState.phase === "idle") {
+      overlay.classList.remove("is-open");
+      row.innerHTML = "";
+      return;
+    }
+    overlay.classList.add("is-open");
+    row.innerHTML = simState.hand.map(function (c, i) {
+      return handCardHtml(c, i * 60);
+    }).join("");
+  }
+
+  function renderSimWaiting() {
+    var strip = el("waitingStrip");
+    if (!strip) return;
+    if (!simState.waiting.length) {
+      strip.innerHTML = "";
+      return;
+    }
+    strip.innerHTML = simState.waiting.map(function (c) {
+      return '<span class="waiting-chip" title="' + escapeHtml(c.cardNo || "") + '">' +
+        escapeHtml(c.name) + "</span>";
+    }).join("");
+  }
+
+  function renderSimPiles() {
+    if (simState.phase === "idle") {
+      el("pileDeck").textContent = String(deckCards.length || 0);
+      el("pileWait").textContent = "0";
+      return;
+    }
+    el("pileDeck").textContent = String(simState.deck.length);
+    el("pileWait").textContent = String(simState.waiting.length);
+  }
+
+  function renderSimAll() {
+    renderSimHand();
+    renderSimWaiting();
+    renderSimPiles();
+    updateSimButtons();
+    el("simLog").textContent = simState.log || "";
+    el("modeBadge").textContent = simState.phase === "idle" ? "VIRTUAL TABLE" : "HAND SIM";
+  }
+
+  function resetSimUi() {
+    simState.deck = [];
+    simState.hand = [];
+    simState.waiting = [];
+    simState.selected = new Set();
+    simState.phase = "idle";
+    simState.log = deckCards.length
+      ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 →「確認調度」。"
+      : "請先匯入 DeckLog 或載入示範牌組。";
+    setSimPhase("idle", deckCards.length ? "可開始模擬" : "尚未開始");
+    renderSimAll();
+  }
+
+  function simDealOpening() {
+    if (!deckCards.length) {
+      toast("請先匯入牌組");
+      return;
+    }
+    if (simAnimating) return;
+    simState.deck = buildShuffledDeck(deckCards);
+    simState.hand = drawFromDeck(OPENING_HAND);
+    simState.waiting = [];
+    simState.selected = new Set();
+    simState.phase = "opening";
+    simState.log = "已洗牌並抽出起手 " + simState.hand.length + " 張。點選要換掉的牌，再按「確認調度」。";
+    setSimPhase("opening", "可調度");
+    // 切到底欄「模擬」焦點
+    document.querySelectorAll(".nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+    var nav = el("navSim");
+    if (nav) nav.classList.add("is-active");
+    var screen = el("screen");
+    screen.className = "screen hud is-focus-sim";
+    renderSimAll();
+  }
+
+  function toggleSimSelect(simId) {
+    if (simState.phase !== "opening" || simAnimating) return;
+    if (simState.selected.has(simId)) simState.selected.delete(simId);
+    else simState.selected.add(simId);
+    renderSimAll();
+  }
+
+  function finishSimMulligan(dump, drawn) {
+    simState.waiting = simState.waiting.concat(dump);
+    simState.hand = simState.hand.filter(function (c) {
+      return !simState.selected.has(c.simId);
+    }).concat(drawn);
+    var dumpN = dump.length;
+    simState.selected = new Set();
+    simState.phase = "done";
+    simState.log = "調度完成：丟棄 " + dumpN + " 張至等待室，補抽 " + drawn.length + " 張。";
+    setSimPhase("done", "調度完成");
+    simAnimating = false;
+    renderSimAll();
+  }
+
+  function applySimMulligan() {
+    if (simState.phase !== "opening" || simAnimating) return;
+    var ids = Array.from(simState.selected);
+    if (!ids.length) return;
+    if (simState.deck.length < ids.length) {
+      simState.log = "牌庫剩餘不足，無法重抽 " + ids.length + " 張（剩 " + simState.deck.length + "）。";
+      renderSimAll();
+      return;
+    }
+    var dump = [];
+    for (var i = 0; i < simState.hand.length; i++) {
+      if (simState.selected.has(simState.hand[i].simId)) dump.push(simState.hand[i]);
+    }
+    var drawn = drawFromDeck(dump.length);
+    simAnimating = true;
+    updateSimButtons();
+    window.setTimeout(function () {
+      finishSimMulligan(dump, drawn);
+    }, 280);
+  }
+
+  function setLoading(on) {
+    var screen = el("screen");
+    if (!screen) return;
+    screen.classList.toggle("is-loading", !!on);
+    el("btnImport").disabled = !!on;
+    el("btnSample").disabled = !!on;
+  }
+
+  function applyDeck(cards, label) {
+    deckCards = normalizeDeckCards(cards);
+    deckLabel = label || "牌組";
+    el("deckName").textContent = deckLabel;
+    lastStats = analyze(deckCards);
+    renderRules(lastStats);
+    renderOdds(deckCards, lastStats);
+    renderTable(deckCards);
+    renderLegend(lastStats);
+    renderCharts(lastStats);
+    loadPrice(lastStats, deckCards);
+    resetSimUi();
+    resizeCharts();
+  }
+
+  async function importByCode(code) {
+    if (!window.WsDecklog) throw new Error("WsDecklog 未載入");
+    var trimmed = String(code || "").trim();
+    if (!trimmed) throw new Error("請輸入 DeckLog 代碼");
+    setLoading(true);
+    toast("正在取得 DeckLog…");
+    try {
+      var result = await WsDecklog.fetchDecklogByCode(trimmed);
+      applyDeck(result.cards, "DeckLog " + (result.code || trimmed));
+      toast("已匯入 " + result.cards.length + " 張");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadSampleDeck() {
+    setLoading(true);
+    toast("載入示範牌組…");
+    try {
+      if (window.WsDecklog && typeof WsDecklog.loadSampleBandDeck === "function") {
+        var result = await WsDecklog.loadSampleBandDeck();
+        applyDeck(result.cards, "BanG Dream! 示範牌組");
+      } else {
+        throw new Error("無法載入示範牌組");
+      }
+      toast("已載入示範牌組");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function bindImportAndSim() {
+    el("importForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      importByCode(el("deckCode").value).catch(function (err) {
+        toast(err && err.message ? err.message : String(err));
+      });
+    });
+    el("btnSample").addEventListener("click", function () {
+      loadSampleDeck().catch(function (err) {
+        toast(err && err.message ? err.message : String(err));
+      });
+    });
+    el("btnSimDeal").addEventListener("click", simDealOpening);
+    el("btnSimMulligan").addEventListener("click", applySimMulligan);
+    el("handRow").addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-sim-id]");
+      if (!btn) return;
+      toggleSimSelect(btn.getAttribute("data-sim-id"));
     });
   }
 
@@ -1147,21 +1580,28 @@
     bindNav();
     bindTheme();
     bindFullscreen();
+    bindImportAndSim();
 
-    deckCards = expandEntries(SAMPLE_ROWS);
-    lastStats = analyze(deckCards);
-    renderRules(lastStats);
-    renderOdds(deckCards, lastStats);
-    renderTable(deckCards);
-    renderLegend(lastStats);
-    renderCharts(lastStats);
-    loadPrice(lastStats, deckCards);
-    // 等字體／首幀後再 fit 一次，避免初始量測偏差
     requestAnimationFrame(function () {
       onViewportChange();
       setTimeout(onViewportChange, 120);
     });
-    toast("已載入 BanG Dream! 示範牌組");
+
+    // URL ?code= 可直接帶 DeckLog；否則載入示範
+    var params = new URLSearchParams(window.location.search || "");
+    var code = params.get("code");
+    if (code) {
+      el("deckCode").value = code;
+      importByCode(code).catch(function (err) {
+        toast(err && err.message ? err.message : String(err));
+        return loadSampleDeck();
+      });
+    } else {
+      loadSampleDeck().catch(function (err) {
+        toast(err && err.message ? err.message : String(err));
+        resetSimUi();
+      });
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
