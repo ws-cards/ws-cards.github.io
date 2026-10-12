@@ -3610,11 +3610,13 @@ background: rgba(30, 30, 30, 0.9);
    ========================================================= */
 
 :root {
-    --desk-foil: #9a7b45;
-    --desk-foil-deep: #6e5832;
-    --desk-surface: rgba(255, 255, 255, 0.86);
-    --desk-surface-strong: #ffffff;
-    --desk-line: rgba(23, 25, 29, 0.12);
+    --desk-foil: #8a6f3a;
+    --desk-foil-deep: #5c4a28;
+    --desk-surface: transparent;
+    --desk-surface-strong: #f7f7f4;
+    --desk-line: rgba(18, 18, 16, 0.28);
+    --desk-ink: #171714;
+    --desk-paper: #f3f3f0;
     --font-display: 'Zen Old Mincho', 'Noto Serif TC', serif;
     --font-ui: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
     --font-serif: 'Noto Serif TC', 'Zen Old Mincho', serif;
@@ -3918,11 +3920,6 @@ body.market-desk-page .market-desk-search .search-hint {
 
 [data-theme="dark"] body.market-desk-page .market-desk-search .form-control:focus {
     background: #1a1814 !important;
-}
-
-/* 淺色：卡面預覽及其下方結果卡邊框，對齊快速搜尋的 desk-line */
-html[data-theme="light"] body.market-desk-page .content .card:not(.market-desk-search) {
-    border: 1px solid var(--desk-line) !important;
 }
 
 /* —— 最近查看縮圖軌道 —— */
@@ -4664,6 +4661,322 @@ body.market-desk-page .external-link-stack > .btn {
 
     body.market-desk-page .price-summary-label {
         font-size: 0.62rem;
+    }
+}
+
+/* =========================================================
+   Light mode — drafting-line desk（對齊 heronaiapp 直線語言）
+   去卡片浮起／圓角／毛玻璃；改以髮絲線、直角、繪圖紙面。
+   深色模式刻意不套用此區塊。
+   ========================================================= */
+html[data-theme="light"] body.market-desk-page {
+    --desk-surface: transparent;
+    --desk-surface-strong: #ffffff;
+    --desk-line: rgba(18, 18, 16, 0.32);
+    --desk-ink: #171714;
+    --desk-paper: #f3f3f0;
+    --fancy-trigger-bg: transparent;
+    --fancy-trigger-fg: var(--desk-ink);
+    --fancy-arrow: #3a3a36;
+    --fancy-panel-bg: #f7f7f4;
+    --fancy-panel-fg: var(--desk-ink);
+    --fancy-divider: rgba(18, 18, 16, 0.18);
+    --fancy-group-bg: rgba(18, 18, 16, 0.04);
+    --fancy-group-fg: rgba(18, 18, 16, 0.48);
+    --fancy-hover-bg: rgba(18, 18, 16, 0.05);
+    --fancy-disabled-bg: rgba(18, 18, 16, 0.03);
+    --fancy-panel-shadow: none;
+    --fancy-trigger-ring: rgba(18, 18, 16, 0.38);
+    color: var(--desk-ink);
+    background-color: var(--desk-paper);
+    background-image:
+        linear-gradient(rgba(18, 18, 16, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18, 18, 16, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-attachment: fixed;
+}
+
+html[data-theme="light"] body.market-desk-page .content-wrapper {
+    background: transparent !important;
+}
+
+/* 面板：直角髮絲線框，無陰影／無玻璃 */
+html[data-theme="light"] body.market-desk-page .content .card,
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search,
+html[data-theme="light"] body.market-desk-page .rarity-variants-card {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid var(--desk-line) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search:hover,
+html[data-theme="light"] body.market-desk-page .content .card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="light"] body.market-desk-page .content .card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--desk-line) !important;
+    border-radius: 0 !important;
+}
+
+html[data-theme="light"] body.market-desk-page .content .card > .card-header .card-title {
+    letter-spacing: 0.04em;
+}
+
+html[data-theme="light"] body.market-desk-page .content .card > .card-body {
+    background: transparent !important;
+}
+
+/* 搜尋區：製圖外框 + 角落十字準星 */
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search {
+    position: relative;
+    border-color: rgba(18, 18, 16, 0.42) !important;
+}
+
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::before,
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 2;
+    border-color: var(--desk-ink);
+    border-style: solid;
+}
+
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1.5px 0 0 1.5px;
+}
+
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::after {
+    right: -1px;
+    bottom: -1px;
+    border-width: 0 1.5px 1.5px 0;
+}
+
+html[data-theme="light"] body.market-desk-page .market-desk-search .form-control {
+    border-radius: 0 !important;
+    background: transparent !important;
+    border-color: rgba(18, 18, 16, 0.42) !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="light"] body.market-desk-page .market-desk-search .form-control:focus {
+    border-color: var(--desk-ink) !important;
+    box-shadow: inset 0 0 0 1px var(--desk-ink) !important;
+    background: rgba(255, 255, 255, 0.55) !important;
+}
+
+html[data-theme="light"] body.market-desk-page .market-status-bar {
+    border-top-color: var(--desk-line);
+}
+
+html[data-theme="light"] body.market-desk-page .market-filter-strip select,
+html[data-theme="light"] body.market-desk-page .fancy-select-trigger {
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+html[data-theme="light"] body.market-desk-page .fancy-select-trigger::before {
+    background: transparent;
+}
+
+html[data-theme="light"] body.market-desk-page .fancy-select-panel,
+html[data-theme="light"] body.market-desk-page .fancy-select-option {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* 品牌／軌道標籤偏製圖註記 */
+html[data-theme="light"] body.market-desk-page .market-desk-kicker,
+html[data-theme="light"] body.market-desk-page .market-search-label,
+html[data-theme="light"] body.market-desk-page .market-rail-label {
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+}
+
+html[data-theme="light"] body.market-desk-page .market-desk-title {
+    color: var(--desk-ink);
+}
+
+/* 最近查看：直角縮圖磚 */
+html[data-theme="light"] body.market-desk-page .history-item {
+    border-radius: 0;
+    border-color: var(--desk-line);
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+html[data-theme="light"] body.market-desk-page .history-item:hover {
+    transform: none;
+    border-color: var(--desk-ink);
+    box-shadow: none;
+}
+
+html[data-theme="light"] body.market-desk-page .history-thumb {
+    border-radius: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .history-count,
+html[data-theme="light"] body.market-desk-page .history-clear-btn,
+html[data-theme="light"] body.market-desk-page .history-rare-badge {
+    border-radius: 0;
+}
+
+/* 價格摘要：格線單元，非玻璃磚 */
+html[data-theme="light"] body.market-desk-page .price-summary-grid {
+    gap: 0;
+    border: 1px solid var(--desk-line);
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item {
+    border: 0;
+    border-right: 1px solid var(--desk-line);
+    border-bottom: 1px solid var(--desk-line);
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item:nth-child(2n) {
+    border-right: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item:nth-last-child(-n+2) {
+    border-bottom: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item::before {
+    display: none;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item:hover {
+    transform: none;
+    background: rgba(18, 18, 16, 0.04);
+    border-color: var(--desk-line);
+    box-shadow: none;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item:hover .price-summary-label {
+    color: rgba(18, 18, 16, 0.55);
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-item:hover .price-summary-value,
+html[data-theme="light"] body.market-desk-page .price-summary-item:hover .price-summary-icon i,
+html[data-theme="light"] body.market-desk-page .price-summary-item:hover .price-summary-icon svg {
+    color: var(--desk-ink);
+    text-shadow: none;
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-label {
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    color: rgba(18, 18, 16, 0.55);
+}
+
+html[data-theme="light"] body.market-desk-page .price-summary-value {
+    font-family: var(--font-mono);
+    text-shadow: none;
+    color: var(--desk-ink);
+}
+
+/* 卡片資訊列：底線分隔，去掉色塊感 */
+html[data-theme="light"] body.market-desk-page .info-item {
+    background: transparent;
+    border-radius: 0;
+    border: 1px solid var(--desk-line);
+}
+
+html[data-theme="light"] body.market-desk-page .info-row {
+    background: transparent;
+    border-radius: 0;
+    border-left: 0;
+    border-bottom: 1px solid rgba(18, 18, 16, 0.12);
+}
+
+html[data-theme="light"] body.market-desk-page .info-row:last-child {
+    border-bottom: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .info-value {
+    background: transparent;
+    border: 1px solid rgba(18, 18, 16, 0.18);
+    border-radius: 0;
+    font-family: var(--font-mono);
+}
+
+html[data-theme="light"] body.market-desk-page .info-row i {
+    color: var(--desk-foil-deep);
+}
+
+/* 圖表／外連：直角線框 */
+html[data-theme="light"] body.market-desk-page .modern-chart,
+html[data-theme="light"] body.market-desk-page .chart {
+    border-radius: 0;
+    background: transparent;
+}
+
+html[data-theme="light"] body.market-desk-page .chart-period,
+html[data-theme="light"] body.market-desk-page .price-time-range,
+html[data-theme="light"] body.market-desk-page .stock-time-range {
+    border-radius: 0 !important;
+}
+
+html[data-theme="light"] body.market-desk-page .external-link-stack > .btn {
+    border-radius: 0 !important;
+    border: 1px solid var(--desk-line) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+html[data-theme="light"] body.market-desk-page .external-link-stack > .btn:hover {
+    background: rgba(18, 18, 16, 0.04) !important;
+    border-color: var(--desk-ink) !important;
+}
+
+html[data-theme="light"] body.market-desk-page .modern-card-image,
+html[data-theme="light"] body.market-desk-page .card-image-wrap {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+html[data-theme="light"] body.market-desk-page .card-favorite-btn {
+    border-radius: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .advanced-filter-btn {
+    border-radius: 0 !important;
+}
+
+html[data-theme="light"] body.market-desk-page .image-placeholder {
+    border: 1px dashed rgba(18, 18, 16, 0.22);
+    width: 100%;
+    padding: 1.5rem 1rem;
+}
+
+/* 手機：維持直線，略降格線密度 */
+@media (max-width: 768px) {
+    html[data-theme="light"] body.market-desk-page {
+        background-size: 36px 36px;
+    }
+
+    html[data-theme="light"] body.market-desk-page .content .card:not(.market-desk-search) {
+        border-radius: 0 !important;
     }
 }
 
