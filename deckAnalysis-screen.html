@@ -372,11 +372,13 @@
       letter-spacing: 0.28em; color: var(--cyan);
     }
     .hand-row {
-      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      display: flex; gap: 14px; justify-content: center; align-items: center;
+      flex-wrap: wrap;
     }
     .hand-card {
       position: relative;
       width: 148px; height: 208px;
+      flex: 0 0 auto;
       border-radius: 8px; overflow: hidden;
       border: 1px solid rgba(56,189,248,.5);
       background: #0a1528;
@@ -384,6 +386,10 @@
       cursor: pointer;
       transition: transform .2s, box-shadow .2s, border-color .2s;
       animation: cardIn .55s ease both;
+    }
+    /* CX／名場為橫向卡，起手時維持橫版 */
+    .hand-card.is-cx {
+      width: 228px; height: 162px;
     }
     .hand-card:hover { transform: translateY(-8px) scale(1.04); }
     .hand-card.is-selected {
@@ -393,18 +399,27 @@
     }
     .hand-card.is-selected::after {
       content: "換";
-      position: absolute; top: 8px; right: 8px;
+      position: absolute; top: 8px; right: 8px; z-index: 3;
       font-family: var(--font-mono); font-size: 12px; font-weight: 700;
       color: #111; background: var(--warn); padding: 2px 6px;
     }
     .hand-card img {
       width: 100%; height: 100%; object-fit: cover; display: block;
     }
+    .hand-card.is-cx img { object-fit: cover; object-position: center; }
     .hand-card img.is-missing { display: none; }
     .hand-card .card-face { padding: 26px 10px 24px; }
+    .hand-card.is-cx .card-face { padding: 22px 14px 22px 16px; }
+    .hand-card.is-cx .fname { font-size: 14px; }
     .hand-card.has-art .card-face { display: none; }
     .hand-card .lv, .hand-card .qty { z-index: 2; }
     .hand-card .qty { display: none; }
+    .hand-card .cx-tag {
+      position: absolute; left: 6px; top: 6px; z-index: 2;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      background: rgba(6,12,24,.85); color: var(--warn);
+      border: 1px solid var(--warn); padding: 2px 6px;
+    }
     .waiting-strip {
       display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
       max-width: 90%;
@@ -700,6 +715,7 @@
               <span class="sim-phase is-ready" id="simPhase">可開始模擬</span>
               <button type="button" class="hud-btn is-primary" id="btnSimDeal">洗牌並起手</button>
               <button type="button" class="hud-btn is-warn" id="btnSimMulligan" hidden disabled>確認調度</button>
+              <button type="button" class="hud-btn" id="btnSimEnd" hidden>結束模擬</button>
               <span class="badge" id="modeBadge">VIRTUAL TABLE</span>
             </div>
           </div>
@@ -723,6 +739,7 @@
               <div class="hand-title">OPENING HAND · 點選要換掉的牌</div>
               <div class="hand-row" id="handRow"></div>
               <div class="waiting-strip" id="waitingStrip"></div>
+              <button type="button" class="hud-btn" id="btnSimEndOverlay">結束模擬</button>
             </div>
           </div>
           <div class="sim-log" id="simLog" role="status"></div>
@@ -1297,29 +1314,38 @@
     var hasDeck = deckCards.length > 0;
     var opening = simState.phase === "opening";
     var done = simState.phase === "done";
+    var active = opening || done;
     var busy = simAnimating;
     var deal = el("btnSimDeal");
     var mull = el("btnSimMulligan");
+    var endBtn = el("btnSimEnd");
     if (!deal || !mull) return;
     deal.disabled = !hasDeck || busy;
-    deal.textContent = (opening || done) ? "重新洗牌起手" : "洗牌並起手";
+    deal.textContent = active ? "重新洗牌起手" : "洗牌並起手";
     mull.hidden = !opening;
     mull.disabled = !opening || simState.selected.size === 0 || busy;
     var n = simState.selected.size;
     mull.textContent = n ? ("確認調度（" + n + "）") : "確認調度";
+    if (endBtn) {
+      endBtn.hidden = !active;
+      endBtn.disabled = busy;
+    }
   }
 
   function handCardHtml(c, delay) {
     var hex = COLOR_MAP[c.color] || "#64748b";
     var kind = c.kind || classifyKind(c);
+    var isCx = kind === "CX";
     var selected = simState.selected.has(c.simId);
     var shortName = String(c.name || "").replace(/^["“]|["”]$/g, "");
-    var lv = (kind !== "CX" && c.level != null && !isNaN(c.level))
-      ? ('<span class="lv">Lv' + c.level + "</span>") : "";
-    return '<button type="button" class="hand-card' + (selected ? " is-selected" : "") +
+    var badge = isCx
+      ? '<span class="cx-tag">CX</span>'
+      : ((c.level != null && !isNaN(c.level)) ? ('<span class="lv">Lv' + c.level + "</span>") : "");
+    return '<button type="button" class="hand-card' + (isCx ? " is-cx" : "") +
+      (selected ? " is-selected" : "") +
       '" data-sim-id="' + escapeHtml(c.simId) + '" style="animation-delay:' + delay +
       'ms;--card-color:' + hex + '" title="' + escapeHtml(c.name) + '">' +
-      lv +
+      badge +
       '<div class="card-face"><div class="fname">' + escapeHtml(shortName) +
       '</div><div class="fmeta">' + escapeHtml(kind + (c.cardNo ? " · " + c.cardNo : "")) + "</div></div>" +
       (c.imageUrl
@@ -1375,17 +1401,46 @@
     el("modeBadge").textContent = simState.phase === "idle" ? "VIRTUAL TABLE" : "HAND SIM";
   }
 
-  function resetSimUi() {
+  function resetSimUi(opts) {
+    opts = opts || {};
+    simAnimating = false;
     simState.deck = [];
     simState.hand = [];
     simState.waiting = [];
     simState.selected = new Set();
     simState.phase = "idle";
-    simState.log = deckCards.length
-      ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 →「確認調度」。"
-      : "請先匯入 DeckLog 或載入示範牌組。";
+    simState.log = opts.log != null
+      ? opts.log
+      : (deckCards.length
+        ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 →「確認調度」。"
+        : "請先匯入 DeckLog 或載入示範牌組。");
     setSimPhase("idle", deckCards.length ? "可開始模擬" : "尚未開始");
     renderSimAll();
+    // 結束模擬時回到總覽，並刷新 DECK 張數
+    if (opts.exitFocus) {
+      document.querySelectorAll(".nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+      var allBtn = document.querySelector('.nav-item[data-focus="all"]');
+      if (allBtn) allBtn.classList.add("is-active");
+      var screen = el("screen");
+      if (screen) {
+        var loading = screen.classList.contains("is-loading");
+        screen.className = "screen hud" + (loading ? " is-loading" : "");
+      }
+    }
+    if (deckCards.length) {
+      el("pileDeck").textContent = String(deckCards.length);
+      el("pileWait").textContent = "0";
+    }
+  }
+
+  function endSimSession() {
+    if (simAnimating) return;
+    if (simState.phase === "idle") return;
+    resetSimUi({
+      exitFocus: true,
+      log: "已結束模擬，回到牌桌總覽。可再按「洗牌並起手」重來。"
+    });
+    toast("已結束模擬");
   }
 
   function simDealOpening() {
@@ -1520,10 +1575,18 @@
     });
     el("btnSimDeal").addEventListener("click", simDealOpening);
     el("btnSimMulligan").addEventListener("click", applySimMulligan);
+    el("btnSimEnd").addEventListener("click", endSimSession);
+    el("btnSimEndOverlay").addEventListener("click", endSimSession);
     el("handRow").addEventListener("click", function (e) {
       var btn = e.target.closest("[data-sim-id]");
       if (!btn) return;
       toggleSimSelect(btn.getAttribute("data-sim-id"));
+    });
+    // Esc 結束模擬
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && (simState.phase === "opening" || simState.phase === "done")) {
+        endSimSession();
+      }
     });
   }
 
