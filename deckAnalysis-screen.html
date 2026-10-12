@@ -715,6 +715,7 @@
               <span class="sim-phase is-ready" id="simPhase">可開始模擬</span>
               <button type="button" class="hud-btn is-primary" id="btnSimDeal">洗牌並起手</button>
               <button type="button" class="hud-btn is-warn" id="btnSimMulligan" hidden disabled>確認調度</button>
+              <button type="button" class="hud-btn" id="btnSimEnd" hidden>結束模擬</button>
               <span class="badge" id="modeBadge">VIRTUAL TABLE</span>
             </div>
           </div>
@@ -738,6 +739,7 @@
               <div class="hand-title">OPENING HAND · 點選要換掉的牌</div>
               <div class="hand-row" id="handRow"></div>
               <div class="waiting-strip" id="waitingStrip"></div>
+              <button type="button" class="hud-btn" id="btnSimEndOverlay">結束模擬</button>
             </div>
           </div>
           <div class="sim-log" id="simLog" role="status"></div>
@@ -1312,16 +1314,22 @@
     var hasDeck = deckCards.length > 0;
     var opening = simState.phase === "opening";
     var done = simState.phase === "done";
+    var active = opening || done;
     var busy = simAnimating;
     var deal = el("btnSimDeal");
     var mull = el("btnSimMulligan");
+    var endBtn = el("btnSimEnd");
     if (!deal || !mull) return;
     deal.disabled = !hasDeck || busy;
-    deal.textContent = (opening || done) ? "重新洗牌起手" : "洗牌並起手";
+    deal.textContent = active ? "重新洗牌起手" : "洗牌並起手";
     mull.hidden = !opening;
     mull.disabled = !opening || simState.selected.size === 0 || busy;
     var n = simState.selected.size;
     mull.textContent = n ? ("確認調度（" + n + "）") : "確認調度";
+    if (endBtn) {
+      endBtn.hidden = !active;
+      endBtn.disabled = busy;
+    }
   }
 
   function handCardHtml(c, delay) {
@@ -1393,17 +1401,46 @@
     el("modeBadge").textContent = simState.phase === "idle" ? "VIRTUAL TABLE" : "HAND SIM";
   }
 
-  function resetSimUi() {
+  function resetSimUi(opts) {
+    opts = opts || {};
+    simAnimating = false;
     simState.deck = [];
     simState.hand = [];
     simState.waiting = [];
     simState.selected = new Set();
     simState.phase = "idle";
-    simState.log = deckCards.length
-      ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 →「確認調度」。"
-      : "請先匯入 DeckLog 或載入示範牌組。";
+    simState.log = opts.log != null
+      ? opts.log
+      : (deckCards.length
+        ? "點「洗牌並起手」抽 5 張 → 點選要換掉的牌 →「確認調度」。"
+        : "請先匯入 DeckLog 或載入示範牌組。");
     setSimPhase("idle", deckCards.length ? "可開始模擬" : "尚未開始");
     renderSimAll();
+    // 結束模擬時回到總覽，並刷新 DECK 張數
+    if (opts.exitFocus) {
+      document.querySelectorAll(".nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+      var allBtn = document.querySelector('.nav-item[data-focus="all"]');
+      if (allBtn) allBtn.classList.add("is-active");
+      var screen = el("screen");
+      if (screen) {
+        var loading = screen.classList.contains("is-loading");
+        screen.className = "screen hud" + (loading ? " is-loading" : "");
+      }
+    }
+    if (deckCards.length) {
+      el("pileDeck").textContent = String(deckCards.length);
+      el("pileWait").textContent = "0";
+    }
+  }
+
+  function endSimSession() {
+    if (simAnimating) return;
+    if (simState.phase === "idle") return;
+    resetSimUi({
+      exitFocus: true,
+      log: "已結束模擬，回到牌桌總覽。可再按「洗牌並起手」重來。"
+    });
+    toast("已結束模擬");
   }
 
   function simDealOpening() {
@@ -1538,10 +1575,18 @@
     });
     el("btnSimDeal").addEventListener("click", simDealOpening);
     el("btnSimMulligan").addEventListener("click", applySimMulligan);
+    el("btnSimEnd").addEventListener("click", endSimSession);
+    el("btnSimEndOverlay").addEventListener("click", endSimSession);
     el("handRow").addEventListener("click", function (e) {
       var btn = e.target.closest("[data-sim-id]");
       if (!btn) return;
       toggleSimSelect(btn.getAttribute("data-sim-id"));
+    });
+    // Esc 結束模擬
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && (simState.phase === "opening" || simState.phase === "done")) {
+        endSimSession();
+      }
     });
   }
 
