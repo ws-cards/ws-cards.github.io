@@ -4700,16 +4700,71 @@ html[data-theme="light"] body.market-desk-page .content-wrapper {
     background: transparent !important;
 }
 
-/* 面板：直角髮絲線框，無陰影／無玻璃 */
+/* 整頁一張製圖紙：外框 + 內部分區線，不要一張張浮起卡片 */
+html[data-theme="light"] body.market-desk-page .content > .container-fluid {
+    position: relative;
+    border: 1px solid rgba(18, 18, 16, 0.42);
+    background: color-mix(in srgb, var(--desk-paper) 88%, #ffffff);
+    padding-left: 0;
+    padding-right: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .content > .container-fluid::before,
+html[data-theme="light"] body.market-desk-page .content > .container-fluid::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    z-index: 3;
+    border-color: var(--desk-ink);
+    border-style: solid;
+}
+
+html[data-theme="light"] body.market-desk-page .content > .container-fluid::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1.5px 0 0 1.5px;
+}
+
+html[data-theme="light"] body.market-desk-page .content > .container-fluid::after {
+    right: -1px;
+    bottom: -1px;
+    border-width: 0 1.5px 1.5px 0;
+}
+
+html[data-theme="light"] body.market-desk-page .content .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .content .row > [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+html[data-theme="light"] body.market-desk-page .market-desk {
+    margin-bottom: 0;
+    padding: 0.75rem 0.85rem 0.55rem;
+    border-bottom: 1px solid var(--desk-line);
+}
+
+/* 區塊：只留水平分隔線，取消獨立外框／陰影／圓角 */
 html[data-theme="light"] body.market-desk-page .content .card,
 html[data-theme="light"] body.market-desk-page .search-card.market-desk-search,
 html[data-theme="light"] body.market-desk-page .rarity-variants-card {
     background: transparent !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border: 1px solid var(--desk-line) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--desk-line) !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    margin-bottom: 0 !important;
+}
+
+html[data-theme="light"] body.market-desk-page .search-card.market-desk-search {
+    border-bottom: 0 !important;
 }
 
 html[data-theme="light"] body.market-desk-page .search-card.market-desk-search:hover,
@@ -4732,34 +4787,20 @@ html[data-theme="light"] body.market-desk-page .content .card > .card-body {
     background: transparent !important;
 }
 
-/* 搜尋區：製圖外框 + 角落十字準星 */
-html[data-theme="light"] body.market-desk-page .search-card.market-desk-search {
-    position: relative;
-    border-color: rgba(18, 18, 16, 0.42) !important;
-}
+/* 桌面雙欄：中間一條垂直髮絲線 */
+@media (min-width: 992px) {
+    html[data-theme="light"] body.market-desk-page .content .row > .col-lg-6 {
+        border-top: 0;
+    }
 
-html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::before,
-html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::after {
-    content: "";
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    pointer-events: none;
-    z-index: 2;
-    border-color: var(--desk-ink);
-    border-style: solid;
-}
+    html[data-theme="light"] body.market-desk-page .content .row > .col-lg-6:nth-child(2) {
+        border-right: 1px solid var(--desk-line);
+    }
 
-html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::before {
-    top: -1px;
-    left: -1px;
-    border-width: 1.5px 0 0 1.5px;
-}
-
-html[data-theme="light"] body.market-desk-page .search-card.market-desk-search::after {
-    right: -1px;
-    bottom: -1px;
-    border-width: 0 1.5px 1.5px 0;
+    html[data-theme="light"] body.market-desk-page .content .row > .col-lg-6 .card:last-child,
+    html[data-theme="light"] body.market-desk-page .content .row > .col-lg-6 .rarity-variants-card:last-child {
+        border-bottom: 0 !important;
+    }
 }
 
 html[data-theme="light"] body.market-desk-page .market-desk-search .form-control {
@@ -4969,14 +5010,20 @@ html[data-theme="light"] body.market-desk-page .image-placeholder {
     padding: 1.5rem 1rem;
 }
 
-/* 手機：維持直線，略降格線密度 */
+/* 手機：維持直線，略降格線密度；欄位改為水平線堆疊 */
 @media (max-width: 768px) {
     html[data-theme="light"] body.market-desk-page {
         background-size: 36px 36px;
     }
 
-    html[data-theme="light"] body.market-desk-page .content .card:not(.market-desk-search) {
+    html[data-theme="light"] body.market-desk-page .content .card:not(.market-desk-search),
+    html[data-theme="light"] body.market-desk-page .content .card:not(.market-desk-search):last-child {
         border-radius: 0 !important;
+        border-bottom: 1px solid var(--desk-line) !important;
+    }
+
+    html[data-theme="light"] body.market-desk-page .market-desk {
+        padding: 0.55rem 0.65rem 0.4rem;
     }
 }
 
