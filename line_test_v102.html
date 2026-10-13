@@ -400,11 +400,8 @@
                         <h5 class="card-title">
                           <i class="fas fa-image mr-2"></i>
                           卡面預覽
-                        </h5>                      
-                        <div class="card-tools">
-                          <!-- 預設收合；展開由視差交接驅動（亦可手動切換） -->
-                          <button type="button" class="btn btn-tool" id="previewFoldBtn" data-card-widget="collapse" data-animation-speed="500" aria-label="展開卡面預覽" aria-expanded="false"><i class="fas fa-plus" aria-hidden="true"></i></button>
-                        </div>				
+                        </h5>
+                        <!-- 開合改由視差交接驅動，不提供手動按鈕以免打亂飛入 -->
                     </div>
 
                     <div class="card-body" id="previewCardBody">
@@ -1323,6 +1320,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function expandCollapsedCard(card) {
         if (!card || !card.classList.contains('collapsed-card')) return;
+        // 卡面預覽開合由視差接管，禁止點標題手動展開
+        if (card.id === 'preview-card-tag' || card.classList.contains('preview-card')) return;
         var toggle = card.querySelector('[data-card-widget="collapse"]');
         if (window.jQuery && toggle && jQuery.fn.CardWidget) {
             jQuery(toggle).CardWidget('expand');
@@ -1334,8 +1333,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         var header = e.target.closest('.card-header');
         if (!header || isInteractive(e.target)) return;
+        var card = header.closest('.card');
+        if (card && (card.id === 'preview-card-tag' || card.classList.contains('preview-card'))) return;
 
-        expandCollapsedCard(header.closest('.card'));
+        expandCollapsedCard(card);
     });
 
     document.addEventListener('keydown', function(e) {

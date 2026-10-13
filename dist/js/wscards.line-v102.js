@@ -7264,9 +7264,7 @@ return {
     var targetImg = null;
     var previewCard = null;
     var previewBody = null;
-    var previewFoldBtn = null;
     var previewHeader = null;
-    var userUnlockedPreview = false;
     var rafId = 0;
     var reducedMotion = false;
     var elsCached = false;
@@ -7278,7 +7276,6 @@ return {
     var lastPreviewExpanded = null;
     var lastStripFaded = null;
     var lastStripDriven = false;
-    var lastIconExpanded = null;
     var lastFlightSrc = '';
     // 兩格滾輪內開門並落地；門檻略早於中段
     var previewOpenThreshold = 0.12;
@@ -7317,7 +7314,6 @@ return {
         targetImg = qs('cardImg');
         previewCard = qs('preview-card-tag');
         previewBody = qs('previewCardBody') || (previewCard && previewCard.querySelector('.card-body'));
-        previewFoldBtn = qs('previewFoldBtn') || (previewCard && previewCard.querySelector('[data-card-widget="collapse"]'));
         previewHeader = previewCard ? previewCard.querySelector('.card-header') : null;
         elsCached = true;
         return !!(flight && flightImg && sourceArt && sourceImg && targetWrap && targetImg);
@@ -7378,18 +7374,6 @@ return {
         // 保留 width/height 作為下一趟飛行基準，避免反覆觸發 layout
     }
 
-    function syncPreviewIcon(expanded) {
-        if (!previewFoldBtn || lastIconExpanded === expanded) return;
-        lastIconExpanded = expanded;
-        var icon = previewFoldBtn.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-minus', !!expanded);
-            icon.classList.toggle('fa-plus', !expanded);
-        }
-        previewFoldBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        previewFoldBtn.setAttribute('aria-label', expanded ? '收合卡面預覽' : '展開卡面預覽');
-    }
-
     function clearPreviewInlineStyles() {
         if (!previewBody) return;
         previewBody.style.height = '';
@@ -7401,10 +7385,10 @@ return {
     }
 
     /**
-     * 卡面預覽預設收合；越過門檻才切 class，開合交給 CSS transition。
+     * 卡面預覽預設收合；僅由視差進度切 class（無手動開合）。
      */
     function updatePreviewExpand(t) {
-        if (!previewCard || userUnlockedPreview) return;
+        if (!previewCard) return;
 
         var shouldOpen = lastPreviewExpanded
             ? t >= previewCloseThreshold
@@ -7417,7 +7401,6 @@ return {
         previewCard.classList.toggle('is-preview-open', shouldOpen);
         previewCard.classList.remove('is-preview-expanding');
         clearPreviewInlineStyles();
-        syncPreviewIcon(shouldOpen);
     }
 
     function openPreviewFully() {
@@ -7427,32 +7410,27 @@ return {
         previewCard.classList.remove('is-preview-expanding');
         previewCard.classList.add('is-preview-open');
         clearPreviewInlineStyles();
-        syncPreviewIcon(true);
     }
 
-    function foldPreviewFully(force) {
+    function foldPreviewFully() {
         if (!previewCard) return;
-        if (userUnlockedPreview && !force) return;
-        if (force) userUnlockedPreview = false;
         lastPreviewExpanded = false;
         previewCard.classList.add('is-preview-scrollfold');
         previewCard.classList.remove('is-preview-expanding');
         previewCard.classList.remove('is-preview-open');
         clearPreviewInlineStyles();
-        syncPreviewIcon(false);
     }
 
-    /** 換卡跳轉時：強制收合預覽並清掉手動解鎖／降落鎖定 */
+    /** 換卡跳轉時：強制收合預覽並清掉降落鎖定 */
     function resetForCardJump() {
         cacheEls(false);
-        userUnlockedPreview = false;
         lastPreviewExpanded = null;
         lastShowSource = null;
         lastShowTarget = null;
         clearLandingLock();
         hideFlight();
         resetStripFade();
-        foldPreviewFully(true);
+        foldPreviewFully();
         setSlotVisibility(true, false);
         scheduleUpdate();
     }
@@ -7758,31 +7736,8 @@ return {
         });
     }
 
-    function bindPreviewManualToggle() {
-        if (!previewFoldBtn || previewFoldBtn._handoffBound) return;
-        previewFoldBtn._handoffBound = true;
-        previewFoldBtn.addEventListener('click', function (e) {
-            // 接管 AdminLTE collapse，改由我們的開合狀態處理
-            e.preventDefault();
-            e.stopPropagation();
-            userUnlockedPreview = true;
-            var expanded = previewCard && previewCard.classList.contains('is-preview-open');
-            if (expanded) {
-                lastPreviewExpanded = false;
-                previewCard.classList.remove('is-preview-open');
-                previewCard.classList.add('is-preview-scrollfold');
-                previewCard.classList.remove('is-preview-expanding');
-                clearPreviewInlineStyles();
-                syncPreviewIcon(false);
-            } else {
-                openPreviewFully();
-            }
-        }, true);
-    }
-
     function bind() {
         if (!cacheEls(true)) return;
-        bindPreviewManualToggle();
         foldPreviewFully();
 
         window.addEventListener('scroll', scheduleUpdate, { passive: true });
