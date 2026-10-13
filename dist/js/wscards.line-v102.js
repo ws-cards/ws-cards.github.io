@@ -7215,6 +7215,7 @@ return {
 (function initCardHandoffParallax() {
     var flight = null;
     var flightImg = null;
+    var identityStrip = null;
     var sourceArt = null;
     var sourceImg = null;
     var targetWrap = null;
@@ -7239,6 +7240,7 @@ return {
     function cacheEls() {
         flight = qs('cardHandoffFlight');
         flightImg = qs('cardHandoffImg');
+        identityStrip = qs('resultIdentityStrip');
         sourceArt = qs('identityArt') || document.querySelector('.result-identity-art');
         sourceImg = qs('identityCardImg');
         targetWrap = qs('cardImageWrap');
@@ -7276,6 +7278,40 @@ return {
         flight.style.height = '';
     }
 
+    /**
+     * 識別帶整體淡出／浮入：
+     * t→1（進入卡面預覽）淡淡消失；
+     * t→0（滑回上方）由下往上淡淡浮出。
+     */
+    function updateStripFade(t) {
+        if (!identityStrip) identityStrip = qs('resultIdentityStrip');
+        if (!identityStrip) return;
+
+        var fade = smoothstep(clamp(t, 0, 1));
+        var opacity = 1 - fade;
+        // fade=1 時下移（看不見）；滑回 fade→0 時從下方浮到定位
+        var y = reducedMotion ? 0 : (16 * fade);
+
+        // 停用 desk-reveal 進場動畫，避免蓋掉捲動驅動的 opacity／transform
+        identityStrip.classList.add('is-handoff-driven');
+        identityStrip.style.opacity = String(opacity);
+        identityStrip.style.transform = 'translate3d(0,' + y + 'px,0)';
+        identityStrip.style.pointerEvents = opacity < 0.12 ? 'none' : '';
+        identityStrip.classList.toggle('is-strip-faded', fade > 0.82);
+        identityStrip.setAttribute('aria-hidden', fade > 0.82 ? 'true' : 'false');
+    }
+
+    function resetStripFade() {
+        if (!identityStrip) identityStrip = qs('resultIdentityStrip');
+        if (!identityStrip) return;
+        identityStrip.classList.remove('is-handoff-driven');
+        identityStrip.style.opacity = '';
+        identityStrip.style.transform = '';
+        identityStrip.style.pointerEvents = '';
+        identityStrip.classList.remove('is-strip-faded');
+        identityStrip.removeAttribute('aria-hidden');
+    }
+
     function updateHandoff() {
         if (!cacheEls()) return;
 
@@ -7283,6 +7319,7 @@ return {
         if (reducedMotion || !hasReadySource()) {
             hideFlight();
             setSlotVisibility(true, true);
+            resetStripFade();
             return;
         }
 
@@ -7293,6 +7330,7 @@ return {
         if (!targetReady) {
             hideFlight();
             setSlotVisibility(true, true);
+            resetStripFade();
             return;
         }
 
@@ -7303,6 +7341,7 @@ return {
         if (from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
             hideFlight();
             setSlotVisibility(true, true);
+            resetStripFade();
             return;
         }
 
@@ -7320,15 +7359,19 @@ return {
 
         // 識別帶已完全捲出、或預覽已貼近導覽列：直接視為降落完成
         var landed = t >= 0.98 || from.bottom < 12 || to.top <= startAnchor + 24;
+        if (landed) t = 1;
 
-        if (t <= 0.02 && !landed) {
+        // 整條識別帶隨進度淡出／滑回時浮入
+        updateStripFade(t);
+
+        if (t <= 0.02) {
             // 仍在識別帶：只顯示識別帶卡面，預覽卡面先藏起
             hideFlight();
             setSlotVisibility(true, false);
             return;
         }
-        if (landed) {
-            // 已抵達預覽：只顯示預覽卡面，識別帶留下淡影格
+        if (landed || t >= 0.98) {
+            // 已抵達預覽：只顯示預覽卡面
             hideFlight();
             setSlotVisibility(false, true);
             return;
