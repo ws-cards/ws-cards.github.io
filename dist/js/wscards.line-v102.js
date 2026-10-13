@@ -7223,10 +7223,23 @@ return {
     var previewCard = null;
     var previewBody = null;
     var previewFoldBtn = null;
-    var naturalBodyHeight = 0;
+    var previewHeader = null;
     var userUnlockedPreview = false;
     var rafId = 0;
     var reducedMotion = false;
+    var elsCached = false;
+    var flightBaseW = 0;
+    var flightBaseH = 0;
+    var flightVisible = false;
+    var lastShowSource = null;
+    var lastShowTarget = null;
+    var lastPreviewExpanded = null;
+    var lastStripFaded = null;
+    var lastStripDriven = false;
+    var lastIconExpanded = null;
+    var lastFlightSrc = '';
+    var previewOpenThreshold = 0.12;
+    var previewCloseThreshold = 0.06;
 
     function qs(id) { return document.getElementById(id); }
 
@@ -7242,7 +7255,10 @@ return {
         return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     }
 
-    function cacheEls() {
+    function cacheEls(force) {
+        if (elsCached && !force) {
+            return !!(flight && flightImg && sourceArt && sourceImg && targetWrap && targetImg);
+        }
         flight = qs('cardHandoffFlight');
         flightImg = qs('cardHandoffImg');
         identityStrip = qs('resultIdentityStrip');
@@ -7253,7 +7269,16 @@ return {
         previewCard = qs('preview-card-tag');
         previewBody = qs('previewCardBody') || (previewCard && previewCard.querySelector('.card-body'));
         previewFoldBtn = qs('previewFoldBtn') || (previewCard && previewCard.querySelector('[data-card-widget="collapse"]'));
+        previewHeader = previewCard ? previewCard.querySelector('.card-header') : null;
+        elsCached = true;
         return !!(flight && flightImg && sourceArt && sourceImg && targetWrap && targetImg);
+    }
+
+    function invalidateCache() {
+        elsCached = false;
+        flightBaseW = 0;
+        flightBaseH = 0;
+        lastFlightSrc = '';
     }
 
     function hasReadySource() {
@@ -7266,28 +7291,40 @@ return {
         if (!flightImg || !sourceImg) return;
         var src = sourceImg.getAttribute('src') || '';
         if (!src) return;
-        if (flightImg.getAttribute('src') !== src) {
+        if (lastFlightSrc !== src) {
             flightImg.setAttribute('src', src);
+            lastFlightSrc = src;
         }
-        flightImg.alt = sourceImg.alt || '';
+        if (flightImg.alt !== (sourceImg.alt || '')) {
+            flightImg.alt = sourceImg.alt || '';
+        }
     }
 
     function setSlotVisibility(showSource, showTarget) {
-        if (sourceArt) sourceArt.classList.toggle('is-handoff-source', !showSource);
-        if (targetWrap) targetWrap.classList.toggle('is-handoff-target', !showTarget);
+        if (sourceArt && lastShowSource !== showSource) {
+            sourceArt.classList.toggle('is-handoff-source', !showSource);
+            lastShowSource = showSource;
+        }
+        if (targetWrap && lastShowTarget !== showTarget) {
+            targetWrap.classList.toggle('is-handoff-target', !showTarget);
+            lastShowTarget = showTarget;
+        }
     }
 
     function hideFlight() {
         if (!flight) return;
-        flight.hidden = true;
-        flight.setAttribute('aria-hidden', 'true');
+        if (flightVisible) {
+            flight.hidden = true;
+            flight.setAttribute('aria-hidden', 'true');
+            flightVisible = false;
+        }
         flight.style.transform = '';
-        flight.style.width = '';
-        flight.style.height = '';
+        // 保留 width/height 作為下一趟飛行基準，避免反覆觸發 layout
     }
 
     function syncPreviewIcon(expanded) {
-        if (!previewFoldBtn) return;
+        if (!previewFoldBtn || lastIconExpanded === expanded) return;
+        lastIconExpanded = expanded;
         var icon = previewFoldBtn.querySelector('i');
         if (icon) {
             icon.classList.toggle('fa-minus', !!expanded);
@@ -7297,137 +7334,102 @@ return {
         previewFoldBtn.setAttribute('aria-label', expanded ? '收合卡面預覽' : '展開卡面預覽');
     }
 
-    function measurePreviewBodyHeight() {
-        if (!previewCard || !previewBody) return;
-        // 暫時解除收合以量真實高度
-        var prevHeight = previewBody.style.height;
-        var prevOverflow = previewBody.style.overflow;
-        var prevOpacity = previewBody.style.opacity;
-        var hadFold = previewCard.classList.contains('is-preview-scrollfold');
-        var hadOpen = previewCard.classList.contains('is-preview-open');
-
-        previewCard.classList.remove('is-preview-scrollfold');
-        previewCard.classList.add('is-preview-open');
-        previewBody.style.height = 'auto';
-        previewBody.style.overflow = 'visible';
-        previewBody.style.opacity = '1';
-        naturalBodyHeight = Math.max(previewBody.scrollHeight, targetWrap ? targetWrap.offsetHeight + 48 : 0);
-
-        // 恢復量測前狀態；真正開合交給 updatePreviewExpand
-        previewBody.style.height = prevHeight;
-        previewBody.style.overflow = prevOverflow;
-        previewBody.style.opacity = prevOpacity;
-        previewCard.classList.toggle('is-preview-scrollfold', hadFold);
-        previewCard.classList.toggle('is-preview-open', hadOpen);
+    function clearPreviewInlineStyles() {
+        if (!previewBody) return;
+        previewBody.style.height = '';
+        previewBody.style.maxHeight = '';
+        previewBody.style.opacity = '';
+        previewBody.style.overflow = '';
+        previewBody.style.paddingTop = '';
+        previewBody.style.paddingBottom = '';
     }
 
     /**
-     * 卡面預覽預設收合；隨交接進度 t 與飛行卡面一起展開。
+     * 卡面預覽預設收合；越過門檻才切 class，開合交給 CSS transition。
      */
     function updatePreviewExpand(t) {
-        if (!previewCard || !previewBody || userUnlockedPreview) return;
+        if (!previewCard || userUnlockedPreview) return;
 
-        if (naturalBodyHeight < 80) measurePreviewBodyHeight();
-        if (naturalBodyHeight < 80) naturalBodyHeight = Math.round(window.innerHeight * 0.55);
+        var shouldOpen = lastPreviewExpanded
+            ? t >= previewCloseThreshold
+            : t >= previewOpenThreshold;
 
-        // 比卡面飛行稍早開門，讓區塊與卡面一起「進入」
-        var open = smoothstep(clamp((t - 0.02) / 0.78, 0, 1));
+        if (lastPreviewExpanded === shouldOpen) return;
 
-        previewCard.classList.remove('is-preview-open');
-        previewCard.classList.add('is-preview-scrollfold');
-        previewCard.classList.toggle('is-preview-expanding', open > 0.001 && open < 0.999);
-
-        if (open <= 0.001) {
-            previewBody.style.height = '0px';
-            previewBody.style.opacity = '0';
-            previewBody.style.overflow = 'hidden';
-            syncPreviewIcon(false);
-            return;
-        }
-
-        if (open >= 0.999) {
-            previewCard.classList.remove('is-preview-scrollfold');
-            previewCard.classList.remove('is-preview-expanding');
-            previewCard.classList.add('is-preview-open');
-            previewBody.style.height = '';
-            previewBody.style.opacity = '';
-            previewBody.style.overflow = '';
-            syncPreviewIcon(true);
-            return;
-        }
-
-        var h = Math.max(0, Math.round(naturalBodyHeight * open));
-        previewBody.style.height = h + 'px';
-        previewBody.style.opacity = String(0.2 + 0.8 * open);
-        previewBody.style.overflow = 'hidden';
-        syncPreviewIcon(open > 0.45);
+        lastPreviewExpanded = shouldOpen;
+        previewCard.classList.toggle('is-preview-scrollfold', !shouldOpen);
+        previewCard.classList.toggle('is-preview-open', shouldOpen);
+        previewCard.classList.remove('is-preview-expanding');
+        clearPreviewInlineStyles();
+        syncPreviewIcon(shouldOpen);
     }
 
     function openPreviewFully() {
-        if (!previewCard || !previewBody) return;
+        if (!previewCard) return;
+        lastPreviewExpanded = true;
         previewCard.classList.remove('is-preview-scrollfold');
         previewCard.classList.remove('is-preview-expanding');
         previewCard.classList.add('is-preview-open');
-        previewBody.style.height = '';
-        previewBody.style.opacity = '';
-        previewBody.style.overflow = '';
+        clearPreviewInlineStyles();
         syncPreviewIcon(true);
     }
 
     function foldPreviewFully() {
-        if (!previewCard || !previewBody || userUnlockedPreview) return;
+        if (!previewCard || userUnlockedPreview) return;
+        lastPreviewExpanded = false;
         previewCard.classList.add('is-preview-scrollfold');
         previewCard.classList.remove('is-preview-expanding');
         previewCard.classList.remove('is-preview-open');
-        previewBody.style.height = '0px';
-        previewBody.style.opacity = '0';
-        previewBody.style.overflow = 'hidden';
+        clearPreviewInlineStyles();
         syncPreviewIcon(false);
     }
 
     /**
-     * 識別帶整體淡出／浮入：
-     * t→1（進入卡面預覽）淡淡消失；
-     * t→0（滑回上方）由下往上淡淡浮出。
+     * 識別帶整體淡出／浮入（只寫 opacity／transform；class 僅在門檻切換）。
      */
     function updateStripFade(t) {
-        if (!identityStrip) identityStrip = qs('resultIdentityStrip');
         if (!identityStrip) return;
 
         var fade = smoothstep(clamp(t, 0, 1));
         var opacity = 1 - fade;
-        // fade=1 時下移（看不見）；滑回 fade→0 時從下方浮到定位
         var y = reducedMotion ? 0 : (16 * fade);
 
-        // 停用 desk-reveal 進場動畫，避免蓋掉捲動驅動的 opacity／transform
-        identityStrip.classList.add('is-handoff-driven');
+        if (!lastStripDriven) {
+            identityStrip.classList.add('is-handoff-driven');
+            lastStripDriven = true;
+        }
         identityStrip.style.opacity = String(opacity);
         identityStrip.style.transform = 'translate3d(0,' + y + 'px,0)';
         identityStrip.style.pointerEvents = opacity < 0.12 ? 'none' : '';
-        identityStrip.classList.toggle('is-strip-faded', fade > 0.82);
-        identityStrip.setAttribute('aria-hidden', fade > 0.82 ? 'true' : 'false');
+
+        var faded = fade > 0.82;
+        if (lastStripFaded !== faded) {
+            lastStripFaded = faded;
+            identityStrip.classList.toggle('is-strip-faded', faded);
+            identityStrip.setAttribute('aria-hidden', faded ? 'true' : 'false');
+        }
     }
 
     function resetStripFade() {
-        if (!identityStrip) identityStrip = qs('resultIdentityStrip');
         if (!identityStrip) return;
-        identityStrip.classList.remove('is-handoff-driven');
+        if (lastStripDriven) {
+            identityStrip.classList.remove('is-handoff-driven');
+            lastStripDriven = false;
+        }
         identityStrip.style.opacity = '';
         identityStrip.style.transform = '';
         identityStrip.style.pointerEvents = '';
-        identityStrip.classList.remove('is-strip-faded');
+        if (lastStripFaded) {
+            identityStrip.classList.remove('is-strip-faded');
+            lastStripFaded = false;
+        }
         identityStrip.removeAttribute('aria-hidden');
     }
 
-    function resolveTargetRect() {
-        // 收合時 wrap 可能高度異常；用 header 下方推估降落框
-        var to = targetWrap.getBoundingClientRect();
-        if (to.width >= 8 && to.height >= 40) return to;
-
-        if (!previewCard) return to;
-        var header = previewCard.querySelector('.card-header');
-        if (!header) return to;
-        var hr = header.getBoundingClientRect();
+    function estimateTargetRectFromHeader() {
+        if (!previewHeader) return null;
+        var hr = previewHeader.getBoundingClientRect();
+        if (hr.width < 8) return null;
         var bodyPad = 16;
         var width = Math.max(120, hr.width - bodyPad * 2);
         var height = Math.max(160, width * (88 / 63));
@@ -7441,8 +7443,35 @@ return {
         };
     }
 
+    function resolveTargetRect(preferEstimate) {
+        // 飛行／展開過渡中優先用 header 推估，避免 max-height 動畫讓降落點每幀晃動
+        if (preferEstimate) {
+            var estimated = estimateTargetRectFromHeader();
+            if (estimated) return estimated;
+        }
+
+        var to = targetWrap.getBoundingClientRect();
+        if (to.width >= 8 && to.height >= 40) return to;
+
+        return estimateTargetRectFromHeader() || to;
+    }
+
+    function ensureFlightBaseSize(fromW, fromH) {
+        if (!flight) return;
+        var w = Math.round(fromW);
+        var h = Math.round(fromH);
+        if (w < 1 || h < 1) return;
+        // 僅在基準尺寸明顯變化時寫入，避免每幀觸發 layout
+        if (Math.abs(w - flightBaseW) > 0.5 || Math.abs(h - flightBaseH) > 0.5) {
+            flightBaseW = w;
+            flightBaseH = h;
+            flight.style.width = w + 'px';
+            flight.style.height = h + 'px';
+        }
+    }
+
     function updateHandoff() {
-        if (!cacheEls()) return;
+        if (!cacheEls(false)) return;
 
         reducedMotion = prefersReducedMotion();
         if (reducedMotion || !hasReadySource()) {
@@ -7467,8 +7496,13 @@ return {
 
         syncFlightImage();
 
+        // —— 讀取階段（集中 getBoundingClientRect，避免與寫入交錯）——
         var from = sourceArt.getBoundingClientRect();
-        var to = resolveTargetRect();
+        // 尚未完全降落前用穩定推估框，避免預覽開合改 layout 帶歪飛行路徑
+        var to = resolveTargetRect(true);
+        var scrollY = window.scrollY;
+        var viewH = window.innerHeight;
+
         if (from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
             hideFlight();
             setSlotVisibility(true, true);
@@ -7479,51 +7513,60 @@ return {
         // 識別帶卡面靠近導覽列下方 → 0；
         // 預覽卡面進入視窗上半（約 38vh）→ 1，讓「捲到卡面預覽」時已完成降落
         var startAnchor = 88;
-        var endAnchor = Math.max(140, Math.round(window.innerHeight * 0.38));
-        var fromDoc = window.scrollY + from.top;
-        var toDoc = window.scrollY + to.top;
+        var endAnchor = Math.max(140, Math.round(viewH * 0.38));
+        var fromDoc = scrollY + from.top;
+        var toDoc = scrollY + to.top;
         var startScroll = fromDoc - startAnchor;
         var endScroll = toDoc - endAnchor;
-        var span = Math.max(1, endScroll - startScroll);
-        var t = clamp((window.scrollY - startScroll) / span, 0, 1);
-        var e = smoothstep(t);
+        // 預覽收合時降落點可能緊貼識別帶，span 會被壓扁甚至反轉；保底捲動距離讓飛行動畫可跑完
+        var minSpan = Math.max(180, Math.round(viewH * 0.24));
+        if (endScroll - startScroll < minSpan) {
+            endScroll = startScroll + minSpan;
+        }
+        var span = endScroll - startScroll;
+        var t = clamp((scrollY - startScroll) / span, 0, 1);
 
         // 識別帶已完全捲出、或預覽已貼近導覽列：直接視為降落完成
         var landed = t >= 0.98 || from.bottom < 12 || to.top <= startAnchor + 24;
         if (landed) t = 1;
+        var e = smoothstep(t);
 
-        // 整條識別帶隨進度淡出／滑回時浮入
+        // —— 寫入階段 ——
         updateStripFade(t);
-        // 卡面預覽隨進度與飛行卡面一起展開
         updatePreviewExpand(t);
 
         if (t <= 0.02) {
-            // 仍在識別帶：只顯示識別帶卡面，預覽卡面先藏起
             hideFlight();
             setSlotVisibility(true, false);
             return;
         }
         if (landed || t >= 0.98) {
-            // 已抵達預覽：只顯示預覽卡面
             hideFlight();
             setSlotVisibility(false, true);
             return;
         }
 
+        // 固定飛行層基準尺寸＝來源框；以 translate + scale 插值至目標（composited）
+        ensureFlightBaseSize(from.width, from.height);
+        if (flightBaseW < 1 || flightBaseH < 1) {
+            hideFlight();
+            setSlotVisibility(true, false);
+            return;
+        }
+
         var x = from.left + (to.left - from.left) * e;
         var y = from.top + (to.top - from.top) * e;
-        var w = from.width + (to.width - from.width) * e;
-        var h = from.height + (to.height - from.height) * e;
-
-        // 輕微上浮視差，加強「被捲進去」的感覺
+        var sx = (from.width + (to.width - from.width) * e) / flightBaseW;
+        var sy = (from.height + (to.height - from.height) * e) / flightBaseH;
         var lift = Math.sin(Math.PI * e) * 12;
 
-        flight.hidden = false;
-        flight.setAttribute('aria-hidden', 'true');
-        flight.style.width = w + 'px';
-        flight.style.height = h + 'px';
-        flight.style.transform = 'translate3d(' + x + 'px,' + (y - lift) + 'px,0)';
-        // 飛行中兩端都藏，只留飛行層
+        if (!flightVisible) {
+            flight.hidden = false;
+            flight.setAttribute('aria-hidden', 'true');
+            flightVisible = true;
+        }
+        flight.style.transform =
+            'translate3d(' + x + 'px,' + (y - lift) + 'px,0) scale(' + sx + ',' + sy + ')';
         setSlotVisibility(false, false);
     }
 
@@ -7545,14 +7588,11 @@ return {
             userUnlockedPreview = true;
             var expanded = previewCard && previewCard.classList.contains('is-preview-open');
             if (expanded) {
+                lastPreviewExpanded = false;
                 previewCard.classList.remove('is-preview-open');
                 previewCard.classList.add('is-preview-scrollfold');
                 previewCard.classList.remove('is-preview-expanding');
-                if (previewBody) {
-                    previewBody.style.height = '0px';
-                    previewBody.style.opacity = '0';
-                    previewBody.style.overflow = 'hidden';
-                }
+                clearPreviewInlineStyles();
                 syncPreviewIcon(false);
             } else {
                 openPreviewFully();
@@ -7561,13 +7601,14 @@ return {
     }
 
     function bind() {
-        if (!cacheEls()) return;
+        if (!cacheEls(true)) return;
         bindPreviewManualToggle();
         foldPreviewFully();
 
         window.addEventListener('scroll', scheduleUpdate, { passive: true });
         window.addEventListener('resize', function () {
-            naturalBodyHeight = 0;
+            flightBaseW = 0;
+            flightBaseH = 0;
             scheduleUpdate();
         });
         if (window.visualViewport) {
@@ -7580,7 +7621,7 @@ return {
             var _refresh = window.refreshResultIdentity;
             window.refreshResultIdentity = function () {
                 var r = _refresh.apply(this, arguments);
-                naturalBodyHeight = 0;
+                invalidateCache();
                 scheduleUpdate();
                 return r;
             };
@@ -7588,22 +7629,26 @@ return {
             var _refreshLocal = refreshResultIdentity;
             window.refreshResultIdentity = function () {
                 var r = _refreshLocal.apply(this, arguments);
-                naturalBodyHeight = 0;
+                invalidateCache();
                 scheduleUpdate();
                 return r;
             };
-            // 若原本是全域函式宣告，包一層後也覆寫回去
             try { refreshResultIdentity = window.refreshResultIdentity; } catch (e) {}
         }
 
         if (targetImg) {
             targetImg.addEventListener('load', function () {
-                naturalBodyHeight = 0;
+                invalidateCache();
                 scheduleUpdate();
             });
         }
         if (sourceImg) {
-            sourceImg.addEventListener('load', scheduleUpdate);
+            sourceImg.addEventListener('load', function () {
+                lastFlightSrc = '';
+                flightBaseW = 0;
+                flightBaseH = 0;
+                scheduleUpdate();
+            });
         }
 
         scheduleUpdate();
