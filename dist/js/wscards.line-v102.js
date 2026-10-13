@@ -3440,20 +3440,38 @@ if (targetElement) {
 }
 
 /**
-* 搜尋完成後滾動到結果區域:結果識別帶（卡圖＋今日價）
+* 點選卡號／搜尋後跳轉：
+* - 識別帶對齊畫面最上方
+* - 卡面預覽保持收合（約兩格滾輪後再由視差展開並落地）
 */
 function scrollToResults() {
-// 優先捲到識別帶，讓第一眼同時看到卡圖與今日價；沒有識別帶時退回卡面預覽
 var identity = document.getElementById('resultIdentityStrip');
+var preview = document.getElementById('preview-card-tag');
+
+// 每次換卡都重置視差／預覽開合，避免沿用上一張的手動展開狀態
+if (typeof window.resetCardHandoffForCardJump === 'function') {
+    window.resetCardHandoffForCardJump();
+} else if (preview) {
+    preview.classList.add('is-preview-scrollfold');
+    preview.classList.remove('is-preview-open', 'is-preview-expanding');
+}
+
 if (identity) {
     identity.hidden = false;
+    identity.style.display = '';
     if (typeof refreshResultIdentity === 'function') {
         refreshResultIdentity();
     }
     smoothScrollToAnchor('resultIdentityStrip', 'smooth', 'start');
+    // 捲動定位後再刷一次交接狀態（預覽收合、飛行層待命）
+    window.setTimeout(function () {
+        if (typeof window.updateCardHandoffParallax === 'function') {
+            window.updateCardHandoffParallax();
+        }
+    }, 320);
     return;
 }
-smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
+smoothScrollToAnchor('preview-card-tag', 'smooth', 'start');
 }
 
 /**
@@ -7262,9 +7280,12 @@ return {
     var lastStripDriven = false;
     var lastIconExpanded = null;
     var lastFlightSrc = '';
-    // 預覽略早於飛行中段開門，配合「提早開始、到頂前落地」
-    var previewOpenThreshold = 0.08;
-    var previewCloseThreshold = 0.04;
+    // 兩格滾輪內開門並落地；門檻略早於中段
+    var previewOpenThreshold = 0.12;
+    var previewCloseThreshold = 0.06;
+    // 常見滑鼠一格 ≈ 100～120px；兩格約 240px 完成飛入
+    var WHEEL_NOTCH_PX = 120;
+    var HANDOFF_WHEEL_NOTCHES = 2;
     // 飛行中鎖定降落尺寸，避免用整欄寬推估把卡面放太大、落地再縮回
     var lockedLandingW = 0;
     var lockedLandingH = 0;
@@ -7409,14 +7430,31 @@ return {
         syncPreviewIcon(true);
     }
 
-    function foldPreviewFully() {
-        if (!previewCard || userUnlockedPreview) return;
+    function foldPreviewFully(force) {
+        if (!previewCard) return;
+        if (userUnlockedPreview && !force) return;
+        if (force) userUnlockedPreview = false;
         lastPreviewExpanded = false;
         previewCard.classList.add('is-preview-scrollfold');
         previewCard.classList.remove('is-preview-expanding');
         previewCard.classList.remove('is-preview-open');
         clearPreviewInlineStyles();
         syncPreviewIcon(false);
+    }
+
+    /** 換卡跳轉時：強制收合預覽並清掉手動解鎖／降落鎖定 */
+    function resetForCardJump() {
+        cacheEls(false);
+        userUnlockedPreview = false;
+        lastPreviewExpanded = null;
+        lastShowSource = null;
+        lastShowTarget = null;
+        clearLandingLock();
+        hideFlight();
+        resetStripFade();
+        foldPreviewFully(true);
+        setSlotVisibility(true, false);
+        scheduleUpdate();
     }
 
     /**
@@ -7574,19 +7612,15 @@ return {
     }
 
     /**
-     * 依視窗高度自適應交接進度：
-     * - 進度錨在「預覽卡片」本身（不是飛行推估框），避免收合時把結束點算太晚
-     * - 空間不夠時往前提早開始，而不是把結束點往後推（否則預覽已到頂才飛完）
-     * - 保證在預覽區抵達導覽列下方前完成降落
+     * 交接進度（配合「跳轉後識別帶在頂、約兩格滾輪落地」）：
+     * - 起點：識別帶抵達導覽列下方（跳轉定位點）
+     * - 終點：約兩格滾輪（~240px），且不晚於預覽頂端碰到導覽區
+     * - 落地時畫面停在卡面預覽、卡圖已在預覽槽位
      */
     function computeHandoffTiming(from, to, scrollY, viewH) {
         var topClear = Math.max(72, Math.round(viewH * 0.09));
-        // 預覽頂端約在視窗 48%～58% 處時應已落地（高螢幕取較大比例）
-        var endAnchor = Math.round(viewH * (viewH >= 1000 ? 0.55 : viewH >= 800 ? 0.5 : 0.46));
-        endAnchor = Math.max(topClear + 120, Math.min(endAnchor, Math.round(viewH * 0.62)));
-
         var fromDoc = scrollY + from.top;
-        // 進度用預覽卡片／header 的文件座標，路徑仍用 to（降落框）
+
         var previewRect = null;
         if (previewCard) previewRect = previewCard.getBoundingClientRect();
         else if (previewHeader) previewRect = previewHeader.getBoundingClientRect();
@@ -7595,34 +7629,29 @@ return {
             : to.top;
         var progressDoc = scrollY + progressTop;
 
+        // 跳轉後識別帶在頂 → t=0
         var startScroll = fromDoc - topClear;
-        var endScroll = progressDoc - endAnchor;
+        // 預設兩格滾輪完成飛入
+        var twoWheelSpan = Math.round(WHEEL_NOTCH_PX * HANDOFF_WHEEL_NOTCHES);
+        var endScroll = startScroll + twoWheelSpan;
 
-        // 理想飛行捲動距離（隨視窗縮放）；不夠就提早開始，勿延後結束
-        var minSpan = Math.max(160, Math.round(viewH * 0.22));
-        var maxSpan = Math.max(minSpan + 40, Math.round(viewH * 0.5));
+        // 不可晚於「預覽頂端抵達導覽區」——否則到頂才飛完
+        var endByPreviewAtTop = progressDoc - topClear - 8;
+        if (endScroll > endByPreviewAtTop) {
+            endScroll = endByPreviewAtTop;
+        }
+
         var span = endScroll - startScroll;
+        // 預覽緊貼識別帶時，至少保留約 1.25 格，避免瞬移
+        var minSpan = Math.round(WHEEL_NOTCH_PX * 1.25);
         if (span < minSpan) {
             startScroll = endScroll - minSpan;
             span = minSpan;
-        } else if (span > maxSpan) {
-            startScroll = endScroll - maxSpan;
-            span = maxSpan;
-        }
-
-        // 硬性：預覽頂端碰到導覽區前必須落地
-        var latestEnd = progressDoc - topClear - 16;
-        if (endScroll > latestEnd) {
-            var shift = endScroll - latestEnd;
-            endScroll = latestEnd;
-            startScroll -= shift;
-            span = endScroll - startScroll;
         }
 
         if (span < 1) span = 1;
         var t = clamp((scrollY - startScroll) / span, 0, 1);
 
-        // 識別帶已捲出、或預覽已近頂：強制落地
         var landed = t >= 0.98
             || from.bottom < 12
             || progressTop <= topClear + 20
@@ -7814,4 +7843,5 @@ return {
     }
 
     window.updateCardHandoffParallax = scheduleUpdate;
+    window.resetCardHandoffForCardJump = resetForCardJump;
 })();
