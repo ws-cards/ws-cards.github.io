@@ -3440,6 +3440,39 @@ if (targetElement) {
 }
 
 /**
+* 將元素下緣對齊視窗底部（留 bottomPad）。
+* 不用 scrollIntoView：此頁 layout 下 block:end 常對不齊。
+*/
+function scrollElementToViewportBottom(el, behavior, bottomPad) {
+    if (!el) return;
+    var pad = (typeof bottomPad === 'number') ? bottomPad : 20;
+    var rect = el.getBoundingClientRect();
+    var viewH = window.innerHeight || document.documentElement.clientHeight || 0;
+    var current = window.scrollY
+        || window.pageYOffset
+        || document.documentElement.scrollTop
+        || document.body.scrollTop
+        || 0;
+    // 目標：元素 bottom 落在視窗 bottom - pad
+    var nextY = Math.max(0, Math.round(current + rect.bottom - (viewH - pad)));
+    var se = document.scrollingElement || document.documentElement;
+    if (behavior === 'smooth' && typeof window.scrollTo === 'function') {
+        try {
+            window.scrollTo({ top: nextY, behavior: 'smooth' });
+            // 若 smooth 被環境忽略，下一幀校正一次
+            window.requestAnimationFrame(function () {
+                if (Math.abs((window.scrollY || se.scrollTop || 0) - nextY) > 80) {
+                    se.scrollTop = nextY;
+                }
+            });
+            return;
+        } catch (e) {}
+    }
+    se.scrollTop = nextY;
+    window.scrollTo(0, nextY);
+}
+
+/**
 * 搜尋／點選卡圖後：把結果識別帶對齊視窗底部。
 * 不直接跳到卡面預覽，讓使用者自行下滑（順便走視差飛入）。
 */
@@ -3447,15 +3480,23 @@ function scrollToResults() {
 var identity = document.getElementById('resultIdentityStrip');
 if (identity) {
     identity.hidden = false;
+    identity.style.display = '';
     if (typeof refreshResultIdentity === 'function') {
         refreshResultIdentity();
     }
-    // end：識別帶落在畫面最下方
-    smoothScrollToAnchor('resultIdentityStrip', 'smooth', 'end');
+    // 等識別帶揭開後再量位置，避免 hidden→顯示當幀高度為 0
+    window.requestAnimationFrame(function () {
+        scrollElementToViewportBottom(identity, 'smooth', 20);
+    });
     return;
 }
 // 沒有識別帶時才退回預覽區，同樣對齊底部
-smoothScrollToAnchor('preview-card-tag', 'smooth', 'end');
+var preview = document.getElementById('preview-card-tag');
+if (preview) {
+    window.requestAnimationFrame(function () {
+        scrollElementToViewportBottom(preview, 'smooth', 20);
+    });
+}
 }
 
 /**
