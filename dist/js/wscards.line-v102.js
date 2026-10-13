@@ -2405,6 +2405,97 @@ console.log("進入繪圖區:"+cardNum);
 }
 
 /**
+* 刷新結果識別帶：把卡圖、卡號／卡名、今日價鏡射到搜尋下方的摘要區，
+* 讓查到後第一眼就能對上「哪張卡、今天多少錢」。
+* 資料來源是畫面上既有欄位，避免重算造成識別帶與摘要不一致。
+*/
+function refreshResultIdentity() {
+    var strip = document.getElementById('resultIdentityStrip');
+    if (!strip) return;
+
+    var noEl = document.getElementById('cardno');
+    var nameEl = document.getElementById('cardname');
+    var rareEl = document.getElementById('cardrare');
+    var priceEl = document.getElementById('summaryCurrentPrice');
+    var changeEl = document.getElementById('summaryChangePercent');
+    var asOfEl = document.getElementById('priceSummaryAsOf');
+    var imgEl = document.getElementById('cardImg');
+
+    var idNo = document.getElementById('identityCardNo');
+    var idName = document.getElementById('identityCardName');
+    var idRare = document.getElementById('identityCardRare');
+    var idPrice = document.getElementById('identityCurrentPrice');
+    var idChange = document.getElementById('identityChangePercent');
+    var idAsOf = document.getElementById('identityAsOf');
+    var idImg = document.getElementById('identityCardImg');
+    var idPlaceholder = document.getElementById('identityArtPlaceholder');
+    var idSample = document.getElementById('identitySampleHint');
+
+    var cardNo = noEl ? String(noEl.textContent || '').trim() : '';
+    var hasCard = cardNo && cardNo !== '-' && cardNo !== '000/000-000';
+
+    if (idNo) idNo.textContent = hasCard ? cardNo : '--';
+    if (idName) {
+        var nameText = nameEl ? String(nameEl.textContent || '').trim() : '';
+        idName.textContent = (nameText && nameText !== '-') ? nameText : '—';
+    }
+    if (idRare) {
+        var rareText = rareEl ? String(rareEl.textContent || '').trim() : '';
+        idRare.textContent = (rareText && rareText !== '-') ? rareText : '—';
+    }
+
+    if (idPrice) {
+        idPrice.textContent = priceEl ? (priceEl.textContent || '--') : '--';
+    }
+    if (idChange) {
+        var changeText = changeEl ? (changeEl.textContent || '--') : '--';
+        idChange.textContent = changeText;
+        var changeClass = 'result-identity-change price-flat';
+        if (changeEl && changeEl.classList.contains('price-up')) changeClass = 'result-identity-change price-up';
+        else if (changeEl && changeEl.classList.contains('price-down')) changeClass = 'result-identity-change price-down';
+        idChange.className = changeClass;
+    }
+    if (idAsOf) {
+        idAsOf.textContent = asOfEl ? String(asOfEl.textContent || '').trim() : '';
+    }
+
+    if (idImg) {
+        var src = (imgEl && imgEl.getAttribute('src')) ? imgEl.getAttribute('src') : '';
+        var altName = idName ? idName.textContent : cardNo;
+        idImg.alt = altName && altName !== '—' ? (altName + ' 卡圖') : '卡片圖';
+        if (src) {
+            if (idImg.getAttribute('src') !== src) idImg.setAttribute('src', src);
+            // 主圖已就緒，或識別帶自己已載入完成，就揭開縮圖
+            var ready = (imgEl && imgEl.naturalWidth > 0 && imgEl.style.display !== 'none')
+                || (idImg.complete && idImg.naturalWidth > 0);
+            if (ready) {
+                idImg.hidden = false;
+                if (idPlaceholder) idPlaceholder.hidden = true;
+            } else if (!idImg._identityLoadBound) {
+                idImg._identityLoadBound = true;
+                idImg.addEventListener('load', function onIdentityImgLoad() {
+                    idImg.hidden = false;
+                    if (idPlaceholder) idPlaceholder.hidden = true;
+                });
+            }
+        } else {
+            idImg.removeAttribute('src');
+            idImg.hidden = true;
+            if (idPlaceholder) idPlaceholder.hidden = false;
+        }
+    }
+
+    if (idSample) {
+        idSample.hidden = !!window._hasUserModified;
+    }
+
+    if (hasCard) {
+        strip.hidden = false;
+        strip.removeAttribute('aria-hidden');
+    }
+}
+
+/**
 * 更新價格摘要統計卡片
 * @param {Array} priceData - 價格資料陣列
 * 
@@ -2440,6 +2531,9 @@ function forceDefault() {
     if (elAsOfDefault) elAsOfDefault.textContent = '這張卡目前沒有價格紀錄。';
     var elSampleDefault = document.getElementById('priceSummarySample');
     if (elSampleDefault) elSampleDefault.style.display = 'none';
+    if (typeof refreshResultIdentity === 'function') {
+        refreshResultIdentity();
+    }
 }
 
 if (!priceData || priceData.length === 0) {
@@ -2573,6 +2667,11 @@ if (changeItem) {
 
 // 顯示卡片
 summaryCard.style.display = 'block';
+
+// 同步結果識別帶（今日價）
+if (typeof refreshResultIdentity === 'function') {
+    refreshResultIdentity();
+}
 }
 
 /**
@@ -2812,6 +2911,9 @@ function showCardImage(src, fallbackSrc) {
                     if (typeof CardFavorites !== 'undefined') {
                         CardFavorites.syncButton();
                     }
+                    if (typeof refreshResultIdentity === 'function') {
+                        refreshResultIdentity();
+                    }
                 }
 
                 img.onload = onCardImageReady;
@@ -2840,6 +2942,9 @@ function showCardImage(src, fallbackSrc) {
                 if (placeholder) placeholder.style.display = 'block';
                 if (typeof CardFavorites !== 'undefined') {
                     CardFavorites.hideButton();
+                }
+                if (typeof refreshResultIdentity === 'function') {
+                    refreshResultIdentity();
                 }
             }
 }    
@@ -3311,10 +3416,19 @@ if (targetElement) {
 }
 
 /**
-* 搜尋完成後滾動到結果區域:卡片預覽區域
+* 搜尋完成後滾動到結果區域:結果識別帶（卡圖＋今日價）
 */
 function scrollToResults() {
-// 滾動到卡片預覽區域
+// 優先捲到識別帶，讓第一眼同時看到卡圖與今日價；沒有識別帶時退回卡面預覽
+var identity = document.getElementById('resultIdentityStrip');
+if (identity) {
+    identity.hidden = false;
+    if (typeof refreshResultIdentity === 'function') {
+        refreshResultIdentity();
+    }
+    smoothScrollToAnchor('resultIdentityStrip', 'smooth', 'start');
+    return;
+}
 smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
 }
 
@@ -3759,6 +3873,11 @@ document.getElementById('cardtext').innerHTML = formatCardTextHtml(cardData.card
 bindCardtextNamePopover();
 
 console.log('卡片資訊已更新:', cardData.cardno);
+
+// 同步結果識別帶（卡號／卡名／稀有度）
+if (typeof refreshResultIdentity === 'function') {
+    refreshResultIdentity();
+}
 
 // 6. 如果有載入詳細資訊，更新歷史紀錄補上真實卡名與稀有度 (有變動才寫入)
 if (window._hasUserModified && typeof SearchHistory !== 'undefined' && cardData.cardno && cardData.cardno !== '-') {
