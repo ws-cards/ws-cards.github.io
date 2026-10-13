@@ -229,8 +229,8 @@
 	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-	<script src="assets/js/firebase-config.js"></script>
-	<script src="assets/js/ws-firebase.js"></script>
+	<script src="assets/js/firebase-config.js?v=auction-20261013"></script>
+	<script src="assets/js/ws-firebase.js?v=auction-20261013"></script>
 	<script src="dist/js/include-navbar.js"></script>
 
 	<div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -410,6 +410,12 @@
 				submitBtn.disabled = true;
 				return;
 			}
+			if (typeof fb.createAuction !== "function") {
+				setBanner("腳本版本過舊，請強制重新整理（Ctrl/Cmd+Shift+R）。", "warn");
+				submitBtn.disabled = true;
+				loginBtn.hidden = !currentUser;
+				return;
+			}
 			if (!currentUser) {
 				setBanner("請先以 Google 登入後再開立拍賣。", "warn");
 				loginBtn.hidden = false;
@@ -440,6 +446,11 @@
 			resultLinks.hidden = true;
 			if (!fb || !currentUser) {
 				errorMsg.textContent = "請先登入。";
+				return;
+			}
+			if (typeof fb.createAuction !== "function") {
+				errorMsg.textContent = "前端腳本版本過舊（缺少 createAuction）。請強制重新整理（Ctrl/Cmd+Shift+R）後再試。";
+				setBanner("偵測到舊版 ws-firebase.js 快取，請硬重新整理頁面。", "warn");
 				return;
 			}
 			submitBtn.disabled = true;
