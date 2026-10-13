@@ -1499,15 +1499,6 @@
 				return;
 			}
 
-			if (runtime.mode === "missing") {
-				el.bidAuthStatus.textContent = "雲端尚無此拍賣文件，請先在 Firestore 建立（見 firebase/README.md）。";
-				el.bidLoginBtn.hidden = true;
-				el.submitBid.disabled = true;
-				el.bidAmount.disabled = true;
-				el.bidderName.value = "";
-				return;
-			}
-
 			if (cloud) {
 				el.bidderName.readOnly = true;
 				if (!loggedIn) {
@@ -1685,25 +1676,8 @@
 
 		function applyCloudSnapshot(payload) {
 			if (!payload || !payload.exists || !payload.auction) {
-				runtime.mode = "missing";
-				setSyncBanner("missing", "Firestore 連線成功，但找不到 auctions/" + runtime.auctionId + "。請依 firebase/README.md 建立種子文件。頁面暫以示範資料顯示外觀。");
-				applyAuctionFields({
-					auctionId: demoState.auctionId,
-					title: demoState.title,
-					images: demoState.images.slice(),
-					shipping: demoState.shipping,
-					itemStatus: demoState.itemStatus,
-					itemDescription: demoState.itemDescription,
-					startPrice: demoState.startPrice,
-					itemQuantity: demoState.itemQuantity,
-					startTime: demoState.startTime,
-					endTime: demoState.endTime,
-					earlyEnd: demoState.earlyEnd,
-					autoExtend: demoState.autoExtend,
-					status: "open",
-					bids: demoState.bids.map(function (b) { return Object.assign({}, b); })
-				});
-				renderAuctionInfo();
+				// 尚無種子文件：以外觀示範 + 本機下標，避免頁面完全不能試
+				startDemoMode("Firestore 連線成功，但找不到 auctions/" + runtime.auctionId + "。請依 firebase/README.md 建立種子後即可雲端下標；目前為本機示範。");
 				return;
 			}
 
