@@ -907,6 +907,61 @@
 			}
 		}
 
+		.sync-banner {
+			grid-column: 1 / -1;
+			margin: 0;
+			padding: 10px 12px;
+			border-radius: 10px;
+			border: 1px solid var(--line);
+			background: var(--section-head-bg);
+			color: var(--muted);
+			font-size: 0.9rem;
+			line-height: 1.5;
+		}
+
+		.sync-banner.is-cloud {
+			color: var(--text);
+		}
+
+		.sync-banner.is-warn {
+			color: var(--danger);
+			border-color: rgba(248, 113, 113, 0.35);
+		}
+
+		.bid-auth-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.bid-auth-status {
+			margin: 0;
+			color: var(--muted);
+			font-size: 0.92rem;
+		}
+
+		.bid-login-btn {
+			height: 36px;
+			padding: 0 12px;
+			font-size: 0.88rem;
+			background: var(--trigger-bg);
+			color: var(--trigger-color);
+			border: 1px solid var(--trigger-border);
+			box-shadow: none;
+		}
+
+		.bid-login-btn:hover {
+			background: var(--trigger-hover-bg);
+			box-shadow: none;
+		}
+
+		input[readonly] {
+			opacity: 0.85;
+			cursor: default;
+		}
+
 		@media (max-width: 560px) {
 			.page {
 				padding: 12px;
@@ -949,6 +1004,7 @@
 	<div data-navbar data-page-title="商品拍賣資訊與出價"></div>
 	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 	<script src="assets/js/firebase-config.js"></script>
 	<script src="assets/js/ws-firebase.js"></script>
 	<script src="dist/js/include-navbar.js"></script>
@@ -1030,40 +1086,28 @@
 	</aside>
 
 	<main class="page">
+		<p id="sync-banner" class="sync-banner" role="status">正在連線…</p>
+
 		<article class="product-gallery" aria-label="商品圖片畫廊">
 			<div class="gallery-stage">
-				<!-- 加入左箭頭 -->
-				<button class="gallery-arrow gallery-prev" aria-label="上一張圖片">&#10094;</button>
-				
-				<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077.png" alt="拍賣商品主圖">
-				<span class="gallery-count">1 / 3</span>
-				
-				<!-- 加入右箭頭 -->
-				<button class="gallery-arrow gallery-next" aria-label="下一張圖片">&#10095;</button>
+				<button type="button" class="gallery-arrow gallery-prev" aria-label="上一張圖片">&#10094;</button>
+				<img id="gallery-main-img" src="" alt="拍賣商品主圖">
+				<span class="gallery-count" id="gallery-count">0 / 0</span>
+				<button type="button" class="gallery-arrow gallery-next" aria-label="下一張圖片">&#10095;</button>
 			</div>
-			<div class="gallery-thumbs" aria-label="商品縮圖列表">
-				<button type="button" class="gallery-thumb is-active" aria-label="查看第 1 張圖片" aria-current="true">
-					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077.png" alt="商品縮圖 1">
-				</button>
-				<button type="button" class="gallery-thumb" aria-label="查看第 2 張圖片">
-					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077s.png" alt="商品縮圖 2">
-				</button>
-				<button type="button" class="gallery-thumb" aria-label="查看第 3 張圖片">
-					<img src="https://imgs.devilfox.net/ws/brd_w139/brd_w139_077sec.png" alt="商品縮圖 3">
-				</button>
-			</div>
+			<div class="gallery-thumbs" id="gallery-thumbs" aria-label="商品縮圖列表"></div>
 		</article>
 
 		<section class="product-sidebar">
 			<section class="product-summary">
 				<p class="summary-kicker">Card Auction</p>
 				<div class="top-meta">
-					<h1 class="title">ヴァイスシュヴァルツ ブラウンダスト2 セレブリティ・バニー ロエン SR</h1>
+					<h1 class="title" id="item-title">載入中…</h1>
 					<div class="price-row">
 						<span class="price-label">目前最高出價</span>
 						<span class="price" id="hero-price">-</span>
 					</div>
-					<p class="ship">運費規則： 賣貨便 38 台幣 / 交貨便 60 台幣</p>
+					<p class="ship" id="item-shipping">運費規則：-</p>
 				</div>
 			</section>
 
@@ -1071,10 +1115,14 @@
 				<section class="section">
 					<h2>立即下標</h2>
 					<div class="bid-panel">
+						<div class="bid-auth-row">
+							<p class="bid-auth-status" id="bid-auth-status">檢查登入狀態…</p>
+							<button type="button" class="bid-login-btn" id="bid-login-btn" hidden>Google 登入後下標</button>
+						</div>
 						<div class="form-row">
 							<div>
 								<label for="bidder-name">下標者名稱</label>
-								<input id="bidder-name" type="text" placeholder="例如：User_chen" maxlength="20">
+								<input id="bidder-name" type="text" placeholder="登入後自動帶入暱稱" maxlength="40" readonly>
 							</div>
 							<div>
 								<label for="bid-amount">出價金額（日圓）</label>
@@ -1083,7 +1131,7 @@
 						</div>
 						<div class="actions">
 							<button type="button" id="submit-bid">確認下標</button>
-							<p class="hint">規則：出價必須高於目前最高價。</p>
+							<p class="hint" id="bid-hint">規則：出價必須高於目前最高價。結標後請私下交易（站內不含金流／物流）。</p>
 						</div>
 						<p class="error" id="error-msg"></p>
 						<p class="ok" id="ok-msg"></p>
@@ -1184,23 +1232,62 @@
 		</div>
 	</div>
 	<script>
-		const state = {
-			auctionId: "YH-AUC-20260707-0019",
+		const DEFAULT_AUCTION_ID = "YH-AUC-20260707-0019";
+		const DEMO_IMAGES = [
+			"https://imgs.devilfox.net/ws/brd_w139/brd_w139_077.png",
+			"https://imgs.devilfox.net/ws/brd_w139/brd_w139_077s.png",
+			"https://imgs.devilfox.net/ws/brd_w139/brd_w139_077sec.png"
+		];
+
+		const demoState = {
+			auctionId: DEFAULT_AUCTION_ID,
+			title: "ヴァイスシュヴァルツ ブラウンダスト2 セレブリティ・バニー ロエン SR",
+			images: DEMO_IMAGES.slice(),
+			shipping: "運費規則： 賣貨便 38 台幣 / 交貨便 60 台幣",
 			itemStatus: "やや傷や汚れあり",
 			itemDescription: "卡片若有摺痕、刮痕、污損，請先以留言詢問。由於部分卡片為二手，為避免爭議，本商品狀態標示為「有些微瑕疵」。完美主義者請審慎下標。",
 			startPrice: 3000,
 			itemQuantity: 1,
-			startTime: "2026-07-07T20:47:00",
-			endTime: "2026-07-09T20:47:00",
+			startTime: "2026-10-01T20:00:00",
+			endTime: "2026-12-31T21:00:00",
 			earlyEnd: "否",
 			autoExtend: "是",
 			bids: [
-				{ bidder: "akira_88", amount: 3200, time: "2026-07-07T20:52:41" },
-				{ bidder: "mio_card", amount: 3500, time: "2026-07-07T21:04:16" }
+				{ bidder: "akira_88", amount: 3200, time: "2026-10-02T20:52:41" },
+				{ bidder: "mio_card", amount: 3500, time: "2026-10-03T21:04:16" }
 			]
 		};
 
+		const runtime = {
+			mode: "loading", // loading | cloud | demo | missing
+			auctionId: DEFAULT_AUCTION_ID,
+			user: null,
+			bidderDisplayName: "",
+			placing: false,
+			unsubAuction: null
+		};
+
+		const state = {
+			auctionId: demoState.auctionId,
+			title: demoState.title,
+			images: demoState.images.slice(),
+			shipping: demoState.shipping,
+			itemStatus: demoState.itemStatus,
+			itemDescription: demoState.itemDescription,
+			startPrice: demoState.startPrice,
+			itemQuantity: demoState.itemQuantity,
+			startTime: demoState.startTime,
+			endTime: demoState.endTime,
+			earlyEnd: demoState.earlyEnd,
+			autoExtend: demoState.autoExtend,
+			status: "open",
+			bids: demoState.bids.map(function (b) { return Object.assign({}, b); })
+		};
+
 		const el = {
+			syncBanner: document.getElementById("sync-banner"),
+			itemTitle: document.getElementById("item-title"),
+			itemShipping: document.getElementById("item-shipping"),
 			itemStatus: document.getElementById("item-status"),
 			itemDescription: document.getElementById("item-description"),
 			startPrice: document.getElementById("start-price"),
@@ -1232,7 +1319,10 @@
 			bidAmount: document.getElementById("bid-amount"),
 			submitBid: document.getElementById("submit-bid"),
 			errorMsg: document.getElementById("error-msg"),
-			okMsg: document.getElementById("ok-msg")
+			okMsg: document.getElementById("ok-msg"),
+			bidAuthStatus: document.getElementById("bid-auth-status"),
+			bidLoginBtn: document.getElementById("bid-login-btn"),
+			bidHint: document.getElementById("bid-hint")
 		};
 
 		function formatYen(value) {
@@ -1269,34 +1359,48 @@
 			return "[" + m + "月" + day + "日 " + h + "時" + min + "分]";
 		}
 
+		function bidTimeValue(bid) {
+			if (bid && typeof bid.timeMs === "number") return bid.timeMs;
+			return bid && bid.time ? bid.time : 0;
+		}
+
 		function getCurrentHighestBid() {
 			if (state.bids.length === 0) {
 				return null;
 			}
-			return state.bids.reduce((top, bid) => (bid.amount > top.amount ? bid : top), state.bids[0]);
+			return state.bids.reduce(function (top, bid) {
+				return bid.amount > top.amount ? bid : top;
+			}, state.bids[0]);
+		}
+
+		function isAuctionClosed() {
+			if (state.status === "closed") return true;
+			const end = new Date(state.endTime).getTime();
+			return Number.isFinite(end) && Date.now() >= end;
 		}
 
 		function getRankedBidders() {
 			const bestByBidder = new Map();
-			state.bids.forEach((bid) => {
-				const existing = bestByBidder.get(bid.bidder);
+			state.bids.forEach(function (bid) {
+				const key = bid.bidderUid || bid.bidder;
+				const existing = bestByBidder.get(key);
 				if (!existing) {
-					bestByBidder.set(bid.bidder, { ...bid });
+					bestByBidder.set(key, Object.assign({}, bid));
 					return;
 				}
 				if (bid.amount > existing.amount) {
-					bestByBidder.set(bid.bidder, { ...bid });
+					bestByBidder.set(key, Object.assign({}, bid));
 					return;
 				}
-				if (bid.amount === existing.amount && new Date(bid.time) < new Date(existing.time)) {
-					bestByBidder.set(bid.bidder, { ...bid });
+				if (bid.amount === existing.amount && new Date(bidTimeValue(bid)) < new Date(bidTimeValue(existing))) {
+					bestByBidder.set(key, Object.assign({}, bid));
 				}
 			});
-			return [...bestByBidder.values()].sort((a, b) => {
+			return Array.from(bestByBidder.values()).sort(function (a, b) {
 				if (b.amount !== a.amount) {
 					return b.amount - a.amount;
 				}
-				return new Date(a.time) - new Date(b.time);
+				return new Date(bidTimeValue(a)) - new Date(bidTimeValue(b));
 			});
 		}
 
@@ -1306,7 +1410,7 @@
 			el.rankSummary.textContent = "共 " + ranked.length + " 位下標者";
 			if (ranked.length > 0) {
 				el.modalTopBidder.textContent = ranked[0].bidder;
-				el.modalTopDetail.textContent = formatYen(ranked[0].amount) + " / 1個 / " + formatDateTime(ranked[0].time);
+				el.modalTopDetail.textContent = formatYen(ranked[0].amount) + " / 1個 / " + formatDateTime(bidTimeValue(ranked[0]));
 			} else {
 				el.modalTopBidder.textContent = "尚無";
 				el.modalTopDetail.textContent = "-";
@@ -1317,7 +1421,7 @@
 				el.rankList.appendChild(li);
 				return;
 			}
-			ranked.forEach((item, idx) => {
+			ranked.forEach(function (item, idx) {
 				const li = document.createElement("li");
 				li.textContent = (idx + 1) + ". " + item.bidder + " - " + formatYen(item.amount);
 				el.rankList.appendChild(li);
@@ -1335,17 +1439,20 @@
 				el.modalPageInfo.textContent = "1ページ中1ページ目を表示（入札合計：0件）";
 				return;
 			}
-			const sortedBids = [...state.bids].sort((a, b) => new Date(b.time) - new Date(a.time));
+			const sortedBids = state.bids.slice().sort(function (a, b) {
+				return new Date(bidTimeValue(b)) - new Date(bidTimeValue(a));
+			});
 			el.historySummary.textContent = "共 " + sortedBids.length + " 筆，點擊上方查看明細";
 			el.modalPageInfo.textContent = "1ページ中1ページ目を表示（入札合計：" + sortedBids.length + "件）";
-			sortedBids.forEach((bid) => {
+			sortedBids.forEach(function (bid) {
 				const line = document.createElement("div");
 				line.className = "history-line";
 				const time = document.createElement("span");
 				time.className = "history-time";
-				time.textContent = formatBidTime(bid.time);
+				time.textContent = formatBidTime(bidTimeValue(bid));
 				const text = document.createElement("span");
-				text.textContent = bid.bidder + " 入札・数量：1で " + new Intl.NumberFormat("ja-JP").format(bid.amount);
+				const qty = bid.quantity || 1;
+				text.textContent = bid.bidder + " 入札・数量：" + qty + "で " + new Intl.NumberFormat("ja-JP").format(bid.amount);
 				line.appendChild(time);
 				line.appendChild(text);
 				el.bidList.appendChild(line);
@@ -1373,9 +1480,79 @@
 			el.historyModal.setAttribute("aria-hidden", "true");
 		}
 
+		function setSyncBanner(mode, message) {
+			el.syncBanner.textContent = message;
+			el.syncBanner.classList.toggle("is-cloud", mode === "cloud");
+			el.syncBanner.classList.toggle("is-warn", mode === "warn" || mode === "missing");
+		}
+
+		function updateBidControls() {
+			const closed = isAuctionClosed();
+			const cloud = runtime.mode === "cloud";
+			const loggedIn = !!runtime.user;
+
+			if (runtime.mode === "loading") {
+				el.bidAuthStatus.textContent = "連線中…";
+				el.bidLoginBtn.hidden = true;
+				el.submitBid.disabled = true;
+				el.bidAmount.disabled = true;
+				el.bidderName.value = "";
+				return;
+			}
+
+			if (cloud) {
+				el.bidderName.readOnly = true;
+				if (!loggedIn) {
+					el.bidAuthStatus.textContent = "未登入可瀏覽；下標請先以 Google 登入。";
+					el.bidLoginBtn.hidden = false;
+					el.submitBid.disabled = true;
+					el.bidAmount.disabled = true;
+					el.bidderName.value = "";
+					el.bidderName.placeholder = "登入後自動帶入暱稱";
+				} else {
+					el.bidAuthStatus.textContent = "已登入：下標將以站內暱稱／顯示名稱公開。";
+					el.bidLoginBtn.hidden = true;
+					el.bidderName.value = runtime.bidderDisplayName || "";
+					el.bidderName.placeholder = "請至個人資料設定暱稱";
+					el.bidAmount.disabled = closed || runtime.placing;
+					el.submitBid.disabled = closed || runtime.placing || !runtime.bidderDisplayName;
+				}
+				el.bidHint.textContent = closed
+					? "拍賣已結束。得標者請與賣家私下聯繫完成交易（站內不含金流／物流）。"
+					: "規則：出價必須高於目前最高價；時間以伺服器為準。結標後私下交易。";
+			} else {
+				el.bidAuthStatus.textContent = "本機示範模式（未寫入雲端）。可任意測試下標 UI。";
+				el.bidLoginBtn.hidden = true;
+				el.bidderName.readOnly = false;
+				el.bidderName.placeholder = "例如：User_chen";
+				el.bidAmount.disabled = closed;
+				el.submitBid.disabled = closed;
+				el.bidHint.textContent = "示範資料不會同步。接上 Firestore 並建立拍賣文件後即為正式模式。";
+			}
+
+			if (closed) {
+				el.submitBid.textContent = "已結標";
+			} else {
+				el.submitBid.textContent = runtime.placing ? "送出中…" : "確認下標";
+			}
+		}
+
+		function applyAuctionFields(fields) {
+			const prevImages = (state.images || []).join("\n");
+			Object.keys(fields).forEach(function (key) {
+				state[key] = fields[key];
+			});
+			const nextImages = (state.images || []).join("\n");
+			if (prevImages !== nextImages && typeof window.__bidCardsRenderGallery === "function") {
+				window.__bidCardsRenderGallery(state.images);
+			}
+		}
+
 		function renderAuctionInfo() {
 			const top = getCurrentHighestBid();
 			const highestValue = top ? top.amount : state.startPrice;
+			if (el.itemTitle) el.itemTitle.textContent = state.title || "-";
+			if (el.itemShipping) el.itemShipping.textContent = state.shipping || "運費規則：-";
 			el.itemStatus.textContent = state.itemStatus;
 			el.itemDescription.textContent = state.itemDescription;
 			el.startPrice.textContent = formatYen(state.startPrice);
@@ -1390,6 +1567,7 @@
 			el.heroPrice.textContent = formatYen(highestValue);
 			renderRankList();
 			renderBidList();
+			updateBidControls();
 		}
 
 		function setMessage(type, message) {
@@ -1402,7 +1580,7 @@
 			}
 		}
 
-		function submitBid() {
+		function submitBidLocal() {
 			const bidder = el.bidderName.value.trim();
 			const amount = Number(el.bidAmount.value.trim());
 			const top = getCurrentHighestBid();
@@ -1419,271 +1597,401 @@
 				setMessage("error", "出價需高於目前最高價（" + formatYen(threshold) + "）。");
 				return;
 			}
-			state.bids.push({ bidder, amount, time: new Date().toISOString() });
+			if (isAuctionClosed()) {
+				setMessage("error", "拍賣已結束，無法下標。");
+				return;
+			}
+			state.bids.push({ bidder: bidder, amount: amount, time: new Date().toISOString() });
 			renderAuctionInfo();
-			setMessage("ok", "下標成功，已更新下標紀錄與順位。");
+			setMessage("ok", "下標成功（本機示範，未寫入雲端）。");
 			el.bidAmount.value = "";
 			el.bidAmount.focus();
+		}
+
+		function submitBidCloud() {
+			const fb = window.WsFirebase;
+			if (!fb || !fb.ready || !fb.firestoreReady) {
+				setMessage("error", (fb && fb.reason) || "Firestore 尚未就緒");
+				return;
+			}
+			if (!runtime.user) {
+				setMessage("error", "請先登入後再下標。");
+				return;
+			}
+			if (!runtime.bidderDisplayName) {
+				setMessage("error", "請先至個人資料設定暱稱。");
+				return;
+			}
+			const amount = Number(el.bidAmount.value.trim());
+			if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+				setMessage("error", "請輸入有效整數金額。");
+				return;
+			}
+			if (isAuctionClosed()) {
+				setMessage("error", "拍賣已結束，無法下標。");
+				return;
+			}
+			runtime.placing = true;
+			updateBidControls();
+			setMessage("ok", "");
+			el.errorMsg.textContent = "";
+			fb.placeBid(runtime.auctionId, amount)
+				.then(function () {
+					setMessage("ok", "下標成功，已同步至雲端。");
+					el.bidAmount.value = "";
+				})
+				.catch(function (err) {
+					const msg = (err && err.message) ? err.message : String(err);
+					setMessage("error", msg.indexOf("出價需高於") >= 0
+						? msg + "（" + formatYen(getCurrentHighestBid() ? getCurrentHighestBid().amount : state.startPrice) + "）"
+						: msg);
+				})
+				.then(function () {
+					runtime.placing = false;
+					updateBidControls();
+				});
+		}
+
+		function submitBid() {
+			if (runtime.mode === "cloud") {
+				submitBidCloud();
+				return;
+			}
+			if (runtime.mode === "demo") {
+				submitBidLocal();
+				return;
+			}
+			setMessage("error", "目前無法下標。");
 		}
 
 		function startClock() {
 			function tick() {
 				el.currentTime.textContent = formatDateTime(new Date().toISOString());
+				if (runtime.mode === "cloud" || runtime.mode === "demo") {
+					updateBidControls();
+				}
 			}
 			tick();
 			setInterval(tick, 1000);
 		}
 
+		function applyCloudSnapshot(payload) {
+			if (!payload || !payload.exists || !payload.auction) {
+				// 尚無種子文件：以外觀示範 + 本機下標，避免頁面完全不能試
+				startDemoMode("Firestore 連線成功，但找不到 auctions/" + runtime.auctionId + "。請依 firebase/README.md 建立種子後即可雲端下標；目前為本機示範。");
+				return;
+			}
+
+			runtime.mode = "cloud";
+			const a = payload.auction;
+			const shipping = a.shipping
+				? (a.shipping.indexOf("運費") >= 0 ? a.shipping : ("運費規則： " + a.shipping))
+				: "運費規則：-";
+			applyAuctionFields({
+				auctionId: a.auctionId,
+				title: a.title,
+				images: (a.images && a.images.length) ? a.images.slice() : DEMO_IMAGES.slice(),
+				shipping: shipping,
+				itemStatus: a.itemStatus,
+				itemDescription: a.description,
+				startPrice: a.startPrice,
+				itemQuantity: a.quantity,
+				startTime: a.startTimeMs || a.startTime,
+				endTime: a.endTimeMs || a.endTime,
+				earlyEnd: a.earlyEnd ? "是" : "否",
+				autoExtend: a.autoExtend ? "是" : "否",
+				status: a.status || "open",
+				bids: (payload.bids || []).map(function (b) {
+					return {
+						bidder: b.bidder,
+						bidderUid: b.bidderUid,
+						amount: b.amount,
+						quantity: b.quantity,
+						time: b.timeMs,
+						timeMs: b.timeMs
+					};
+				})
+			});
+			setSyncBanner("cloud", "雲端同步中｜拍賣 " + a.auctionId + "｜未登入可看，登入後可下標。結標後私下交易。");
+			renderAuctionInfo();
+		}
+
+		function startDemoMode(reason) {
+			runtime.mode = "demo";
+			el.bidderName.readOnly = false;
+			setSyncBanner("warn", reason || "Firebase 未就緒，使用本機示範資料。");
+			applyAuctionFields({
+				auctionId: demoState.auctionId,
+				title: demoState.title,
+				images: demoState.images.slice(),
+				shipping: demoState.shipping,
+				itemStatus: demoState.itemStatus,
+				itemDescription: demoState.itemDescription,
+				startPrice: demoState.startPrice,
+				itemQuantity: demoState.itemQuantity,
+				startTime: demoState.startTime,
+				endTime: demoState.endTime,
+				earlyEnd: demoState.earlyEnd,
+				autoExtend: demoState.autoExtend,
+				status: "open",
+				bids: demoState.bids.map(function (b) { return Object.assign({}, b); })
+			});
+			renderAuctionInfo();
+		}
+
+		function refreshBidderName() {
+			const fb = window.WsFirebase;
+			if (!fb || !runtime.user) {
+				runtime.bidderDisplayName = "";
+				updateBidControls();
+				return Promise.resolve();
+			}
+			return fb.resolveBidderDisplayName()
+				.then(function (name) {
+					runtime.bidderDisplayName = name || "";
+					updateBidControls();
+				})
+				.catch(function () {
+					runtime.bidderDisplayName = "";
+					updateBidControls();
+				});
+		}
+
+		function connectCloud() {
+			const fb = window.WsFirebase;
+			const fromUrl = fb && fb.getAuctionIdFromLocation ? fb.getAuctionIdFromLocation() : "";
+			runtime.auctionId = fromUrl || DEFAULT_AUCTION_ID;
+
+			if (!fb || !fb.ready) {
+				startDemoMode((fb && fb.reason) || "Firebase 尚未設定，使用本機示範資料。");
+				return;
+			}
+			if (!fb.firestoreReady) {
+				startDemoMode("已載入 Auth，但 Firestore SDK 未就緒。請確認已引入 firebase-firestore-compat.js。");
+				return;
+			}
+
+			setSyncBanner("cloud", "正在訂閱 auctions/" + runtime.auctionId + " …");
+			if (runtime.unsubAuction) {
+				runtime.unsubAuction();
+				runtime.unsubAuction = null;
+			}
+			runtime.unsubAuction = fb.watchAuction(
+				runtime.auctionId,
+				applyCloudSnapshot,
+				function (err) {
+					console.error(err);
+					startDemoMode("訂閱拍賣失敗：" + ((err && err.message) || err) + "。改以本機示範。");
+				}
+			);
+
+			fb.onAuth(function (user) {
+				runtime.user = user || null;
+				if (user && fb.ensureUserProfile) {
+					fb.ensureUserProfile().finally(refreshBidderName);
+				} else {
+					refreshBidderName();
+				}
+			});
+		}
+
 		el.submitBid.addEventListener("click", submitBid);
-		el.bidAmount.addEventListener("keydown", (event) => {
+		el.bidAmount.addEventListener("keydown", function (event) {
 			if (event.key === "Enter") {
 				submitBid();
 			}
 		});
-		el.bidderName.addEventListener("keydown", (event) => {
-			if (event.key === "Enter") {
+		el.bidderName.addEventListener("keydown", function (event) {
+			if (event.key === "Enter" && runtime.mode === "demo") {
 				submitBid();
 			}
 		});
-		el.openHistory.addEventListener("click", () => {
+		el.bidLoginBtn.addEventListener("click", function () {
+			const fb = window.WsFirebase;
+			if (!fb || !fb.ready) {
+				alert((fb && fb.reason) || "請先設定 Firebase");
+				return;
+			}
+			el.bidLoginBtn.disabled = true;
+			fb.signInWithGoogle()
+				.catch(function (err) {
+					alert("登入失敗：" + ((err && err.message) || err));
+				})
+				.then(function () {
+					el.bidLoginBtn.disabled = false;
+				});
+		});
+		el.openHistory.addEventListener("click", function () {
 			openHistoryModal("rank");
 		});
 		el.closeHistory.addEventListener("click", closeHistoryModal);
-		el.tagRank.addEventListener("click", () => {
+		el.tagRank.addEventListener("click", function () {
 			setActiveTab("rank");
 		});
-		el.tagHistory.addEventListener("click", () => {
+		el.tagHistory.addEventListener("click", function () {
 			setActiveTab("history");
 		});
-		el.historyModal.addEventListener("click", (event) => {
+		el.historyModal.addEventListener("click", function (event) {
 			if (event.target === el.historyModal) {
 				closeHistoryModal();
 			}
 		});
-		document.addEventListener("keydown", (event) => {
+		document.addEventListener("keydown", function (event) {
 			if (event.key === "Escape" && el.historyModal.classList.contains("show")) {
 				closeHistoryModal();
 			}
 		});
 
-		renderAuctionInfo();
-		startClock();
-		// --- 圖片放大燈箱與放大鏡功能 ---
-		const galleryMainImg = document.querySelector(".gallery-stage img");
+		// --- 圖片放大燈箱與畫廊（支援雲端 images[] 動態重建） ---
+		const galleryMainImg = document.getElementById("gallery-main-img");
+		const galleryThumbsWrap = document.getElementById("gallery-thumbs");
+		const galleryCount = document.getElementById("gallery-count");
+		const btnPrev = document.querySelector(".gallery-prev");
+		const btnNext = document.querySelector(".gallery-next");
 		const imageModal = document.getElementById("image-modal");
 		const closeImageModal = document.getElementById("close-image-modal");
 		const lightboxWrap = document.getElementById("lightbox-wrap");
 		const lightboxImg = document.getElementById("lightbox-img");
+		const stageForSwipe = document.querySelector(".gallery-stage");
 
-		// 1. 點擊主圖片開啟 Modal
-		galleryMainImg.addEventListener("click", () => {
-			lightboxImg.src = galleryMainImg.src; // 抓取當前主圖的來源
-			imageModal.classList.add("show");
-			document.body.classList.add("modal-open");
-			imageModal.setAttribute("aria-hidden", "false");
-		});
+		let galleryThumbs = [];
+		let currentGalleryIndex = 0;
+		let pointerStartX = 0;
+		let pointerStartY = 0;
+		let isDragging = false;
+		let dragDeltaX = 0;
+		let hasMoved = false;
 
-		// 2. 關閉 Modal 的函數
-		function closeImageLightbox() {
-			imageModal.classList.remove("show");
-			imageModal.setAttribute("aria-hidden", "true");
-			
-			// 若拍賣歷史Modal沒開著，才解除body鎖定
-			if (!el.historyModal.classList.contains("show")) {
-				document.body.classList.remove("modal-open");
-			}
-			
-			// 重置放大狀態
-			lightboxImg.style.transform = "scale(1)";
-		}
-
-		closeImageModal.addEventListener("click", closeImageLightbox);
-
-		// 點擊黑色半透明背景也能關閉
-		imageModal.addEventListener("click", (e) => {
-			if (e.target === imageModal || e.target.classList.contains("lightbox-content")) {
-				closeImageLightbox();
-			}
-		});
-
-		// ESC 鍵關閉圖片 Modal
-		document.addEventListener("keydown", (event) => {
-			if (event.key === "Escape" && imageModal.classList.contains("show")) {
-				closeImageLightbox();
-			}
-		});
-
-		// 3. 滑鼠在 Modal 內的圖片上滑動時，局部放大圖片 (放大鏡效果)
-		// [修改] 將 mousemove 改為 pointermove，使其同時完美支援「滑鼠點按拖曳」與「觸控螢幕」
-		lightboxWrap.addEventListener("pointermove", (e) => {
-			// 取得容器的座標與尺寸
-			const rect = lightboxWrap.getBoundingClientRect();
-			
-			// 計算指標 (滑鼠/手指) 在圖片中的 X 與 Y 軸百分比
-			const x = ((e.clientX - rect.left) / rect.width) * 100;
-			const y = ((e.clientY - rect.top) / rect.height) * 100;
-			
-			// 設定變形原點（滑鼠指到哪，就以哪裡為中心放大）
-			lightboxImg.style.transformOrigin = `${x}% ${y}%`;
-			lightboxImg.style.transform = "scale(2.5)"; // 放大 2.5 倍
-		});
-
-		// 滑鼠或手指離開圖片範圍時，恢復原始大小
-		// [修改] 對應 pointermove，將 mouseleave 改為 pointerleave
-		lightboxWrap.addEventListener("pointerleave", () => {
-			lightboxImg.style.transform = "scale(1)";
-			setTimeout(() => {
-				lightboxImg.style.transformOrigin = "center center";
-			}, 150); // 等待縮小動畫快結束再重置中心點，避免畫面閃跳
-		});		
-
-		// [新增] 阻擋瀏覽器預設的圖片拖曳行為 (Drag & Drop)
-		// 這樣按住滑鼠左鍵並移動時，事件就不會被強制中斷，放大鏡就能流暢跟隨
-		lightboxImg.addEventListener("dragstart", (e) => {
-			e.preventDefault();
-		});	
-// --- 畫廊切換功能 (點擊切換 + 手機拖曳實體滑動) ---
-		const galleryThumbs = document.querySelectorAll(".gallery-thumb");
-		const galleryCount = document.querySelector(".gallery-count");
-		const btnPrev = document.querySelector(".gallery-prev");
-		const btnNext = document.querySelector(".gallery-next");
-
-		let currentGalleryIndex = 0; 
-
-		// 將新圖片滑入的統一函式
-		// isDragged: 如果是手指拖曳放開，不要再播「滑出」動畫（因為手已經把它拉出去了），只要做「滑入」。
-		function switchGalleryImage(newIndex, direction = "left", isDragged = false) {
+		function switchGalleryImage(newIndex, direction, isDragged) {
+			direction = direction || "left";
+			isDragged = !!isDragged;
+			if (!galleryThumbs.length) return;
 			if (newIndex >= galleryThumbs.length) newIndex = 0;
 			if (newIndex < 0) newIndex = galleryThumbs.length - 1;
-			if (newIndex === currentGalleryIndex) return;
+			if (newIndex === currentGalleryIndex && !isDragged) return;
 
 			const targetThumb = galleryThumbs[newIndex];
-
-			// 1. 更新縮圖的 active 狀態
-			galleryThumbs.forEach(t => {
+			galleryThumbs.forEach(function (t) {
 				t.classList.remove("is-active");
 				t.removeAttribute("aria-current");
 			});
 			targetThumb.classList.add("is-active");
 			targetThumb.setAttribute("aria-current", "true");
 
-			// 如果是點擊箭頭或縮圖，執行圖片「飛出」動畫
 			if (!isDragged) {
-				const outX = direction === "left" ? -50 : 50; // 往左或往右飛出
-				galleryMainImg.style.transform = `translateX(${outX}%) scale(0.9)`;
+				const outX = direction === "left" ? -50 : 50;
+				galleryMainImg.style.transform = "translateX(" + outX + "%) scale(0.9)";
 				galleryMainImg.style.opacity = 0;
 			}
 
-			// 2. 等待飛出/拖曳離開後，進行圖片替換並滑入
-			setTimeout(() => {
+			setTimeout(function () {
 				const newSrc = targetThumb.querySelector("img").src;
 				galleryMainImg.src = newSrc;
-				galleryCount.textContent = `${newIndex + 1} / ${galleryThumbs.length}`;
+				galleryCount.textContent = (newIndex + 1) + " / " + galleryThumbs.length;
 				currentGalleryIndex = newIndex;
 
-				// 瞬間把新圖片放到反方向，準備滑入
 				galleryMainImg.style.transition = "none";
 				const inX = direction === "left" ? 50 : -50;
-				galleryMainImg.style.transform = `translateX(${inX}%) scale(0.9)`;
+				galleryMainImg.style.transform = "translateX(" + inX + "%) scale(0.9)";
 
-				// 給瀏覽器一點時間重繪 (Reflow)，再觸發滑回中央的彈性動畫
-				requestAnimationFrame(() => {
-					requestAnimationFrame(() => {
+				requestAnimationFrame(function () {
+					requestAnimationFrame(function () {
 						galleryMainImg.style.transition = "transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease, filter 0.4s ease";
 						galleryMainImg.style.transform = "translateX(0) scale(1)";
 						galleryMainImg.style.opacity = 1;
 					});
 				});
-			}, isDragged ? 0 : 200); // 拖曳直接滑入，點擊則等待飛出完成
+			}, isDragged ? 0 : 200);
 		}
 
-		// 綁定縮圖點擊
-		galleryThumbs.forEach((thumb, index) => {
-			thumb.addEventListener("click", () => {
-				// 判斷該往左還是往右飛
-				const direction = index > currentGalleryIndex ? "left" : "right";
-				switchGalleryImage(index, direction);
+		function bindThumbClicks() {
+			galleryThumbs.forEach(function (thumb, index) {
+				thumb.addEventListener("click", function () {
+					const direction = index > currentGalleryIndex ? "left" : "right";
+					switchGalleryImage(index, direction);
+				});
 			});
+		}
+
+		function renderGallery(images) {
+			const list = (images && images.length) ? images.slice() : DEMO_IMAGES.slice();
+			galleryThumbsWrap.innerHTML = "";
+			list.forEach(function (src, index) {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.className = "gallery-thumb" + (index === 0 ? " is-active" : "");
+				btn.setAttribute("aria-label", "查看第 " + (index + 1) + " 張圖片");
+				if (index === 0) btn.setAttribute("aria-current", "true");
+				const img = document.createElement("img");
+				img.src = src;
+				img.alt = "商品縮圖 " + (index + 1);
+				btn.appendChild(img);
+				galleryThumbsWrap.appendChild(btn);
+			});
+			galleryThumbs = Array.prototype.slice.call(galleryThumbsWrap.querySelectorAll(".gallery-thumb"));
+			currentGalleryIndex = 0;
+			galleryMainImg.src = list[0] || "";
+			galleryCount.textContent = list.length ? ("1 / " + list.length) : "0 / 0";
+			galleryMainImg.style.opacity = 1;
+			galleryMainImg.style.transform = "translateX(0) scale(1)";
+			bindThumbClicks();
+		}
+		window.__bidCardsRenderGallery = renderGallery;
+		renderGallery(state.images);
+
+		galleryMainImg.addEventListener("click", function () {
+			if (!galleryMainImg.src) return;
+			lightboxImg.src = galleryMainImg.src;
+			imageModal.classList.add("show");
+			document.body.classList.add("modal-open");
+			imageModal.setAttribute("aria-hidden", "false");
 		});
 
-		// 綁定左右箭頭
-		btnPrev.addEventListener("click", (e) => {
+		function closeImageLightbox() {
+			imageModal.classList.remove("show");
+			imageModal.setAttribute("aria-hidden", "true");
+			if (!el.historyModal.classList.contains("show")) {
+				document.body.classList.remove("modal-open");
+			}
+			lightboxImg.style.transform = "scale(1)";
+		}
+
+		closeImageModal.addEventListener("click", closeImageLightbox);
+		imageModal.addEventListener("click", function (e) {
+			if (e.target === imageModal || e.target.classList.contains("lightbox-content")) {
+				closeImageLightbox();
+			}
+		});
+		document.addEventListener("keydown", function (event) {
+			if (event.key === "Escape" && imageModal.classList.contains("show")) {
+				closeImageLightbox();
+			}
+		});
+
+		lightboxWrap.addEventListener("pointermove", function (e) {
+			const rect = lightboxWrap.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			lightboxImg.style.transformOrigin = x + "% " + y + "%";
+			lightboxImg.style.transform = "scale(2.5)";
+		});
+		lightboxWrap.addEventListener("pointerleave", function () {
+			lightboxImg.style.transform = "scale(1)";
+			setTimeout(function () {
+				lightboxImg.style.transformOrigin = "center center";
+			}, 150);
+		});
+		lightboxImg.addEventListener("dragstart", function (e) { e.preventDefault(); });
+
+		btnPrev.addEventListener("click", function (e) {
 			e.stopPropagation();
 			switchGalleryImage(currentGalleryIndex - 1, "right");
 		});
-		btnNext.addEventListener("click", (e) => {
+		btnNext.addEventListener("click", function (e) {
 			e.stopPropagation();
 			switchGalleryImage(currentGalleryIndex + 1, "left");
 		});
 
-// --- 實體拖曳 (Drag to Swipe) 核心邏輯 (全面支援滑鼠與觸控) ---
-		const stageForSwipe = document.querySelector(".gallery-stage");
-		let pointerStartX = 0;
-		let pointerStartY = 0;
-		let isDragging = false;
-		let dragDeltaX = 0;
-		let hasMoved = false; // [新增] 紀錄這次按下是否真的有滑動
-
-		// 阻擋桌機瀏覽器原生的「拖曳圖片檔案」行為
-		galleryMainImg.addEventListener("dragstart", (e) => e.preventDefault());
-
-		// 攔截點擊事件 (Capture 階段)：如果是拖曳行為，就阻止原生的「點擊放大」燈箱
-		stageForSwipe.addEventListener("click", (e) => {
-			if (hasMoved) {
-				e.stopPropagation();
-				e.preventDefault();
-			}
-		}, true); 
-
-		stageForSwipe.addEventListener("pointerdown", (e) => {
-			hasMoved = false; // 每次游標按下時，先重置移動狀態
-
-			// 如果點到的是左右箭頭，不執行拖曳，交給原本的點擊事件處理
-			if (e.target.closest('.gallery-arrow')) return;
-			// 如果是滑鼠，只允許「左鍵 (button === 0)」進行拖曳
-			if (e.pointerType === "mouse" && e.button !== 0) return;
-			
-			pointerStartX = e.clientX;
-			pointerStartY = e.clientY;
-			isDragging = true;
-			dragDeltaX = 0;
-
-			// 移除過場動畫，讓圖片零延遲跟隨游標
-			galleryMainImg.style.transition = "none";
-			galleryMainImg.style.cursor = "grabbing"; 
-			
-			// [關鍵修正] 對「圖片本身」設定游標捕捉，而不是外層容器
-			// 這樣放開滑鼠時，click 事件才會正確觸發在圖片上，順利啟動原本的放大燈箱！
-			galleryMainImg.setPointerCapture(e.pointerId);
-		});
-
-		stageForSwipe.addEventListener("pointermove", (e) => {
-			if (!isDragging) return;
-
-			const deltaX = e.clientX - pointerStartX;
-			const deltaY = e.clientY - pointerStartY;
-
-			// 只要移動超過 5px，就判定為正在拖曳 (放開時就不會觸發放大燈箱)
-			if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-				hasMoved = true;
-			}
-
-			// 如果是觸控裝置，且垂直滑動大於水平，判定為網頁上下捲動，立刻中止拖曳
-			if (e.pointerType === "touch" && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(dragDeltaX) < 10) {
-				isDragging = false;
-				resetImagePosition();
-				return;
-			}
-
-			dragDeltaX = deltaX;
-			const moveX = dragDeltaX * 0.7; // 加上 0.7 倍阻力
-			const opacity = Math.max(0.4, 1 - Math.abs(dragDeltaX) / window.innerWidth);
-			
-			galleryMainImg.style.transform = `translateX(${moveX}px) scale(0.95)`;
-			galleryMainImg.style.opacity = opacity;
-		});
-
-		// 彈回中央原位的函式
 		function resetImagePosition() {
 			galleryMainImg.style.transition = "transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease, filter 0.4s ease";
 			galleryMainImg.style.transform = "translateX(0) scale(1)";
@@ -1691,44 +1999,76 @@
 			galleryMainImg.style.cursor = "zoom-in";
 		}
 
-		// 統一處理滑鼠放開或觸控離開的行為
-		const onPointerUp = (e) => {
+		galleryMainImg.addEventListener("dragstart", function (e) { e.preventDefault(); });
+		stageForSwipe.addEventListener("click", function (e) {
+			if (hasMoved) {
+				e.stopPropagation();
+				e.preventDefault();
+			}
+		}, true);
+
+		stageForSwipe.addEventListener("pointerdown", function (e) {
+			hasMoved = false;
+			if (e.target.closest(".gallery-arrow")) return;
+			if (e.pointerType === "mouse" && e.button !== 0) return;
+			pointerStartX = e.clientX;
+			pointerStartY = e.clientY;
+			isDragging = true;
+			dragDeltaX = 0;
+			galleryMainImg.style.transition = "none";
+			galleryMainImg.style.cursor = "grabbing";
+			galleryMainImg.setPointerCapture(e.pointerId);
+		});
+
+		stageForSwipe.addEventListener("pointermove", function (e) {
+			if (!isDragging) return;
+			const deltaX = e.clientX - pointerStartX;
+			const deltaY = e.clientY - pointerStartY;
+			if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+				hasMoved = true;
+			}
+			if (e.pointerType === "touch" && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(dragDeltaX) < 10) {
+				isDragging = false;
+				resetImagePosition();
+				return;
+			}
+			dragDeltaX = deltaX;
+			const moveX = dragDeltaX * 0.7;
+			const opacity = Math.max(0.4, 1 - Math.abs(dragDeltaX) / window.innerWidth);
+			galleryMainImg.style.transform = "translateX(" + moveX + "px) scale(0.95)";
+			galleryMainImg.style.opacity = opacity;
+		});
+
+		const onPointerUp = function (e) {
 			if (!isDragging) return;
 			isDragging = false;
-			
-			// 釋放游標捕捉
-			galleryMainImg.releasePointerCapture(e.pointerId);
-
-			const threshold = 60; // 必須滑動超過 60px 才會判定為換頁
-
+			try { galleryMainImg.releasePointerCapture(e.pointerId); } catch (err) {}
+			const threshold = 60;
 			if (dragDeltaX > threshold) {
-				// 往右滑 -> 換上一張
 				galleryMainImg.style.transition = "transform 0.3s ease-out, opacity 0.2s ease";
-				galleryMainImg.style.transform = `translateX(100%) scale(0.9)`;
+				galleryMainImg.style.transform = "translateX(100%) scale(0.9)";
 				galleryMainImg.style.opacity = 0;
-				
-				setTimeout(() => {
+				setTimeout(function () {
 					switchGalleryImage(currentGalleryIndex - 1, "right", true);
 					galleryMainImg.style.cursor = "zoom-in";
 				}, 150);
 			} else if (dragDeltaX < -threshold) {
-				// 往左滑 -> 換下一張
 				galleryMainImg.style.transition = "transform 0.3s ease-out, opacity 0.2s ease";
-				galleryMainImg.style.transform = `translateX(-100%) scale(0.9)`;
+				galleryMainImg.style.transform = "translateX(-100%) scale(0.9)";
 				galleryMainImg.style.opacity = 0;
-
-				setTimeout(() => {
+				setTimeout(function () {
 					switchGalleryImage(currentGalleryIndex + 1, "left", true);
 					galleryMainImg.style.cursor = "zoom-in";
 				}, 150);
 			} else {
-				// 沒滑夠遠，彈回中央原位
 				resetImagePosition();
 			}
 		};
-
 		stageForSwipe.addEventListener("pointerup", onPointerUp);
 		stageForSwipe.addEventListener("pointercancel", onPointerUp);
+
+		connectCloud();
+		startClock();
 	</script>
 	<script>
 		function toggleCustomDrawer(e) {
