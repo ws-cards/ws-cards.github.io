@@ -7235,6 +7235,9 @@ return {
     var lastFlightSrc = '';
     var previewOpenThreshold = 0.12;
     var previewCloseThreshold = 0.06;
+    // 飛行中鎖定降落尺寸，避免用整欄寬推估把卡面放太大、落地再縮回
+    var lockedLandingW = 0;
+    var lockedLandingH = 0;
 
     function qs(id) { return document.getElementById(id); }
 
@@ -7274,6 +7277,13 @@ return {
         flightBaseW = 0;
         flightBaseH = 0;
         lastFlightSrc = '';
+        lockedLandingW = 0;
+        lockedLandingH = 0;
+    }
+
+    function clearLandingLock() {
+        lockedLandingW = 0;
+        lockedLandingH = 0;
     }
 
     function hasReadySource() {
@@ -7421,34 +7431,102 @@ return {
         identityStrip.removeAttribute('aria-hidden');
     }
 
+    function previewCardMaxHeight() {
+        // 對齊 .modern-card-image 在 market-desk-page 的 max-height
+        try {
+            if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return 380;
+        } catch (e) {}
+        return 430;
+    }
+
+    function cardAspectRatio() {
+        if (targetImg && targetImg.naturalWidth > 0 && targetImg.naturalHeight > 0) {
+            return targetImg.naturalWidth / targetImg.naturalHeight;
+        }
+        if (sourceImg && sourceImg.naturalWidth > 0 && sourceImg.naturalHeight > 0) {
+            return sourceImg.naturalWidth / sourceImg.naturalHeight;
+        }
+        return 63 / 88;
+    }
+
+    function readMeasuredLandingRect() {
+        // 優先量真實卡圖；wrap 在收合／opacity:0 時可能失真
+        if (targetImg) {
+            var ir = targetImg.getBoundingClientRect();
+            if (ir.width >= 40 && ir.height >= 60) return ir;
+        }
+        if (targetWrap) {
+            var wr = targetWrap.getBoundingClientRect();
+            if (wr.width >= 40 && wr.height >= 60) return wr;
+        }
+        return null;
+    }
+
     function estimateTargetRectFromHeader() {
         if (!previewHeader) return null;
         var hr = previewHeader.getBoundingClientRect();
         if (hr.width < 8) return null;
         var bodyPad = 16;
-        var width = Math.max(120, hr.width - bodyPad * 2);
-        var height = Math.max(160, width * (88 / 63));
+        var availW = Math.max(120, hr.width - bodyPad * 2);
+        var aspect = cardAspectRatio(); // width / height
+        var maxH = previewCardMaxHeight();
+        // 以 max-height 為主（與實際預覽卡圖一致），再受欄寬限制；置中對齊 .preview-container
+        var height = maxH;
+        var width = height * aspect;
+        if (width > availW) {
+            width = availW;
+            height = width / aspect;
+        }
+        var left = hr.left + bodyPad + (availW - width) / 2;
+        var top = hr.bottom + bodyPad;
         return {
-            left: hr.left + bodyPad,
-            top: hr.bottom + bodyPad,
+            left: left,
+            top: top,
             width: width,
             height: height,
-            right: hr.left + bodyPad + width,
-            bottom: hr.bottom + bodyPad + height
+            right: left + width,
+            bottom: top + height
         };
     }
 
-    function resolveTargetRect(preferEstimate) {
-        // 飛行／展開過渡中優先用 header 推估，避免 max-height 動畫讓降落點每幀晃動
-        if (preferEstimate) {
-            var estimated = estimateTargetRectFromHeader();
-            if (estimated) return estimated;
+    function resolveTargetRect(inFlight) {
+        var measured = readMeasuredLandingRect();
+        if (measured) {
+            // 首次量到可信尺寸就鎖定，避免展開動畫期間每幀變大再縮
+            if (lockedLandingW < 40 || lockedLandingH < 40) {
+                lockedLandingW = measured.width;
+                lockedLandingH = measured.height;
+            }
         }
 
-        var to = targetWrap.getBoundingClientRect();
-        if (to.width >= 8 && to.height >= 40) return to;
+        var estimated = estimateTargetRectFromHeader();
+        var sizeW = lockedLandingW >= 40 ? lockedLandingW : (estimated ? estimated.width : 0);
+        var sizeH = lockedLandingH >= 40 ? lockedLandingH : (estimated ? estimated.height : 0);
 
-        return estimateTargetRectFromHeader() || to;
+        if (inFlight && sizeW >= 40 && sizeH >= 40) {
+            var left;
+            var top;
+            if (measured) {
+                left = measured.left;
+                top = measured.top;
+            } else if (estimated) {
+                left = estimated.left;
+                top = estimated.top;
+            } else {
+                return null;
+            }
+            return {
+                left: left,
+                top: top,
+                width: sizeW,
+                height: sizeH,
+                right: left + sizeW,
+                bottom: top + sizeH
+            };
+        }
+
+        if (measured) return measured;
+        return estimated;
     }
 
     function ensureFlightBaseSize(fromW, fromH) {
@@ -7493,12 +7571,12 @@ return {
 
         // —— 讀取階段（集中 getBoundingClientRect，避免與寫入交錯）——
         var from = sourceArt.getBoundingClientRect();
-        // 尚未完全降落前用穩定推估框，避免預覽開合改 layout 帶歪飛行路徑
+        // 飛行中用「鎖定的真實預覽尺寸」或 max-height 推估，勿用整欄寬（會先放大再縮回）
         var to = resolveTargetRect(true);
         var scrollY = window.scrollY;
         var viewH = window.innerHeight;
 
-        if (from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
+        if (!to || from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
             hideFlight();
             setSlotVisibility(true, true);
             resetStripFade();
@@ -7604,6 +7682,7 @@ return {
         window.addEventListener('resize', function () {
             flightBaseW = 0;
             flightBaseH = 0;
+            clearLandingLock();
             scheduleUpdate();
         });
         if (window.visualViewport) {
@@ -7642,6 +7721,7 @@ return {
                 lastFlightSrc = '';
                 flightBaseW = 0;
                 flightBaseH = 0;
+                clearLandingLock();
                 scheduleUpdate();
             });
         }
