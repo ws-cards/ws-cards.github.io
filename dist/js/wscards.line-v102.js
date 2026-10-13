@@ -3440,20 +3440,22 @@ if (targetElement) {
 }
 
 /**
-* 搜尋完成後滾動到結果區域:結果識別帶（卡圖＋今日價）
+* 搜尋／點選卡圖後：把結果識別帶對齊視窗底部。
+* 不直接跳到卡面預覽，讓使用者自行下滑（順便走視差飛入）。
 */
 function scrollToResults() {
-// 優先捲到識別帶，讓第一眼同時看到卡圖與今日價；沒有識別帶時退回卡面預覽
 var identity = document.getElementById('resultIdentityStrip');
 if (identity) {
     identity.hidden = false;
     if (typeof refreshResultIdentity === 'function') {
         refreshResultIdentity();
     }
-    smoothScrollToAnchor('resultIdentityStrip', 'smooth', 'start');
+    // end：識別帶落在畫面最下方
+    smoothScrollToAnchor('resultIdentityStrip', 'smooth', 'end');
     return;
 }
-smoothScrollToAnchor('preview-card-tag', 'smooth', 'center');
+// 沒有識別帶時才退回預覽區，同樣對齊底部
+smoothScrollToAnchor('preview-card-tag', 'smooth', 'end');
 }
 
 /**
