@@ -6,8 +6,14 @@
 window.onload=function(){
     setTimeout(function(){
         window.scrollTo(0, 1);
-    }, 100);		
+    }, 100);
+    if (window.WsPageLoader) WsPageLoader.mark('boot', '初始化…');
     setFun();  
+}
+
+/** 推進全頁載入進度（無 WsPageLoader 時為 no-op） */
+function markPageLoad(id, label) {
+    if (window.WsPageLoader) WsPageLoader.mark(id, label);
 }
 
 // Typeahead 輸入框和下拉選單元素
@@ -1480,9 +1486,11 @@ requestStandardW.onload = function(){
         optgroupW.appendChild(option);				
     }	
     _standardWLoaded = true;
+    markPageLoad('standardW', '作品標準（Weiss）');
 }
 requestStandardW.onerror = function(){
     _standardWLoaded = true;
+    markPageLoad('standardW', '作品標準（Weiss）');
 }
 
 /**
@@ -1500,9 +1508,11 @@ requestStandardS.onload = function(){
         optgroupS.appendChild(option);				
     }					
     _standardSLoaded = true;
+    markPageLoad('standardS', '作品標準（Schwarz）');
 }
 requestStandardS.onerror = function(){
     _standardSLoaded = true;
+    markPageLoad('standardS', '作品標準（Schwarz）');
 }
 
 // 載入預設價格資料			  
@@ -1515,10 +1525,11 @@ requestStock.responseType = 'json';
 requestStock.send();
           
 fetchCardTitleData().then(function(cardsTitle) {
-    if (!cardsTitle) return;
-    populateCardTitleOptions(cardsTitle, null);
+    if (cardsTitle) populateCardTitleOptions(cardsTitle, null);
+    markPageLoad('cardTitle', '產品清單就緒');
 }).catch(function(err) {
     console.error('初始載入 cardTitle 失敗', err);
+    markPageLoad('cardTitle', '產品清單就緒');
 });
 
 /**
@@ -1537,6 +1548,10 @@ requestPrice.onload = function(){
     //loadCardData 預設
     loadCardData('BD/W54-070SSP');
     searchCardNumberFromUrl();
+    markPageLoad('price', '價格資料就緒');
+}
+requestPrice.onerror = function(){
+    markPageLoad('price', '價格資料就緒');
 }
 
 /**
@@ -1545,20 +1560,34 @@ requestPrice.onload = function(){
  */		  
 requestStock.onload = function(){
     var cards = requestStock.response;
-    getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');			  
-}			
+    getCardStockData(cards,'BD/W54-070SSP','BD/W54-070SSP');
+    markPageLoad('stock', '庫存資料就緒');
+}
+requestStock.onerror = function(){
+    markPageLoad('stock', '庫存資料就緒');
+}
 
 
 /**
  * 等待卡片圖片載入完成
  * - 載入完成後隱藏 overlay
+ * - 空 src 的 img.complete 常為 true，必須等有 src 再算完成
  */			  
-var timer = setInterval(function(){
-    if (document.getElementById('cardImg').complete){
-        clearInterval(timer);
-        document.getElementById('overlay-1').style.display='none';	
+var cardImgTimer = setInterval(function(){
+    var img = document.getElementById('cardImg');
+    var src = img && (img.getAttribute('src') || img.currentSrc || '');
+    if (img && src && img.complete){
+        clearInterval(cardImgTimer);
+        clearTimeout(cardImgSafety);
+        document.getElementById('overlay-1').style.display='none';
+        markPageLoad('cardImg', '卡面就緒');
     }
 }, 10);
+// 卡面逾時保底，避免 src 遲遲未設時卡住全頁 overlay
+var cardImgSafety = setTimeout(function(){
+    clearInterval(cardImgTimer);
+    markPageLoad('cardImg', '卡面就緒');
+}, 6000);
 
 if (typeof syncAdvancedFilterButton === 'function') {
     syncAdvancedFilterButton();

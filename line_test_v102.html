@@ -15,12 +15,60 @@
     })();
   </script>
   <style>
-    /* 字體就緒前先藏內文，避免系統字 → 自訂字的 swap 閃爍 */
+    /* 頁面就緒前藏內文（進度 overlay 除外），避免字體 swap 閃爍與半載入畫面 */
     html { background: #ffffff; }
     html[data-theme="dark"] { background: #141414; }
-    html:not(.fonts-ready) body { visibility: hidden; }
-    html.fonts-ready body { visibility: visible; }
+    html:not(.page-ready) body > *:not(#wsPageLoader) { visibility: hidden; }
+    html.page-ready body > *:not(#wsPageLoader) { visibility: visible; }
+    /* 關鍵 CSS：外部 stylesheet 尚未到位時也能先畫出進度條 */
+    #wsPageLoader.ws-page-loader {
+      position: fixed; inset: 0; z-index: 20000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; visibility: visible !important;
+      background: #ffffff; color: #2d3748;
+    }
+    html[data-theme="dark"] #wsPageLoader.ws-page-loader {
+      background: #141414; color: #e9e7e1;
+    }
+    #wsPageLoader .ws-page-loader-panel {
+      width: min(20.5rem, 100%); text-align: center;
+    }
+    #wsPageLoader .ws-page-loader-brand {
+      display: inline-flex; align-items: center; gap: 0.65rem; margin-bottom: 0.85rem;
+    }
+    #wsPageLoader .ws-page-loader-mark {
+      display: block; width: 1.15rem; height: 1px; background: #b07c28; opacity: 0.72;
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-mark { background: #cbb083; }
+    #wsPageLoader .ws-page-loader-name {
+      font-family: 'UoqMunThenKhung', 'Noto Serif TC', serif;
+      font-size: 1.55rem; letter-spacing: 0.18em;
+    }
+    #wsPageLoader .ws-page-loader-label {
+      margin: 0.85rem 0 1rem; font-size: 0.84rem; opacity: 0.72;
+    }
+    #wsPageLoader .ws-page-loader-track {
+      height: 5px; border-radius: 999px; overflow: hidden;
+      background: rgba(45, 55, 72, 0.12);
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-track {
+      background: rgba(233, 231, 225, 0.14);
+    }
+    #wsPageLoader .ws-page-loader-fill {
+      display: block; height: 100%; width: 0%;
+      border-radius: inherit; background: #b07c28;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-fill {
+      background: #cbb083;
+    }
+    #wsPageLoader .ws-page-loader-pct {
+      margin-top: 0.7rem;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 600; font-variant-numeric: tabular-nums;
+    }
   </style>
+  <script src="assets/js/ws-page-loader.js"></script>
   <meta name="description" content="查詢黑白雙翼（Weiss Schwarz）各卡號在遊遊亭的價格與庫存走勢，支援卡名、作品名與卡號查詢。">
   <meta property="og:title" content="各卡號漲幅趨勢（WS）｜WS-Cards 卡片雲">
   <meta property="og:description" content="輸入卡號即可查看遊遊亭的價格與庫存走勢，涵蓋近一月至近一年。">
@@ -44,6 +92,7 @@
   <script>
     // 必須放在字體 stylesheet 之後。等首屏關鍵字就緒再開字；
     // 1.5s 保底，CDN 掛掉也不要永遠白屏。
+    // 同時推進 WsPageLoader 的 fonts 里程碑。
     (function () {
       var root = document.documentElement;
       var done = false;
@@ -51,6 +100,7 @@
         if (done) return;
         done = true;
         root.classList.add('fonts-ready');
+        if (window.WsPageLoader) WsPageLoader.mark('fonts', '字體就緒');
       }
       if (!document.fonts || !document.fonts.load) {
         markReady();
@@ -90,6 +140,40 @@
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed market-desk-page">
+<!-- 全頁載入進度 overlay（百分比）；內容就緒後由 WsPageLoader.complete 關閉 -->
+<div id="wsPageLoader" class="ws-page-loader" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-busy="true" aria-label="頁面載入中">
+  <div class="ws-page-loader-panel">
+    <div class="ws-page-loader-brand" aria-hidden="true">
+      <span class="ws-page-loader-mark"></span>
+      <span class="ws-page-loader-name">卡片雲</span>
+      <span class="ws-page-loader-mark"></span>
+    </div>
+    <p class="ws-page-loader-label" data-loader-label>載入中…</p>
+    <div class="ws-page-loader-track" aria-hidden="true">
+      <span class="ws-page-loader-fill" data-loader-fill></span>
+    </div>
+    <div class="ws-page-loader-pct" data-loader-pct>0%</div>
+  </div>
+</div>
+<script>
+  (function () {
+    if (!window.WsPageLoader) return;
+    WsPageLoader.configure([
+      { id: 'fonts', weight: 18, label: '載入字體…' },
+      { id: 'boot', weight: 8, label: '初始化…' },
+      { id: 'standardW', weight: 10, label: '載入作品標準…' },
+      { id: 'standardS', weight: 10, label: '載入作品標準…' },
+      { id: 'cardTitle', weight: 16, label: '載入產品清單…' },
+      { id: 'price', weight: 18, label: '載入價格資料…' },
+      { id: 'stock', weight: 12, label: '載入庫存資料…' },
+      { id: 'cardImg', weight: 8, label: '載入卡面…' }
+    ]);
+    WsPageLoader.armSafety(12000);
+    if (document.documentElement.classList.contains('fonts-ready')) {
+      WsPageLoader.mark('fonts', '字體就緒');
+    }
+  })();
+</script>
 <div class="wrapper">
 
   <!-- Navbar -->

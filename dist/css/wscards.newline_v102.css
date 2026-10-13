@@ -6194,3 +6194,179 @@ body.market-desk-page .preview-card.is-preview-open > .card-body {
         transition: none;
     }
 }
+
+/* =========================================================
+ * 全頁載入進度 overlay（WsPageLoader / #wsPageLoader）
+ * ========================================================= */
+.ws-page-loader {
+    --ws-loader-ink: #2d3748;
+    --ws-loader-muted: #718096;
+    --ws-loader-track: rgba(45, 55, 72, 0.12);
+    --ws-loader-fill: #b07c28;
+    --ws-loader-fill-shine: rgba(255, 255, 255, 0.42);
+    --ws-loader-panel: rgba(255, 253, 248, 0.92);
+    --ws-loader-border: rgba(38, 50, 71, 0.12);
+    --ws-loader-bg: #ffffff;
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background:
+        radial-gradient(120% 80% at 50% -10%, rgba(176, 124, 40, 0.10), transparent 55%),
+        radial-gradient(90% 60% at 100% 100%, rgba(30, 45, 90, 0.05), transparent 50%),
+        var(--ws-loader-bg);
+    color: var(--ws-loader-ink);
+    visibility: visible !important;
+    opacity: 1;
+    transition: opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.42s linear;
+    pointer-events: all;
+}
+
+[data-theme="dark"] .ws-page-loader {
+    --ws-loader-ink: #e9e7e1;
+    --ws-loader-muted: #9a958b;
+    --ws-loader-track: rgba(233, 231, 225, 0.14);
+    --ws-loader-fill: #cbb083;
+    --ws-loader-fill-shine: rgba(255, 255, 255, 0.28);
+    --ws-loader-panel: rgba(26, 25, 23, 0.88);
+    --ws-loader-border: rgba(255, 255, 255, 0.10);
+    --ws-loader-bg: #141414;
+    background:
+        radial-gradient(120% 80% at 50% -10%, rgba(203, 176, 131, 0.14), transparent 55%),
+        radial-gradient(90% 60% at 0% 100%, rgba(203, 176, 131, 0.06), transparent 50%),
+        var(--ws-loader-bg);
+}
+
+.ws-page-loader.is-done {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.ws-page-loader[hidden] {
+    display: none !important;
+}
+
+.ws-page-loader-panel {
+    width: min(20.5rem, 100%);
+    padding: 1.55rem 1.45rem 1.35rem;
+    border-radius: 16px;
+    border: 1px solid var(--ws-loader-border);
+    background: var(--ws-loader-panel);
+    box-shadow:
+        0 18px 48px rgba(30, 45, 90, 0.12),
+        0 4px 14px rgba(30, 45, 90, 0.06);
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: ws-loader-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-theme="dark"] .ws-page-loader-panel {
+    box-shadow:
+        0 20px 52px rgba(0, 0, 0, 0.48),
+        0 5px 18px rgba(0, 0, 0, 0.28);
+}
+
+.ws-page-loader-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+
+.ws-page-loader-mark {
+    display: block;
+    width: 1.15rem;
+    height: 1px;
+    background: var(--ws-loader-fill);
+    opacity: 0.72;
+}
+
+.ws-page-loader-name {
+    font-family: 'UoqMunThenKhung', 'Noto Serif TC', 'Noto Sans TC', serif;
+    font-size: 1.55rem;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    color: var(--ws-loader-ink);
+}
+
+.ws-page-loader-label {
+    margin: 0 0 1rem;
+    font-family: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--ws-loader-muted);
+}
+
+.ws-page-loader-track {
+    height: 5px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--ws-loader-track);
+}
+
+.ws-page-loader-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background-color: var(--ws-loader-fill);
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--ws-loader-fill-shine) 50%,
+        transparent 100%
+    );
+    background-size: 40% 100%;
+    background-repeat: no-repeat;
+    animation: ws-loader-sheen 1.55s ease-in-out infinite;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: width;
+}
+
+.ws-page-loader-pct {
+    margin-top: 0.7rem;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: var(--ws-loader-ink);
+}
+
+@keyframes ws-loader-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes ws-loader-sheen {
+    0% { background-position: -60% 0; }
+    100% { background-position: 160% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ws-page-loader {
+        transition: opacity 0.2s ease, visibility 0.2s linear;
+    }
+    .ws-page-loader-panel {
+        animation: none;
+    }
+    .ws-page-loader-fill {
+        animation: none;
+        background-image: none;
+        transition: none;
+    }
+}
