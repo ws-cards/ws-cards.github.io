@@ -5688,6 +5688,8 @@ body.market-desk-page .result-identity {
     background: var(--desk-surface-strong, #f7f7f4);
     color: var(--desk-ink, #171714);
     scroll-margin-top: 4.75rem;
+    width: fit-content;
+    max-width: 100%;
 }
 
 body.market-desk-page .result-identity[hidden] {
@@ -5891,13 +5893,15 @@ body.market-desk-page .result-identity-asof {
     border-left-color: rgba(240, 238, 230, 0.18);
 }
 
-/* 桌面／平板：全寬（卡面｜卡名＋今日價緊鄰）— 必須在基礎樣式之後 */
+/* 桌面／平板：卡面｜卡名｜今日價緊湊模組（外框跟內容同寬） */
 @media (min-width: 769px) {
     body.market-desk-page .result-identity-inner {
-        grid-template-columns: 220px minmax(0, 1fr);
+        grid-template-columns: 220px auto auto;
         gap: 1.15rem 1.75rem;
         padding: 1.1rem 1.35rem;
         align-items: center;
+        width: max-content;
+        max-width: 100%;
     }
 
     body.market-desk-page .result-identity-art {
@@ -5906,27 +5910,21 @@ body.market-desk-page .result-identity-asof {
     }
 
     body.market-desk-page .result-identity-body {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 1rem 2.5rem;
-        padding: 0.15rem 0;
+        display: contents;
     }
 
     body.market-desk-page .result-identity-meta {
-        flex: 1 1 16rem;
-        max-width: 34rem;
+        max-width: 22rem;
+        min-width: 12rem;
     }
 
     body.market-desk-page .result-identity-price {
-        flex: 0 0 auto;
         align-items: flex-start;
         text-align: left;
         margin-top: 0;
         padding-left: 1.5rem;
         border-left: 1px solid var(--desk-line);
+        min-width: 9.5rem;
     }
 
     body.market-desk-page .result-identity-name {
@@ -5940,7 +5938,7 @@ body.market-desk-page .result-identity-asof {
 
 @media (min-width: 1200px) {
     body.market-desk-page .result-identity-inner {
-        grid-template-columns: 248px minmax(0, 1fr);
+        grid-template-columns: 248px auto auto;
     }
 
     body.market-desk-page .result-identity-art {
@@ -5951,11 +5949,16 @@ body.market-desk-page .result-identity-asof {
 
 /* 手機：左右比例分欄，卡面保持可辨識 */
 @media (max-width: 768px) {
+    body.market-desk-page .result-identity {
+        width: 100%;
+    }
+
     body.market-desk-page .result-identity-inner {
         grid-template-columns: minmax(132px, 0.44fr) minmax(0, 0.56fr);
         gap: 0.75rem 0.9rem;
         padding: 0.8rem 0.85rem;
         align-items: stretch;
+        width: 100%;
     }
 
     body.market-desk-page .result-identity-art {
