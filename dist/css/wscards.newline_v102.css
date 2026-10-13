@@ -6148,6 +6148,36 @@ body.market-desk-page #cardImageWrap.is-handoff-target {
     min-height: 1px;
 }
 
+/* 識別帶隨捲動淡出／浮入（opacity／transform 由 JS 逐幀寫入） */
+body.market-desk-page .result-identity {
+    will-change: opacity, transform;
+}
+
+/* 捲動交接接管後，關掉 desk-reveal 進場動畫以免蓋掉 inline 樣式 */
+body.market-desk-page .result-identity.is-handoff-driven {
+    animation: none !important;
+}
+
+/* 卡面預覽：預設收合，隨視差進度展開（高度／透明度由 JS 寫入） */
+body.market-desk-page .preview-card.is-preview-scrollfold > .card-body {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    border: 0;
+    pointer-events: none;
+}
+
+body.market-desk-page .preview-card.is-preview-expanding > .card-body {
+    pointer-events: none;
+}
+
+body.market-desk-page .preview-card.is-preview-open > .card-body {
+    height: auto;
+    overflow: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
     body.market-desk-page .card-handoff-flight {
         display: none !important;
@@ -6157,5 +6187,9 @@ body.market-desk-page #cardImageWrap.is-handoff-target {
     body.market-desk-page #cardImageWrap.is-handoff-target .modern-card-image {
         opacity: 1 !important;
         transition: opacity 0.2s ease;
+    }
+
+    body.market-desk-page .result-identity {
+        transform: none !important;
     }
 }
