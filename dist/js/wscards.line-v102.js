@@ -2429,7 +2429,6 @@ function refreshResultIdentity() {
     var idAsOf = document.getElementById('identityAsOf');
     var idImg = document.getElementById('identityCardImg');
     var idPlaceholder = document.getElementById('identityArtPlaceholder');
-    var idSample = document.getElementById('identitySampleHint');
 
     var cardNo = noEl ? String(noEl.textContent || '').trim() : '';
     var hasCard = cardNo && cardNo !== '-' && cardNo !== '000/000-000';
@@ -2483,10 +2482,6 @@ function refreshResultIdentity() {
             idImg.hidden = true;
             if (idPlaceholder) idPlaceholder.hidden = false;
         }
-    }
-
-    if (idSample) {
-        idSample.hidden = !!window._hasUserModified;
     }
 
     if (hasCard) {
