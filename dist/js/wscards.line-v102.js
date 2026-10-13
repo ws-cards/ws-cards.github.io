@@ -7207,3 +7207,201 @@ return {
     suspendRefresh: suspendRefresh
 };
 })();
+
+/**
+ * 卡面交接視差：捲動時把結果識別帶的卡面「送進」卡面預覽，
+ * 避免同一時間看到兩張相同卡面。
+ */
+(function initCardHandoffParallax() {
+    var flight = null;
+    var flightImg = null;
+    var sourceArt = null;
+    var sourceImg = null;
+    var targetWrap = null;
+    var targetImg = null;
+    var rafId = 0;
+    var reducedMotion = false;
+
+    function qs(id) { return document.getElementById(id); }
+
+    function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+    }
+
+    function smoothstep(t) {
+        return t * t * (3 - 2 * t);
+    }
+
+    function prefersReducedMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    function cacheEls() {
+        flight = qs('cardHandoffFlight');
+        flightImg = qs('cardHandoffImg');
+        sourceArt = qs('identityArt') || document.querySelector('.result-identity-art');
+        sourceImg = qs('identityCardImg');
+        targetWrap = qs('cardImageWrap');
+        targetImg = qs('cardImg');
+        return !!(flight && flightImg && sourceArt && sourceImg && targetWrap && targetImg);
+    }
+
+    function hasReadySource() {
+        if (!sourceImg) return false;
+        var src = sourceImg.getAttribute('src') || '';
+        return !sourceImg.hidden && !!src && sourceImg.naturalWidth > 0;
+    }
+
+    function syncFlightImage() {
+        if (!flightImg || !sourceImg) return;
+        var src = sourceImg.getAttribute('src') || '';
+        if (!src) return;
+        if (flightImg.getAttribute('src') !== src) {
+            flightImg.setAttribute('src', src);
+        }
+        flightImg.alt = sourceImg.alt || '';
+    }
+
+    function setSlotVisibility(showSource, showTarget) {
+        if (sourceArt) sourceArt.classList.toggle('is-handoff-source', !showSource);
+        if (targetWrap) targetWrap.classList.toggle('is-handoff-target', !showTarget);
+    }
+
+    function hideFlight() {
+        if (!flight) return;
+        flight.hidden = true;
+        flight.setAttribute('aria-hidden', 'true');
+        flight.style.transform = '';
+        flight.style.width = '';
+        flight.style.height = '';
+    }
+
+    function updateHandoff() {
+        if (!cacheEls()) return;
+
+        reducedMotion = prefersReducedMotion();
+        if (reducedMotion || !hasReadySource()) {
+            hideFlight();
+            setSlotVisibility(true, true);
+            return;
+        }
+
+        // 預覽尚未顯示圖時不做交接（避免飛向空白）
+        var targetReady = targetImg.style.display !== 'none'
+            && !!(targetImg.getAttribute('src') || '')
+            && targetImg.naturalWidth > 0;
+        if (!targetReady) {
+            hideFlight();
+            setSlotVisibility(true, true);
+            return;
+        }
+
+        syncFlightImage();
+
+        var from = sourceArt.getBoundingClientRect();
+        var to = targetWrap.getBoundingClientRect();
+        if (from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
+            hideFlight();
+            setSlotVisibility(true, true);
+            return;
+        }
+
+        // 識別帶卡面靠近導覽列下方 → 0；
+        // 預覽卡面進入視窗上半（約 38vh）→ 1，讓「捲到卡面預覽」時已完成降落
+        var startAnchor = 88;
+        var endAnchor = Math.max(140, Math.round(window.innerHeight * 0.38));
+        var fromDoc = window.scrollY + from.top;
+        var toDoc = window.scrollY + to.top;
+        var startScroll = fromDoc - startAnchor;
+        var endScroll = toDoc - endAnchor;
+        var span = Math.max(1, endScroll - startScroll);
+        var t = clamp((window.scrollY - startScroll) / span, 0, 1);
+        var e = smoothstep(t);
+
+        // 識別帶已完全捲出、或預覽已貼近導覽列：直接視為降落完成
+        var landed = t >= 0.98 || from.bottom < 12 || to.top <= startAnchor + 24;
+
+        if (t <= 0.02 && !landed) {
+            // 仍在識別帶：只顯示識別帶卡面，預覽卡面先藏起
+            hideFlight();
+            setSlotVisibility(true, false);
+            return;
+        }
+        if (landed) {
+            // 已抵達預覽：只顯示預覽卡面，識別帶留下淡影格
+            hideFlight();
+            setSlotVisibility(false, true);
+            return;
+        }
+
+        var x = from.left + (to.left - from.left) * e;
+        var y = from.top + (to.top - from.top) * e;
+        var w = from.width + (to.width - from.width) * e;
+        var h = from.height + (to.height - from.height) * e;
+
+        // 輕微上浮視差，加強「被捲進去」的感覺
+        var lift = Math.sin(Math.PI * e) * 12;
+
+        flight.hidden = false;
+        flight.setAttribute('aria-hidden', 'true');
+        flight.style.width = w + 'px';
+        flight.style.height = h + 'px';
+        flight.style.transform = 'translate3d(' + x + 'px,' + (y - lift) + 'px,0)';
+        // 飛行中兩端都藏，只留飛行層
+        setSlotVisibility(false, false);
+    }
+
+    function scheduleUpdate() {
+        if (rafId) return;
+        rafId = window.requestAnimationFrame(function () {
+            rafId = 0;
+            updateHandoff();
+        });
+    }
+
+    function bind() {
+        if (!cacheEls()) return;
+        window.addEventListener('scroll', scheduleUpdate, { passive: true });
+        window.addEventListener('resize', scheduleUpdate);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', scheduleUpdate);
+            window.visualViewport.addEventListener('scroll', scheduleUpdate);
+        }
+
+        // 卡圖載入／識別帶刷新後重算
+        if (typeof window.refreshResultIdentity === 'function') {
+            var _refresh = window.refreshResultIdentity;
+            window.refreshResultIdentity = function () {
+                var r = _refresh.apply(this, arguments);
+                scheduleUpdate();
+                return r;
+            };
+        } else if (typeof refreshResultIdentity === 'function') {
+            var _refreshLocal = refreshResultIdentity;
+            window.refreshResultIdentity = function () {
+                var r = _refreshLocal.apply(this, arguments);
+                scheduleUpdate();
+                return r;
+            };
+            // 若原本是全域函式宣告，包一層後也覆寫回去
+            try { refreshResultIdentity = window.refreshResultIdentity; } catch (e) {}
+        }
+
+        if (targetImg) {
+            targetImg.addEventListener('load', scheduleUpdate);
+        }
+        if (sourceImg) {
+            sourceImg.addEventListener('load', scheduleUpdate);
+        }
+
+        scheduleUpdate();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bind);
+    } else {
+        bind();
+    }
+
+    window.updateCardHandoffParallax = scheduleUpdate;
+})();

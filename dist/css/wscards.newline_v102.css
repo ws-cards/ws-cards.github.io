@@ -6094,3 +6094,68 @@ html[data-theme="light"] body.market-desk-page .result-identity-rare,
 html[data-theme="light"] body.market-desk-page .result-identity-no {
     border-radius: 0;
 }
+
+/* =========================================================
+   卡面交接視差 — 識別帶卡面捲入卡面預覽
+   ========================================================= */
+body.market-desk-page .card-handoff-flight {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1080;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    transform-origin: 0 0;
+    will-change: transform, width, height;
+    overflow: hidden;
+    background:
+        linear-gradient(160deg, color-mix(in srgb, var(--desk-foil) 22%, #222) 0%, #1a1a1a 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 18px 40px rgba(18, 18, 16, 0.18);
+}
+
+body.market-desk-page .card-handoff-flight[hidden] {
+    display: none !important;
+}
+
+body.market-desk-page .card-handoff-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center center;
+}
+
+/* 交接進行中／對端待命：藏起該槽位卡面，避免同時看到兩張 */
+body.market-desk-page .result-identity-art.is-handoff-source .result-identity-img,
+body.market-desk-page #cardImageWrap.is-handoff-target .modern-card-image {
+    opacity: 0 !important;
+}
+
+body.market-desk-page .result-identity-img,
+body.market-desk-page #cardImageWrap .modern-card-image {
+    transition: opacity 0.18s ease;
+}
+
+body.market-desk-page .result-identity-art.is-handoff-source {
+    background: color-mix(in srgb, var(--desk-line) 28%, transparent);
+    box-shadow: inset 0 0 0 1px var(--desk-line);
+}
+
+body.market-desk-page #cardImageWrap.is-handoff-target {
+    min-height: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.market-desk-page .card-handoff-flight {
+        display: none !important;
+    }
+
+    body.market-desk-page .result-identity-art.is-handoff-source .result-identity-img,
+    body.market-desk-page #cardImageWrap.is-handoff-target .modern-card-image {
+        opacity: 1 !important;
+        transition: opacity 0.2s ease;
+    }
+}
