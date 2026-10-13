@@ -6107,13 +6107,15 @@ body.market-desk-page .card-handoff-flight {
     padding: 0;
     pointer-events: none;
     transform-origin: 0 0;
-    will-change: transform, width, height;
+    /* 尺寸固定、飛行動作用 transform scale，避免每幀改 width/height 觸發 layout */
+    will-change: transform;
     overflow: hidden;
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--desk-foil) 22%, #222) 0%, #1a1a1a 100%);
     box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.08),
         0 18px 40px rgba(18, 18, 16, 0.18);
+    backface-visibility: hidden;
 }
 
 body.market-desk-page .card-handoff-flight[hidden] {
@@ -6158,24 +6160,32 @@ body.market-desk-page .result-identity.is-handoff-driven {
     animation: none !important;
 }
 
-/* 卡面預覽：預設收合，隨視差進度展開（高度／透明度由 JS 寫入） */
+/* 卡面預覽：預設收合；JS 只切 class，高度／透明度由 CSS transition 處理（避免每幀改 height） */
 body.market-desk-page .preview-card.is-preview-scrollfold > .card-body {
-    height: 0;
+    max-height: 0;
+    height: auto;
     overflow: hidden;
     opacity: 0;
     border: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     pointer-events: none;
-}
-
-body.market-desk-page .preview-card.is-preview-expanding > .card-body {
-    pointer-events: none;
+    transition:
+        max-height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.32s ease,
+        padding 0.32s ease;
 }
 
 body.market-desk-page .preview-card.is-preview-open > .card-body {
+    max-height: min(92vh, 1200px);
     height: auto;
     overflow: visible;
     opacity: 1;
     pointer-events: auto;
+    transition:
+        max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.38s ease 0.04s,
+        padding 0.38s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6191,5 +6201,10 @@ body.market-desk-page .preview-card.is-preview-open > .card-body {
 
     body.market-desk-page .result-identity {
         transform: none !important;
+    }
+
+    body.market-desk-page .preview-card.is-preview-scrollfold > .card-body,
+    body.market-desk-page .preview-card.is-preview-open > .card-body {
+        transition: none;
     }
 }
