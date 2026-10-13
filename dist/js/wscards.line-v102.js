@@ -7262,8 +7262,9 @@ return {
     var lastStripDriven = false;
     var lastIconExpanded = null;
     var lastFlightSrc = '';
-    var previewOpenThreshold = 0.12;
-    var previewCloseThreshold = 0.06;
+    // 預覽略早於飛行中段開門，配合「提早開始、到頂前落地」
+    var previewOpenThreshold = 0.08;
+    var previewCloseThreshold = 0.04;
     // 飛行中鎖定降落尺寸，避免用整欄寬推估把卡面放太大、落地再縮回
     var lockedLandingW = 0;
     var lockedLandingH = 0;
@@ -7572,6 +7573,70 @@ return {
         }
     }
 
+    /**
+     * 依視窗高度自適應交接進度：
+     * - 進度錨在「預覽卡片」本身（不是飛行推估框），避免收合時把結束點算太晚
+     * - 空間不夠時往前提早開始，而不是把結束點往後推（否則預覽已到頂才飛完）
+     * - 保證在預覽區抵達導覽列下方前完成降落
+     */
+    function computeHandoffTiming(from, to, scrollY, viewH) {
+        var topClear = Math.max(72, Math.round(viewH * 0.09));
+        // 預覽頂端約在視窗 48%～58% 處時應已落地（高螢幕取較大比例）
+        var endAnchor = Math.round(viewH * (viewH >= 1000 ? 0.55 : viewH >= 800 ? 0.5 : 0.46));
+        endAnchor = Math.max(topClear + 120, Math.min(endAnchor, Math.round(viewH * 0.62)));
+
+        var fromDoc = scrollY + from.top;
+        // 進度用預覽卡片／header 的文件座標，路徑仍用 to（降落框）
+        var previewRect = null;
+        if (previewCard) previewRect = previewCard.getBoundingClientRect();
+        else if (previewHeader) previewRect = previewHeader.getBoundingClientRect();
+        var progressTop = previewRect && previewRect.width >= 8
+            ? previewRect.top
+            : to.top;
+        var progressDoc = scrollY + progressTop;
+
+        var startScroll = fromDoc - topClear;
+        var endScroll = progressDoc - endAnchor;
+
+        // 理想飛行捲動距離（隨視窗縮放）；不夠就提早開始，勿延後結束
+        var minSpan = Math.max(160, Math.round(viewH * 0.22));
+        var maxSpan = Math.max(minSpan + 40, Math.round(viewH * 0.5));
+        var span = endScroll - startScroll;
+        if (span < minSpan) {
+            startScroll = endScroll - minSpan;
+            span = minSpan;
+        } else if (span > maxSpan) {
+            startScroll = endScroll - maxSpan;
+            span = maxSpan;
+        }
+
+        // 硬性：預覽頂端碰到導覽區前必須落地
+        var latestEnd = progressDoc - topClear - 16;
+        if (endScroll > latestEnd) {
+            var shift = endScroll - latestEnd;
+            endScroll = latestEnd;
+            startScroll -= shift;
+            span = endScroll - startScroll;
+        }
+
+        if (span < 1) span = 1;
+        var t = clamp((scrollY - startScroll) / span, 0, 1);
+
+        // 識別帶已捲出、或預覽已近頂：強制落地
+        var landed = t >= 0.98
+            || from.bottom < 12
+            || progressTop <= topClear + 20
+            || to.top <= topClear + 20;
+
+        return {
+            t: landed ? 1 : t,
+            landed: landed,
+            topClear: topClear,
+            startScroll: startScroll,
+            endScroll: endScroll
+        };
+    }
+
     function updateHandoff() {
         if (!cacheEls(false)) return;
 
@@ -7612,25 +7677,9 @@ return {
             return;
         }
 
-        // 識別帶卡面靠近導覽列下方 → 0；
-        // 預覽卡面進入視窗上半（約 38vh）→ 1，讓「捲到卡面預覽」時已完成降落
-        var startAnchor = 88;
-        var endAnchor = Math.max(140, Math.round(viewH * 0.38));
-        var fromDoc = scrollY + from.top;
-        var toDoc = scrollY + to.top;
-        var startScroll = fromDoc - startAnchor;
-        var endScroll = toDoc - endAnchor;
-        // 預覽收合時降落點可能緊貼識別帶，span 會被壓扁甚至反轉；保底捲動距離讓飛行動畫可跑完
-        var minSpan = Math.max(180, Math.round(viewH * 0.24));
-        if (endScroll - startScroll < minSpan) {
-            endScroll = startScroll + minSpan;
-        }
-        var span = endScroll - startScroll;
-        var t = clamp((scrollY - startScroll) / span, 0, 1);
-
-        // 識別帶已完全捲出、或預覽已貼近導覽列：直接視為降落完成
-        var landed = t >= 0.98 || from.bottom < 12 || to.top <= startAnchor + 24;
-        if (landed) t = 1;
+        var timing = computeHandoffTiming(from, to, scrollY, viewH);
+        var t = timing.t;
+        var landed = timing.landed;
         var e = smoothstep(t);
 
         // —— 寫入階段 ——
