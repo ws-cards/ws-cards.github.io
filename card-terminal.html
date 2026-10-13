@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#d6ff38">
+  <meta name="description" content="卡片雲我的行情：追蹤黑白雙翼卡片價格、排序自選清單，並比較同卡不同稀有度。">
+  <title>我的行情 · CARD TERMINAL</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('terminal-theme')||'light'}catch{}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="assets/card-terminal.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script type="module" src="assets/js/card-terminal.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">跳至行情</a>
+  <header class="topbar">
+    <a class="brand" href="card-terminal.html" aria-label="卡片雲 CARD TERMINAL 首頁"><span class="brand-symbol">W<span>／</span>S</span><span class="brand-name">卡片雲<small>CARD TERMINAL</small></span></a>
+    <span class="edition">WEISS SCHWARZ<br>MARKET INDEX / 01</span>
+    <nav class="header-tools" aria-label="頁面工具">
+      <a class="original-link" href="line_test_v102.html">查卡片 <i class="fas fa-arrow-up" aria-hidden="true"></i></a>
+      <a class="icon-button" href="#watchlist" title="我的追蹤" aria-label="我的追蹤"><i class="far fa-bookmark" aria-hidden="true"></i><span class="count" id="collection-count">0</span></a>
+      <button class="icon-button" id="theme-button" title="切換深色模式" aria-label="切換深色模式" aria-pressed="false"><i class="far fa-moon" aria-hidden="true"></i></button>
+    </nav>
+  </header>
+
+  <section class="search-band" aria-label="卡片搜尋">
+    <div class="search-heading"><span class="eyebrow">YOUR CARDS. YOUR MARKET.</span><h1>我的行情<span class="local-label">本機追蹤</span></h1></div>
+    <div class="search-area">
+      <form id="search-form" class="search-form" role="search">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <label class="sr-only" for="card-search">卡號或卡名</label>
+        <input id="card-search" type="search" autocomplete="off" placeholder="搜尋卡號、卡名" aria-controls="search-results" aria-expanded="false">
+        <button type="submit" class="search-submit" title="搜尋" aria-label="搜尋"><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+      </form>
+      <div class="search-results" id="search-results" hidden></div>
+      <div class="quick-search"><span>快速查詢</span><button data-card="NIK/S117-002EX">NIKKE</button><button data-card="BD/W54-070SSP">BanG Dream!</button><span class="search-count" id="search-count">CARD DATABASE</span></div>
+    </div>
+  </section>
+
+  <main id="workspace" tabindex="-1">
+    <section class="watch-summary" aria-label="追蹤摘要">
+      <div class="summary-lead"><span class="eyebrow">WATCHLIST / OVERVIEW</span><p>關注的卡，一眼掌握。</p><span id="watch-status" role="status">載入追蹤清單…</span></div>
+      <div class="summary-number"><span>追蹤卡片</span><strong id="tracked-total">0</strong></div>
+      <div class="summary-number"><span>近 7 日降價</span><strong id="falling-total">0</strong></div>
+      <div class="summary-number"><span>有庫存</span><strong id="stock-total">0</strong></div>
+    </section>
+    <section id="watchlist" class="watchlist" aria-labelledby="watch-heading">
+      <div class="watch-toolbar">
+        <div class="watch-heading"><h2 id="watch-heading">追蹤清單</h2><div class="watch-filters" role="group" aria-label="追蹤篩選"><button data-watch-filter="all" aria-pressed="true">全部</button><button data-watch-filter="falling" aria-pressed="false">降價</button><button data-watch-filter="stock" aria-pressed="false">有庫存</button></div></div>
+        <div class="watch-actions"><label for="watch-sort" class="sr-only">清單排序</label><select id="watch-sort"><option value="added">加入順序</option><option value="price-desc">價格：高到低</option><option value="price-asc">價格：低到高</option><option value="change-asc">漲跌：低到高</option><option value="change-desc">漲跌：高到低</option></select><button id="refresh-watchlist" class="icon-button" aria-label="更新追蹤行情" title="更新追蹤行情"><i class="fas fa-sync-alt" aria-hidden="true"></i></button><button id="add-watch" class="accent-button"><i class="fas fa-plus" aria-hidden="true"></i> 新增追蹤</button></div>
+      </div>
+      <div class="watch-table-wrap" id="watch-table-wrap" hidden><table class="watch-table"><caption class="sr-only">追蹤卡片最新售價、近 7 日變化、庫存及行情日期</caption><thead><tr><th scope="col">卡片 / 版本</th><th scope="col">最新售價 · JPY</th><th scope="col">近 7 日</th><th scope="col">庫存</th><th scope="col">報價日期</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead><tbody id="watch-rows"></tbody></table></div>
+      <div class="watch-empty" id="watch-empty"><div><span class="eyebrow">YOUR NEXT PICK</span><h2>尚無追蹤卡片</h2><button class="accent-button" id="empty-search"><i class="fas fa-plus" aria-hidden="true"></i> 搜尋卡片</button></div><div class="starter-cards" aria-label="示例卡片"><button data-card="NIK/S117-002EX"><img src="https://imgs.devilfox.net/ws/nik_s117/nik_s117_002ex.png" alt="アニス SEC+ 示例卡片" loading="lazy"><span>NIKKE <b>SEC+</b></span></button><button data-card="BD/W54-070SSP"><img src="https://imgs.devilfox.net/ws/bd_w54/bd_w54_070ssp.png" alt="湊友希那 SSP 示例卡片" loading="lazy"><span>BanG Dream! <b>SSP</b></span></button></div></div>
+      <p class="filter-empty" id="filter-empty" hidden>沒有符合條件的追蹤卡片。</p>
+      <div class="watch-footnote"><span>資料來源：遊遊亭 · 非即時報價</span><span>漲跌截至各卡報價日 · 缺少資料不計入摘要</span></div>
+    </section>
+    <footer><a class="footer-brand" href="./">WS-CARDS / 卡片雲</a><p>非官方卡片資訊站。價格僅供參考，實際售價與庫存以各平台為準。</p><span class="mono">CARD TERMINAL © 2026</span></footer>
+  </main>
+
+  <dialog id="card-panel" class="side-sheet" aria-labelledby="panel-title">
+    <div class="sheet-top"><div><span class="eyebrow">CARD / QUICK VIEW</span><h2 id="panel-title">單卡行情</h2></div><button class="icon-button" data-close="card-panel" aria-label="關閉單卡側面板" title="關閉"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+    <div class="context-bar"><div><span class="status-dot"></span><span id="set-name">WEISS SCHWARZ</span><span class="context-divider">/</span><span id="context-id">NIK/S117-002EX</span></div><span class="source-note">遊遊亭行情 <i class="fas fa-external-link-alt" aria-hidden="true"></i></span></div>
+    <div class="notice" id="notice" role="status" hidden><span id="notice-text"></span><button id="retry-button" hidden>重新載入 <i class="fas fa-redo" aria-hidden="true"></i></button></div>
+    <div class="terminal-grid" id="terminal-grid" aria-busy="false">
+      <section class="art-panel" aria-label="卡面預覽">
+        <div class="panel-overline"><span>01 / THE CARD</span><span id="art-rarity">—</span></div>
+        <div class="art-stage" id="art-stage">
+          <span class="art-watermark" aria-hidden="true">WS</span>
+          <button class="art-image-button" id="enlarge-button" title="放大卡面" aria-label="放大卡面"><img id="card-image" alt="卡面載入中" decoding="async"><span class="image-failure" id="image-failure" hidden>卡面暫時無法載入</span></button>
+          <span class="art-corner corner-top" aria-hidden="true"></span><span class="art-corner corner-bottom" aria-hidden="true"></span>
+        </div>
+        <div class="art-bottom"><span class="mono" id="art-id">NIK/S117-002EX</span><div><button class="icon-button" id="favorite-button" aria-label="加入本機收藏" title="加入本機收藏" aria-pressed="false"><i class="far fa-star" aria-hidden="true"></i></button><button class="icon-button" id="zoom-button" aria-label="放大卡面" title="放大卡面"><i class="fas fa-expand" aria-hidden="true"></i></button></div></div>
+      </section>
+
+      <section class="quote-panel" aria-labelledby="card-name">
+        <div class="quote-top"><span class="eyebrow">02 / MARKET QUOTE</span><span class="rarity-badge" id="rarity-badge">—</span></div>
+        <h2 id="card-name">正在取得卡片資料</h2>
+        <div class="price-heading"><span>最新售價</span><span class="mono">JPY</span></div>
+        <div class="main-price" id="current-price">—</div>
+        <div class="price-caption"><span class="change-badge" id="week-change">—</span><span>近 7 日</span><span class="stock-caption" id="current-stock">庫存 —</span></div>
+        <div class="quote-stats"><div><span>近 30 日最高</span><strong id="high-price">—</strong></div><div><span>近 30 日最低</span><strong id="low-price">—</strong></div><div><span>行情資料日</span><strong class="date-value" id="as-of">—</strong></div></div>
+      </section>
+
+      <section class="chart-panel" aria-label="行情歷史">
+        <div class="chart-toolbar"><div class="chart-tabs" role="group" aria-label="圖表內容"><button data-metric="price" aria-pressed="true">價格走勢</button><button data-metric="stock" aria-pressed="false">庫存走勢</button></div><div class="periods" role="group" aria-label="截至資料日的時間範圍"><button data-months="1" aria-pressed="false">1M</button><button data-months="3" aria-pressed="false">3M</button><button data-months="6" aria-pressed="false">6M</button><button data-months="12" aria-pressed="true">1Y</button></div></div>
+        <div class="chart-readout"><div><span class="eyebrow" id="cursor-date">—</span><strong id="cursor-value">—</strong></div><button class="icon-button" id="download-button" aria-label="下載目前走勢圖" title="下載目前走勢圖"><i class="fas fa-download" aria-hidden="true"></i></button></div>
+        <div class="chart-wrap"><canvas id="market-chart" role="img" aria-label="卡片歷史行情折線圖"></canvas><p class="chart-empty" id="chart-empty" hidden>此期間沒有資料</p></div>
+        <div class="timeline"><i class="fas fa-history" aria-hidden="true"></i><label class="sr-only" for="history-slider">歷史資料日期</label><input type="range" id="history-slider" min="0" max="0" value="0"><span id="history-date" class="mono">—</span></div>
+        <div class="chart-footnote"><span>資料來源：遊遊亭 · 非即時報價</span><span>截至行情資料日</span></div>
+      </section>
+
+    </div>
+
+    <section class="variants-section" aria-labelledby="variants-heading">
+      <div class="section-heading"><div><span class="eyebrow">SAME CARD / DIFFERENT EDITION</span><h2 id="variants-heading">稀有度比較<span id="variant-count"> / 00</span></h2></div><div class="variant-controls"><label class="sr-only" for="rarity-filter">稀有度篩選</label><select id="rarity-filter"><option value="all">全部稀有度</option></select><button class="icon-button" id="variants-prev" title="上一組版本" aria-label="上一組版本"><i class="fas fa-arrow-left" aria-hidden="true"></i></button><button class="icon-button" id="variants-next" title="下一組版本" aria-label="下一組版本"><i class="fas fa-arrow-right" aria-hidden="true"></i></button></div></div>
+      <div class="variants-track" id="variants-track"></div>
+      <div class="compare-launch"><span id="comparison-selection" role="status">已選 0 / 3 個版本</span><button id="open-comparison" class="accent-button" disabled><i class="fas fa-columns" aria-hidden="true"></i> 比較版本</button></div>
+    </section>
+
+    <section class="marketplaces" aria-label="其他平台比價"><span class="eyebrow">EXPLORE THE MARKET</span><div id="market-links"></div></section>
+    <a id="full-card-link" class="full-card-link" href="line_test_v102.html" target="_blank" rel="noopener noreferrer">查看完整卡片資料 <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+  </dialog>
+
+  <dialog id="image-dialog" class="image-dialog" aria-labelledby="image-dialog-title"><div class="dialog-top"><h2 id="image-dialog-title">卡面預覽</h2><button class="icon-button" data-close="image-dialog" title="關閉" aria-label="關閉卡面预覽"><i class="fas fa-times" aria-hidden="true"></i></button></div><div class="image-dialog-stage"><img id="dialog-image" alt="放大卡面"></div><div class="zoom-controls"><label for="image-zoom">縮放</label><input id="image-zoom" type="range" min="100" max="200" value="100" step="10"><span id="zoom-value">100%</span></div></dialog>
+  <dialog id="comparison-dialog" class="comparison-dialog" aria-labelledby="comparison-title">
+    <div class="dialog-top"><div><span class="eyebrow">EDITION / SIDE BY SIDE</span><h2 id="comparison-title">稀有度比較</h2></div><button class="icon-button" data-close="comparison-dialog" aria-label="關閉稀有度比較" title="關閉"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+    <div class="comparison-toolbar"><p id="comparison-asof"></p><label>價差基準 <select id="comparison-baseline"></select></label></div>
+    <div class="comparison-scroll" tabindex="0" role="region" aria-label="稀有度並排比較"><div id="comparison-grid" class="comparison-grid"></div></div>
+    <div class="comparison-chart-heading"><h3>價格走勢 <span>JPY</span></h3><label><span class="sr-only">比較走勢期間</span><select id="comparison-period"><option value="30">近 30 日</option><option value="90">近 90 日</option><option value="365">近一年</option></select></label></div>
+    <div class="comparison-chart-wrap"><canvas id="comparison-chart" role="img" aria-label="各稀有度在相同期間的價格走勢比較"></canvas><p id="comparison-chart-empty" hidden>此期間沒有價格資料</p></div>
+    <p class="comparison-disclaimer">資料來源：遊遊亭 · 各版本依共同截止日前最後一筆紀錄比較，實際報價與庫存日期分別列示。</p>
+  </dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
