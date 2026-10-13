@@ -12,6 +12,7 @@
   var COLLECTION_FAVORITES = "cardFavorites";
   var COLLECTION_AUCTIONS = "auctions";
   var COLLECTION_BIDS = "bids";
+  var COLLECTION_AUCTION_ACTIVITY = "auctionActivity";
 
   function isConfigured(cfg) {
     if (!cfg || typeof cfg !== "object") return false;
@@ -100,7 +101,16 @@
       placeBid: function () {
         return Promise.reject(new Error(reason || "Firebase 尚未設定"));
       },
-      resolveBidderDisplayName: function () { return Promise.resolve(""); }
+      resolveBidderDisplayName: function () { return Promise.resolve(""); },
+      createAuction: function () {
+        return Promise.reject(new Error(reason || "Firebase 尚未設定"));
+      },
+      listMySellingAuctions: function () { return Promise.resolve([]); },
+      listMyBiddingActivity: function () { return Promise.resolve([]); },
+      closeAuction: function () {
+        return Promise.reject(new Error(reason || "Firebase 尚未設定"));
+      },
+      makeAuctionId: function () { return ""; }
     };
   }
 
@@ -397,6 +407,11 @@
       var images = Array.isArray(data.images)
         ? data.images.map(function (u) { return String(u || "").trim(); }).filter(Boolean)
         : [];
+      var status = String(data.status || "open").trim() || "open";
+      var endTimeMs = toMillis(data.endTime);
+      if (status === "open" && endTimeMs && Date.now() >= endTimeMs) {
+        status = "ended";
+      }
       return {
         auctionId: String(auctionId || data.auctionId || "").trim(),
         title: String(data.title || "").trim(),
@@ -408,16 +423,52 @@
         quantity: Math.floor(Number(data.quantity) || 1),
         currency: String(data.currency || "JPY").trim() || "JPY",
         startTimeMs: toMillis(data.startTime),
-        endTimeMs: toMillis(data.endTime),
+        endTimeMs: endTimeMs,
         earlyEnd: data.earlyEnd === true || data.earlyEnd === "是",
         autoExtend: data.autoExtend === true || data.autoExtend === "是",
         autoExtendMinutes: Math.max(1, Math.floor(Number(data.autoExtendMinutes) || 5)),
-        status: String(data.status || "open").trim() || "open",
+        status: status,
         highestAmount: highestAmount,
         highestBidder: String(data.highestBidder || "").trim(),
         highestBidderUid: String(data.highestBidderUid || "").trim(),
-        bidCount: Math.max(0, Math.floor(Number(data.bidCount) || 0))
+        bidCount: Math.max(0, Math.floor(Number(data.bidCount) || 0)),
+        sellerUid: String(data.sellerUid || "").trim(),
+        sellerName: String(data.sellerName || "").trim(),
+        createdAtMs: toMillis(data.createdAt) || toMillis(data.updatedAt)
       };
+    }
+
+    function activityRef(uid, auctionId) {
+      return db
+        .collection(COLLECTION_USERS)
+        .doc(uid)
+        .collection(COLLECTION_AUCTION_ACTIVITY)
+        .doc(String(auctionId || "").trim());
+    }
+
+    function makeAuctionId(now) {
+      var d = now instanceof Date ? now : new Date();
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      var rand = Math.floor(Math.random() * 36 * 36 * 36 * 36)
+        .toString(36)
+        .toUpperCase()
+        .padStart(4, "0")
+        .slice(-4);
+      return "WS-AUC-" + y + m + day + "-" + rand;
+    }
+
+    function sanitizeHttpUrl(url) {
+      var u = String(url || "").trim();
+      if (!u) return "";
+      try {
+        var parsed = new URL(u);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+        return parsed.href;
+      } catch (e) {
+        return "";
+      }
     }
 
     function normalizeBidDoc(docSnap) {
@@ -561,7 +612,7 @@
             var data = snap.data() || {};
             var auction = normalizeAuctionDoc(id, data);
             var now = Date.now();
-            if (auction.status === "closed") {
+            if (auction.status === "closed" || auction.status === "ended") {
               throw new Error("拍賣已結束");
             }
             if (!auction.endTimeMs || now >= auction.endTimeMs) {
@@ -569,6 +620,9 @@
             }
             if (auction.startTimeMs && now < auction.startTimeMs) {
               throw new Error("拍賣尚未開始");
+            }
+            if (auction.sellerUid && auction.sellerUid === user.uid) {
+              throw new Error("不能對自己刊登的拍賣下標");
             }
             if (bidAmount <= auction.highestAmount) {
               throw new Error("出價需高於目前最高價");
@@ -602,6 +656,20 @@
               updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            tx.set(
+              activityRef(user.uid, id),
+              {
+                auctionId: id,
+                role: "bidder",
+                title: auction.title || "",
+                coverImage: (auction.images && auction.images[0]) || "",
+                myHighestAmount: bidAmount,
+                lastBidAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              },
+              { merge: true }
+            );
+
             return {
               auctionId: id,
               amount: bidAmount,
@@ -609,6 +677,224 @@
             };
           });
         });
+      });
+    }
+
+    /**
+     * 登入後開立新拍賣。input 欄位見 normalize／rules。
+     * 回傳 { auctionId }
+     */
+    function createAuction(input) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) {
+        return Promise.reject(new Error("請先登入後再開立拍賣"));
+      }
+      input = input || {};
+
+      return resolveBidderDisplayName().then(function (sellerName) {
+        if (!sellerName) {
+          return Promise.reject(new Error("無法取得賣家名稱，請先至個人資料設定暱稱"));
+        }
+
+        var title = String(input.title || "").trim();
+        var description = String(input.description || "").trim();
+        var itemStatus = String(input.itemStatus || "").trim();
+        var shipping = String(input.shipping || "").trim();
+        var images = Array.isArray(input.images)
+          ? input.images.map(sanitizeHttpUrl).filter(Boolean)
+          : String(input.imagesText || "")
+              .split(/\r?\n/)
+              .map(sanitizeHttpUrl)
+              .filter(Boolean);
+        var startPrice = Math.floor(Number(input.startPrice));
+        var quantity = Math.floor(Number(input.quantity != null ? input.quantity : 1));
+        var autoExtendMinutes = Math.floor(Number(input.autoExtendMinutes != null ? input.autoExtendMinutes : 5));
+        var earlyEnd = !!input.earlyEnd;
+        var autoExtend = input.autoExtend !== false;
+        var startMs = toMillis(input.startTime) || Date.now();
+        var endMs = toMillis(input.endTime);
+
+        if (!title) return Promise.reject(new Error("請填寫商品標題"));
+        if (!description) return Promise.reject(new Error("請填寫商品說明"));
+        if (!itemStatus) return Promise.reject(new Error("請填寫商品狀態"));
+        if (!images.length) return Promise.reject(new Error("請至少提供 1 張圖片網址"));
+        if (images.length > 12) return Promise.reject(new Error("圖片最多 12 張"));
+        if (!Number.isFinite(startPrice) || startPrice <= 0) {
+          return Promise.reject(new Error("起始價格須為正整數"));
+        }
+        if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 99) {
+          return Promise.reject(new Error("商品數量須為 1～99"));
+        }
+        if (!Number.isFinite(autoExtendMinutes) || autoExtendMinutes < 1 || autoExtendMinutes > 60) {
+          return Promise.reject(new Error("自動延長分鐘數須為 1～60"));
+        }
+        if (!endMs || endMs <= Date.now()) {
+          return Promise.reject(new Error("結束時間必須是未來"));
+        }
+        if (endMs <= startMs) {
+          return Promise.reject(new Error("結束時間必須晚於開始時間"));
+        }
+
+        var auctionId = String(input.auctionId || "").trim() || makeAuctionId();
+        if (!/^[-A-Za-z0-9_]{8,64}$/.test(auctionId)) {
+          return Promise.reject(new Error("拍賣 ID 格式無效"));
+        }
+
+        var ref = auctionRef(auctionId);
+        var payload = {
+          auctionId: auctionId,
+          sellerUid: user.uid,
+          sellerName: sellerName.slice(0, 40),
+          title: title.slice(0, 200),
+          description: description.slice(0, 4000),
+          itemStatus: itemStatus.slice(0, 80),
+          shipping: shipping.slice(0, 200),
+          images: images,
+          startPrice: startPrice,
+          highestAmount: startPrice,
+          quantity: quantity,
+          currency: "JPY",
+          bidCount: 0,
+          highestBidder: "",
+          highestBidderUid: "",
+          status: "open",
+          earlyEnd: earlyEnd,
+          autoExtend: autoExtend,
+          autoExtendMinutes: autoExtendMinutes,
+          startTime: firebase.firestore.Timestamp.fromMillis(startMs),
+          endTime: firebase.firestore.Timestamp.fromMillis(endMs),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        return ref.get().then(function (snap) {
+          if (snap.exists) {
+            return Promise.reject(new Error("拍賣 ID 已存在，請再試一次"));
+          }
+          var batch = db.batch();
+          batch.set(ref, payload);
+          batch.set(activityRef(user.uid, auctionId), {
+            auctionId: auctionId,
+            role: "seller",
+            title: payload.title,
+            coverImage: images[0] || "",
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          return batch.commit().then(function () {
+            return { auctionId: auctionId };
+          });
+        });
+      });
+    }
+
+    function listMySellingAuctions() {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) return Promise.resolve([]);
+      return db
+        .collection(COLLECTION_AUCTIONS)
+        .where("sellerUid", "==", user.uid)
+        .get()
+        .then(function (snap) {
+          var list = [];
+          snap.forEach(function (docSnap) {
+            list.push(normalizeAuctionDoc(docSnap.id, docSnap.data()));
+          });
+          list.sort(function (a, b) {
+            return (b.createdAtMs || b.endTimeMs || 0) - (a.createdAtMs || a.endTimeMs || 0);
+          });
+          return list;
+        });
+    }
+
+    function listMyBiddingActivity() {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) return Promise.resolve([]);
+      return db
+        .collection(COLLECTION_USERS)
+        .doc(user.uid)
+        .collection(COLLECTION_AUCTION_ACTIVITY)
+        .where("role", "==", "bidder")
+        .get()
+        .then(function (snap) {
+          var activities = [];
+          snap.forEach(function (docSnap) {
+            var data = docSnap.data() || {};
+            activities.push({
+              auctionId: String(data.auctionId || docSnap.id).trim(),
+              title: String(data.title || "").trim(),
+              coverImage: String(data.coverImage || "").trim(),
+              myHighestAmount: Math.floor(Number(data.myHighestAmount) || 0),
+              updatedAtMs: toMillis(data.updatedAt) || toMillis(data.lastBidAt)
+            });
+          });
+          if (!activities.length) return [];
+
+          return Promise.all(
+            activities.map(function (act) {
+              return auctionRef(act.auctionId)
+                .get()
+                .then(function (aSnap) {
+                  var auction = aSnap.exists
+                    ? normalizeAuctionDoc(act.auctionId, aSnap.data())
+                    : null;
+                  return {
+                    activity: act,
+                    auction: auction
+                  };
+                })
+                .catch(function () {
+                  return { activity: act, auction: null };
+                });
+            })
+          ).then(function (rows) {
+            rows.sort(function (a, b) {
+              var am = (a.activity && a.activity.updatedAtMs) || 0;
+              var bm = (b.activity && b.activity.updatedAtMs) || 0;
+              return bm - am;
+            });
+            return rows;
+          });
+        });
+    }
+
+    function closeAuction(auctionId) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) {
+        return Promise.reject(new Error("請先登入"));
+      }
+      var id = String(auctionId || "").trim();
+      if (!id) {
+        return Promise.reject(new Error("缺少拍賣 ID"));
+      }
+      var ref = auctionRef(id);
+      return ref.get().then(function (snap) {
+        if (!snap.exists) {
+          return Promise.reject(new Error("找不到此拍賣"));
+        }
+        var data = snap.data() || {};
+        if (data.sellerUid !== user.uid) {
+          return Promise.reject(new Error("只有賣家可以結束拍賣"));
+        }
+        if (data.status === "closed") {
+          return { auctionId: id, status: "closed" };
+        }
+        return ref
+          .update({
+            status: "closed",
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          })
+          .then(function () {
+            return { auctionId: id, status: "closed" };
+          });
       });
     }
 
@@ -671,7 +957,12 @@
       getAuctionIdFromLocation: getAuctionIdFromLocation,
       watchAuction: watchAuction,
       placeBid: placeBid,
-      resolveBidderDisplayName: resolveBidderDisplayName
+      resolveBidderDisplayName: resolveBidderDisplayName,
+      createAuction: createAuction,
+      listMySellingAuctions: listMySellingAuctions,
+      listMyBiddingActivity: listMyBiddingActivity,
+      closeAuction: closeAuction,
+      makeAuctionId: makeAuctionId
     };
   }
 

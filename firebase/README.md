@@ -34,28 +34,42 @@ users/{uid}                              ← 個人資料（account.html）
 users/{uid}/countingSessions/default     ← 戰況（countingDemoNew）
   state, updatedAt, syncedAt
 
-auctions/{auctionId}                     ← 拍賣主檔（bid-cards.html，公開讀）
+auctions/{auctionId}                     ← 拍賣主檔（公開讀；登入可建立）
+  auctionId, sellerUid, sellerName,
   title, images[], shipping, description, itemStatus,
   startPrice, quantity, currency,
   startTime, endTime,                    ← Firestore Timestamp
   earlyEnd, autoExtend, autoExtendMinutes,
-  status,                                ← "open" | "closed"（可選）
+  status,                                ← "open" | "closed"
   highestAmount, highestBidder, highestBidderUid, bidCount,
-  updatedAt
+  createdAt, updatedAt
 
 auctions/{auctionId}/bids/{bidId}        ← 出價明細（公開讀；登入可新增）
   bidderUid, bidderName, amount, quantity, createdAt
+
+users/{uid}/auctionActivity/{auctionId}  ← 我的競標索引（賣家／出價者）
+  role ("seller"|"bidder"), title, coverImage,
+  myHighestAmount?, lastBidAt?, createdAt, updatedAt
 ```
 
-> 請將最新 `firebase/firestore.rules` 發布到 Console（需允許 `users/{uid}` 本體讀寫，以及 `auctions` 公開讀／下標寫入）。
+> 請將最新 `firebase/firestore.rules` 發布到 Console（需允許 `users/{uid}` 本體讀寫，以及 `auctions` 公開讀／登入開標與下標）。
 
-### 拍賣種子（Console 手動建立）
+### 拍賣頁面
 
-1. Firestore → **Data** → 啟動集合 `auctions`。
-2. 文件 ID 設為例如 `YH-AUC-20260707-0019`（需與 `bid-cards.html?id=...` 一致；未帶參數時頁面預設此 ID）。
-3. 欄位請對照 [`auction.seed.example.json`](auction.seed.example.json)；**時間欄位請用 Timestamp**，且 `endTime` 必須是未來時間，否則無法下標。
-4. `highestAmount` 初始請設成與 `startPrice` 相同，`bidCount` 設 `0`，`highestBidder` / `highestBidderUid` 先留空字串。
-5. 發布最新 `firestore.rules` 後，開啟 `bid-cards.html`：未登入可看，Google 登入後可下標。
+| 頁面 | 用途 |
+|------|------|
+| `bid-new.html` | 開新商品競標（需登入） |
+| `bid-mine.html` | 我刊登的／我參與的 |
+| `bid-cards.html?id=...` | 拍賣詳情與出價 |
+
+### 拍賣種子（Console 手動建立，可選）
+
+一般請用 `bid-new.html` 開立。若要手動種子：
+
+1. Firestore → **Data** → 集合 `auctions`。
+2. 文件 ID 與 `auctionId` 欄位一致（例如 `YH-AUC-20260707-0019`）。
+3. 欄位對照 [`auction.seed.example.json`](auction.seed.example.json)；**時間用 Timestamp**，`endTime` 必須是未來；並填 `sellerUid`／`sellerName`。
+4. 發布最新 `firestore.rules` 後即可下標。
 
 產品邊界：站內只做競標過程與時間戳紀錄；**不含金流／物流**，結標後由買賣雙方私下交易。
 
@@ -249,4 +263,4 @@ users
 - [ ] Firestore 資料庫已建立
 - [ ] Security Rules 已依 `firestore.rules` 發布（含 `auctions`）
 - [ ] `countingDemoNew.html` 可 Google 登入並在 Console 看到 `users/.../countingSessions/default`
-- [ ] （可選）已建立 `auctions/{id}` 種子，`bid-cards.html` 可雲端下標
+- [ ] （可選）`bid-new.html` 可開立拍賣，`bid-mine.html` 可看到刊登／參與紀錄

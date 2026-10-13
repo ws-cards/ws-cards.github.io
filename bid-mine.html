@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>我的競標｜WS-Cards</title>
+	<script>
+		(function () {
+			try {
+				var saved = localStorage.getItem("ws-theme");
+				document.documentElement.setAttribute("data-theme", saved === "dark" ? "dark" : "light");
+			} catch (e) {
+				document.documentElement.setAttribute("data-theme", "light");
+			}
+		})();
+	</script>
+	<link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+	<link rel="stylesheet" href="dist/css/adminlte.min.css">
+	<link rel="stylesheet" href="dist/css/wscards.newline_v103.css">
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #000000;
+			--panel: #0d0d0d;
+			--text: #eaeaea;
+			--muted: #8a8a8a;
+			--line: rgba(255, 255, 255, 0.1);
+			--primary: #ffffff;
+			--danger: #f87171;
+			--success: #34d399;
+			--shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+			--body-bg: #000000;
+			--section-head-bg: rgba(255, 255, 255, 0.04);
+			--btn-bg: #ffffff;
+			--btn-color: #000000;
+			--chip-bg: rgba(255, 255, 255, 0.08);
+		}
+		:root[data-theme="light"] {
+			color-scheme: light;
+			--bg: #efefef;
+			--panel: #ffffff;
+			--text: #1e1f22;
+			--muted: #6c7178;
+			--line: #d9dde3;
+			--primary: #0b57d0;
+			--danger: #c5221f;
+			--success: #0f9d58;
+			--shadow: 0 8px 24px rgba(20, 24, 31, 0.08);
+			--body-bg:
+				radial-gradient(circle at 20% -20%, #f8fbff 0%, rgba(248, 251, 255, 0) 48%),
+				linear-gradient(180deg, #f4f4f4 0%, #ececec 100%);
+			--section-head-bg: #f6f7fa;
+			--btn-bg: var(--primary);
+			--btn-color: #ffffff;
+			--chip-bg: #eef3fb;
+		}
+		* { box-sizing: border-box; }
+		body.bid-page {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+			color: var(--text);
+			background: var(--body-bg);
+			background-attachment: fixed;
+		}
+		body.bid-page.layout-fixed .main-header { margin-left: 0 !important; }
+		.bid-page .main-header { position: sticky; top: 0; z-index: 100; min-height: 56px; }
+		.page {
+			width: min(100%, 980px);
+			margin: 0 auto;
+			padding: 16px;
+			display: grid;
+			gap: 14px;
+		}
+		.hero {
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			box-shadow: var(--shadow);
+			padding: 20px;
+			display: grid;
+			gap: 10px;
+		}
+		.kicker {
+			margin: 0;
+			font-size: 0.8rem;
+			font-weight: 700;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.hero h1 { margin: 0; font-size: clamp(1.35rem, 2.5vw, 1.7rem); }
+		.hero p { margin: 0; color: var(--muted); line-height: 1.7; }
+		.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+		.banner {
+			margin: 0;
+			padding: 10px 12px;
+			border-radius: 10px;
+			border: 1px solid var(--line);
+			background: var(--section-head-bg);
+			color: var(--muted);
+			font-size: 0.92rem;
+		}
+		.banner.is-warn { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+		.tabs {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+		.tab-btn {
+			height: 48px;
+			border: none;
+			background: transparent;
+			color: var(--muted);
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.tab-btn.active {
+			background: var(--section-head-bg);
+			color: var(--text);
+			box-shadow: inset 0 -2px 0 var(--primary);
+		}
+		.panel { display: none; }
+		.panel.active { display: grid; gap: 12px; }
+		.list { display: grid; gap: 12px; }
+		.item {
+			display: grid;
+			grid-template-columns: 88px 1fr;
+			gap: 14px;
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 16px;
+			box-shadow: var(--shadow);
+			padding: 12px;
+			align-items: start;
+		}
+		@media (max-width: 560px) {
+			.item { grid-template-columns: 72px 1fr; gap: 10px; }
+		}
+		.thumb {
+			width: 88px;
+			height: 88px;
+			border-radius: 12px;
+			object-fit: cover;
+			background: #111;
+			border: 1px solid var(--line);
+		}
+		@media (max-width: 560px) {
+			.thumb { width: 72px; height: 72px; }
+		}
+		.item-body { display: grid; gap: 6px; min-width: 0; }
+		.item-title {
+			margin: 0;
+			font-size: 1.02rem;
+			font-weight: 700;
+			line-height: 1.4;
+			overflow-wrap: anywhere;
+		}
+		.meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			color: var(--muted);
+			font-size: 0.88rem;
+		}
+		.chip {
+			display: inline-flex;
+			align-items: center;
+			padding: 2px 8px;
+			border-radius: 999px;
+			background: var(--chip-bg);
+			color: var(--text);
+			font-size: 0.8rem;
+			font-weight: 600;
+		}
+		.chip.is-open { color: var(--success); }
+		.chip.is-closed, .chip.is-ended { color: var(--danger); }
+		.item-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 4px;
+		}
+		button, .btn {
+			height: 36px;
+			border: none;
+			border-radius: 8px;
+			background: var(--btn-bg);
+			color: var(--btn-color);
+			font-weight: 700;
+			padding: 0 12px;
+			cursor: pointer;
+			font-size: 0.88rem;
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+		}
+		.btn-ghost {
+			background: transparent;
+			color: var(--text);
+			border: 1px solid var(--line);
+		}
+		button:disabled { opacity: 0.55; cursor: not-allowed; }
+		.empty {
+			margin: 0;
+			padding: 18px;
+			border: 1px dashed var(--line);
+			border-radius: 12px;
+			color: var(--muted);
+			background: var(--panel);
+		}
+	</style>
+</head>
+<body class="bid-page hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+	<div data-navbar data-page-title="我的競標"></div>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+	<script src="assets/js/firebase-config.js"></script>
+	<script src="assets/js/ws-firebase.js"></script>
+	<script src="dist/js/include-navbar.js"></script>
+
+	<div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+	<aside class="custom-drawer" id="customDrawer">
+		<div class="custom-drawer-header">
+			<a href="./" class="brand-link">
+				<span class="navbar-title-mark" aria-hidden="true"></span>
+				<span class="brand-text" aria-label="卡片雲"><span class="navbar-title-char">卡</span><span class="navbar-title-char">片</span><span class="navbar-title-char">雲</span></span>
+				<span class="navbar-title-mark" aria-hidden="true"></span>
+			</a>
+			<button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+				<i class="fas fa-times" aria-hidden="true"></i>
+			</button>
+		</div>
+		<nav class="custom-drawer-nav" aria-label="網站導覽">
+			<ul>
+				<li class="menu-item open">
+					<a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+						<i class="fas fa-gavel main-icon"></i>
+						<span>商品競標</span>
+						<i class="fas fa-angle-left right-icon"></i>
+					</a>
+					<ul class="submenu">
+						<li><a href="bid-cards.html" class="menu-link"><i class="fas fa-eye main-icon"></i><span>拍賣詳情／出價</span></a></li>
+						<li><a href="bid-new.html" class="menu-link"><i class="fas fa-plus-circle main-icon"></i><span>開新商品競標</span></a></li>
+						<li><a href="bid-mine.html" class="menu-link active"><i class="fas fa-list main-icon"></i><span>我的競標</span></a></li>
+					</ul>
+				</li>
+				<li class="menu-item">
+					<a href="favorites.html" class="menu-link"><i class="fas fa-star main-icon"></i><span>願望清單</span></a>
+				</li>
+				<li class="menu-item">
+					<a href="account.html" class="menu-link"><i class="fas fa-user main-icon"></i><span>個人資料</span></a>
+				</li>
+			</ul>
+		</nav>
+		<div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+	</aside>
+
+	<main class="page">
+		<section class="hero">
+			<p class="kicker">My Auctions</p>
+			<h1>我的競標</h1>
+			<p>查看你刊登的拍賣，以及你參與過的下標。結標後請私下聯繫對方完成交易。</p>
+			<div class="hero-actions">
+				<a class="btn" href="bid-new.html">開新商品競標</a>
+				<button type="button" class="btn-ghost" id="login-btn" hidden>Google 登入</button>
+				<button type="button" class="btn-ghost" id="reload-btn">重新整理</button>
+			</div>
+		</section>
+
+		<p id="banner" class="banner" role="status">檢查登入狀態…</p>
+
+		<div class="tabs" role="tablist">
+			<button type="button" class="tab-btn active" id="tab-selling" role="tab" aria-selected="true">我刊登的</button>
+			<button type="button" class="tab-btn" id="tab-bidding" role="tab" aria-selected="false">我參與的</button>
+		</div>
+
+		<section id="panel-selling" class="panel active" aria-label="我刊登的拍賣">
+			<div class="list" id="selling-list"></div>
+		</section>
+		<section id="panel-bidding" class="panel" aria-label="我參與的拍賣">
+			<div class="list" id="bidding-list"></div>
+		</section>
+	</main>
+
+	<script>
+		function toggleCustomDrawer(e) {
+			if (e) e.preventDefault();
+			var drawer = document.getElementById("customDrawer");
+			var overlay = document.getElementById("customDrawerOverlay");
+			if (!drawer || !overlay) return;
+			drawer.classList.toggle("open");
+			overlay.classList.toggle("active");
+			var btn = document.getElementById("leftbar");
+			if (btn) {
+				var opened = drawer.classList.contains("open");
+				btn.classList.toggle("is-open", opened);
+				btn.setAttribute("aria-expanded", opened ? "true" : "false");
+			}
+		}
+		function toggleSubmenu(element, e) {
+			if (e) e.preventDefault();
+			var parent = element.closest(".menu-item");
+			if (parent) parent.classList.toggle("open");
+		}
+
+		var banner = document.getElementById("banner");
+		var loginBtn = document.getElementById("login-btn");
+		var reloadBtn = document.getElementById("reload-btn");
+		var sellingList = document.getElementById("selling-list");
+		var biddingList = document.getElementById("bidding-list");
+		var tabSelling = document.getElementById("tab-selling");
+		var tabBidding = document.getElementById("tab-bidding");
+		var panelSelling = document.getElementById("panel-selling");
+		var panelBidding = document.getElementById("panel-bidding");
+		var currentUser = null;
+
+		function setBanner(text, warn) {
+			banner.textContent = text;
+			banner.classList.toggle("is-warn", !!warn);
+		}
+
+		function formatYen(value) {
+			return new Intl.NumberFormat("ja-JP").format(value || 0) + " 円";
+		}
+
+		function formatDateTime(ms) {
+			if (!ms) return "-";
+			var d = new Date(ms);
+			if (Number.isNaN(d.getTime())) return "-";
+			var pad = function (n) { return String(n).padStart(2, "0"); };
+			return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " +
+				pad(d.getHours()) + ":" + pad(d.getMinutes());
+		}
+
+		function statusChip(status) {
+			var label = status === "closed" ? "已結束" : (status === "ended" ? "已到期" : "進行中");
+			var cls = status === "open" ? "is-open" : (status === "closed" ? "is-closed" : "is-ended");
+			return '<span class="chip ' + cls + '">' + label + "</span>";
+		}
+
+		function setTab(name) {
+			var selling = name === "selling";
+			tabSelling.classList.toggle("active", selling);
+			tabBidding.classList.toggle("active", !selling);
+			tabSelling.setAttribute("aria-selected", selling ? "true" : "false");
+			tabBidding.setAttribute("aria-selected", selling ? "false" : "true");
+			panelSelling.classList.toggle("active", selling);
+			panelBidding.classList.toggle("active", !selling);
+		}
+
+		function emptyHtml(text) {
+			return '<p class="empty">' + text + "</p>";
+		}
+
+		function renderSelling(list) {
+			if (!list.length) {
+				sellingList.innerHTML = emptyHtml("尚未刊登任何拍賣。可前往「開新商品競標」。");
+				return;
+			}
+			sellingList.innerHTML = list.map(function (a) {
+				var cover = (a.images && a.images[0]) || "";
+				var canClose = a.status === "open";
+				return (
+					'<article class="item" data-id="' + a.auctionId + '">' +
+						(cover
+							? '<img class="thumb" src="' + cover.replace(/"/g, "&quot;") + '" alt="">'
+							: '<div class="thumb" aria-hidden="true"></div>') +
+						'<div class="item-body">' +
+							'<h2 class="item-title">' + escapeHtml(a.title || a.auctionId) + "</h2>" +
+							'<div class="meta">' +
+								statusChip(a.status) +
+								"<span>目前 " + formatYen(a.highestAmount) + "</span>" +
+								"<span>出價 " + (a.bidCount || 0) + " 次</span>" +
+								"<span>結束 " + formatDateTime(a.endTimeMs) + "</span>" +
+							"</div>" +
+							'<div class="item-actions">' +
+								'<a class="btn" href="bid-cards.html?id=' + encodeURIComponent(a.auctionId) + '">查看</a>' +
+								(canClose
+									? '<button type="button" class="btn-ghost js-close" data-id="' + escapeHtml(a.auctionId) + '">結束拍賣</button>'
+									: "") +
+							"</div>" +
+						"</div>" +
+					"</article>"
+				);
+			}).join("");
+		}
+
+		function renderBidding(rows) {
+			if (!rows.length) {
+				biddingList.innerHTML = emptyHtml("尚未參與任何下標。");
+				return;
+			}
+			biddingList.innerHTML = rows.map(function (row) {
+				var a = row.auction;
+				var act = row.activity || {};
+				var title = (a && a.title) || act.title || act.auctionId;
+				var cover = (a && a.images && a.images[0]) || act.coverImage || "";
+				var status = a ? a.status : "ended";
+				var highest = a ? a.highestAmount : act.myHighestAmount;
+				var mine = act.myHighestAmount || 0;
+				var winning = a && a.highestBidderUid && currentUser && a.highestBidderUid === currentUser.uid;
+				return (
+					'<article class="item">' +
+						(cover
+							? '<img class="thumb" src="' + cover.replace(/"/g, "&quot;") + '" alt="">'
+							: '<div class="thumb" aria-hidden="true"></div>') +
+						'<div class="item-body">' +
+							'<h2 class="item-title">' + escapeHtml(title) + "</h2>" +
+							'<div class="meta">' +
+								statusChip(status) +
+								(winning ? '<span class="chip is-open">目前最高</span>' : "") +
+								"<span>目前 " + formatYen(highest) + "</span>" +
+								"<span>我的最高 " + formatYen(mine) + "</span>" +
+								(a ? "<span>結束 " + formatDateTime(a.endTimeMs) + "</span>" : "") +
+							"</div>" +
+							'<div class="item-actions">' +
+								'<a class="btn" href="bid-cards.html?id=' + encodeURIComponent(act.auctionId) + '">查看／繼續出價</a>' +
+							"</div>" +
+						"</div>" +
+					"</article>"
+				);
+			}).join("");
+		}
+
+		function escapeHtml(s) {
+			return String(s || "")
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;");
+		}
+
+		function loadLists() {
+			var fb = window.WsFirebase;
+			if (!fb || !fb.ready || !fb.firestoreReady || !currentUser) {
+				sellingList.innerHTML = emptyHtml("登入後即可查看。");
+				biddingList.innerHTML = emptyHtml("登入後即可查看。");
+				return;
+			}
+			sellingList.innerHTML = emptyHtml("載入中…");
+			biddingList.innerHTML = emptyHtml("載入中…");
+			Promise.all([
+				fb.listMySellingAuctions(),
+				fb.listMyBiddingActivity()
+			])
+				.then(function (pair) {
+					renderSelling(pair[0] || []);
+					renderBidding(pair[1] || []);
+					setBanner("已載入你的刊登與參與紀錄。", false);
+				})
+				.catch(function (err) {
+					setBanner("載入失敗：" + ((err && err.message) || err), true);
+					sellingList.innerHTML = emptyHtml("載入失敗。");
+					biddingList.innerHTML = emptyHtml("載入失敗。");
+				});
+		}
+
+		sellingList.addEventListener("click", function (e) {
+			var btn = e.target.closest(".js-close");
+			if (!btn) return;
+			var id = btn.getAttribute("data-id");
+			var fb = window.WsFirebase;
+			if (!fb || !id) return;
+			if (!confirm("確定結束此拍賣？結束後無法再接受下標。")) return;
+			btn.disabled = true;
+			fb.closeAuction(id)
+				.then(function () {
+					loadLists();
+				})
+				.catch(function (err) {
+					alert((err && err.message) || err);
+					btn.disabled = false;
+				});
+		});
+
+		tabSelling.addEventListener("click", function () { setTab("selling"); });
+		tabBidding.addEventListener("click", function () { setTab("bidding"); });
+		reloadBtn.addEventListener("click", loadLists);
+		loginBtn.addEventListener("click", function () {
+			var fb = window.WsFirebase;
+			if (!fb || !fb.ready) return;
+			loginBtn.disabled = true;
+			fb.signInWithGoogle()
+				.catch(function (err) {
+					alert("登入失敗：" + ((err && err.message) || err));
+				})
+				.then(function () { loginBtn.disabled = false; });
+		});
+
+		(function init() {
+			var fb = window.WsFirebase;
+			if (!fb || !fb.ready) {
+				setBanner((fb && fb.reason) || "Firebase 尚未設定", true);
+				loginBtn.hidden = true;
+				loadLists();
+				return;
+			}
+			fb.onAuth(function (user) {
+				currentUser = user || null;
+				if (!user) {
+					setBanner("請先登入以查看我的競標。", true);
+					loginBtn.hidden = false;
+					loadLists();
+					return;
+				}
+				loginBtn.hidden = true;
+				setBanner("已登入，正在載入…", false);
+				if (fb.ensureUserProfile) {
+					fb.ensureUserProfile().finally(loadLists);
+				} else {
+					loadLists();
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
