@@ -7518,7 +7518,12 @@ return {
         var toDoc = scrollY + to.top;
         var startScroll = fromDoc - startAnchor;
         var endScroll = toDoc - endAnchor;
-        var span = Math.max(1, endScroll - startScroll);
+        // 預覽收合時降落點可能緊貼識別帶，span 會被壓扁甚至反轉；保底捲動距離讓飛行動畫可跑完
+        var minSpan = Math.max(180, Math.round(viewH * 0.24));
+        if (endScroll - startScroll < minSpan) {
+            endScroll = startScroll + minSpan;
+        }
+        var span = endScroll - startScroll;
         var t = clamp((scrollY - startScroll) / span, 0, 1);
 
         // 識別帶已完全捲出、或預覽已貼近導覽列：直接視為降落完成
