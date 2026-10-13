@@ -1198,6 +1198,22 @@ document.addEventListener('DOMContentLoaded', function() {
     adjustRarityVariantsPosition();
 })();
 
+// 收合狀態下點 .card-title 亦可展開（避開置頂鈕擋到右側 +/-）
+(function() {
+    document.addEventListener('click', function(e) {
+        var title = e.target.closest('.card-title');
+        if (!title) return;
+        // 標題內的時間選單／連結／按鈕維持原行為
+        if (e.target.closest('select, input, textarea, button, a, label.chart-time-wrap')) return;
+
+        var card = title.closest('.card');
+        if (!card || !card.classList.contains('collapsed-card')) return;
+
+        var toggle = card.querySelector('[data-card-widget="collapse"]');
+        if (toggle) toggle.click();
+    });
+})();
+
 </script>
 
 </body>
