@@ -7220,6 +7220,11 @@ return {
     var sourceImg = null;
     var targetWrap = null;
     var targetImg = null;
+    var previewCard = null;
+    var previewBody = null;
+    var previewFoldBtn = null;
+    var naturalBodyHeight = 0;
+    var userUnlockedPreview = false;
     var rafId = 0;
     var reducedMotion = false;
 
@@ -7245,6 +7250,9 @@ return {
         sourceImg = qs('identityCardImg');
         targetWrap = qs('cardImageWrap');
         targetImg = qs('cardImg');
+        previewCard = qs('preview-card-tag');
+        previewBody = qs('previewCardBody') || (previewCard && previewCard.querySelector('.card-body'));
+        previewFoldBtn = qs('previewFoldBtn') || (previewCard && previewCard.querySelector('[data-card-widget="collapse"]'));
         return !!(flight && flightImg && sourceArt && sourceImg && targetWrap && targetImg);
     }
 
@@ -7276,6 +7284,105 @@ return {
         flight.style.transform = '';
         flight.style.width = '';
         flight.style.height = '';
+    }
+
+    function syncPreviewIcon(expanded) {
+        if (!previewFoldBtn) return;
+        var icon = previewFoldBtn.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-minus', !!expanded);
+            icon.classList.toggle('fa-plus', !expanded);
+        }
+        previewFoldBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        previewFoldBtn.setAttribute('aria-label', expanded ? '收合卡面預覽' : '展開卡面預覽');
+    }
+
+    function measurePreviewBodyHeight() {
+        if (!previewCard || !previewBody) return;
+        // 暫時解除收合以量真實高度
+        var prevHeight = previewBody.style.height;
+        var prevOverflow = previewBody.style.overflow;
+        var prevOpacity = previewBody.style.opacity;
+        var hadFold = previewCard.classList.contains('is-preview-scrollfold');
+        var hadOpen = previewCard.classList.contains('is-preview-open');
+
+        previewCard.classList.remove('is-preview-scrollfold');
+        previewCard.classList.add('is-preview-open');
+        previewBody.style.height = 'auto';
+        previewBody.style.overflow = 'visible';
+        previewBody.style.opacity = '1';
+        naturalBodyHeight = Math.max(previewBody.scrollHeight, targetWrap ? targetWrap.offsetHeight + 48 : 0);
+
+        // 恢復量測前狀態；真正開合交給 updatePreviewExpand
+        previewBody.style.height = prevHeight;
+        previewBody.style.overflow = prevOverflow;
+        previewBody.style.opacity = prevOpacity;
+        previewCard.classList.toggle('is-preview-scrollfold', hadFold);
+        previewCard.classList.toggle('is-preview-open', hadOpen);
+    }
+
+    /**
+     * 卡面預覽預設收合；隨交接進度 t 與飛行卡面一起展開。
+     */
+    function updatePreviewExpand(t) {
+        if (!previewCard || !previewBody || userUnlockedPreview) return;
+
+        if (naturalBodyHeight < 80) measurePreviewBodyHeight();
+        if (naturalBodyHeight < 80) naturalBodyHeight = Math.round(window.innerHeight * 0.55);
+
+        // 比卡面飛行稍早開門，讓區塊與卡面一起「進入」
+        var open = smoothstep(clamp((t - 0.02) / 0.78, 0, 1));
+
+        previewCard.classList.remove('is-preview-open');
+        previewCard.classList.add('is-preview-scrollfold');
+        previewCard.classList.toggle('is-preview-expanding', open > 0.001 && open < 0.999);
+
+        if (open <= 0.001) {
+            previewBody.style.height = '0px';
+            previewBody.style.opacity = '0';
+            previewBody.style.overflow = 'hidden';
+            syncPreviewIcon(false);
+            return;
+        }
+
+        if (open >= 0.999) {
+            previewCard.classList.remove('is-preview-scrollfold');
+            previewCard.classList.remove('is-preview-expanding');
+            previewCard.classList.add('is-preview-open');
+            previewBody.style.height = '';
+            previewBody.style.opacity = '';
+            previewBody.style.overflow = '';
+            syncPreviewIcon(true);
+            return;
+        }
+
+        var h = Math.max(0, Math.round(naturalBodyHeight * open));
+        previewBody.style.height = h + 'px';
+        previewBody.style.opacity = String(0.2 + 0.8 * open);
+        previewBody.style.overflow = 'hidden';
+        syncPreviewIcon(open > 0.45);
+    }
+
+    function openPreviewFully() {
+        if (!previewCard || !previewBody) return;
+        previewCard.classList.remove('is-preview-scrollfold');
+        previewCard.classList.remove('is-preview-expanding');
+        previewCard.classList.add('is-preview-open');
+        previewBody.style.height = '';
+        previewBody.style.opacity = '';
+        previewBody.style.overflow = '';
+        syncPreviewIcon(true);
+    }
+
+    function foldPreviewFully() {
+        if (!previewCard || !previewBody || userUnlockedPreview) return;
+        previewCard.classList.add('is-preview-scrollfold');
+        previewCard.classList.remove('is-preview-expanding');
+        previewCard.classList.remove('is-preview-open');
+        previewBody.style.height = '0px';
+        previewBody.style.opacity = '0';
+        previewBody.style.overflow = 'hidden';
+        syncPreviewIcon(false);
     }
 
     /**
@@ -7312,6 +7419,28 @@ return {
         identityStrip.removeAttribute('aria-hidden');
     }
 
+    function resolveTargetRect() {
+        // 收合時 wrap 可能高度異常；用 header 下方推估降落框
+        var to = targetWrap.getBoundingClientRect();
+        if (to.width >= 8 && to.height >= 40) return to;
+
+        if (!previewCard) return to;
+        var header = previewCard.querySelector('.card-header');
+        if (!header) return to;
+        var hr = header.getBoundingClientRect();
+        var bodyPad = 16;
+        var width = Math.max(120, hr.width - bodyPad * 2);
+        var height = Math.max(160, width * (88 / 63));
+        return {
+            left: hr.left + bodyPad,
+            top: hr.bottom + bodyPad,
+            width: width,
+            height: height,
+            right: hr.left + bodyPad + width,
+            bottom: hr.bottom + bodyPad + height
+        };
+    }
+
     function updateHandoff() {
         if (!cacheEls()) return;
 
@@ -7320,6 +7449,7 @@ return {
             hideFlight();
             setSlotVisibility(true, true);
             resetStripFade();
+            openPreviewFully();
             return;
         }
 
@@ -7331,13 +7461,14 @@ return {
             hideFlight();
             setSlotVisibility(true, true);
             resetStripFade();
+            foldPreviewFully();
             return;
         }
 
         syncFlightImage();
 
         var from = sourceArt.getBoundingClientRect();
-        var to = targetWrap.getBoundingClientRect();
+        var to = resolveTargetRect();
         if (from.width < 8 || from.height < 8 || to.width < 8 || to.height < 8) {
             hideFlight();
             setSlotVisibility(true, true);
@@ -7363,6 +7494,8 @@ return {
 
         // 整條識別帶隨進度淡出／滑回時浮入
         updateStripFade(t);
+        // 卡面預覽隨進度與飛行卡面一起展開
+        updatePreviewExpand(t);
 
         if (t <= 0.02) {
             // 仍在識別帶：只顯示識別帶卡面，預覽卡面先藏起
@@ -7402,10 +7535,41 @@ return {
         });
     }
 
+    function bindPreviewManualToggle() {
+        if (!previewFoldBtn || previewFoldBtn._handoffBound) return;
+        previewFoldBtn._handoffBound = true;
+        previewFoldBtn.addEventListener('click', function (e) {
+            // 接管 AdminLTE collapse，改由我們的開合狀態處理
+            e.preventDefault();
+            e.stopPropagation();
+            userUnlockedPreview = true;
+            var expanded = previewCard && previewCard.classList.contains('is-preview-open');
+            if (expanded) {
+                previewCard.classList.remove('is-preview-open');
+                previewCard.classList.add('is-preview-scrollfold');
+                previewCard.classList.remove('is-preview-expanding');
+                if (previewBody) {
+                    previewBody.style.height = '0px';
+                    previewBody.style.opacity = '0';
+                    previewBody.style.overflow = 'hidden';
+                }
+                syncPreviewIcon(false);
+            } else {
+                openPreviewFully();
+            }
+        }, true);
+    }
+
     function bind() {
         if (!cacheEls()) return;
+        bindPreviewManualToggle();
+        foldPreviewFully();
+
         window.addEventListener('scroll', scheduleUpdate, { passive: true });
-        window.addEventListener('resize', scheduleUpdate);
+        window.addEventListener('resize', function () {
+            naturalBodyHeight = 0;
+            scheduleUpdate();
+        });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', scheduleUpdate);
             window.visualViewport.addEventListener('scroll', scheduleUpdate);
@@ -7416,6 +7580,7 @@ return {
             var _refresh = window.refreshResultIdentity;
             window.refreshResultIdentity = function () {
                 var r = _refresh.apply(this, arguments);
+                naturalBodyHeight = 0;
                 scheduleUpdate();
                 return r;
             };
@@ -7423,6 +7588,7 @@ return {
             var _refreshLocal = refreshResultIdentity;
             window.refreshResultIdentity = function () {
                 var r = _refreshLocal.apply(this, arguments);
+                naturalBodyHeight = 0;
                 scheduleUpdate();
                 return r;
             };
@@ -7431,7 +7597,10 @@ return {
         }
 
         if (targetImg) {
-            targetImg.addEventListener('load', scheduleUpdate);
+            targetImg.addEventListener('load', function () {
+                naturalBodyHeight = 0;
+                scheduleUpdate();
+            });
         }
         if (sourceImg) {
             sourceImg.addEventListener('load', scheduleUpdate);
