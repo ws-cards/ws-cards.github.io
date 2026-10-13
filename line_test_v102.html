@@ -1204,17 +1204,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return !!(el && el.closest('select, input, textarea, button, a, label.chart-time-wrap, .card-tools, [data-card-widget]'));
     }
 
-    document.addEventListener('click', function(e) {
-        var title = e.target.closest('.card-title');
-        var header = e.target.closest('.card-header');
-        if (!title && !header) return;
-        if (isInteractive(e.target)) return;
-
-        var card = (title || header).closest('.card');
+    function expandCollapsedCard(card) {
         if (!card || !card.classList.contains('collapsed-card')) return;
-
         var toggle = card.querySelector('[data-card-widget="collapse"]');
+        if (window.jQuery && toggle && jQuery.fn.CardWidget) {
+            jQuery(toggle).CardWidget('expand');
+            return;
+        }
         if (toggle) toggle.click();
+    }
+
+    document.addEventListener('click', function(e) {
+        var header = e.target.closest('.card-header');
+        if (!header || isInteractive(e.target)) return;
+
+        expandCollapsedCard(header.closest('.card'));
     });
 
     document.addEventListener('keydown', function(e) {
@@ -1226,8 +1230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!card || !card.classList.contains('collapsed-card')) return;
 
         e.preventDefault();
-        var toggle = card.querySelector('[data-card-widget="collapse"]');
-        if (toggle) toggle.click();
+        expandCollapsedCard(card);
     });
 })();
 
