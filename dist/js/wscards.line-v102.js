@@ -95,9 +95,10 @@ var _dictNameIndex = null; // 卡名 → [卡號…]（由字典建立）
 var _currentSetNameIndex = null; // 目前產品卡表：卡名 → [卡號…]
 var _currentCardSetPrefix = ''; // 例如 BD/W54，用來優先挑同系列印刷
 var _cardtextNamePopoverBound = false;
-// cardStandard 下拉選單原生就帶 2 個預留 option，options.length 判斷不出載入狀態，需另外追蹤
+// cardStandard 下拉選單原生就帶預留 option，options.length 判斷不出載入狀態，需另外追蹤
 var _standardWLoaded = false;
 var _standardSLoaded = false;
+var _standardRLoaded = false;
 // 程式化級聯設選器時：略過 changeTitle 自動選第一張／重複打 cardTitle.json
 var _programmaticCascade = false;
 var _cardTitleDataCache = null;
@@ -1248,10 +1249,12 @@ var requestURLCardStockbyPreCode = 'https://storage.googleapis.com/divine-vehicl
 var requestURLCardTitle = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
 var standardWURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_W.json';
 var standardSURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_S.json';
+var standardRURL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardStandard_R.json';
 
 // XMLHttpRequest 物件
 var requestStandardW = new XMLHttpRequest();
-var requestStandardS = new XMLHttpRequest();			
+var requestStandardS = new XMLHttpRequest();
+var requestStandardR = new XMLHttpRequest();
 var requestPrice = new XMLHttpRequest();	
 var requestStock = new XMLHttpRequest();
 var requestTitle = new XMLHttpRequest();	
@@ -1445,7 +1448,7 @@ function resetCardNumberWaiting() {
 
 /**
 * 初始化設定函數
-* - 載入作品標準資料 (Weiss 和 Schwarz)
+* - 載入作品標準資料 (Weiss、Schwarz、Rose)
 * - 載入主題資料
 * - 載入預設卡片資料
 * - 設置選擇器初始狀態
@@ -1470,6 +1473,11 @@ requestStandardW.send();
 requestStandardS.open('GET', standardSURL);
 requestStandardS.responseType = 'json';
 requestStandardS.send();
+
+// 載入 Rose 作品標準
+requestStandardR.open('GET', standardRURL);
+requestStandardR.responseType = 'json';
+requestStandardR.send();
 
 /**
  * Weiss 作品標準載入完成後
@@ -1513,6 +1521,30 @@ requestStandardS.onload = function(){
 requestStandardS.onerror = function(){
     _standardSLoaded = true;
     markPageLoad('standardS', '作品標準（Schwarz）');
+}
+
+/**
+ * Rose 作品標準載入完成後
+ * - 填充 Rose 選項群組
+ */
+requestStandardR.onload = function(){
+    var optgroupR = document.getElementById("Rose");
+    var cardsR = requestStandardR.response;
+    if (optgroupR && cardsR) {
+        for (var key in cardsR) {
+            var option = document.createElement("option");
+            option.setAttribute("value", cardsR[key]);
+            option.setAttribute("id", key);
+            option.appendChild(document.createTextNode(key));
+            optgroupR.appendChild(option);
+        }
+    }
+    _standardRLoaded = true;
+    markPageLoad('standardR', '作品標準（Rose）');
+}
+requestStandardR.onerror = function(){
+    _standardRLoaded = true;
+    markPageLoad('standardR', '作品標準（Rose）');
 }
 
 // 載入預設價格資料			  
@@ -3082,8 +3114,8 @@ return new Promise((resolve) => {
 // 等待標準資料載入完成
 var checkInterval = setInterval(() => {
   var cardStandardSelect = document.getElementById('cardStandard');
-  // options.length 初始就有 2 個預留 option，判斷不出兩支 XHR 是否都跑完，改認旗標
-  if (!cardStandardSelect || !_standardWLoaded || !_standardSLoaded) {
+  // options.length 初始就有預留 option，判斷不出三支 XHR 是否都跑完，改認旗標
+  if (!cardStandardSelect || !_standardWLoaded || !_standardSLoaded || !_standardRLoaded) {
     return; // 還沒載入完成
   }
   
