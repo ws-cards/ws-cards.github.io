@@ -2447,7 +2447,6 @@ function refreshResultIdentity() {
     var rareEl = document.getElementById('cardrare');
     var priceEl = document.getElementById('summaryCurrentPrice');
     var changeEl = document.getElementById('summaryChangePercent');
-    var asOfEl = document.getElementById('priceSummaryAsOf');
     var imgEl = document.getElementById('cardImg');
 
     var idNo = document.getElementById('identityCardNo');
@@ -2483,9 +2482,8 @@ function refreshResultIdentity() {
         else if (changeEl && changeEl.classList.contains('price-down')) changeClass = 'result-identity-change price-down';
         idChange.className = changeClass;
     }
-    if (idAsOf) {
-        idAsOf.textContent = asOfEl ? String(asOfEl.textContent || '').trim() : '';
-    }
+    // 價格摘要下方的資料日期／範例說明已移除，識別帶也不再顯示同段文案
+    if (idAsOf) idAsOf.textContent = '';
 
     if (idImg) {
         var src = (imgEl && imgEl.getAttribute('src')) ? imgEl.getAttribute('src') : '';
@@ -2550,11 +2548,6 @@ function forceDefault() {
         var changeIcon = changeItem.querySelector('.price-summary-icon i');
         if (changeIcon) changeIcon.className = 'fas fa-minus';
     }
-    // 沒有價格資料時，不要留著上一張卡的日期
-    var elAsOfDefault = document.getElementById('priceSummaryAsOf');
-    if (elAsOfDefault) elAsOfDefault.textContent = '這張卡目前沒有價格紀錄。';
-    var elSampleDefault = document.getElementById('priceSummarySample');
-    if (elSampleDefault) elSampleDefault.style.display = 'none';
     if (typeof refreshResultIdentity === 'function') {
         refreshResultIdentity();
     }
@@ -2655,23 +2648,6 @@ if (elChange) {
 
         setValueClass(elChange, 'price-summary-value ' + colorClass);
     }
-}
-
-// 價格必須帶日期才算完整答案：讀者要知道這個數字是哪一天的
-var elAsOf = document.getElementById('priceSummaryAsOf');
-if (elAsOf) {
-    var lastLabel = (_rawPriceLabels && _rawPriceLabels.length === priceData.length)
-        ? _rawPriceLabels[priceData.length - 1] : '';
-    var lastDate = parseLabelToDate(lastLabel);
-    elAsOf.textContent = lastDate
-        ? '資料日期 ' + (lastDate.getMonth() + 1) + '/' + lastDate.getDate() + '，來源遊遊亭。'
-        : '資料來源：遊遊亭。';
-}
-
-// 開站時載入的是範例卡片，必須說清楚，避免被當成自己要查的卡的價格
-var elSample = document.getElementById('priceSummarySample');
-if (elSample) {
-    elSample.style.display = window._hasUserModified ? 'none' : 'inline';
 }
 
 // 更新漲跌圖標方向
@@ -6330,7 +6306,6 @@ function renderVariants(relatedCards, currentCardId) {
     html += '<button type="button" class="rarity-variants-nav is-next" data-rarity-nav="next" aria-label="查看下一張稀有度">';
     html += '<i class="fas fa-chevron-right" aria-hidden="true"></i></button>';
     html += '</div>';
-    html += '<p class="rarity-variants-hint">左右滑動或點選圖片切換稀有度</p>';
     container.innerHTML = html;
 
     // 把目前這張捲到可視區中央
