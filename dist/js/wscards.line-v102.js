@@ -7283,6 +7283,13 @@ return {
     // 常見滑鼠一格 ≈ 100～120px；兩格約 240px 完成飛入
     var WHEEL_NOTCH_PX = 120;
     var HANDOFF_WHEEL_NOTCHES = 2;
+    // 落地後短距 soft-snap：僅在離定位點約一格內時輕吸，避免飛入中段被拽
+    var SNAP_MAX_PX = Math.round(WHEEL_NOTCH_PX * 1.25); // ~150
+    var SNAP_MIN_PX = 8;
+    var SNAP_DURATION_MS = 220;
+    var landingSnapDone = false;
+    var landingSnapInProgress = false;
+    var wasLanded = false;
     // 飛行中鎖定降落尺寸，避免用整欄寬推估把卡面放太大、落地再縮回
     var lockedLandingW = 0;
     var lockedLandingH = 0;
@@ -7427,12 +7434,71 @@ return {
         lastPreviewExpanded = null;
         lastShowSource = null;
         lastShowTarget = null;
+        landingSnapDone = false;
+        landingSnapInProgress = false;
+        wasLanded = false;
         clearLandingLock();
         hideFlight();
         resetStripFade();
         foldPreviewFully();
         setSlotVisibility(true, false);
         scheduleUpdate();
+    }
+
+    function getScrollY() {
+        return window.scrollY
+            || window.pageYOffset
+            || document.documentElement.scrollTop
+            || document.body.scrollTop
+            || 0;
+    }
+
+    function setScrollY(y) {
+        var se = document.scrollingElement || document.documentElement;
+        se.scrollTop = y;
+        try { window.scrollTo(0, y); } catch (e) {}
+    }
+
+    /**
+     * 落地後短距 soft-snap：預覽頂端已靠近導覽列下方時，輕吸到對齊點。
+     * 距離過大不吸（使用者繼續往下看時不被拽回）。
+     */
+    function softSnapPreviewToTop(topClear) {
+        if (landingSnapInProgress || landingSnapDone) return;
+        if (reducedMotion || prefersReducedMotion()) {
+            landingSnapDone = true;
+            return;
+        }
+        if (!previewCard) return;
+
+        var rect = previewCard.getBoundingClientRect();
+        if (rect.width < 8) return;
+        var delta = rect.top - topClear;
+        if (Math.abs(delta) < SNAP_MIN_PX) {
+            landingSnapDone = true;
+            return;
+        }
+        if (Math.abs(delta) > SNAP_MAX_PX) return;
+
+        landingSnapInProgress = true;
+        var startY = getScrollY();
+        var targetY = Math.max(0, Math.round(startY + delta));
+        var startTs = 0;
+
+        function step(ts) {
+            if (!startTs) startTs = ts;
+            var p = Math.min(1, (ts - startTs) / SNAP_DURATION_MS);
+            var eased = 1 - (1 - p) * (1 - p);
+            setScrollY(startY + (targetY - startY) * eased);
+            if (p < 1) {
+                window.requestAnimationFrame(step);
+                return;
+            }
+            landingSnapInProgress = false;
+            landingSnapDone = true;
+            scheduleUpdate();
+        }
+        window.requestAnimationFrame(step);
     }
 
     /**
@@ -7689,6 +7755,12 @@ return {
         var landed = timing.landed;
         var e = smoothstep(t);
 
+        // 滑回上半段時重新允許落地 snap（同一趟往下再吸一次）
+        if (t < 0.55) {
+            landingSnapDone = false;
+            wasLanded = false;
+        }
+
         // —— 寫入階段 ——
         updateStripFade(t);
         updatePreviewExpand(t);
@@ -7701,6 +7773,11 @@ return {
         if (landed || t >= 0.98) {
             hideFlight();
             setSlotVisibility(false, true);
+            // 剛落地：短距 soft-snap 對齊預覽頂（修正兩格後停歪）
+            if (!wasLanded && !landingSnapInProgress) {
+                softSnapPreviewToTop(timing.topClear);
+            }
+            wasLanded = true;
             return;
         }
 
@@ -7799,4 +7876,14 @@ return {
 
     window.updateCardHandoffParallax = scheduleUpdate;
     window.resetCardHandoffForCardJump = resetForCardJump;
+    // 測試／除錯：落地 soft-snap 狀態
+    window.getCardHandoffSnapState = function () {
+        return {
+            done: landingSnapDone,
+            inProgress: landingSnapInProgress,
+            wasLanded: wasLanded,
+            maxPx: SNAP_MAX_PX,
+            minPx: SNAP_MIN_PX
+        };
+    };
 })();
