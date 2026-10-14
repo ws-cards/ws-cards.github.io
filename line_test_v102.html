@@ -435,7 +435,7 @@
                       </div>					
                     </div>
                     <div class="card-body">
-                        <div class="info-swiper hint-hidden" id="infoSwiper">           
+                        <div class="info-swiper is-manual-turn hint-hidden" id="infoSwiper">           
                             <!-- 無資料遮罩 -->
                             <div class="info-swiper-mask" id="infoSwiperMask">
                                 <div class="info-swiper-mask-text" id="infoSwiperMaskText"><i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>此卡號查無詳細資料</div>
@@ -444,10 +444,10 @@
                             <button class="swiper-btn swiper-prev" id="swiperPrev" aria-label="上一頁"><i class="fas fa-chevron-left"></i></button>
                             <button class="swiper-btn swiper-next" id="swiperNext" aria-label="下一頁"><i class="fas fa-chevron-right"></i></button>
 
-                            <!-- 滑動內容容器 -->
+                            <!-- 說明書式翻頁：兩頁疊放，由 InfoSwiper 驅動翻面 -->
                             <!-- 第一頁：混合佈局（兩欄 + 單欄） --> 
                             <div class="info-items-container" id="infoItemsContainer">
-                                <div class="info-item mixed-layout active">
+                                <div class="info-item mixed-layout active" data-info-page="0" aria-hidden="false">
                                     <!-- 單欄區域的內容（跨越整個寬度） -->      
                                     <div class="info-row full-width">
                                         <i class="fas fa-star mr-2"></i>
@@ -512,7 +512,7 @@
                                         <span id="cardfeatures" class="info-value long-text white-space-nowrap">音楽・Roselia</span>
                                     </div>                                 
                             </div>            
-                            <div class="info-item single-column"> 
+                            <div class="info-item single-column" data-info-page="1" aria-hidden="true"> 
                                 <div class="info-row cardtext-row">
                                     <div class="cardtext-heading">
                                         <i class="fas fa-scroll mr-2" aria-hidden="true"></i>
@@ -523,10 +523,11 @@
                             </div>
                         </div>
               
-                        <!-- 滑動指示器 -->
-                        <div class="swipe-indicators" id="swipeIndicators">
-                            <div class="swipe-dot active" data-index="0"></div>
-                            <div class="swipe-dot" data-index="1"></div>
+                        <!-- 頁碼指示器 -->
+                        <div class="swipe-indicators" id="swipeIndicators" role="tablist" aria-label="卡片資訊分頁">
+                            <button type="button" class="swipe-dot active" data-index="0" role="tab" aria-selected="true" aria-label="第 1 頁：屬性"></button>
+                            <button type="button" class="swipe-dot" data-index="1" role="tab" aria-selected="false" aria-label="第 2 頁：效果"></button>
+                            <span class="info-page-label" id="infoPageLabel" aria-live="polite">1 / 2 · 屬性</span>
                         </div>
                     </div>
                 </div>	  
@@ -1023,24 +1024,33 @@ if (typeof CardFavorites !== 'undefined') {
 //  text: '4/17 資料已復原可正常查詢'
 //})
 
-// 資訊卡片滑動功能
+// 資訊卡片：說明書式翻頁（屬性 ↔ 效果）
 class InfoSwiper {  
    constructor() {
         this.swiper = document.getElementById('infoSwiper');
         this.container = document.getElementById('infoItemsContainer');
-        this.items = document.querySelectorAll('.info-item');
+        this.items = Array.from(document.querySelectorAll('#infoItemsContainer .info-item'));
         this.indicators = document.querySelectorAll('.swipe-dot');
         this.prevBtn = document.getElementById('swiperPrev');
         this.nextBtn = document.getElementById('swiperNext');
+        this.pageLabel = document.getElementById('infoPageLabel');
+        this.pageNames = ['屬性', '效果'];
         
         this.currentIndex = 0;
         this.totalItems = this.items.length;
+        this.isAnimating = false;
+        this.prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        this._touchStartX = 0;
+        this._touchStartY = 0;
         
         this.init();
     }
     
     init() {
-        // 點擊指示器切換
+        if (!this.swiper || !this.container || !this.items.length) return;
+
+        this.swiper.classList.add('is-manual-turn');
+
         this.indicators.forEach((dot, index) => {
             dot.addEventListener('click', () => {
                 this.goTo(index);
@@ -1048,7 +1058,6 @@ class InfoSwiper {
             });
         });
 
-        // 左右按鈕切換
         if (this.prevBtn) {
             this.prevBtn.addEventListener('click', () => {
                 if (this.currentIndex > 0) {
@@ -1067,42 +1076,95 @@ class InfoSwiper {
             });
         }
 
-        // 監聽滾動以更新指示器與按鈕
-        this.container.addEventListener('scroll', () => {
-            const scrollLeft = this.container.scrollLeft;
-            const itemWidth = this.container.clientWidth;
-            // 根據滾動位置計算當前索引
-            let newIndex = Math.round(scrollLeft / itemWidth);
-            
-            // 安全邊界處理
-            newIndex = Math.max(0, Math.min(newIndex, this.totalItems - 1));
-            
-            if (this.currentIndex !== newIndex) {
-                this.currentIndex = newIndex;
-                this.updateIndicators();
-                this.updateActiveItem();
-                this.updateButtons();
+        // 觸控：水平滑動觸發翻頁（避免和整頁直向捲動搶手勢）
+        this.container.addEventListener('touchstart', (e) => {
+            if (!e.touches || !e.touches[0]) return;
+            this._touchStartX = e.touches[0].clientX;
+            this._touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        this.container.addEventListener('touchend', (e) => {
+            if (!e.changedTouches || !e.changedTouches[0]) return;
+            var dx = e.changedTouches[0].clientX - this._touchStartX;
+            var dy = e.changedTouches[0].clientY - this._touchStartY;
+            if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+            if (dx < 0 && this.currentIndex < this.totalItems - 1) {
+                this.goTo(this.currentIndex + 1);
+                this.markHintAsSeen();
+            } else if (dx > 0 && this.currentIndex > 0) {
+                this.goTo(this.currentIndex - 1);
                 this.markHintAsSeen();
             }
-        });
-        
-        // 初始化按鈕狀態
-        this.updateButtons();
+        }, { passive: true });
 
-    }
-    
-    goTo(index) {
-        this.currentIndex = index;
-        const targetScrollLeft = index * this.container.clientWidth;
-        
-        this.container.scrollTo({
-            left: targetScrollLeft,
-            behavior: 'smooth'
-        });
-        
-        this.updateIndicators();
-        this.updateActiveItem();
         this.updateButtons();
+        this.updateIndicators();
+        this.updateActiveItem(true);
+        this.updatePageLabel();
+        this.syncStackHeight();
+    }
+
+    prefersReduced() {
+        return this.prefersReducedMotion
+            || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    goTo(index) {
+        index = Math.max(0, Math.min(index, this.totalItems - 1));
+        if (index === this.currentIndex || this.isAnimating) return;
+
+        var fromIndex = this.currentIndex;
+        var direction = index > fromIndex ? 'next' : 'prev';
+        var fromItem = this.items[fromIndex];
+        var toItem = this.items[index];
+
+        if (this.prefersReduced() || !fromItem || !toItem) {
+            this.currentIndex = index;
+            this.updateIndicators();
+            this.updateActiveItem(true);
+            this.updateButtons();
+            this.updatePageLabel();
+            this.syncStackHeight();
+            return;
+        }
+
+        this.isAnimating = true;
+        this.swiper.classList.add('is-turning');
+
+        // 先讓目標頁躺在下方，再把目前頁當說明書翻過去
+        toItem.classList.add('is-page-under');
+        toItem.setAttribute('aria-hidden', 'false');
+        // 用目前頁與目標頁較高者撐高，避免翻頁中高度塌縮
+        this.container.style.minHeight = Math.ceil(Math.max(fromItem.scrollHeight, toItem.scrollHeight)) + 'px';
+        // 強制 reflow，確保每次都能重跑翻頁動畫
+        void fromItem.offsetWidth;
+        fromItem.classList.add(direction === 'next' ? 'is-turn-out-next' : 'is-turn-out-prev');
+
+        var finished = false;
+        var finish = () => {
+            if (finished) return;
+            finished = true;
+            fromItem.removeEventListener('animationend', onEnd);
+            fromItem.classList.remove('active', 'is-turn-out-next', 'is-turn-out-prev');
+            fromItem.setAttribute('aria-hidden', 'true');
+            toItem.classList.remove('is-page-under');
+            toItem.classList.add('active');
+            toItem.setAttribute('aria-hidden', 'false');
+            this.currentIndex = index;
+            this.isAnimating = false;
+            this.swiper.classList.remove('is-turning');
+            this.updateIndicators();
+            this.updateButtons();
+            this.updatePageLabel();
+            this.syncStackHeight();
+        };
+
+        var onEnd = (e) => {
+            if (e.target !== fromItem) return;
+            finish();
+        };
+        fromItem.addEventListener('animationend', onEnd);
+        window.setTimeout(finish, 700);
     }
     
     updateButtons() {
@@ -1116,57 +1178,69 @@ class InfoSwiper {
 
     updateIndicators() {
         this.indicators.forEach((dot, index) => {
-            dot.classList.toggle('active', index === this.currentIndex);
+            var on = index === this.currentIndex;
+            dot.classList.toggle('active', on);
+            dot.setAttribute('aria-selected', on ? 'true' : 'false');
         });
     }
     
-    updateActiveItem() {
+    updateActiveItem(instant) {
         this.items.forEach((item, index) => {
-            item.classList.toggle('active', index === this.currentIndex);
+            var on = index === this.currentIndex;
+            item.classList.toggle('active', on);
+            item.classList.remove('is-turn-out-next', 'is-turn-out-prev', 'is-page-under');
+            item.setAttribute('aria-hidden', on ? 'false' : 'true');
+            if (instant) {
+                item.style.animation = 'none';
+                // reflow then clear so later turns can animate
+                void item.offsetWidth;
+                item.style.animation = '';
+            }
         });
     }
 
-    // 檢查是否已看過提示
+    updatePageLabel() {
+        if (!this.pageLabel) return;
+        var name = this.pageNames[this.currentIndex] || '';
+        this.pageLabel.textContent = (this.currentIndex + 1) + ' / ' + this.totalItems + (name ? (' · ' + name) : '');
+    }
+
+    syncStackHeight() {
+        if (!this.container) return;
+        var active = this.items[this.currentIndex];
+        if (!active) return;
+        // 疊放時用目前頁高度撐開容器，避免翻頁後高度跳動過劇
+        this.container.style.minHeight = Math.ceil(active.scrollHeight) + 'px';
+    }
+
     hasSeenHint() {
         return localStorage.getItem('infoSwiperHintSeen') === 'true';
     }
     
-    // 標記提示為已看過
     markHintAsSeen() {
         localStorage.setItem('infoSwiperHintSeen', 'true');
         this.hideHint();
     }
     
-    // 隱藏提示
     hideHint() {
         this.swiper.classList.add('hint-hidden');
     }
 
-    // 提示動畫- 只顯示一次
     startHintAnimation() {
         if (this.hasSeenHint()) {
             this.hideHint();
             return;
         }
-        
-        setTimeout(() => {
-            if (!this.hasSeenHint()) {
-                // Hint display logic
-            }
-        }, 2000);
     }
     
-    // 響應式處理
     handleResize() {
-        // 重置當前索引的滾動位置，確保在調整大小時仍對齊
-        this.goTo(this.currentIndex);
+        this.syncStackHeight();
     }
 
-    // 重置提示（開發測試用，可選）
     resetHint() {
         localStorage.removeItem('infoSwiperHintSeen');
         this.swiper.classList.remove('hint-hidden');
-        console.log('滑動提示已重置');
+        console.log('翻頁提示已重置');
     }    
 }
 
