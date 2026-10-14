@@ -6148,32 +6148,60 @@ body.market-desk-page .result-identity.is-handoff-driven {
     animation: none !important;
 }
 
-/* 卡面預覽：預設收合；JS 只切 class，高度／透明度由 CSS transition 處理（避免每幀改 height） */
-body.market-desk-page .preview-card.is-preview-scrollfold > .card-body {
-    max-height: 0;
-    height: auto;
-    overflow: hidden;
+/* 卡面預覽：預設收合；飛入前不得露出空白（避免像尚未載入）
+   特異性需蓋過 .content .card > .card-body 的 padding */
+body.market-desk-page .content .preview-card.is-preview-scrollfold > .card-body,
+body.market-desk-page .preview-card.is-preview-scrollfold > #previewCardBody {
+    max-height: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
     opacity: 0;
-    border: 0;
-    padding-top: 0;
-    padding-bottom: 0;
+    visibility: hidden;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     pointer-events: none;
-    transition:
-        max-height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.32s ease,
-        padding 0.32s ease;
+    /* 收合不過渡高度／padding，避免飛入前閃出空白帶 */
+    transition: opacity 0.2s ease;
 }
 
-body.market-desk-page .preview-card.is-preview-open > .card-body {
+body.market-desk-page .content .preview-card.is-preview-scrollfold .preview-container,
+body.market-desk-page .preview-card.is-preview-scrollfold .preview-container {
+    min-height: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+body.market-desk-page .content .preview-card.is-preview-scrollfold .image-placeholder,
+body.market-desk-page .preview-card.is-preview-scrollfold .image-placeholder,
+body.market-desk-page .content .preview-card.is-preview-scrollfold .overlay-wrapper,
+body.market-desk-page .preview-card.is-preview-scrollfold .overlay-wrapper {
+    display: none;
+}
+
+body.market-desk-page .content .preview-card.is-preview-open > .card-body,
+body.market-desk-page .preview-card.is-preview-open > #previewCardBody {
     max-height: min(92vh, 1200px);
     height: auto;
+    min-height: 0;
     overflow: visible;
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
     transition:
         max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
         opacity 0.38s ease 0.04s,
         padding 0.38s ease;
+}
+
+/* 已開門但卡圖仍在飛行（槽位隱藏）時：不要露出空白預覽區 */
+body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handoff-target) .preview-container {
+    min-height: 0;
+}
+
+body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handoff-target) .image-placeholder {
+    display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6191,8 +6219,10 @@ body.market-desk-page .preview-card.is-preview-open > .card-body {
         transform: none !important;
     }
 
-    body.market-desk-page .preview-card.is-preview-scrollfold > .card-body,
-    body.market-desk-page .preview-card.is-preview-open > .card-body {
+    body.market-desk-page .content .preview-card.is-preview-scrollfold > .card-body,
+    body.market-desk-page .preview-card.is-preview-scrollfold > #previewCardBody,
+    body.market-desk-page .content .preview-card.is-preview-open > .card-body,
+    body.market-desk-page .preview-card.is-preview-open > #previewCardBody {
         transition: none;
     }
 }

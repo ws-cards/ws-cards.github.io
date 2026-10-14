@@ -7277,9 +7277,9 @@ return {
     var lastStripFaded = null;
     var lastStripDriven = false;
     var lastFlightSrc = '';
-    // 兩格滾輪內開門並落地；門檻略早於中段
-    var previewOpenThreshold = 0.12;
-    var previewCloseThreshold = 0.06;
+    // 兩格滾輪內落地；預覽略晚開門，避免飛入前露出空白 body
+    var previewOpenThreshold = 0.42;
+    var previewCloseThreshold = 0.28;
     // 常見滑鼠一格 ≈ 100～120px；兩格約 240px 完成飛入
     var WHEEL_NOTCH_PX = 120;
     var HANDOFF_WHEEL_NOTCHES = 2;
