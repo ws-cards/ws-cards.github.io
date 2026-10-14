@@ -1207,10 +1207,34 @@ class InfoSwiper {
 
     syncStackHeight() {
         if (!this.container) return;
-        var active = this.items[this.currentIndex];
-        if (!active) return;
-        // 疊放時用目前頁高度撐開容器，避免翻頁後高度跳動過劇
-        this.container.style.minHeight = Math.ceil(active.scrollHeight) + 'px';
+        // 逐頁以絕對定位量自然高度，再取最大值撐住疊放容器
+        var maxH = 0;
+        var containerWidth = this.container.clientWidth || 0;
+        this.items.forEach((item) => {
+            var clone = item.cloneNode(true);
+            clone.style.cssText = [
+                'position:absolute',
+                'left:-9999px',
+                'top:0',
+                'visibility:hidden',
+                'pointer-events:none',
+                'height:auto',
+                'max-height:none',
+                'overflow:visible',
+                'opacity:1',
+                'transform:none',
+                'width:' + (containerWidth ? containerWidth + 'px' : '100%'),
+                'min-width:0',
+                'grid-area:auto',
+            ].join(';');
+            clone.classList.remove('is-turn-out-next', 'is-turn-out-prev', 'is-page-under');
+            document.body.appendChild(clone);
+            maxH = Math.max(maxH, Math.ceil(clone.scrollHeight || clone.offsetHeight || 0));
+            clone.remove();
+        });
+        if (maxH > 0) {
+            this.container.style.minHeight = maxH + 'px';
+        }
     }
 
     hasSeenHint() {
