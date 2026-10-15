@@ -64,7 +64,8 @@
       ended: false,
       startedAt: null,
       endedAt: null,
-      encoreFrom: null
+      encoreFrom: null,
+      endReason: null
     };
   }
 
@@ -208,6 +209,56 @@
     return out;
   }
 
+  /** Per-card attack damage (same cardNo accumulated). */
+  function cardAttackDamageStats(side) {
+    var logs = state.logs.filter(function (l) { return l.side === side; });
+    var map = {};
+    for (var i = 0; i < logs.length; i++) {
+      var l = logs[i];
+      var ac = l.attackerCard || {};
+      var key = ac.cardNo || ac.name;
+      if (!key) continue;
+      if (!map[key]) {
+        map[key] = {
+          key: key,
+          cardNo: ac.cardNo || "",
+          name: ac.name || ac.cardNo || key,
+          damage: 0,
+          attacks: 0
+        };
+      }
+      map[key].damage += Number(l.actualDamage) || 0;
+      map[key].attacks += 1;
+    }
+    var list = Object.keys(map).map(function (k) { return map[k]; });
+    list.sort(function (a, b) {
+      if (b.damage !== a.damage) return b.damage - a.damage;
+      return b.attacks - a.attacks;
+    });
+    return list;
+  }
+
+  function standStage(stage) {
+    if (!stage) return;
+    for (var i = 0; i < SLOT_KEYS.length; i++) {
+      var slot = stage[SLOT_KEYS[i]];
+      if (slot) slot.resolvedOnce = false;
+    }
+  }
+
+  /** Level 4 = lose (WS). Returns true if match ended. */
+  function checkLevelOut() {
+    ensureLife();
+    var l1 = state.life.first.level;
+    var l2 = state.life.second.level;
+    if (l1 < 4 && l2 < 4) return false;
+    if (l1 >= 4 && l2 >= 4) state.endReason = "both_level4";
+    else if (l1 >= 4) state.endReason = "first_level4";
+    else state.endReason = "second_level4";
+    endGame();
+    return true;
+  }
+
   function sessionTotals() {
     var first = totalsFor("first");
     var second = totalsFor("second");
@@ -331,8 +382,12 @@
   function buildMatchReport() {
     var s1 = receivedStatsFor("first");
     var s2 = receivedStatsFor("second");
+    ensureLife();
     var winner = "平手";
-    if (s1.damageReceived < s2.damageReceived) winner = "玩家 1（先攻）";
+    if (state.endReason === "first_level4") winner = "玩家 2（後攻）・先攻到達等級 4";
+    else if (state.endReason === "second_level4") winner = "玩家 1（先攻）・後攻到達等級 4";
+    else if (state.endReason === "both_level4") winner = "平手（雙方到達等級 4）";
+    else if (s1.damageReceived < s2.damageReceived) winner = "玩家 1（先攻）";
     else if (s2.damageReceived < s1.damageReceived) winner = "玩家 2（後攻）";
     var maxTurn = 1;
     for (var i = 0; i < state.logs.length; i++) {
@@ -345,8 +400,15 @@
       startedAt: state.startedAt,
       endedAt: state.endedAt,
       winner: winner,
+      endReason: state.endReason || null,
       first: s1,
       second: s2,
+      cardDamageFirst: cardAttackDamageStats("first"),
+      cardDamageSecond: cardAttackDamageStats("second"),
+      life: {
+        first: { level: state.life.first.level, damage: state.life.first.damage },
+        second: { level: state.life.second.level, damage: state.life.second.damage }
+      },
       turns: maxTurn,
       decisions: state.logs.length,
       durationMs: (state.endedAt && state.startedAt) ? (state.endedAt - state.startedAt) : 0
@@ -557,7 +619,36 @@
 
     fillDeckList("first", "sumDeckTitle1", "sumDeckCode1", "sumDeckList1", report.p1Name);
     fillDeckList("second", "sumDeckTitle2", "sumDeckCode2", "sumDeckList2", report.p2Name);
+    fillCardDamageList("sumCardDmg1", report.cardDamageFirst, report.p1Name);
+    fillCardDamageList("sumCardDmg2", report.cardDamageSecond, report.p2Name);
     setSummaryTab(summaryTab || "stats");
+  }
+
+  function fillCardDamageList(listId, stats, name) {
+    var host = $(listId);
+    if (!host) return;
+    host.innerHTML = "";
+    var h = document.createElement("h3");
+    h.textContent = name + "・各卡攻擊傷害";
+    host.appendChild(h);
+    if (!stats || !stats.length) {
+      var empty = document.createElement("div");
+      empty.className = "agl-card-dmg-empty";
+      empty.textContent = "本局無攻擊傷害";
+      host.appendChild(empty);
+      return;
+    }
+    var ul = document.createElement("ul");
+    for (var i = 0; i < stats.length; i++) {
+      var s = stats[i];
+      var li = document.createElement("li");
+      var label = (s.name || s.key) + (s.cardNo && s.name !== s.cardNo ? "（" + s.cardNo + "）" : "");
+      li.innerHTML =
+        "<span>" + escapeHtml(label) + "</span>" +
+        "<strong>" + s.damage + " 傷 · ×" + s.attacks + "</strong>";
+      ul.appendChild(li);
+    }
+    host.appendChild(ul);
   }
 
   function fillDeckList(side, titleId, codeId, listId, name) {
@@ -772,6 +863,7 @@
     state.startedAt = Date.now();
     state.endedAt = null;
     state.encoreFrom = null;
+    state.endReason = null;
     uiState.attackStep = null;
     uiState.draft = null;
     uiState.pickerSlot = null;
@@ -1227,6 +1319,10 @@
     uiState.draft = null;
     uiState.attackStep = null;
     persist();
+    if (checkLevelOut()) {
+      toast(sideLabel(receiver) + " 到達等級 4・對局結束");
+      return;
+    }
     render();
     var msg;
     if (d.result === "cancel") msg = "已取消（仍計使用）";
@@ -1293,9 +1389,10 @@
       state.turn += 1;
       state.activeSide = "first";
       state.phase = "deploy";
-      state.stages.first = emptyStage();
-      state.stages.second = emptyStage();
-      toast("第 " + state.turn + " 回合・先攻布陣");
+      // Keep characters on stage; stand them for the new turn
+      standStage(state.stages.first);
+      standStage(state.stages.second);
+      toast("第 " + state.turn + " 回合・先攻布陣（場上角色保留）");
     }
     persist();
     render();
@@ -1404,6 +1501,33 @@
     root.addChild(sub);
   }
 
+  function drawLifeChip(x, y, label, life, color, active) {
+    var text = label + " 等級 " + life.level + " 傷害 " + life.damage;
+    var t = makeText(text, {
+      size: 13,
+      weight: "700",
+      fill: active ? COLORS.onAccent : color,
+      display: true
+    });
+    var padX = 10;
+    var padY = 6;
+    var bw = Math.ceil(t.width) + padX * 2;
+    var bh = Math.max(28, Math.ceil(t.height) + padY * 2);
+    var g = new PIXI.Graphics();
+    if (active) {
+      gFillRound(g, x, y, bw, bh, 8, color, 1);
+      gStrokeRound(g, x, y, bw, bh, 8, COLORS.onAccent, 1.5);
+    } else {
+      gFillRound(g, x, y, bw, bh, 8, COLORS.panel2, 0.92);
+      gStrokeRound(g, x, y, bw, bh, 8, color, 1.25);
+    }
+    root.addChild(g);
+    t.x = x + padX;
+    t.y = y + Math.floor((bh - t.height) / 2);
+    root.addChild(t);
+    return { w: bw, h: bh };
+  }
+
   function drawHeader(w) {
     var pad = 12;
     var land = isLandscape();
@@ -1413,6 +1537,9 @@
     var phaseHint = state.phase === "encore"
       ? "安可"
       : (state.phase === "deploy" ? "布陣" : (state.phase === "attack" ? "戰階" : ""));
+    // During encore both sides act; otherwise highlight whose turn it is.
+    var activeFirst = state.phase !== "encore" && state.activeSide === "first";
+    var activeSecond = state.phase !== "encore" && state.activeSide === "second";
 
     var turnLine = makeText(
       "回合 " + state.turn + (phaseHint ? "・" + phaseHint : ""),
@@ -1422,26 +1549,13 @@
     turnLine.y = pad;
     root.addChild(turnLine);
 
-    var firstLine = makeText(
-      "先攻 等級 " + life1.level + " 傷害 " + life1.damage,
-      { size: land ? 14 : 13, weight: "700", fill: COLORS.teal, display: true }
-    );
-    firstLine.x = pad;
-    firstLine.y = pad + (land ? 18 : 20);
-    root.addChild(firstLine);
-
-    var secondLine = makeText(
-      "後攻 等級 " + life2.level + " 傷害 " + life2.damage,
-      { size: land ? 14 : 13, weight: "700", fill: COLORS.amber, display: true }
-    );
+    var chipY = pad + (land ? 18 : 20);
+    var c1 = drawLifeChip(pad, chipY, "先攻", life1, COLORS.teal, activeFirst);
     if (land) {
-      secondLine.x = pad + 178;
-      secondLine.y = pad + 18;
+      drawLifeChip(pad + c1.w + 10, chipY, "後攻", life2, COLORS.amber, activeSecond);
     } else {
-      secondLine.x = pad;
-      secondLine.y = pad + 40;
+      drawLifeChip(pad, chipY + c1.h + 6, "後攻", life2, COLORS.amber, activeSecond);
     }
-    root.addChild(secondLine);
 
     var endBtn = makeBtn("結束對局", 96, 34, COLORS.panel2, {
       size: 13, stroke: COLORS.line, textFill: COLORS.muted, radius: 10
@@ -1584,7 +1698,7 @@
     );
     title.anchor.set(0.5, 0);
     title.x = w / 2;
-    title.y = land ? 56 : 96;
+    title.y = land ? 68 : 112;
     root.addChild(title);
 
     var hintText;
@@ -1977,7 +2091,7 @@
     var title = makeText("安可階段", { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true });
     title.anchor.set(0.5, 0);
     title.x = w / 2;
-    title.y = land ? 56 : 96;
+    title.y = land ? 68 : 112;
     root.addChild(title);
 
     var sub = makeText("點角色可移除・先後攻皆可操作", { size: 12, fill: COLORS.muted });
@@ -2042,7 +2156,7 @@
 
   function drawAttack(w, h) {
     var land = isLandscape();
-    var headerH = land ? 52 : 86;
+    var headerH = land ? 64 : 110;
     var dim = cardAspect();
     var leftPad = 12;
     var title = makeText(
@@ -2564,6 +2678,9 @@
     endAttackPhase: endAttackPhase,
     endEncorePhase: endEncorePhase,
     applyClockDamage: applyClockDamage,
+    checkLevelOut: checkLevelOut,
+    cardAttackDamageStats: cardAttackDamageStats,
+    standStage: standStage,
     endGame: endGame,
     undoLast: undoLast,
     resetGame: resetGame,
