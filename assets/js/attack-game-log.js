@@ -2112,10 +2112,11 @@
   function drawCardPicker(x, y, w, maxH, parent, origin) {
     parent = parent || root;
     origin = origin || { originX: 0, originY: 0 };
-    var panelH = Math.min(maxH, 300);
+    var panelH = Math.min(maxH, 320);
     var panel = new PIXI.Container();
     panel.x = x;
     panel.y = y;
+    panel.eventMode = "static";
 
     var bg = new PIXI.Graphics();
     gFillRound(bg, 0, 0, w, panelH, 14, COLORS.panel2, 1);
@@ -2149,9 +2150,19 @@
     var thumbH = 48;
     var textPad = 12 + thumbW + 10;
     var listTop = 40;
-    var listH = panelH - listTop - 44;
+    var listH = panelH - listTop - 40;
+    var maxScroll = Math.max(0, list.length * rowH - listH);
+    uiState.listScroll = Math.max(0, Math.min(maxScroll, uiState.listScroll || 0));
+
     var mask = new PIXI.Graphics();
     gFillRect(mask, 0, listTop, w, listH, 0xffffff, 1);
+
+    // Transparent hit target for empty list area / wheel / drag start
+    var listHit = new PIXI.Graphics();
+    gFillRect(listHit, 0, listTop, w, listH, 0x000000, 0.001);
+    listHit.eventMode = "static";
+    listHit.cursor = "grab";
+    panel.addChild(listHit);
 
     var listC = new PIXI.Container();
     listC.y = listTop - uiState.listScroll;
@@ -2167,9 +2178,34 @@
       panel.addChild(empty);
     }
 
-    var thumbs = [];
     var absListTop = origin.originY + y + listTop;
     var absListBottom = absListTop + listH;
+    var slotKey = uiState.pickerSlot;
+
+    function rebuildThumbs() {
+      var thumbs = [];
+      for (var ti = 0; ti < list.length; ti++) {
+        var c = list[ti];
+        if (!c || !c.imageUrl) continue;
+        var thumbTop = origin.originY + y + listTop - uiState.listScroll + ti * rowH + 4;
+        var clipped = thumbTop + thumbH < absListTop || thumbTop > absListBottom;
+        thumbs.push({
+          url: c.imageUrl,
+          x: origin.originX + x + 10,
+          y: thumbTop,
+          w: thumbW,
+          h: thumbH,
+          clipped: clipped
+        });
+      }
+      syncPickerThumbs(thumbs);
+    }
+
+    function setListScroll(next) {
+      uiState.listScroll = Math.max(0, Math.min(maxScroll, next));
+      listC.y = listTop - uiState.listScroll;
+      rebuildThumbs();
+    }
 
     for (var i = 0; i < list.length; i++) {
       var card = list[i];
@@ -2184,7 +2220,6 @@
       gFillRect(sw, 0, 0, 4, rowH - 2, colorTint(card.color), 1);
       row.addChild(sw);
 
-      // Placeholder frame for DOM thumb
       var ph = new PIXI.Graphics();
       gFillRound(ph, 10, 4, thumbW, thumbH, 4, 0x0e0d0b, 1);
       gStrokeRound(ph, 10, 4, thumbW, thumbH, 4, COLORS.line, 1);
@@ -2203,51 +2238,103 @@
       meta.x = textPad;
       meta.y = 32;
       row.addChild(meta);
-      (function (c, slotKey) {
-        hit(row, function () {
-          if (!setCardOnSlot(slotKey, c)) return;
-          uiState.pickerSlot = null;
-          uiState.redeployMode = false;
-          clearPickerThumbs();
-          toast("已放入" + SLOT_LABELS[slotKey]);
-        });
-      })(card, uiState.pickerSlot);
       listC.addChild(row);
 
-      if (card.imageUrl) {
-        var thumbTop = origin.originY + y + listTop - uiState.listScroll + i * rowH + 4;
-        var clipped = thumbTop + thumbH < absListTop || thumbTop > absListBottom;
-        thumbs.push({
-          url: card.imageUrl,
-          x: origin.originX + x + 10,
-          y: thumbTop,
-          w: thumbW,
-          h: thumbH,
-          clipped: clipped
+      (function (c, rowNode) {
+        rowNode.on("pointerdown", function (ev) {
+          beginPickerDrag(ev, c);
         });
+      })(card, row);
+    }
+
+    rebuildThumbs();
+
+    var dragState = null;
+    function beginPickerDrag(ev, cardOrNull) {
+      if (!ev || !ev.global) return;
+      dragState = {
+        y: ev.global.y,
+        scroll: uiState.listScroll,
+        moved: false,
+        card: cardOrNull || null,
+        pointerId: ev.pointerId
+      };
+      listHit.cursor = "grabbing";
+      if (app && app.stage) {
+        app.stage.eventMode = "static";
+        app.stage.on("pointermove", onPickerDragMove);
+        app.stage.on("pointerup", onPickerDragEnd);
+        app.stage.on("pointerupoutside", onPickerDragEnd);
+        app.stage.on("pointercancel", onPickerDragEnd);
+      }
+      if (ev.stopPropagation) ev.stopPropagation();
+    }
+
+    function onPickerDragMove(ev) {
+      if (!dragState || !ev || !ev.global) return;
+      var dy = dragState.y - ev.global.y;
+      if (Math.abs(dy) > 8) dragState.moved = true;
+      setListScroll(dragState.scroll + dy);
+    }
+
+    function onPickerDragEnd(ev) {
+      if (!dragState) return;
+      var d = dragState;
+      dragState = null;
+      listHit.cursor = "grab";
+      if (app && app.stage) {
+        app.stage.off("pointermove", onPickerDragMove);
+        app.stage.off("pointerup", onPickerDragEnd);
+        app.stage.off("pointerupoutside", onPickerDragEnd);
+        app.stage.off("pointercancel", onPickerDragEnd);
+      }
+      // Tap (not swipe) selects the card
+      if (!d.moved && d.card) {
+        if (!setCardOnSlot(slotKey, d.card)) return;
+        uiState.pickerSlot = null;
+        uiState.redeployMode = false;
+        clearPickerThumbs();
+        toast("已放入" + SLOT_LABELS[slotKey]);
       }
     }
 
-    syncPickerThumbs(thumbs);
+    listHit.on("pointerdown", function (ev) {
+      beginPickerDrag(ev, null);
+    });
 
-    // scroll buttons
-    var maxScroll = Math.max(0, list.length * rowH - listH);
-    var up = makeBtn("▲", 44, 32, COLORS.panel, { size: 12, stroke: COLORS.line, radius: 8 });
-    up.x = w - 100;
-    up.y = panelH - 40;
-    hit(up, function () {
-      uiState.listScroll = Math.max(0, uiState.listScroll - rowH * 3);
-      render();
+    // Mouse wheel / trackpad
+    panel.on("wheel", function (ev) {
+      var dy = (ev && ev.deltaY) || 0;
+      if (!dy) return;
+      setListScroll(uiState.listScroll + dy);
+      if (ev.stopPropagation) ev.stopPropagation();
+      if (ev.preventDefault) ev.preventDefault();
     });
-    panel.addChild(up);
-    var down = makeBtn("▼", 44, 32, COLORS.panel, { size: 12, stroke: COLORS.line, radius: 8 });
-    down.x = w - 50;
-    down.y = panelH - 40;
-    hit(down, function () {
-      uiState.listScroll = Math.min(maxScroll, uiState.listScroll + rowH * 3);
-      render();
+
+    // Scroll hint + optional buttons
+    var hint = makeText(maxScroll > 0 ? "上下滑動挑卡" : "點選角色放入", {
+      size: 11, fill: COLORS.muted
     });
-    panel.addChild(down);
+    hint.x = 10;
+    hint.y = panelH - 28;
+    panel.addChild(hint);
+
+    if (maxScroll > 0) {
+      var up = makeBtn("▲", 40, 28, COLORS.panel, { size: 12, stroke: COLORS.line, radius: 8 });
+      up.x = w - 92;
+      up.y = panelH - 34;
+      hit(up, function () {
+        setListScroll(uiState.listScroll - rowH * 2);
+      });
+      panel.addChild(up);
+      var down = makeBtn("▼", 40, 28, COLORS.panel, { size: 12, stroke: COLORS.line, radius: 8 });
+      down.x = w - 46;
+      down.y = panelH - 34;
+      hit(down, function () {
+        setListScroll(uiState.listScroll + rowH * 2);
+      });
+      panel.addChild(down);
+    }
 
     parent.addChild(panel);
     return y + panelH;
