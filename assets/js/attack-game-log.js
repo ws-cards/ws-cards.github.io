@@ -763,14 +763,62 @@
     });
   }
 
+  function downloadCanvasPng(canvas, filename) {
+    return new Promise(function (resolve) {
+      var done = function (ok, detail) { resolve({ ok: !!ok, detail: detail || "" }); };
+      if (!canvas || !canvas.toBlob) {
+        try {
+          var url = canvas.toDataURL("image/png");
+          var a = document.createElement("a");
+          a.download = filename;
+          a.href = url;
+          a.rel = "noopener";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          done(true, "dataurl");
+        } catch (e) {
+          done(false, String((e && e.message) || e));
+        }
+        return;
+      }
+      canvas.toBlob(function (blob) {
+        if (!blob) {
+          done(false, "blob empty");
+          return;
+        }
+        var url = URL.createObjectURL(blob);
+        try {
+          var a = document.createElement("a");
+          a.download = filename;
+          a.href = url;
+          a.rel = "noopener";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          // iOS often ignores <a download>; open tab as fallback
+          var ua = navigator.userAgent || "";
+          if (/iPhone|iPad|iPod/i.test(ua)) {
+            window.open(url, "_blank");
+          }
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          done(true, "blob");
+        } catch (e2) {
+          try { window.open(url, "_blank"); done(true, "tab"); }
+          catch (e3) { done(false, String((e3 && e3.message) || e3)); }
+        }
+      }, "image/png");
+    });
+  }
+
   function exportMatchImage() {
     var root = $("overlay-summary");
     if (!root || !root.classList.contains("is-open")) {
-      toast("尚無可輸出的結算畫面");
+      alert("尚無可輸出的結算畫面");
       return Promise.resolve(false);
     }
     if (typeof html2canvas !== "function") {
-      alert("圖片輸出元件尚未載入");
+      alert("圖片輸出元件尚未載入，請重新整理後再試");
       return Promise.resolve(false);
     }
     var btn = $("btnSumExport");
@@ -779,35 +827,117 @@
       btn.disabled = true;
       btn.textContent = "輸出中…";
     }
+
+    var bodyEl = root.querySelector(".agl-summary-body");
+    var prev = {
+      rootHeight: root.style.height,
+      rootMaxHeight: root.style.maxHeight,
+      rootOverflow: root.style.overflow,
+      rootTop: root.style.top,
+      rootLeft: root.style.left,
+      rootWidth: root.style.width,
+      rootPos: root.style.position,
+      bodyOverflow: bodyEl ? bodyEl.style.overflow : "",
+      bodyMaxHeight: bodyEl ? bodyEl.style.maxHeight : "",
+      bodyHeight: bodyEl ? bodyEl.style.height : ""
+    };
+
+    // Expand fixed overlay so html2canvas can capture full scroll content
+    root.style.position = "fixed";
+    root.style.top = "0px";
+    root.style.left = "0px";
+    root.style.width = Math.min(1100, Math.max(320, window.innerWidth)) + "px";
+    root.style.height = "auto";
+    root.style.maxHeight = "none";
+    root.style.overflow = "visible";
+    if (bodyEl) {
+      bodyEl.style.overflow = "visible";
+      bodyEl.style.maxHeight = "none";
+      bodyEl.style.height = "auto";
+      bodyEl.scrollTop = 0;
+    }
+
+    var filename = "attack-game-log-" + Date.now() + ".png";
+    var restoreStyles = function () {
+      root.style.height = prev.rootHeight;
+      root.style.maxHeight = prev.rootMaxHeight;
+      root.style.overflow = prev.rootOverflow;
+      root.style.top = prev.rootTop;
+      root.style.left = prev.rootLeft;
+      root.style.width = prev.rootWidth;
+      root.style.position = prev.rootPos;
+      if (bodyEl) {
+        bodyEl.style.overflow = prev.bodyOverflow;
+        bodyEl.style.maxHeight = prev.bodyMaxHeight;
+        bodyEl.style.height = prev.bodyHeight;
+      }
+    };
+
     return html2canvas(root, {
       backgroundColor: "#141414",
       useCORS: true,
-      allowTaint: false,
+      allowTaint: true,
       scale: Math.min(2, window.devicePixelRatio || 2),
       logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: root.scrollWidth || root.offsetWidth,
+      windowHeight: root.scrollHeight || root.offsetHeight,
       onclone: function (doc) {
         var cloned = doc.getElementById("overlay-summary");
         if (!cloned) return;
         cloned.style.display = "flex";
+        cloned.style.flexDirection = "column";
+        cloned.style.position = "static";
+        cloned.style.width = Math.min(1100, Math.max(320, window.innerWidth)) + "px";
+        cloned.style.height = "auto";
+        cloned.style.maxHeight = "none";
+        cloned.style.overflow = "visible";
+        cloned.style.inset = "auto";
+        cloned.style.background = "#141414";
         var actions = cloned.querySelector(".agl-summary-actions");
         if (actions) actions.style.display = "none";
+        var body = cloned.querySelector(".agl-summary-body");
+        if (body) {
+          body.style.overflow = "visible";
+          body.style.maxHeight = "none";
+          body.style.height = "auto";
+          body.style.flex = "none";
+        }
+        // Show stats pane for a complete report image
+        var panes = cloned.querySelectorAll(".agl-summary-pane");
+        for (var i = 0; i < panes.length; i++) {
+          var pane = panes[i];
+          if (pane.getAttribute("data-pane") === "stats") {
+            pane.style.display = "block";
+            pane.classList.add("is-active");
+          } else {
+            pane.style.display = "none";
+            pane.classList.remove("is-active");
+          }
+        }
       }
     }).then(function (canvas) {
-      var a = document.createElement("a");
-      a.download = "attack-game-log-" + Date.now() + ".png";
-      a.href = canvas.toDataURL("image/png");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      toast("已輸出圖片");
+      restoreStyles();
+      if (!canvas || canvas.width < 2 || canvas.height < 2) {
+        throw new Error("截圖結果是空白的");
+      }
+      return downloadCanvasPng(canvas, filename);
+    }).then(function (res) {
+      if (!res || !res.ok) throw new Error((res && res.detail) || "下載失敗");
+      if (btn) btn.textContent = "已下載";
+      setTimeout(function () {
+        if (btn && btn.textContent === "已下載") btn.textContent = prevLabel || "輸出圖片";
+      }, 1600);
       return true;
     }).catch(function (e) {
+      restoreStyles();
       alert("輸出圖片失敗：" + ((e && e.message) || e));
       return false;
     }).then(function (ok) {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = prevLabel || "輸出圖片";
+        if (btn.textContent === "輸出中…") btn.textContent = prevLabel || "輸出圖片";
       }
       return ok;
     });
@@ -996,11 +1126,13 @@
     var land = isLandscape();
     var deployHero = mode === "hero" || (state.phase === "deploy" && mode !== "split");
     var gap = deployHero ? 14 : 8;
+    // Header chips + title/sub + bottom CTA must stay clear of card art
+    var chromeTop = land ? 120 : 150;
+    var chromeBottom = 68;
 
     if (deployHero && land) {
-      // leave room for title + bottom CTA
-      var maxH = Math.max(170, h - 118);
-      var maxStageW = Math.floor(w * 0.9);
+      var maxH = Math.max(140, h - chromeTop - chromeBottom);
+      var maxStageW = Math.floor(w * 0.82);
       var slotH = maxH;
       var slotW = Math.floor(slotH / 1.4);
       var totalW = slotW * 3 + gap * 2;
@@ -1014,12 +1146,31 @@
     var colW = stageColWidth();
     var slotW = Math.floor((colW - 24) / 3);
     var slotH = Math.floor(slotW * 1.4);
-    var maxH = Math.max(120, h - (land ? 78 : 96));
+    var maxH = Math.max(120, h - chromeTop - chromeBottom);
     if (slotH > maxH) {
       slotH = maxH;
       slotW = Math.floor(slotH / 1.4);
     }
     return { slotW: slotW, slotH: slotH, gap: gap, colW: colW };
+  }
+
+  /** Place a bottom CTA without overlapping stage slots / card art. */
+  function placeBottomCta(btn, w, h) {
+    btn.x = Math.floor((w - btn._w) / 2);
+    btn.y = h - btn._h - 12;
+    return btn.y;
+  }
+
+  /** Fit slots between header content and bottom CTA. */
+  function fitSlotsInBand(topY, bottomY, dim) {
+    var avail = Math.max(100, bottomY - topY);
+    var next = { slotW: dim.slotW, slotH: dim.slotH, gap: dim.gap };
+    if (next.slotH > avail) {
+      next.slotH = avail;
+      next.slotW = Math.floor(next.slotH / 1.4);
+    }
+    var y = topY + Math.max(0, Math.floor((avail - next.slotH) / 2));
+    return { dim: next, y: y };
   }
 
   function tryLockLandscape() {
@@ -1187,20 +1338,34 @@
       panelLeft = isLandscape() ? (w - panelW * tPanel) : 0;
     }
 
+    var screenH = app ? app.screen.height : window.innerHeight;
+    var screenW = app ? app.screen.width : window.innerWidth;
+    var ctaTop = screenH - 64; // keep bottom CTA visually clear
+    var tabLeft = screenW - 44; // keep side「選卡」tab clear
+
     for (var i = 0; i < rects.length; i++) {
       var r = rects[i];
       if (!r || !r.url) continue;
       // Hide art under the open side panel
       if (r.x + r.w * 0.45 > panelLeft) continue;
+      var left = Math.round(r.x + 6);
+      var top = Math.round(r.y + 22);
+      var width = Math.max(8, Math.round(r.w - 12));
+      var height = Math.max(8, Math.round(r.h - 44));
+      // Clip against bottom CTA and right tab so DOM art never covers controls
+      if (left + width > tabLeft) width = Math.max(8, tabLeft - left - 4);
+      if (top >= ctaTop) continue;
+      if (top + height > ctaTop) height = Math.max(8, ctaTop - top - 4);
+      if (width < 8 || height < 8) continue;
       var img = document.createElement("img");
       img.className = "agl-slot-art" + (r.rested ? " is-rested" : "");
       img.alt = "";
       img.draggable = false;
       img.src = r.url;
-      img.style.left = Math.round(r.x + 6) + "px";
-      img.style.top = Math.round(r.y + 22) + "px";
-      img.style.width = Math.max(8, Math.round(r.w - 12)) + "px";
-      img.style.height = Math.max(8, Math.round(r.h - 44)) + "px";
+      img.style.left = left + "px";
+      img.style.top = top + "px";
+      img.style.width = width + "px";
+      img.style.height = height + "px";
       layer.appendChild(img);
     }
   }
@@ -1717,17 +1882,10 @@
     sub.y = title.y + 24;
     root.addChild(sub);
 
-    var slotsStartX = Math.floor((w - totalW) / 2);
-    var slotsY = land
-      ? Math.max(title.y + 44, Math.floor((h - dim.slotH - 58) / 2))
-      : title.y + 48;
-    drawSlotsRow(slotsY, "deploy", { startX: slotsStartX, dim: dim, side: state.activeSide });
-
     var startBtn = makeBtn("戰階開始", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
       textFill: COLORS.onAccent, size: 16, radius: 12
     });
-    startBtn.x = (w - startBtn._w) / 2;
-    startBtn.y = h - 56;
+    var ctaTop = placeBottomCta(startBtn, w, h);
     hit(startBtn, function () {
       uiState.pickerSlot = null;
       uiState.redeployMode = false;
@@ -1738,6 +1896,16 @@
       render();
       toast("戰階開始・任選槽攻擊");
     });
+
+    var bandTop = sub.y + 28;
+    var fitted = fitSlotsInBand(bandTop, ctaTop - 10, dim);
+    dim = fitted.dim;
+    totalW = dim.slotW * 3 + dim.gap * 2;
+    var slotsStartX = Math.floor((w - totalW) / 2);
+    // Keep clear of right「選卡」tab
+    slotsStartX = Math.min(slotsStartX, w - 48 - totalW);
+    slotsStartX = Math.max(8, slotsStartX);
+    drawSlotsRow(fitted.y, "deploy", { startX: slotsStartX, dim: dim, side: state.activeSide });
     root.addChild(startBtn);
 
     if (tPanel > 0.01) drawDeploySidePanel(w, h, tPanel);
@@ -2094,63 +2262,56 @@
     title.y = land ? 68 : 112;
     root.addChild(title);
 
-    var sub = makeText("點角色可移除・先後攻皆可操作", { size: 12, fill: COLORS.muted });
+    var sub = makeText("左先攻／右後攻・點角色可移除", { size: 12, fill: COLORS.muted });
     sub.anchor.set(0.5, 0);
     sub.x = w / 2;
     sub.y = title.y + 24;
     root.addChild(sub);
 
-    var dim = cardAspect(land ? "hero" : null);
-    if (!land) {
-      dim = {
-        slotW: Math.floor(dim.slotW * 0.72),
-        slotH: Math.floor(dim.slotH * 0.72),
-        gap: 8
-      };
-    } else {
-      dim = {
-        slotW: Math.floor(Math.min(dim.slotW, 110)),
-        slotH: Math.floor(Math.min(dim.slotH, 154)),
-        gap: 10
-      };
-    }
-    var totalW = dim.slotW * 3 + dim.gap * 2;
-    var startX = Math.floor((w - totalW) / 2);
-    var artRects = [];
-
-    var y1Label = makeText("先攻", { size: 13, weight: "700", fill: COLORS.teal, display: true });
-    y1Label.x = startX;
-    y1Label.y = title.y + 48;
-    root.addChild(y1Label);
-    var y1 = y1Label.y + 20;
-    drawSlotsRow(y1, "encore", {
-      startX: startX,
-      dim: dim,
-      side: "first",
-      artRects: artRects,
-      syncArt: false
-    });
-
-    var y2Label = makeText("後攻", { size: 13, weight: "700", fill: COLORS.amber, display: true });
-    y2Label.x = startX;
-    y2Label.y = y1 + dim.slotH + 10;
-    root.addChild(y2Label);
-    var y2 = y2Label.y + 20;
-    drawSlotsRow(y2, "encore", {
-      startX: startX,
-      dim: dim,
-      side: "second",
-      artRects: artRects,
-      syncArt: false
-    });
-    syncCardArtLayer(artRects);
-
-    var done = makeBtn("結束安可", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
+    var done = makeBtn("結束安可", Math.min(w - 28, land ? 220 : 260), 44, COLORS.amber, {
       textFill: COLORS.onAccent, size: 16, radius: 12
     });
-    done.x = (w - done._w) / 2;
-    done.y = h - 56;
+    var ctaTop = placeBottomCta(done, w, h);
     hit(done, endEncorePhase);
+
+    // Side-by-side columns so 後攻 is never under the CTA
+    var sidePad = 12;
+    var colGap = land ? 16 : 10;
+    var colW = Math.floor((w - sidePad * 2 - colGap) / 2);
+    var bandTop = sub.y + 30;
+    var availH = Math.max(120, ctaTop - 12 - bandTop);
+    var gap = land ? 8 : 6;
+    var slotW = Math.floor((colW - gap * 2) / 3);
+    var slotH = Math.floor(slotW * 1.4);
+    var labelH = 22;
+    if (slotH > availH - labelH) {
+      slotH = Math.max(90, availH - labelH);
+      slotW = Math.floor(slotH / 1.4);
+    }
+    var dim = { slotW: slotW, slotH: slotH, gap: gap };
+    var rowW = slotW * 3 + gap * 2;
+    var slotsY = bandTop + labelH + Math.max(0, Math.floor((availH - labelH - slotH) / 2));
+    var artRects = [];
+
+    function drawEncoreCol(side, colIndex, color) {
+      var colX = sidePad + colIndex * (colW + colGap);
+      var startX = colX + Math.max(0, Math.floor((colW - rowW) / 2));
+      var label = makeText(sideLabel(side), { size: 13, weight: "700", fill: color, display: true });
+      label.x = startX;
+      label.y = slotsY - labelH;
+      root.addChild(label);
+      drawSlotsRow(slotsY, "encore", {
+        startX: startX,
+        dim: dim,
+        side: side,
+        artRects: artRects,
+        syncArt: false
+      });
+    }
+
+    drawEncoreCol("first", 0, COLORS.teal);
+    drawEncoreCol("second", 1, COLORS.amber);
+    syncCardArtLayer(artRects);
     root.addChild(done);
   }
 
@@ -2167,13 +2328,6 @@
     title.y = headerH;
     root.addChild(title);
 
-    var slotsY = headerH + 28;
-    var slotsStartX = land
-      ? leftPad
-      : Math.floor((w - (dim.slotW * 3 + dim.gap * 2)) / 2);
-    drawSlotsRow(slotsY, "attack", { startX: slotsStartX });
-
-    var controlsY = slotsY + dim.slotH + 10;
     var redeploy = makeBtn(
       uiState.redeployMode ? "完成換人" : "中途換人／放卡",
       land ? 128 : 140,
@@ -2186,8 +2340,14 @@
         radius: 10
       }
     );
+    var endPhase = makeBtn("結束本戰階", 120, 34, COLORS.teal, {
+      size: 12, textFill: COLORS.bg, radius: 10
+    });
+    var controlsY = land ? (h - 48) : (h - 48);
     redeploy.x = leftPad;
-    redeploy.y = land ? h - 48 : controlsY;
+    redeploy.y = controlsY;
+    endPhase.x = leftPad + redeploy._w + 8;
+    endPhase.y = controlsY;
     hit(redeploy, function () {
       if (uiState.attackStep) {
         toast("請先完成或取消目前宣告");
@@ -2198,18 +2358,6 @@
       toast(uiState.redeployMode ? "點槽位換人／放卡" : "已結束換人");
       render();
     });
-    root.addChild(redeploy);
-
-    var endPhase = makeBtn("結束本戰階", 120, 34, COLORS.teal, {
-      size: 12, textFill: COLORS.bg, radius: 10
-    });
-    if (land) {
-      endPhase.x = leftPad + 136;
-      endPhase.y = h - 48;
-    } else {
-      endPhase.x = w - 134;
-      endPhase.y = controlsY;
-    }
     hit(endPhase, function () {
       if (uiState.attackStep) {
         toast("請先完成目前宣告");
@@ -2217,11 +2365,19 @@
       }
       endAttackPhase();
     });
+
+    var fitted = fitSlotsInBand(headerH + 28, controlsY - 10, dim);
+    dim = fitted.dim;
+    var slotsStartX = land
+      ? leftPad
+      : Math.floor((w - (dim.slotW * 3 + dim.gap * 2)) / 2);
+    drawSlotsRow(fitted.y, "attack", { startX: slotsStartX, dim: dim });
+    root.addChild(redeploy);
     root.addChild(endPhase);
 
     var rightX = land ? Math.floor(w * 0.46) : 14;
     var rightW = land ? w - rightX - 12 : w - 28;
-    var rightY = land ? headerH : controlsY + 44;
+    var rightY = land ? headerH : Math.min(fitted.y + dim.slotH + 8, controlsY - 40);
 
     if (uiState.pickerSlot && !uiState.attackStep) {
       drawCardPicker(rightX, rightY, rightW, h - rightY - 16);
