@@ -7,21 +7,23 @@
   var STORAGE_KEY = "ws-attack-game-log-v1";
   var SLOT_KEYS = ["left", "center", "right"];
   var SLOT_LABELS = { left: "左", center: "中", right: "右" };
+  /* Palette aligned with line_test_v102 dark desk (foil / ink / paper) */
   var COLORS = {
-    bg: 0x141820,
-    panel: 0x1c222d,
-    panel2: 0x252c3a,
-    line: 0x3a4558,
-    ink: 0xe8ecf2,
-    muted: 0x8b95a8,
-    amber: 0xf0a202,
-    teal: 0x2ec4b6,
-    coral: 0xe85d4c,
-    good: 0x5dce8a,
-    yellow: 0xeab308,
-    green: 0x22c55e,
-    red: 0xef4444,
-    blue: 0x3b82f6
+    bg: 0x141414,
+    panel: 0x1c1b18,
+    panel2: 0x24231f,
+    line: 0x3a3830,
+    ink: 0xe9e7e1,
+    muted: 0x9a958b,
+    amber: 0xcbb083, /* foil */
+    teal: 0x91a9c7,  /* cool accent / P1 */
+    coral: 0xdc8a80,
+    good: 0x8fc5a4,
+    yellow: 0xd5b36f,
+    green: 0x568a6d,
+    red: 0xb45d52,
+    blue: 0x6886a8,
+    onAccent: 0x211a10
   };
 
   var app = null;
@@ -571,8 +573,8 @@
       datasets.push({
         label: "玩家 1",
         data: series.first,
-        borderColor: "#2ec4b6",
-        backgroundColor: "rgba(46,196,182,0.14)",
+        borderColor: "#91a9c7",
+        backgroundColor: "rgba(145,169,199,0.16)",
         tension: 0.15,
         pointRadius: 3,
         borderWidth: 2
@@ -582,8 +584,8 @@
       datasets.push({
         label: "玩家 2",
         data: series.second,
-        borderColor: "#f0a202",
-        backgroundColor: "rgba(240,162,2,0.14)",
+        borderColor: "#cbb083",
+        backgroundColor: "rgba(203,176,131,0.16)",
         tension: 0.15,
         pointRadius: 3,
         borderWidth: 2
@@ -600,19 +602,19 @@
         },
         scales: {
           x: {
-            title: { display: true, text: "Turn", color: "#8b95a8" },
-            ticks: { stepSize: 1, color: "#8b95a8" },
-            grid: { color: "rgba(232,236,242,0.08)" }
+            title: { display: true, text: "Turn", color: "#9a958b" },
+            ticks: { stepSize: 1, color: "#9a958b" },
+            grid: { color: "rgba(240,238,230,0.08)" }
           },
           y: {
             beginAtZero: true,
             title: {
               display: true,
               text: metric === "attacks" ? "Attacks" : "Damage",
-              color: "#8b95a8"
+              color: "#9a958b"
             },
-            ticks: { color: "#8b95a8" },
-            grid: { color: "rgba(232,236,242,0.08)" }
+            ticks: { color: "#9a958b" },
+            grid: { color: "rgba(240,238,230,0.08)" }
           }
         }
       }
@@ -636,7 +638,7 @@
       btn.textContent = "輸出中…";
     }
     return html2canvas(root, {
-      backgroundColor: "#141820",
+      backgroundColor: "#141414",
       useCORS: true,
       allowTaint: false,
       scale: Math.min(2, window.devicePixelRatio || 2),
@@ -733,7 +735,9 @@
   function makeText(str, opts) {
     opts = opts || {};
     var style = new PIXI.TextStyle({
-      fontFamily: opts.display ? '"Chakra Petch", "Noto Sans TC", sans-serif' : '"Noto Sans TC", sans-serif',
+      fontFamily: opts.display
+        ? '"Zen Old Mincho", "Noto Serif TC", "Zen Kaku Gothic New", sans-serif'
+        : '"Zen Kaku Gothic New", "Noto Sans TC", sans-serif',
       fontSize: opts.size || 14,
       fontWeight: opts.weight || "500",
       fill: opts.fill != null ? opts.fill : COLORS.ink,
@@ -1183,9 +1187,9 @@
 
     var bg = new PIXI.Graphics();
     gFillRect(bg, 0, 0, w, h, COLORS.bg, 1);
-    gFillRect(bg, 0, 0, w, h * 0.35, 0x1a2433, 0.9);
-    gFillEllipse(bg, w * 0.15, 0, w * 0.45, h * 0.28, 0x2ec4b6, 0.08);
-    gFillEllipse(bg, w * 0.9, h * 0.85, w * 0.4, h * 0.3, 0xf0a202, 0.07);
+    gFillRect(bg, 0, 0, w, h * 0.35, 0x1a1916, 0.92);
+    gFillEllipse(bg, w * 0.18, 0, w * 0.42, h * 0.26, COLORS.amber, 0.07);
+    gFillEllipse(bg, w * 0.9, h * 0.88, w * 0.38, h * 0.28, COLORS.teal, 0.06);
     root.addChild(bg);
 
     if (state.phase === "setup") {
@@ -1213,7 +1217,7 @@
   }
 
   function drawIdleBrand(w, h) {
-    var title = makeText("ATTACK LOG", { size: 34, weight: "700", fill: COLORS.ink, display: true });
+    var title = makeText("攻擊記錄", { size: 34, weight: "700", fill: COLORS.ink, display: true });
     title.anchor.set(0.5);
     title.x = w / 2;
     title.y = h * 0.38;
@@ -1405,7 +1409,7 @@
     drawSlotsRow(slotsY, "deploy", { startX: slotsStartX, dim: dim });
 
     var startBtn = makeBtn("戰階開始", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
-      textFill: 0x1a1200, size: 16, radius: 12
+      textFill: COLORS.onAccent, size: 16, radius: 12
     });
     startBtn.x = (w - startBtn._w) / 2;
     startBtn.y = h - 56;
@@ -1438,18 +1442,18 @@
 
     var g = new PIXI.Graphics();
     gFillRound(g, 0, 0, tabW, tabH, 10, panelOpen ? COLORS.amber : COLORS.panel2, 1);
-    gStrokeRound(g, 0, 0, tabW, tabH, 10, panelOpen ? 0x1a1200 : COLORS.teal, 1.5);
+    gStrokeRound(g, 0, 0, tabW, tabH, 10, panelOpen ? COLORS.onAccent : COLORS.teal, 1.5);
     tab.addChild(g);
 
     var t1 = makeText(panelOpen ? "◂" : "▸", {
-      size: 16, weight: "700", fill: panelOpen ? 0x1a1200 : COLORS.teal, display: true
+      size: 16, weight: "700", fill: panelOpen ? COLORS.onAccent : COLORS.teal, display: true
     });
     t1.anchor.set(0.5);
     t1.x = tabW / 2;
     t1.y = 28;
     tab.addChild(t1);
     var t2 = makeText(panelOpen ? "收合" : "選卡", {
-      size: 12, weight: "700", fill: panelOpen ? 0x1a1200 : COLORS.ink, display: true
+      size: 12, weight: "700", fill: panelOpen ? COLORS.onAccent : COLORS.ink, display: true
     });
     t2.anchor.set(0.5);
     t2.x = tabW / 2;
@@ -1567,7 +1571,7 @@
       var on = uiState.filterLevel === lv.id;
       var b = makeBtn(lv.label, 40, 30, on ? COLORS.amber : COLORS.panel2, {
         size: 12,
-        textFill: on ? 0x1a1200 : COLORS.ink,
+        textFill: on ? COLORS.onAccent : COLORS.ink,
         radius: 8,
         stroke: COLORS.line
       });
@@ -1591,7 +1595,7 @@
       var onC = uiState.filterColor === col.id;
       var cb = makeBtn(col.label, 40, 30, onC ? (col.fill || COLORS.amber) : COLORS.panel2, {
         size: 12,
-        textFill: onC && col.id !== "all" ? 0xffffff : (onC ? 0x1a1200 : COLORS.ink),
+        textFill: onC && col.id !== "all" ? 0xffffff : (onC ? COLORS.onAccent : COLORS.ink),
         radius: 8,
         stroke: COLORS.line
       });
@@ -1677,7 +1681,7 @@
       row.eventMode = "static";
       row.cursor = "pointer";
       var rg = new PIXI.Graphics();
-      gFillRect(rg, 0, 0, w, rowH - 2, i % 2 ? 0x1a2030 : 0x222a3a, 1);
+      gFillRect(rg, 0, 0, w, rowH - 2, i % 2 ? 0x1a1916 : 0x22211c, 1);
       row.addChild(rg);
       var sw = new PIXI.Graphics();
       gFillRect(sw, 0, 0, 5, rowH - 2, colorTint(card.color), 1);
@@ -1757,7 +1761,7 @@
       {
         size: 12,
         stroke: COLORS.line,
-        textFill: uiState.redeployMode ? 0x1a1200 : COLORS.muted,
+        textFill: uiState.redeployMode ? COLORS.onAccent : COLORS.muted,
         radius: 10
       }
     );
@@ -1776,7 +1780,7 @@
     root.addChild(redeploy);
 
     var endPhase = makeBtn("結束本戰階", 120, 34, COLORS.teal, {
-      size: 12, textFill: 0x06221f, radius: 10
+      size: 12, textFill: COLORS.bg, radius: 10
     });
     if (land) {
       endPhase.x = leftPad + 136;
@@ -1963,7 +1967,7 @@
     y += 48;
 
     var skip = makeBtn("略過（不指定）", w - 24, 40, COLORS.amber, {
-      size: 14, textFill: 0x1a1200, radius: 10
+      size: 14, textFill: COLORS.onAccent, radius: 10
     });
     skip.x = 12;
     skip.y = y;
@@ -2000,7 +2004,7 @@
     }
     y += 112;
     var plus = makeBtn("6+ 自行輸入", w - 24, 44, COLORS.amber, {
-      size: 15, textFill: 0x1a1200, radius: 10
+      size: 15, textFill: COLORS.onAccent, radius: 10
     });
     plus.x = 12;
     plus.y = y;
@@ -2054,7 +2058,7 @@
     y += 56;
 
     var other = makeBtn("其他（觸發取消／擋傷／減傷）", w - 24, 48, COLORS.teal, {
-      size: 14, textFill: 0x06221f, radius: 12
+      size: 14, textFill: COLORS.bg, radius: 12
     });
     other.x = 12;
     other.y = y;
