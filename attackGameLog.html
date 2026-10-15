@@ -63,6 +63,7 @@
     /* Pin shell to visualViewport so URL/tab bars don't cover controls */
     #pixi-host,
     #agl-card-layer,
+    #agl-picker-layer,
     .agl-overlay,
     .agl-boot,
     .agl-orient-gate,
@@ -84,16 +85,29 @@
       height: 100% !important;
     }
     /* Card art via DOM — avoids WebGL cross-origin texImage2D errors */
-    #agl-card-layer {
+    #agl-card-layer,
+    #agl-picker-layer {
       z-index: 2;
       pointer-events: none;
       overflow: hidden;
     }
-    #agl-card-layer .agl-slot-art {
+    #agl-picker-layer { z-index: 3; }
+    #agl-card-layer .agl-slot-art,
+    #agl-picker-layer .agl-picker-thumb {
       position: absolute;
       object-fit: contain;
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.22);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    #agl-card-layer .agl-slot-art.is-rested {
+      transform: rotate(90deg) scale(0.78);
+      transform-origin: center center;
+      border: 1px solid rgba(203, 176, 131, 0.45);
+    }
+    #agl-picker-layer .agl-picker-thumb {
+      border-radius: 4px;
+      border: 1px solid rgba(240, 238, 230, 0.12);
     }
     .agl-overlay {
       z-index: 20;
@@ -656,6 +670,7 @@
   </div>
   <div id="pixi-host" aria-label="攻擊記錄主畫面"></div>
   <div id="agl-card-layer" aria-hidden="true"></div>
+  <div id="agl-picker-layer" aria-hidden="true"></div>
 
   <div id="overlay-setup" class="agl-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
     <div class="agl-sheet">
