@@ -103,9 +103,19 @@
     style.id = 'nav-auth-menu-styles';
     style.textContent = [
       '.nav-auth-menu{position:relative;}',
-      '.nav-auth-avatar-btn{padding:0;overflow:hidden;}',
+      '.nav-auth-avatar-btn{padding:0;}',
+      '.nav-auth-account-btn{position:relative;overflow:visible;}',
       '.nav-auth-avatar-img{width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;}',
       '.nav-auth-initial{font-size:0.85rem;font-weight:700;line-height:1;letter-spacing:0;}',
+      '.nav-auth-guest-icon{display:inline-flex;align-items:center;justify-content:center;line-height:1;}',
+      '.nav-auth-guest-icon i{font-size:1rem;}',
+      '.nav-auth-unread-dot{',
+      'position:absolute;top:2px;right:2px;width:8px;height:8px;',
+      'border-radius:50%;background:#e11d48;border:1.5px solid #fff;',
+      'z-index:2;pointer-events:none;box-sizing:border-box;',
+      '}',
+      '[data-theme="dark"] .nav-auth-unread-dot{border-color:#1a1206;}',
+      '.nav-auth-unread-dot[hidden]{display:none!important;}',
       '.nav-auth-dropdown{',
       'position:absolute;top:calc(100% + 8px);right:0;min-width:220px;z-index:1100;',
       'padding:8px;border-radius:12px;border:1px solid rgba(10,10,10,.12);',
@@ -120,6 +130,7 @@
       'padding:8px 10px 10px;margin-bottom:6px;',
       'border-bottom:1px solid rgba(10,10,10,.08);',
       '}',
+      '.nav-auth-dropdown-head[hidden]{display:none!important;}',
       '[data-theme="dark"] .nav-auth-dropdown-head{border-bottom-color:rgba(255,255,255,.1);}',
       '.nav-auth-dropdown-name{font-size:0.92rem;font-weight:700;line-height:1.3;}',
       '.nav-auth-dropdown-email{font-size:0.78rem;opacity:0.7;margin-top:2px;word-break:break-all;}',
@@ -128,6 +139,7 @@
       'padding:10px 10px;border:0;border-radius:8px;background:transparent;',
       'color:inherit;font-size:0.9rem;text-align:left;cursor:pointer;',
       '}',
+      '.nav-auth-dropdown-item[hidden]{display:none!important;}',
       '.nav-auth-dropdown-item:hover{background:rgba(10,10,10,.06);}',
       '[data-theme="dark"] .nav-auth-dropdown-item:hover{background:rgba(255,255,255,.08);}',
       '.nav-auth-dropdown-item i{width:1rem;text-align:center;opacity:0.85;}',
@@ -135,6 +147,56 @@
       '[data-theme="dark"] .nav-auth-dropdown-danger{color:#f97066;}'
     ].join('');
     document.head.appendChild(style);
+  }
+
+  function loadFeedMessagesModule() {
+    if (window.WsFeedMessages) return Promise.resolve(window.WsFeedMessages);
+    return new Promise(function (resolve) {
+      var existing = document.querySelector('script[data-ws-feed-messages]');
+      if (existing) {
+        existing.addEventListener('load', function () {
+          resolve(window.WsFeedMessages || null);
+        });
+        existing.addEventListener('error', function () {
+          resolve(null);
+        });
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = '/assets/js/ws-feed-messages.js';
+      script.async = true;
+      script.setAttribute('data-ws-feed-messages', '1');
+      script.onload = function () {
+        resolve(window.WsFeedMessages || null);
+      };
+      script.onerror = function () {
+        resolve(null);
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function syncFeedAuthState(signedIn) {
+    loadFeedMessagesModule().then(function (feed) {
+      if (!feed) return;
+      if (typeof feed.setSignedIn === 'function') feed.setSignedIn(!!signedIn);
+      if (typeof feed.load === 'function') feed.load();
+      else if (typeof feed.updateBadge === 'function') feed.updateBadge();
+    });
+  }
+
+  function openFeedMessages() {
+    setUserMenuOpen(false);
+    loadFeedMessagesModule().then(function (feed) {
+      if (!feed || typeof feed.openPanel !== 'function') {
+        alert('動態消息暫時無法開啟');
+        return;
+      }
+      var ready = typeof feed.load === 'function' ? feed.load() : Promise.resolve();
+      Promise.resolve(ready).then(function () {
+        feed.openPanel();
+      });
+    });
   }
 
   function applyTheme(theme, button, icon) {
@@ -251,7 +313,7 @@
 
   function setUserMenuOpen(open) {
     menuOpen = !!open;
-    var btn = container.querySelector('#navAuthUserMenuBtn');
+    var btn = container.querySelector('#navAuthAccountBtn');
     var dropdown = container.querySelector('#navAuthUserDropdown');
     if (btn) btn.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
     if (dropdown) {
@@ -260,12 +322,26 @@
     }
   }
 
-  function fillUserMenu(user) {
+  function setElHidden(el, hidden) {
+    if (!el) return;
+    if (hidden) el.setAttribute('hidden', '');
+    else el.removeAttribute('hidden');
+  }
+
+  function fillAccountMenu(user) {
+    var signedIn = !!user;
     var nameEl = container.querySelector('#navAuthDropdownName');
     var emailEl = container.querySelector('#navAuthDropdownEmail');
+    var headEl = container.querySelector('#navAuthDropdownHead');
     var avatar = container.querySelector('#navAuthUserAvatar');
     var initial = container.querySelector('#navAuthUserInitial');
-    var btn = container.querySelector('#navAuthUserMenuBtn');
+    var guestIcon = container.querySelector('#navAuthUserIcon');
+    var btn = container.querySelector('#navAuthAccountBtn');
+    var btnIn = container.querySelector('#navAuthSignIn');
+    var profileBtn = container.querySelector('#navAuthProfileBtn');
+    var favoritesBtn = container.querySelector('#navAuthFavoritesBtn');
+    var btnOut = container.querySelector('#navAuthSignOut');
+
     var name = (user && (user.displayName || user.email || user.uid)) || '';
     var email = (user && user.email) || '';
     var photo = (user && user.photoURL) || '';
@@ -275,25 +351,47 @@
       emailEl.textContent = email;
       emailEl.style.display = email ? '' : 'none';
     }
+    setElHidden(headEl, !signedIn);
+    setElHidden(btnIn, signedIn);
+    setElHidden(profileBtn, !signedIn);
+    setElHidden(favoritesBtn, !signedIn);
+    setElHidden(btnOut, !signedIn);
+
     if (btn) {
-      btn.title = name ? ('帳戶選單（' + name + '）') : '帳戶選單';
+      if (signedIn) {
+        btn.title = name ? ('帳戶選單（' + name + '）') : '帳戶選單';
+      } else {
+        btn.title = '帳戶選單';
+      }
       btn.setAttribute('aria-label', btn.title);
     }
+
+    if (!signedIn) {
+      if (avatar) {
+        avatar.hidden = true;
+        avatar.removeAttribute('src');
+      }
+      setElHidden(initial, true);
+      setElHidden(guestIcon, false);
+      return;
+    }
+
+    setElHidden(guestIcon, true);
     if (avatar && initial) {
       if (photo) {
         avatar.hidden = false;
         avatar.src = photo;
         avatar.alt = '';
-        initial.style.display = 'none';
+        setElHidden(initial, true);
         avatar.onerror = function () {
           avatar.hidden = true;
-          initial.style.display = '';
+          setElHidden(initial, false);
           initial.textContent = userInitial(user);
         };
       } else {
         avatar.hidden = true;
         avatar.removeAttribute('src');
-        initial.style.display = '';
+        setElHidden(initial, false);
         initial.textContent = userInitial(user);
       }
     }
@@ -309,17 +407,13 @@
     var signedIn = !!user;
     currentAuthUser = user || null;
 
-    var btnIn = container.querySelector('#navAuthSignIn');
-    var inItem = container.querySelector('#navAuthSignInItem');
-    var menuItem = container.querySelector('#navAuthUserMenuItem');
+    var accountItem = container.querySelector('#navAuthAccountItem');
+    if (accountItem) accountItem.style.display = '';
 
-    if (btnIn) btnIn.style.display = '';
-    if (inItem) inItem.style.display = signedIn ? 'none' : '';
-    if (menuItem) menuItem.style.display = signedIn ? '' : 'none';
+    fillAccountMenu(user);
+    if (!signedIn) setUserMenuOpen(false);
 
-    if (signedIn) fillUserMenu(user);
-    else setUserMenuOpen(false);
-
+    syncFeedAuthState(signedIn);
     if (persist) writeAuthHint(user);
   }
 
@@ -349,18 +443,23 @@
     ensureAuthMenuStyles();
 
     var btnIn = container.querySelector('#navAuthSignIn');
-    var menuBtn = container.querySelector('#navAuthUserMenuBtn');
+    var menuBtn = container.querySelector('#navAuthAccountBtn');
+    var feedBtn = container.querySelector('#navAuthFeedBtn');
     var profileBtn = container.querySelector('#navAuthProfileBtn');
     var favoritesBtn = container.querySelector('#navAuthFavoritesBtn');
     var btnOut = container.querySelector('#navAuthSignOut');
     var fb = window.WsFirebase;
 
-    if (!btnIn && !menuBtn) return;
+    if (!menuBtn) return;
 
     applyOptimisticAuthUi();
+    syncFeedAuthState(!!currentAuthUser || !!readAuthHint());
 
     if (btnIn) {
-      btnIn.addEventListener('click', function () {
+      btnIn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        setUserMenuOpen(false);
         if (!fb || !fb.ready) {
           alert((fb && fb.reason) || '請先載入 Firebase 設定（assets/js/firebase-config.js）');
           return;
@@ -382,6 +481,14 @@
         e.preventDefault();
         e.stopPropagation();
         setUserMenuOpen(!menuOpen);
+      });
+    }
+
+    if (feedBtn) {
+      feedBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openFeedMessages();
       });
     }
 
@@ -416,7 +523,7 @@
 
     document.addEventListener('click', function (e) {
       if (!menuOpen) return;
-      var menuItem = container.querySelector('#navAuthUserMenuItem');
+      var menuItem = container.querySelector('#navAuthAccountItem');
       if (menuItem && menuItem.contains(e.target)) return;
       setUserMenuOpen(false);
     });
