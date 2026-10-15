@@ -44,6 +44,8 @@
     listScroll: 0,
     redeployMode: false,
     sidePanelOpen: false,
+    panelAnim: 0,
+    panelAnimTarget: 0,
     toast: "",
     toastUntil: 0
   };
@@ -56,11 +58,13 @@
       activeSide: "first",
       phase: "setup",
       stages: { first: emptyStage(), second: emptyStage() },
+      life: { first: emptyLife(), second: emptyLife() },
       logs: [],
       lastUndo: null,
       ended: false,
       startedAt: null,
-      endedAt: null
+      endedAt: null,
+      encoreFrom: null
     };
   }
 
@@ -70,6 +74,51 @@
       center: { card: null, resolvedOnce: false },
       right: { card: null, resolvedOnce: false }
     };
+  }
+
+  function emptyLife() {
+    return { level: 0, damage: 0 };
+  }
+
+  function ensureLife() {
+    if (!state.life) state.life = { first: emptyLife(), second: emptyLife() };
+    if (!state.life.first) state.life.first = emptyLife();
+    if (!state.life.second) state.life.second = emptyLife();
+    state.life.first.level = Number(state.life.first.level) || 0;
+    state.life.first.damage = Number(state.life.first.damage) || 0;
+    state.life.second.level = Number(state.life.second.level) || 0;
+    state.life.second.damage = Number(state.life.second.damage) || 0;
+  }
+
+  /** WS clock: every 7 damage → +1 level, remainder stays in damage zone. */
+  function applyClockDamage(side, amount) {
+    ensureLife();
+    var n = Math.max(0, Number(amount) || 0);
+    if (!n) return;
+    var life = state.life[side];
+    life.damage += n;
+    while (life.damage >= 7) {
+      life.damage -= 7;
+      life.level += 1;
+    }
+  }
+
+  function lifeSnapshot(side) {
+    ensureLife();
+    var life = state.life[side];
+    return { level: life.level, damage: life.damage };
+  }
+
+  function countStageCards(stage) {
+    var n = 0;
+    for (var i = 0; i < SLOT_KEYS.length; i++) {
+      if (stage[SLOT_KEYS[i]] && stage[SLOT_KEYS[i]].card) n += 1;
+    }
+    return n;
+  }
+
+  function isFirstTurnOneLimit() {
+    return state.turn === 1 && state.activeSide === "first";
   }
 
   function uid() {
@@ -116,6 +165,8 @@
       var parsed = JSON.parse(raw);
       if (!parsed || !parsed.state) return false;
       state = parsed.state;
+      ensureLife();
+      if (!state.stages) state.stages = { first: emptyStage(), second: emptyStage() };
       return true;
     } catch (e) {
       return false;
@@ -714,21 +765,26 @@
     state.turn = 1;
     state.activeSide = "first";
     state.stages = { first: emptyStage(), second: emptyStage() };
+    state.life = { first: emptyLife(), second: emptyLife() };
     state.logs = [];
     state.lastUndo = null;
     state.ended = false;
     state.startedAt = Date.now();
     state.endedAt = null;
+    state.encoreFrom = null;
     uiState.attackStep = null;
     uiState.draft = null;
     uiState.pickerSlot = null;
     uiState.redeployMode = false;
     uiState.sidePanelOpen = false;
+    uiState.panelAnim = 0;
+    uiState.panelAnimTarget = 0;
     closeOverlay("overlay-setup");
     hideSummaryUI();
+    clearPickerThumbs();
     persist();
     render();
-    toast("記錄開始・先攻布陣");
+    toast("記錄開始・先攻布陣（第1回合限1隻）");
   }
 
   /* ——— Pixi helpers ——— */
@@ -821,6 +877,18 @@
 
   function isSidePanelOpen() {
     return !!uiState.sidePanelOpen;
+  }
+
+  function sidePanelProgress() {
+    return uiState.panelAnim || 0;
+  }
+
+  function setSidePanel(open) {
+    uiState.sidePanelOpen = !!open;
+    uiState.panelAnimTarget = open ? 1 : 0;
+    if (open && uiState.panelAnim < 0.01) uiState.panelAnim = 0.02;
+    if (!open) clearPickerThumbs();
+    render();
   }
 
   function stageColWidth() {
@@ -983,19 +1051,48 @@
     if (layer) layer.innerHTML = "";
   }
 
+  function clearPickerThumbs() {
+    var layer = $("agl-picker-layer");
+    if (layer) layer.innerHTML = "";
+  }
+
+  function syncPickerThumbs(thumbs) {
+    var layer = $("agl-picker-layer");
+    if (!layer) return;
+    layer.innerHTML = "";
+    if (!thumbs || !thumbs.length) return;
+    if (sidePanelProgress() < 0.2) return;
+    for (var i = 0; i < thumbs.length; i++) {
+      var t = thumbs[i];
+      if (!t || !t.url || t.clipped) continue;
+      var img = document.createElement("img");
+      img.className = "agl-picker-thumb";
+      img.alt = "";
+      img.draggable = false;
+      img.loading = "lazy";
+      img.src = t.url;
+      img.style.left = Math.round(t.x) + "px";
+      img.style.top = Math.round(t.y) + "px";
+      img.style.width = Math.round(t.w) + "px";
+      img.style.height = Math.round(t.h) + "px";
+      layer.appendChild(img);
+    }
+  }
+
   function syncCardArtLayer(rects) {
     var layer = $("agl-card-layer");
     if (!layer) return;
     layer.innerHTML = "";
     if (!rects || !rects.length) return;
-    if (state.phase !== "deploy" && state.phase !== "attack") return;
+    if (state.phase !== "deploy" && state.phase !== "attack" && state.phase !== "encore") return;
     if (state.phase === "summary" || state.ended) return;
 
     var panelLeft = Infinity;
-    if (state.phase === "deploy" && isSidePanelOpen()) {
+    var tPanel = sidePanelProgress();
+    if (state.phase === "deploy" && tPanel > 0.05) {
       var w = app.screen.width;
       var panelW = isLandscape() ? Math.floor(Math.min(w * 0.4, 360)) : w;
-      panelLeft = isLandscape() ? (w - panelW) : 0;
+      panelLeft = isLandscape() ? (w - panelW * tPanel) : 0;
     }
 
     for (var i = 0; i < rects.length; i++) {
@@ -1004,7 +1101,7 @@
       // Hide art under the open side panel
       if (r.x + r.w * 0.45 > panelLeft) continue;
       var img = document.createElement("img");
-      img.className = "agl-slot-art";
+      img.className = "agl-slot-art" + (r.rested ? " is-rested" : "");
       img.alt = "";
       img.draggable = false;
       img.src = r.url;
@@ -1050,10 +1147,26 @@
   /* ——— Game actions ——— */
   function setCardOnSlot(slotKey, card) {
     var stage = activeStage();
+    if (card && isFirstTurnOneLimit()) {
+      var occupiedElsewhere = false;
+      for (var i = 0; i < SLOT_KEYS.length; i++) {
+        var k = SLOT_KEYS[i];
+        if (k === slotKey) continue;
+        if (stage[k] && stage[k].card) {
+          occupiedElsewhere = true;
+          break;
+        }
+      }
+      if (occupiedElsewhere) {
+        toast("先攻第 1 回合只能放 1 隻角色");
+        return false;
+      }
+    }
     stage[slotKey].card = card ? Object.assign({}, card) : null;
     if (!card) stage[slotKey].resolvedOnce = false;
     persist();
     render();
+    return true;
   }
 
   function startAttackOnSlot(slotKey) {
@@ -1079,6 +1192,11 @@
     var d = uiState.draft;
     if (!d) return;
     var attacker = activeStage()[d.slot].card;
+    var receiver = opponentSide();
+    var dealt = Math.max(0, Number(d.actualDamage) || 0);
+    var lifeBefore = lifeSnapshot(receiver);
+    if (dealt > 0) applyClockDamage(receiver, dealt);
+    var lifeAfter = lifeSnapshot(receiver);
     var log = {
       id: uid(),
       turn: state.turn,
@@ -1098,6 +1216,9 @@
       otherKind: d.otherKind,
       actualDamage: d.actualDamage,
       countsAsCancel: d.result === "cancel",
+      dealtTo: receiver,
+      lifeBefore: lifeBefore,
+      lifeAfter: lifeAfter,
       timestamp: Date.now()
     };
     state.logs.push(log);
@@ -1107,7 +1228,15 @@
     uiState.attackStep = null;
     persist();
     render();
-    toast(d.result === "cancel" ? "已取消（仍計使用）" : "已記錄");
+    var msg;
+    if (d.result === "cancel") msg = "已取消（仍計使用）";
+    else if (dealt > 0) {
+      msg = sideLabel(receiver) + " → 等級 " + lifeAfter.level + " 傷害 " + lifeAfter.damage;
+      if (lifeAfter.level > lifeBefore.level) msg = "升級！" + msg;
+    } else {
+      msg = "已記錄";
+    }
+    toast(msg);
   }
 
   function undoLast() {
@@ -1122,6 +1251,16 @@
     }
     state.logs.pop();
     state.lastUndo = null;
+    if (last.dealtTo && last.lifeBefore) {
+      ensureLife();
+      state.life[last.dealtTo] = {
+        level: Number(last.lifeBefore.level) || 0,
+        damage: Number(last.lifeBefore.damage) || 0
+      };
+    }
+    if (last.side && last.slot && state.stages[last.side] && state.stages[last.side][last.slot]) {
+      state.stages[last.side][last.slot].resolvedOnce = false;
+    }
     persist();
     render();
     toast("已撤銷上一筆");
@@ -1131,7 +1270,22 @@
     uiState.draft = null;
     uiState.attackStep = null;
     uiState.pickerSlot = null;
-    if (state.activeSide === "first") {
+    uiState.redeployMode = false;
+    setSidePanel(false);
+    state.encoreFrom = state.activeSide;
+    state.phase = "encore";
+    persist();
+    render();
+    toast("安可階段・點卡可移除");
+  }
+
+  function endEncorePhase() {
+    uiState.draft = null;
+    uiState.attackStep = null;
+    uiState.pickerSlot = null;
+    var from = state.encoreFrom || state.activeSide;
+    state.encoreFrom = null;
+    if (from === "first") {
       state.activeSide = "second";
       state.phase = "deploy";
       toast("換後攻布陣");
@@ -1147,6 +1301,19 @@
     render();
   }
 
+  function removeEncoreCard(side, slotKey) {
+    var stage = state.stages[side];
+    if (!stage || !stage[slotKey] || !stage[slotKey].card) {
+      toast("此槽沒有卡");
+      return;
+    }
+    stage[slotKey].card = null;
+    stage[slotKey].resolvedOnce = false;
+    persist();
+    render();
+    toast("已移除" + sideLabel(side) + "・" + SLOT_LABELS[slotKey]);
+  }
+
   function endGame() {
     state.ended = true;
     state.phase = "summary";
@@ -1159,6 +1326,8 @@
 
   function resetGame() {
     hideSummaryUI();
+    clearCardArtLayer();
+    clearPickerThumbs();
     state = createEmptyState();
     uiState = {
       filterLevel: "all",
@@ -1169,6 +1338,8 @@
       listScroll: 0,
       redeployMode: false,
       sidePanelOpen: false,
+      panelAnim: 0,
+      panelAnimTarget: 0,
       toast: "",
       toastUntil: 0
     };
@@ -1195,11 +1366,13 @@
     if (state.phase === "setup") {
       hideSummaryUI();
       clearCardArtLayer();
+      clearPickerThumbs();
       drawIdleBrand(w, h);
       return;
     }
     if (state.phase === "summary" || state.ended) {
       clearCardArtLayer();
+      clearPickerThumbs();
       drawSummary(w, h);
       return;
     }
@@ -1208,6 +1381,8 @@
     drawHeader(w);
     if (state.phase === "deploy") drawDeploy(w, h);
     else if (state.phase === "attack") drawAttack(w, h);
+    else if (state.phase === "encore") drawEncore(w, h);
+    else clearPickerThumbs();
 
     if (uiState.toast && performance.now() < uiState.toastUntil) {
       drawToast(w, h, uiState.toast);
@@ -1231,37 +1406,42 @@
 
   function drawHeader(w) {
     var pad = 12;
-    var side = sideLabel(state.activeSide);
-    var sideColor = state.activeSide === "first" ? COLORS.teal : COLORS.amber;
-    var dmgSide = totalsFor(state.activeSide);
     var land = isLandscape();
+    ensureLife();
+    var life1 = state.life.first;
+    var life2 = state.life.second;
+    var phaseHint = state.phase === "encore"
+      ? "安可"
+      : (state.phase === "deploy" ? "布陣" : (state.phase === "attack" ? "戰階" : ""));
 
-    var badge = makeText(side, { size: land ? 16 : 18, weight: "700", fill: sideColor, display: true });
-    badge.x = pad;
-    badge.y = pad + (land ? 6 : 4);
-    root.addChild(badge);
+    var turnLine = makeText(
+      "回合 " + state.turn + (phaseHint ? "・" + phaseHint : ""),
+      { size: land ? 13 : 12, fill: COLORS.muted, display: true }
+    );
+    turnLine.x = pad;
+    turnLine.y = pad;
+    root.addChild(turnLine);
 
+    var firstLine = makeText(
+      "先攻 等級 " + life1.level + " 傷害 " + life1.damage,
+      { size: land ? 14 : 13, weight: "700", fill: COLORS.teal, display: true }
+    );
+    firstLine.x = pad;
+    firstLine.y = pad + (land ? 18 : 20);
+    root.addChild(firstLine);
+
+    var secondLine = makeText(
+      "後攻 等級 " + life2.level + " 傷害 " + life2.damage,
+      { size: land ? 14 : 13, weight: "700", fill: COLORS.amber, display: true }
+    );
     if (land) {
-      var line = makeText(
-        "回合 " + state.turn + "   累計傷 " + dmgSide.actualDamage + "  ·  取消 " + dmgSide.cancels,
-        { size: 13, fill: COLORS.ink, display: true }
-      );
-      line.x = pad + 52;
-      line.y = pad + 10;
-      root.addChild(line);
+      secondLine.x = pad + 178;
+      secondLine.y = pad + 18;
     } else {
-      var turn = makeText("回合 " + state.turn, { size: 14, fill: COLORS.muted, display: true });
-      turn.x = pad;
-      turn.y = pad + 28;
-      root.addChild(turn);
-      var stats = makeText(
-        "累計傷 " + dmgSide.actualDamage + "  ·  取消 " + dmgSide.cancels,
-        { size: 13, fill: COLORS.ink, display: true }
-      );
-      stats.x = pad;
-      stats.y = pad + 48;
-      root.addChild(stats);
+      secondLine.x = pad;
+      secondLine.y = pad + 40;
     }
+    root.addChild(secondLine);
 
     var endBtn = makeBtn("結束對局", 96, 34, COLORS.panel2, {
       size: 13, stroke: COLORS.line, textFill: COLORS.muted, radius: 10
@@ -1289,9 +1469,13 @@
     var startX = opts.startX != null
       ? opts.startX
       : Math.floor((app.screen.width - totalW) / 2);
-    var stage = activeStage();
-    var draftSlot = uiState.draft && uiState.draft.slot;
-    var artRects = [];
+    var side = opts.side || state.activeSide;
+    var stage = opts.stage || state.stages[side];
+    var draftSlot = uiState.draft && uiState.draft.slot && side === state.activeSide
+      ? uiState.draft.slot
+      : null;
+    var artRects = opts.artRects || [];
+    var syncArt = opts.syncArt !== false;
 
     for (var i = 0; i < SLOT_KEYS.length; i++) {
       var key = SLOT_KEYS[i];
@@ -1304,58 +1488,65 @@
       box.cursor = "pointer";
 
       var g = new PIXI.Graphics();
-      var selected = draftSlot === key || uiState.pickerSlot === key;
+      var selected = draftSlot === key || (uiState.pickerSlot === key && side === state.activeSide);
       gFillRound(g, 0, 0, dim.slotW, dim.slotH, 12, COLORS.panel, 1);
       gStrokeRound(g, 0, 0, dim.slotW, dim.slotH, 12,
         selected ? COLORS.amber : (slot.resolvedOnce ? COLORS.good : COLORS.line),
         selected ? 2.5 : 1.5);
       box.addChild(g);
 
-      var tag = makeText(SLOT_LABELS[key] + (slot.resolvedOnce ? " ✓" : ""), {
-        size: 11, fill: COLORS.muted, display: true
+      var tag = makeText(SLOT_LABELS[key] + (slot.resolvedOnce ? " 休" : ""), {
+        size: 11, fill: slot.resolvedOnce ? COLORS.amber : COLORS.muted, display: true
       });
       tag.x = 8;
       tag.y = 6;
       box.addChild(tag);
 
       if (slot.card) {
-        drawCardFace(box, slot.card, dim.slotW, dim.slotH);
+        drawCardFace(box, slot.card, dim.slotW, dim.slotH, { rested: !!slot.resolvedOnce });
         if (slot.card.imageUrl) {
           artRects.push({
-            key: key,
+            key: side + "-" + key,
             x: x,
             y: y,
             w: dim.slotW,
             h: dim.slotH,
-            url: slot.card.imageUrl
+            url: slot.card.imageUrl,
+            rested: !!slot.resolvedOnce
           });
         }
       } else {
-        var empty = makeText("點擊放卡", { size: 13, fill: COLORS.muted });
+        var emptyLabel = interactiveMode === "encore"
+          ? "空"
+          : (interactiveMode === "attack" ? "空槽" : "點擊放卡");
+        var empty = makeText(emptyLabel, { size: 13, fill: COLORS.muted });
         empty.anchor.set(0.5);
         empty.x = dim.slotW / 2;
         empty.y = dim.slotH / 2;
         box.addChild(empty);
       }
 
-      (function (slotKey) {
+      (function (slotKey, slotSide) {
         hit(box, function () {
-          if (interactiveMode === "deploy" || uiState.redeployMode) {
+          if (interactiveMode === "encore") {
+            removeEncoreCard(slotSide, slotKey);
+          } else if (interactiveMode === "deploy" || uiState.redeployMode) {
             openPicker(slotKey);
           } else if (interactiveMode === "attack") {
             if (uiState.attackStep) return;
             startAttackOnSlot(slotKey);
           }
         });
-      })(key);
+      })(key, side);
 
       root.addChild(box);
     }
-    syncCardArtLayer(artRects);
+    if (syncArt) syncCardArtLayer(artRects);
     return y + dim.slotH;
   }
 
-  function drawCardFace(parent, card, w, h) {
+  function drawCardFace(parent, card, w, h, opts) {
+    opts = opts || {};
     // Art is shown via #agl-card-layer (DOM) to avoid WebGL CORS texImage2D errors.
     var stripe = new PIXI.Graphics();
     gFillRect(stripe, 0, 22, w, 4, colorTint(card.color), 1);
@@ -1367,12 +1558,13 @@
     });
     name.x = 6;
     name.y = 32;
-    name.alpha = 0.35;
+    name.alpha = opts.rested ? 0.2 : 0.35;
     parent.addChild(name);
 
     var meta = makeText(
+      (opts.rested ? "橫置 · " : "") +
       "Lv" + (card.level != null ? card.level : "?") + " · " + (card.color || "—"),
-      { size: 11, fill: COLORS.muted, display: true }
+      { size: 11, fill: opts.rested ? COLORS.amber : COLORS.muted, display: true }
     );
     meta.x = 6;
     meta.y = h - 22;
@@ -1383,20 +1575,29 @@
     var land = isLandscape();
     var dim = cardAspect("hero");
     var totalW = dim.slotW * 3 + dim.gap * 2;
-    var panelOpen = isSidePanelOpen();
+    var tPanel = sidePanelProgress();
+    var panelOpen = tPanel > 0.5;
 
-    var title = makeText("前排布陣", { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true });
+    var title = makeText(
+      sideLabel(state.activeSide) + "・前排布陣",
+      { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true }
+    );
     title.anchor.set(0.5, 0);
     title.x = w / 2;
-    title.y = land ? 50 : 86;
+    title.y = land ? 56 : 96;
     root.addChild(title);
 
-    var sub = makeText(
-      panelOpen
-        ? (uiState.pickerSlot ? ("選卡中・" + SLOT_LABELS[uiState.pickerSlot] + "槽") : "選卡面板已展開")
-        : "點槽位選卡・右側「選卡」可展開篩選",
-      { size: 12, fill: COLORS.muted }
-    );
+    var hintText;
+    if (isFirstTurnOneLimit()) {
+      hintText = "第 1 回合・先攻僅可放 1 隻（可不放）";
+    } else if (panelOpen) {
+      hintText = uiState.pickerSlot
+        ? ("選卡中・" + SLOT_LABELS[uiState.pickerSlot] + "槽")
+        : "選卡面板已展開";
+    } else {
+      hintText = "點槽位選卡・右側「選卡」可展開篩選";
+    }
+    var sub = makeText(hintText, { size: 12, fill: COLORS.muted });
     sub.anchor.set(0.5, 0);
     sub.x = w / 2;
     sub.y = title.y + 24;
@@ -1406,7 +1607,7 @@
     var slotsY = land
       ? Math.max(title.y + 44, Math.floor((h - dim.slotH - 58) / 2))
       : title.y + 48;
-    drawSlotsRow(slotsY, "deploy", { startX: slotsStartX, dim: dim });
+    drawSlotsRow(slotsY, "deploy", { startX: slotsStartX, dim: dim, side: state.activeSide });
 
     var startBtn = makeBtn("戰階開始", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
       textFill: COLORS.onAccent, size: 16, radius: 12
@@ -1415,8 +1616,8 @@
     startBtn.y = h - 56;
     hit(startBtn, function () {
       uiState.pickerSlot = null;
-      uiState.sidePanelOpen = false;
       uiState.redeployMode = false;
+      setSidePanel(false);
       clearToast();
       state.phase = "attack";
       persist();
@@ -1425,35 +1626,40 @@
     });
     root.addChild(startBtn);
 
-    if (panelOpen) drawDeploySidePanel(w, h);
-    drawSidePanelTab(w, h, panelOpen);
+    if (tPanel > 0.01) drawDeploySidePanel(w, h, tPanel);
+    else clearPickerThumbs();
+    drawSidePanelTab(w, h, tPanel);
   }
 
-  function drawSidePanelTab(w, h, panelOpen) {
+  function drawSidePanelTab(w, h, tPanel) {
+    tPanel = tPanel == null ? sidePanelProgress() : tPanel;
     var tabW = 36;
     var tabH = 112;
     var land = isLandscape();
     var panelW = land ? Math.floor(Math.min(w * 0.4, 360)) : Math.floor(w * 0.92);
+    var openX = w - panelW - tabW + 2;
+    var closedX = w - tabW;
     var tab = new PIXI.Container();
     tab.eventMode = "static";
     tab.cursor = "pointer";
-    tab.x = panelOpen ? (w - panelW - tabW + 2) : (w - tabW);
+    tab.x = closedX + (openX - closedX) * tPanel;
     tab.y = Math.floor((h - tabH) / 2);
+    var lit = tPanel > 0.5;
 
     var g = new PIXI.Graphics();
-    gFillRound(g, 0, 0, tabW, tabH, 10, panelOpen ? COLORS.amber : COLORS.panel2, 1);
-    gStrokeRound(g, 0, 0, tabW, tabH, 10, panelOpen ? COLORS.onAccent : COLORS.teal, 1.5);
+    gFillRound(g, 0, 0, tabW, tabH, 10, lit ? COLORS.amber : COLORS.panel2, 1);
+    gStrokeRound(g, 0, 0, tabW, tabH, 10, lit ? COLORS.onAccent : COLORS.teal, 1.5);
     tab.addChild(g);
 
-    var t1 = makeText(panelOpen ? "◂" : "▸", {
-      size: 16, weight: "700", fill: panelOpen ? COLORS.onAccent : COLORS.teal, display: true
+    var t1 = makeText(lit ? "◂" : "▸", {
+      size: 16, weight: "700", fill: lit ? COLORS.onAccent : COLORS.teal, display: true
     });
     t1.anchor.set(0.5);
     t1.x = tabW / 2;
     t1.y = 28;
     tab.addChild(t1);
-    var t2 = makeText(panelOpen ? "收合" : "選卡", {
-      size: 12, weight: "700", fill: panelOpen ? COLORS.onAccent : COLORS.ink, display: true
+    var t2 = makeText(lit ? "收合" : "選卡", {
+      size: 12, weight: "700", fill: lit ? COLORS.onAccent : COLORS.ink, display: true
     });
     t2.anchor.set(0.5);
     t2.x = tabW / 2;
@@ -1462,37 +1668,38 @@
 
     hit(tab, function () {
       if (isSidePanelOpen()) {
-        uiState.sidePanelOpen = false;
-        render();
+        setSidePanel(false);
       } else {
-        uiState.sidePanelOpen = true;
         if (!uiState.pickerSlot) uiState.pickerSlot = "left";
-        render();
+        setSidePanel(true);
       }
     });
     root.addChild(tab);
   }
 
-  function drawDeploySidePanel(w, h) {
+  function drawDeploySidePanel(w, h, tPanel) {
+    tPanel = tPanel == null ? 1 : tPanel;
     var land = isLandscape();
     var panelW = land ? Math.floor(Math.min(w * 0.4, 360)) : Math.floor(w * 0.92);
-    var panelX = land ? w - panelW : Math.floor((w - panelW) / 2);
+    var panelXOpen = land ? w - panelW : Math.floor((w - panelW) / 2);
+    var panelXClosed = land ? w + 8 : panelXOpen;
+    var panelX = panelXClosed + (panelXOpen - panelXClosed) * tPanel;
     var panelY = land ? 44 : 70;
     var panelH = h - panelY - 10;
 
     var backdrop = new PIXI.Graphics();
-    gFillRect(backdrop, 0, 0, Math.max(0, panelX), h, 0x000000, 0.32);
-    backdrop.eventMode = "static";
+    gFillRect(backdrop, 0, 0, Math.max(0, panelXOpen), h, 0x000000, 0.32 * tPanel);
+    backdrop.eventMode = tPanel > 0.55 ? "static" : "none";
     backdrop.cursor = "pointer";
-    hit(backdrop, function () {
-      uiState.sidePanelOpen = false;
-      render();
-    });
+    if (tPanel > 0.55) {
+      hit(backdrop, function () { setSidePanel(false); });
+    }
     root.addChild(backdrop);
 
     var panel = new PIXI.Container();
     panel.x = panelX;
     panel.y = panelY;
+    panel.alpha = Math.min(1, 0.35 + tPanel * 0.65);
     panel.eventMode = "static";
 
     var bg = new PIXI.Graphics();
@@ -1513,10 +1720,7 @@
     });
     closeBtn.x = panelW - 46;
     closeBtn.y = 10;
-    hit(closeBtn, function () {
-      uiState.sidePanelOpen = false;
-      render();
-    });
+    hit(closeBtn, function () { setSidePanel(false); });
     panel.addChild(closeBtn);
 
     var contentX = 12;
@@ -1530,9 +1734,11 @@
         afterFilters + 6,
         contentW,
         panelH - (afterFilters + 6) - 12,
-        panel
+        panel,
+        { originX: panel.x, originY: panel.y }
       );
     } else {
+      clearPickerThumbs();
       var hint = makeText("點場上槽位後，在此篩選並放入角色。", {
         size: 13, fill: COLORS.muted, wrap: true, wrapWidth: contentW
       });
@@ -1612,19 +1818,19 @@
 
   function openPicker(slotKey) {
     uiState.pickerSlot = slotKey;
-    uiState.sidePanelOpen = true;
     uiState.listScroll = 0;
-    render();
+    setSidePanel(true);
   }
 
   function toggleSidePanel(force) {
-    uiState.sidePanelOpen = typeof force === "boolean" ? force : !isSidePanelOpen();
-    render();
+    var next = typeof force === "boolean" ? force : !isSidePanelOpen();
+    setSidePanel(next);
   }
 
-  function drawCardPicker(x, y, w, maxH, parent) {
+  function drawCardPicker(x, y, w, maxH, parent, origin) {
     parent = parent || root;
-    var panelH = Math.min(maxH, 280);
+    origin = origin || { originX: 0, originY: 0 };
+    var panelH = Math.min(maxH, 300);
     var panel = new PIXI.Container();
     panel.x = x;
     panel.y = y;
@@ -1650,14 +1856,18 @@
       setCardOnSlot(uiState.pickerSlot, null);
       uiState.pickerSlot = null;
       uiState.redeployMode = false;
+      clearPickerThumbs();
       toast("已清空");
     });
     panel.addChild(clearBtn);
 
     var list = filteredCharacters();
-    var rowH = 52;
+    var rowH = 58;
+    var thumbW = 34;
+    var thumbH = 48;
+    var textPad = 12 + thumbW + 10;
     var listTop = 40;
-    var listH = panelH - listTop - 8;
+    var listH = panelH - listTop - 44;
     var mask = new PIXI.Graphics();
     gFillRect(mask, 0, listTop, w, listH, 0xffffff, 1);
 
@@ -1668,11 +1878,16 @@
     listC.mask = mask;
 
     if (!list.length) {
+      clearPickerThumbs();
       var empty = makeText("沒有符合的角色", { size: 13, fill: COLORS.muted });
       empty.x = 12;
       empty.y = listTop + 16;
       panel.addChild(empty);
     }
+
+    var thumbs = [];
+    var absListTop = origin.originY + y + listTop;
+    var absListBottom = absListTop + listH;
 
     for (var i = 0; i < list.length; i++) {
       var card = list[i];
@@ -1684,31 +1899,54 @@
       gFillRect(rg, 0, 0, w, rowH - 2, i % 2 ? 0x1a1916 : 0x22211c, 1);
       row.addChild(rg);
       var sw = new PIXI.Graphics();
-      gFillRect(sw, 0, 0, 5, rowH - 2, colorTint(card.color), 1);
+      gFillRect(sw, 0, 0, 4, rowH - 2, colorTint(card.color), 1);
       row.addChild(sw);
+
+      // Placeholder frame for DOM thumb
+      var ph = new PIXI.Graphics();
+      gFillRound(ph, 10, 4, thumbW, thumbH, 4, 0x0e0d0b, 1);
+      gStrokeRound(ph, 10, 4, thumbW, thumbH, 4, COLORS.line, 1);
+      row.addChild(ph);
+
       var nm = makeText(card.name || card.cardNo, {
-        size: 13, fill: COLORS.ink, wrap: true, wrapWidth: w - 100
+        size: 13, fill: COLORS.ink, wrap: true, wrapWidth: Math.max(60, w - textPad - 12)
       });
-      nm.x = 12;
+      nm.x = textPad;
       nm.y = 8;
       row.addChild(nm);
       var meta = makeText(
         (card.cardNo || "") + "  Lv" + (card.level != null ? card.level : "?") + " ×" + (card.qty || 1),
         { size: 11, fill: COLORS.muted }
       );
-      meta.x = 12;
-      meta.y = 30;
+      meta.x = textPad;
+      meta.y = 32;
       row.addChild(meta);
       (function (c, slotKey) {
         hit(row, function () {
-          setCardOnSlot(slotKey, c);
+          if (!setCardOnSlot(slotKey, c)) return;
           uiState.pickerSlot = null;
           uiState.redeployMode = false;
+          clearPickerThumbs();
           toast("已放入" + SLOT_LABELS[slotKey]);
         });
       })(card, uiState.pickerSlot);
       listC.addChild(row);
+
+      if (card.imageUrl) {
+        var thumbTop = origin.originY + y + listTop - uiState.listScroll + i * rowH + 4;
+        var clipped = thumbTop + thumbH < absListTop || thumbTop > absListBottom;
+        thumbs.push({
+          url: card.imageUrl,
+          x: origin.originX + x + 10,
+          y: thumbTop,
+          w: thumbW,
+          h: thumbH,
+          clipped: clipped
+        });
+      }
     }
+
+    syncPickerThumbs(thumbs);
 
     // scroll buttons
     var maxScroll = Math.max(0, list.length * rowH - listH);
@@ -1733,13 +1971,82 @@
     return y + panelH;
   }
 
+  function drawEncore(w, h) {
+    clearPickerThumbs();
+    var land = isLandscape();
+    var title = makeText("安可階段", { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true });
+    title.anchor.set(0.5, 0);
+    title.x = w / 2;
+    title.y = land ? 56 : 96;
+    root.addChild(title);
+
+    var sub = makeText("點角色可移除・先後攻皆可操作", { size: 12, fill: COLORS.muted });
+    sub.anchor.set(0.5, 0);
+    sub.x = w / 2;
+    sub.y = title.y + 24;
+    root.addChild(sub);
+
+    var dim = cardAspect(land ? "hero" : null);
+    if (!land) {
+      dim = {
+        slotW: Math.floor(dim.slotW * 0.72),
+        slotH: Math.floor(dim.slotH * 0.72),
+        gap: 8
+      };
+    } else {
+      dim = {
+        slotW: Math.floor(Math.min(dim.slotW, 110)),
+        slotH: Math.floor(Math.min(dim.slotH, 154)),
+        gap: 10
+      };
+    }
+    var totalW = dim.slotW * 3 + dim.gap * 2;
+    var startX = Math.floor((w - totalW) / 2);
+    var artRects = [];
+
+    var y1Label = makeText("先攻", { size: 13, weight: "700", fill: COLORS.teal, display: true });
+    y1Label.x = startX;
+    y1Label.y = title.y + 48;
+    root.addChild(y1Label);
+    var y1 = y1Label.y + 20;
+    drawSlotsRow(y1, "encore", {
+      startX: startX,
+      dim: dim,
+      side: "first",
+      artRects: artRects,
+      syncArt: false
+    });
+
+    var y2Label = makeText("後攻", { size: 13, weight: "700", fill: COLORS.amber, display: true });
+    y2Label.x = startX;
+    y2Label.y = y1 + dim.slotH + 10;
+    root.addChild(y2Label);
+    var y2 = y2Label.y + 20;
+    drawSlotsRow(y2, "encore", {
+      startX: startX,
+      dim: dim,
+      side: "second",
+      artRects: artRects,
+      syncArt: false
+    });
+    syncCardArtLayer(artRects);
+
+    var done = makeBtn("結束安可", Math.min(w - 28, land ? 240 : 280), 44, COLORS.amber, {
+      textFill: COLORS.onAccent, size: 16, radius: 12
+    });
+    done.x = (w - done._w) / 2;
+    done.y = h - 56;
+    hit(done, endEncorePhase);
+    root.addChild(done);
+  }
+
   function drawAttack(w, h) {
     var land = isLandscape();
     var headerH = land ? 52 : 86;
     var dim = cardAspect();
     var leftPad = 12;
     var title = makeText(
-      uiState.attackStep ? "攻擊宣告中" : "選擇攻擊角色",
+      sideLabel(state.activeSide) + "・" + (uiState.attackStep ? "攻擊宣告中" : "選擇攻擊角色"),
       { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true }
     );
     title.x = leftPad;
@@ -2220,10 +2527,20 @@
     });
 
     app.ticker.add(function () {
+      var needRender = false;
+      var target = uiState.panelAnimTarget || 0;
+      var cur = uiState.panelAnim || 0;
+      if (Math.abs(cur - target) > 0.004) {
+        var next = cur + (target - cur) * 0.22;
+        if (Math.abs(next - target) < 0.004) next = target;
+        uiState.panelAnim = next;
+        needRender = true;
+      }
       if (uiState.toast && performance.now() >= uiState.toastUntil) {
         uiState.toast = "";
-        render();
+        needRender = true;
       }
+      if (needRender) render();
     });
 
     syncOrientGate();
@@ -2245,6 +2562,8 @@
     startAttackOnSlot: startAttackOnSlot,
     beginRecording: beginRecording,
     endAttackPhase: endAttackPhase,
+    endEncorePhase: endEncorePhase,
+    applyClockDamage: applyClockDamage,
     endGame: endGame,
     undoLast: undoLast,
     resetGame: resetGame,
