@@ -168,6 +168,7 @@
       state = parsed.state;
       ensureLife();
       if (!state.stages) state.stages = { first: emptyStage(), second: emptyStage() };
+      if (!Array.isArray(state.logs)) state.logs = [];
       return true;
     } catch (e) {
       return false;
@@ -527,6 +528,8 @@
             var next = parsed.state || parsed;
             if (!next || !next.logs) throw new Error("格式不符");
             state = next;
+            if (!Array.isArray(state.logs)) state.logs = [];
+            ensureLife();
             state.ended = true;
             state.phase = "summary";
             if (!state.endedAt) state.endedAt = Date.now();
@@ -553,6 +556,8 @@
       panes[p].classList.toggle("is-active", panes[p].getAttribute("data-pane") === summaryTab);
     }
     if (summaryTab === "chart") renderSummaryChart();
+    // Always rebuild when opening detail — avoids blank pane after cache / restore races
+    if (summaryTab === "detail") fillBattleDetail(buildBattleDetail());
   }
 
   function hideSummaryUI() {
@@ -620,7 +625,10 @@
 
     fillCardDamageList("sumCardDmg1", report.cardDamageFirst, report.p1Name);
     fillCardDamageList("sumCardDmg2", report.cardDamageSecond, report.p2Name);
-    fillBattleDetail(report.battleDetail || buildBattleDetail());
+    // Empty array is truthy — never skip rebuild with `||`
+    var detailGroups = report.battleDetail;
+    if (!detailGroups || !detailGroups.length) detailGroups = buildBattleDetail();
+    fillBattleDetail(detailGroups);
     if (summaryTab === "decks") summaryTab = "detail";
     setSummaryTab(summaryTab || "stats");
   }
@@ -651,8 +659,9 @@
   function buildBattleDetail() {
     var groups = [];
     var index = {};
-    for (var i = 0; i < state.logs.length; i++) {
-      var log = state.logs[i];
+    var logs = Array.isArray(state.logs) ? state.logs : [];
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
       if (!log) continue;
       var turn = Number(log.turn) || 1;
       var side = log.side === "second" ? "second" : "first";
@@ -681,11 +690,25 @@
     return groups;
   }
 
-  function fillBattleDetail(groups) {
+  function ensureBattleDetailHost() {
     var host = $("sumBattleDetail");
+    if (host) return host;
+    var pane = $("sumPaneDetail");
+    if (!pane) return null;
+    host = document.createElement("div");
+    host.id = "sumBattleDetail";
+    host.className = "agl-battle-detail";
+    host.setAttribute("aria-label", "對戰詳細資訊");
+    pane.appendChild(host);
+    return host;
+  }
+
+  function fillBattleDetail(groups) {
+    var host = ensureBattleDetailHost();
     if (!host) return;
     host.innerHTML = "";
-    if (!groups || !groups.length) {
+    if (!Array.isArray(groups)) groups = buildBattleDetail();
+    if (!groups.length) {
       var empty = document.createElement("div");
       empty.className = "agl-battle-detail-empty";
       empty.textContent = "本局尚無攻擊紀錄";
@@ -970,17 +993,25 @@
           body.style.height = "auto";
           body.style.flex = "none";
         }
-        // Show stats pane for a complete report image
+        // Stack stats + battle detail in the export image (hide chart)
         var panes = cloned.querySelectorAll(".agl-summary-pane");
         for (var i = 0; i < panes.length; i++) {
           var pane = panes[i];
-          if (pane.getAttribute("data-pane") === "stats") {
+          var kind = pane.getAttribute("data-pane");
+          if (kind === "stats" || kind === "detail") {
             pane.style.display = "block";
+            pane.style.height = "auto";
             pane.classList.add("is-active");
           } else {
             pane.style.display = "none";
             pane.classList.remove("is-active");
           }
+        }
+        var detailHost = cloned.getElementById("sumBattleDetail");
+        if (detailHost) {
+          detailHost.style.height = "auto";
+          detailHost.style.overflow = "visible";
+          detailHost.style.minHeight = "0";
         }
       }
     }).then(function (canvas) {
