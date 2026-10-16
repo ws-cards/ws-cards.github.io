@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">
-  <meta name="theme-color" content="#141820">
+  <meta name="theme-color" content="#141414">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,22 +14,31 @@
   <link rel="icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- 與 line_test_v102 同源：顯示明朝／UI 角ゴシック／品牌宇文天穹／數據 mono -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;600;700&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@500;600;700;900&display=swap">
   <style>
     :root {
-      --ink: #e8ecf2;
-      --muted: #8b95a8;
-      --panel: #1c222d;
-      --panel-2: #252c3a;
-      --line: rgba(232, 236, 242, 0.12);
-      --amber: #f0a202;
-      --teal: #2ec4b6;
-      --coral: #e85d4c;
-      --good: #5dce8a;
-      --danger: #ff6b6b;
-      --bg: #141820;
-      --display: "Chakra Petch", "Noto Sans TC", sans-serif;
-      --body: "Noto Sans TC", sans-serif;
+      /* v102 dark desk tokens */
+      --ink: #e9e7e1;
+      --muted: #9a958b;
+      --panel: #1c1b18;
+      --panel-2: #24231f;
+      --line: rgba(240, 238, 230, 0.12);
+      --foil: #cbb083;
+      --foil-deep: #b8955a;
+      --foil-text: #211a10;
+      --amber: var(--foil);
+      --teal: #91a9c7;
+      --coral: #dc8a80;
+      --good: #8fc5a4;
+      --danger: #dc8a80;
+      --bg: #141414;
+      --paper: #fffdf8;
+      --display: "Zen Old Mincho", "Noto Serif TC", serif;
+      --brand: "UoqMunThenKhung", "Noto Serif TC", serif;
+      --body: "Zen Kaku Gothic New", "Noto Sans TC", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
     * { box-sizing: border-box; }
     html, body {
@@ -43,10 +52,18 @@
       font-family: var(--body);
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      color-scheme: dark;
+    }
+    body button,
+    body input,
+    body select,
+    body textarea {
+      font-family: var(--body);
     }
     /* Pin shell to visualViewport so URL/tab bars don't cover controls */
     #pixi-host,
     #agl-card-layer,
+    #agl-picker-layer,
     .agl-overlay,
     .agl-boot,
     .agl-orient-gate,
@@ -68,16 +85,29 @@
       height: 100% !important;
     }
     /* Card art via DOM — avoids WebGL cross-origin texImage2D errors */
-    #agl-card-layer {
+    #agl-card-layer,
+    #agl-picker-layer {
       z-index: 2;
       pointer-events: none;
       overflow: hidden;
     }
-    #agl-card-layer .agl-slot-art {
+    #agl-picker-layer { z-index: 3; }
+    #agl-card-layer .agl-slot-art,
+    #agl-picker-layer .agl-picker-thumb {
       position: absolute;
       object-fit: contain;
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.22);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    #agl-card-layer .agl-slot-art.is-rested {
+      transform: rotate(90deg) scale(0.78);
+      transform-origin: center center;
+      border: 1px solid rgba(203, 176, 131, 0.45);
+    }
+    #agl-picker-layer .agl-picker-thumb {
+      border-radius: 4px;
+      border: 1px solid rgba(240, 238, 230, 0.12);
     }
     .agl-overlay {
       z-index: 20;
@@ -86,44 +116,46 @@
       justify-content: center;
       padding: 16px;
       padding-bottom: max(16px, env(safe-area-inset-bottom));
-      background: rgba(8, 10, 14, 0.55);
-      backdrop-filter: blur(6px);
+      background: rgba(10, 10, 9, 0.58);
+      backdrop-filter: blur(8px);
     }
     .agl-overlay.is-open { display: flex; }
     .agl-sheet {
       width: min(440px, 100%);
-      background: linear-gradient(165deg, var(--panel-2), var(--panel));
-      border: 1px solid var(--line);
-      border-radius: 18px 18px 14px 14px;
-      padding: 18px 16px 14px;
-      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
-      animation: sheetUp 0.28s ease;
+      background: var(--panel-2);
+      border: 1px solid rgba(226, 189, 119, 0.24);
+      border-radius: 14px;
+      padding: 1.65rem 1.5rem 1.35rem;
+      box-shadow: 0 20px 52px rgba(0, 0, 0, 0.48), 0 5px 18px rgba(0, 0, 0, 0.28);
+      animation: sheetUp 0.42s var(--ease);
     }
     @keyframes sheetUp {
-      from { transform: translateY(24px); opacity: 0; }
+      from { transform: translateY(18px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
     .agl-sheet h2 {
       margin: 0 0 6px;
       font-family: var(--display);
       font-size: 1.15rem;
-      letter-spacing: 0.02em;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
     }
     .agl-sheet p {
       margin: 0 0 14px;
       color: var(--muted);
-      font-size: 0.88rem;
-      line-height: 1.45;
+      font-size: 0.92rem;
+      line-height: 1.7;
     }
     .agl-field { margin-bottom: 12px; }
     .agl-field label {
       display: block;
-      font-size: 0.75rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      color: var(--foil);
       margin-bottom: 6px;
-      font-family: var(--display);
+      font-family: var(--body);
+      font-weight: 500;
     }
     .agl-field input, .agl-field textarea {
       width: 100%;
@@ -135,9 +167,11 @@
       font-size: 1rem;
       font-family: var(--body);
       outline: none;
+      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
     }
     .agl-field input:focus, .agl-field textarea:focus {
-      border-color: rgba(240, 162, 2, 0.65);
+      border-color: var(--foil);
+      box-shadow: 0 0 0 1px var(--foil), 0 0 0 4px rgba(226, 189, 119, 0.22);
     }
     .agl-actions {
       display: flex;
@@ -148,20 +182,27 @@
       flex: 1;
       min-height: 46px;
       border: 0;
-      border-radius: 12px;
-      font-family: var(--display);
-      font-weight: 600;
+      border-radius: 10px;
+      font-family: var(--body);
+      font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
+      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
     }
     .agl-btn-ghost {
-      background: transparent;
-      color: var(--muted);
+      background: rgba(240, 238, 228, 0.09);
+      color: var(--ink);
       border: 1px solid var(--line) !important;
     }
+    .agl-btn-ghost:hover {
+      background: rgba(240, 238, 228, 0.16);
+    }
     .agl-btn-primary {
-      background: var(--amber);
-      color: #1a1200;
+      background: var(--foil);
+      color: var(--foil-text);
+    }
+    .agl-btn-primary:hover {
+      background: #e0c493;
     }
     .agl-status {
       min-height: 1.2em;
@@ -178,15 +219,36 @@
       flex-direction: column;
       gap: 10px;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(46, 196, 182, 0.18), transparent 45%),
-        radial-gradient(ellipse at 90% 80%, rgba(240, 162, 2, 0.14), transparent 40%),
+        radial-gradient(ellipse at 50% 0%, rgba(203, 176, 131, 0.14), transparent 48%),
+        radial-gradient(ellipse at 85% 90%, rgba(145, 169, 199, 0.08), transparent 42%),
         var(--bg);
-      font-family: var(--display);
       letter-spacing: 0.04em;
     }
     .agl-boot[hidden] { display: none !important; }
-    .agl-boot strong { font-size: 1.4rem; }
-    .agl-boot span { color: var(--muted); font-size: 0.9rem; }
+    .agl-boot-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.2rem;
+    }
+    .agl-boot-mark {
+      display: block;
+      width: 1.15rem;
+      height: 1px;
+      background: var(--foil);
+      opacity: 0.72;
+    }
+    .agl-boot strong {
+      font-family: var(--brand);
+      font-size: 1.55rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+    }
+    .agl-boot span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      opacity: 0.85;
+    }
 
     /* —— Landscape lock gate —— */
     .agl-orient-gate {
@@ -197,9 +259,9 @@
       padding: 28px 22px;
       overflow: hidden;
       background:
-        radial-gradient(ellipse at 50% 0%, rgba(240, 162, 2, 0.16), transparent 50%),
-        radial-gradient(ellipse at 20% 100%, rgba(46, 196, 182, 0.12), transparent 45%),
-        linear-gradient(165deg, #0e1218 0%, #1a2230 48%, #121820 100%);
+        radial-gradient(ellipse at 50% 0%, rgba(203, 176, 131, 0.16), transparent 50%),
+        radial-gradient(ellipse at 20% 100%, rgba(145, 169, 199, 0.1), transparent 45%),
+        linear-gradient(165deg, #10100e 0%, #1a1916 48%, #141414 100%);
       color: var(--ink);
       text-align: center;
     }
@@ -207,11 +269,11 @@
       content: "";
       position: absolute;
       inset: 0;
-      opacity: 0.35;
+      opacity: 0.28;
       pointer-events: none;
       background-image:
-        linear-gradient(rgba(232, 236, 242, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232, 236, 242, 0.04) 1px, transparent 1px);
+        linear-gradient(rgba(240, 238, 230, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240, 238, 230, 0.04) 1px, transparent 1px);
       background-size: 28px 28px;
       mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
     }
@@ -219,30 +281,31 @@
       position: relative;
       width: min(320px, 100%);
       padding: 28px 22px 24px;
-      border-radius: 20px;
-      border: 1px solid rgba(240, 162, 2, 0.35);
-      background: linear-gradient(160deg, rgba(37, 44, 58, 0.95), rgba(20, 24, 32, 0.98));
+      border-radius: 14px;
+      border: 1px solid rgba(226, 189, 119, 0.28);
+      background: var(--panel-2);
       box-shadow:
-        0 0 0 1px rgba(46, 196, 182, 0.08),
-        0 24px 60px rgba(0, 0, 0, 0.55);
+        0 0 0 1px rgba(203, 176, 131, 0.06),
+        0 20px 52px rgba(0, 0, 0, 0.48);
+      animation: sheetUp 0.56s var(--ease);
     }
     .agl-orient-kicker {
       margin: 0 0 14px;
-      font-family: var(--display);
+      font-family: var(--body);
       font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--teal);
+      color: var(--foil);
     }
     .agl-phone {
       width: 72px;
       height: 112px;
       margin: 0 auto 18px;
-      border: 2.5px solid var(--amber);
+      border: 2px solid var(--foil);
       border-radius: 14px;
       position: relative;
-      box-shadow: inset 0 0 0 1px rgba(240, 162, 2, 0.25);
+      box-shadow: inset 0 0 0 1px rgba(203, 176, 131, 0.22);
       animation: phoneTilt 1.8s ease-in-out infinite;
       transform-origin: center center;
     }
@@ -255,7 +318,7 @@
       height: 4px;
       margin-left: -11px;
       border-radius: 999px;
-      background: rgba(240, 162, 2, 0.55);
+      background: rgba(203, 176, 131, 0.55);
     }
     .agl-phone::after {
       content: "";
@@ -263,8 +326,8 @@
       inset: 18px 10px 14px;
       border-radius: 6px;
       background:
-        linear-gradient(135deg, rgba(46, 196, 182, 0.2), transparent 55%),
-        rgba(232, 236, 242, 0.06);
+        linear-gradient(135deg, rgba(203, 176, 131, 0.18), transparent 55%),
+        rgba(240, 238, 230, 0.05);
     }
     @keyframes phoneTilt {
       0%, 18% { transform: rotate(0deg); }
@@ -273,39 +336,41 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .agl-phone { animation: none; transform: rotate(90deg); }
+      .agl-orient-card,
+      .agl-sheet { animation: none; }
     }
     .agl-orient-card h1 {
       margin: 0 0 8px;
       font-family: var(--display);
       font-size: 1.55rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       line-height: 1.2;
     }
     .agl-orient-card p {
       margin: 0;
       color: var(--muted);
       font-size: 0.92rem;
-      line-height: 1.5;
+      line-height: 1.7;
     }
     .agl-orient-card .agl-orient-hint {
       margin-top: 16px;
       padding-top: 14px;
-      border-top: 1px dashed rgba(232, 236, 242, 0.12);
-      font-family: var(--display);
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      color: var(--amber);
+      border-top: 1px dashed rgba(240, 238, 230, 0.12);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--foil);
     }
 
-    /* —— Summary dashboard (original Attack Log palette) —— */
+    /* —— Summary dashboard (v102 desk palette) —— */
     .agl-summary {
       z-index: 40;
       display: none;
       flex-direction: column;
       background:
-        radial-gradient(ellipse at 15% 0%, rgba(46, 196, 182, 0.14), transparent 45%),
-        radial-gradient(ellipse at 90% 100%, rgba(240, 162, 2, 0.1), transparent 42%),
+        radial-gradient(ellipse at 15% 0%, rgba(203, 176, 131, 0.12), transparent 45%),
+        radial-gradient(ellipse at 90% 100%, rgba(145, 169, 199, 0.08), transparent 42%),
         var(--bg);
       color: var(--ink);
       font-family: var(--body);
@@ -317,7 +382,7 @@
       grid-template-columns: 1.2fr 1.4fr 1fr;
       gap: 8px;
       padding: 12px 16px 10px;
-      background: rgba(28, 34, 45, 0.92);
+      background: rgba(28, 27, 24, 0.94);
       border-bottom: 1px solid var(--line);
       align-items: center;
     }
@@ -326,16 +391,17 @@
       font-family: var(--display);
       font-size: clamp(1.25rem, 3.2vw, 1.85rem);
       font-weight: 700;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
       line-height: 1.15;
     }
     .agl-summary-vs .p1 { color: var(--teal); }
-    .agl-summary-vs .p2 { color: var(--amber); }
+    .agl-summary-vs .p2 { color: var(--foil); }
     .agl-summary-vs .sep { color: var(--muted); margin: 0 0.25em; font-weight: 600; }
     .agl-summary-times {
       font-size: 0.82rem;
       color: var(--muted);
       line-height: 1.45;
+      font-family: var(--mono);
     }
     .agl-summary-meta {
       text-align: right;
@@ -355,7 +421,7 @@
       border-right: 1px solid var(--line);
       background: transparent;
       min-height: 42px;
-      font-family: var(--display);
+      font-family: var(--body);
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
@@ -365,7 +431,7 @@
     .agl-summary-tabs button.is-active {
       color: var(--ink);
       background: var(--panel-2);
-      box-shadow: inset 0 -3px 0 var(--amber);
+      box-shadow: inset 0 -3px 0 var(--foil);
     }
     .agl-summary-body {
       flex: 1;
@@ -380,7 +446,7 @@
       border-collapse: collapse;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       font-size: 0.92rem;
     }
@@ -398,20 +464,80 @@
       color: var(--ink);
     }
     .agl-stat-table th.p1 { color: var(--teal); }
-    .agl-stat-table th.p2 { color: var(--amber); }
+    .agl-stat-table th.p2 { color: var(--foil); }
     .agl-stat-table td.label {
       text-align: left;
-      background: rgba(0, 0, 0, 0.18);
+      background: rgba(0, 0, 0, 0.22);
       font-weight: 600;
       width: 28%;
       color: var(--muted);
     }
     .agl-stat-table tbody tr:nth-child(even) td:not(.label) {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(240, 238, 230, 0.02);
     }
     .agl-stat-table td.p1 { color: var(--teal); font-weight: 600; }
-    .agl-stat-table td.p2 { color: var(--amber); font-weight: 600; }
+    .agl-stat-table td.p2 { color: var(--foil); font-weight: 600; }
     .agl-stat-table td.small { font-size: 0.78rem; font-weight: 500; color: var(--muted); }
+    .agl-card-dmg {
+      margin-top: 14px;
+      padding: 12px 14px 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    .agl-card-dmg-title {
+      margin: 0 0 4px;
+      font-family: var(--display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+    }
+    .agl-card-dmg-lede {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .agl-card-dmg-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .agl-card-dmg-col h3 {
+      margin: 0 0 8px;
+      font-family: var(--display);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .agl-card-dmg-col.p1 h3 { color: var(--teal); }
+    .agl-card-dmg-col.p2 h3 { color: var(--foil); }
+    .agl-card-dmg-col ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .agl-card-dmg-col li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.85rem;
+      color: var(--ink);
+    }
+    .agl-card-dmg-col li strong {
+      color: var(--foil);
+      font-family: var(--mono);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .agl-card-dmg-col.p1 li strong { color: var(--teal); }
+    .agl-card-dmg-empty {
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 4px 0 8px;
+    }
     .agl-chart-wrap {
       height: calc(100% - 8px);
       min-height: 220px;
@@ -436,6 +562,7 @@
       font-size: 1.1rem;
       font-weight: 700;
       color: var(--ink);
+      letter-spacing: 0.04em;
     }
     .agl-chart-toolbar label {
       font-size: 0.85rem;
@@ -443,7 +570,7 @@
       margin-right: 10px;
       color: var(--teal);
     }
-    .agl-chart-toolbar label.p2 { color: var(--amber); }
+    .agl-chart-toolbar label.p2 { color: var(--foil); }
     .agl-chart-toolbar select {
       border: 1px solid var(--line);
       background: var(--panel-2);
@@ -452,6 +579,10 @@
       padding: 6px 10px;
       font-size: 0.85rem;
       font-family: var(--body);
+    }
+    .agl-chart-toolbar select:focus {
+      border-color: var(--foil);
+      outline: none;
     }
     .agl-chart-canvas-box { flex: 1; min-height: 0; position: relative; }
     .agl-decklists {
@@ -473,9 +604,10 @@
       font-family: var(--display);
       font-size: 1rem;
       font-weight: 700;
+      letter-spacing: 0.04em;
     }
     .agl-deck-col h3.p1 { color: var(--teal); }
-    .agl-deck-col h3.p2 { color: var(--amber); }
+    .agl-deck-col h3.p2 { color: var(--foil); }
     .agl-deck-col ul {
       margin: 0;
       padding: 0;
@@ -494,6 +626,7 @@
       color: var(--muted);
       font-size: 0.75rem;
       margin-bottom: 8px;
+      font-family: var(--mono);
     }
     .agl-summary-footmeta {
       display: flex;
@@ -505,14 +638,14 @@
       color: var(--muted);
       font-size: 0.82rem;
       font-weight: 600;
-      font-family: var(--display);
+      font-family: var(--mono);
     }
     .agl-summary-actions {
       display: flex;
       justify-content: space-between;
       gap: 10px;
       padding: 10px 14px 12px;
-      background: rgba(20, 24, 32, 0.96);
+      background: rgba(20, 19, 17, 0.96);
       border-top: 1px solid var(--line);
     }
     .agl-summary-actions .left,
@@ -521,18 +654,18 @@
       min-height: 42px;
       padding: 0 16px;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--panel-2);
+      border-radius: 10px;
+      background: rgba(240, 238, 228, 0.09);
       color: var(--ink);
-      font-family: var(--display);
+      font-family: var(--body);
       font-weight: 700;
       font-size: 0.92rem;
       cursor: pointer;
     }
     .agl-summary-actions .primary {
-      background: var(--amber);
+      background: var(--foil);
       border-color: transparent;
-      color: #1a1200;
+      color: var(--foil-text);
       min-width: 140px;
     }
 
@@ -548,50 +681,6 @@
         pointer-events: none !important;
       }
     }
-    .agl-chrome-bar {
-      position: fixed;
-      top: var(--vv-top, 0px);
-      left: var(--vv-left, 0px);
-      width: var(--vv-width, 100%);
-      z-index: 55;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 10px;
-      background: rgba(20, 24, 32, 0.94);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(8px);
-      box-sizing: border-box;
-    }
-    .agl-chrome-bar.is-visible { display: flex; }
-    body.is-fullscreen .agl-chrome-bar { display: none !important; }
-    .agl-chrome-bar .agl-chrome-tip {
-      flex: 1;
-      min-width: 0;
-      color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.3;
-    }
-    .agl-chrome-bar button {
-      flex: 0 0 auto;
-      min-height: 36px;
-      padding: 0 12px;
-      border: 0;
-      border-radius: 10px;
-      background: var(--amber);
-      color: #1a1200;
-      font-family: var(--display);
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    body.needs-chrome-collapse .agl-overlay.is-open,
-    body.needs-chrome-collapse .agl-summary.is-open {
-      padding-top: 52px;
-    }
-
     @media (orientation: landscape) {
       .agl-orient-gate { display: none !important; }
       .agl-overlay {
@@ -604,10 +693,7 @@
         overflow: auto;
         border-radius: 14px;
         padding: 12px 14px 10px;
-        animation: sheetIn 0.28s ease;
-      }
-      body.needs-chrome-collapse .agl-sheet {
-        max-height: calc(var(--vv-height, 100dvh) - 64px);
+        animation: sheetIn 0.42s var(--ease);
       }
       .agl-sheet h2 { font-size: 1.02rem; margin-bottom: 4px; }
       .agl-sheet p { margin-bottom: 8px; font-size: 0.8rem; }
@@ -626,25 +712,25 @@
 <body>
   <div id="orient-gate" class="agl-orient-gate" role="alertdialog" aria-modal="true" aria-labelledby="orientTitle" aria-describedby="orientDesc">
     <div class="agl-orient-card">
-      <p class="agl-orient-kicker">Attack Log</p>
+      <p class="agl-orient-kicker">攻擊記錄</p>
       <div class="agl-phone" aria-hidden="true"></div>
       <h1 id="orientTitle">請橫持裝置</h1>
-      <p id="orientDesc">攻擊記錄僅支援橫向畫面。轉橫後請點「收合網址列／分頁」進入沉浸畫面（Safari 無法自動縮掉分頁列）。</p>
-      <p class="agl-orient-hint">ROTATE · TAP TO HIDE BARS</p>
+      <p id="orientDesc">攻擊記錄僅支援橫向畫面。請將裝置轉為橫向後繼續。</p>
+      <p class="agl-orient-hint">ROTATE TO LANDSCAPE</p>
     </div>
   </div>
 
-  <div id="agl-chrome-bar" class="agl-chrome-bar" aria-live="polite">
-    <span class="agl-chrome-tip">Safari 分頁列無法自動縮小，請點右側進入沉浸畫面</span>
-    <button type="button" id="btnCollapseChrome">收合網址列／分頁</button>
-  </div>
-
   <div id="agl-boot" class="agl-boot" aria-live="polite">
-    <strong>ATTACK LOG</strong>
-    <span>載入戰場介面…</span>
+    <div class="agl-boot-brand" aria-hidden="true">
+      <span class="agl-boot-mark"></span>
+      <strong>卡片雲</strong>
+      <span class="agl-boot-mark"></span>
+    </div>
+    <span>載入攻擊記錄…</span>
   </div>
   <div id="pixi-host" aria-label="攻擊記錄主畫面"></div>
   <div id="agl-card-layer" aria-hidden="true"></div>
+  <div id="agl-picker-layer" aria-hidden="true"></div>
 
   <div id="overlay-setup" class="agl-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
     <div class="agl-sheet">
@@ -725,6 +811,14 @@
           </thead>
           <tbody id="sumStatBody"></tbody>
         </table>
+        <div class="agl-card-dmg" aria-label="各卡攻擊傷害">
+          <h2 class="agl-card-dmg-title">各卡攻擊傷害</h2>
+          <p class="agl-card-dmg-lede">同卡號累積實際造成傷害與攻擊次數</p>
+          <div class="agl-card-dmg-grid">
+            <div class="agl-card-dmg-col p1" id="sumCardDmg1"></div>
+            <div class="agl-card-dmg-col p2" id="sumCardDmg2"></div>
+          </div>
+        </div>
       </section>
       <section class="agl-summary-pane" id="sumPaneChart" data-pane="chart">
         <div class="agl-chart-wrap">
