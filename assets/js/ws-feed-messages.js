@@ -11,40 +11,64 @@
       type: 'Public',
       subject: '新增《BanG Dream!》部分卡號',
       content: '已補齊 BD/W54 系列若干卡號之遊遊亭行情與庫存資料，可於各卡號漲幅趨勢查詢。',
-      publishedAt: '2026-10-15'
+      publishedAt: '2026-10-15',
+      hasRead: 0
     },
     {
       id: 'pub-20261014-1',
       type: 'Public',
       subject: '新增《Overlord》系列卡資料',
       content: 'OVL 系列新卡已入庫，含數張 PR 與稀有度變體。',
-      publishedAt: '2026-10-14'
+      publishedAt: '2026-10-14',
+      hasRead: 0
     },
     {
       id: 'pub-20261012-1',
       type: 'Public',
       subject: '資料修正：卡名與稀有度對應',
       content: '修正少數卡號名稱與稀有度標示錯誤，不影響既有查詢流程。',
-      publishedAt: '2026-10-12'
+      publishedAt: '2026-10-12',
+      hasRead: 0
     },
     {
       id: 'per-20261015-1',
       type: 'Personal',
       subject: '願望清單卡片有新行情',
       content: '你追蹤的卡片中，有 2 張今日售價有變動，可至願望清單查看。',
-      publishedAt: '2026-10-15'
+      publishedAt: '2026-10-15',
+      hasRead: 0
     },
     {
       id: 'per-20261013-1',
       type: 'Personal',
       subject: '歡迎使用帳戶功能',
       content: '登入後可同步願望清單，並接收與你相關的個人通知（測試用訊息）。',
-      publishedAt: '2026-10-13'
+      publishedAt: '2026-10-13',
+      hasRead: 0
     }
   ];
 
+  /** hasRead：1=已讀、0=未讀 */
+  function normalizeHasRead(value) {
+    if (value === 1 || value === '1' || value === true) return 1;
+    return 0;
+  }
+
+  function cloneDefaults() {
+    return DEFAULT_MESSAGES.map(function (msg) {
+      return {
+        id: msg.id,
+        type: msg.type,
+        subject: msg.subject,
+        content: msg.content,
+        publishedAt: msg.publishedAt,
+        hasRead: normalizeHasRead(msg.hasRead)
+      };
+    });
+  }
+
   var state = {
-    messages: DEFAULT_MESSAGES.slice(),
+    messages: cloneDefaults(),
     loaded: false,
     loading: null,
     signedIn: false
@@ -158,8 +182,18 @@
       type: type,
       subject: String(raw.subject || '').trim(),
       content: String(raw.content || '').trim(),
-      publishedAt: String(raw.publishedAt || '').trim()
+      publishedAt: String(raw.publishedAt || '').trim(),
+      hasRead: normalizeHasRead(raw.hasRead)
     };
+  }
+
+  /** 以本機已讀紀錄覆寫 hasRead（靜態 JSON 無法回寫時用） */
+  function applyLocalReadState(messages) {
+    var read = readReadIds();
+    for (var i = 0; i < messages.length; i++) {
+      if (read[messages[i].id]) messages[i].hasRead = 1;
+    }
+    return messages;
   }
 
   function sortMessages(list) {
@@ -194,11 +228,10 @@
   }
 
   function unreadCount(signedIn) {
-    var read = readReadIds();
     var list = visibleMessages(signedIn);
     var n = 0;
     for (var i = 0; i < list.length; i++) {
-      if (!read[list[i].id]) n += 1;
+      if (list[i].hasRead !== 1) n += 1;
     }
     return n;
   }
@@ -206,7 +239,10 @@
   function markVisibleRead(signedIn) {
     var read = readReadIds();
     var list = visibleMessages(signedIn);
-    for (var i = 0; i < list.length; i++) read[list[i].id] = true;
+    for (var i = 0; i < list.length; i++) {
+      list[i].hasRead = 1;
+      read[list[i].id] = true;
+    }
     writeReadIds(read);
   }
 
@@ -319,7 +355,7 @@
           ? payload
           : null;
     if (!rawList) {
-      state.messages = DEFAULT_MESSAGES.slice();
+      state.messages = applyLocalReadState(cloneDefaults());
       return;
     }
     var next = [];
@@ -327,7 +363,7 @@
       var msg = normalizeMessage(rawList[i]);
       if (msg) next.push(msg);
     }
-    state.messages = next.length ? next : DEFAULT_MESSAGES.slice();
+    state.messages = applyLocalReadState(next.length ? next : cloneDefaults());
   }
 
   function load() {
@@ -346,7 +382,7 @@
         return state.messages;
       })
       .catch(function () {
-        state.messages = DEFAULT_MESSAGES.slice();
+        state.messages = applyLocalReadState(cloneDefaults());
         state.loaded = true;
         updateBadge();
         return state.messages;
