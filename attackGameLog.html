@@ -585,49 +585,68 @@
       outline: none;
     }
     .agl-chart-canvas-box { flex: 1; min-height: 0; position: relative; }
-    .agl-decklists {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+    .agl-battle-detail {
       height: 100%;
       min-height: 200px;
+      overflow: auto;
+      padding: 4px 2px 8px;
     }
-    .agl-deck-col {
+    .agl-battle-detail-empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 18px 12px;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
-      overflow: auto;
-      padding: 12px 14px;
     }
-    .agl-deck-col h3 {
+    .agl-battle-block {
+      margin-bottom: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px 8px;
+    }
+    .agl-battle-block-head {
       margin: 0 0 8px;
       font-family: var(--display);
       font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
-    .agl-deck-col h3.p1 { color: var(--teal); }
-    .agl-deck-col h3.p2 { color: var(--foil); }
-    .agl-deck-col ul {
+    .agl-battle-block.is-first .agl-battle-block-head { color: var(--teal); }
+    .agl-battle-block.is-second .agl-battle-block-head { color: var(--foil); }
+    .agl-battle-block ul {
       margin: 0;
       padding: 0;
       list-style: none;
     }
-    .agl-deck-col li {
+    .agl-battle-block li {
       display: flex;
       justify-content: space-between;
-      gap: 8px;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.85rem;
+      align-items: baseline;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px solid var(--line);
+      font-size: 0.9rem;
       color: var(--ink);
     }
-    .agl-deck-col .code {
-      color: var(--muted);
-      font-size: 0.75rem;
-      margin-bottom: 8px;
-      font-family: var(--mono);
+    .agl-battle-block li:first-child { border-top: 0; }
+    .agl-battle-block .atk-name {
+      min-width: 0;
+      flex: 1;
     }
+    .agl-battle-block .atk-meta {
+      flex: 0 0 auto;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.84rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .agl-battle-block .atk-meta .res-damage { color: var(--coral); }
+    .agl-battle-block .atk-meta .res-cancel { color: var(--good); }
+    .agl-battle-block .atk-meta .res-other { color: var(--foil); }
+    .agl-battle-block.is-first .atk-meta .res-damage { color: var(--teal); }
     .agl-summary-footmeta {
       display: flex;
       flex-wrap: wrap;
@@ -797,7 +816,7 @@
     <nav class="agl-summary-tabs" aria-label="結算分頁">
       <button type="button" class="is-active" data-sum-tab="stats">快速統計</button>
       <button type="button" data-sum-tab="chart">回合圖表</button>
-      <button type="button" data-sum-tab="decks">Decklists</button>
+      <button type="button" data-sum-tab="detail">對戰詳細資訊</button>
     </nav>
     <div class="agl-summary-body">
       <section class="agl-summary-pane is-active" id="sumPaneStats" data-pane="stats">
@@ -839,19 +858,8 @@
           </div>
         </div>
       </section>
-      <section class="agl-summary-pane" id="sumPaneDecks" data-pane="decks">
-        <div class="agl-decklists">
-          <div class="agl-deck-col">
-            <h3 class="p1" id="sumDeckTitle1">玩家 1</h3>
-            <div class="code" id="sumDeckCode1"></div>
-            <ul id="sumDeckList1"></ul>
-          </div>
-          <div class="agl-deck-col">
-            <h3 class="p2" id="sumDeckTitle2">玩家 2</h3>
-            <div class="code" id="sumDeckCode2"></div>
-            <ul id="sumDeckList2"></ul>
-          </div>
-        </div>
+      <section class="agl-summary-pane" id="sumPaneDetail" data-pane="detail">
+        <div class="agl-battle-detail" id="sumBattleDetail" aria-label="對戰詳細資訊"></div>
       </section>
     </div>
     <div class="agl-summary-footmeta" id="sumFootMeta"></div>

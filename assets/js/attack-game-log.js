@@ -405,6 +405,7 @@
       second: s2,
       cardDamageFirst: cardAttackDamageStats("first"),
       cardDamageSecond: cardAttackDamageStats("second"),
+      battleDetail: buildBattleDetail(),
       life: {
         first: { level: state.life.first.level, damage: state.life.first.damage },
         second: { level: state.life.second.level, damage: state.life.second.damage }
@@ -617,11 +618,109 @@
       "　玩家總決策數: " + report.decisions +
       "　總洗牌次數: —";
 
-    fillDeckList("first", "sumDeckTitle1", "sumDeckCode1", "sumDeckList1", report.p1Name);
-    fillDeckList("second", "sumDeckTitle2", "sumDeckCode2", "sumDeckList2", report.p2Name);
     fillCardDamageList("sumCardDmg1", report.cardDamageFirst, report.p1Name);
     fillCardDamageList("sumCardDmg2", report.cardDamageSecond, report.p2Name);
+    fillBattleDetail(report.battleDetail || buildBattleDetail());
+    if (summaryTab === "decks") summaryTab = "detail";
     setSummaryTab(summaryTab || "stats");
+  }
+
+  function attackResultLabel(log) {
+    if (!log) return "—";
+    if (log.result === "damage") return "吃傷";
+    if (log.result === "cancel") return "取消";
+    if (log.otherKind === "triggerCancel") return "觸發取消";
+    if (log.otherKind === "block") return "擋傷";
+    if (log.otherKind === "reduce") {
+      return "減傷→" + (Number(log.actualDamage) || 0);
+    }
+    if (log.result === "other") return "其他";
+    return "—";
+  }
+
+  function attackResultClass(log) {
+    if (!log) return "res-other";
+    if (log.result === "damage") return "res-damage";
+    if (log.result === "cancel" || log.otherKind === "triggerCancel" || log.otherKind === "block") {
+      return "res-cancel";
+    }
+    return "res-other";
+  }
+
+  /** Group every recorded attack by turn + side for the detail tab. */
+  function buildBattleDetail() {
+    var groups = [];
+    var index = {};
+    for (var i = 0; i < state.logs.length; i++) {
+      var log = state.logs[i];
+      if (!log) continue;
+      var turn = Number(log.turn) || 1;
+      var side = log.side === "second" ? "second" : "first";
+      var key = turn + "|" + side;
+      if (!index[key]) {
+        var atkLife = log.attackerLife || null;
+        index[key] = {
+          turn: turn,
+          side: side,
+          level: atkLife && atkLife.level != null ? Number(atkLife.level) || 0 : 0,
+          attacks: []
+        };
+        groups.push(index[key]);
+      }
+      var ac = log.attackerCard || {};
+      index[key].attacks.push({
+        name: ac.name || ac.cardNo || "未知角色",
+        cardNo: ac.cardNo || "",
+        declaredDamage: Number(log.declaredDamage) || 0,
+        actualDamage: Number(log.actualDamage) || 0,
+        resultLabel: attackResultLabel(log),
+        resultClass: attackResultClass(log),
+        attackType: log.attackType || ""
+      });
+    }
+    return groups;
+  }
+
+  function fillBattleDetail(groups) {
+    var host = $("sumBattleDetail");
+    if (!host) return;
+    host.innerHTML = "";
+    if (!groups || !groups.length) {
+      var empty = document.createElement("div");
+      empty.className = "agl-battle-detail-empty";
+      empty.textContent = "本局尚無攻擊紀錄";
+      host.appendChild(empty);
+      return;
+    }
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      var block = document.createElement("section");
+      block.className = "agl-battle-block is-" + g.side;
+      var head = document.createElement("h3");
+      head.className = "agl-battle-block-head";
+      head.textContent =
+        sideLabel(g.side) + " 第" + g.turn + "回 等級" + g.level;
+      block.appendChild(head);
+      var ul = document.createElement("ul");
+      if (!g.attacks.length) {
+        var none = document.createElement("li");
+        none.innerHTML = "<span class=\"atk-name\">（本回合無攻擊）</span><span></span>";
+        ul.appendChild(none);
+      } else {
+        for (var a = 0; a < g.attacks.length; a++) {
+          var atk = g.attacks[a];
+          var li = document.createElement("li");
+          li.innerHTML =
+            "<span class=\"atk-name\">" + escapeHtml(atk.name) + "</span>" +
+            "<span class=\"atk-meta\">攻擊 " + atk.declaredDamage +
+            "（<span class=\"" + atk.resultClass + "\">" +
+            escapeHtml(atk.resultLabel) + "</span>）</span>";
+          ul.appendChild(li);
+        }
+      }
+      block.appendChild(ul);
+      host.appendChild(block);
+    }
   }
 
   function fillCardDamageList(listId, stats, name) {
@@ -649,39 +748,6 @@
       ul.appendChild(li);
     }
     host.appendChild(ul);
-  }
-
-  function fillDeckList(side, titleId, codeId, listId, name) {
-    $(titleId).textContent = name + "（" + sideLabel(side) + "）";
-    var p = state[side];
-    $(codeId).textContent = p && p.code ? ("DeckLog: " + p.code) : "DeckLog: —";
-    var ul = $(listId);
-    ul.innerHTML = "";
-    var used = totalsFor(side).cards;
-    var keys = Object.keys(used);
-    if (!keys.length) {
-      var empty = document.createElement("li");
-      empty.innerHTML = "<span>（本局未宣告攻擊）</span><span></span>";
-      ul.appendChild(empty);
-      return;
-    }
-    keys.sort(function (a, b) { return used[b] - used[a]; });
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      var display = key;
-      for (var li = 0; li < state.logs.length; li++) {
-        var ac = state.logs[li].attackerCard;
-        if (ac && (ac.cardNo === key || ac.name === key)) {
-          display = ac.name || ac.cardNo || key;
-          break;
-        }
-      }
-      var item = document.createElement("li");
-      item.innerHTML =
-        "<span>" + escapeHtml(display) + "</span>" +
-        "<strong>×" + used[key] + "</strong>";
-      ul.appendChild(item);
-    }
   }
 
   function escapeHtml(s) {
@@ -1474,6 +1540,7 @@
       actualDamage: d.actualDamage,
       countsAsCancel: d.result === "cancel",
       dealtTo: receiver,
+      attackerLife: lifeSnapshot(state.activeSide),
       lifeBefore: lifeBefore,
       lifeAfter: lifeAfter,
       timestamp: Date.now()
@@ -2929,6 +2996,7 @@
     resetGame: resetGame,
     exportMatchImage: exportMatchImage,
     buildMatchReport: buildMatchReport,
+    buildBattleDetail: buildBattleDetail,
     showSummaryUI: showSummaryUI,
     commitDraft: function (partial) {
       if (!uiState.draft) return false;
