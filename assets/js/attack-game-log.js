@@ -659,8 +659,9 @@
   function buildBattleDetail() {
     var groups = [];
     var index = {};
-    for (var i = 0; i < state.logs.length; i++) {
-      var log = state.logs[i];
+    var logs = Array.isArray(state.logs) ? state.logs : [];
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
       if (!log) continue;
       var turn = Number(log.turn) || 1;
       var side = log.side === "second" ? "second" : "first";
