@@ -2996,6 +2996,7 @@
     resetGame: resetGame,
     exportMatchImage: exportMatchImage,
     buildMatchReport: buildMatchReport,
+    buildBattleDetail: buildBattleDetail,
     showSummaryUI: showSummaryUI,
     commitDraft: function (partial) {
       if (!uiState.draft) return false;
