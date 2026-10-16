@@ -1143,8 +1143,17 @@ try {
 // 每個查不到的環節對讀者來說都是同一件事：這張卡查不到。
 // 所以不再播報內部步驟，只在真的失敗時說明原因與下一步。
 var notFound = function(target) {
-    showSearchNotification(target + ' 不在遊遊亭的收錄範圍，或卡號有誤。可改用下方「篩選條件」逐步尋找。', 'error');
+    // 不再跳右上角通知；改在價格／庫存區塊以 overlay 提示（同卡片資料遮罩）
+    console.warn('查無遊遊亭價格／庫存資料:', target);
+    showChartUnavailable('overlay-2', '無法抓到價格資料');
+    showChartUnavailable('overlay-3', '無法抓到庫存資料');
+    if (typeof updatePriceSummary === 'function') {
+        updatePriceSummary(null);
+    }
     setSearchBusy(false);
+    setTimeout(function() {
+        if (typeof scrollToResults === 'function') scrollToResults();
+    }, 200);
 };
 
 // 程式化級聯：略過 changeTitle 自動選第一張，避免先載錯卡再載目標卡
@@ -2168,10 +2177,10 @@ console.log(cardTitle+'->'+cardTilteReplaceSpare);
 // 先銷毀現有圖表
 destroyAllCharts();
 
-// 顯示載入動畫
-document.getElementById('overlay-1').style.display='block';					
-document.getElementById('overlay-2').style.display='block';				
-document.getElementById('overlay-3').style.display='block';		
+// 顯示載入動畫（價格／庫存若先前是「無法抓到」狀態，一併還原 spinner）
+document.getElementById('overlay-1').style.display='block';
+showChartLoading('overlay-2', '載入價格走勢…');
+showChartLoading('overlay-3', '載入庫存走勢…');
 
 var downloadCardTag = document.getElementById('download-card-tag');
 if (downloadCardTag) {
@@ -2191,10 +2200,25 @@ requestPrice.onload = function() {
     var cards = requestPrice.response;
     var cardNumberSelect=document.getElementById('cardNumber');
     var selectedIndex=cardNumberSelect.selectedIndex;
+    if (selectedIndex < 0 || !cardNumberSelect.options[selectedIndex]) {
+        showChartUnavailable('overlay-2', '無法抓到價格資料');
+        return;
+    }
     var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
-    var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+    var internalCardNumber=cardNumberSelect.options[selectedIndex].value;
+    if (!cards || requestPrice.status >= 400) {
+        console.warn('價格 JSON 無法取得:', cardTilteReplaceSpare, requestPrice.status);
+        showChartUnavailable('overlay-2', '無法抓到價格資料');
+        if (typeof updatePriceSummary === 'function') updatePriceSummary(null);
+        return;
+    }
     getCardData(cards,internalCardNumber,cardNumberDisplay);
 }
+requestPrice.onerror = function() {
+    console.error('價格資料請求失敗:', cardTilteReplaceSpare);
+    showChartUnavailable('overlay-2', '無法抓到價格資料');
+    if (typeof updatePriceSummary === 'function') updatePriceSummary(null);
+};
 
 // 載入庫存資料
 requestStock.open('GET', requestURLCardStockbyPreCode + cardTilteReplaceSpare +'.json');
@@ -2210,10 +2234,23 @@ requestStock.onload = function() {
   var cards = requestStock.response;
   var cardNumberSelect=document.getElementById('cardNumber');
   var selectedIndex=cardNumberSelect.selectedIndex;
+  if (selectedIndex < 0 || !cardNumberSelect.options[selectedIndex]) {
+      showChartUnavailable('overlay-3', '無法抓到庫存資料');
+      return;
+  }
   var cardNumberDisplay=cardNumberSelect.options[selectedIndex].text;				  
-  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;		
+  var internalCardNumber=cardNumberSelect.options[selectedIndex].value;
+  if (!cards || requestStock.status >= 400) {
+      console.warn('庫存 JSON 無法取得:', cardTilteReplaceSpare, requestStock.status);
+      showChartUnavailable('overlay-3', '無法抓到庫存資料');
+      return;
+  }
   getCardStockData(cards,internalCardNumber,cardNumberDisplay);
-}				
+}
+requestStock.onerror = function() {
+    console.error('庫存資料請求失敗:', cardTilteReplaceSpare);
+    showChartUnavailable('overlay-3', '無法抓到庫存資料');
+};				
 
 /**
  * update 卡片資訊
@@ -2272,7 +2309,15 @@ console.log("進入繪圖區:"+cardNum);
             }
             
             addPhoto(cardNum);
-            var cardInfo = jsonObj[internalCardNumber];
+            var cardInfo = jsonObj && jsonObj[internalCardNumber];
+            if (!cardInfo) {
+                console.warn('查無此卡價格資料:', internalCardNumber);
+                _rawPriceLabels = [];
+                _rawPriceData = [];
+                if (typeof updatePriceSummary === 'function') updatePriceSummary(null);
+                showChartUnavailable('overlay-2', '無法抓到價格資料');
+                return;
+            }
             var cardPriceUpDate=cardInfo['upddate'];
             var cardData=cardInfo['cardPrice'];
 
@@ -2424,7 +2469,7 @@ console.log("進入繪圖區:"+cardNum);
             });
 
             console.log('價格圖表創建完成');
-            document.getElementById('overlay-2').style.display='none';
+            hideOverlay('overlay-2');
 
             // 5. 更新價格摘要統計卡片
             updatePriceSummary(cardData);
@@ -2728,7 +2773,14 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
                 myStockChart = null;
             }
             
-            var cardInfo = jsonObj[internalCardNumber];
+            var cardInfo = jsonObj && jsonObj[internalCardNumber];
+            if (!cardInfo) {
+                console.warn('查無此卡庫存資料:', internalCardNumber);
+                _rawStockLabels = [];
+                _rawStockData = [];
+                showChartUnavailable('overlay-3', '無法抓到庫存資料');
+                return;
+            }
             var cardPriceUpDate=cardInfo['upddate'];
             var cardData=cardInfo['cardPrice'];
 
@@ -2877,7 +2929,7 @@ function getCardStockData(jsonObj,internalCardNumber,cardNum) {
             });		
 
             console.log('庫存圖表創建完成');
-            document.getElementById('overlay-3').style.display='none';					
+            hideOverlay('overlay-3');
 }
 
 /**
@@ -4119,7 +4171,43 @@ function hideOverlay(overlayId) {
 const overlay = document.getElementById(overlayId);
 if (overlay) {
     overlay.style.display = 'none';
+    overlay.classList.remove('is-unavailable');
 }
+}
+
+/**
+* 價格／庫存載入中：還原 spinner overlay
+* @param {string} overlayId
+* @param {string} label
+*/
+function showChartLoading(overlayId, label) {
+    var overlay = document.getElementById(overlayId);
+    if (!overlay) return;
+    overlay.innerHTML =
+        '<div class="overlay" role="status">' +
+        '<i class="fas fa-3x fa-sync-alt fa-spin" aria-hidden="true"></i>' +
+        '<div class="text-bold pt-2">' + label + '</div></div>';
+    overlay.classList.remove('is-unavailable');
+    overlay.style.display = 'block';
+}
+
+/**
+* 價格／庫存無法取得：以 overlay 提示（對齊卡片資訊 infoSwiperMask 寫法）
+* 不發右上角 toast，避免打斷閱讀；訊息留在對應圖表區塊。
+* @param {string} overlayId
+* @param {string} message
+*/
+function showChartUnavailable(overlayId, message) {
+    var overlay = document.getElementById(overlayId);
+    if (!overlay) return;
+    overlay.innerHTML =
+        '<div class="overlay overlay-unavailable" role="status">' +
+        '<div class="overlay-unavailable-text">' +
+        '<i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i>' +
+        message +
+        '</div></div>';
+    overlay.classList.add('is-unavailable');
+    overlay.style.display = 'block';
 }
 
 // 顯示/隱藏卡片資訊遮罩
