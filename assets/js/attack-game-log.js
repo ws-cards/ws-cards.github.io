@@ -1236,7 +1236,9 @@
             pane.classList.remove("is-active");
           }
         }
-        var detailHost = cloned.getElementById("sumBattleDetail");
+        // Element has no getElementById — use querySelector / doc
+        var detailHost = cloned.querySelector("#sumBattleDetail") ||
+          doc.getElementById("sumBattleDetail");
         if (detailHost) {
           detailHost.style.height = "auto";
           detailHost.style.overflow = "visible";
