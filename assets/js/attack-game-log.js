@@ -2070,24 +2070,6 @@
     turnLine.y = pad;
     root.addChild(turnLine);
 
-    // Top-center: self-damage actions for the current-turn player
-    var refreshBtn = makeBtn("洗傷", land ? 72 : 64, 32, COLORS.panel2, {
-      size: 13, stroke: COLORS.coral, textFill: COLORS.coral, radius: 9
-    });
-    var otherSelfBtn = makeBtn("其他自傷", land ? 96 : 88, 32, COLORS.panel2, {
-      size: 13, stroke: COLORS.amber, textFill: COLORS.amber, radius: 9
-    });
-    var selfGap = 8;
-    var selfGroupW = refreshBtn._w + selfGap + otherSelfBtn._w;
-    refreshBtn.x = Math.floor((w - selfGroupW) / 2);
-    refreshBtn.y = pad;
-    otherSelfBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
-    otherSelfBtn.y = pad;
-    hit(refreshBtn, doRefreshDamage);
-    hit(otherSelfBtn, doOtherSelfDamage);
-    root.addChild(refreshBtn);
-    root.addChild(otherSelfBtn);
-
     var chipY = pad + 36;
     var compact = land && w < 900;
     var c1 = drawLifeChip(pad, chipY, "先攻", "first", life1, COLORS.teal, activeFirst, compact);
@@ -2118,6 +2100,27 @@
       hit(undoBtn, undoLast);
       root.addChild(undoBtn);
     }
+
+    // Top-center self-damage — drawn last so they stay clickable above other chrome
+    var refreshBtn = makeBtn("洗傷", land ? 78 : 70, 34, COLORS.panel2, {
+      size: 14, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
+    });
+    var otherSelfBtn = makeBtn("其他自傷", land ? 104 : 96, 34, COLORS.panel2, {
+      size: 14, stroke: COLORS.amber, textFill: COLORS.amber, radius: 10
+    });
+    var selfGap = 10;
+    var selfGroupW = refreshBtn._w + selfGap + otherSelfBtn._w;
+    var rightLimit = (state.lastUndo ? (w - 96 - 72 - pad - 16) : (endBtn.x - 8));
+    var selfX = Math.floor((w - selfGroupW) / 2);
+    selfX = Math.max(pad, Math.min(selfX, rightLimit - selfGroupW));
+    refreshBtn.x = selfX;
+    refreshBtn.y = pad;
+    otherSelfBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
+    otherSelfBtn.y = pad;
+    hit(refreshBtn, doRefreshDamage);
+    hit(otherSelfBtn, doOtherSelfDamage);
+    root.addChild(refreshBtn);
+    root.addChild(otherSelfBtn);
   }
 
   function drawSlotsRow(y, interactiveMode, opts) {
