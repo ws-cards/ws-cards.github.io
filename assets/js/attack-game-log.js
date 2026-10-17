@@ -164,6 +164,73 @@
     return true;
   }
 
+  function formatLifeArrow(before, after) {
+    before = before || { level: 0, damage: 0 };
+    after = after || { level: 0, damage: 0 };
+    if (Number(before.level) === Number(after.level)) {
+      return "傷" + (Number(before.damage) || 0) + "→" + (Number(after.damage) || 0);
+    }
+    return "Lv" + (Number(before.level) || 0) + "/" + (Number(before.damage) || 0) +
+      "→Lv" + (Number(after.level) || 0) + "/" + (Number(after.damage) || 0);
+  }
+
+  /**
+   * Self-inflicted clock damage for the active (current-turn) player.
+   * reason: "refresh" (洗傷, fixed 1) | "other" (其他自傷, chosen amount)
+   */
+  function applySelfDamage(amount, reason) {
+    if (state.ended || state.phase === "summary" || state.phase === "setup") {
+      toast("對局未進行中");
+      return false;
+    }
+    var side = state.activeSide === "second" ? "second" : "first";
+    var n = Math.max(0, Number(amount) || 0);
+    if (!n) {
+      toast("傷害需大於 0");
+      return false;
+    }
+    reason = reason === "other" ? "other" : "refresh";
+    ensureLife();
+    var before = lifeSnapshot(side);
+    applyClockDamage(side, n);
+    var after = lifeSnapshot(side);
+    var log = {
+      id: uid(),
+      kind: "selfDamage",
+      selfKind: reason,
+      turn: state.turn,
+      side: side,
+      activeSide: state.activeSide,
+      amount: n,
+      lifeBefore: before,
+      lifeAfter: after,
+      timestamp: Date.now()
+    };
+    state.logs.push(log);
+    state.lastUndo = { logId: log.id, kind: "selfDamage" };
+    persist();
+    var kindLabel = reason === "other" ? "其他自傷" : "洗傷";
+    if (checkLevelOut()) {
+      toast(sideLabel(side) + " 到達等級 4・對局結束");
+      return true;
+    }
+    render();
+    toast(sideLabel(side) + " " + kindLabel + " " + n +
+      "（" + formatLifeArrow(before, after) + "）");
+    return true;
+  }
+
+  function doRefreshDamage() {
+    applySelfDamage(1, "refresh");
+  }
+
+  function doOtherSelfDamage() {
+    askNumber("其他自傷", "輸入對自己造成的傷害點數（≥ 1）。", false).then(function (n) {
+      if (n == null) return;
+      applySelfDamage(n, "other");
+    });
+  }
+
   function countStageCards(stage) {
     var n = 0;
     for (var i = 0; i < SLOT_KEYS.length; i++) {
@@ -726,7 +793,17 @@
     };
   }
 
-  /** Group attacks + manual life adjusts by turn + side for the detail tab. */
+  function selfDamageLabel(log) {
+    var name = log && log.selfKind === "other" ? "其他自傷" : "洗傷";
+    var amount = Number(log && log.amount) || 0;
+    return {
+      name: name,
+      meta: amount + "傷（" + formatLifeArrow(log && log.lifeBefore, log && log.lifeAfter) + "）",
+      resultClass: "res-damage"
+    };
+  }
+
+  /** Group attacks + life/self-damage events by turn + side for the detail tab. */
   function buildBattleDetail() {
     var groups = [];
     var index = {};
@@ -739,8 +816,11 @@
       var key = turn + "|" + side;
       if (!index[key]) {
         var seedLife = null;
-        if (log.kind === "lifeAdjust") seedLife = log.lifeBefore || log.lifeAfter;
-        else seedLife = log.attackerLife || null;
+        if (log.kind === "lifeAdjust" || log.kind === "selfDamage") {
+          seedLife = log.lifeBefore || log.lifeAfter;
+        } else {
+          seedLife = log.attackerLife || null;
+        }
         index[key] = {
           turn: turn,
           side: side,
@@ -756,6 +836,16 @@
           name: adj.name,
           meta: adj.meta,
           resultClass: adj.resultClass
+        });
+        continue;
+      }
+      if (log.kind === "selfDamage") {
+        var sd = selfDamageLabel(log);
+        index[key].entries.push({
+          entryType: "selfDamage",
+          name: sd.name,
+          meta: sd.meta,
+          resultClass: sd.resultClass
         });
         continue;
       }
@@ -818,8 +908,8 @@
         for (var a = 0; a < entries.length; a++) {
           var ent = entries[a];
           var li = document.createElement("li");
-          if (ent.entryType === "lifeAdjust") {
-            li.className = "is-life-adjust";
+          if (ent.entryType === "lifeAdjust" || ent.entryType === "selfDamage") {
+            li.className = ent.entryType === "selfDamage" ? "is-self-damage" : "is-life-adjust";
             li.innerHTML =
               "<span class=\"atk-name\">" + escapeHtml(ent.name) + "</span>" +
               "<span class=\"atk-meta\"><span class=\"" + ent.resultClass + "\">" +
@@ -1703,7 +1793,7 @@
     }
     state.logs.pop();
     state.lastUndo = null;
-    if (last.kind === "lifeAdjust" && last.side && last.lifeBefore) {
+    if ((last.kind === "lifeAdjust" || last.kind === "selfDamage") && last.side && last.lifeBefore) {
       ensureLife();
       state.life[last.side] = {
         level: Number(last.lifeBefore.level) || 0,
@@ -1716,13 +1806,17 @@
         damage: Number(last.lifeBefore.damage) || 0
       };
     }
-    if (last.kind !== "lifeAdjust" && last.side && last.slot &&
+    if (last.kind !== "lifeAdjust" && last.kind !== "selfDamage" &&
+        last.side && last.slot &&
         state.stages[last.side] && state.stages[last.side][last.slot]) {
       state.stages[last.side][last.slot].resolvedOnce = false;
     }
     persist();
     render();
-    toast(last.kind === "lifeAdjust" ? "已撤銷生命調整" : "已撤銷上一筆攻擊");
+    var undoMsg = "已撤銷上一筆攻擊";
+    if (last.kind === "lifeAdjust") undoMsg = "已撤銷生命調整";
+    else if (last.kind === "selfDamage") undoMsg = "已撤銷自傷";
+    toast(undoMsg);
   }
 
   function endAttackPhase() {
@@ -1976,7 +2070,25 @@
     turnLine.y = pad;
     root.addChild(turnLine);
 
-    var chipY = pad + (land ? 18 : 20);
+    // Top-center: self-damage actions for the current-turn player
+    var refreshBtn = makeBtn("洗傷", land ? 72 : 64, 32, COLORS.panel2, {
+      size: 13, stroke: COLORS.coral, textFill: COLORS.coral, radius: 9
+    });
+    var otherSelfBtn = makeBtn("其他自傷", land ? 96 : 88, 32, COLORS.panel2, {
+      size: 13, stroke: COLORS.amber, textFill: COLORS.amber, radius: 9
+    });
+    var selfGap = 8;
+    var selfGroupW = refreshBtn._w + selfGap + otherSelfBtn._w;
+    refreshBtn.x = Math.floor((w - selfGroupW) / 2);
+    refreshBtn.y = pad;
+    otherSelfBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
+    otherSelfBtn.y = pad;
+    hit(refreshBtn, doRefreshDamage);
+    hit(otherSelfBtn, doOtherSelfDamage);
+    root.addChild(refreshBtn);
+    root.addChild(otherSelfBtn);
+
+    var chipY = pad + 36;
     var compact = land && w < 900;
     var c1 = drawLifeChip(pad, chipY, "先攻", "first", life1, COLORS.teal, activeFirst, compact);
     var c2;
@@ -3189,6 +3301,7 @@
     endEncorePhase: endEncorePhase,
     applyClockDamage: applyClockDamage,
     adjustLife: adjustLife,
+    applySelfDamage: applySelfDamage,
     checkLevelOut: checkLevelOut,
     cardAttackDamageStats: cardAttackDamageStats,
     standStage: standStage,
