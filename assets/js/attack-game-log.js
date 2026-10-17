@@ -739,7 +739,7 @@
       var key = turn + "|" + side;
       if (!index[key]) {
         var seedLife = null;
-        if (log.kind === "lifeAdjust") seedLife = log.lifeAfter || log.lifeBefore;
+        if (log.kind === "lifeAdjust") seedLife = log.lifeBefore || log.lifeAfter;
         else seedLife = log.attackerLife || null;
         index[key] = {
           turn: turn,
