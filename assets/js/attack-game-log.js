@@ -763,7 +763,6 @@
       ["取消傷害綜計", report.first.cancelDamage, report.second.cancelDamage],
       ["取消傷害次數", report.first.cancelTimes, report.second.cancelTimes],
       ["取消率", report.first.cancelRate.toFixed(2) + "%", report.second.cancelRate.toFixed(2) + "%"],
-      ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
       ["Attacks", report.first.attacks, report.second.attacks],
       [
         "直 / 正 / 側 / 效",
