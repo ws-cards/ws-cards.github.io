@@ -37,7 +37,6 @@
 
   var state = createEmptyState();
   var SELF_REASON_OPTIONS = [
-    { id: "press1draw2", label: "壓1抽2" },
     { id: "charEffect", label: "角色效果" },
     { id: "other", label: "其他" }
   ];
@@ -189,8 +188,8 @@
 
   /**
    * Self-inflicted clock damage for the active (current-turn) player.
-   * kind: "refresh" (洗傷, fixed 1) | "other" (其他自傷)
-   * selfReason: only for other — press1draw2 | charEffect | other
+   * kind: "refresh" (洗傷) | "press1draw2" (壓1抽2) | "other" (其他自傷)
+   * selfReason: only for other — charEffect | other
    */
   function applySelfDamage(amount, kind, selfReason) {
     if (state.ended || state.phase === "summary" || state.phase === "setup") {
@@ -203,7 +202,7 @@
       toast("傷害需大於 0");
       return false;
     }
-    kind = kind === "other" ? "other" : "refresh";
+    if (kind !== "other" && kind !== "press1draw2") kind = "refresh";
     if (kind === "other" && !SELF_REASON_LABELS[selfReason]) selfReason = "other";
     ensureLife();
     var before = lifeSnapshot(side);
@@ -213,7 +212,7 @@
       id: uid(),
       kind: "selfDamage",
       selfKind: kind,
-      selfReason: kind === "other" ? selfReason : null,
+      selfReason: kind === "other" ? selfReason : (kind === "press1draw2" ? "press1draw2" : null),
       turn: state.turn,
       side: side,
       activeSide: state.activeSide,
@@ -227,9 +226,9 @@
     uiState.selfDamageStep = null;
     uiState.selfDamageAmount = null;
     persist();
-    var kindLabel = kind === "other"
-      ? ("其他自傷・" + (SELF_REASON_LABELS[selfReason] || "其他"))
-      : "洗傷";
+    var kindLabel = "洗傷";
+    if (kind === "press1draw2") kindLabel = "壓1抽2";
+    else if (kind === "other") kindLabel = "其他自傷・" + (SELF_REASON_LABELS[selfReason] || "其他");
     if (checkLevelOut()) {
       toast(sideLabel(side) + " 到達等級 4・對局結束");
       return true;
@@ -246,6 +245,12 @@
     applySelfDamage(1, "refresh");
   }
 
+  function doPress1Draw2() {
+    uiState.selfDamageStep = null;
+    uiState.selfDamageAmount = null;
+    applySelfDamage(1, "press1draw2");
+  }
+
   function doOtherSelfDamage() {
     uiState.draft = null;
     uiState.attackStep = null;
@@ -258,6 +263,12 @@
     uiState.selfDamageStep = null;
     uiState.selfDamageAmount = null;
     render();
+  }
+
+  function confirmEndGame() {
+    var ok = window.confirm("確定要結束對局嗎？\n結束後將進入結算畫面，無法繼續記錄本局攻擊。");
+    if (!ok) return;
+    endGame();
   }
 
   function countStageCards(stage) {
@@ -837,7 +848,8 @@
 
   function selfDamageLabel(log) {
     var name = "洗傷";
-    if (log && log.selfKind === "other") {
+    if (log && log.selfKind === "press1draw2") name = "壓1抽2";
+    else if (log && log.selfKind === "other") {
       name = "其他自傷・" + (SELF_REASON_LABELS[log.selfReason] || "其他");
     }
     var amount = Number(log && log.amount) || 0;
@@ -1400,6 +1412,33 @@
     c.addChild(t);
     c._bg = g;
     c._label = t;
+    c._w = w;
+    c._h = h;
+    return c;
+  }
+
+  /** Red danger button with a warning-triangle icon (no emoji font needed). */
+  function makeDangerEndBtn(w, h) {
+    var c = new PIXI.Container();
+    c.eventMode = "static";
+    c.cursor = "pointer";
+    var g = new PIXI.Graphics();
+    gFillRound(g, 0, 0, w, h, 10, COLORS.red, 1);
+    gStrokeRound(g, 0, 0, w, h, 10, 0xf0a29a, 1.25);
+    // Warning triangle
+    var cx = w / 2;
+    var top = 6;
+    var triH = 16;
+    var half = 10;
+    g.beginFill(0xffffff, 1);
+    g.drawPolygon([cx, top, cx + half, top + triH, cx - half, top + triH]);
+    g.endFill();
+    // Bang
+    g.beginFill(COLORS.red, 1);
+    g.drawRect(cx - 1.2, top + 5, 2.4, 6.5);
+    g.drawCircle(cx, top + 13.5, 1.4);
+    g.endFill();
+    c.addChild(g);
     c._w = w;
     c._h = h;
     return c;
@@ -2015,7 +2054,7 @@
     root.addChild(dim);
 
     var sheetW = Math.min(360, w - 32);
-    var sheetH = uiState.selfDamageStep === "reason" ? 260 : 220;
+    var sheetH = uiState.selfDamageStep === "reason" ? 220 : 220;
     var sheet = new PIXI.Container();
     sheet.x = Math.floor((w - sheetW) / 2);
     sheet.y = Math.floor((h - sheetH) / 2);
@@ -2234,43 +2273,50 @@
       ? chipY + Math.max(c1.h, c2.h) + 6
       : chipY + c1.h + 6 + c2.h + 6;
 
-    var endBtn = makeBtn("結束對局", 96, 34, COLORS.panel2, {
-      size: 13, stroke: COLORS.line, textFill: COLORS.muted, radius: 10
-    });
-    endBtn.x = w - 96 - pad;
+    // Danger end-match control (icon + red fill + confirm)
+    var endBtn = makeDangerEndBtn(40, 34);
+    endBtn.x = w - endBtn._w - pad;
     endBtn.y = pad;
-    hit(endBtn, endGame);
+    hit(endBtn, confirmEndGame);
     root.addChild(endBtn);
 
     if (state.lastUndo && (state.phase === "attack" || state.phase === "deploy" || state.phase === "encore")) {
       var undoBtn = makeBtn("撤銷", 72, 34, COLORS.panel2, {
         size: 13, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
       });
-      undoBtn.x = w - 96 - 72 - pad - 8;
+      undoBtn.x = endBtn.x - undoBtn._w - 8;
       undoBtn.y = pad;
       hit(undoBtn, undoLast);
       root.addChild(undoBtn);
     }
 
-    // Top-center self-damage — drawn last so they stay clickable above other chrome
-    var refreshBtn = makeBtn("洗傷", land ? 78 : 70, 34, COLORS.panel2, {
+    // Top-center: 洗傷 → 壓1抽2 → 其他自傷
+    var refreshBtn = makeBtn("洗傷", land ? 70 : 64, 34, COLORS.panel2, {
       size: 14, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
     });
-    var otherSelfBtn = makeBtn("其他自傷", land ? 104 : 96, 34, COLORS.panel2, {
+    var pressBtn = makeBtn("壓1抽2", land ? 86 : 80, 34, COLORS.panel2, {
+      size: 14, stroke: COLORS.teal, textFill: COLORS.teal, radius: 10
+    });
+    var otherSelfBtn = makeBtn("其他自傷", land ? 96 : 88, 34, COLORS.panel2, {
       size: 14, stroke: COLORS.amber, textFill: COLORS.amber, radius: 10
     });
-    var selfGap = 10;
-    var selfGroupW = refreshBtn._w + selfGap + otherSelfBtn._w;
-    var rightLimit = (state.lastUndo ? (w - 96 - 72 - pad - 16) : (endBtn.x - 8));
+    var selfGap = 8;
+    var selfGroupW = refreshBtn._w + selfGap + pressBtn._w + selfGap + otherSelfBtn._w;
+    var rightLimit = endBtn.x - 8;
+    if (state.lastUndo) rightLimit = endBtn.x - 72 - 8 - 8;
     var selfX = Math.floor((w - selfGroupW) / 2);
     selfX = Math.max(pad, Math.min(selfX, rightLimit - selfGroupW));
     refreshBtn.x = selfX;
     refreshBtn.y = pad;
-    otherSelfBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
+    pressBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
+    pressBtn.y = pad;
+    otherSelfBtn.x = pressBtn.x + pressBtn._w + selfGap;
     otherSelfBtn.y = pad;
     hit(refreshBtn, doRefreshDamage);
+    hit(pressBtn, doPress1Draw2);
     hit(otherSelfBtn, doOtherSelfDamage);
     root.addChild(refreshBtn);
+    root.addChild(pressBtn);
     root.addChild(otherSelfBtn);
   }
 
