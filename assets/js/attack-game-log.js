@@ -759,9 +759,9 @@
     $("sumHeadP2").textContent = "玩家 2（後攻）";
 
     var rows = [
-      ["受到傷害", report.first.damageReceived, report.second.damageReceived],
+      ["受到傷害總計", report.first.damageReceived, report.second.damageReceived],
       ["受到傷害次數", report.first.damageReceivedTimes, report.second.damageReceivedTimes],
-      ["取消傷害", report.first.cancelDamage, report.second.cancelDamage],
+      ["取消傷害綜計", report.first.cancelDamage, report.second.cancelDamage],
       ["取消傷害次數", report.first.cancelTimes, report.second.cancelTimes],
       ["取消率", report.first.cancelRate.toFixed(2) + "%", report.second.cancelRate.toFixed(2) + "%"],
       ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
@@ -1014,8 +1014,8 @@
     if (typeof Chart === "undefined") return;
     var metric = ($("sumChartMetric") && $("sumChartMetric").value) || "damageReceived";
     var titles = {
-      damageReceived: "受到傷害",
-      cancelDamage: "取消傷害",
+      damageReceived: "受到傷害總計",
+      cancelDamage: "取消傷害綜計",
       attacks: "Attacks"
     };
     if ($("sumChartTitle")) $("sumChartTitle").textContent = titles[metric] || metric;
