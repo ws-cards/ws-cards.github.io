@@ -36,6 +36,17 @@
   var lastHeaderBottom = 96;
 
   var state = createEmptyState();
+  var SELF_REASON_OPTIONS = [
+    { id: "press1draw2", label: "壓1抽2" },
+    { id: "charEffect", label: "角色效果" },
+    { id: "other", label: "其他" }
+  ];
+  var SELF_REASON_LABELS = {
+    press1draw2: "壓1抽2",
+    charEffect: "角色效果",
+    other: "其他"
+  };
+
   var uiState = {
     filterLevel: "all",
     filterColor: "all",
@@ -47,6 +58,8 @@
     sidePanelOpen: false,
     panelAnim: 0,
     panelAnimTarget: 0,
+    selfDamageStep: null,
+    selfDamageAmount: null,
     toast: "",
     toastUntil: 0
   };
@@ -176,9 +189,10 @@
 
   /**
    * Self-inflicted clock damage for the active (current-turn) player.
-   * reason: "refresh" (洗傷, fixed 1) | "other" (其他自傷, chosen amount)
+   * kind: "refresh" (洗傷, fixed 1) | "other" (其他自傷)
+   * selfReason: only for other — press1draw2 | charEffect | other
    */
-  function applySelfDamage(amount, reason) {
+  function applySelfDamage(amount, kind, selfReason) {
     if (state.ended || state.phase === "summary" || state.phase === "setup") {
       toast("對局未進行中");
       return false;
@@ -189,7 +203,8 @@
       toast("傷害需大於 0");
       return false;
     }
-    reason = reason === "other" ? "other" : "refresh";
+    kind = kind === "other" ? "other" : "refresh";
+    if (kind === "other" && !SELF_REASON_LABELS[selfReason]) selfReason = "other";
     ensureLife();
     var before = lifeSnapshot(side);
     applyClockDamage(side, n);
@@ -197,7 +212,8 @@
     var log = {
       id: uid(),
       kind: "selfDamage",
-      selfKind: reason,
+      selfKind: kind,
+      selfReason: kind === "other" ? selfReason : null,
       turn: state.turn,
       side: side,
       activeSide: state.activeSide,
@@ -208,8 +224,12 @@
     };
     state.logs.push(log);
     state.lastUndo = { logId: log.id, kind: "selfDamage" };
+    uiState.selfDamageStep = null;
+    uiState.selfDamageAmount = null;
     persist();
-    var kindLabel = reason === "other" ? "其他自傷" : "洗傷";
+    var kindLabel = kind === "other"
+      ? ("其他自傷・" + (SELF_REASON_LABELS[selfReason] || "其他"))
+      : "洗傷";
     if (checkLevelOut()) {
       toast(sideLabel(side) + " 到達等級 4・對局結束");
       return true;
@@ -221,14 +241,23 @@
   }
 
   function doRefreshDamage() {
+    uiState.selfDamageStep = null;
+    uiState.selfDamageAmount = null;
     applySelfDamage(1, "refresh");
   }
 
   function doOtherSelfDamage() {
-    askNumber("其他自傷", "輸入對自己造成的傷害點數（≥ 1）。", false).then(function (n) {
-      if (n == null) return;
-      applySelfDamage(n, "other");
-    });
+    uiState.draft = null;
+    uiState.attackStep = null;
+    uiState.selfDamageAmount = null;
+    uiState.selfDamageStep = "amount";
+    render();
+  }
+
+  function closeSelfDamageSheet() {
+    uiState.selfDamageStep = null;
+    uiState.selfDamageAmount = null;
+    render();
   }
 
   function countStageCards(stage) {
@@ -319,7 +348,7 @@
       cancels: 0,
       others: 0,
       actualDamage: 0,
-      byType: { direct: 0, front: 0, side: 0 },
+      byType: { direct: 0, front: 0, side: 0, effect: 0 },
       cards: {}
     };
     for (var i = 0; i < logs.length; i++) {
@@ -434,12 +463,23 @@
       var actual = Number(l.actualDamage) || 0;
       damageReceived += actual;
       if (actual > 0) damageReceivedTimes += 1;
-      var cancelled = 0;
-      if (l.result === "cancel") cancelled = declared;
-      else if (l.result === "other") cancelled = Math.max(0, declared - actual);
-      if (cancelled > 0 || l.result === "cancel" || (l.result === "other" && actual === 0)) {
-        cancelDamage += cancelled;
-        cancelTimes += 1;
+      // Rule: declared 0 cannot count as cancel
+      if (declared > 0) {
+        var cancelled = 0;
+        var isCancelLike = false;
+        if (l.result === "cancel") {
+          cancelled = declared;
+          isCancelLike = true;
+        } else if (l.result === "other") {
+          cancelled = Math.max(0, declared - actual);
+          if (l.otherKind === "triggerCancel" || l.otherKind === "block" || cancelled > 0) {
+            isCancelLike = true;
+          }
+        }
+        if (isCancelLike) {
+          cancelDamage += cancelled;
+          cancelTimes += 1;
+        }
       }
     }
     var denom = cancelDamage + damageReceived;
@@ -480,8 +520,10 @@
         var declared = Number(l.declaredDamage) || 0;
         var actual = Number(l.actualDamage) || 0;
         var cancelled = 0;
-        if (l.result === "cancel") cancelled = declared;
-        else if (l.result === "other") cancelled = Math.max(0, declared - actual);
+        if (declared > 0) {
+          if (l.result === "cancel") cancelled = declared;
+          else if (l.result === "other") cancelled = Math.max(0, declared - actual);
+        }
         // metric accumulates on the RECEIVING side
         var recvSide = l.side === "first" ? "second" : "first";
         var val = 0;
@@ -725,9 +767,9 @@
       ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
       ["Attacks", report.first.attacks, report.second.attacks],
       [
-        "直 / 正 / 側",
-        report.first.byType.direct + "/" + report.first.byType.front + "/" + report.first.byType.side,
-        report.second.byType.direct + "/" + report.second.byType.front + "/" + report.second.byType.side
+        "直 / 正 / 側 / 效",
+        report.first.byType.direct + "/" + report.first.byType.front + "/" + report.first.byType.side + "/" + (report.first.byType.effect || 0),
+        report.second.byType.direct + "/" + report.second.byType.front + "/" + report.second.byType.side + "/" + (report.second.byType.effect || 0)
       ]
     ];
     var body = $("sumStatBody");
@@ -794,7 +836,10 @@
   }
 
   function selfDamageLabel(log) {
-    var name = log && log.selfKind === "other" ? "其他自傷" : "洗傷";
+    var name = "洗傷";
+    if (log && log.selfKind === "other") {
+      name = "其他自傷・" + (SELF_REASON_LABELS[log.selfReason] || "其他");
+    }
     var amount = Number(log && log.amount) || 0;
     return {
       name: name,
@@ -915,9 +960,10 @@
               "<span class=\"atk-meta\"><span class=\"" + ent.resultClass + "\">" +
               escapeHtml(ent.meta) + "</span></span>";
           } else {
+            var dmgWord = ent.attackType === "effect" ? "效果傷害 " : "攻擊 ";
             li.innerHTML =
               "<span class=\"atk-name\">" + escapeHtml(ent.name) + "</span>" +
-              "<span class=\"atk-meta\">攻擊 " + ent.declaredDamage +
+              "<span class=\"atk-meta\">" + dmgWord + ent.declaredDamage +
               "（<span class=\"" + ent.resultClass + "\">" +
               escapeHtml(ent.resultLabel) + "</span>）</span>";
           }
@@ -1190,7 +1236,9 @@
             pane.classList.remove("is-active");
           }
         }
-        var detailHost = cloned.getElementById("sumBattleDetail");
+        // Element has no getElementById — use querySelector / doc
+        var detailHost = cloned.querySelector("#sumBattleDetail") ||
+          doc.getElementById("sumBattleDetail");
         if (detailHost) {
           detailHost.style.height = "auto";
           detailHost.style.overflow = "visible";
@@ -1729,6 +1777,15 @@
     var d = uiState.draft;
     if (!d) return;
     var attacker = activeStage()[d.slot].card;
+    if (!attacker) {
+      toast("攻擊角色已不在場上");
+      return;
+    }
+    var declared = Number(d.declaredDamage) || 0;
+    if (d.result === "cancel" && declared <= 0) {
+      toast("宣告 0 點不能算取消");
+      return;
+    }
     var receiver = opponentSide();
     var dealt = Math.max(0, Number(d.actualDamage) || 0);
     var lifeBefore = lifeSnapshot(receiver);
@@ -1752,7 +1809,7 @@
       result: d.result,
       otherKind: d.otherKind,
       actualDamage: d.actualDamage,
-      countsAsCancel: d.result === "cancel",
+      countsAsCancel: d.result === "cancel" && declared > 0,
       dealtTo: receiver,
       attackerLife: lifeSnapshot(state.activeSide),
       lifeBefore: lifeBefore,
@@ -1894,6 +1951,8 @@
       sidePanelOpen: false,
       panelAnim: 0,
       panelAnimTarget: 0,
+      selfDamageStep: null,
+      selfDamageAmount: null,
       toast: "",
       toastUntil: 0
     };
@@ -1938,11 +1997,103 @@
     else if (state.phase === "encore") drawEncore(w, h);
     else clearPickerThumbs();
 
+    if (uiState.selfDamageStep) drawSelfDamageSheet(w, h);
+
     if (uiState.toast && performance.now() < uiState.toastUntil) {
       drawToast(w, h, uiState.toast);
     } else {
       uiState.toast = "";
     }
+  }
+
+  function drawSelfDamageSheet(w, h) {
+    var dim = new PIXI.Graphics();
+    gFillRect(dim, 0, 0, w, h, 0x000000, 0.55);
+    dim.eventMode = "static";
+    dim.cursor = "pointer";
+    hit(dim, closeSelfDamageSheet);
+    root.addChild(dim);
+
+    var sheetW = Math.min(360, w - 32);
+    var sheetH = uiState.selfDamageStep === "reason" ? 260 : 220;
+    var sheet = new PIXI.Container();
+    sheet.x = Math.floor((w - sheetW) / 2);
+    sheet.y = Math.floor((h - sheetH) / 2);
+    sheet.eventMode = "static";
+    // swallow taps so backdrop doesn't close when pressing buttons
+    sheet.on("pointertap", function (e) { if (e && e.stopPropagation) e.stopPropagation(); });
+    var bg = new PIXI.Graphics();
+    gFillRound(bg, 0, 0, sheetW, sheetH, 14, COLORS.panel, 0.98);
+    gStrokeRound(bg, 0, 0, sheetW, sheetH, 14, COLORS.amber, 1.5);
+    sheet.addChild(bg);
+
+    var title = makeText(
+      uiState.selfDamageStep === "reason" ? "自傷理由" : "其他自傷・選擇點數",
+      { size: 16, weight: "700", fill: COLORS.ink, display: true }
+    );
+    title.x = 16;
+    title.y = 14;
+    sheet.addChild(title);
+
+    var closeBtn = makeBtn("關閉", 64, 30, COLORS.panel2, {
+      size: 12, stroke: COLORS.line, textFill: COLORS.muted, radius: 8
+    });
+    closeBtn.x = sheetW - 76;
+    closeBtn.y = 12;
+    hit(closeBtn, closeSelfDamageSheet);
+    sheet.addChild(closeBtn);
+
+    var y = 56;
+    if (uiState.selfDamageStep === "amount") {
+      var hint = makeText("當回合・" + sideLabel(state.activeSide) + " 自傷", {
+        size: 13, fill: COLORS.muted, display: true
+      });
+      hint.x = 16;
+      hint.y = y;
+      sheet.addChild(hint);
+      y += 32;
+      var bw = Math.floor((sheetW - 32 - 18) / 4);
+      for (var i = 1; i <= 4; i++) {
+        var b = makeBtn(String(i), bw, 48, COLORS.panel2, {
+          size: 20, display: true, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
+        });
+        b.x = 16 + (i - 1) * (bw + 6);
+        b.y = y;
+        (function (n) {
+          hit(b, function () {
+            uiState.selfDamageAmount = n;
+            uiState.selfDamageStep = "reason";
+            render();
+          });
+        })(i);
+        sheet.addChild(b);
+      }
+    } else {
+      var amt = Number(uiState.selfDamageAmount) || 0;
+      var sub = makeText("已選 " + amt + " 傷・請選理由", {
+        size: 13, fill: COLORS.muted, display: true
+      });
+      sub.x = 16;
+      sub.y = y;
+      sheet.addChild(sub);
+      y += 32;
+      for (var r = 0; r < SELF_REASON_OPTIONS.length; r++) {
+        var opt = SELF_REASON_OPTIONS[r];
+        var rb = makeBtn(opt.label, sheetW - 32, 44, COLORS.panel2, {
+          size: 15, stroke: COLORS.amber, textFill: COLORS.ink, radius: 10
+        });
+        rb.x = 16;
+        rb.y = y;
+        (function (id) {
+          hit(rb, function () {
+            applySelfDamage(uiState.selfDamageAmount, "other", id);
+          });
+        })(opt.id);
+        sheet.addChild(rb);
+        y += 52;
+      }
+    }
+    root.addChild(sheet);
   }
 
   function drawIdleBrand(w, h) {
@@ -2522,6 +2673,7 @@
       uiState.pickerSlot = null;
       uiState.redeployMode = false;
       clearPickerThumbs();
+      setSidePanel(false);
       toast("已清空");
     });
     panel.addChild(clearBtn);
@@ -2670,12 +2822,13 @@
         app.stage.off("pointerupoutside", onPickerDragEnd);
         app.stage.off("pointercancel", onPickerDragEnd);
       }
-      // Tap (not swipe) selects the card
+      // Tap (not swipe) selects the card — then auto-collapse picker
       if (!d.moved && d.card) {
         if (!setCardOnSlot(slotKey, d.card)) return;
         uiState.pickerSlot = null;
         uiState.redeployMode = false;
         clearPickerThumbs();
+        setSidePanel(false);
         toast("已放入" + SLOT_LABELS[slotKey]);
       }
     }
@@ -2923,12 +3076,15 @@
     var types = [
       { id: "direct", label: "直接攻擊" },
       { id: "front", label: "正面攻擊" },
-      { id: "side", label: "側面攻擊" }
+      { id: "side", label: "側面攻擊" },
+      { id: "effect", label: "效果傷害" }
     ];
     for (var i = 0; i < types.length; i++) {
       var tp = types[i];
       var b = makeBtn(tp.label, w - 24, 42, COLORS.panel2, {
-        size: 15, stroke: COLORS.line, radius: 10
+        size: 15, stroke: tp.id === "effect" ? COLORS.amber : COLORS.line,
+        textFill: tp.id === "effect" ? COLORS.amber : COLORS.ink,
+        radius: 10
       });
       b.x = 12;
       b.y = y;
@@ -2936,7 +3092,13 @@
         hit(b, function () {
           uiState.draft.attackType = id;
           if (id === "front") uiState.attackStep = "target";
-          else uiState.attackStep = "damage";
+          else {
+            // effect / direct / side → pick damage
+            if (id === "effect") {
+              uiState.draft.target = { fromSlot: null, freeText: "效果傷害" };
+            }
+            uiState.attackStep = "damage";
+          }
           render();
         });
       })(tp.id);
@@ -3066,8 +3228,9 @@
   }
 
   function drawResultStep(panel, y, w) {
+    var declared = Number(uiState.draft.declaredDamage) || 0;
     var t = makeText(
-      "宣告 " + uiState.draft.declaredDamage + " 點 → 結果",
+      "宣告 " + declared + " 點 → 結果",
       { size: 14, fill: COLORS.ink, display: true }
     );
     t.x = 12;
@@ -3089,19 +3252,29 @@
     panel.addChild(eat);
     y += 56;
 
-    var cancel = makeBtn("取消", w - 24, 48, COLORS.panel2, {
-      size: 17, stroke: COLORS.muted, textFill: COLORS.ink, radius: 12
-    });
-    cancel.x = 12;
-    cancel.y = y;
-    hit(cancel, function () {
-      uiState.draft.result = "cancel";
-      uiState.draft.actualDamage = 0;
-      uiState.draft.otherKind = null;
-      commitAttack();
-    });
-    panel.addChild(cancel);
-    y += 56;
+    if (declared > 0) {
+      var cancel = makeBtn("取消", w - 24, 48, COLORS.panel2, {
+        size: 17, stroke: COLORS.muted, textFill: COLORS.ink, radius: 12
+      });
+      cancel.x = 12;
+      cancel.y = y;
+      hit(cancel, function () {
+        uiState.draft.result = "cancel";
+        uiState.draft.actualDamage = 0;
+        uiState.draft.otherKind = null;
+        commitAttack();
+      });
+      panel.addChild(cancel);
+      y += 56;
+    } else {
+      var tip = makeText("宣告 0 點不能算取消", {
+        size: 13, fill: COLORS.muted, display: true
+      });
+      tip.x = 12;
+      tip.y = y + 12;
+      panel.addChild(tip);
+      y += 44;
+    }
 
     var other = makeBtn("其他（觸發取消／擋傷／減傷）", w - 24, 48, COLORS.teal, {
       size: 14, textFill: COLORS.bg, radius: 12
@@ -3109,6 +3282,10 @@
     other.x = 12;
     other.y = y;
     hit(other, function () {
+      if (declared <= 0) {
+        toast("宣告 0 點不能算取消（請選吃傷或改打點）");
+        return;
+      }
       uiState.draft.result = "other";
       uiState.attackStep = "otherKind";
       render();
@@ -3324,9 +3501,14 @@
       if (uiState.draft.actualDamage == null && (uiState.draft.result === "cancel" || uiState.draft.otherKind === "triggerCancel" || uiState.draft.otherKind === "block")) {
         uiState.draft.actualDamage = 0;
       }
+      if (uiState.draft.result === "cancel" && !(Number(uiState.draft.declaredDamage) > 0)) {
+        return false;
+      }
       commitAttack();
       return true;
     },
+    doOtherSelfDamage: doOtherSelfDamage,
+    closeSelfDamageSheet: closeSelfDamageSheet,
     forcePhase: function (phase) {
       state.phase = phase;
       persist();
