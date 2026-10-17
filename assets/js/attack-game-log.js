@@ -670,6 +670,15 @@
     };
     $("btnSample").onclick = onSample;
     $("btnImport").onclick = onImport;
+    if ($("btnLiveStatsClose")) {
+      $("btnLiveStatsClose").onclick = hideLiveStats;
+    }
+    var liveOverlay = $("overlay-live-stats");
+    if (liveOverlay) {
+      liveOverlay.addEventListener("click", function (ev) {
+        if (ev.target === liveOverlay) hideLiveStats();
+      });
+    }
     bindSummaryUI();
   }
 
@@ -747,6 +756,66 @@
     }
   }
 
+  function buildQuickStatRows(report) {
+    return [
+      ["受到傷害總計", report.first.damageReceived, report.second.damageReceived],
+      ["受到傷害次數", report.first.damageReceivedTimes, report.second.damageReceivedTimes],
+      ["取消傷害綜計", report.first.cancelDamage, report.second.cancelDamage],
+      ["取消傷害次數", report.first.cancelTimes, report.second.cancelTimes],
+      ["取消率", report.first.cancelRate.toFixed(2) + "%", report.second.cancelRate.toFixed(2) + "%"],
+      ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
+      ["Attacks", report.first.attacks, report.second.attacks],
+      [
+        "直 / 正 / 側 / 效",
+        report.first.byType.direct + "/" + report.first.byType.front + "/" + report.first.byType.side + "/" + (report.first.byType.effect || 0),
+        report.second.byType.direct + "/" + report.second.byType.front + "/" + report.second.byType.side + "/" + (report.second.byType.effect || 0)
+      ]
+    ];
+  }
+
+  function fillQuickStatTable(bodyId, report) {
+    var body = $(bodyId);
+    if (!body) return;
+    body.innerHTML = "";
+    var rows = buildQuickStatRows(report);
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="label">' + escapeHtml(row[0]) + "</td>" +
+        '<td class="p1' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[1])) + "</td>" +
+        '<td class="p2' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[2])) + "</td>";
+      body.appendChild(tr);
+    }
+  }
+
+  function showLiveStats() {
+    if (state.phase === "setup" || state.ended || state.phase === "summary") {
+      toast("對局進行中才可查看");
+      return;
+    }
+    var report = buildMatchReport();
+    if ($("liveHeadP1")) $("liveHeadP1").textContent = "玩家 1（先攻）";
+    if ($("liveHeadP2")) $("liveHeadP2").textContent = "玩家 2（後攻）";
+    fillQuickStatTable("liveStatBody", report);
+    var phaseHint = state.phase === "encore"
+      ? "安可"
+      : (state.phase === "deploy" ? "布陣" : (state.phase === "attack" ? "戰階" : ""));
+    if ($("liveStatsMeta")) {
+      $("liveStatsMeta").textContent =
+        "回合 " + state.turn +
+        (phaseHint ? "・" + phaseHint : "") +
+        "・目前 " + sideLabel(state.activeSide) +
+        "　｜　先攻 Lv" + state.life.first.level + "/" + state.life.first.damage +
+        "　後攻 Lv" + state.life.second.level + "/" + state.life.second.damage;
+    }
+    openOverlay("overlay-live-stats");
+  }
+
+  function hideLiveStats() {
+    closeOverlay("overlay-live-stats");
+  }
+
   function showSummaryUI() {
     var el = $("overlay-summary");
     if (!el) return;
@@ -768,32 +837,7 @@
       escapeHtml(code1) + " / " + escapeHtml(code2) + "</div>";
     $("sumHeadP1").textContent = "玩家 1（先攻）";
     $("sumHeadP2").textContent = "玩家 2（後攻）";
-
-    var rows = [
-      ["受到傷害總計", report.first.damageReceived, report.second.damageReceived],
-      ["受到傷害次數", report.first.damageReceivedTimes, report.second.damageReceivedTimes],
-      ["取消傷害綜計", report.first.cancelDamage, report.second.cancelDamage],
-      ["取消傷害次數", report.first.cancelTimes, report.second.cancelTimes],
-      ["取消率", report.first.cancelRate.toFixed(2) + "%", report.second.cancelRate.toFixed(2) + "%"],
-      ["壓縮率", "—（本工具未記錄）", "—（本工具未記錄）", true],
-      ["Attacks", report.first.attacks, report.second.attacks],
-      [
-        "直 / 正 / 側 / 效",
-        report.first.byType.direct + "/" + report.first.byType.front + "/" + report.first.byType.side + "/" + (report.first.byType.effect || 0),
-        report.second.byType.direct + "/" + report.second.byType.front + "/" + report.second.byType.side + "/" + (report.second.byType.effect || 0)
-      ]
-    ];
-    var body = $("sumStatBody");
-    body.innerHTML = "";
-    for (var r = 0; r < rows.length; r++) {
-      var row = rows[r];
-      var tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td class="label">' + escapeHtml(row[0]) + "</td>" +
-        '<td class="p1' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[1])) + "</td>" +
-        '<td class="p2' + (row[3] ? " small" : "") + '">' + escapeHtml(String(row[2])) + "</td>";
-      body.appendChild(tr);
-    }
+    fillQuickStatTable("sumStatBody", report);
 
     $("sumFootMeta").textContent =
       "Duration: " + formatDuration(report.durationMs) +
@@ -2280,11 +2324,20 @@
     hit(endBtn, confirmEndGame);
     root.addChild(endBtn);
 
+    // Live quick-stats popup — left of end button
+    var liveBtn = makeBtn(land ? "即時戰況統計" : "戰況統計", land ? 124 : 88, 34, COLORS.panel2, {
+      size: land ? 13 : 12, stroke: COLORS.teal, textFill: COLORS.teal, radius: 10
+    });
+    liveBtn.x = endBtn.x - liveBtn._w - 8;
+    liveBtn.y = pad;
+    hit(liveBtn, showLiveStats);
+    root.addChild(liveBtn);
+
     if (state.lastUndo && (state.phase === "attack" || state.phase === "deploy" || state.phase === "encore")) {
       var undoBtn = makeBtn("撤銷", 72, 34, COLORS.panel2, {
         size: 13, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
       });
-      undoBtn.x = endBtn.x - undoBtn._w - 8;
+      undoBtn.x = liveBtn.x - undoBtn._w - 8;
       undoBtn.y = pad;
       hit(undoBtn, undoLast);
       root.addChild(undoBtn);
@@ -2302,8 +2355,8 @@
     });
     var selfGap = 8;
     var selfGroupW = refreshBtn._w + selfGap + pressBtn._w + selfGap + otherSelfBtn._w;
-    var rightLimit = endBtn.x - 8;
-    if (state.lastUndo) rightLimit = endBtn.x - 72 - 8 - 8;
+    var rightLimit = liveBtn.x - 8;
+    if (state.lastUndo) rightLimit = liveBtn.x - 72 - 8 - 8;
     var selfX = Math.floor((w - selfGroupW) / 2);
     selfX = Math.max(pad, Math.min(selfX, rightLimit - selfGroupW));
     refreshBtn.x = selfX;
@@ -3555,6 +3608,9 @@
     },
     doOtherSelfDamage: doOtherSelfDamage,
     closeSelfDamageSheet: closeSelfDamageSheet,
+    showLiveStats: showLiveStats,
+    hideLiveStats: hideLiveStats,
+    buildQuickStatRows: buildQuickStatRows,
     forcePhase: function (phase) {
       state.phase = phase;
       persist();
