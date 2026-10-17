@@ -33,6 +33,7 @@
   var textResolver = null;
   var summaryChart = null;
   var summaryTab = "stats";
+  var lastHeaderBottom = 96;
 
   var state = createEmptyState();
   var uiState = {
@@ -108,6 +109,59 @@
     ensureLife();
     var life = state.life[side];
     return { level: life.level, damage: life.damage };
+  }
+
+  /**
+   * Manually nudge a side's level or damage zone.
+   * Does not auto-convert damage→level (level is adjusted separately).
+   */
+  function adjustLife(side, field, delta) {
+    if (state.ended || state.phase === "summary" || state.phase === "setup") {
+      toast("對局未進行中");
+      return false;
+    }
+    side = side === "second" ? "second" : "first";
+    field = field === "level" ? "level" : "damage";
+    delta = Number(delta) || 0;
+    if (!delta) return false;
+    ensureLife();
+    var life = state.life[side];
+    var before = lifeSnapshot(side);
+    var next = Number(life[field]) || 0;
+    next += delta;
+    if (field === "level") next = Math.max(0, Math.min(4, next));
+    else next = Math.max(0, next);
+    if (next === before[field]) {
+      toast(field === "level" ? "等級已達上下限" : "傷害不可再減");
+      return false;
+    }
+    life[field] = next;
+    var after = lifeSnapshot(side);
+    var log = {
+      id: uid(),
+      kind: "lifeAdjust",
+      turn: state.turn,
+      side: side,
+      activeSide: state.activeSide,
+      field: field,
+      delta: after[field] - before[field],
+      lifeBefore: before,
+      lifeAfter: after,
+      timestamp: Date.now()
+    };
+    state.logs.push(log);
+    state.lastUndo = { logId: log.id, kind: "lifeAdjust" };
+    persist();
+    var signed = (log.delta > 0 ? "+" : "") + log.delta;
+    var label = field === "level" ? "等級" : "傷害";
+    if (checkLevelOut()) {
+      toast(sideLabel(side) + " 到達等級 4・對局結束");
+      return true;
+    }
+    render();
+    toast(sideLabel(side) + " " + label + " " + signed +
+      "（" + before[field] + "→" + after[field] + "）");
+    return true;
   }
 
   function countStageCards(stage) {
@@ -186,8 +240,12 @@
     uiState.toastUntil = 0;
   }
 
+  function isAttackLog(l) {
+    return !!(l && l.kind !== "lifeAdjust" && l.attackerCard);
+  }
+
   function totalsFor(side) {
-    var logs = state.logs.filter(function (l) { return l.side === side; });
+    var logs = state.logs.filter(function (l) { return l.side === side && isAttackLog(l); });
     var out = {
       declared: logs.length,
       damageHits: 0,
@@ -212,7 +270,7 @@
 
   /** Per-card attack damage (same cardNo accumulated). */
   function cardAttackDamageStats(side) {
-    var logs = state.logs.filter(function (l) { return l.side === side; });
+    var logs = state.logs.filter(function (l) { return l.side === side && isAttackLog(l); });
     var map = {};
     for (var i = 0; i < logs.length; i++) {
       var l = logs[i];
@@ -297,7 +355,7 @@
   /** Stats from the receiving player's perspective (like reference report). */
   function receivedStatsFor(side) {
     var opp = side === "first" ? "second" : "first";
-    var logs = state.logs.filter(function (l) { return l.side === opp; });
+    var logs = state.logs.filter(function (l) { return l.side === opp && isAttackLog(l); });
     var damageReceived = 0;
     var damageReceivedTimes = 0;
     var cancelDamage = 0;
@@ -351,7 +409,7 @@
       var add2 = 0;
       for (var li = 0; li < state.logs.length; li++) {
         var l = state.logs[li];
-        if (l.turn !== turn) continue;
+        if (l.turn !== turn || !isAttackLog(l)) continue;
         var declared = Number(l.declaredDamage) || 0;
         var actual = Number(l.actualDamage) || 0;
         var cancelled = 0;
@@ -655,7 +713,20 @@
     return "res-other";
   }
 
-  /** Group every recorded attack by turn + side for the detail tab. */
+  function lifeAdjustLabel(log) {
+    var field = log && log.field === "level" ? "等級" : "傷害";
+    var d = Number(log && log.delta) || 0;
+    var signed = (d > 0 ? "+" : "") + d;
+    var before = log && log.lifeBefore ? Number(log.lifeBefore[log.field]) || 0 : "—";
+    var after = log && log.lifeAfter ? Number(log.lifeAfter[log.field]) || 0 : "—";
+    return {
+      name: "手動調整・" + field,
+      meta: signed + "（" + before + "→" + after + "）",
+      resultClass: d >= 0 ? "res-damage" : "res-cancel"
+    };
+  }
+
+  /** Group attacks + manual life adjusts by turn + side for the detail tab. */
   function buildBattleDetail() {
     var groups = [];
     var index = {};
@@ -667,17 +738,30 @@
       var side = log.side === "second" ? "second" : "first";
       var key = turn + "|" + side;
       if (!index[key]) {
-        var atkLife = log.attackerLife || null;
+        var seedLife = null;
+        if (log.kind === "lifeAdjust") seedLife = log.lifeAfter || log.lifeBefore;
+        else seedLife = log.attackerLife || null;
         index[key] = {
           turn: turn,
           side: side,
-          level: atkLife && atkLife.level != null ? Number(atkLife.level) || 0 : 0,
-          attacks: []
+          level: seedLife && seedLife.level != null ? Number(seedLife.level) || 0 : 0,
+          entries: []
         };
         groups.push(index[key]);
       }
+      if (log.kind === "lifeAdjust") {
+        var adj = lifeAdjustLabel(log);
+        index[key].entries.push({
+          entryType: "lifeAdjust",
+          name: adj.name,
+          meta: adj.meta,
+          resultClass: adj.resultClass
+        });
+        continue;
+      }
       var ac = log.attackerCard || {};
-      index[key].attacks.push({
+      index[key].entries.push({
+        entryType: "attack",
         name: ac.name || ac.cardNo || "未知角色",
         cardNo: ac.cardNo || "",
         declaredDamage: Number(log.declaredDamage) || 0,
@@ -711,7 +795,7 @@
     if (!groups.length) {
       var empty = document.createElement("div");
       empty.className = "agl-battle-detail-empty";
-      empty.textContent = "本局尚無攻擊紀錄";
+      empty.textContent = "本局尚無對戰紀錄";
       host.appendChild(empty);
       return;
     }
@@ -725,19 +809,28 @@
         sideLabel(g.side) + " 第" + g.turn + "回 等級" + g.level;
       block.appendChild(head);
       var ul = document.createElement("ul");
-      if (!g.attacks.length) {
+      var entries = g.entries || g.attacks || [];
+      if (!entries.length) {
         var none = document.createElement("li");
-        none.innerHTML = "<span class=\"atk-name\">（本回合無攻擊）</span><span></span>";
+        none.innerHTML = "<span class=\"atk-name\">（本回合無紀錄）</span><span></span>";
         ul.appendChild(none);
       } else {
-        for (var a = 0; a < g.attacks.length; a++) {
-          var atk = g.attacks[a];
+        for (var a = 0; a < entries.length; a++) {
+          var ent = entries[a];
           var li = document.createElement("li");
-          li.innerHTML =
-            "<span class=\"atk-name\">" + escapeHtml(atk.name) + "</span>" +
-            "<span class=\"atk-meta\">攻擊 " + atk.declaredDamage +
-            "（<span class=\"" + atk.resultClass + "\">" +
-            escapeHtml(atk.resultLabel) + "</span>）</span>";
+          if (ent.entryType === "lifeAdjust") {
+            li.className = "is-life-adjust";
+            li.innerHTML =
+              "<span class=\"atk-name\">" + escapeHtml(ent.name) + "</span>" +
+              "<span class=\"atk-meta\"><span class=\"" + ent.resultClass + "\">" +
+              escapeHtml(ent.meta) + "</span></span>";
+          } else {
+            li.innerHTML =
+              "<span class=\"atk-name\">" + escapeHtml(ent.name) + "</span>" +
+              "<span class=\"atk-meta\">攻擊 " + ent.declaredDamage +
+              "（<span class=\"" + ent.resultClass + "\">" +
+              escapeHtml(ent.resultLabel) + "</span>）</span>";
+          }
           ul.appendChild(li);
         }
       }
@@ -1600,29 +1693,36 @@
 
   function undoLast() {
     if (!state.lastUndo || !state.logs.length) {
-      toast("沒有可撤銷的攻擊");
+      toast("沒有可撤銷的紀錄");
       return;
     }
     var last = state.logs[state.logs.length - 1];
     if (!last || last.id !== state.lastUndo.logId) {
-      toast("只能撤銷上一筆攻擊");
+      toast("只能撤銷上一筆紀錄");
       return;
     }
     state.logs.pop();
     state.lastUndo = null;
-    if (last.dealtTo && last.lifeBefore) {
+    if (last.kind === "lifeAdjust" && last.side && last.lifeBefore) {
+      ensureLife();
+      state.life[last.side] = {
+        level: Number(last.lifeBefore.level) || 0,
+        damage: Number(last.lifeBefore.damage) || 0
+      };
+    } else if (last.dealtTo && last.lifeBefore) {
       ensureLife();
       state.life[last.dealtTo] = {
         level: Number(last.lifeBefore.level) || 0,
         damage: Number(last.lifeBefore.damage) || 0
       };
     }
-    if (last.side && last.slot && state.stages[last.side] && state.stages[last.side][last.slot]) {
+    if (last.kind !== "lifeAdjust" && last.side && last.slot &&
+        state.stages[last.side] && state.stages[last.side][last.slot]) {
       state.stages[last.side][last.slot].resolvedOnce = false;
     }
     persist();
     render();
-    toast("已撤銷上一筆");
+    toast(last.kind === "lifeAdjust" ? "已撤銷生命調整" : "已撤銷上一筆攻擊");
   }
 
   function endAttackPhase() {
@@ -1764,30 +1864,94 @@
     root.addChild(sub);
   }
 
-  function drawLifeChip(x, y, label, life, color, active) {
-    var text = label + " 等級 " + life.level + " 傷害 " + life.damage;
-    var t = makeText(text, {
-      size: 13,
+  function drawLifeStepper(parent, x, y, side, field, value, accent, compact) {
+    var label = field === "level" ? "等級" : "傷害";
+    var btnW = compact ? 26 : 28;
+    var btnH = compact ? 24 : 26;
+    var gap = 4;
+    var lab = makeText(label, {
+      size: compact ? 11 : 12,
+      weight: "700",
+      fill: COLORS.muted,
+      display: true
+    });
+    lab.x = x;
+    lab.y = y + Math.floor((btnH - lab.height) / 2);
+    parent.addChild(lab);
+
+    var cx = x + Math.ceil(lab.width) + 6;
+    var minus = makeBtn("−", btnW, btnH, COLORS.panel2, {
+      size: 16, stroke: accent, textFill: accent, radius: 7
+    });
+    minus.x = cx;
+    minus.y = y;
+    hit(minus, function () { adjustLife(side, field, -1); });
+    parent.addChild(minus);
+
+    var val = makeText(String(value), {
+      size: compact ? 14 : 15,
+      weight: "700",
+      fill: COLORS.ink,
+      display: true
+    });
+    var valW = Math.max(22, Math.ceil(val.width));
+    val.x = cx + btnW + gap + Math.floor((valW - val.width) / 2);
+    val.y = y + Math.floor((btnH - val.height) / 2);
+    parent.addChild(val);
+
+    var plus = makeBtn("+", btnW, btnH, COLORS.panel2, {
+      size: 16, stroke: accent, textFill: accent, radius: 7
+    });
+    plus.x = cx + btnW + gap + valW + gap;
+    plus.y = y;
+    hit(plus, function () { adjustLife(side, field, +1); });
+    parent.addChild(plus);
+
+    return {
+      w: (plus.x + btnW) - x,
+      h: btnH
+    };
+  }
+
+  function drawLifeChip(x, y, label, side, life, color, active, compact) {
+    var box = new PIXI.Container();
+    box.x = x;
+    box.y = y;
+    root.addChild(box);
+
+    var rowGap = compact ? 4 : 5;
+    var innerPadX = compact ? 8 : 10;
+    var innerPadY = compact ? 6 : 7;
+    var title = makeText(label, {
+      size: compact ? 12 : 13,
       weight: "700",
       fill: active ? COLORS.onAccent : color,
       display: true
     });
-    var padX = 10;
-    var padY = 6;
-    var bw = Math.ceil(t.width) + padX * 2;
-    var bh = Math.max(28, Math.ceil(t.height) + padY * 2);
+    title.x = innerPadX;
+    title.y = innerPadY;
+    box.addChild(title);
+
+    var cy = innerPadY + Math.ceil(title.height) + rowGap;
+    var s1 = drawLifeStepper(box, innerPadX, cy, side, "level", life.level, color, compact);
+    cy += s1.h + rowGap;
+    var s2 = drawLifeStepper(box, innerPadX, cy, side, "damage", life.damage, color, compact);
+    cy += s2.h;
+
+    var contentW = Math.max(Math.ceil(title.width), s1.w, s2.w);
+    var bw = contentW + innerPadX * 2;
+    var bh = cy + innerPadY;
+
     var g = new PIXI.Graphics();
     if (active) {
-      gFillRound(g, x, y, bw, bh, 8, color, 1);
-      gStrokeRound(g, x, y, bw, bh, 8, COLORS.onAccent, 1.5);
+      gFillRound(g, 0, 0, bw, bh, 10, color, 1);
+      gStrokeRound(g, 0, 0, bw, bh, 10, COLORS.onAccent, 1.5);
     } else {
-      gFillRound(g, x, y, bw, bh, 8, COLORS.panel2, 0.92);
-      gStrokeRound(g, x, y, bw, bh, 8, color, 1.25);
+      gFillRound(g, 0, 0, bw, bh, 10, COLORS.panel2, 0.94);
+      gStrokeRound(g, 0, 0, bw, bh, 10, color, 1.25);
     }
-    root.addChild(g);
-    t.x = x + padX;
-    t.y = y + Math.floor((bh - t.height) / 2);
-    root.addChild(t);
+    box.addChildAt(g, 0);
+
     return { w: bw, h: bh };
   }
 
@@ -1813,12 +1977,17 @@
     root.addChild(turnLine);
 
     var chipY = pad + (land ? 18 : 20);
-    var c1 = drawLifeChip(pad, chipY, "先攻", life1, COLORS.teal, activeFirst);
+    var compact = land && w < 900;
+    var c1 = drawLifeChip(pad, chipY, "先攻", "first", life1, COLORS.teal, activeFirst, compact);
+    var c2;
     if (land) {
-      drawLifeChip(pad + c1.w + 10, chipY, "後攻", life2, COLORS.amber, activeSecond);
+      c2 = drawLifeChip(pad + c1.w + 10, chipY, "後攻", "second", life2, COLORS.amber, activeSecond, compact);
     } else {
-      drawLifeChip(pad, chipY + c1.h + 6, "後攻", life2, COLORS.amber, activeSecond);
+      c2 = drawLifeChip(pad, chipY + c1.h + 6, "後攻", "second", life2, COLORS.amber, activeSecond, compact);
     }
+    lastHeaderBottom = land
+      ? chipY + Math.max(c1.h, c2.h) + 6
+      : chipY + c1.h + 6 + c2.h + 6;
 
     var endBtn = makeBtn("結束對局", 96, 34, COLORS.panel2, {
       size: 13, stroke: COLORS.line, textFill: COLORS.muted, radius: 10
@@ -1828,7 +1997,7 @@
     hit(endBtn, endGame);
     root.addChild(endBtn);
 
-    if (state.phase === "attack" && state.lastUndo) {
+    if (state.lastUndo && (state.phase === "attack" || state.phase === "deploy" || state.phase === "encore")) {
       var undoBtn = makeBtn("撤銷", 72, 34, COLORS.panel2, {
         size: 13, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
       });
@@ -1961,7 +2130,7 @@
     );
     title.anchor.set(0.5, 0);
     title.x = w / 2;
-    title.y = land ? 68 : 112;
+    title.y = lastHeaderBottom + (land ? 2 : 4);
     root.addChild(title);
 
     var hintText;
@@ -2444,7 +2613,7 @@
     var title = makeText("安可階段", { size: land ? 18 : 20, weight: "700", fill: COLORS.ink, display: true });
     title.anchor.set(0.5, 0);
     title.x = w / 2;
-    title.y = land ? 68 : 112;
+    title.y = lastHeaderBottom + (land ? 2 : 4);
     root.addChild(title);
 
     var sub = makeText("左先攻／右後攻・點角色可移除", { size: 12, fill: COLORS.muted });
@@ -2502,7 +2671,7 @@
 
   function drawAttack(w, h) {
     var land = isLandscape();
-    var headerH = land ? 64 : 110;
+    var headerH = lastHeaderBottom + (land ? 2 : 4);
     var dim = cardAspect();
     var leftPad = 12;
     var title = makeText(
@@ -3019,6 +3188,7 @@
     endAttackPhase: endAttackPhase,
     endEncorePhase: endEncorePhase,
     applyClockDamage: applyClockDamage,
+    adjustLife: adjustLife,
     checkLevelOut: checkLevelOut,
     cardAttackDamageStats: cardAttackDamageStats,
     standStage: standStage,
