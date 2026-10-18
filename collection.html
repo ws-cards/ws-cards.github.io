@@ -19,9 +19,9 @@
     html:not(.fonts-ready) body { visibility: hidden; }
     html.fonts-ready body { visibility: visible; }
   </style>
-  <meta name="description" content="管理已擁有的 Weiss Schwarz 卡片收藏，支援從願望清單轉入、標籤分組與數量增減。">
+  <meta name="description" content="管理已擁有的 Weiss Schwarz 單卡庫與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
   <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
-  <meta property="og:description" content="記錄已擁有的卡片，標籤分組管理並調整持有數量。">
+  <meta property="og:description" content="單卡庫存與引用制牌組分層管理：標籤、數量與缺卡提示。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -733,6 +733,189 @@
       font-weight: 700;
     }
     [data-theme="dark"] .col-confirm-text strong { color: #fc8181; }
+
+    /* —— 單卡 / 牌組 分頁 —— */
+    .col-tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      padding: 0.25rem;
+      border-radius: 10px;
+      background: #f7fafc;
+      width: fit-content;
+      max-width: 100%;
+    }
+    [data-theme="dark"] .col-tabs {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .col-tab {
+      border: none;
+      background: transparent;
+      color: #718096;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+    .col-tab:hover { color: #2d3748; }
+    .col-tab.is-active {
+      background: #fff;
+      color: #1a202c;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+    [data-theme="dark"] .col-tab:hover { color: #e2e8f0; }
+    [data-theme="dark"] .col-tab.is-active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f7fafc;
+      box-shadow: none;
+    }
+    .col-panel[hidden] { display: none !important; }
+
+    .col-deck-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+    .col-deck-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      background: #f7fafc;
+      border: 1px solid transparent;
+    }
+    [data-theme="dark"] .col-deck-card {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .col-deck-card.is-short {
+      border-color: rgba(229, 62, 62, 0.35);
+    }
+    .col-deck-name {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a202c;
+      word-break: break-word;
+    }
+    [data-theme="dark"] .col-deck-name { color: #f7fafc; }
+    .col-deck-meta {
+      margin-top: 0.3rem;
+      font-size: 0.78rem;
+      color: #718096;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 0.55rem;
+      align-items: center;
+    }
+    [data-theme="dark"] .col-deck-meta { color: #a0aec0; }
+    .col-deck-warn {
+      color: #c53030;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .col-deck-warn { color: #fc8181; }
+    .col-deck-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: flex-end;
+    }
+    .col-deck-actions .btn {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.35rem 0.65rem;
+    }
+
+    .col-modal-dialog.col-modal-wide {
+      width: min(720px, 100%);
+    }
+    .col-deck-editor-head {
+      display: grid;
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+    .col-deck-editor-head label {
+      display: grid;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #718096;
+    }
+    [data-theme="dark"] .col-deck-editor-head label { color: #a0aec0; }
+    .col-deck-editor-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      color: #718096;
+      margin-bottom: 0.75rem;
+    }
+    [data-theme="dark"] .col-deck-editor-summary { color: #a0aec0; }
+    .col-deck-editor-summary strong {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      color: #2d3748;
+    }
+    [data-theme="dark"] .col-deck-editor-summary strong { color: #e2e8f0; }
+    .col-deck-entry-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .col-deck-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 0.5rem 0.65rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: #f7fafc;
+    }
+    [data-theme="dark"] .col-deck-entry {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .col-deck-entry.is-short {
+      box-shadow: inset 0 0 0 1px rgba(229, 62, 62, 0.45);
+    }
+    .col-deck-entry-cardno {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .col-deck-entry-name {
+      display: block;
+      font-size: 0.72rem;
+      color: #718096;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-deck-entry-name { color: #a0aec0; }
+    .col-deck-entry-owned {
+      font-size: 0.7rem;
+      color: #718096;
+      white-space: nowrap;
+    }
+    .col-deck-entry-owned.is-short {
+      color: #c53030;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .col-deck-entry-owned.is-short { color: #fc8181; }
+    .col-deck-remove-btn {
+      border: none;
+      background: transparent;
+      color: #a0aec0;
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+    .col-deck-remove-btn:hover { color: #e53e3e; }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
@@ -836,83 +1019,139 @@
                 </h5>
               </div>
               <div class="card-body">
-                <div class="col-controls" aria-label="篩選列">
-                  <div class="col-field col-field-search">
-                    <label for="colSearchInput">搜尋</label>
-                    <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
-                  </div>
-                  <div class="col-field col-field-rare">
-                    <label for="colRareSelect">稀有度</label>
-                    <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
-                      <option value="" selected>全部稀有度</option>
-                    </select>
-                  </div>
-                  <div class="col-field col-field-tag">
-                    <label for="colTagSelect">標籤</label>
-                    <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
-                      <option value="" selected>全部標籤</option>
-                      <option value="__untagged__">未標籤</option>
-                    </select>
-                  </div>
-                  <div class="col-field col-field-group">
-                    <label for="colGroupSelect">分組檢視</label>
-                    <select id="colGroupSelect" class="form-control">
-                      <option value="none" selected>不分組</option>
-                      <option value="tag">依標籤分組</option>
-                    </select>
-                  </div>
-                  <div class="col-field col-field-sort">
-                    <label for="colSortSelect">排序</label>
-                    <select id="colSortSelect" class="form-control">
-                      <option value="newest" selected>最新加入</option>
-                      <option value="oldest">最早加入</option>
-                      <option value="cardNumber">卡號 A→Z</option>
-                      <option value="qtyDesc">數量多→少</option>
-                      <option value="qtyAsc">數量少→多</option>
-                      <option value="rare">稀有度</option>
-                    </select>
-                  </div>
-                  <div class="col-field col-field-actions">
-                    <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
-                    <div class="col-control-actions">
-                      <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
-                        <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                      </button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-total-bar" id="colTotalBar" aria-live="polite">
-                  <div class="col-total-copy">
-                    <div class="col-total-main">
-                      <span>持有總量</span>
-                      <span class="col-total-value" id="colTotalValue">0</span>
-                    </div>
-                    <div class="col-total-sub">
-                      <span class="col-total-count" id="colCountLabel">共 0 種</span>
-                      <span class="col-total-sep" aria-hidden="true">·</span>
-                      <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
-                    </div>
-                  </div>
-                  <div class="col-total-actions">
-                    <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
-                      <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
-                    </a>
-                  </div>
+                <div class="col-tabs" role="tablist" aria-label="收藏庫分層">
+                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">單卡</button>
+                  <button type="button" class="col-tab" role="tab" id="colTabDecks" data-col-tab="decks" aria-selected="false" aria-controls="colPanelDecks">牌組</button>
                 </div>
 
                 <div class="col-status" id="colStatus" role="status" aria-live="polite"></div>
-                <div id="colEmpty" class="col-empty" style="display:none;">
-                  <div><i class="fas fa-layer-group" aria-hidden="true"></i></div>
-                  <p id="colEmptyText">收藏庫尚無卡片。</p>
-                  <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
-                    <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                  </button>
+
+                <div id="colPanelCards" class="col-panel" data-col-panel="cards" role="tabpanel" aria-labelledby="colTabCards">
+                  <div class="col-controls" aria-label="單卡篩選列">
+                    <div class="col-field col-field-search">
+                      <label for="colSearchInput">搜尋</label>
+                      <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
+                    </div>
+                    <div class="col-field col-field-rare">
+                      <label for="colRareSelect">稀有度</label>
+                      <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
+                        <option value="" selected>全部稀有度</option>
+                      </select>
+                    </div>
+                    <div class="col-field col-field-tag">
+                      <label for="colTagSelect">標籤</label>
+                      <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
+                        <option value="" selected>全部標籤</option>
+                        <option value="__untagged__">未標籤</option>
+                      </select>
+                    </div>
+                    <div class="col-field col-field-group">
+                      <label for="colGroupSelect">分組檢視</label>
+                      <select id="colGroupSelect" class="form-control">
+                        <option value="none" selected>不分組</option>
+                        <option value="tag">依標籤分組</option>
+                      </select>
+                    </div>
+                    <div class="col-field col-field-sort">
+                      <label for="colSortSelect">排序</label>
+                      <select id="colSortSelect" class="form-control">
+                        <option value="newest" selected>最新加入</option>
+                        <option value="oldest">最早加入</option>
+                        <option value="cardNumber">卡號 A→Z</option>
+                        <option value="qtyDesc">數量多→少</option>
+                        <option value="qtyAsc">數量少→多</option>
+                        <option value="rare">稀有度</option>
+                      </select>
+                    </div>
+                    <div class="col-field col-field-actions">
+                      <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                      <div class="col-control-actions">
+                        <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
+                          <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-total-bar" id="colTotalBar" aria-live="polite">
+                    <div class="col-total-copy">
+                      <div class="col-total-main">
+                        <span>持有總量</span>
+                        <span class="col-total-value" id="colTotalValue">0</span>
+                      </div>
+                      <div class="col-total-sub">
+                        <span class="col-total-count" id="colCountLabel">共 0 種</span>
+                        <span class="col-total-sep" aria-hidden="true">·</span>
+                        <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
+                      </div>
+                    </div>
+                    <div class="col-total-actions">
+                      <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
+                        <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
+                      </a>
+                    </div>
+                  </div>
+
+                  <div id="colEmpty" class="col-empty" style="display:none;">
+                    <div><i class="fas fa-clone" aria-hidden="true"></i></div>
+                    <p id="colEmptyText">單卡庫尚無卡片。</p>
+                    <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
+                      <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                    </button>
+                  </div>
+                  <div id="colAlbumRoot" aria-label="單卡相簿"></div>
                 </div>
-                <div id="colAlbumRoot" aria-label="收藏庫相簿"></div>
+
+                <div id="colPanelDecks" class="col-panel" data-col-panel="decks" role="tabpanel" aria-labelledby="colTabDecks" hidden>
+                  <div class="col-controls" aria-label="牌組操作列">
+                    <div class="col-field col-field-search">
+                      <label for="colDeckSearchInput">搜尋牌組</label>
+                      <input id="colDeckSearchInput" type="search" class="form-control" placeholder="牌組名稱、標籤、卡號" autocomplete="off">
+                    </div>
+                    <div class="col-field col-field-sort">
+                      <label for="colDeckSortSelect">排序</label>
+                      <select id="colDeckSortSelect" class="form-control">
+                        <option value="updated" selected>最近更新</option>
+                        <option value="name">名稱 A→Z</option>
+                        <option value="cardsDesc">張數多→少</option>
+                      </select>
+                    </div>
+                    <div class="col-field col-field-actions">
+                      <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                      <div class="col-control-actions">
+                        <button type="button" class="btn btn-primary btn-sm" id="colDeckCreateBtn">
+                          <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-total-bar" id="colDeckTotalBar" aria-live="polite">
+                    <div class="col-total-copy">
+                      <div class="col-total-main">
+                        <span>牌組數</span>
+                        <span class="col-total-value" id="colDeckTotalValue">0</span>
+                      </div>
+                      <div class="col-total-sub">
+                        <span class="col-total-count" id="colDeckCountLabel">可見 0 副</span>
+                        <span class="col-total-sep" aria-hidden="true">·</span>
+                        <span>牌組引用單卡庫；庫存不足會標示缺卡</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="colDeckEmpty" class="col-empty" style="display:none;">
+                    <div><i class="fas fa-th-large" aria-hidden="true"></i></div>
+                    <p id="colDeckEmptyText">尚未建立牌組。</p>
+                    <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyCreateBtn">
+                      <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
+                    </button>
+                  </div>
+                  <ul class="col-deck-list" id="colDeckList" aria-label="牌組列表"></ul>
+                </div>
               </div>
             </div>
           </div>
@@ -971,17 +1210,69 @@
   </div>
 </div>
 
-<!-- 數量歸零移除確認 -->
+<!-- 數量歸零 / 刪除牌組 確認 -->
 <div id="colConfirmModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="confirm"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colConfirmTitle" style="width:min(420px,100%);">
     <div class="col-modal-body">
-      <h3 id="colConfirmTitle">移出收藏庫</h3>
-      <p class="col-confirm-text" id="colConfirmText">數量將變為 0，此卡片會從收藏庫移除。確定繼續？</p>
+      <h3 id="colConfirmTitle">確認</h3>
+      <p class="col-confirm-text" id="colConfirmText">確定繼續？</p>
     </div>
     <div class="col-modal-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="confirm">取消</button>
-      <button type="button" class="btn btn-danger btn-sm" id="colConfirmOkBtn">確認移除</button>
+      <button type="button" class="btn btn-danger btn-sm" id="colConfirmOkBtn">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- 牌組編輯 -->
+<div id="colDeckModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deck"></div>
+  <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
+    <div class="col-modal-body">
+      <h3 id="colDeckTitle">編輯牌組</h3>
+      <p class="col-modal-hint">牌組以引用方式對應單卡庫；編成張數可超過持有量，但會標示缺卡。</p>
+      <div class="col-deck-editor-head">
+        <label for="colDeckNameInput">
+          牌組名稱
+          <input id="colDeckNameInput" type="text" class="form-control" maxlength="40" placeholder="例如：SAO 八橋" autocomplete="off">
+        </label>
+        <label for="colDeckTagsInput">
+          牌組標籤（逗號分隔，選填）
+          <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
+        </label>
+      </div>
+      <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
+      <div class="col-tag-input-row" style="margin-bottom:0.75rem;">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
+          <i class="fas fa-plus mr-1" aria-hidden="true"></i>從單卡庫加入
+        </button>
+      </div>
+      <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
+    </div>
+  </div>
+</div>
+
+<!-- 從單卡庫挑選加入牌組 -->
+<div id="colDeckPickModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckPick"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckPickTitle">
+    <div class="col-modal-body">
+      <h3 id="colDeckPickTitle">從單卡庫加入</h3>
+      <p class="col-modal-hint">勾選要編成的卡片；已在牌組內的卡會累加編成數量 +1。</p>
+      <div class="col-tag-input-row">
+        <input id="colDeckPickSearch" type="search" class="form-control" placeholder="篩選單卡庫…" autocomplete="off">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickSelectAllBtn">全選可見</button>
+      </div>
+      <ul class="col-import-list" id="colDeckPickList" aria-label="可加入牌組的單卡"></ul>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckPick">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckPickConfirmBtn">加入選取</button>
     </div>
   </div>
 </div>
@@ -1017,24 +1308,36 @@
 
   (function () {
     var STORAGE_KEY = 'wsCardsCollection';
+    var DECKS_KEY = 'wsCardsDecks';
     var FAVORITES_KEY = 'wsCardsFavorites';
     var MAX_ITEMS = 500;
+    var MAX_DECKS = 100;
     var MAX_QTY = 999;
+    var MAX_DECK_ENTRY_QTY = 50;
     var UNTAGGED = '__untagged__';
+    var ACTIVE_TAB_KEY = 'wsCollectionActiveTab';
 
     var allItems = [];
+    var allDecks = [];
     var checkedSet = {};
     var filterQuery = '';
     var rareFilter = '';
     var tagFilter = '';
     var sortMode = 'newest';
     var groupMode = 'none';
+    var activeTab = 'cards';
 
     var importPickSet = {};
     var importFilter = '';
     var tagEditTargets = [];
     var tagEditDraft = [];
-    var pendingRemoveCard = null;
+    var pendingConfirm = null;
+
+    var deckFilterQuery = '';
+    var deckSortMode = 'updated';
+    var deckDraft = null;
+    var deckPickSet = {};
+    var deckPickFilter = '';
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var emptyEl = document.getElementById('colEmpty');
@@ -1049,6 +1352,16 @@
     var totalValueEl = document.getElementById('colTotalValue');
     var totalSubEl = document.getElementById('colTotalSub');
 
+    var panelCards = document.getElementById('colPanelCards');
+    var panelDecks = document.getElementById('colPanelDecks');
+    var deckListEl = document.getElementById('colDeckList');
+    var deckEmptyEl = document.getElementById('colDeckEmpty');
+    var deckEmptyTextEl = document.getElementById('colDeckEmptyText');
+    var deckSearchInput = document.getElementById('colDeckSearchInput');
+    var deckSortSelect = document.getElementById('colDeckSortSelect');
+    var deckTotalValueEl = document.getElementById('colDeckTotalValue');
+    var deckCountLabelEl = document.getElementById('colDeckCountLabel');
+
     var importModal = document.getElementById('colImportModal');
     var importList = document.getElementById('colImportList');
     var importSearch = document.getElementById('colImportSearch');
@@ -1059,7 +1372,17 @@
     var selectedTagsEl = document.getElementById('colSelectedTags');
     var tagSuggestEl = document.getElementById('colTagSuggest');
     var confirmModal = document.getElementById('colConfirmModal');
+    var confirmTitle = document.getElementById('colConfirmTitle');
     var confirmText = document.getElementById('colConfirmText');
+    var confirmOkBtn = document.getElementById('colConfirmOkBtn');
+    var deckModal = document.getElementById('colDeckModal');
+    var deckNameInput = document.getElementById('colDeckNameInput');
+    var deckTagsInput = document.getElementById('colDeckTagsInput');
+    var deckEntryList = document.getElementById('colDeckEntryList');
+    var deckEditorSummary = document.getElementById('colDeckEditorSummary');
+    var deckPickModal = document.getElementById('colDeckPickModal');
+    var deckPickList = document.getElementById('colDeckPickList');
+    var deckPickSearch = document.getElementById('colDeckPickSearch');
 
     function setStatus(msg, kind) {
       statusEl.textContent = msg || '';
@@ -1169,6 +1492,7 @@
       writeLocal(allItems);
       refreshFilterOptions();
       renderAlbum();
+      if (activeTab === 'decks') renderDeckList();
     }
 
     function getRareColor(rare) {
@@ -1377,7 +1701,7 @@
 
       if (!allItems.length) {
         emptyEl.style.display = '';
-        emptyTextEl.textContent = '收藏庫尚無卡片。';
+        emptyTextEl.textContent = '單卡庫尚無卡片。';
         albumRoot.innerHTML = '';
         return;
       }
@@ -1435,19 +1759,31 @@
       return allItems.find(function (it) { return it.cardNumber === cardNumber; }) || null;
     }
 
+    function askConfirm(opts) {
+      pendingConfirm = opts || null;
+      if (confirmTitle) confirmTitle.textContent = (opts && opts.title) || '確認';
+      if (confirmText) confirmText.innerHTML = (opts && opts.html) || '確定繼續？';
+      if (confirmOkBtn) confirmOkBtn.textContent = (opts && opts.okLabel) || '確認';
+      openModal(confirmModal);
+    }
+
     function changeQuantity(cardNumber, delta) {
       var item = findItem(cardNumber);
       if (!item) return;
       var next = (item.quantity || 1) + delta;
       if (next <= 0) {
-        pendingRemoveCard = cardNumber;
-        confirmText.innerHTML = '「<strong>' + escapeHtml(cardNumber) + '</strong>」數量將變為 0，此卡片會從收藏庫移除。確定繼續？';
-        openModal(confirmModal);
+        askConfirm({
+          title: '移出單卡庫',
+          okLabel: '確認移除',
+          html: '「<strong>' + escapeHtml(cardNumber) + '</strong>」數量將變為 0，此卡片會從單卡庫移除。確定繼續？',
+          onOk: function () { removeItem(cardNumber); }
+        });
         return;
       }
       if (next > MAX_QTY) next = MAX_QTY;
       item.quantity = next;
       persistAndRender();
+      if (activeTab === 'decks') renderDeckList();
       setStatus(cardNumber + ' 數量更新為 ' + next, 'is-ok');
     }
 
@@ -1486,8 +1822,439 @@
       }
       if (name === 'confirm') {
         closeModal(confirmModal);
-        pendingRemoveCard = null;
+        pendingConfirm = null;
+        return;
       }
+      if (name === 'deck') {
+        closeModal(deckModal);
+        deckDraft = null;
+        return;
+      }
+      if (name === 'deckPick') {
+        closeModal(deckPickModal);
+        deckPickSet = {};
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab === 'decks' ? 'decks' : 'cards';
+      try { localStorage.setItem(ACTIVE_TAB_KEY, activeTab); } catch (e) { /* ignore */ }
+      document.querySelectorAll('[data-col-tab]').forEach(function (btn) {
+        var on = btn.getAttribute('data-col-tab') === activeTab;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      if (panelCards) panelCards.hidden = activeTab !== 'cards';
+      if (panelDecks) panelDecks.hidden = activeTab !== 'decks';
+      if (activeTab === 'decks') renderDeckList();
+      else renderAlbum();
+    }
+
+    function ownedQty(cardNumber) {
+      var item = findItem(cardNumber);
+      return item ? (item.quantity || 0) : 0;
+    }
+
+    function inventoryMeta(cardNumber) {
+      var item = findItem(cardNumber);
+      return {
+        cardName: item ? (item.cardName || '') : '',
+        cardRare: item ? (item.cardRare || '') : '',
+        cardTitle: item ? (item.cardTitle || '') : ''
+      };
+    }
+
+    function readDecks() {
+      try {
+        var raw = localStorage.getItem(DECKS_KEY);
+        var list = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(list)) return [];
+        return list.map(normalizeDeck).filter(Boolean);
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    function writeDecks(list) {
+      try {
+        localStorage.setItem(DECKS_KEY, JSON.stringify((list || []).map(serializeDeck)));
+      } catch (e) {
+        console.error(e);
+        setStatus('牌組儲存失敗（容量可能已滿）', 'is-error');
+      }
+    }
+
+    function newDeckId() {
+      return 'deck_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function normalizeDeckCards(cards) {
+      var map = {};
+      (Array.isArray(cards) ? cards : []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var key = String(entry.cardNumber).trim();
+        if (!key) return;
+        var qty = parseInt(entry.qty, 10);
+        if (isNaN(qty) || qty < 1) qty = 1;
+        if (qty > MAX_DECK_ENTRY_QTY) qty = MAX_DECK_ENTRY_QTY;
+        if (map[key]) map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
+        else map[key] = { cardNumber: key, qty: qty };
+      });
+      return Object.keys(map)
+        .map(function (k) { return map[k]; })
+        .sort(function (a, b) { return String(a.cardNumber).localeCompare(String(b.cardNumber)); });
+    }
+
+    function normalizeDeck(deck) {
+      if (!deck) return null;
+      var id = normalizeText(deck.id) || newDeckId();
+      var name = normalizeText(deck.name) || '未命名牌組';
+      return {
+        id: id,
+        name: name.slice(0, 40),
+        tags: normalizeTags(deck.tags),
+        cards: normalizeDeckCards(deck.cards),
+        createdAt: typeof deck.createdAt === 'number' ? deck.createdAt : Date.now(),
+        updatedAt: typeof deck.updatedAt === 'number' ? deck.updatedAt : Date.now()
+      };
+    }
+
+    function serializeDeck(deck) {
+      return {
+        id: deck.id,
+        name: deck.name || '未命名牌組',
+        tags: normalizeTags(deck.tags),
+        cards: normalizeDeckCards(deck.cards),
+        createdAt: deck.createdAt || Date.now(),
+        updatedAt: deck.updatedAt || Date.now()
+      };
+    }
+
+    function persistDecksAndRender() {
+      writeDecks(allDecks);
+      renderDeckList();
+    }
+
+    function deckTotalCards(deck) {
+      return (deck.cards || []).reduce(function (sum, c) { return sum + (c.qty || 0); }, 0);
+    }
+
+    function deckShortage(deck) {
+      var shortKinds = 0;
+      var shortCopies = 0;
+      (deck.cards || []).forEach(function (entry) {
+        var owned = ownedQty(entry.cardNumber);
+        var need = entry.qty || 0;
+        if (owned < need) {
+          shortKinds += 1;
+          shortCopies += (need - owned);
+        }
+      });
+      return { shortKinds: shortKinds, shortCopies: shortCopies };
+    }
+
+    function getVisibleDecks() {
+      var q = deckFilterQuery.trim().toLowerCase();
+      var list = allDecks.filter(function (deck) {
+        if (!q) return true;
+        var hay = [
+          deck.name,
+          (deck.tags || []).join(' '),
+          (deck.cards || []).map(function (c) { return c.cardNumber; }).join(' ')
+        ].join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      list.sort(function (a, b) {
+        if (deckSortMode === 'name') return String(a.name).localeCompare(String(b.name), 'zh-Hant');
+        if (deckSortMode === 'cardsDesc') return deckTotalCards(b) - deckTotalCards(a) || String(a.name).localeCompare(String(b.name), 'zh-Hant');
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+      return list;
+    }
+
+    function renderDeckList() {
+      var visible = getVisibleDecks();
+      if (deckTotalValueEl) deckTotalValueEl.textContent = String(allDecks.length);
+      if (deckCountLabelEl) deckCountLabelEl.textContent = '可見 ' + visible.length + ' 副';
+
+      if (!allDecks.length) {
+        if (deckEmptyEl) deckEmptyEl.style.display = '';
+        if (deckEmptyTextEl) deckEmptyTextEl.textContent = '尚未建立牌組。';
+        if (deckListEl) deckListEl.innerHTML = '';
+        return;
+      }
+      if (!visible.length) {
+        if (deckEmptyEl) deckEmptyEl.style.display = '';
+        if (deckEmptyTextEl) deckEmptyTextEl.textContent = '沒有符合搜尋條件的牌組。';
+        if (deckListEl) deckListEl.innerHTML = '';
+        return;
+      }
+
+      if (deckEmptyEl) deckEmptyEl.style.display = 'none';
+      var html = '';
+      visible.forEach(function (deck) {
+        var total = deckTotalCards(deck);
+        var kinds = (deck.cards || []).length;
+        var short = deckShortage(deck);
+        var tagsHtml = (deck.tags || []).length
+          ? (deck.tags || []).map(function (t) {
+              return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
+            }).join('')
+          : '';
+        html += '<li class="col-deck-card' + (short.shortKinds ? ' is-short' : '') + '" data-deck-id="' + escapeHtml(deck.id) + '">';
+        html += '  <div>';
+        html += '    <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>';
+        html += '    <div class="col-deck-meta">';
+        html += '      <span>' + kinds + ' 種 · ' + total + ' 張</span>';
+        html += '      <span>更新於 ' + escapeHtml(formatTime(deck.updatedAt)) + '</span>';
+        if (short.shortKinds) {
+          html += '      <span class="col-deck-warn">缺卡 ' + short.shortKinds + ' 種（差 ' + short.shortCopies + ' 張）</span>';
+        }
+        html += tagsHtml;
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="col-deck-actions">';
+        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '">編輯</button>';
+        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '">複製</button>';
+        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-del="' + escapeHtml(deck.id) + '">刪除</button>';
+        html += '  </div>';
+        html += '</li>';
+      });
+      if (deckListEl) deckListEl.innerHTML = html;
+    }
+
+    function cloneDeckDraft(deck) {
+      return {
+        id: deck.id,
+        name: deck.name,
+        tags: (deck.tags || []).slice(),
+        cards: (deck.cards || []).map(function (c) {
+          return { cardNumber: c.cardNumber, qty: c.qty };
+        }),
+        createdAt: deck.createdAt,
+        updatedAt: deck.updatedAt
+      };
+    }
+
+    function renderDeckEditor() {
+      if (!deckDraft) return;
+      var total = deckTotalCards(deckDraft);
+      var kinds = (deckDraft.cards || []).length;
+      var short = deckShortage(deckDraft);
+      if (deckEditorSummary) {
+        deckEditorSummary.innerHTML =
+          '<span>編成 <strong>' + total + '</strong> 張</span>' +
+          '<span>卡種 <strong>' + kinds + '</strong></span>' +
+          (short.shortKinds
+            ? '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（差 ' + short.shortCopies + ' 張）</span>'
+            : '<span>庫存足夠</span>');
+      }
+      if (!deckEntryList) return;
+      if (!(deckDraft.cards || []).length) {
+        deckEntryList.innerHTML = '<li class="col-modal-hint" style="margin:0;">尚未加入卡片，請按「從單卡庫加入」。</li>';
+        return;
+      }
+      var html = '';
+      deckDraft.cards.forEach(function (entry) {
+        var meta = inventoryMeta(entry.cardNumber);
+        var owned = ownedQty(entry.cardNumber);
+        var isShort = owned < entry.qty;
+        html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
+        html += '  <div>';
+        html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
+        html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（單卡庫尚無卡名）') + '</span>';
+        html += '  </div>';
+        html += '  <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+        html += '    <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
+        html += '    <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
+        html += '    <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+        html += '  </div>';
+        html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
+        html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+        html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組"><i class="fas fa-times" aria-hidden="true"></i></button>';
+        html += '  </div>';
+        html += '</li>';
+      });
+      deckEntryList.innerHTML = html;
+    }
+
+    function openDeckEditor(deckId) {
+      var existing = deckId
+        ? allDecks.find(function (d) { return d.id === deckId; })
+        : null;
+      if (deckId && !existing) {
+        setStatus('找不到該牌組', 'is-error');
+        return;
+      }
+      if (existing) {
+        deckDraft = cloneDeckDraft(existing);
+        document.getElementById('colDeckTitle').textContent = '編輯牌組';
+      } else {
+        var now = Date.now();
+        deckDraft = {
+          id: newDeckId(),
+          name: '',
+          tags: [],
+          cards: [],
+          createdAt: now,
+          updatedAt: now
+        };
+        document.getElementById('colDeckTitle').textContent = '新建牌組';
+      }
+      if (deckNameInput) deckNameInput.value = deckDraft.name || '';
+      if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      renderDeckEditor();
+      openModal(deckModal);
+      if (deckNameInput) deckNameInput.focus();
+    }
+
+    function changeDeckDraftQty(cardNumber, delta) {
+      if (!deckDraft) return;
+      var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
+      if (!entry) return;
+      var next = (entry.qty || 1) + delta;
+      if (next <= 0) {
+        deckDraft.cards = deckDraft.cards.filter(function (c) { return c.cardNumber !== cardNumber; });
+      } else {
+        entry.qty = Math.min(MAX_DECK_ENTRY_QTY, next);
+      }
+      renderDeckEditor();
+    }
+
+    function saveDeckDraft() {
+      if (!deckDraft) return;
+      var name = normalizeText(deckNameInput && deckNameInput.value);
+      if (!name) {
+        setStatus('請輸入牌組名稱', 'is-error');
+        if (deckNameInput) deckNameInput.focus();
+        return;
+      }
+      var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
+      var tags = normalizeTags(tagRaw.split(/[,，]/));
+      deckDraft.name = name.slice(0, 40);
+      deckDraft.tags = tags;
+      deckDraft.cards = normalizeDeckCards(deckDraft.cards);
+      deckDraft.updatedAt = Date.now();
+
+      var idx = allDecks.findIndex(function (d) { return d.id === deckDraft.id; });
+      if (idx >= 0) allDecks[idx] = serializeDeck(deckDraft);
+      else {
+        if (allDecks.length >= MAX_DECKS) {
+          setStatus('牌組數量已達上限（' + MAX_DECKS + '）', 'is-error');
+          return;
+        }
+        allDecks.unshift(serializeDeck(deckDraft));
+      }
+      persistDecksAndRender();
+      closeModalByName('deck');
+      switchTab('decks');
+      setStatus('已儲存牌組「' + name + '」', 'is-ok');
+    }
+
+    function duplicateDeck(deckId) {
+      var src = allDecks.find(function (d) { return d.id === deckId; });
+      if (!src) return;
+      if (allDecks.length >= MAX_DECKS) {
+        setStatus('牌組數量已達上限（' + MAX_DECKS + '）', 'is-error');
+        return;
+      }
+      var now = Date.now();
+      var copy = serializeDeck({
+        id: newDeckId(),
+        name: (src.name || '未命名牌組').slice(0, 36) + ' 副本',
+        tags: src.tags,
+        cards: src.cards,
+        createdAt: now,
+        updatedAt: now
+      });
+      allDecks.unshift(copy);
+      persistDecksAndRender();
+      setStatus('已複製牌組「' + copy.name + '」', 'is-ok');
+    }
+
+    function deleteDeck(deckId) {
+      var src = allDecks.find(function (d) { return d.id === deckId; });
+      if (!src) return;
+      askConfirm({
+        title: '刪除牌組',
+        okLabel: '確認刪除',
+        html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？單卡庫存不會受影響。',
+        onOk: function () {
+          allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
+          persistDecksAndRender();
+          setStatus('已刪除牌組「' + src.name + '」', 'is-ok');
+        }
+      });
+    }
+
+    function renderDeckPickList() {
+      var q = deckPickFilter.trim().toLowerCase();
+      var visible = allItems.filter(function (item) {
+        if (!q) return true;
+        var hay = [item.cardNumber, item.cardName, item.cardTitle, item.cardRare, (item.tags || []).join(' ')].join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      if (!visible.length) {
+        deckPickList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
+          (allItems.length ? '沒有符合篩選的單卡。' : '單卡庫尚無卡片，請先至「單卡」分頁轉入。') +
+          '</li>';
+        return;
+      }
+      var inDeck = {};
+      if (deckDraft) {
+        (deckDraft.cards || []).forEach(function (c) { inDeck[c.cardNumber] = c.qty || 0; });
+      }
+      var html = '';
+      visible.forEach(function (item) {
+        var key = item.cardNumber;
+        var picked = !!deckPickSet[key];
+        var deckQty = inDeck[key] || 0;
+        html += '<li class="col-import-item" data-deck-pick="' + escapeHtml(key) + '">';
+        html += '  <input type="checkbox" ' + (picked ? 'checked' : '') + ' aria-label="選取 ' + escapeHtml(key) + '">';
+        html += '  <div class="col-import-meta">';
+        html += '    <span class="col-import-cardno">' + escapeHtml(key) + '</span>';
+        html += '    <span class="col-import-name">' + escapeHtml(item.cardName || '（無卡名）') + '</span>';
+        html += '  </div>';
+        html += '  <span class="col-import-badge">持有 ×' + (item.quantity || 0) +
+          (deckQty ? (' · 編成 ×' + deckQty) : '') + '</span>';
+        html += '</li>';
+      });
+      deckPickList.innerHTML = html;
+    }
+
+    function openDeckPickModal() {
+      if (!deckDraft) return;
+      if (!allItems.length) {
+        setStatus('單卡庫尚無卡片，請先轉入單卡', 'is-error');
+        return;
+      }
+      deckPickSet = {};
+      deckPickFilter = '';
+      if (deckPickSearch) deckPickSearch.value = '';
+      renderDeckPickList();
+      openModal(deckPickModal);
+    }
+
+    function confirmDeckPick() {
+      var keys = Object.keys(deckPickSet);
+      if (!keys.length) {
+        setStatus('請先勾選要加入的卡片', 'is-error');
+        return;
+      }
+      if (!deckDraft) return;
+      var map = {};
+      (deckDraft.cards || []).forEach(function (c) {
+        map[c.cardNumber] = { cardNumber: c.cardNumber, qty: c.qty || 1 };
+      });
+      keys.forEach(function (key) {
+        if (map[key]) map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, (map[key].qty || 1) + 1);
+        else map[key] = { cardNumber: key, qty: 1 };
+      });
+      deckDraft.cards = normalizeDeckCards(Object.keys(map).map(function (k) { return map[k]; }));
+      closeModalByName('deckPick');
+      renderDeckEditor();
+      setStatus('已加入 ' + keys.length + ' 種卡片至牌組草稿', 'is-ok');
     }
 
     function favoriteMatchesImportFilter(item) {
@@ -1839,15 +2606,15 @@
     });
     document.getElementById('colTagConfirmBtn').addEventListener('click', applyTagDraft);
 
-    document.getElementById('colConfirmOkBtn').addEventListener('click', function () {
-      if (!pendingRemoveCard) {
+    if (confirmOkBtn) {
+      confirmOkBtn.addEventListener('click', function () {
+        var action = pendingConfirm && typeof pendingConfirm.onOk === 'function'
+          ? pendingConfirm.onOk
+          : null;
         closeModalByName('confirm');
-        return;
-      }
-      var cardNumber = pendingRemoveCard;
-      closeModalByName('confirm');
-      removeItem(cardNumber);
-    });
+        if (action) action();
+      });
+    }
 
     document.querySelectorAll('[data-modal-close]').forEach(function (el) {
       el.addEventListener('click', function () {
@@ -1855,10 +2622,111 @@
       });
     });
 
+    document.querySelectorAll('[data-col-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchTab(btn.getAttribute('data-col-tab'));
+      });
+    });
+
+    document.getElementById('colDeckCreateBtn').addEventListener('click', function () {
+      openDeckEditor(null);
+    });
+    document.getElementById('colDeckEmptyCreateBtn').addEventListener('click', function () {
+      openDeckEditor(null);
+    });
+    if (deckSearchInput) {
+      deckSearchInput.addEventListener('input', function () {
+        deckFilterQuery = deckSearchInput.value || '';
+        renderDeckList();
+      });
+    }
+    if (deckSortSelect) {
+      deckSortSelect.addEventListener('change', function () {
+        deckSortMode = deckSortSelect.value || 'updated';
+        renderDeckList();
+      });
+    }
+    if (deckListEl) {
+      deckListEl.addEventListener('click', function (e) {
+        var editBtn = e.target.closest('[data-deck-edit]');
+        if (editBtn) {
+          openDeckEditor(editBtn.getAttribute('data-deck-edit'));
+          return;
+        }
+        var dupBtn = e.target.closest('[data-deck-dup]');
+        if (dupBtn) {
+          duplicateDeck(dupBtn.getAttribute('data-deck-dup'));
+          return;
+        }
+        var delBtn = e.target.closest('[data-deck-del]');
+        if (delBtn) {
+          deleteDeck(delBtn.getAttribute('data-deck-del'));
+        }
+      });
+    }
+    document.getElementById('colDeckSaveBtn').addEventListener('click', saveDeckDraft);
+    document.getElementById('colDeckPickBtn').addEventListener('click', openDeckPickModal);
+    document.getElementById('colDeckPickConfirmBtn').addEventListener('click', confirmDeckPick);
+    document.getElementById('colDeckPickSelectAllBtn').addEventListener('click', function () {
+      var q = deckPickFilter.trim().toLowerCase();
+      allItems.forEach(function (item) {
+        if (!item || !item.cardNumber) return;
+        if (q) {
+          var hay = [item.cardNumber, item.cardName, item.cardTitle, item.cardRare, (item.tags || []).join(' ')].join(' ').toLowerCase();
+          if (hay.indexOf(q) < 0) return;
+        }
+        deckPickSet[item.cardNumber] = true;
+      });
+      renderDeckPickList();
+    });
+    if (deckPickSearch) {
+      deckPickSearch.addEventListener('input', function () {
+        deckPickFilter = deckPickSearch.value || '';
+        renderDeckPickList();
+      });
+    }
+    if (deckPickList) {
+      deckPickList.addEventListener('click', function (e) {
+        var row = e.target.closest('[data-deck-pick]');
+        if (!row) return;
+        var key = row.getAttribute('data-deck-pick');
+        if (!key) return;
+        if (deckPickSet[key]) delete deckPickSet[key];
+        else deckPickSet[key] = true;
+        renderDeckPickList();
+      });
+    }
+    if (deckEntryList) {
+      deckEntryList.addEventListener('click', function (e) {
+        var dec = e.target.closest('[data-deck-qty-dec]');
+        if (dec) {
+          changeDeckDraftQty(dec.getAttribute('data-deck-qty-dec'), -1);
+          return;
+        }
+        var inc = e.target.closest('[data-deck-qty-inc]');
+        if (inc) {
+          changeDeckDraftQty(inc.getAttribute('data-deck-qty-inc'), 1);
+          return;
+        }
+        var removeBtn = e.target.closest('[data-deck-entry-remove]');
+        if (removeBtn) {
+          changeDeckDraftQty(removeBtn.getAttribute('data-deck-entry-remove'), -999);
+        }
+      });
+    }
+
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
       if (confirmModal.classList.contains('is-open')) {
         closeModalByName('confirm');
+        return;
+      }
+      if (deckPickModal && deckPickModal.classList.contains('is-open')) {
+        closeModalByName('deckPick');
+        return;
+      }
+      if (deckModal && deckModal.classList.contains('is-open')) {
+        closeModalByName('deck');
         return;
       }
       if (tagModal.classList.contains('is-open')) {
@@ -1871,6 +2739,7 @@
     });
 
     allItems = readLocal();
+    allDecks = readDecks();
     Object.keys(checkedSet).forEach(function (key) {
       if (!allItems.some(function (it) { return it.cardNumber === key; })) {
         delete checkedSet[key];
@@ -1879,7 +2748,16 @@
     refreshFilterOptions();
     renderAlbum();
     ingestPendingFromFavoritesQuery();
-    setStatus(allItems.length ? '已載入本機收藏庫' : '收藏庫為空，可從願望清單轉入', allItems.length ? 'is-ok' : '');
+
+    var savedTab = 'cards';
+    try { savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || 'cards'; } catch (e) { savedTab = 'cards'; }
+    switchTab(savedTab === 'decks' ? 'decks' : 'cards');
+    setStatus(
+      allItems.length || allDecks.length
+        ? ('已載入單卡 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
+        : '收藏庫為空，可先至「單卡」從願望清單轉入',
+      allItems.length || allDecks.length ? 'is-ok' : ''
+    );
   })();
 </script>
 </body>
