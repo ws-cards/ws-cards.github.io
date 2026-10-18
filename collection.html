@@ -927,6 +927,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="assets/js/firebase-config.js"></script>
   <script src="assets/js/ws-firebase.js"></script>
+  <script src="assets/js/ws-decklog.js?v=20261017h"></script>
   <script src="dist/js/include-navbar.js"></script>
 
   <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -1125,6 +1126,9 @@
                         <button type="button" class="btn btn-primary btn-sm" id="colDeckCreateBtn">
                           <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
                         </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDecklogImportBtn">
+                          <i class="fas fa-cloud-download-alt mr-1" aria-hidden="true"></i>從 DeckLog 匯入
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1146,9 +1150,14 @@
                   <div id="colDeckEmpty" class="col-empty" style="display:none;">
                     <div><i class="fas fa-th-large" aria-hidden="true"></i></div>
                     <p id="colDeckEmptyText">尚未建立牌組。</p>
-                    <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyCreateBtn">
-                      <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
-                    </button>
+                    <div class="col-control-actions" style="justify-content:center;">
+                      <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyCreateBtn">
+                        <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyDecklogBtn">
+                        <i class="fas fa-cloud-download-alt mr-1" aria-hidden="true"></i>從 DeckLog 匯入
+                      </button>
+                    </div>
                   </div>
                   <ul class="col-deck-list" id="colDeckList" aria-label="牌組列表"></ul>
                 </div>
@@ -1277,6 +1286,32 @@
   </div>
 </div>
 
+<!-- 從 DeckLog 匯入牌組（讀取規則同 attackGameLog / ws-decklog.js） -->
+<div id="colDecklogModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="decklog"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
+    <div class="col-modal-body">
+      <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯，可再調整名稱與編成。</p>
+      <div class="col-deck-editor-head">
+        <label for="colDecklogCodeInput">
+          DeckLog 代碼
+          <input id="colDecklogCodeInput" type="text" class="form-control" inputmode="text" autocomplete="off" spellcheck="false" placeholder="例：564TU">
+        </label>
+        <label for="colDecklogNameInput">
+          牌組名稱（選填）
+          <input id="colDecklogNameInput" type="text" class="form-control" maxlength="40" autocomplete="off" placeholder="空白則使用 DeckLog 代碼">
+        </label>
+      </div>
+      <p class="col-modal-hint" id="colDecklogStatus" role="status" aria-live="polite" style="margin:0;"></p>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="decklog">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDecklogConfirmBtn">取得並匯入</button>
+    </div>
+  </div>
+</div>
+
 <script>
   function toggleCustomDrawer(e) {
     if (e) e.preventDefault();
@@ -1383,6 +1418,11 @@
     var deckPickModal = document.getElementById('colDeckPickModal');
     var deckPickList = document.getElementById('colDeckPickList');
     var deckPickSearch = document.getElementById('colDeckPickSearch');
+    var decklogModal = document.getElementById('colDecklogModal');
+    var decklogCodeInput = document.getElementById('colDecklogCodeInput');
+    var decklogNameInput = document.getElementById('colDecklogNameInput');
+    var decklogStatusEl = document.getElementById('colDecklogStatus');
+    var decklogConfirmBtn = document.getElementById('colDecklogConfirmBtn');
 
     function setStatus(msg, kind) {
       statusEl.textContent = msg || '';
@@ -1833,6 +1873,15 @@
       if (name === 'deckPick') {
         closeModal(deckPickModal);
         deckPickSet = {};
+        return;
+      }
+      if (name === 'decklog') {
+        closeModal(decklogModal);
+        if (decklogStatusEl) decklogStatusEl.textContent = '';
+        if (decklogConfirmBtn) {
+          decklogConfirmBtn.disabled = false;
+          decklogConfirmBtn.removeAttribute('aria-busy');
+        }
       }
     }
 
@@ -1855,13 +1904,34 @@
       return item ? (item.quantity || 0) : 0;
     }
 
-    function inventoryMeta(cardNumber) {
+    function inventoryMeta(cardNumber, fallbackName) {
       var item = findItem(cardNumber);
       return {
-        cardName: item ? (item.cardName || '') : '',
+        cardName: (item && item.cardName) || normalizeText(fallbackName) || '',
         cardRare: item ? (item.cardRare || '') : '',
         cardTitle: item ? (item.cardTitle || '') : ''
       };
+    }
+
+    function aggregateDecklogCards(cards) {
+      var map = {};
+      (Array.isArray(cards) ? cards : []).forEach(function (c) {
+        if (!c) return;
+        var key = normalizeText(c.cardNo || c.cardNumber).replace(/\\/g, '/');
+        if (!key) return;
+        if (!map[key]) {
+          map[key] = {
+            cardNumber: key,
+            qty: 0,
+            cardName: normalizeText(c.name || c.cardName)
+          };
+        }
+        map[key].qty += 1;
+        if (!map[key].cardName && (c.name || c.cardName)) {
+          map[key].cardName = normalizeText(c.name || c.cardName);
+        }
+      });
+      return normalizeDeckCards(Object.keys(map).map(function (k) { return map[k]; }));
     }
 
     function readDecks() {
@@ -1893,13 +1963,19 @@
       var map = {};
       (Array.isArray(cards) ? cards : []).forEach(function (entry) {
         if (!entry || !entry.cardNumber) return;
-        var key = String(entry.cardNumber).trim();
+        var key = String(entry.cardNumber).trim().replace(/\\/g, '/');
         if (!key) return;
         var qty = parseInt(entry.qty, 10);
         if (isNaN(qty) || qty < 1) qty = 1;
         if (qty > MAX_DECK_ENTRY_QTY) qty = MAX_DECK_ENTRY_QTY;
-        if (map[key]) map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
-        else map[key] = { cardNumber: key, qty: qty };
+        var cardName = normalizeText(entry.cardName);
+        if (map[key]) {
+          map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
+          if (!map[key].cardName && cardName) map[key].cardName = cardName;
+        } else {
+          map[key] = { cardNumber: key, qty: qty };
+          if (cardName) map[key].cardName = cardName;
+        }
       });
       return Object.keys(map)
         .map(function (k) { return map[k]; })
@@ -1925,7 +2001,11 @@
         id: deck.id,
         name: deck.name || '未命名牌組',
         tags: normalizeTags(deck.tags),
-        cards: normalizeDeckCards(deck.cards),
+        cards: normalizeDeckCards(deck.cards).map(function (c) {
+          var out = { cardNumber: c.cardNumber, qty: c.qty };
+          if (c.cardName) out.cardName = c.cardName;
+          return out;
+        }),
         createdAt: deck.createdAt || Date.now(),
         updatedAt: deck.updatedAt || Date.now()
       };
@@ -2030,11 +2110,92 @@
         name: deck.name,
         tags: (deck.tags || []).slice(),
         cards: (deck.cards || []).map(function (c) {
-          return { cardNumber: c.cardNumber, qty: c.qty };
+          var out = { cardNumber: c.cardNumber, qty: c.qty };
+          if (c.cardName) out.cardName = c.cardName;
+          return out;
         }),
         createdAt: deck.createdAt,
         updatedAt: deck.updatedAt
       };
+    }
+
+    function setDecklogStatus(msg, isError) {
+      if (!decklogStatusEl) return;
+      decklogStatusEl.textContent = msg || '';
+      decklogStatusEl.style.color = isError ? '#c53030' : '';
+    }
+
+    function openDecklogModal() {
+      if (!(window.WsDecklog && typeof window.WsDecklog.fetchDecklogByCode === 'function')) {
+        setStatus('DeckLog 讀取模組未載入', 'is-error');
+        return;
+      }
+      if (decklogCodeInput) decklogCodeInput.value = '';
+      if (decklogNameInput) decklogNameInput.value = '';
+      setDecklogStatus('');
+      if (decklogConfirmBtn) {
+        decklogConfirmBtn.disabled = false;
+        decklogConfirmBtn.removeAttribute('aria-busy');
+      }
+      openModal(decklogModal);
+      if (decklogCodeInput) decklogCodeInput.focus();
+    }
+
+    function openImportedDeckEditor(result, preferredName) {
+      var cards = aggregateDecklogCards(result && result.cards);
+      if (!cards.length) throw new Error('匯出為 0 張。');
+      var code = normalizeText(result && result.code) || 'DeckLog';
+      var name = normalizeText(preferredName) || ('DeckLog ' + code);
+      var now = Date.now();
+      deckDraft = {
+        id: newDeckId(),
+        name: name.slice(0, 40),
+        tags: ['DeckLog'],
+        cards: cards,
+        createdAt: now,
+        updatedAt: now
+      };
+      document.getElementById('colDeckTitle').textContent = '編輯匯入牌組';
+      if (deckNameInput) deckNameInput.value = deckDraft.name;
+      if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      renderDeckEditor();
+      closeModalByName('decklog');
+      switchTab('decks');
+      openModal(deckModal);
+      setStatus('已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' + deckTotalCards(deckDraft) + ' 張），請確認後儲存', 'is-ok');
+    }
+
+    function importFromDecklog() {
+      if (!(window.WsDecklog && typeof window.WsDecklog.fetchDecklogByCode === 'function')) {
+        setDecklogStatus('DeckLog 讀取模組未載入', true);
+        return;
+      }
+      var code = normalizeText(decklogCodeInput && decklogCodeInput.value);
+      if (!code) {
+        setDecklogStatus('請輸入 DeckLog 代碼', true);
+        if (decklogCodeInput) decklogCodeInput.focus();
+        return;
+      }
+      var preferredName = normalizeText(decklogNameInput && decklogNameInput.value);
+      if (decklogConfirmBtn) {
+        decklogConfirmBtn.disabled = true;
+        decklogConfirmBtn.setAttribute('aria-busy', 'true');
+      }
+      setDecklogStatus('正在取得 DeckLog…');
+      window.WsDecklog.fetchDecklogByCode(code)
+        .then(function (result) {
+          openImportedDeckEditor(result, preferredName);
+        })
+        .catch(function (err) {
+          console.error(err);
+          setDecklogStatus((err && err.message) ? err.message : 'DeckLog 匯入失敗', true);
+        })
+        .then(function () {
+          if (decklogConfirmBtn) {
+            decklogConfirmBtn.disabled = false;
+            decklogConfirmBtn.removeAttribute('aria-busy');
+          }
+        });
     }
 
     function renderDeckEditor() {
@@ -2057,7 +2218,7 @@
       }
       var html = '';
       deckDraft.cards.forEach(function (entry) {
-        var meta = inventoryMeta(entry.cardNumber);
+        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
         var owned = ownedQty(entry.cardNumber);
         var isShort = owned < entry.qty;
         html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
@@ -2634,6 +2795,19 @@
     document.getElementById('colDeckEmptyCreateBtn').addEventListener('click', function () {
       openDeckEditor(null);
     });
+    document.getElementById('colDecklogImportBtn').addEventListener('click', openDecklogModal);
+    document.getElementById('colDeckEmptyDecklogBtn').addEventListener('click', openDecklogModal);
+    if (decklogConfirmBtn) {
+      decklogConfirmBtn.addEventListener('click', importFromDecklog);
+    }
+    if (decklogCodeInput) {
+      decklogCodeInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          importFromDecklog();
+        }
+      });
+    }
     if (deckSearchInput) {
       deckSearchInput.addEventListener('input', function () {
         deckFilterQuery = deckSearchInput.value || '';
@@ -2723,6 +2897,10 @@
       }
       if (deckPickModal && deckPickModal.classList.contains('is-open')) {
         closeModalByName('deckPick');
+        return;
+      }
+      if (decklogModal && decklogModal.classList.contains('is-open')) {
+        closeModalByName('decklog');
         return;
       }
       if (deckModal && deckModal.classList.contains('is-open')) {
