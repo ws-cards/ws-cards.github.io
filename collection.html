@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style>
+    html { background: #ffffff; }
+    html[data-theme="dark"] { background: #141414; }
+    html:not(.fonts-ready) body { visibility: hidden; }
+    html.fonts-ready body { visibility: visible; }
+  </style>
+  <meta name="description" content="管理已擁有的 Weiss Schwarz 卡片收藏，支援從願望清單轉入、標籤分組與數量增減。">
+  <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
+  <meta property="og:description" content="記錄已擁有的卡片，標籤分組管理並調整持有數量。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/collection.html">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
+  <meta name="msapplication-TileColor" content="#fff">
+  <link rel="manifest" href="/manifest.json">
+  <title>收藏庫｜WS-Cards 卡片雲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var done = false;
+      function markReady() {
+        if (done) return;
+        done = true;
+        root.classList.add('fonts-ready');
+      }
+      if (!document.fonts || !document.fonts.load) {
+        markReady();
+        return;
+      }
+      var jobs = [
+        document.fonts.load('400 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "IBM Plex Mono"')
+      ];
+      Promise.all(jobs)
+        .then(function () { return document.fonts.ready; })
+        .then(markReady)
+        .catch(markReady);
+      setTimeout(markReady, 1500);
+    })();
+  </script>
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
+  <style>
+    body,
+    body button,
+    body input,
+    body select,
+    body textarea,
+    body p,
+    body h3,
+    body h5 {
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+    }
+
+    .col-controls {
+      --col-control-h: 2.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.65rem 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .col-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .col-field-search { flex: 1 1 12rem; }
+    .col-field-rare { flex: 1 1 7.5rem; max-width: 11rem; }
+    .col-field-tag { flex: 1 1 7.5rem; max-width: 11rem; }
+    .col-field-sort { flex: 1 1 8.5rem; max-width: 12rem; }
+    .col-field-group { flex: 1 1 8rem; max-width: 11rem; }
+    .col-field-actions { flex: 0 0 auto; overflow: visible; }
+    .col-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #6c757d;
+      margin-bottom: 0.3rem;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .col-field label { color: #a0aec0; }
+    .col-field-label-spacer {
+      visibility: hidden;
+      user-select: none;
+      pointer-events: none;
+    }
+    .col-controls .form-control,
+    .col-controls select.form-control {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100%;
+      height: var(--col-control-h);
+      min-height: var(--col-control-h);
+      margin: 0 !important;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.9rem !important;
+      line-height: 1.25;
+      border-width: 1px !important;
+      box-sizing: border-box;
+      transform: none;
+    }
+    .col-controls .form-control:focus,
+    .col-controls select.form-control:focus { transform: none; }
+    .col-control-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+      min-height: var(--col-control-h);
+    }
+    .col-controls .col-control-actions .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: var(--col-control-h);
+      min-height: var(--col-control-h);
+      padding: 0 0.8rem;
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      white-space: nowrap;
+      border: 1px solid #cbd5e0;
+      background: #fff;
+      color: #4a5568;
+      box-shadow: none;
+      transform: none;
+      box-sizing: border-box;
+    }
+    .col-controls .col-control-actions .btn:hover,
+    .col-controls .col-control-actions .btn:focus {
+      background: #edf2f7;
+      border-color: #a0aec0;
+      color: #2d3748;
+      box-shadow: none;
+      transform: none;
+    }
+    .col-controls .col-control-actions .btn-primary {
+      background: #3182ce;
+      border-color: #3182ce;
+      color: #fff;
+    }
+    .col-controls .col-control-actions .btn-primary:hover,
+    .col-controls .col-control-actions .btn-primary:focus {
+      background: #2b6cb0;
+      border-color: #2b6cb0;
+      color: #fff;
+    }
+    [data-theme="dark"] .col-controls .col-control-actions .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #e2e8f0;
+    }
+    [data-theme="dark"] .col-controls .col-control-actions .btn:hover,
+    [data-theme="dark"] .col-controls .col-control-actions .btn:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #f7fafc;
+    }
+    [data-theme="dark"] .col-controls .col-control-actions .btn-primary {
+      background: #4299e1;
+      border-color: #4299e1;
+      color: #1a202c;
+    }
+    @media (max-width: 575px) {
+      .col-field-search,
+      .col-field-rare,
+      .col-field-tag,
+      .col-field-sort,
+      .col-field-group,
+      .col-field-actions { flex: 1 1 100%; max-width: none; }
+      .col-control-actions { width: 100%; }
+      .col-controls .col-control-actions .btn { flex: 1 1 0; }
+    }
+
+    .col-status {
+      min-height: 1.25rem;
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 0.75rem;
+    }
+    [data-theme="dark"] .col-status { color: #a0aec0; }
+    .col-status.is-error { color: #c53030; }
+    .col-status.is-ok { color: #2f855a; }
+    [data-theme="dark"] .col-status.is-error { color: #fc8181; }
+    [data-theme="dark"] .col-status.is-ok { color: #68d391; }
+
+    .col-total-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      padding: 0.95rem 1.05rem;
+      border-radius: 12px;
+      background: #f7fafc;
+      border: 1px solid transparent;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    }
+    [data-theme="dark"] .col-total-bar {
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: none;
+    }
+    .col-total-copy { min-width: 0; flex: 1 1 220px; }
+    .col-total-main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.35rem 0.55rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #718096;
+      letter-spacing: 0.02em;
+    }
+    [data-theme="dark"] .col-total-main { color: #a0aec0; }
+    .col-total-value {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 1.55rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #1a202c;
+      font-variant-numeric: tabular-nums;
+    }
+    [data-theme="dark"] .col-total-value { color: #f7fafc; }
+    .col-total-sub {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.25rem 0.4rem;
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+      line-height: 1.35;
+      color: #718096;
+    }
+    [data-theme="dark"] .col-total-sub { color: #a0aec0; }
+    .col-total-count {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    [data-theme="dark"] .col-total-count { color: #e2e8f0; }
+    .col-total-sep { opacity: 0.55; }
+    .col-total-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .col-empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: #6c757d;
+    }
+    [data-theme="dark"] .col-empty { color: #a0aec0; }
+    .col-empty i {
+      font-size: 2.2rem;
+      opacity: 0.45;
+      margin-bottom: 0.75rem;
+    }
+    .col-empty p { margin-bottom: 1rem; }
+
+    .col-album {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 1rem 0.85rem;
+    }
+    @media (min-width: 768px) {
+      .col-album {
+        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+        gap: 1.15rem 1rem;
+      }
+    }
+    .col-group-block { margin-bottom: 1.5rem; }
+    .col-group-title {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin: 0 0 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2d3748;
+    }
+    [data-theme="dark"] .col-group-title {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+    .col-group-count {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #718096;
+    }
+    [data-theme="dark"] .col-group-count { color: #a0aec0; }
+
+    .col-tile {
+      position: relative;
+      margin: 0;
+      min-width: 0;
+    }
+    .col-tile.is-checked .col-tile-body {
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.55);
+    }
+    [data-theme="dark"] .col-tile.is-checked .col-tile-body {
+      box-shadow: 0 0 0 2px rgba(196, 166, 114, 0.65);
+    }
+    .col-tile-body {
+      display: block;
+      color: inherit;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    [data-theme="dark"] .col-tile-body { background: rgba(255, 255, 255, 0.04); }
+    .col-tile-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      overflow: hidden;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .col-tile-art {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    }
+    .col-tile-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .col-tile-art img.is-loaded { opacity: 1; }
+    .col-tile-art img.is-broken { display: none; }
+    .col-tile-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      color: #a0aec0;
+      font-size: 0.75rem;
+      pointer-events: none;
+    }
+    .col-tile-placeholder i {
+      font-size: 1.5rem;
+      opacity: 0.55;
+    }
+    .col-tile-art.has-image .col-tile-placeholder { display: none; }
+    .col-rare {
+      position: absolute;
+      left: 0.45rem;
+      bottom: 0.45rem;
+      z-index: 1;
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      color: #fff;
+      background: #718096;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    .col-check {
+      position: absolute;
+      top: 0.4rem;
+      left: 0.4rem;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      margin: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .col-check { background: rgba(36, 36, 36, 0.92); }
+    .col-check input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+    .col-tile-caption { padding: 0.55rem 0.15rem 0.1rem; }
+    .col-cardno {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.01em;
+      color: #2d3748;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-cardno { color: #e2e8f0; }
+    .col-name {
+      margin-top: 0.15rem;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #4a5568;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .col-name { color: #cbd5e0; }
+    .col-meta {
+      margin-top: 0.2rem;
+      font-size: 0.7rem;
+      color: #718096;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-meta { color: #a0aec0; }
+
+    .col-qty {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+    }
+    .col-qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      background: #fff;
+      color: #4a5568;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .col-qty-btn:hover { background: #edf2f7; }
+    .col-qty-btn:focus-visible {
+      outline: 2px solid #3182ce;
+      outline-offset: 1px;
+    }
+    [data-theme="dark"] .col-qty-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #e2e8f0;
+    }
+    [data-theme="dark"] .col-qty-btn:hover { background: rgba(255, 255, 255, 0.12); }
+    .col-qty-value {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      min-width: 1.5rem;
+      text-align: center;
+      color: #2d3748;
+      font-variant-numeric: tabular-nums;
+    }
+    [data-theme="dark"] .col-qty-value { color: #f7fafc; }
+
+    .col-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.4rem;
+      min-height: 1.2rem;
+    }
+    .col-tag-chip {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: #edf2f7;
+      color: #4a5568;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .col-tag-chip {
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e0;
+    }
+    .col-tag-edit-btn {
+      border: none;
+      background: transparent;
+      color: #a0aec0;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.2rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .col-tag-edit-btn:hover { color: #3182ce; }
+    [data-theme="dark"] .col-tag-edit-btn:hover { color: #63b3ed; }
+
+    .col-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(0.75rem, env(safe-area-inset-top, 0px))
+               max(0.75rem, env(safe-area-inset-right, 0px))
+               max(0.75rem, env(safe-area-inset-bottom, 0px))
+               max(0.75rem, env(safe-area-inset-left, 0px));
+    }
+    .col-modal.is-open { display: flex; }
+    .col-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .col-modal-dialog {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      width: min(560px, 100%);
+      max-height: min(88dvh, 88vh, 820px);
+      overflow: hidden;
+      border-radius: 14px;
+      background: #fff;
+      color: #1a202c;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+    [data-theme="dark"] .col-modal-dialog {
+      background: #1f1f1f;
+      color: #f7fafc;
+    }
+    .col-modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 1rem 1rem 0.85rem;
+    }
+    .col-modal-dialog h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .col-modal-hint {
+      margin: 0 0 0.75rem;
+      font-size: 0.78rem;
+      color: #718096;
+    }
+    [data-theme="dark"] .col-modal-hint { color: #a0aec0; }
+    .col-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.02);
+    }
+    [data-theme="dark"] .col-modal-actions {
+      border-top-color: rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .col-import-list,
+    .col-tag-suggest {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .col-import-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.55rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: #f7fafc;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .col-import-item { background: rgba(255, 255, 255, 0.05); }
+    .col-import-item.is-disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+    .col-import-meta { min-width: 0; }
+    .col-import-cardno {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .col-import-name {
+      display: block;
+      font-size: 0.72rem;
+      color: #718096;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-import-name { color: #a0aec0; }
+    .col-import-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #718096;
+      white-space: nowrap;
+    }
+    .col-tag-input-row {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.65rem;
+    }
+    .col-tag-input-row .form-control { flex: 1 1 auto; }
+    .col-tag-chip-btn {
+      border: 1px solid #cbd5e0;
+      background: #fff;
+      color: #4a5568;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      cursor: pointer;
+    }
+    .col-tag-chip-btn.is-active {
+      background: #ebf8ff;
+      border-color: #3182ce;
+      color: #2b6cb0;
+    }
+    [data-theme="dark"] .col-tag-chip-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #e2e8f0;
+    }
+    [data-theme="dark"] .col-tag-chip-btn.is-active {
+      background: rgba(66, 153, 225, 0.2);
+      border-color: #4299e1;
+      color: #90cdf4;
+    }
+    .col-tag-suggest {
+      grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+      margin-bottom: 0.75rem;
+    }
+    .col-selected-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      min-height: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .col-selected-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      background: #edf2f7;
+      color: #2d3748;
+    }
+    [data-theme="dark"] .col-selected-tag {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+    .col-selected-tag button {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.7;
+    }
+    .col-selected-tag button:hover { opacity: 1; color: #e53e3e; }
+
+    .col-confirm-text {
+      margin: 0.5rem 0 0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: #4a5568;
+    }
+    [data-theme="dark"] .col-confirm-text { color: #cbd5e0; }
+    .col-confirm-text strong {
+      color: #c53030;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .col-confirm-text strong { color: #fc8181; }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+
+  <div data-navbar data-page-title="收藏庫"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <span class="navbar-title-mark" aria-hidden="true"></span>
+        <span class="brand-text" aria-label="卡片雲"><span class="navbar-title-char">卡</span><span class="navbar-title-char">片</span><span class="navbar-title-char">雲</span></span>
+        <span class="navbar-title-mark" aria-hidden="true"></span>
+      </a>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i>
+            <span>遊遊亭價格查詢</span>
+            <i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li>
+              <a href="line_test_v102.html" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WS)</span>
+              </a>
+            </li>
+            <li>
+              <a href="lineWSR" class="menu-link">
+                <i class="fas fa-chart-line main-icon"></i>
+                <span>各卡號漲幅趨勢(WSR)</span>
+              </a>
+            </li>
+            <li>
+              <a href="deckPrice" class="menu-link">
+                <i class="fas fa-search-dollar main-icon"></i>
+                <span>牌組總額查詢計算機</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="menu-item">
+          <a href="championList" class="menu-link">
+            <i class="fas fa-trophy main-icon"></i>
+            <span>優勝牌組查詢 (Beta)</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="productTimeline.html" class="menu-link">
+            <i class="fas fa-calendar-alt main-icon"></i>
+            <span>商品發售時間軸</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="favorites.html" class="menu-link">
+            <i class="fas fa-star main-icon"></i>
+            <span>願望清單</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="collection.html" class="menu-link active">
+            <i class="fas fa-layer-group main-icon"></i>
+            <span>收藏庫</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="account.html" class="menu-link">
+            <i class="fas fa-user main-icon"></i>
+            <span>個人資料</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card search-card">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-layer-group mr-2"></i>
+                  收藏庫
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="col-controls" aria-label="篩選列">
+                  <div class="col-field col-field-search">
+                    <label for="colSearchInput">搜尋</label>
+                    <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
+                  </div>
+                  <div class="col-field col-field-rare">
+                    <label for="colRareSelect">稀有度</label>
+                    <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
+                      <option value="" selected>全部稀有度</option>
+                    </select>
+                  </div>
+                  <div class="col-field col-field-tag">
+                    <label for="colTagSelect">標籤</label>
+                    <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
+                      <option value="" selected>全部標籤</option>
+                      <option value="__untagged__">未標籤</option>
+                    </select>
+                  </div>
+                  <div class="col-field col-field-group">
+                    <label for="colGroupSelect">分組檢視</label>
+                    <select id="colGroupSelect" class="form-control">
+                      <option value="none" selected>不分組</option>
+                      <option value="tag">依標籤分組</option>
+                    </select>
+                  </div>
+                  <div class="col-field col-field-sort">
+                    <label for="colSortSelect">排序</label>
+                    <select id="colSortSelect" class="form-control">
+                      <option value="newest" selected>最新加入</option>
+                      <option value="oldest">最早加入</option>
+                      <option value="cardNumber">卡號 A→Z</option>
+                      <option value="qtyDesc">數量多→少</option>
+                      <option value="qtyAsc">數量少→多</option>
+                      <option value="rare">稀有度</option>
+                    </select>
+                  </div>
+                  <div class="col-field col-field-actions">
+                    <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                    <div class="col-control-actions">
+                      <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
+                        <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-total-bar" id="colTotalBar" aria-live="polite">
+                  <div class="col-total-copy">
+                    <div class="col-total-main">
+                      <span>持有總量</span>
+                      <span class="col-total-value" id="colTotalValue">0</span>
+                    </div>
+                    <div class="col-total-sub">
+                      <span class="col-total-count" id="colCountLabel">共 0 種</span>
+                      <span class="col-total-sep" aria-hidden="true">·</span>
+                      <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
+                    </div>
+                  </div>
+                  <div class="col-total-actions">
+                    <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
+                      <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
+                    </a>
+                  </div>
+                </div>
+
+                <div class="col-status" id="colStatus" role="status" aria-live="polite"></div>
+                <div id="colEmpty" class="col-empty" style="display:none;">
+                  <div><i class="fas fa-layer-group" aria-hidden="true"></i></div>
+                  <p id="colEmptyText">收藏庫尚無卡片。</p>
+                  <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
+                    <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                  </button>
+                </div>
+                <div id="colAlbumRoot" aria-label="收藏庫相簿"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer" aria-label="意見回饋（另開新視窗的表單）">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<!-- 從願望清單轉入 -->
+<div id="colImportModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="import"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colImportTitle">
+    <div class="col-modal-body">
+      <h3 id="colImportTitle">從願望清單轉入</h3>
+      <p class="col-modal-hint">勾選要加入收藏庫的卡片。已在收藏庫的卡會累加數量 +1。</p>
+      <div class="col-tag-input-row">
+        <input id="colImportSearch" type="search" class="form-control" placeholder="篩選願望清單…" autocomplete="off">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colImportSelectAllBtn">全選可轉</button>
+      </div>
+      <ul class="col-import-list" id="colImportList" aria-label="願望清單可轉入卡片"></ul>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="import">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colImportConfirmBtn">轉入選取</button>
+    </div>
+  </div>
+</div>
+
+<!-- 標籤編輯 / 批次標籤 -->
+<div id="colTagModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="tag"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colTagTitle">
+    <div class="col-modal-body">
+      <h3 id="colTagTitle">編輯標籤</h3>
+      <p class="col-modal-hint" id="colTagHint">為選取的卡片設定標籤，可用於群組分類。</p>
+      <div class="col-tag-input-row">
+        <input id="colTagInput" type="text" class="form-control" placeholder="輸入新標籤後按加入" maxlength="24" autocomplete="off">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colTagAddBtn">加入</button>
+      </div>
+      <div class="col-selected-tags" id="colSelectedTags" aria-live="polite"></div>
+      <ul class="col-tag-suggest" id="colTagSuggest" aria-label="既有標籤"></ul>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="tag">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colTagConfirmBtn">套用標籤</button>
+    </div>
+  </div>
+</div>
+
+<!-- 數量歸零移除確認 -->
+<div id="colConfirmModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="confirm"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colConfirmTitle" style="width:min(420px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colConfirmTitle">移出收藏庫</h3>
+      <p class="col-confirm-text" id="colConfirmText">數量將變為 0，此卡片會從收藏庫移除。確定繼續？</p>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="confirm">取消</button>
+      <button type="button" class="btn btn-danger btn-sm" id="colConfirmOkBtn">確認移除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleCustomDrawer(e) {
+    if (e) e.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+      var btn = document.getElementById('leftbar');
+      if (btn) {
+        var opened = drawer.classList.contains('open');
+        btn.classList.toggle('is-open', opened);
+        btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        btn.setAttribute('aria-label', opened ? '關閉選單' : '開啟選單');
+      }
+    }
+  }
+
+  function toggleSubmenu(element, e) {
+    if (e) e.preventDefault();
+    var parent = element.parentElement;
+    if (!parent) return;
+    parent.classList.toggle('open');
+    var submenu = parent.querySelector('.submenu');
+    if (submenu) {
+      submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  }
+
+  (function () {
+    var STORAGE_KEY = 'wsCardsCollection';
+    var FAVORITES_KEY = 'wsCardsFavorites';
+    var MAX_ITEMS = 500;
+    var MAX_QTY = 999;
+    var UNTAGGED = '__untagged__';
+
+    var allItems = [];
+    var checkedSet = {};
+    var filterQuery = '';
+    var rareFilter = '';
+    var tagFilter = '';
+    var sortMode = 'newest';
+    var groupMode = 'none';
+
+    var importPickSet = {};
+    var importFilter = '';
+    var tagEditTargets = [];
+    var tagEditDraft = [];
+    var pendingRemoveCard = null;
+
+    var albumRoot = document.getElementById('colAlbumRoot');
+    var emptyEl = document.getElementById('colEmpty');
+    var emptyTextEl = document.getElementById('colEmptyText');
+    var countEl = document.getElementById('colCountLabel');
+    var statusEl = document.getElementById('colStatus');
+    var searchInput = document.getElementById('colSearchInput');
+    var rareSelect = document.getElementById('colRareSelect');
+    var tagSelect = document.getElementById('colTagSelect');
+    var sortSelect = document.getElementById('colSortSelect');
+    var groupSelect = document.getElementById('colGroupSelect');
+    var totalValueEl = document.getElementById('colTotalValue');
+    var totalSubEl = document.getElementById('colTotalSub');
+
+    var importModal = document.getElementById('colImportModal');
+    var importList = document.getElementById('colImportList');
+    var importSearch = document.getElementById('colImportSearch');
+    var tagModal = document.getElementById('colTagModal');
+    var tagTitle = document.getElementById('colTagTitle');
+    var tagHint = document.getElementById('colTagHint');
+    var tagInput = document.getElementById('colTagInput');
+    var selectedTagsEl = document.getElementById('colSelectedTags');
+    var tagSuggestEl = document.getElementById('colTagSuggest');
+    var confirmModal = document.getElementById('colConfirmModal');
+    var confirmText = document.getElementById('colConfirmText');
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg || '';
+      statusEl.classList.remove('is-error', 'is-ok');
+      if (kind) statusEl.classList.add(kind);
+    }
+
+    function normalizeText(value) {
+      if (value === null || value === undefined) return '';
+      var text = String(value).trim();
+      return (text === '-' || text === '?') ? '' : text;
+    }
+
+    function normalizeTag(value) {
+      return normalizeText(value).replace(/\s+/g, ' ').slice(0, 24);
+    }
+
+    function normalizeTags(tags) {
+      var seen = {};
+      var out = [];
+      (Array.isArray(tags) ? tags : []).forEach(function (t) {
+        var tag = normalizeTag(t);
+        if (!tag || seen[tag]) return;
+        seen[tag] = true;
+        out.push(tag);
+      });
+      return out;
+    }
+
+    function clampQty(n) {
+      var q = parseInt(n, 10);
+      if (isNaN(q) || q < 1) return 1;
+      if (q > MAX_QTY) return MAX_QTY;
+      return q;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function readLocal() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        var list = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(list)) return [];
+        return list.map(normalizeItem).filter(Boolean);
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    function writeLocal(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify((list || []).map(serializeItem)));
+      } catch (e) {
+        console.error(e);
+        setStatus('本機儲存失敗（容量可能已滿）', 'is-error');
+      }
+    }
+
+    function readFavorites() {
+      try {
+        var raw = localStorage.getItem(FAVORITES_KEY);
+        var list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function normalizeItem(item) {
+      if (!item || !item.cardNumber) return null;
+      var key = String(item.cardNumber).trim();
+      if (!key) return null;
+      return {
+        cardNumber: key,
+        cardName: normalizeText(item.cardName),
+        cardRare: normalizeText(item.cardRare),
+        cardTitle: normalizeText(item.cardTitle),
+        quantity: clampQty(item.quantity),
+        tags: normalizeTags(item.tags),
+        source: normalizeText(item.source) || 'favorites',
+        timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now()
+      };
+    }
+
+    function serializeItem(item) {
+      return {
+        cardNumber: item.cardNumber,
+        cardName: item.cardName || '',
+        cardRare: item.cardRare || '',
+        cardTitle: item.cardTitle || '',
+        quantity: clampQty(item.quantity),
+        tags: normalizeTags(item.tags),
+        source: item.source || 'favorites',
+        timestamp: item.timestamp || Date.now()
+      };
+    }
+
+    function persistAndRender() {
+      writeLocal(allItems);
+      refreshFilterOptions();
+      renderAlbum();
+    }
+
+    function getRareColor(rare) {
+      if (!rare) return '#718096';
+      var r = String(rare).toUpperCase();
+      if (r.indexOf('SSP') >= 0 || r.indexOf('SEC') >= 0 || r.indexOf('SP') >= 0) return '#e53e3e';
+      if (r.indexOf('SR') >= 0 || r.indexOf('OFR') >= 0) return '#d69e2e';
+      if (r.indexOf('RRR') >= 0) return '#805ad5';
+      if (r.indexOf('RR') >= 0) return '#3182ce';
+      if (r.indexOf('R') >= 0) return '#38a169';
+      return '#718096';
+    }
+
+    function rareRank(rare) {
+      if (!rare) return 90;
+      var r = String(rare).toUpperCase();
+      if (r.indexOf('SSP') >= 0 || r.indexOf('SEC') >= 0) return 10;
+      if (r.indexOf('SP') >= 0) return 20;
+      if (r.indexOf('SR') >= 0 || r.indexOf('OFR') >= 0) return 30;
+      if (r.indexOf('RRR') >= 0) return 40;
+      if (r.indexOf('RR') >= 0) return 50;
+      if (r.indexOf('R') >= 0) return 60;
+      if (r.indexOf('U') >= 0) return 70;
+      if (r.indexOf('C') >= 0) return 80;
+      return 90;
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '—';
+      var now = Date.now();
+      var diff = now - ts;
+      var minutes = Math.floor(diff / 60000);
+      var hours = Math.floor(diff / 3600000);
+      var days = Math.floor(diff / 86400000);
+      if (minutes < 1) return '剛剛';
+      if (minutes < 60) return minutes + ' 分鐘前';
+      if (hours < 24) return hours + ' 小時前';
+      if (days < 7) return days + ' 天前';
+      var d = new Date(ts);
+      return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    function buildCardImageUrls(cardNumberDisplay) {
+      var cardNum = String(cardNumberDisplay || '').trim();
+      if (cardNum.indexOf(' ') >= 0) cardNum = cardNum.substr(0, cardNum.indexOf(' '));
+      if (!cardNum || cardNum.indexOf('-') < 0) return { primary: '', fallback: '' };
+      var cardFirst = cardNum.substr(0, 1);
+      var cardSecond = cardNum.substr(0, cardNum.indexOf('-')).replace('/', '_');
+      var cardThird = cardNum.replace('/', '_').replace('-', '_');
+      return {
+        primary: 'https://imgs.devilfox.net/ws/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png',
+        fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' +
+          cardFirst.toLowerCase() + '/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png'
+      };
+    }
+
+    function collectAllTags() {
+      var map = {};
+      allItems.forEach(function (item) {
+        (item.tags || []).forEach(function (tag) {
+          map[tag] = true;
+        });
+      });
+      return Object.keys(map).sort(function (a, b) {
+        return a.localeCompare(b, 'zh-Hant');
+      });
+    }
+
+    function refreshFilterOptions() {
+      var rares = {};
+      allItems.forEach(function (item) {
+        if (item.cardRare) rares[item.cardRare] = true;
+      });
+      var rareList = Object.keys(rares).sort(function (a, b) {
+        return rareRank(a) - rareRank(b) || a.localeCompare(b);
+      });
+      var prevRare = rareFilter;
+      rareSelect.innerHTML = '<option value="">全部稀有度</option>' +
+        rareList.map(function (r) {
+          return '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>';
+        }).join('');
+      rareSelect.value = rares[prevRare] ? prevRare : '';
+      rareFilter = rareSelect.value || '';
+
+      var tags = collectAllTags();
+      var prevTag = tagFilter;
+      tagSelect.innerHTML =
+        '<option value="">全部標籤</option>' +
+        '<option value="' + UNTAGGED + '">未標籤</option>' +
+        tags.map(function (t) {
+          return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>';
+        }).join('');
+      var stillValid = prevTag === UNTAGGED || !prevTag || tags.indexOf(prevTag) >= 0;
+      tagSelect.value = stillValid ? prevTag : '';
+      tagFilter = tagSelect.value || '';
+    }
+
+    function matchesFilters(item) {
+      if (rareFilter && item.cardRare !== rareFilter) return false;
+      if (tagFilter === UNTAGGED) {
+        if (item.tags && item.tags.length) return false;
+      } else if (tagFilter) {
+        if (!item.tags || item.tags.indexOf(tagFilter) < 0) return false;
+      }
+      var q = filterQuery.trim().toLowerCase();
+      if (!q) return true;
+      var hay = [
+        item.cardNumber,
+        item.cardName,
+        item.cardTitle,
+        item.cardRare,
+        (item.tags || []).join(' ')
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) >= 0;
+    }
+
+    function sortItems(list) {
+      var arr = list.slice();
+      arr.sort(function (a, b) {
+        if (sortMode === 'oldest') return (a.timestamp || 0) - (b.timestamp || 0);
+        if (sortMode === 'cardNumber') return String(a.cardNumber).localeCompare(String(b.cardNumber));
+        if (sortMode === 'qtyDesc') return (b.quantity || 0) - (a.quantity || 0) || String(a.cardNumber).localeCompare(String(b.cardNumber));
+        if (sortMode === 'qtyAsc') return (a.quantity || 0) - (b.quantity || 0) || String(a.cardNumber).localeCompare(String(b.cardNumber));
+        if (sortMode === 'rare') {
+          var ra = rareRank(a.cardRare);
+          var rb = rareRank(b.cardRare);
+          if (ra !== rb) return ra - rb;
+          return String(a.cardNumber).localeCompare(String(b.cardNumber));
+        }
+        return (b.timestamp || 0) - (a.timestamp || 0);
+      });
+      return arr;
+    }
+
+    function getVisibleItems() {
+      return sortItems(allItems.filter(matchesFilters));
+    }
+
+    function updateTotalBar(visible) {
+      var totalQty = allItems.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
+      var checkedCount = Object.keys(checkedSet).filter(function (key) {
+        return allItems.some(function (it) { return it.cardNumber === key; });
+      }).length;
+      totalValueEl.textContent = String(totalQty);
+      countEl.textContent = '共 ' + allItems.length + ' 種';
+      totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + (visible ? visible.length : 0) + ' 種';
+    }
+
+    function renderTile(item) {
+      var cardNumber = item.cardNumber || '';
+      var name = item.cardName || '（尚無卡名）';
+      var rare = item.cardRare || '';
+      var urls = buildCardImageUrls(cardNumber);
+      var checked = !!checkedSet[cardNumber];
+      var rareHtml = rare
+        ? '<span class="col-rare" style="background:' + getRareColor(rare) + ';">' + escapeHtml(rare) + '</span>'
+        : '';
+      var tags = item.tags || [];
+      var tagsHtml = tags.length
+        ? tags.map(function (t) {
+            return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
+          }).join('')
+        : '<span class="col-meta">尚無標籤</span>';
+
+      var html = '';
+      html += '<li class="col-tile' + (checked ? ' is-checked' : '') + '" data-card-number="' + escapeHtml(cardNumber) + '">';
+      html += '  <label class="col-check">';
+      html += '    <input type="checkbox" data-check="' + escapeHtml(cardNumber) + '"' + (checked ? ' checked' : '') + ' aria-label="勾選 ' + escapeHtml(cardNumber) + '">';
+      html += '  </label>';
+      html += '  <div class="col-tile-body">';
+      html += '    <div class="col-tile-art" data-toggle-check="' + escapeHtml(cardNumber) + '">';
+      html += '      <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
+      if (urls.primary) {
+        html += '      <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(cardNumber) + '" loading="lazy" decoding="async">';
+      }
+      html += rareHtml;
+      html += '    </div>';
+      html += '    <div class="col-tile-caption">';
+      html += '      <span class="col-cardno">' + escapeHtml(cardNumber) + '</span>';
+      html += '      <span class="col-name">' + escapeHtml(name) + '</span>';
+      html += '      <div class="col-qty" role="group" aria-label="' + escapeHtml(cardNumber) + ' 數量">';
+      html += '        <button type="button" class="col-qty-btn" data-qty-dec="' + escapeHtml(cardNumber) + '" aria-label="減少數量">−</button>';
+      html += '        <span class="col-qty-value" data-qty-for="' + escapeHtml(cardNumber) + '">' + escapeHtml(String(item.quantity || 1)) + '</span>';
+      html += '        <button type="button" class="col-qty-btn" data-qty-inc="' + escapeHtml(cardNumber) + '" aria-label="增加數量">+</button>';
+      html += '      </div>';
+      html += '      <div class="col-tags">';
+      html += tagsHtml;
+      html += '        <button type="button" class="col-tag-edit-btn" data-tag-edit="' + escapeHtml(cardNumber) + '" title="編輯標籤" aria-label="編輯標籤 ' + escapeHtml(cardNumber) + '"><i class="fas fa-tag" aria-hidden="true"></i></button>';
+      html += '      </div>';
+      html += '      <div class="col-meta">加入於 ' + escapeHtml(formatTime(item.timestamp)) + '</div>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '</li>';
+      return html;
+    }
+
+    function renderAlbum() {
+      var visible = getVisibleItems();
+      updateTotalBar(visible);
+
+      Object.keys(checkedSet).forEach(function (key) {
+        if (!allItems.some(function (it) { return it.cardNumber === key; })) {
+          delete checkedSet[key];
+        }
+      });
+
+      if (!allItems.length) {
+        emptyEl.style.display = '';
+        emptyTextEl.textContent = '收藏庫尚無卡片。';
+        albumRoot.innerHTML = '';
+        return;
+      }
+
+      if (!visible.length) {
+        emptyEl.style.display = '';
+        emptyTextEl.textContent = '沒有符合搜尋條件的卡片。';
+        albumRoot.innerHTML = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+
+      if (groupMode === 'tag') {
+        var groups = {};
+        var order = [];
+        visible.forEach(function (item) {
+          var tags = item.tags && item.tags.length ? item.tags : ['未標籤'];
+          tags.forEach(function (tag) {
+            if (!groups[tag]) {
+              groups[tag] = [];
+              order.push(tag);
+            }
+            if (!groups[tag].some(function (it) { return it.cardNumber === item.cardNumber; })) {
+              groups[tag].push(item);
+            }
+          });
+        });
+        order.sort(function (a, b) {
+          if (a === '未標籤') return 1;
+          if (b === '未標籤') return -1;
+          return a.localeCompare(b, 'zh-Hant');
+        });
+        var html = '';
+        order.forEach(function (tag) {
+          var items = groups[tag] || [];
+          html += '<section class="col-group-block">';
+          html += '  <h6 class="col-group-title">' + escapeHtml(tag) +
+            '<span class="col-group-count">' + items.length + ' 種</span></h6>';
+          html += '  <ul class="col-album">';
+          items.forEach(function (item) { html += renderTile(item); });
+          html += '  </ul>';
+          html += '</section>';
+        });
+        albumRoot.innerHTML = html;
+        return;
+      }
+
+      albumRoot.innerHTML = '<ul class="col-album">' +
+        visible.map(renderTile).join('') +
+        '</ul>';
+    }
+
+    function findItem(cardNumber) {
+      return allItems.find(function (it) { return it.cardNumber === cardNumber; }) || null;
+    }
+
+    function changeQuantity(cardNumber, delta) {
+      var item = findItem(cardNumber);
+      if (!item) return;
+      var next = (item.quantity || 1) + delta;
+      if (next <= 0) {
+        pendingRemoveCard = cardNumber;
+        confirmText.innerHTML = '「<strong>' + escapeHtml(cardNumber) + '</strong>」數量將變為 0，此卡片會從收藏庫移除。確定繼續？';
+        openModal(confirmModal);
+        return;
+      }
+      if (next > MAX_QTY) next = MAX_QTY;
+      item.quantity = next;
+      persistAndRender();
+      setStatus(cardNumber + ' 數量更新為 ' + next, 'is-ok');
+    }
+
+    function removeItem(cardNumber) {
+      allItems = allItems.filter(function (item) { return item.cardNumber !== cardNumber; });
+      delete checkedSet[cardNumber];
+      persistAndRender();
+      setStatus('已從收藏庫移除 ' + cardNumber, 'is-ok');
+    }
+
+    function openModal(modal) {
+      if (!modal) return;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('is-open');
+    }
+
+    function closeModal(modal) {
+      if (!modal) return;
+      modal.classList.remove('is-open');
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function closeModalByName(name) {
+      if (name === 'import') {
+        closeModal(importModal);
+        importPickSet = {};
+        return;
+      }
+      if (name === 'tag') {
+        closeModal(tagModal);
+        tagEditTargets = [];
+        tagEditDraft = [];
+        return;
+      }
+      if (name === 'confirm') {
+        closeModal(confirmModal);
+        pendingRemoveCard = null;
+      }
+    }
+
+    function favoriteMatchesImportFilter(item) {
+      var q = importFilter.trim().toLowerCase();
+      if (!q) return true;
+      var hay = [item.cardNumber, item.cardName, item.cardTitle, item.cardRare].join(' ').toLowerCase();
+      return hay.indexOf(q) >= 0;
+    }
+
+    function renderImportList() {
+      var favorites = readFavorites().filter(function (item) {
+        return item && item.cardNumber;
+      });
+      var owned = {};
+      allItems.forEach(function (item) { owned[item.cardNumber] = item.quantity || 1; });
+
+      var visible = favorites.filter(favoriteMatchesImportFilter);
+      if (!visible.length) {
+        importList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
+          (favorites.length ? '沒有符合篩選的願望清單卡片。' : '願望清單尚無卡片，請先至願望清單加入。') +
+          '</li>';
+        return;
+      }
+
+      var html = '';
+      visible.forEach(function (item) {
+        var key = String(item.cardNumber).trim();
+        var qtyOwned = owned[key] || 0;
+        var picked = !!importPickSet[key];
+        html += '<li class="col-import-item" data-import-pick="' + escapeHtml(key) + '">';
+        html += '  <input type="checkbox" ' + (picked ? 'checked' : '') + ' aria-label="選取 ' + escapeHtml(key) + '">';
+        html += '  <div class="col-import-meta">';
+        html += '    <span class="col-import-cardno">' + escapeHtml(key) + '</span>';
+        html += '    <span class="col-import-name">' + escapeHtml(item.cardName || '（無卡名）') + '</span>';
+        html += '  </div>';
+        html += '  <span class="col-import-badge">' + (qtyOwned ? ('已有 ×' + qtyOwned) : '未收藏') + '</span>';
+        html += '</li>';
+      });
+      importList.innerHTML = html;
+    }
+
+    function openImportModal() {
+      importPickSet = {};
+      importFilter = '';
+      if (importSearch) importSearch.value = '';
+      renderImportList();
+      openModal(importModal);
+    }
+
+    function importSelectedFromFavorites() {
+      var keys = Object.keys(importPickSet);
+      if (!keys.length) {
+        setStatus('請先勾選要轉入的卡片', 'is-error');
+        return;
+      }
+      var favMap = {};
+      readFavorites().forEach(function (item) {
+        if (item && item.cardNumber) favMap[String(item.cardNumber).trim()] = item;
+      });
+      var map = {};
+      allItems.forEach(function (item) { map[item.cardNumber] = item; });
+      var added = 0;
+      var bumped = 0;
+      var now = Date.now();
+
+      keys.forEach(function (key) {
+        var fav = favMap[key];
+        if (!fav) return;
+        if (map[key]) {
+          map[key].quantity = clampQty((map[key].quantity || 1) + 1);
+          if (!map[key].cardName && fav.cardName) map[key].cardName = normalizeText(fav.cardName);
+          if (!map[key].cardRare && fav.cardRare) map[key].cardRare = normalizeText(fav.cardRare);
+          if (!map[key].cardTitle && fav.cardTitle) map[key].cardTitle = normalizeText(fav.cardTitle);
+          bumped += 1;
+        } else {
+          map[key] = {
+            cardNumber: key,
+            cardName: normalizeText(fav.cardName),
+            cardRare: normalizeText(fav.cardRare),
+            cardTitle: normalizeText(fav.cardTitle),
+            quantity: 1,
+            tags: [],
+            source: 'favorites',
+            timestamp: now
+          };
+          added += 1;
+        }
+      });
+
+      allItems = Object.keys(map)
+        .map(function (k) { return map[k]; })
+        .sort(function (a, b) { return (b.timestamp || 0) - (a.timestamp || 0); })
+        .slice(0, MAX_ITEMS);
+
+      if (!added && !bumped) {
+        setStatus('找不到對應的願望清單卡片，請確認後再試', 'is-error');
+        return;
+      }
+
+      persistAndRender();
+      closeModalByName('import');
+      setStatus('已轉入 ' + added + ' 種新卡' + (bumped ? '，另累加 ' + bumped + ' 種既有卡' : ''), 'is-ok');
+    }
+
+    function renderTagEditor() {
+      selectedTagsEl.innerHTML = tagEditDraft.length
+        ? tagEditDraft.map(function (tag) {
+            return '<span class="col-selected-tag">' + escapeHtml(tag) +
+              '<button type="button" data-tag-remove="' + escapeHtml(tag) + '" aria-label="移除標籤 ' + escapeHtml(tag) + '">×</button></span>';
+          }).join('')
+        : '<span class="col-meta">尚未選擇標籤</span>';
+
+      var known = collectAllTags();
+      tagSuggestEl.innerHTML = known.length
+        ? known.map(function (tag) {
+            var active = tagEditDraft.indexOf(tag) >= 0 ? ' is-active' : '';
+            return '<li><button type="button" class="col-tag-chip-btn' + active + '" data-tag-toggle="' + escapeHtml(tag) + '">' +
+              escapeHtml(tag) + '</button></li>';
+          }).join('')
+        : '<li class="col-modal-hint" style="margin:0;grid-column:1/-1;">尚無既有標籤，可直接輸入新標籤。</li>';
+    }
+
+    function openTagEditor(cardNumbers, mode) {
+      tagEditTargets = (cardNumbers || []).filter(Boolean);
+      if (!tagEditTargets.length) {
+        setStatus('請先勾選要標籤的卡片', 'is-error');
+        return;
+      }
+      if (mode === 'bulk') {
+        tagTitle.textContent = '批次標籤';
+        tagHint.textContent = '將為已勾選的 ' + tagEditTargets.length + ' 種卡片套用相同標籤（覆蓋原標籤）。';
+        tagEditDraft = [];
+      } else {
+        var item = findItem(tagEditTargets[0]);
+        tagTitle.textContent = '編輯標籤';
+        tagHint.textContent = '為「' + tagEditTargets[0] + '」設定標籤，可用於群組分類。';
+        tagEditDraft = item ? (item.tags || []).slice() : [];
+      }
+      if (tagInput) tagInput.value = '';
+      renderTagEditor();
+      openModal(tagModal);
+    }
+
+    function addDraftTag(raw) {
+      var tag = normalizeTag(raw);
+      if (!tag) return;
+      if (tagEditDraft.indexOf(tag) < 0) tagEditDraft.push(tag);
+      renderTagEditor();
+    }
+
+    function applyTagDraft() {
+      if (!tagEditTargets.length) return;
+      var tags = normalizeTags(tagEditDraft);
+      var count = tagEditTargets.length;
+      tagEditTargets.forEach(function (cardNumber) {
+        var item = findItem(cardNumber);
+        if (item) item.tags = tags.slice();
+      });
+      persistAndRender();
+      closeModalByName('tag');
+      setStatus('已更新 ' + count + ' 種卡片的標籤', 'is-ok');
+    }
+
+    function onAlbumImageLoad(img) {
+      img.classList.add('is-loaded');
+      var art = img.closest('.col-tile-art');
+      if (art) art.classList.add('has-image');
+    }
+
+    function onAlbumImageError(img) {
+      var fallback = img.getAttribute('data-fallback');
+      if (fallback && img.getAttribute('src') !== fallback) {
+        img.removeAttribute('data-fallback');
+        img.src = fallback;
+        return;
+      }
+      img.classList.add('is-broken');
+      img.removeAttribute('src');
+      var art = img.closest('.col-tile-art');
+      if (art) {
+        art.classList.remove('has-image');
+        var label = art.querySelector('.col-tile-placeholder span');
+        if (label) label.textContent = '無卡面';
+      }
+    }
+
+    function ingestPendingFromFavoritesQuery() {
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        var raw = params.get('fromFav');
+        if (!raw) return;
+        var keys = raw.split(',').map(function (s) { return String(s || '').trim(); }).filter(Boolean);
+        if (!keys.length) return;
+        importPickSet = {};
+        keys.forEach(function (k) { importPickSet[k] = true; });
+        importSelectedFromFavorites();
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    albumRoot.addEventListener('click', function (e) {
+      var dec = e.target.closest('[data-qty-dec]');
+      if (dec) {
+        e.preventDefault();
+        e.stopPropagation();
+        changeQuantity(dec.getAttribute('data-qty-dec'), -1);
+        return;
+      }
+      var inc = e.target.closest('[data-qty-inc]');
+      if (inc) {
+        e.preventDefault();
+        e.stopPropagation();
+        changeQuantity(inc.getAttribute('data-qty-inc'), 1);
+        return;
+      }
+      var tagEdit = e.target.closest('[data-tag-edit]');
+      if (tagEdit) {
+        e.preventDefault();
+        e.stopPropagation();
+        openTagEditor([tagEdit.getAttribute('data-tag-edit')], 'single');
+        return;
+      }
+      if (e.target.closest('.col-check') || e.target.closest('[data-check]')) return;
+      var toggle = e.target.closest('[data-toggle-check]');
+      if (!toggle) return;
+      var cardNumber = toggle.getAttribute('data-toggle-check');
+      var tile = toggle.closest('.col-tile');
+      var input = tile ? tile.querySelector('[data-check]') : null;
+      if (!input) return;
+      e.preventDefault();
+      input.checked = !input.checked;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    albumRoot.addEventListener('change', function (e) {
+      var input = e.target.closest('[data-check]');
+      if (!input) return;
+      var cardNumber = input.getAttribute('data-check');
+      if (!cardNumber) return;
+      if (input.checked) checkedSet[cardNumber] = true;
+      else delete checkedSet[cardNumber];
+      var tile = input.closest('.col-tile');
+      if (tile) tile.classList.toggle('is-checked', !!input.checked);
+      updateTotalBar(getVisibleItems());
+    });
+
+    albumRoot.addEventListener('load', function (e) {
+      if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+    }, true);
+
+    albumRoot.addEventListener('error', function (e) {
+      if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+    }, true);
+
+    searchInput.addEventListener('input', function () {
+      filterQuery = searchInput.value || '';
+      renderAlbum();
+    });
+    rareSelect.addEventListener('change', function () {
+      rareFilter = rareSelect.value || '';
+      renderAlbum();
+    });
+    tagSelect.addEventListener('change', function () {
+      tagFilter = tagSelect.value || '';
+      renderAlbum();
+    });
+    sortSelect.addEventListener('change', function () {
+      sortMode = sortSelect.value || 'newest';
+      renderAlbum();
+    });
+    groupSelect.addEventListener('change', function () {
+      groupMode = groupSelect.value || 'none';
+      renderAlbum();
+    });
+
+    document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
+      getVisibleItems().forEach(function (item) {
+        checkedSet[item.cardNumber] = true;
+      });
+      renderAlbum();
+    });
+    document.getElementById('colClearCheckBtn').addEventListener('click', function () {
+      checkedSet = {};
+      renderAlbum();
+    });
+    document.getElementById('colImportBtn').addEventListener('click', openImportModal);
+    document.getElementById('colEmptyImportBtn').addEventListener('click', openImportModal);
+    document.getElementById('colBulkTagBtn').addEventListener('click', function () {
+      openTagEditor(Object.keys(checkedSet), 'bulk');
+    });
+
+    document.getElementById('colImportConfirmBtn').addEventListener('click', importSelectedFromFavorites);
+    document.getElementById('colImportSelectAllBtn').addEventListener('click', function () {
+      readFavorites().filter(favoriteMatchesImportFilter).forEach(function (item) {
+        if (item && item.cardNumber) importPickSet[String(item.cardNumber).trim()] = true;
+      });
+      renderImportList();
+    });
+    if (importSearch) {
+      importSearch.addEventListener('input', function () {
+        importFilter = importSearch.value || '';
+        renderImportList();
+      });
+    }
+    importList.addEventListener('click', function (e) {
+      var row = e.target.closest('[data-import-pick]');
+      if (!row) return;
+      var key = row.getAttribute('data-import-pick');
+      if (!key) return;
+      if (importPickSet[key]) delete importPickSet[key];
+      else importPickSet[key] = true;
+      renderImportList();
+    });
+
+    document.getElementById('colTagAddBtn').addEventListener('click', function () {
+      addDraftTag(tagInput.value);
+      tagInput.value = '';
+      tagInput.focus();
+    });
+    tagInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addDraftTag(tagInput.value);
+        tagInput.value = '';
+      }
+    });
+    selectedTagsEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-tag-remove]');
+      if (!btn) return;
+      var tag = btn.getAttribute('data-tag-remove');
+      tagEditDraft = tagEditDraft.filter(function (t) { return t !== tag; });
+      renderTagEditor();
+    });
+    tagSuggestEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-tag-toggle]');
+      if (!btn) return;
+      var tag = btn.getAttribute('data-tag-toggle');
+      if (!tag) return;
+      if (tagEditDraft.indexOf(tag) >= 0) {
+        tagEditDraft = tagEditDraft.filter(function (t) { return t !== tag; });
+      } else {
+        tagEditDraft.push(tag);
+      }
+      renderTagEditor();
+    });
+    document.getElementById('colTagConfirmBtn').addEventListener('click', applyTagDraft);
+
+    document.getElementById('colConfirmOkBtn').addEventListener('click', function () {
+      if (!pendingRemoveCard) {
+        closeModalByName('confirm');
+        return;
+      }
+      var cardNumber = pendingRemoveCard;
+      closeModalByName('confirm');
+      removeItem(cardNumber);
+    });
+
+    document.querySelectorAll('[data-modal-close]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        closeModalByName(el.getAttribute('data-modal-close'));
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (confirmModal.classList.contains('is-open')) {
+        closeModalByName('confirm');
+        return;
+      }
+      if (tagModal.classList.contains('is-open')) {
+        closeModalByName('tag');
+        return;
+      }
+      if (importModal.classList.contains('is-open')) {
+        closeModalByName('import');
+      }
+    });
+
+    allItems = readLocal();
+    Object.keys(checkedSet).forEach(function (key) {
+      if (!allItems.some(function (it) { return it.cardNumber === key; })) {
+        delete checkedSet[key];
+      }
+    });
+    refreshFilterOptions();
+    renderAlbum();
+    ingestPendingFromFavoritesQuery();
+    setStatus(allItems.length ? '已載入本機收藏庫' : '收藏庫為空，可從願望清單轉入', allItems.length ? 'is-ok' : '');
+  })();
+</script>
+</body>
+</html>
