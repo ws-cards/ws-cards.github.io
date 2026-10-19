@@ -832,7 +832,7 @@
     }
 
     .col-modal-dialog.col-modal-wide {
-      width: min(720px, 100%);
+      width: min(880px, 100%);
     }
     .col-deck-editor-head {
       display: grid;
@@ -861,61 +861,166 @@
       color: #2d3748;
     }
     [data-theme="dark"] .col-deck-editor-summary strong { color: #e2e8f0; }
+
+    /* 牌組編成：手機 3 欄、桌面 4 欄卡面網格 */
     .col-deck-entry-list {
       list-style: none;
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 0.45rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem 0.5rem;
+    }
+    @media (min-width: 768px) {
+      .col-deck-entry-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem 0.65rem;
+      }
+    }
+    .col-deck-entry-empty {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 0.75rem 0.25rem;
     }
     .col-deck-entry {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 0.5rem 0.65rem;
-      align-items: center;
-      padding: 0.55rem 0.65rem;
+      position: relative;
+      margin: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .col-deck-entry-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
       border-radius: 8px;
-      background: #f7fafc;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
     }
-    [data-theme="dark"] .col-deck-entry {
-      background: rgba(255, 255, 255, 0.05);
+    [data-theme="dark"] .col-deck-entry-art {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     }
-    .col-deck-entry.is-short {
-      box-shadow: inset 0 0 0 1px rgba(229, 62, 62, 0.45);
+    .col-deck-entry.is-short .col-deck-entry-art {
+      box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.55);
+    }
+    .col-deck-entry-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .col-deck-entry-art img.is-loaded { opacity: 1; }
+    .col-deck-entry-art img.is-broken { display: none; }
+    .col-deck-entry-art .col-tile-placeholder {
+      font-size: 0.68rem;
+    }
+    .col-deck-entry-art.has-image .col-tile-placeholder { display: none; }
+    .col-deck-qty-badge {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.35rem;
+      z-index: 2;
+      min-width: 1.55rem;
+      padding: 0.12rem 0.35rem;
+      border-radius: 6px;
+      background: rgba(26, 32, 44, 0.82);
+      color: #fff;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .col-deck-owned-badge {
+      position: absolute;
+      left: 0.35rem;
+      bottom: 0.35rem;
+      z-index: 2;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #4a5568;
+      font-size: 0.65rem;
+      font-weight: 700;
+      line-height: 1.2;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+    .col-deck-owned-badge.is-short {
+      background: #fff5f5;
+      color: #c53030;
+    }
+    [data-theme="dark"] .col-deck-owned-badge {
+      background: rgba(36, 36, 36, 0.92);
+      color: #e2e8f0;
+    }
+    [data-theme="dark"] .col-deck-owned-badge.is-short {
+      background: rgba(197, 48, 48, 0.28);
+      color: #fc8181;
+    }
+    .col-deck-remove-btn {
+      position: absolute;
+      top: 0.3rem;
+      left: 0.3rem;
+      z-index: 3;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      color: #a0aec0;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .col-deck-remove-btn:hover { color: #e53e3e; background: #fff; }
+    [data-theme="dark"] .col-deck-remove-btn {
+      background: rgba(36, 36, 36, 0.92);
+      color: #a0aec0;
+    }
+    .col-deck-entry-caption {
+      min-width: 0;
+      padding: 0 0.05rem;
     }
     .col-deck-entry-cardno {
       display: block;
       font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-size: 0.78rem;
+      font-size: 0.68rem;
       font-weight: 700;
+      color: #2d3748;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    [data-theme="dark"] .col-deck-entry-cardno { color: #e2e8f0; }
     .col-deck-entry-name {
       display: block;
-      font-size: 0.72rem;
+      margin-top: 0.1rem;
+      font-size: 0.68rem;
+      line-height: 1.3;
       color: #718096;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     [data-theme="dark"] .col-deck-entry-name { color: #a0aec0; }
-    .col-deck-entry-owned {
-      font-size: 0.7rem;
-      color: #718096;
-      white-space: nowrap;
+    .col-deck-entry .col-qty {
+      margin-top: 0.15rem;
+      justify-content: center;
     }
-    .col-deck-entry-owned.is-short {
-      color: #c53030;
-      font-weight: 700;
+    .col-deck-entry .col-qty-btn {
+      width: 26px;
+      height: 26px;
+      font-size: 0.85rem;
     }
-    [data-theme="dark"] .col-deck-entry-owned.is-short { color: #fc8181; }
-    .col-deck-remove-btn {
-      border: none;
-      background: transparent;
-      color: #a0aec0;
-      cursor: pointer;
-      padding: 0.25rem;
+    .col-deck-entry .col-qty-value {
+      min-width: 1.25rem;
+      font-size: 0.85rem;
     }
-    .col-deck-remove-btn:hover { color: #e53e3e; }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
@@ -2248,7 +2353,7 @@
       }
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
-        deckEntryList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
+        deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
           (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。') +
           '</li>';
         return;
@@ -2258,29 +2363,30 @@
         var meta = inventoryMeta(entry.cardNumber, entry.cardName);
         var owned = ownedQty(entry.cardNumber);
         var isShort = owned < entry.qty;
+        var urls = buildCardImageUrls(entry.cardNumber);
         html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
-        html += '  <div>';
+        html += '  <div class="col-deck-entry-art">';
+        html += '    <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
+        if (urls.primary) {
+          html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
+        }
+        html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
+        html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+        if (!isView) {
+          html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
+        }
+        html += '  </div>';
+        html += '  <div class="col-deck-entry-caption">';
         html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
         html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
-        html += '  </div>';
-        if (isView) {
-          html += '  <div class="col-qty" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
-          html += '    <span class="col-qty-value">×' + escapeHtml(String(entry.qty)) + '</span>';
-          html += '  </div>';
-          html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
-          html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
-          html += '  </div>';
-        } else {
-          html += '  <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
-          html += '    <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
-          html += '    <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
-          html += '    <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
-          html += '  </div>';
-          html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
-          html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
-          html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組"><i class="fas fa-times" aria-hidden="true"></i></button>';
-          html += '  </div>';
+        if (!isView) {
+          html += '    <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+          html += '      <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
+          html += '      <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
+          html += '      <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+          html += '    </div>';
         }
+        html += '  </div>';
         html += '</li>';
       });
       deckEntryList.innerHTML = html;
@@ -2636,7 +2742,7 @@
 
     function onAlbumImageLoad(img) {
       img.classList.add('is-loaded');
-      var art = img.closest('.col-tile-art');
+      var art = img.closest('.col-tile-art, .col-deck-entry-art');
       if (art) art.classList.add('has-image');
     }
 
@@ -2649,7 +2755,7 @@
       }
       img.classList.add('is-broken');
       img.removeAttribute('src');
-      var art = img.closest('.col-tile-art');
+      var art = img.closest('.col-tile-art, .col-deck-entry-art');
       if (art) {
         art.classList.remove('has-image');
         var label = art.querySelector('.col-tile-placeholder span');
@@ -2955,9 +3061,17 @@
         }
         var removeBtn = e.target.closest('[data-deck-entry-remove]');
         if (removeBtn) {
+          e.preventDefault();
+          e.stopPropagation();
           changeDeckDraftQty(removeBtn.getAttribute('data-deck-entry-remove'), -999);
         }
       });
+      deckEntryList.addEventListener('load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      deckEntryList.addEventListener('error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
     }
 
     document.addEventListener('keydown', function (e) {
