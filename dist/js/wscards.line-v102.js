@@ -374,8 +374,7 @@ selectOnBlur:false     // 失去焦點時不自動選擇
 });
 
 // 作品建議清單以背景方式載入：頁面與卡號搜尋不必等它完成。
-// 本地 JSON（coverImage / coverUrl 自製封面，或 coverCard 卡圖）；遠端同名檔尚未含封面欄位時以此為準
-var _typeaheadSourceUrl = 'json/wsSeriesSuggestions.json';
+var _typeaheadSourceUrl = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/wsSeriesSuggestions.json';
 function loadTypeaheadSuggestions() {
     fetch(_typeaheadSourceUrl)
         .then(function(response) {
@@ -519,9 +518,9 @@ function fetchCardDictionary(callback) {
         return;
     }
     console.log("正在載入卡片字典...");
-    // 呼叫包含卡名與卡號對應的 JSON，例如 json/cardDictionary.json
-    // 如果檔案不存在會報錯，開發時需確認該檔案存在，格式為 [["BD/W54-070", "卡名A"], ...]
-    fetch('json/cardDictionary.json')
+    // 呼叫包含卡名與卡號對應的 JSON（GCS）
+    // 格式為 [["BD/W54-070", "卡名A"], ...]
+    fetch('https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/cardDictionary/cardDictionary.json')
         .then(response => response.json())
         .then(data => {
             _cardDictionary = data;
