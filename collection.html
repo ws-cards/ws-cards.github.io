@@ -2337,20 +2337,97 @@
       }
     }
 
-    function renderDeckEditor() {
-      if (!deckDraft) return;
-      var isView = deckEditorMode === 'view';
+    function updateDeckEditorSummary() {
+      if (!deckDraft || !deckEditorSummary) return;
       var total = deckTotalCards(deckDraft);
       var kinds = (deckDraft.cards || []).length;
       var short = deckShortage(deckDraft);
-      if (deckEditorSummary) {
-        deckEditorSummary.innerHTML =
-          '<span>編成 <strong>' + total + '</strong> 張</span>' +
-          '<span>卡種 <strong>' + kinds + '</strong></span>' +
-          (short.shortKinds
-            ? '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（差 ' + short.shortCopies + ' 張）</span>'
-            : '<span>庫存足夠</span>');
+      deckEditorSummary.innerHTML =
+        '<span>編成 <strong>' + total + '</strong> 張</span>' +
+        '<span>卡種 <strong>' + kinds + '</strong></span>' +
+        (short.shortKinds
+          ? '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（差 ' + short.shortCopies + ' 張）</span>'
+          : '<span>庫存足夠</span>');
+    }
+
+    function findDeckEntryTile(cardNumber) {
+      if (!deckEntryList) return null;
+      var nodes = deckEntryList.querySelectorAll('[data-deck-entry]');
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].getAttribute('data-deck-entry') === cardNumber) return nodes[i];
       }
+      return null;
+    }
+
+    function syncDeckEntryTile(cardNumber) {
+      if (!deckEntryList || !deckDraft) return false;
+      var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
+      var tile = findDeckEntryTile(cardNumber);
+      if (!entry) {
+        if (tile) tile.remove();
+        if (!(deckDraft.cards || []).length) {
+          deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
+            (deckEditorMode === 'view' ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。') +
+            '</li>';
+        }
+        return true;
+      }
+      if (!tile) return false;
+      var owned = ownedQty(entry.cardNumber);
+      var isShort = owned < entry.qty;
+      tile.classList.toggle('is-short', isShort);
+      var qtyBadge = tile.querySelector('.col-deck-qty-badge');
+      if (qtyBadge) {
+        qtyBadge.textContent = '×' + entry.qty;
+        qtyBadge.setAttribute('aria-label', '編成 ' + entry.qty + ' 張');
+      }
+      var ownedBadge = tile.querySelector('.col-deck-owned-badge');
+      if (ownedBadge) {
+        ownedBadge.textContent = '持有 ' + owned;
+        ownedBadge.classList.toggle('is-short', isShort);
+      }
+      var qtyValue = tile.querySelector('.col-qty-value');
+      if (qtyValue) qtyValue.textContent = String(entry.qty);
+      return true;
+    }
+
+    function buildDeckEntryHtml(entry, isView) {
+      var meta = inventoryMeta(entry.cardNumber, entry.cardName);
+      var owned = ownedQty(entry.cardNumber);
+      var isShort = owned < entry.qty;
+      var urls = buildCardImageUrls(entry.cardNumber);
+      var html = '';
+      html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
+      html += '  <div class="col-deck-entry-art">';
+      html += '    <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
+      if (urls.primary) {
+        html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
+      }
+      html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
+      html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+      if (!isView) {
+        html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
+      }
+      html += '  </div>';
+      html += '  <div class="col-deck-entry-caption">';
+      html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
+      html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
+      if (!isView) {
+        html += '    <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+        html += '      <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
+        html += '      <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
+        html += '      <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+        html += '    </div>';
+      }
+      html += '  </div>';
+      html += '</li>';
+      return html;
+    }
+
+    function renderDeckEditor() {
+      if (!deckDraft) return;
+      var isView = deckEditorMode === 'view';
+      updateDeckEditorSummary();
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
@@ -2358,38 +2435,9 @@
           '</li>';
         return;
       }
-      var html = '';
-      deckDraft.cards.forEach(function (entry) {
-        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-        var owned = ownedQty(entry.cardNumber);
-        var isShort = owned < entry.qty;
-        var urls = buildCardImageUrls(entry.cardNumber);
-        html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
-        html += '  <div class="col-deck-entry-art">';
-        html += '    <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
-        if (urls.primary) {
-          html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
-        }
-        html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
-        html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
-        if (!isView) {
-          html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
-        }
-        html += '  </div>';
-        html += '  <div class="col-deck-entry-caption">';
-        html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
-        html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
-        if (!isView) {
-          html += '    <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
-          html += '      <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
-          html += '      <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
-          html += '      <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
-          html += '    </div>';
-        }
-        html += '  </div>';
-        html += '</li>';
-      });
-      deckEntryList.innerHTML = html;
+      deckEntryList.innerHTML = deckDraft.cards.map(function (entry) {
+        return buildDeckEntryHtml(entry, isView);
+      }).join('');
     }
 
     function openDeckEditor(deckId, mode) {
@@ -2440,7 +2488,9 @@
       } else {
         entry.qty = Math.min(MAX_DECK_ENTRY_QTY, next);
       }
-      renderDeckEditor();
+      // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
+      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      else updateDeckEditorSummary();
     }
 
     function saveDeckDraft() {
