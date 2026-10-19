@@ -19,9 +19,9 @@
     html:not(.fonts-ready) body { visibility: hidden; }
     html.fonts-ready body { visibility: visible; }
   </style>
-  <meta name="description" content="管理已擁有的 Weiss Schwarz 單卡庫與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
+  <meta name="description" content="管理已擁有的 Weiss Schwarz 卡冊與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
   <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
-  <meta property="og:description" content="單卡庫存與引用制牌組分層管理：標籤、數量與缺卡提示。">
+  <meta property="og:description" content="我的卡冊與引用制牌組分層管理：標籤、數量與缺卡提示。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -734,7 +734,7 @@
     }
     [data-theme="dark"] .col-confirm-text strong { color: #fc8181; }
 
-    /* —— 單卡 / 牌組 分頁 —— */
+    /* —— 我的卡冊 / 牌組 分頁 —— */
     .col-tabs {
       display: flex;
       gap: 0.35rem;
@@ -1021,14 +1021,14 @@
               </div>
               <div class="card-body">
                 <div class="col-tabs" role="tablist" aria-label="收藏庫分層">
-                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">單卡</button>
+                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">我的卡冊</button>
                   <button type="button" class="col-tab" role="tab" id="colTabDecks" data-col-tab="decks" aria-selected="false" aria-controls="colPanelDecks">牌組</button>
                 </div>
 
                 <div class="col-status" id="colStatus" role="status" aria-live="polite"></div>
 
                 <div id="colPanelCards" class="col-panel" data-col-panel="cards" role="tabpanel" aria-labelledby="colTabCards">
-                  <div class="col-controls" aria-label="單卡篩選列">
+                  <div class="col-controls" aria-label="卡冊篩選列">
                     <div class="col-field col-field-search">
                       <label for="colSearchInput">搜尋</label>
                       <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
@@ -1098,12 +1098,12 @@
 
                   <div id="colEmpty" class="col-empty" style="display:none;">
                     <div><i class="fas fa-clone" aria-hidden="true"></i></div>
-                    <p id="colEmptyText">單卡庫尚無卡片。</p>
+                    <p id="colEmptyText">卡冊尚無卡片。</p>
                     <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
                       <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
                     </button>
                   </div>
-                  <div id="colAlbumRoot" aria-label="單卡相簿"></div>
+                  <div id="colAlbumRoot" aria-label="我的卡冊相簿"></div>
                 </div>
 
                 <div id="colPanelDecks" class="col-panel" data-col-panel="decks" role="tabpanel" aria-labelledby="colTabDecks" hidden>
@@ -1142,7 +1142,7 @@
                       <div class="col-total-sub">
                         <span class="col-total-count" id="colDeckCountLabel">可見 0 副</span>
                         <span class="col-total-sep" aria-hidden="true">·</span>
-                        <span>牌組引用單卡庫；庫存不足會標示缺卡</span>
+                        <span>牌組引用我的卡冊；庫存不足會標示缺卡</span>
                       </div>
                     </div>
                   </div>
@@ -1240,7 +1240,7 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint">牌組以引用方式對應單卡庫；編成張數可超過持有量，但會標示缺卡。</p>
+      <p class="col-modal-hint" id="colDeckModalHint">牌組以引用方式對應我的卡冊；編成張數可超過持有量，但會標示缺卡。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -1252,32 +1252,33 @@
         </label>
       </div>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
-      <div class="col-tag-input-row" style="margin-bottom:0.75rem;">
+      <div class="col-tag-input-row" id="colDeckPickRow" style="margin-bottom:0.75rem;">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
-          <i class="fas fa-plus mr-1" aria-hidden="true"></i>從單卡庫加入
+          <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
         </button>
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
     </div>
     <div class="col-modal-actions">
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck">取消</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck" id="colDeckCancelBtn">取消</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckViewEditBtn" hidden>編輯此牌組</button>
       <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
     </div>
   </div>
 </div>
 
-<!-- 從單卡庫挑選加入牌組 -->
+<!-- 從我的卡冊挑選加入牌組 -->
 <div id="colDeckPickModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckPick"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckPickTitle">
     <div class="col-modal-body">
-      <h3 id="colDeckPickTitle">從單卡庫加入</h3>
+      <h3 id="colDeckPickTitle">從我的卡冊加入</h3>
       <p class="col-modal-hint">勾選要編成的卡片；已在牌組內的卡會累加編成數量 +1。</p>
       <div class="col-tag-input-row">
-        <input id="colDeckPickSearch" type="search" class="form-control" placeholder="篩選單卡庫…" autocomplete="off">
+        <input id="colDeckPickSearch" type="search" class="form-control" placeholder="篩選我的卡冊…" autocomplete="off">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickSelectAllBtn">全選可見</button>
       </div>
-      <ul class="col-import-list" id="colDeckPickList" aria-label="可加入牌組的單卡"></ul>
+      <ul class="col-import-list" id="colDeckPickList" aria-label="可加入牌組的卡冊卡片"></ul>
     </div>
     <div class="col-modal-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckPick">取消</button>
@@ -1292,7 +1293,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯，可再調整名稱與編成。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯；編成會引用我的卡冊並標示缺卡。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -1371,8 +1372,15 @@
     var deckFilterQuery = '';
     var deckSortMode = 'updated';
     var deckDraft = null;
+    var deckEditorMode = 'edit';
     var deckPickSet = {};
     var deckPickFilter = '';
+
+    var deckModalHint = document.getElementById('colDeckModalHint');
+    var deckPickRow = document.getElementById('colDeckPickRow');
+    var deckCancelBtn = document.getElementById('colDeckCancelBtn');
+    var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
+    var deckSaveBtn = document.getElementById('colDeckSaveBtn');
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var emptyEl = document.getElementById('colEmpty');
@@ -1741,7 +1749,7 @@
 
       if (!allItems.length) {
         emptyEl.style.display = '';
-        emptyTextEl.textContent = '單卡庫尚無卡片。';
+        emptyTextEl.textContent = '卡冊尚無卡片。';
         albumRoot.innerHTML = '';
         return;
       }
@@ -1813,9 +1821,9 @@
       var next = (item.quantity || 1) + delta;
       if (next <= 0) {
         askConfirm({
-          title: '移出單卡庫',
+          title: '移出卡冊',
           okLabel: '確認移除',
-          html: '「<strong>' + escapeHtml(cardNumber) + '</strong>」數量將變為 0，此卡片會從單卡庫移除。確定繼續？',
+          html: '「<strong>' + escapeHtml(cardNumber) + '</strong>」數量將變為 0，此卡片會從我的卡冊移除。確定繼續？',
           onOk: function () { removeItem(cardNumber); }
         });
         return;
@@ -1868,6 +1876,8 @@
       if (name === 'deck') {
         closeModal(deckModal);
         deckDraft = null;
+        deckEditorMode = 'edit';
+        applyDeckEditorMode();
         return;
       }
       if (name === 'deckPick') {
@@ -2095,6 +2105,7 @@
         html += '    </div>';
         html += '  </div>';
         html += '  <div class="col-deck-actions">';
+        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-view="' + escapeHtml(deck.id) + '">檢視</button>';
         html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '">編輯</button>';
         html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '">複製</button>';
         html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-del="' + escapeHtml(deck.id) + '">刪除</button>';
@@ -2155,9 +2166,11 @@
         createdAt: now,
         updatedAt: now
       };
+      deckEditorMode = 'edit';
       document.getElementById('colDeckTitle').textContent = '編輯匯入牌組';
       if (deckNameInput) deckNameInput.value = deckDraft.name;
       if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      applyDeckEditorMode();
       renderDeckEditor();
       closeModalByName('decklog');
       switchTab('decks');
@@ -2198,8 +2211,30 @@
         });
     }
 
+    function applyDeckEditorMode() {
+      var isView = deckEditorMode === 'view';
+      if (deckNameInput) {
+        deckNameInput.readOnly = isView;
+        deckNameInput.disabled = isView;
+      }
+      if (deckTagsInput) {
+        deckTagsInput.readOnly = isView;
+        deckTagsInput.disabled = isView;
+      }
+      if (deckPickRow) deckPickRow.hidden = isView;
+      if (deckSaveBtn) deckSaveBtn.hidden = isView;
+      if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
+      if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
+      if (deckModalHint) {
+        deckModalHint.textContent = isView
+          ? '唯讀檢視：對照我的卡冊持有量；缺卡會標示。若要修改請按「編輯此牌組」。'
+          : '牌組以引用方式對應我的卡冊；編成張數可超過持有量，但會標示缺卡。';
+      }
+    }
+
     function renderDeckEditor() {
       if (!deckDraft) return;
+      var isView = deckEditorMode === 'view';
       var total = deckTotalCards(deckDraft);
       var kinds = (deckDraft.cards || []).length;
       var short = deckShortage(deckDraft);
@@ -2213,7 +2248,9 @@
       }
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
-        deckEntryList.innerHTML = '<li class="col-modal-hint" style="margin:0;">尚未加入卡片，請按「從單卡庫加入」。</li>';
+        deckEntryList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
+          (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。') +
+          '</li>';
         return;
       }
       var html = '';
@@ -2224,23 +2261,32 @@
         html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
         html += '  <div>';
         html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
-        html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（單卡庫尚無卡名）') + '</span>';
+        html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
         html += '  </div>';
-        html += '  <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
-        html += '    <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
-        html += '    <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
-        html += '    <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
-        html += '  </div>';
-        html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
-        html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
-        html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組"><i class="fas fa-times" aria-hidden="true"></i></button>';
-        html += '  </div>';
+        if (isView) {
+          html += '  <div class="col-qty" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+          html += '    <span class="col-qty-value">×' + escapeHtml(String(entry.qty)) + '</span>';
+          html += '  </div>';
+          html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
+          html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+          html += '  </div>';
+        } else {
+          html += '  <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+          html += '    <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
+          html += '    <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
+          html += '    <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+          html += '  </div>';
+          html += '  <div style="display:flex;align-items:center;gap:0.35rem;">';
+          html += '    <span class="col-deck-entry-owned' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+          html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組"><i class="fas fa-times" aria-hidden="true"></i></button>';
+          html += '  </div>';
+        }
         html += '</li>';
       });
       deckEntryList.innerHTML = html;
     }
 
-    function openDeckEditor(deckId) {
+    function openDeckEditor(deckId, mode) {
       var existing = deckId
         ? allDecks.find(function (d) { return d.id === deckId; })
         : null;
@@ -2248,10 +2294,13 @@
         setStatus('找不到該牌組', 'is-error');
         return;
       }
+      deckEditorMode = mode === 'view' ? 'view' : 'edit';
       if (existing) {
         deckDraft = cloneDeckDraft(existing);
-        document.getElementById('colDeckTitle').textContent = '編輯牌組';
+        document.getElementById('colDeckTitle').textContent =
+          deckEditorMode === 'view' ? '檢視牌組' : '編輯牌組';
       } else {
+        deckEditorMode = 'edit';
         var now = Date.now();
         deckDraft = {
           id: newDeckId(),
@@ -2265,13 +2314,18 @@
       }
       if (deckNameInput) deckNameInput.value = deckDraft.name || '';
       if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
-      if (deckNameInput) deckNameInput.focus();
+      if (deckEditorMode === 'edit' && deckNameInput) deckNameInput.focus();
+    }
+
+    function openDeckViewer(deckId) {
+      openDeckEditor(deckId, 'view');
     }
 
     function changeDeckDraftQty(cardNumber, delta) {
-      if (!deckDraft) return;
+      if (!deckDraft || deckEditorMode === 'view') return;
       var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
       if (!entry) return;
       var next = (entry.qty || 1) + delta;
@@ -2284,7 +2338,7 @@
     }
 
     function saveDeckDraft() {
-      if (!deckDraft) return;
+      if (!deckDraft || deckEditorMode === 'view') return;
       var name = normalizeText(deckNameInput && deckNameInput.value);
       if (!name) {
         setStatus('請輸入牌組名稱', 'is-error');
@@ -2340,7 +2394,7 @@
       askConfirm({
         title: '刪除牌組',
         okLabel: '確認刪除',
-        html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？單卡庫存不會受影響。',
+        html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？我的卡冊不會受影響。',
         onOk: function () {
           allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
           persistDecksAndRender();
@@ -2358,7 +2412,7 @@
       });
       if (!visible.length) {
         deckPickList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
-          (allItems.length ? '沒有符合篩選的單卡。' : '單卡庫尚無卡片，請先至「單卡」分頁轉入。') +
+          (allItems.length ? '沒有符合篩選的卡片。' : '卡冊尚無卡片，請先至「我的卡冊」分頁轉入。') +
           '</li>';
         return;
       }
@@ -2386,8 +2440,9 @@
 
     function openDeckPickModal() {
       if (!deckDraft) return;
+      if (deckEditorMode === 'view') return;
       if (!allItems.length) {
-        setStatus('單卡庫尚無卡片，請先轉入單卡', 'is-error');
+        setStatus('卡冊尚無卡片，請先轉入我的卡冊', 'is-error');
         return;
       }
       deckPickSet = {};
@@ -2822,9 +2877,14 @@
     }
     if (deckListEl) {
       deckListEl.addEventListener('click', function (e) {
+        var viewBtn = e.target.closest('[data-deck-view]');
+        if (viewBtn) {
+          openDeckViewer(viewBtn.getAttribute('data-deck-view'));
+          return;
+        }
         var editBtn = e.target.closest('[data-deck-edit]');
         if (editBtn) {
-          openDeckEditor(editBtn.getAttribute('data-deck-edit'));
+          openDeckEditor(editBtn.getAttribute('data-deck-edit'), 'edit');
           return;
         }
         var dupBtn = e.target.closest('[data-deck-dup]');
@@ -2838,7 +2898,18 @@
         }
       });
     }
-    document.getElementById('colDeckSaveBtn').addEventListener('click', saveDeckDraft);
+    if (deckViewEditBtn) {
+      deckViewEditBtn.addEventListener('click', function () {
+        if (!deckDraft || !deckDraft.id) return;
+        openDeckEditor(deckDraft.id, 'edit');
+      });
+    }
+    if (deckSaveBtn) {
+      deckSaveBtn.addEventListener('click', function () {
+        if (deckEditorMode === 'view') return;
+        saveDeckDraft();
+      });
+    }
     document.getElementById('colDeckPickBtn').addEventListener('click', openDeckPickModal);
     document.getElementById('colDeckPickConfirmBtn').addEventListener('click', confirmDeckPick);
     document.getElementById('colDeckPickSelectAllBtn').addEventListener('click', function () {
@@ -2932,8 +3003,8 @@
     switchTab(savedTab === 'decks' ? 'decks' : 'cards');
     setStatus(
       allItems.length || allDecks.length
-        ? ('已載入單卡 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
-        : '收藏庫為空，可先至「單卡」從願望清單轉入',
+        ? ('已載入卡冊 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
+        : '收藏庫為空，可先至「我的卡冊」從願望清單轉入',
       allItems.length || allDecks.length ? 'is-ok' : ''
     );
   })();
