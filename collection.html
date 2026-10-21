@@ -1038,6 +1038,7 @@
       margin: 0;
       padding: 0.45rem;
       display: grid;
+      /* 手機：2×2 */
       grid-template-columns: repeat(2, minmax(0, 1fr));
       grid-template-rows: repeat(2, minmax(0, 1fr));
       gap: 0.4rem 0.35rem;
@@ -1063,9 +1064,11 @@
             rgba(20, 35, 58, 0.035) 31px 32px
           ),
           var(--binder-page);
-        padding: 0.55rem 0.5rem 0.6rem;
+        padding: 0.4rem 0.4rem 0.45rem;
+        /* 電腦單頁 2×4；左右對開共 4×4 */
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.45rem 0.4rem;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        gap: 0.3rem 0.3rem;
       }
       .col-binder-page-left {
         box-shadow: inset -10px 0 20px rgba(20, 35, 58, 0.05);
@@ -1105,7 +1108,36 @@
     }
     .col-binder-page .col-tile-caption {
       flex: 0 0 auto;
-      padding: 0.15rem 0.12rem 0.12rem;
+      padding: 0.12rem 0.1rem 0.08rem;
+    }
+    @media (min-width: 768px) {
+      .col-binder-page .col-tile-caption {
+        padding: 0.08rem 0.08rem 0.05rem;
+      }
+      .col-binder-page .col-cardno {
+        font-size: 0.58rem;
+      }
+      .col-binder-page .col-qty-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 0.72rem;
+      }
+      .col-binder-page .col-qty-value {
+        min-width: 1rem;
+        font-size: 0.72rem;
+      }
+      .col-binder-page .col-check {
+        width: 24px;
+        height: 24px;
+        top: 0.18rem;
+        left: 0.18rem;
+      }
+      .col-binder-page .col-rare {
+        font-size: 0.58rem;
+        left: 0.28rem;
+        bottom: 0.28rem;
+        padding: 0.08rem 0.28rem;
+      }
     }
     .col-binder-page .col-cardno {
       font-size: 0.64rem;
@@ -3299,7 +3331,8 @@
     }
 
     function getAlbumSpreadSize() {
-      return window.matchMedia('(min-width: 768px)').matches ? 8 : 4;
+      /* 手機 2×2=4；電腦左右頁各 2×4，對開共 4×4=16 */
+      return window.matchMedia('(min-width: 768px)').matches ? 16 : 4;
     }
 
     function isAlbumDesktopSpread() {
