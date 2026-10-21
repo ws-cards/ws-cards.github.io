@@ -882,147 +882,67 @@
       padding: 0;
     }
 
-    /* 卡冊舞台：對開頁／手機單頁，類似 binder 參考版面（高度隨內容，不強制適配視窗） */
+    /* 卡冊舞台：附圖風格純格線，無頁碼／翻頁鈕 */
     .col-binder-stage {
-      --binder-frame: #3b82f6;
-      --binder-panel: #eef2f7;
-      --binder-panel-ink: #111827;
-      --binder-gap: 0.45rem;
-      position: relative;
+      --binder-gap: 0.55rem;
+      --binder-panel: #141414;
       margin-top: 0.85rem;
-      display: flex;
-      flex-direction: column;
-      padding: 0 2.4rem;
+      padding: 0;
+      border-radius: 12px;
+      background: var(--binder-panel);
+      overflow: hidden;
     }
-    @media (max-width: 767px) {
-      .col-binder-stage {
-        padding: 0 1.35rem;
-      }
-    }
-    [data-theme="dark"] .col-binder-stage {
-      --binder-frame: #60a5fa;
-      --binder-panel: #1c1f24;
-      --binder-panel-ink: #f3f4f6;
+    [data-theme="light"] .col-binder-stage {
+      --binder-panel: #1a1a1a;
     }
     .col-binder-viewport {
       min-width: 0;
-      display: flex;
-      flex-direction: column;
     }
     .col-binder-spread {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-      /* 固定舒適高度（非依剩餘視窗動態壓縮） */
-      height: clamp(420px, 112vw, 620px);
-      transform-origin: center center;
-      transition: transform 0.4s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.3s ease;
-    }
-    @media (min-width: 768px) {
-      .col-binder-spread {
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        height: clamp(560px, 64vw, 820px);
-      }
-    }
-    .col-binder-spread.is-flip-next {
-      transform: translateX(-18px) scale(0.985);
-      opacity: 0.35;
-    }
-    .col-binder-spread.is-flip-prev {
-      transform: translateX(18px) scale(0.985);
-      opacity: 0.35;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .col-binder-spread { transition: opacity 0.2s ease; }
-      .col-binder-spread.is-flip-next,
-      .col-binder-spread.is-flip-prev {
-        transform: none;
-        opacity: 0.4;
-      }
-    }
-    .col-binder-leaf {
-      min-width: 0;
-      min-height: 0;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      border: 2px solid var(--binder-frame);
-      border-radius: 10px;
-      background: var(--binder-panel);
-      color: var(--binder-panel-ink);
-      overflow: hidden;
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
-    }
-    [data-theme="dark"] .col-binder-leaf {
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-    }
-    .col-binder-leaf-label {
-      flex: 0 0 auto;
       margin: 0;
-      padding: 0.45rem 0.6rem 0.25rem;
-      text-align: center;
-      font-size: 0.92rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--binder-panel-ink);
-      opacity: 0.88;
+      padding: 0;
     }
     .col-binder-page {
       list-style: none;
       margin: 0;
-      padding: 0.35rem 0.45rem 0.55rem;
-      flex: 1 1 auto;
-      min-height: 0;
+      padding: var(--binder-gap);
       display: grid;
-      /* 手機：2×2 */
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(2, minmax(0, 1fr));
       gap: var(--binder-gap);
-      align-content: stretch;
-      overflow: hidden;
+      background: var(--binder-panel);
     }
     @media (min-width: 768px) {
       .col-binder-page {
-        /* 電腦單頁 2×4；左右對開共 4×4 */
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(4, minmax(0, 1fr));
-        gap: 0.4rem;
-        padding: 0.3rem 0.5rem 0.55rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        --binder-gap: 0.65rem;
+        padding: 0.65rem;
       }
     }
     .col-binder-page .col-tile {
-      min-height: 0;
-      height: 100%;
       margin: 0;
+      min-width: 0;
       position: relative;
     }
     .col-binder-page .col-tile-body {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      border-radius: 6px;
+      display: block;
+      border-radius: 8px;
       overflow: hidden;
       background: transparent;
       box-shadow: none;
     }
     .col-binder-page .col-tile-art {
-      flex: 1 1 auto;
-      min-height: 0;
+      position: relative;
       width: 100%;
-      height: 100%;
-      aspect-ratio: auto;
-      border-radius: 6px;
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
       overflow: hidden;
-      background: rgba(15, 23, 42, 0.06);
-    }
-    [data-theme="dark"] .col-binder-page .col-tile-art {
-      background: rgba(255, 255, 255, 0.04);
+      background: #0d0d0d;
     }
     .col-binder-page .col-tile-art img {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      background: transparent;
+      display: block;
     }
     .col-binder-page .col-tile-caption {
       display: none;
@@ -1030,8 +950,8 @@
     .col-binder-page .col-check {
       width: 26px;
       height: 26px;
-      top: 0.28rem;
-      left: 0.28rem;
+      top: 0.35rem;
+      left: 0.35rem;
       border-radius: 7px;
       background: rgba(255, 255, 255, 0.92);
     }
@@ -1040,14 +960,14 @@
     }
     .col-binder-page .col-rare {
       font-size: 0.62rem;
-      left: 0.3rem;
-      bottom: 0.3rem;
+      left: 0.35rem;
+      bottom: 0.35rem;
       padding: 0.08rem 0.3rem;
     }
     .col-binder-page .col-binder-qty-badge {
       position: absolute;
-      right: 0.3rem;
-      bottom: 0.3rem;
+      right: 0.35rem;
+      bottom: 0.35rem;
       z-index: 2;
       min-width: 1.35rem;
       padding: 0.1rem 0.35rem;
@@ -1061,141 +981,64 @@
       text-align: center;
       pointer-events: none;
     }
-    .col-binder-pocket-empty {
-      min-height: 0;
-      height: 100%;
-      border: 1.5px dashed rgba(15, 23, 42, 0.22);
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.04);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(15, 23, 42, 0.28);
-      font-size: 1.35rem;
-    }
-    [data-theme="dark"] .col-binder-pocket-empty {
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.03);
-      color: rgba(255, 255, 255, 0.28);
-    }
-    .col-binder-nav {
-      position: absolute;
-      top: 42%;
-      transform: translateY(-50%);
-      z-index: 3;
-      width: 2.6rem;
-      height: 2.6rem;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(55, 65, 81, 0.55);
-      color: #f9fafb;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-    .col-binder-nav:hover:not(:disabled) {
-      background: rgba(37, 99, 235, 0.85);
-      transform: translateY(-50%) scale(1.04);
-    }
-    .col-binder-nav:disabled {
-      opacity: 0.28;
-      cursor: not-allowed;
-    }
-    .col-binder-nav-prev { left: 0.15rem; }
-    .col-binder-nav-next { right: 0.15rem; }
-    @media (max-width: 767px) {
-      .col-binder-nav {
-        width: 1.55rem;
-        height: 3.2rem;
-        border-radius: 0 999px 999px 0;
-        top: 46%;
-        background: rgba(75, 85, 99, 0.45);
-        box-shadow: none;
-      }
-      .col-binder-nav-prev {
-        left: 0;
-        border-radius: 0 999px 999px 0;
-      }
-      .col-binder-nav-next {
-        right: 0;
-        border-radius: 999px 0 0 999px;
-      }
-      .col-binder-nav:hover:not(:disabled) {
-        transform: translateY(-50%);
-      }
-    }
-    .col-binder-pager {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-top: 0.7rem;
-      width: fit-content;
-      max-width: 100%;
-      align-self: center;
-      padding: 0.2rem;
-      border-radius: 999px;
-      background: rgba(31, 41, 55, 0.88);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-    }
-    .col-binder-pager[hidden] { display: none !important; }
-    .col-binder-pager-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 2.35rem;
-      min-height: 2.15rem;
-      padding: 0.25rem 0.55rem;
-      border: 0;
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-      background: transparent;
-      color: #f3f4f6;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .col-binder-pager-btn:last-child { border-right: 0; }
-    .col-binder-pager-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .col-binder-pager-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-    .col-binder-page-label {
-      min-width: 4.2rem;
-      padding: 0 0.65rem;
-      text-align: center;
-      font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: #fff;
-      letter-spacing: 0.02em;
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-      line-height: 2.15rem;
-    }
     .col-binder-groups {
       display: grid;
       gap: 1rem;
+      padding: 0.75rem;
+      background: var(--binder-panel);
     }
     .col-binder-groups .col-group-title {
-      color: var(--col-ink, #111827);
-      border-bottom-color: var(--col-line, #e5e7eb);
-    }
-    [data-theme="dark"] .col-binder-groups .col-group-title {
-      color: #f3f6fb;
+      color: #f3f4f6;
       border-bottom-color: rgba(255, 255, 255, 0.14);
     }
     .col-binder-groups .col-album {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      padding: 0.85rem;
-      border-radius: 12px;
-      background: var(--binder-page);
-      box-shadow: inset 0 0 0 1px var(--binder-page-line);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--binder-gap);
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    @media (min-width: 768px) {
+      .col-binder-groups .col-album {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    .col-binder-groups .col-tile {
+      position: relative;
+      margin: 0;
+      min-width: 0;
+    }
+    .col-binder-groups .col-tile-caption { display: none; }
+    .col-binder-groups .col-tile-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+    .col-binder-groups .col-tile-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .col-binder-groups .col-binder-qty-badge {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.35rem;
+      z-index: 2;
+      min-width: 1.35rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 999px;
+      background: rgba(17, 24, 39, 0.78);
+      color: #fff;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      pointer-events: none;
     }
 
     /* 牌盒 */
@@ -2501,7 +2344,7 @@
                   <div>
                     <p class="col-section-kicker">Card Binder</p>
                     <h2 class="col-section-title" id="colBinderTitle">我的卡冊</h2>
-                    <p class="col-section-lede">管理持有卡；下方卡冊可左右翻頁瀏覽。</p>
+                    <p class="col-section-lede">管理持有卡；下方以格線瀏覽卡冊。</p>
                   </div>
                   <div class="col-section-stats" aria-live="polite">
                     <div class="col-section-stat">
@@ -2513,8 +2356,8 @@
                       <span>持有張數</span>
                     </div>
                     <div class="col-section-stat">
-                      <strong id="colBinderStatPage">1</strong>
-                      <span>目前頁</span>
+                      <strong id="colBinderStatVisible">0</strong>
+                      <span>可見</span>
                     </div>
                   </div>
                 </header>
@@ -2542,7 +2385,7 @@
                       <div class="col-field col-field-group">
                         <label for="colGroupSelect">分組檢視</label>
                         <select id="colGroupSelect" class="form-control">
-                          <option value="none" selected>不分組（翻頁）</option>
+                          <option value="none" selected>不分組</option>
                           <option value="tag">依標籤分組</option>
                         </select>
                       </div>
@@ -2597,32 +2440,9 @@
                     </div>
 
                     <div class="col-binder-stage" id="colBinderStage">
-                      <button type="button" class="col-binder-nav col-binder-nav-prev" id="colBinderSidePrev" aria-label="上一頁">
-                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                      </button>
                       <div class="col-binder-viewport">
-                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊翻頁區"></div>
+                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊"></div>
                       </div>
-                      <button type="button" class="col-binder-nav col-binder-nav-next" id="colBinderSideNext" aria-label="下一頁">
-                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                      </button>
-                      <nav class="col-binder-pager" id="colBinderPager" hidden aria-label="卡冊翻頁">
-                        <button type="button" class="col-binder-pager-btn" id="colBinderFirstBtn" aria-label="第一頁">
-                          <i class="fas fa-angle-double-left" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderPrevBtn" aria-label="上一頁">
-                          <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                        </button>
-                        <div class="col-binder-page-label">
-                          <span id="colBinderPageNow">1</span> / <span id="colBinderPageTotal">1</span>
-                        </div>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderNextBtn" aria-label="下一頁">
-                          <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderLastBtn" aria-label="最後一頁">
-                          <i class="fas fa-angle-double-right" aria-hidden="true"></i>
-                        </button>
-                      </nav>
                     </div>
                   </div>
                 </div>
@@ -2940,9 +2760,6 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
-    var albumPageIndex = 0;
-    var albumFlipTimer = null;
-    var albumTouchStartX = null;
 
     var deckModalHint = document.getElementById('colDeckModalHint');
     var deckPickRow = document.getElementById('colDeckPickRow');
@@ -2958,17 +2775,8 @@
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var binderStage = document.getElementById('colBinderStage');
-    var binderPager = document.getElementById('colBinderPager');
-    var binderPrevBtn = document.getElementById('colBinderPrevBtn');
-    var binderNextBtn = document.getElementById('colBinderNextBtn');
-    var binderFirstBtn = document.getElementById('colBinderFirstBtn');
-    var binderLastBtn = document.getElementById('colBinderLastBtn');
-    var binderSidePrev = document.getElementById('colBinderSidePrev');
-    var binderSideNext = document.getElementById('colBinderSideNext');
-    var binderPageNow = document.getElementById('colBinderPageNow');
-    var binderPageTotal = document.getElementById('colBinderPageTotal');
     var binderStatKinds = document.getElementById('colBinderStatKinds');
-    var binderStatPage = document.getElementById('colBinderStatPage');
+    var binderStatVisible = document.getElementById('colBinderStatVisible');
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var countEl = document.getElementById('colCountLabel');
@@ -3283,99 +3091,23 @@
       var checkedCount = Object.keys(checkedSet).filter(function (key) {
         return allItems.some(function (it) { return it.cardNumber === key; });
       }).length;
+      var visibleCount = visible ? visible.length : 0;
       if (totalValueEl) totalValueEl.textContent = String(totalQty);
       if (binderStatKinds) binderStatKinds.textContent = String(allItems.length);
+      if (binderStatVisible) binderStatVisible.textContent = String(visibleCount);
       countEl.textContent = '共 ' + allItems.length + ' 種';
-      totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + (visible ? visible.length : 0) + ' 種';
-    }
-
-    function getAlbumSpreadSize() {
-      /* 手機 2×2=4；電腦左右頁各 2×4，對開共 4×4=16 */
-      return window.matchMedia('(min-width: 768px)').matches ? 16 : 4;
-    }
-
-    function isAlbumDesktopSpread() {
-      return window.matchMedia('(min-width: 768px)').matches;
-    }
-
-    function updateBinderPager(totalPages) {
-      var pages = Math.max(1, totalPages || 1);
-      var now = albumPageIndex + 1;
-      var atStart = albumPageIndex <= 0;
-      var atEnd = albumPageIndex >= pages - 1;
-      if (binderPageNow) binderPageNow.textContent = String(now);
-      if (binderPageTotal) binderPageTotal.textContent = String(pages);
-      if (binderStatPage) binderStatPage.textContent = String(now);
-      if (binderPrevBtn) binderPrevBtn.disabled = atStart;
-      if (binderNextBtn) binderNextBtn.disabled = atEnd;
-      if (binderFirstBtn) binderFirstBtn.disabled = atStart;
-      if (binderLastBtn) binderLastBtn.disabled = atEnd;
-      if (binderSidePrev) binderSidePrev.disabled = atStart;
-      if (binderSideNext) binderSideNext.disabled = atEnd;
-      if (binderPager) binderPager.hidden = pages <= 1 || groupMode === 'tag';
-      if (binderSidePrev) binderSidePrev.hidden = groupMode === 'tag';
-      if (binderSideNext) binderSideNext.hidden = groupMode === 'tag';
-    }
-
-    function buildBinderLeafHtml(items, sideClass, pocketCount, pageLabel) {
-      var html = '<section class="col-binder-leaf ' + sideClass + '">';
-      html += '  <h3 class="col-binder-leaf-label">' + escapeHtml(pageLabel) + '</h3>';
-      html += '  <ul class="col-binder-page">';
-      items.forEach(function (item) { html += renderTile(item, true); });
-      var empty = Math.max(0, pocketCount - items.length);
-      for (var i = 0; i < empty; i++) {
-        html += '<li class="col-binder-pocket-empty" aria-hidden="true"><i class="fas fa-plus" aria-hidden="true"></i></li>';
-      }
-      html += '  </ul>';
-      html += '</section>';
-      return html;
+      totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + visibleCount + ' 種';
     }
 
     function renderAlbumSpread(visible) {
-      var size = getAlbumSpreadSize();
-      var totalPages = Math.max(1, Math.ceil(visible.length / size));
-      if (albumPageIndex > totalPages - 1) albumPageIndex = totalPages - 1;
-      if (albumPageIndex < 0) albumPageIndex = 0;
-      var start = albumPageIndex * size;
-      var slice = visible.slice(start, start + size);
-      var desktop = isAlbumDesktopSpread();
-      var perSide = desktop ? Math.ceil(size / 2) : size;
-      var left = slice.slice(0, perSide);
-      var right = desktop ? slice.slice(perSide) : [];
-      var leftNo = desktop ? (albumPageIndex * 2 + 1) : (albumPageIndex + 1);
-      var rightNo = albumPageIndex * 2 + 2;
-      var html = buildBinderLeafHtml(left, 'col-binder-page-left', perSide, '第 ' + leftNo + ' 頁');
-      if (desktop) {
-        html += buildBinderLeafHtml(right, 'col-binder-page-right', perSide, '第 ' + rightNo + ' 頁');
-      }
+      var html = '<ul class="col-binder-page">';
+      visible.forEach(function (item) { html += renderTile(item, true); });
+      html += '</ul>';
       if (albumRoot) {
         albumRoot.classList.add('col-binder-spread');
         albumRoot.classList.remove('col-binder-groups');
         albumRoot.innerHTML = html;
       }
-      updateBinderPager(totalPages);
-    }
-
-    function goAlbumPage(nextIndex, dir) {
-      var visible = getVisibleItems();
-      var size = getAlbumSpreadSize();
-      var totalPages = Math.max(1, Math.ceil(visible.length / size));
-      if (nextIndex < 0 || nextIndex > totalPages - 1 || nextIndex === albumPageIndex) return;
-      albumPageIndex = nextIndex;
-      if (!albumRoot) {
-        renderAlbum();
-        return;
-      }
-      albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
-      void albumRoot.offsetWidth;
-      albumRoot.classList.add(dir === 'prev' ? 'is-flip-prev' : 'is-flip-next');
-      if (albumFlipTimer) clearTimeout(albumFlipTimer);
-      albumFlipTimer = setTimeout(function () {
-        renderAlbumSpread(visible);
-        requestAnimationFrame(function () {
-          albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
-        });
-      }, 170);
     }
 
     function renderTile(item, binderCompact) {
@@ -3447,7 +3179,6 @@
         emptyTextEl.textContent = '卡冊尚無卡片。';
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
-        updateBinderPager(1);
         return;
       }
 
@@ -3456,7 +3187,6 @@
         emptyTextEl.textContent = '沒有符合搜尋條件的卡片。';
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
-        updateBinderPager(1);
         return;
       }
 
@@ -3490,7 +3220,7 @@
           html += '  <h6 class="col-group-title">' + escapeHtml(tag) +
             '<span class="col-group-count">' + items.length + ' 種</span></h6>';
           html += '  <ul class="col-album">';
-          items.forEach(function (item) { html += renderTile(item); });
+          items.forEach(function (item) { html += renderTile(item, true); });
           html += '  </ul>';
           html += '</section>';
         });
@@ -3499,7 +3229,6 @@
           albumRoot.classList.add('col-binder-groups');
           albumRoot.innerHTML = html;
         }
-        updateBinderPager(1);
         return;
       }
 
@@ -4825,67 +4554,25 @@
       if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
     }, true);
 
-    function resetAlbumPageAndRender() {
-      albumPageIndex = 0;
-      renderAlbum();
-    }
     searchInput.addEventListener('input', function () {
       filterQuery = searchInput.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     rareSelect.addEventListener('change', function () {
       rareFilter = rareSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     tagSelect.addEventListener('change', function () {
       tagFilter = tagSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     sortSelect.addEventListener('change', function () {
       sortMode = sortSelect.value || 'newest';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     groupSelect.addEventListener('change', function () {
       groupMode = groupSelect.value || 'none';
-      resetAlbumPageAndRender();
-    });
-    function wireBinderNav(btn, deltaOrFn) {
-      if (!btn) return;
-      btn.addEventListener('click', function () {
-        if (typeof deltaOrFn === 'function') deltaOrFn();
-        else goAlbumPage(albumPageIndex + deltaOrFn, deltaOrFn < 0 ? 'prev' : 'next');
-      });
-    }
-    wireBinderNav(binderPrevBtn, -1);
-    wireBinderNav(binderNextBtn, 1);
-    wireBinderNav(binderSidePrev, -1);
-    wireBinderNav(binderSideNext, 1);
-    wireBinderNav(binderFirstBtn, function () { goAlbumPage(0, 'prev'); });
-    wireBinderNav(binderLastBtn, function () {
-      var total = Math.max(1, Math.ceil(getVisibleItems().length / getAlbumSpreadSize()));
-      goAlbumPage(total - 1, 'next');
-    });
-    if (binderStage) {
-      binderStage.addEventListener('touchstart', function (e) {
-        if (!e.changedTouches || !e.changedTouches[0]) return;
-        albumTouchStartX = e.changedTouches[0].clientX;
-      }, { passive: true });
-      binderStage.addEventListener('touchend', function (e) {
-        if (albumTouchStartX == null || !e.changedTouches || !e.changedTouches[0]) return;
-        var dx = e.changedTouches[0].clientX - albumTouchStartX;
-        albumTouchStartX = null;
-        if (Math.abs(dx) < 48 || groupMode === 'tag') return;
-        if (dx < 0) goAlbumPage(albumPageIndex + 1, 'next');
-        else goAlbumPage(albumPageIndex - 1, 'prev');
-      }, { passive: true });
-    }
-    var albumResizeTimer = null;
-    window.addEventListener('resize', function () {
-      if (albumResizeTimer) clearTimeout(albumResizeTimer);
-      albumResizeTimer = setTimeout(function () {
-        if (groupMode === 'tag') return;
-        renderAlbum();
-      }, 160);
+      renderAlbum();
     });
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
