@@ -880,9 +880,9 @@
       padding: 0;
     }
 
-    /* 僅翻頁舞台使用卡冊外殼；高度限制在可視視窗內一次看完 */
+    /* 僅翻頁舞台使用卡冊外殼；高度由 JS 依剩餘可視區動態限制，一次看完 */
     .col-binder-stage {
-      --binder-stage-h: clamp(260px, calc(100dvh - 11.5rem), 560px);
+      --binder-stage-h: clamp(220px, calc(100dvh - 14rem), 520px);
       margin-top: 0.85rem;
       height: var(--binder-stage-h);
       max-height: var(--binder-stage-h);
@@ -893,7 +893,7 @@
     }
     @media (max-width: 767px) {
       .col-binder-stage {
-        --binder-stage-h: clamp(240px, calc(100dvh - 9.5rem), 480px);
+        --binder-stage-h: clamp(200px, calc(100dvh - 12rem), 440px);
       }
     }
     .col-binder-stage .col-binder-shell {
@@ -1070,6 +1070,7 @@
       height: 100%;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
     .col-binder-page .col-tile-body {
       flex: 1 1 auto;
@@ -1079,6 +1080,7 @@
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(20, 35, 58, 0.1);
+      overflow: hidden;
     }
     [data-theme="dark"] .col-binder-page .col-tile-body {
       background: rgba(255, 255, 255, 0.04);
@@ -1086,24 +1088,21 @@
     .col-binder-page .col-tile-art {
       flex: 1 1 auto;
       min-height: 0;
-      aspect-ratio: auto;
+      width: auto;
+      max-width: 100%;
+      height: 100%;
+      align-self: center;
+      aspect-ratio: 63 / 88;
     }
     .col-binder-page .col-tile-caption {
       flex: 0 0 auto;
-      padding: 0.2rem 0.15rem 0.15rem;
+      padding: 0.15rem 0.12rem 0.12rem;
     }
     .col-binder-page .col-cardno {
-      font-size: 0.68rem;
+      font-size: 0.64rem;
       color: #1f2937;
     }
-    .col-binder-page .col-name {
-      font-size: 0.66rem;
-      color: #1f2937;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+    .col-binder-page .col-name,
     .col-binder-page .col-meta,
     .col-binder-page .col-tags {
       display: none;
@@ -3337,6 +3336,28 @@
       return html;
     }
 
+    function fitBinderStageToViewport() {
+      if (!binderStage) return;
+      if (binderStage.hidden) {
+        binderStage.style.height = '';
+        binderStage.style.maxHeight = '';
+        return;
+      }
+      binderStage.style.height = '';
+      binderStage.style.maxHeight = '';
+      void binderStage.offsetHeight;
+      var top = binderStage.getBoundingClientRect().top;
+      var pad = Math.max(10, Math.round(window.innerHeight * 0.015));
+      var available = Math.floor(window.innerHeight - top - pad);
+      var mobile = window.matchMedia('(max-width: 767px)').matches;
+      var minH = mobile ? 200 : 240;
+      var maxH = mobile ? 480 : 560;
+      var h = Math.min(maxH, Math.max(minH, available));
+      if (available > 0 && available < minH) h = Math.max(180, available);
+      binderStage.style.height = h + 'px';
+      binderStage.style.maxHeight = h + 'px';
+    }
+
     function renderAlbum() {
       var visible = getVisibleItems();
       updateTotalBar(visible);
@@ -3353,6 +3374,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        fitBinderStageToViewport();
         return;
       }
 
@@ -3362,6 +3384,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        fitBinderStageToViewport();
         return;
       }
 
@@ -3405,10 +3428,12 @@
           albumRoot.innerHTML = html;
         }
         updateBinderPager(1);
+        requestAnimationFrame(fitBinderStageToViewport);
         return;
       }
 
       renderAlbumSpread(visible);
+      requestAnimationFrame(fitBinderStageToViewport);
     }
 
     function findItem(cardNumber) {
@@ -4782,9 +4807,13 @@
     window.addEventListener('resize', function () {
       if (albumResizeTimer) clearTimeout(albumResizeTimer);
       albumResizeTimer = setTimeout(function () {
+        fitBinderStageToViewport();
         if (groupMode === 'tag') return;
         renderAlbum();
       }, 160);
+    });
+    window.addEventListener('orientationchange', function () {
+      setTimeout(fitBinderStageToViewport, 200);
     });
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
