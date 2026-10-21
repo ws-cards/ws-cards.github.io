@@ -882,25 +882,20 @@
       padding: 0;
     }
 
-    /* 卡冊舞台：對開頁／手機單頁，類似 binder 參考版面 */
+    /* 卡冊舞台：對開頁／手機單頁，類似 binder 參考版面（高度隨內容，不強制適配視窗） */
     .col-binder-stage {
-      --binder-stage-h: clamp(280px, calc(100dvh - 12rem), 640px);
       --binder-frame: #3b82f6;
       --binder-panel: #eef2f7;
       --binder-panel-ink: #111827;
       --binder-gap: 0.45rem;
       position: relative;
       margin-top: 0.85rem;
-      height: var(--binder-stage-h);
-      max-height: var(--binder-stage-h);
       display: flex;
       flex-direction: column;
-      min-height: 0;
       padding: 0 2.4rem;
     }
     @media (max-width: 767px) {
       .col-binder-stage {
-        --binder-stage-h: clamp(320px, calc(100dvh - 10rem), 560px);
         padding: 0 1.35rem;
       }
     }
@@ -910,19 +905,16 @@
       --binder-panel-ink: #f3f4f6;
     }
     .col-binder-viewport {
-      flex: 1 1 auto;
-      min-height: 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
     }
     .col-binder-spread {
       position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.75rem;
+      min-height: clamp(360px, 108vw, 560px);
       transform-origin: center center;
       transition: transform 0.4s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.3s ease;
     }
@@ -930,6 +922,7 @@
       .col-binder-spread {
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
+        min-height: clamp(480px, 58vw, 720px);
       }
     }
     .col-binder-spread.is-flip-next {
@@ -3438,31 +3431,6 @@
       return html;
     }
 
-    function fitBinderStageToViewport() {
-      if (!binderStage) return;
-      if (binderStage.hidden) {
-        binderStage.style.height = '';
-        binderStage.style.maxHeight = '';
-        return;
-      }
-      binderStage.style.height = '';
-      binderStage.style.maxHeight = '';
-      void binderStage.offsetHeight;
-      var top = binderStage.getBoundingClientRect().top;
-      var pad = Math.max(10, Math.round(window.innerHeight * 0.015));
-      var navReserve = 56;
-      var vhCap = Math.floor(window.innerHeight - navReserve - pad);
-      var available = Math.floor(window.innerHeight - top - pad);
-      var mobile = window.matchMedia('(max-width: 767px)').matches;
-      var minH = mobile ? 200 : 240;
-      var maxH = mobile ? 480 : 560;
-      var target = available > 0 ? available : vhCap;
-      var h = Math.min(maxH, vhCap, Math.max(minH, target));
-      if (available > 0 && available < minH) h = Math.max(180, Math.min(vhCap, available));
-      binderStage.style.height = h + 'px';
-      binderStage.style.maxHeight = h + 'px';
-    }
-
     function renderAlbum() {
       var visible = getVisibleItems();
       updateTotalBar(visible);
@@ -3479,7 +3447,6 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
-        fitBinderStageToViewport();
         return;
       }
 
@@ -3489,7 +3456,6 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
-        fitBinderStageToViewport();
         return;
       }
 
@@ -3533,12 +3499,10 @@
           albumRoot.innerHTML = html;
         }
         updateBinderPager(1);
-        requestAnimationFrame(fitBinderStageToViewport);
         return;
       }
 
       renderAlbumSpread(visible);
-      requestAnimationFrame(fitBinderStageToViewport);
     }
 
     function findItem(cardNumber) {
@@ -4918,13 +4882,9 @@
     window.addEventListener('resize', function () {
       if (albumResizeTimer) clearTimeout(albumResizeTimer);
       albumResizeTimer = setTimeout(function () {
-        fitBinderStageToViewport();
         if (groupMode === 'tag') return;
         renderAlbum();
       }, 160);
-    });
-    window.addEventListener('orientationchange', function () {
-      setTimeout(fitBinderStageToViewport, 200);
     });
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
