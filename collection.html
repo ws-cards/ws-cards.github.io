@@ -206,11 +206,21 @@
     }
 
     .col-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       min-height: 1.25rem;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #6c757d;
-      margin-bottom: 0.75rem;
+      margin: 0 0 0.85rem;
     }
+    .col-status-icon {
+      color: #38a169;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    .col-status.is-error .col-status-icon { color: #c53030; }
+    .col-status:not(.is-ok):not(.is-error) .col-status-icon { color: #a0aec0; }
     [data-theme="dark"] .col-status { color: #a0aec0; }
     .col-status.is-error { color: #c53030; }
     .col-status.is-ok { color: #2f855a; }
@@ -734,44 +744,228 @@
     }
     [data-theme="dark"] .col-confirm-text strong { color: #fc8181; }
 
-    /* —— 我的卡冊 / 牌組 分頁 —— */
-    .col-tabs {
-      display: flex;
-      gap: 0.35rem;
-      margin-bottom: 1rem;
-      padding: 0.25rem;
-      border-radius: 10px;
-      background: #f7fafc;
-      width: fit-content;
-      max-width: 100%;
+    /* —— 我的卡冊 / 牌組 分頁（mockup 版型） —— */
+    .col-shell {
+      --col-accent: #3b82f6;
+      --col-accent-soft: #eff6ff;
+      --col-line: #e5e7eb;
+      --col-ink: #1f2937;
+      --col-muted: #6b7280;
     }
-    [data-theme="dark"] .col-tabs {
-      background: rgba(255, 255, 255, 0.05);
+    [data-theme="dark"] .col-shell {
+      --col-accent: #60a5fa;
+      --col-accent-soft: rgba(96, 165, 250, 0.12);
+      --col-line: rgba(255, 255, 255, 0.12);
+      --col-ink: #f3f4f6;
+      --col-muted: #9ca3af;
+    }
+    .col-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--col-line);
     }
     .col-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
       border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
       background: transparent;
-      color: #718096;
-      font-size: 0.9rem;
+      color: var(--col-muted);
+      font-size: 0.95rem;
       font-weight: 700;
-      padding: 0.5rem 1.1rem;
-      border-radius: 8px;
+      padding: 0.7rem 0.5rem;
       cursor: pointer;
       line-height: 1.2;
+      border-radius: 0;
     }
-    .col-tab:hover { color: #2d3748; }
+    .col-tab i { font-size: 0.95rem; }
+    .col-tab:hover { color: var(--col-ink); }
     .col-tab.is-active {
-      background: #fff;
-      color: #1a202c;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      color: var(--col-accent);
+      border-bottom-color: var(--col-accent);
+      background: transparent;
+      box-shadow: none;
     }
-    [data-theme="dark"] .col-tab:hover { color: #e2e8f0; }
     [data-theme="dark"] .col-tab.is-active {
-      background: rgba(255, 255, 255, 0.12);
-      color: #f7fafc;
+      background: transparent;
+      color: var(--col-accent);
       box-shadow: none;
     }
     .col-panel[hidden] { display: none !important; }
+
+    .col-deck-toolbar {
+      display: grid;
+      gap: 0.7rem;
+      margin-bottom: 0.85rem;
+    }
+    .col-search-wrap {
+      position: relative;
+    }
+    .col-search-wrap > i {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+    .col-search-wrap .form-control {
+      width: 100%;
+      height: 2.65rem;
+      padding: 0.55rem 0.9rem 0.55rem 2.4rem;
+      border: 1px solid var(--col-line);
+      border-radius: 10px;
+      background: #fff;
+      font-size: 0.92rem;
+      box-shadow: none;
+    }
+    [data-theme="dark"] .col-search-wrap .form-control {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--col-ink);
+      border-color: var(--col-line);
+    }
+    .col-sort-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      max-width: 100%;
+      border: 1px solid var(--col-line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .col-sort-chip {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-sort-chip > i {
+      position: absolute;
+      left: 0.65rem;
+      color: var(--col-muted);
+      pointer-events: none;
+      font-size: 0.8rem;
+      z-index: 1;
+    }
+    .col-sort-chip select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--col-ink);
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 0.45rem 1.8rem 0.45rem 1.9rem;
+      margin: 0;
+      min-height: 2.1rem;
+      cursor: pointer;
+    }
+    .col-sort-chip::after {
+      content: '\f107';
+      font-family: 'Font Awesome 5 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 0.65rem;
+      color: var(--col-muted);
+      pointer-events: none;
+      font-size: 0.75rem;
+    }
+    .col-deck-cta-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .col-cta-primary,
+    .col-cta-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      min-height: 2.7rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      line-height: 1.2;
+      padding: 0.55rem 0.75rem;
+    }
+    .col-cta-primary {
+      background: var(--col-accent);
+      border-color: var(--col-accent);
+      color: #fff;
+    }
+    .col-cta-primary:hover { filter: brightness(0.96); color: #fff; }
+    .col-cta-secondary {
+      background: #fff;
+      border-color: var(--col-accent);
+      color: var(--col-accent);
+    }
+    [data-theme="dark"] .col-cta-secondary {
+      background: transparent;
+    }
+    .col-cta-secondary:hover {
+      background: var(--col-accent-soft);
+      color: var(--col-accent);
+    }
+
+    .col-deck-stats {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      gap: 0;
+      align-items: center;
+      margin-bottom: 0.9rem;
+      padding: 0.7rem 0.75rem;
+      border-radius: 10px;
+      background: var(--col-accent-soft);
+      border: 1px solid transparent;
+    }
+    .col-deck-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--col-ink);
+      white-space: nowrap;
+    }
+    .col-deck-stat:first-child { padding-left: 0.15rem; }
+    .col-deck-stat + .col-deck-stat {
+      border-left: 1px solid rgba(59, 130, 246, 0.22);
+    }
+    .col-deck-stat i {
+      color: var(--col-accent);
+      font-size: 0.85rem;
+    }
+    .col-deck-stat strong {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 700;
+    }
+    .col-deck-stat-note {
+      white-space: normal;
+      font-weight: 500;
+      color: var(--col-muted);
+      line-height: 1.35;
+      min-width: 0;
+    }
+    @media (max-width: 575px) {
+      .col-deck-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem 0;
+      }
+      .col-deck-stat-note {
+        grid-column: 1 / -1;
+        border-left: 0 !important;
+        padding: 0.35rem 0 0;
+        border-top: 1px solid rgba(59, 130, 246, 0.18);
+      }
+      .col-deck-stat:nth-child(2) { justify-content: flex-end; }
+    }
 
     .col-deck-list {
       list-style: none;
@@ -783,52 +977,129 @@
     .col-deck-card {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
-      gap: 0.75rem 1rem;
-      align-items: center;
-      padding: 0.9rem 1rem;
+      gap: 0;
+      align-items: stretch;
+      padding: 0;
       border-radius: 12px;
-      background: #f7fafc;
-      border: 1px solid transparent;
+      background: #fff;
+      border: 1px solid var(--col-line);
+      overflow: hidden;
     }
     [data-theme="dark"] .col-deck-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
     }
     .col-deck-card.is-short {
-      border-color: rgba(229, 62, 62, 0.35);
+      border-color: rgba(239, 68, 68, 0.35);
     }
+    .col-deck-main {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.7rem;
+      align-items: start;
+      padding: 0.85rem 0.85rem;
+      min-width: 0;
+    }
+    .col-deck-thumb {
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 10px;
+      background: var(--col-accent-soft);
+      color: var(--col-accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex: 0 0 auto;
+    }
+    .col-deck-info { min-width: 0; }
     .col-deck-name {
       margin: 0;
       font-size: 1rem;
-      font-weight: 700;
-      color: #1a202c;
+      font-weight: 800;
+      color: var(--col-ink);
       word-break: break-word;
+      line-height: 1.3;
     }
-    [data-theme="dark"] .col-deck-name { color: #f7fafc; }
     .col-deck-meta {
-      margin-top: 0.3rem;
-      font-size: 0.78rem;
-      color: #718096;
+      margin-top: 0.25rem;
+      font-size: 0.76rem;
+      color: var(--col-muted);
+      line-height: 1.4;
+    }
+    .col-deck-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.25rem 0.55rem;
-      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.4rem;
     }
-    [data-theme="dark"] .col-deck-meta { color: #a0aec0; }
-    .col-deck-warn {
-      color: #c53030;
+    .col-deck-tags .col-tag-chip {
+      background: var(--col-accent-soft);
+      color: var(--col-accent);
+      border-radius: 999px;
+      font-size: 0.68rem;
       font-weight: 700;
+      padding: 0.12rem 0.45rem;
     }
-    [data-theme="dark"] .col-deck-warn { color: #fc8181; }
-    .col-deck-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      justify-content: flex-end;
-    }
-    .col-deck-actions .btn {
+    .col-deck-warn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+      color: #ef4444;
       font-size: 0.78rem;
-      font-weight: 600;
-      padding: 0.35rem 0.65rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    [data-theme="dark"] .col-deck-warn { color: #f87171; }
+    .col-deck-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      width: 6.4rem;
+      border-left: 1px solid var(--col-line);
+      background: #fafafa;
+    }
+    [data-theme="dark"] .col-deck-actions {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .col-deck-actions button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      border: 0;
+      background: transparent;
+      color: var(--col-muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.45rem 0.2rem;
+      cursor: pointer;
+      line-height: 1.1;
+    }
+    .col-deck-actions button:nth-child(1),
+    .col-deck-actions button:nth-child(2) {
+      border-bottom: 1px solid var(--col-line);
+    }
+    .col-deck-actions button:nth-child(odd) {
+      border-right: 1px solid var(--col-line);
+    }
+    .col-deck-actions button i {
+      font-size: 0.95rem;
+      color: #64748b;
+    }
+    .col-deck-actions button:hover {
+      background: var(--col-accent-soft);
+      color: var(--col-accent);
+    }
+    .col-deck-actions button:hover i { color: var(--col-accent); }
+    .col-deck-actions button.is-danger:hover,
+    .col-deck-actions button.is-danger:hover i {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+    [data-theme="dark"] .col-deck-actions button.is-danger:hover {
+      background: rgba(239, 68, 68, 0.12);
     }
 
     .col-modal-dialog.col-modal-wide {
@@ -1124,13 +1395,20 @@
                   收藏庫
                 </h5>
               </div>
-              <div class="card-body">
+              <div class="card-body col-shell">
                 <div class="col-tabs" role="tablist" aria-label="收藏庫分層">
-                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">我的卡冊</button>
-                  <button type="button" class="col-tab" role="tab" id="colTabDecks" data-col-tab="decks" aria-selected="false" aria-controls="colPanelDecks">牌組</button>
+                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">
+                    <i class="fas fa-clone" aria-hidden="true"></i><span>我的卡冊</span>
+                  </button>
+                  <button type="button" class="col-tab" role="tab" id="colTabDecks" data-col-tab="decks" aria-selected="false" aria-controls="colPanelDecks">
+                    <i class="fas fa-layer-group" aria-hidden="true"></i><span>牌組</span>
+                  </button>
                 </div>
 
-                <div class="col-status" id="colStatus" role="status" aria-live="polite"></div>
+                <div class="col-status" id="colStatus" role="status" aria-live="polite">
+                  <i class="fas fa-database col-status-icon" aria-hidden="true"></i>
+                  <span id="colStatusText"></span>
+                </div>
 
                 <div id="colPanelCards" class="col-panel" data-col-panel="cards" role="tabpanel" aria-labelledby="colTabCards">
                   <div class="col-controls" aria-label="卡冊篩選列">
@@ -1212,55 +1490,53 @@
                 </div>
 
                 <div id="colPanelDecks" class="col-panel" data-col-panel="decks" role="tabpanel" aria-labelledby="colTabDecks" hidden>
-                  <div class="col-controls" aria-label="牌組操作列">
-                    <div class="col-field col-field-search">
-                      <label for="colDeckSearchInput">搜尋牌組</label>
-                      <input id="colDeckSearchInput" type="search" class="form-control" placeholder="牌組名稱、標籤、卡號" autocomplete="off">
+                  <div class="col-deck-toolbar" aria-label="牌組操作列">
+                    <div class="col-search-wrap">
+                      <i class="fas fa-search" aria-hidden="true"></i>
+                      <input id="colDeckSearchInput" type="search" class="form-control" placeholder="搜尋牌組名稱、標籤、卡號" autocomplete="off" aria-label="搜尋牌組">
                     </div>
-                    <div class="col-field col-field-sort">
-                      <label for="colDeckSortSelect">排序</label>
-                      <select id="colDeckSortSelect" class="form-control">
+                    <div class="col-sort-chip">
+                      <i class="fas fa-sort" aria-hidden="true"></i>
+                      <select id="colDeckSortSelect" aria-label="牌組排序">
                         <option value="updated" selected>最近更新</option>
                         <option value="name">名稱 A→Z</option>
                         <option value="cardsDesc">張數多→少</option>
                       </select>
                     </div>
-                    <div class="col-field col-field-actions">
-                      <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
-                      <div class="col-control-actions">
-                        <button type="button" class="btn btn-primary btn-sm" id="colDeckCreateBtn">
-                          <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDecklogImportBtn">
-                          <i class="fas fa-cloud-download-alt mr-1" aria-hidden="true"></i>從 DeckLog 匯入
-                        </button>
-                      </div>
+                    <div class="col-deck-cta-row">
+                      <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
+                        <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                      </button>
+                      <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
+                        <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
+                      </button>
                     </div>
                   </div>
 
-                  <div class="col-total-bar" id="colDeckTotalBar" aria-live="polite">
-                    <div class="col-total-copy">
-                      <div class="col-total-main">
-                        <span>牌組數</span>
-                        <span class="col-total-value" id="colDeckTotalValue">0</span>
-                      </div>
-                      <div class="col-total-sub">
-                        <span class="col-total-count" id="colDeckCountLabel">可見 0 副</span>
-                        <span class="col-total-sep" aria-hidden="true">·</span>
-                        <span>牌組引用我的卡冊；庫存不足會標示缺卡</span>
-                      </div>
+                  <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
+                    <div class="col-deck-stat">
+                      <i class="fas fa-clone" aria-hidden="true"></i>
+                      <span>牌組 <strong id="colDeckTotalValue">0</strong> 副</span>
+                    </div>
+                    <div class="col-deck-stat">
+                      <i class="fas fa-eye" aria-hidden="true"></i>
+                      <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
+                    </div>
+                    <div class="col-deck-stat col-deck-stat-note">
+                      <i class="fas fa-info-circle" aria-hidden="true"></i>
+                      <span>牌組引用我的卡冊，庫存不足會標示缺卡</span>
                     </div>
                   </div>
 
                   <div id="colDeckEmpty" class="col-empty" style="display:none;">
                     <div><i class="fas fa-th-large" aria-hidden="true"></i></div>
                     <p id="colDeckEmptyText">尚未建立牌組。</p>
-                    <div class="col-control-actions" style="justify-content:center;">
-                      <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyCreateBtn">
-                        <i class="fas fa-plus mr-1" aria-hidden="true"></i>新建牌組
+                    <div class="col-deck-cta-row" style="max-width:22rem;margin:0 auto;">
+                      <button type="button" class="col-cta-secondary" id="colDeckEmptyCreateBtn">
+                        <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
                       </button>
-                      <button type="button" class="btn btn-outline-secondary" id="colDeckEmptyDecklogBtn">
-                        <i class="fas fa-cloud-download-alt mr-1" aria-hidden="true"></i>從 DeckLog 匯入
+                      <button type="button" class="col-cta-secondary" id="colDeckEmptyDecklogBtn">
+                        <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
                       </button>
                     </div>
                   </div>
@@ -1492,6 +1768,7 @@
     var emptyTextEl = document.getElementById('colEmptyText');
     var countEl = document.getElementById('colCountLabel');
     var statusEl = document.getElementById('colStatus');
+    var statusTextEl = document.getElementById('colStatusText') || statusEl;
     var searchInput = document.getElementById('colSearchInput');
     var rareSelect = document.getElementById('colRareSelect');
     var tagSelect = document.getElementById('colTagSelect');
@@ -1538,9 +1815,11 @@
     var decklogConfirmBtn = document.getElementById('colDecklogConfirmBtn');
 
     function setStatus(msg, kind) {
-      statusEl.textContent = msg || '';
-      statusEl.classList.remove('is-error', 'is-ok');
-      if (kind) statusEl.classList.add(kind);
+      if (statusTextEl) statusTextEl.textContent = msg || '';
+      if (statusEl) {
+        statusEl.classList.remove('is-error', 'is-ok');
+        if (kind) statusEl.classList.add(kind);
+      }
     }
 
     function normalizeText(value) {
@@ -2171,7 +2450,7 @@
     function renderDeckList() {
       var visible = getVisibleDecks();
       if (deckTotalValueEl) deckTotalValueEl.textContent = String(allDecks.length);
-      if (deckCountLabelEl) deckCountLabelEl.textContent = '可見 ' + visible.length + ' 副';
+      if (deckCountLabelEl) deckCountLabelEl.textContent = String(visible.length);
 
       if (!allDecks.length) {
         if (deckEmptyEl) deckEmptyEl.style.display = '';
@@ -2193,27 +2472,29 @@
         var kinds = (deck.cards || []).length;
         var short = deckShortage(deck);
         var tagsHtml = (deck.tags || []).length
-          ? (deck.tags || []).map(function (t) {
+          ? '<div class="col-deck-tags">' + (deck.tags || []).map(function (t) {
               return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
-            }).join('')
+            }).join('') + '</div>'
           : '';
         html += '<li class="col-deck-card' + (short.shortKinds ? ' is-short' : '') + '" data-deck-id="' + escapeHtml(deck.id) + '">';
-        html += '  <div>';
-        html += '    <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>';
-        html += '    <div class="col-deck-meta">';
-        html += '      <span>' + kinds + ' 種 · ' + total + ' 張</span>';
-        html += '      <span>更新於 ' + escapeHtml(formatTime(deck.updatedAt)) + '</span>';
-        if (short.shortKinds) {
-          html += '      <span class="col-deck-warn">缺卡 ' + short.shortKinds + ' 種（差 ' + short.shortCopies + ' 張）</span>';
-        }
+        html += '  <div class="col-deck-main">';
+        html += '    <div class="col-deck-thumb" aria-hidden="true"><i class="fas fa-layer-group"></i></div>';
+        html += '    <div class="col-deck-info">';
+        html += '      <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>';
+        var when = formatTime(deck.updatedAt);
+        var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
+        html += '      <div class="col-deck-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
         html += tagsHtml;
+        if (short.shortKinds) {
+          html += '      <div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' + short.shortKinds + ' 種（差 ' + short.shortCopies + ' 張）</div>';
+        }
         html += '    </div>';
         html += '  </div>';
         html += '  <div class="col-deck-actions">';
-        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-view="' + escapeHtml(deck.id) + '">檢視</button>';
-        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '">編輯</button>';
-        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '">複製</button>';
-        html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-del="' + escapeHtml(deck.id) + '">刪除</button>';
+        html += '    <button type="button" data-deck-view="' + escapeHtml(deck.id) + '" title="查看"><i class="fas fa-eye" aria-hidden="true"></i><span>查看</span></button>';
+        html += '    <button type="button" data-deck-edit="' + escapeHtml(deck.id) + '" title="編輯"><i class="fas fa-pen" aria-hidden="true"></i><span>編輯</span></button>';
+        html += '    <button type="button" data-deck-dup="' + escapeHtml(deck.id) + '" title="複製"><i class="fas fa-copy" aria-hidden="true"></i><span>複製</span></button>';
+        html += '    <button type="button" class="is-danger" data-deck-del="' + escapeHtml(deck.id) + '" title="刪除"><i class="fas fa-trash-alt" aria-hidden="true"></i><span>刪除</span></button>';
         html += '  </div>';
         html += '</li>';
       });
