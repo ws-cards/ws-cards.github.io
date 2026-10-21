@@ -37,7 +37,7 @@
   <title>收藏庫｜WS-Cards 卡片雲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
   <script>
     (function () {
       var root = document.documentElement;
@@ -54,6 +54,7 @@
       var jobs = [
         document.fonts.load('400 16px "Zen Kaku Gothic New"'),
         document.fonts.load('700 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "Noto Serif TC"'),
         document.fonts.load('700 16px "IBM Plex Mono"')
       ];
       Promise.all(jobs)
@@ -762,10 +763,542 @@
     .col-page-status {
       margin: 0 0 0.85rem;
     }
-    .col-section-decks {
-      margin-top: 1.15rem;
-    }
     .col-panel[hidden] { display: none !important; }
+
+    /* —— 實體卡冊／牌盒區塊 —— */
+    .col-stage {
+      --binder-ink: #14233a;
+      --binder-ink-deep: #0c1728;
+      --binder-page: #f3f6fa;
+      --binder-page-line: rgba(20, 35, 58, 0.1);
+      --binder-accent: #2f6fed;
+      --binder-metal: #9aa7b8;
+      --deckbox-shell: #1e2a24;
+      --deckbox-lid: #2a3b32;
+      --deckbox-paper: #f5f7f4;
+      --deckbox-accent: #d4a24c;
+      display: grid;
+      gap: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    [data-theme="dark"] .col-stage {
+      --binder-ink: #9eb6d9;
+      --binder-ink-deep: #0a1018;
+      --binder-page: #1a2330;
+      --binder-page-line: rgba(255, 255, 255, 0.08);
+      --binder-accent: #6ea0ff;
+      --binder-metal: #6b7c90;
+      --deckbox-shell: #152019;
+      --deckbox-lid: #1f2d25;
+      --deckbox-paper: #1b2420;
+      --deckbox-accent: #e0b35a;
+    }
+
+    .col-binder,
+    .col-deckbox {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+    }
+    .col-binder .col-empty,
+    .col-deckbox .col-empty {
+      color: rgba(238, 243, 238, 0.72);
+    }
+    .col-binder .col-empty { color: rgba(232, 238, 248, 0.72); }
+
+    .col-binder-shell {
+      display: grid;
+      grid-template-columns: minmax(3.2rem, 4.2rem) minmax(0, 1fr);
+      border-radius: 18px 22px 22px 14px;
+      overflow: hidden;
+      background: linear-gradient(165deg, #1a2f4d 0%, var(--binder-ink-deep) 55%, #101a2b 100%);
+      box-shadow:
+        0 18px 40px rgba(12, 23, 40, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      color: #e8eef8;
+    }
+    [data-theme="dark"] .col-binder-shell {
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .col-binder-spine {
+      position: relative;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.35), transparent 40%),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.04) 0 2px,
+          transparent 2px 7px
+        ),
+        linear-gradient(180deg, #243b5c, #13233c);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 0.35rem 1.25rem;
+      gap: 1rem;
+    }
+    .col-binder-spine-title {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      letter-spacing: 0.28em;
+      color: #f4f7fc;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    }
+    .col-binder-rings {
+      display: grid;
+      gap: 1.35rem;
+      width: 100%;
+      justify-items: center;
+    }
+    .col-binder-ring {
+      width: 1.15rem;
+      height: 1.15rem;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #d7dee8, var(--binder-metal) 55%, #5d6b7c);
+      box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.55),
+        0 2px 4px rgba(0, 0, 0, 0.35);
+    }
+    .col-binder-main {
+      min-width: 0;
+      background:
+        radial-gradient(120% 80% at 0% 0%, rgba(47, 111, 237, 0.16), transparent 50%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
+        #122033;
+      padding: 1rem 1rem 1.15rem;
+    }
+    @media (min-width: 768px) {
+      .col-binder-main { padding: 1.25rem 1.35rem 1.4rem; }
+    }
+    .col-binder-masthead {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      margin-bottom: 0.95rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .col-binder-kicker {
+      margin: 0 0 0.2rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(232, 238, 248, 0.55);
+    }
+    .col-binder-title {
+      margin: 0;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+      font-weight: 900;
+      line-height: 1.15;
+      color: #f7f9fc;
+      letter-spacing: 0.04em;
+    }
+    .col-binder-lede {
+      margin: 0.35rem 0 0;
+      max-width: 28rem;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: rgba(232, 238, 248, 0.72);
+    }
+    .col-binder-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .col-binder-stat {
+      min-width: 4.5rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+    .col-binder-stat strong {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .col-binder-stat span {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: rgba(232, 238, 248, 0.6);
+    }
+    .col-binder .col-shell {
+      --col-accent: var(--binder-accent);
+      --col-accent-soft: rgba(47, 111, 237, 0.16);
+      --col-line: rgba(255, 255, 255, 0.12);
+      --col-ink: #e8eef8;
+      --col-muted: rgba(232, 238, 248, 0.62);
+      background: transparent;
+      padding: 0;
+    }
+    .col-binder .col-controls label,
+    .col-binder .col-total-main,
+    .col-binder .col-total-sub,
+    .col-binder .col-total-count {
+      color: rgba(232, 238, 248, 0.72);
+    }
+    .col-binder .col-total-value { color: #fff; }
+    .col-binder .col-total-bar {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+    .col-binder .col-controls .form-control,
+    .col-binder .col-controls select.form-control {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #f3f6fb;
+    }
+    .col-binder .col-controls .form-control::placeholder { color: rgba(243, 246, 251, 0.45); }
+    .col-binder .btn-outline-secondary {
+      color: #dce6f5;
+      border-color: rgba(220, 230, 245, 0.35);
+      background: transparent;
+    }
+    .col-binder .btn-outline-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .col-binder-stage {
+      margin-top: 0.85rem;
+      perspective: 1600px;
+    }
+    .col-binder-spread {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      min-height: 12rem;
+      transform-origin: left center;
+      transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.35s ease;
+    }
+    @media (min-width: 768px) {
+      .col-binder-spread {
+        grid-template-columns: 1fr 14px 1fr;
+        background: linear-gradient(90deg, #dfe7f2, var(--binder-page) 8%, var(--binder-page) 92%, #dfe7f2);
+        border-radius: 4px 14px 14px 4px;
+        box-shadow:
+          inset 8px 0 18px rgba(20, 35, 58, 0.08),
+          inset -6px 0 14px rgba(20, 35, 58, 0.06),
+          0 10px 24px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+      }
+    }
+    [data-theme="dark"] .col-binder-spread {
+      background: linear-gradient(90deg, #141c28, var(--binder-page) 10%, var(--binder-page) 90%, #141c28);
+    }
+    .col-binder-spread.is-flip-next {
+      transform: rotateY(-14deg) scale(0.985);
+      opacity: 0.35;
+    }
+    .col-binder-spread.is-flip-prev {
+      transform: rotateY(14deg) scale(0.985);
+      opacity: 0.35;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .col-binder-spread { transition: opacity 0.2s ease; }
+      .col-binder-spread.is-flip-next,
+      .col-binder-spread.is-flip-prev {
+        transform: none;
+        opacity: 0.4;
+      }
+    }
+    .col-binder-gutter {
+      display: none;
+      background:
+        linear-gradient(90deg, rgba(20, 35, 58, 0.18), rgba(20, 35, 58, 0.02) 40%, rgba(20, 35, 58, 0.02) 60%, rgba(20, 35, 58, 0.16)),
+        repeating-linear-gradient(180deg, transparent 0 10px, rgba(20, 35, 58, 0.05) 10px 11px);
+    }
+    @media (min-width: 768px) {
+      .col-binder-gutter { display: block; }
+    }
+    .col-binder-page {
+      list-style: none;
+      margin: 0;
+      padding: 0.85rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 0.65rem;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent 28%),
+        var(--binder-page);
+      min-height: 11rem;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px var(--binder-page-line);
+    }
+    @media (min-width: 768px) {
+      .col-binder-page {
+        border-radius: 0;
+        box-shadow: none;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 24%),
+          repeating-linear-gradient(
+            180deg,
+            transparent 0 31px,
+            rgba(20, 35, 58, 0.035) 31px 32px
+          ),
+          var(--binder-page);
+        padding: 1.1rem 1rem 1.2rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem 0.75rem;
+        align-content: start;
+      }
+      .col-binder-page-left {
+        box-shadow: inset -10px 0 20px rgba(20, 35, 58, 0.05);
+      }
+      .col-binder-page-right {
+        box-shadow: inset 10px 0 20px rgba(20, 35, 58, 0.05);
+      }
+    }
+    .col-binder-page .col-tile-body {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(20, 35, 58, 0.1);
+    }
+    [data-theme="dark"] .col-binder-page .col-tile-body {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-binder-page .col-meta,
+    .col-binder-page .col-name,
+    .col-binder-page .col-cardno {
+      color: #1f2937;
+    }
+    [data-theme="dark"] .col-binder-page .col-meta,
+    [data-theme="dark"] .col-binder-page .col-name,
+    [data-theme="dark"] .col-binder-page .col-cardno {
+      color: #e5e7eb;
+    }
+    .col-binder-pocket-empty {
+      min-height: 8rem;
+      border: 1.5px dashed rgba(20, 35, 58, 0.18);
+      border-radius: 8px;
+      background: rgba(20, 35, 58, 0.03);
+    }
+    [data-theme="dark"] .col-binder-pocket-empty {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .col-binder-pager {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+    .col-binder-page-label {
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: rgba(247, 249, 252, 0.88);
+      letter-spacing: 0.04em;
+    }
+    .col-binder-page-label strong {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      color: #fff;
+    }
+    .col-binder-pager-actions {
+      display: inline-flex;
+      gap: 0.45rem;
+    }
+    .col-binder-pager-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.35rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f3f6fb;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .col-binder-pager-btn:hover:not(:disabled) {
+      background: rgba(47, 111, 237, 0.28);
+      border-color: rgba(47, 111, 237, 0.55);
+    }
+    .col-binder-pager-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .col-binder-groups {
+      display: grid;
+      gap: 1rem;
+    }
+    .col-binder-groups .col-group-title {
+      color: #f3f6fb;
+      border-bottom-color: rgba(255, 255, 255, 0.14);
+    }
+    .col-binder-groups .col-album {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      padding: 0.85rem;
+      border-radius: 12px;
+      background: var(--binder-page);
+      box-shadow: inset 0 0 0 1px var(--binder-page-line);
+    }
+
+    /* 牌盒 */
+    .col-deckbox-shell {
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(212, 162, 76, 0.14), transparent 40%),
+        linear-gradient(180deg, var(--deckbox-lid), var(--deckbox-shell));
+      box-shadow:
+        0 18px 40px rgba(20, 32, 26, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      color: #eef3ee;
+    }
+    .col-deckbox-lid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      padding: 1.15rem 1.2rem 1rem;
+      border-bottom: 1px solid rgba(212, 162, 76, 0.28);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+        var(--deckbox-lid);
+    }
+    .col-deckbox-kicker {
+      margin: 0 0 0.2rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(238, 243, 238, 0.55);
+    }
+    .col-deckbox-title {
+      margin: 0;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: clamp(1.45rem, 2.2vw, 1.95rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      color: #f7faf7;
+    }
+    .col-deckbox-lede {
+      margin: 0.3rem 0 0;
+      font-size: 0.86rem;
+      color: rgba(238, 243, 238, 0.7);
+      max-width: 26rem;
+      line-height: 1.45;
+    }
+    .col-deckbox-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(212, 162, 76, 0.45);
+      background: rgba(212, 162, 76, 0.12);
+      color: var(--deckbox-accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .col-deckbox-body {
+      padding: 1rem 1.1rem 1.2rem;
+      background:
+        linear-gradient(180deg, rgba(245, 247, 244, 0.04), transparent 24%),
+        #18231e;
+    }
+    .col-deckbox .col-shell {
+      --col-accent: #3f8f6b;
+      --col-accent-soft: rgba(63, 143, 107, 0.16);
+      --col-line: rgba(255, 255, 255, 0.12);
+      --col-ink: #eef3ee;
+      --col-muted: rgba(238, 243, 238, 0.62);
+      background: transparent;
+      padding: 0;
+    }
+    .col-deckbox .col-search-wrap .form-control,
+    .col-deckbox .col-sort-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #f3f6f3;
+    }
+    .col-deckbox .col-sort-chip select { color: #f3f6f3; }
+    .col-deckbox .col-cta-secondary {
+      background: transparent;
+      border-color: var(--deckbox-accent);
+      color: var(--deckbox-accent);
+    }
+    .col-deckbox .col-cta-primary {
+      background: #3f8f6b;
+      border-color: #3f8f6b;
+    }
+    .col-deckbox .col-deck-stats {
+      background: rgba(212, 162, 76, 0.1);
+      border-color: rgba(212, 162, 76, 0.22);
+    }
+    .col-deckbox .col-deck-stat,
+    .col-deckbox .col-deck-stat-note { color: rgba(238, 243, 238, 0.85); }
+    .col-deckbox .col-deck-stat i { color: var(--deckbox-accent); }
+    @media (min-width: 992px) {
+      .col-deckbox .col-deck-sidebar,
+      .col-deckbox .col-deck-detail {
+        background: var(--deckbox-paper);
+        border-color: rgba(255, 255, 255, 0.08);
+        color: #1f2937;
+      }
+      [data-theme="dark"] .col-deckbox .col-deck-sidebar,
+      [data-theme="dark"] .col-deckbox .col-deck-detail {
+        color: #e5e7eb;
+      }
+      .col-deckbox .col-deck-sidebar-title,
+      .col-deckbox .col-deck-detail-title,
+      .col-deckbox .col-deck-name,
+      .col-deckbox .col-deck-info-card h6,
+      .col-deckbox .col-deck-detail-main-head h6 {
+        color: inherit;
+      }
+      .col-deckbox .col-deck-meta,
+      .col-deckbox .col-deck-detail-meta { color: #6b7280; }
+      [data-theme="dark"] .col-deckbox .col-deck-meta,
+      [data-theme="dark"] .col-deckbox .col-deck-detail-meta { color: #9ca3af; }
+      .col-deckbox .col-deck-card.is-selected {
+        background: rgba(63, 143, 107, 0.14);
+      }
+      .col-deckbox .col-deck-detail-tabs {
+        background: rgba(63, 143, 107, 0.08);
+      }
+      .col-deckbox .col-deck-info-card {
+        background: rgba(63, 143, 107, 0.06);
+      }
+    }
+    @media (max-width: 991px) {
+      .col-deckbox .col-deck-card {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .col-deckbox .col-deck-name { color: #f3f6f3; }
+      .col-deckbox .col-deck-meta { color: rgba(238, 243, 238, 0.62); }
+      .col-deckbox .col-deck-actions {
+        background: rgba(0, 0, 0, 0.18);
+        border-left-color: rgba(255, 255, 255, 0.1);
+      }
+    }
 
     .col-deck-toolbar {
       display: grid;
@@ -1823,169 +2356,223 @@
               <span id="colStatusText"></span>
             </div>
 
-            <div class="card search-card" id="colSectionAlbum">
-              <div class="card-header">
-                <h5 class="card-title">
-                  <i class="fas fa-clone mr-2"></i>
-                  我的卡冊
-                </h5>
-              </div>
-              <div class="card-body col-shell">
-                <div id="colPanelCards" class="col-panel" data-col-panel="cards">
-                  <div class="col-controls" aria-label="卡冊篩選列">
-                    <div class="col-field col-field-search">
-                      <label for="colSearchInput">搜尋</label>
-                      <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
+            <div class="col-stage">
+              <section class="col-binder" id="colSectionAlbum" aria-labelledby="colBinderTitle">
+                <div class="col-binder-shell">
+                  <aside class="col-binder-spine" aria-hidden="true">
+                    <div class="col-binder-rings">
+                      <span class="col-binder-ring"></span>
+                      <span class="col-binder-ring"></span>
+                      <span class="col-binder-ring"></span>
                     </div>
-                    <div class="col-field col-field-rare">
-                      <label for="colRareSelect">稀有度</label>
-                      <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
-                        <option value="" selected>全部稀有度</option>
-                      </select>
+                    <div class="col-binder-spine-title">我的卡冊</div>
+                    <div class="col-binder-rings">
+                      <span class="col-binder-ring"></span>
+                      <span class="col-binder-ring"></span>
                     </div>
-                    <div class="col-field col-field-tag">
-                      <label for="colTagSelect">標籤</label>
-                      <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
-                        <option value="" selected>全部標籤</option>
-                        <option value="__untagged__">未標籤</option>
-                      </select>
-                    </div>
-                    <div class="col-field col-field-group">
-                      <label for="colGroupSelect">分組檢視</label>
-                      <select id="colGroupSelect" class="form-control">
-                        <option value="none" selected>不分組</option>
-                        <option value="tag">依標籤分組</option>
-                      </select>
-                    </div>
-                    <div class="col-field col-field-sort">
-                      <label for="colSortSelect">排序</label>
-                      <select id="colSortSelect" class="form-control">
-                        <option value="newest" selected>最新加入</option>
-                        <option value="oldest">最早加入</option>
-                        <option value="cardNumber">卡號 A→Z</option>
-                        <option value="qtyDesc">數量多→少</option>
-                        <option value="qtyAsc">數量少→多</option>
-                        <option value="rare">稀有度</option>
-                      </select>
-                    </div>
-                    <div class="col-field col-field-actions">
-                      <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
-                      <div class="col-control-actions">
-                        <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
-                          <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                  </aside>
+                  <div class="col-binder-main">
+                    <header class="col-binder-masthead">
+                      <div>
+                        <p class="col-binder-kicker">Card Binder</p>
+                        <h2 class="col-binder-title" id="colBinderTitle">我的卡冊</h2>
+                        <p class="col-binder-lede">像翻開實體卡冊一樣瀏覽持有卡；左右頁可翻頁檢視。</p>
                       </div>
-                    </div>
-                  </div>
-
-                  <div class="col-total-bar" id="colTotalBar" aria-live="polite">
-                    <div class="col-total-copy">
-                      <div class="col-total-main">
-                        <span>持有總量</span>
-                        <span class="col-total-value" id="colTotalValue">0</span>
-                      </div>
-                      <div class="col-total-sub">
-                        <span class="col-total-count" id="colCountLabel">共 0 種</span>
-                        <span class="col-total-sep" aria-hidden="true">·</span>
-                        <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
-                      </div>
-                    </div>
-                    <div class="col-total-actions">
-                      <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
-                        <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
-                      </a>
-                    </div>
-                  </div>
-
-                  <div id="colEmpty" class="col-empty" style="display:none;">
-                    <div><i class="fas fa-clone" aria-hidden="true"></i></div>
-                    <p id="colEmptyText">卡冊尚無卡片。</p>
-                    <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
-                      <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                    </button>
-                  </div>
-                  <div id="colAlbumRoot" aria-label="我的卡冊相簿"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card search-card col-section-decks" id="colSectionDecks">
-              <div class="card-header">
-                <h5 class="card-title">
-                  <i class="fas fa-layer-group mr-2"></i>
-                  牌組
-                </h5>
-              </div>
-              <div class="card-body col-shell">
-                <div id="colPanelDecks" class="col-panel" data-col-panel="decks">
-                  <div class="col-deck-toolbar" aria-label="牌組操作列">
-                    <div class="col-search-wrap">
-                      <i class="fas fa-search" aria-hidden="true"></i>
-                      <input id="colDeckSearchInput" type="search" class="form-control" placeholder="搜尋牌組名稱、標籤、卡號" autocomplete="off" aria-label="搜尋牌組">
-                    </div>
-                    <div class="col-sort-chip">
-                      <i class="fas fa-sort" aria-hidden="true"></i>
-                      <select id="colDeckSortSelect" aria-label="牌組排序">
-                        <option value="updated" selected>最近更新</option>
-                        <option value="name">名稱 A→Z</option>
-                        <option value="cardsDesc">張數多→少</option>
-                      </select>
-                    </div>
-                    <div class="col-deck-cta-row">
-                      <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
-                        <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
-                      </button>
-                      <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
-                        <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
-                    <div class="col-deck-stat">
-                      <i class="fas fa-clone" aria-hidden="true"></i>
-                      <span>牌組 <strong id="colDeckTotalValue">0</strong> 副</span>
-                    </div>
-                    <div class="col-deck-stat">
-                      <i class="fas fa-eye" aria-hidden="true"></i>
-                      <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
-                    </div>
-                    <div class="col-deck-stat col-deck-stat-note">
-                      <i class="fas fa-info-circle" aria-hidden="true"></i>
-                      <span>牌組引用我的卡冊；缺卡請在編輯中調整</span>
-                    </div>
-                  </div>
-
-                  <div id="colDeckEmpty" class="col-empty" style="display:none;">
-                    <div><i class="fas fa-th-large" aria-hidden="true"></i></div>
-                    <p id="colDeckEmptyText">尚未建立牌組。</p>
-                    <div class="col-deck-cta-row" style="max-width:22rem;margin:0 auto;">
-                      <button type="button" class="col-cta-secondary" id="colDeckEmptyCreateBtn">
-                        <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
-                      </button>
-                      <button type="button" class="col-cta-secondary" id="colDeckEmptyDecklogBtn">
-                        <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="col-deck-workspace" id="colDeckWorkspace" hidden>
-                    <aside class="col-deck-sidebar" aria-label="牌組側欄">
-                      <div class="col-deck-sidebar-head">
-                        <div class="col-deck-sidebar-title">
-                          牌組列表
-                          <span class="col-deck-sidebar-count" id="colDeckSidebarCount">0</span>
+                      <div class="col-binder-stats" aria-live="polite">
+                        <div class="col-binder-stat">
+                          <strong id="colBinderStatKinds">0</strong>
+                          <span>種卡</span>
+                        </div>
+                        <div class="col-binder-stat">
+                          <strong id="colTotalValue">0</strong>
+                          <span>持有張數</span>
+                        </div>
+                        <div class="col-binder-stat">
+                          <strong id="colBinderStatPage">1</strong>
+                          <span>目前頁</span>
                         </div>
                       </div>
-                      <ul class="col-deck-list" id="colDeckList" aria-label="牌組列表"></ul>
-                    </aside>
-                    <section class="col-deck-detail" id="colDeckDetail" aria-live="polite"></section>
+                    </header>
+
+                    <div class="col-shell">
+                      <div id="colPanelCards" class="col-panel" data-col-panel="cards">
+                        <div class="col-controls" aria-label="卡冊篩選列">
+                          <div class="col-field col-field-search">
+                            <label for="colSearchInput">搜尋</label>
+                            <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
+                          </div>
+                          <div class="col-field col-field-rare">
+                            <label for="colRareSelect">稀有度</label>
+                            <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
+                              <option value="" selected>全部稀有度</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-tag">
+                            <label for="colTagSelect">標籤</label>
+                            <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
+                              <option value="" selected>全部標籤</option>
+                              <option value="__untagged__">未標籤</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-group">
+                            <label for="colGroupSelect">分組檢視</label>
+                            <select id="colGroupSelect" class="form-control">
+                              <option value="none" selected>不分組（翻頁）</option>
+                              <option value="tag">依標籤分組</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-sort">
+                            <label for="colSortSelect">排序</label>
+                            <select id="colSortSelect" class="form-control">
+                              <option value="newest" selected>最新加入</option>
+                              <option value="oldest">最早加入</option>
+                              <option value="cardNumber">卡號 A→Z</option>
+                              <option value="qtyDesc">數量多→少</option>
+                              <option value="qtyAsc">數量少→多</option>
+                              <option value="rare">稀有度</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-actions">
+                            <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                            <div class="col-control-actions">
+                              <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
+                                <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-total-bar" id="colTotalBar" aria-live="polite">
+                          <div class="col-total-copy">
+                            <div class="col-total-main">
+                              <span>本冊狀態</span>
+                            </div>
+                            <div class="col-total-sub">
+                              <span class="col-total-count" id="colCountLabel">共 0 種</span>
+                              <span class="col-total-sep" aria-hidden="true">·</span>
+                              <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
+                            </div>
+                          </div>
+                          <div class="col-total-actions">
+                            <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
+                              <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
+                            </a>
+                          </div>
+                        </div>
+
+                        <div id="colEmpty" class="col-empty" style="display:none;">
+                          <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
+                          <p id="colEmptyText">卡冊尚無卡片。</p>
+                          <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
+                            <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                          </button>
+                        </div>
+
+                        <div class="col-binder-stage" id="colBinderStage">
+                          <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊翻頁區"></div>
+                          <nav class="col-binder-pager" id="colBinderPager" hidden aria-label="卡冊翻頁">
+                            <div class="col-binder-page-label">
+                              第 <strong id="colBinderPageNow">1</strong> / <strong id="colBinderPageTotal">1</strong> 頁
+                            </div>
+                            <div class="col-binder-pager-actions">
+                              <button type="button" class="col-binder-pager-btn" id="colBinderPrevBtn">
+                                <i class="fas fa-chevron-left" aria-hidden="true"></i>上一頁
+                              </button>
+                              <button type="button" class="col-binder-pager-btn" id="colBinderNextBtn">
+                                下一頁<i class="fas fa-chevron-right" aria-hidden="true"></i>
+                              </button>
+                            </div>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </section>
+
+              <section class="col-deckbox" id="colSectionDecks" aria-labelledby="colDeckboxTitle">
+                <div class="col-deckbox-shell">
+                  <header class="col-deckbox-lid">
+                    <div>
+                      <p class="col-deckbox-kicker">Deck Box</p>
+                      <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
+                      <p class="col-deckbox-lede">編成像收進牌盒一樣分開管理；缺卡請在編輯中標記。</p>
+                    </div>
+                    <div class="col-deckbox-badge" aria-live="polite">
+                      <i class="fas fa-archive" aria-hidden="true"></i>
+                      <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
+                    </div>
+                  </header>
+                  <div class="col-deckbox-body">
+                    <div class="col-shell">
+                      <div id="colPanelDecks" class="col-panel" data-col-panel="decks">
+                        <div class="col-deck-toolbar" aria-label="牌組操作列">
+                          <div class="col-search-wrap">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <input id="colDeckSearchInput" type="search" class="form-control" placeholder="搜尋牌組名稱、標籤、卡號" autocomplete="off" aria-label="搜尋牌組">
+                          </div>
+                          <div class="col-sort-chip">
+                            <i class="fas fa-sort" aria-hidden="true"></i>
+                            <select id="colDeckSortSelect" aria-label="牌組排序">
+                              <option value="updated" selected>最近更新</option>
+                              <option value="name">名稱 A→Z</option>
+                              <option value="cardsDesc">張數多→少</option>
+                            </select>
+                          </div>
+                          <div class="col-deck-cta-row">
+                            <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
+                              <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                            </button>
+                            <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
+                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
+                          <div class="col-deck-stat">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                            <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
+                          </div>
+                          <div class="col-deck-stat col-deck-stat-note">
+                            <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            <span>牌組與卡冊分開保存；缺卡請在編輯中調整</span>
+                          </div>
+                        </div>
+
+                        <div id="colDeckEmpty" class="col-empty" style="display:none;">
+                          <div><i class="fas fa-archive" aria-hidden="true"></i></div>
+                          <p id="colDeckEmptyText">尚未建立牌組。</p>
+                          <div class="col-deck-cta-row" style="max-width:22rem;margin:0 auto;">
+                            <button type="button" class="col-cta-secondary" id="colDeckEmptyCreateBtn">
+                              <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                            </button>
+                            <button type="button" class="col-cta-secondary" id="colDeckEmptyDecklogBtn">
+                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="col-deck-workspace" id="colDeckWorkspace" hidden>
+                          <aside class="col-deck-sidebar" aria-label="牌組側欄">
+                            <div class="col-deck-sidebar-head">
+                              <div class="col-deck-sidebar-title">
+                                牌組列表
+                                <span class="col-deck-sidebar-count" id="colDeckSidebarCount">0</span>
+                              </div>
+                            </div>
+                            <ul class="col-deck-list" id="colDeckList" aria-label="牌組列表"></ul>
+                          </aside>
+                          <section class="col-deck-detail" id="colDeckDetail" aria-live="polite"></section>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         </div>
@@ -2064,7 +2651,7 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint" id="colDeckModalHint">勾選要標記缺卡的牌，並設定缺幾張；可依持有量一鍵帶入。</p>
+      <p class="col-modal-hint" id="colDeckModalHint">勾選要標記缺卡的牌，並設定缺幾張。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -2079,12 +2666,6 @@
       <div class="col-deck-editor-tools" id="colDeckPickRow">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
           <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
-        </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckShortAutoBtn" title="依我的卡冊持有量帶入缺卡張數">
-          <i class="fas fa-magic mr-1" aria-hidden="true"></i>依持有量標記缺卡
-        </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckShortClearBtn" title="清除所有缺卡標記">
-          清除缺卡
         </button>
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
@@ -2204,16 +2785,25 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
+    var albumPageIndex = 0;
+    var albumFlipTimer = null;
+    var albumTouchStartX = null;
 
     var deckModalHint = document.getElementById('colDeckModalHint');
     var deckPickRow = document.getElementById('colDeckPickRow');
-    var deckShortAutoBtn = document.getElementById('colDeckShortAutoBtn');
-    var deckShortClearBtn = document.getElementById('colDeckShortClearBtn');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
     var deckSaveBtn = document.getElementById('colDeckSaveBtn');
 
     var albumRoot = document.getElementById('colAlbumRoot');
+    var binderStage = document.getElementById('colBinderStage');
+    var binderPager = document.getElementById('colBinderPager');
+    var binderPrevBtn = document.getElementById('colBinderPrevBtn');
+    var binderNextBtn = document.getElementById('colBinderNextBtn');
+    var binderPageNow = document.getElementById('colBinderPageNow');
+    var binderPageTotal = document.getElementById('colBinderPageTotal');
+    var binderStatKinds = document.getElementById('colBinderStatKinds');
+    var binderStatPage = document.getElementById('colBinderStatPage');
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var countEl = document.getElementById('colCountLabel');
@@ -2528,9 +3118,86 @@
       var checkedCount = Object.keys(checkedSet).filter(function (key) {
         return allItems.some(function (it) { return it.cardNumber === key; });
       }).length;
-      totalValueEl.textContent = String(totalQty);
+      if (totalValueEl) totalValueEl.textContent = String(totalQty);
+      if (binderStatKinds) binderStatKinds.textContent = String(allItems.length);
       countEl.textContent = '共 ' + allItems.length + ' 種';
       totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + (visible ? visible.length : 0) + ' 種';
+    }
+
+    function getAlbumSpreadSize() {
+      return window.matchMedia('(min-width: 768px)').matches ? 8 : 4;
+    }
+
+    function isAlbumDesktopSpread() {
+      return window.matchMedia('(min-width: 768px)').matches;
+    }
+
+    function updateBinderPager(totalPages) {
+      var pages = Math.max(1, totalPages || 1);
+      var now = albumPageIndex + 1;
+      if (binderPageNow) binderPageNow.textContent = String(now);
+      if (binderPageTotal) binderPageTotal.textContent = String(pages);
+      if (binderStatPage) binderStatPage.textContent = String(now);
+      if (binderPrevBtn) binderPrevBtn.disabled = albumPageIndex <= 0;
+      if (binderNextBtn) binderNextBtn.disabled = albumPageIndex >= pages - 1;
+      if (binderPager) binderPager.hidden = pages <= 1 || groupMode === 'tag';
+    }
+
+    function buildBinderPageHtml(items, sideClass, pocketCount) {
+      var html = '<ul class="col-binder-page ' + sideClass + '">';
+      items.forEach(function (item) { html += renderTile(item); });
+      var empty = Math.max(0, pocketCount - items.length);
+      for (var i = 0; i < empty; i++) {
+        html += '<li class="col-binder-pocket-empty" aria-hidden="true"></li>';
+      }
+      html += '</ul>';
+      return html;
+    }
+
+    function renderAlbumSpread(visible) {
+      var size = getAlbumSpreadSize();
+      var totalPages = Math.max(1, Math.ceil(visible.length / size));
+      if (albumPageIndex > totalPages - 1) albumPageIndex = totalPages - 1;
+      if (albumPageIndex < 0) albumPageIndex = 0;
+      var start = albumPageIndex * size;
+      var slice = visible.slice(start, start + size);
+      var desktop = isAlbumDesktopSpread();
+      var perSide = desktop ? Math.ceil(size / 2) : size;
+      var left = slice.slice(0, perSide);
+      var right = desktop ? slice.slice(perSide) : [];
+      var html = buildBinderPageHtml(left, 'col-binder-page-left', perSide);
+      if (desktop) {
+        html += '<div class="col-binder-gutter" aria-hidden="true"></div>';
+        html += buildBinderPageHtml(right, 'col-binder-page-right', perSide);
+      }
+      if (albumRoot) {
+        albumRoot.classList.add('col-binder-spread');
+        albumRoot.classList.remove('col-binder-groups');
+        albumRoot.innerHTML = html;
+      }
+      updateBinderPager(totalPages);
+    }
+
+    function goAlbumPage(nextIndex, dir) {
+      var visible = getVisibleItems();
+      var size = getAlbumSpreadSize();
+      var totalPages = Math.max(1, Math.ceil(visible.length / size));
+      if (nextIndex < 0 || nextIndex > totalPages - 1 || nextIndex === albumPageIndex) return;
+      albumPageIndex = nextIndex;
+      if (!albumRoot) {
+        renderAlbum();
+        return;
+      }
+      albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
+      void albumRoot.offsetWidth;
+      albumRoot.classList.add(dir === 'prev' ? 'is-flip-prev' : 'is-flip-next');
+      if (albumFlipTimer) clearTimeout(albumFlipTimer);
+      albumFlipTimer = setTimeout(function () {
+        renderAlbumSpread(visible);
+        requestAnimationFrame(function () {
+          albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
+        });
+      }, 170);
     }
 
     function renderTile(item) {
@@ -2594,18 +3261,23 @@
       if (!allItems.length) {
         emptyEl.style.display = '';
         emptyTextEl.textContent = '卡冊尚無卡片。';
-        albumRoot.innerHTML = '';
+        if (albumRoot) albumRoot.innerHTML = '';
+        if (binderStage) binderStage.hidden = true;
+        updateBinderPager(1);
         return;
       }
 
       if (!visible.length) {
         emptyEl.style.display = '';
         emptyTextEl.textContent = '沒有符合搜尋條件的卡片。';
-        albumRoot.innerHTML = '';
+        if (albumRoot) albumRoot.innerHTML = '';
+        if (binderStage) binderStage.hidden = true;
+        updateBinderPager(1);
         return;
       }
 
       emptyEl.style.display = 'none';
+      if (binderStage) binderStage.hidden = false;
 
       if (groupMode === 'tag') {
         var groups = {};
@@ -2638,13 +3310,16 @@
           html += '  </ul>';
           html += '</section>';
         });
-        albumRoot.innerHTML = html;
+        if (albumRoot) {
+          albumRoot.classList.remove('col-binder-spread');
+          albumRoot.classList.add('col-binder-groups');
+          albumRoot.innerHTML = html;
+        }
+        updateBinderPager(1);
         return;
       }
 
-      albumRoot.innerHTML = '<ul class="col-album">' +
-        visible.map(renderTile).join('') +
-        '</ul>';
+      renderAlbumSpread(visible);
     }
 
     function findItem(cardNumber) {
@@ -3271,10 +3946,8 @@
       if (deckModalHint) {
         deckModalHint.textContent = isView
           ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
-          : '勾選要標記缺卡的牌，並設定缺幾張；也可按「依持有量標記缺卡」帶入建議值。';
+          : '勾選要標記缺卡的牌，並用 ± 設定缺幾張。';
       }
-      if (deckShortAutoBtn) deckShortAutoBtn.hidden = isView;
-      if (deckShortClearBtn) deckShortClearBtn.hidden = isView;
     }
 
     function updateDeckEditorSummary() {
@@ -3506,31 +4179,6 @@
       }
       if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
-    }
-
-    function markDeckShortFromOwned() {
-      if (!deckDraft || deckEditorMode === 'view') return;
-      var changed = 0;
-      (deckDraft.cards || []).forEach(function (entry) {
-        var suggested = suggestedShortQty(entry);
-        var prev = entryShortQty(entry);
-        entry.shortQty = suggested;
-        if (entry.shortQty !== prev) changed += 1;
-      });
-      renderDeckEditor();
-      setStatus(
-        changed
-          ? ('已依持有量更新 ' + changed + ' 種缺卡標記')
-          : '目前編成相對持有量無需標記缺卡',
-        'is-ok'
-      );
-    }
-
-    function clearDeckShortMarks() {
-      if (!deckDraft || deckEditorMode === 'view') return;
-      (deckDraft.cards || []).forEach(function (entry) { entry.shortQty = 0; });
-      renderDeckEditor();
-      setStatus('已清除缺卡標記', 'is-ok');
     }
 
     function saveDeckDraft() {
@@ -3933,25 +4581,61 @@
       if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
     }, true);
 
+    function resetAlbumPageAndRender() {
+      albumPageIndex = 0;
+      renderAlbum();
+    }
     searchInput.addEventListener('input', function () {
       filterQuery = searchInput.value || '';
-      renderAlbum();
+      resetAlbumPageAndRender();
     });
     rareSelect.addEventListener('change', function () {
       rareFilter = rareSelect.value || '';
-      renderAlbum();
+      resetAlbumPageAndRender();
     });
     tagSelect.addEventListener('change', function () {
       tagFilter = tagSelect.value || '';
-      renderAlbum();
+      resetAlbumPageAndRender();
     });
     sortSelect.addEventListener('change', function () {
       sortMode = sortSelect.value || 'newest';
-      renderAlbum();
+      resetAlbumPageAndRender();
     });
     groupSelect.addEventListener('change', function () {
       groupMode = groupSelect.value || 'none';
-      renderAlbum();
+      resetAlbumPageAndRender();
+    });
+    if (binderPrevBtn) {
+      binderPrevBtn.addEventListener('click', function () {
+        goAlbumPage(albumPageIndex - 1, 'prev');
+      });
+    }
+    if (binderNextBtn) {
+      binderNextBtn.addEventListener('click', function () {
+        goAlbumPage(albumPageIndex + 1, 'next');
+      });
+    }
+    if (binderStage) {
+      binderStage.addEventListener('touchstart', function (e) {
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        albumTouchStartX = e.changedTouches[0].clientX;
+      }, { passive: true });
+      binderStage.addEventListener('touchend', function (e) {
+        if (albumTouchStartX == null || !e.changedTouches || !e.changedTouches[0]) return;
+        var dx = e.changedTouches[0].clientX - albumTouchStartX;
+        albumTouchStartX = null;
+        if (Math.abs(dx) < 48 || groupMode === 'tag') return;
+        if (dx < 0) goAlbumPage(albumPageIndex + 1, 'next');
+        else goAlbumPage(albumPageIndex - 1, 'prev');
+      }, { passive: true });
+    }
+    var albumResizeTimer = null;
+    window.addEventListener('resize', function () {
+      if (albumResizeTimer) clearTimeout(albumResizeTimer);
+      albumResizeTimer = setTimeout(function () {
+        if (groupMode === 'tag') return;
+        renderAlbum();
+      }, 160);
     });
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
@@ -4171,12 +4855,6 @@
         else deckPickSet[key] = true;
         renderDeckPickList();
       });
-    }
-    if (deckShortAutoBtn) {
-      deckShortAutoBtn.addEventListener('click', markDeckShortFromOwned);
-    }
-    if (deckShortClearBtn) {
-      deckShortClearBtn.addEventListener('click', clearDeckShortMarks);
     }
     if (deckEntryList) {
       deckEntryList.addEventListener('click', function (e) {
