@@ -2311,11 +2311,74 @@
     .col-deck-editor-tools {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      align-items: center;
+      gap: 0.4rem 0.65rem;
       margin: 0 0 0.75rem;
     }
     .col-deck-editor-tools .btn {
       font-weight: 700;
+    }
+    .col-deck-card-view-tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem 0.75rem;
+      margin-left: auto;
+    }
+    .col-deck-card-sort {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a5568;
+    }
+    [data-theme="dark"] .col-deck-card-sort { color: #cbd5e0; }
+    .col-deck-card-sort select {
+      height: 2rem;
+      min-width: 8.5rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--col-line, #e2e8f0);
+      border-radius: 8px;
+      background: #fff;
+      color: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .col-deck-card-sort select {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #e2e8f0;
+    }
+    .col-deck-card-short-only {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a5568;
+      cursor: pointer;
+      user-select: none;
+    }
+    [data-theme="dark"] .col-deck-card-short-only { color: #cbd5e0; }
+    .col-deck-card-short-only input {
+      width: 0.95rem;
+      height: 0.95rem;
+      margin: 0;
+      accent-color: #dc2626;
+    }
+    .col-deck-detail-main-head .col-deck-card-view-tools {
+      flex: 1 1 100%;
+      margin-left: 0;
+      justify-content: flex-start;
+    }
+    @media (min-width: 768px) {
+      .col-deck-detail-main-head .col-deck-card-view-tools {
+        flex: 1 1 auto;
+        justify-content: flex-end;
+      }
     }
     #colDeckMetaModal.col-modal {
       z-index: 2100;
@@ -2711,6 +2774,19 @@
             <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
           </button>
         </span>
+        <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
+          <label class="col-deck-card-sort" for="colDeckCardSortSelect">
+            <span>排序</span>
+            <select id="colDeckCardSortSelect" aria-label="牌組內排序">
+              <option value="cardNumber" selected>按卡號排序</option>
+              <option value="level">按等級排序</option>
+            </select>
+          </label>
+          <label class="col-deck-card-short-only">
+            <input type="checkbox" id="colDeckCardShortOnly">
+            <span>僅列出缺少的牌</span>
+          </label>
+        </div>
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
     </div>
@@ -2857,6 +2933,10 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
+    var deckCardSortMode = 'cardNumber';
+    var deckCardShortOnly = false;
+    var deckLevelCache = {};
+    var deckLevelEnriching = false;
 
     var deckModalHint = document.getElementById('colDeckModalHint');
     var deckPickRow = document.getElementById('colDeckPickRow');
@@ -3573,23 +3653,33 @@
       };
     }
 
+    function parseCardLevel(value) {
+      if (value == null || value === '') return null;
+      var n = Number(value);
+      if (isNaN(n)) return null;
+      return n;
+    }
+
     function aggregateDecklogCards(cards) {
       var map = {};
       (Array.isArray(cards) ? cards : []).forEach(function (c) {
         if (!c) return;
         var key = normalizeText(c.cardNo || c.cardNumber).replace(/\\/g, '/');
         if (!key) return;
+        var level = parseCardLevel(c.level != null ? c.level : c.cardlevel);
         if (!map[key]) {
           map[key] = {
             cardNumber: key,
             qty: 0,
             cardName: normalizeText(c.name || c.cardName)
           };
+          if (level != null) map[key].level = level;
         }
         map[key].qty += 1;
         if (!map[key].cardName && (c.name || c.cardName)) {
           map[key].cardName = normalizeText(c.name || c.cardName);
         }
+        if (map[key].level == null && level != null) map[key].level = level;
       });
       return normalizeDeckCards(Object.keys(map).map(function (k) { return map[k]; }));
     }
@@ -3638,6 +3728,7 @@
         if (qty > MAX_DECK_ENTRY_QTY) qty = MAX_DECK_ENTRY_QTY;
         var shortQty = clampShortQty(entry.shortQty, qty);
         var cardName = normalizeText(entry.cardName);
+        var level = parseCardLevel(entry.level != null ? entry.level : entry.cardlevel);
         if (map[key]) {
           map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
           map[key].shortQty = clampShortQty(
@@ -3645,10 +3736,13 @@
             map[key].qty
           );
           if (!map[key].cardName && cardName) map[key].cardName = cardName;
+          if (map[key].level == null && level != null) map[key].level = level;
         } else {
           map[key] = { cardNumber: key, qty: qty, shortQty: shortQty };
           if (cardName) map[key].cardName = cardName;
+          if (level != null) map[key].level = level;
         }
+        if (level != null) deckLevelCache[key] = level;
       });
       return Object.keys(map)
         .map(function (k) { return map[k]; })
@@ -3677,6 +3771,8 @@
         cards: normalizeDeckCards(deck.cards).map(function (c) {
           var out = { cardNumber: c.cardNumber, qty: c.qty };
           if (c.cardName) out.cardName = c.cardName;
+          var level = parseCardLevel(c.level);
+          if (level != null) out.level = level;
           var shortQty = clampShortQty(c.shortQty, c.qty);
           if (shortQty > 0) out.shortQty = shortQty;
           return out;
@@ -3698,6 +3794,123 @@
     function entryShortQty(entry) {
       if (!entry) return 0;
       return clampShortQty(entry.shortQty, entry.qty || 0);
+    }
+
+    function entryLevel(entry) {
+      if (!entry) return null;
+      var fromEntry = parseCardLevel(entry.level);
+      if (fromEntry != null) return fromEntry;
+      var key = entry.cardNumber || '';
+      if (key && Object.prototype.hasOwnProperty.call(deckLevelCache, key)) {
+        return deckLevelCache[key];
+      }
+      return null;
+    }
+
+    function stampDeckEntryLevels(entries) {
+      (entries || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var lv = entryLevel(entry);
+        if (lv != null) entry.level = lv;
+      });
+    }
+
+    function filterAndSortDeckCards(cards, opts) {
+      opts = opts || {};
+      var q = String(opts.query || '').trim().toLowerCase();
+      var shortOnly = !!opts.shortOnly;
+      var sortMode = opts.sortMode || 'cardNumber';
+      var list = (cards || []).filter(function (entry) {
+        if (shortOnly && entryShortQty(entry) < 1) return false;
+        if (!q) return true;
+        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
+        var hay = [entry.cardNumber, meta.cardName, entry.cardName].join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      list.sort(function (a, b) {
+        if (sortMode === 'level') {
+          var la = entryLevel(a);
+          var lb = entryLevel(b);
+          var ra = la == null ? 999 : la;
+          var rb = lb == null ? 999 : lb;
+          if (ra !== rb) return ra - rb;
+        }
+        return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''));
+      });
+      return list;
+    }
+
+    function syncDeckCardViewControls() {
+      var sortSelect = document.getElementById('colDeckCardSortSelect');
+      if (sortSelect && sortSelect.value !== deckCardSortMode) sortSelect.value = deckCardSortMode;
+      var shortOnly = document.getElementById('colDeckCardShortOnly');
+      if (shortOnly) shortOnly.checked = !!deckCardShortOnly;
+      var detailSort = document.getElementById('colDeckDetailCardSortSelect');
+      if (detailSort && detailSort.value !== deckCardSortMode) detailSort.value = deckCardSortMode;
+      var detailShort = document.getElementById('colDeckDetailCardShortOnly');
+      if (detailShort) detailShort.checked = !!deckCardShortOnly;
+    }
+
+    function ensureDeckCardLevels(cards, onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      var need = [];
+      var seen = {};
+      (cards || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        if (entryLevel(entry) != null) return;
+        if (Object.prototype.hasOwnProperty.call(deckLevelCache, entry.cardNumber)) return;
+        if (seen[entry.cardNumber]) return;
+        seen[entry.cardNumber] = true;
+        need.push({
+          cardNo: entry.cardNumber,
+          name: entry.cardName || entry.cardNumber
+        });
+      });
+      if (!need.length || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        stampDeckEntryLevels(cards);
+        done(false);
+        return;
+      }
+      if (deckLevelEnriching) {
+        done(false);
+        return;
+      }
+      deckLevelEnriching = true;
+      window.WsDecklog.enrichCards(need)
+        .then(function (enriched) {
+          (enriched || []).forEach(function (row) {
+            var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
+            if (!key) return;
+            var lv = parseCardLevel(row.level != null ? row.level : row.cardlevel);
+            deckLevelCache[key] = lv;
+          });
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key && !Object.prototype.hasOwnProperty.call(deckLevelCache, key)) {
+              deckLevelCache[key] = null;
+            }
+          });
+          stampDeckEntryLevels(cards);
+          done(true);
+        })
+        .catch(function (err) {
+          console.error(err);
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key) deckLevelCache[key] = null;
+          });
+          done(false);
+        })
+        .then(function () {
+          deckLevelEnriching = false;
+        });
+    }
+
+    function deckCardEmptyMessage(opts) {
+      opts = opts || {};
+      if (opts.shortOnly) return '沒有標記缺少的牌。';
+      if (opts.query) return '沒有符合搜尋的卡片。';
+      return opts.emptyFallback || '此牌組尚未加入卡片。';
     }
 
     function suggestedShortQty(entry) {
@@ -3826,12 +4039,17 @@
       var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
       var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
       var q = deckDetailCardFilter.trim().toLowerCase();
-      var cards = (deck.cards || []).filter(function (entry) {
-        if (!q) return true;
-        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-        var hay = [entry.cardNumber, meta.cardName, entry.cardName].join(' ').toLowerCase();
-        return hay.indexOf(q) >= 0;
+      if (deckCardSortMode === 'level') {
+        ensureDeckCardLevels(deck.cards || [], function (updated) {
+          if (updated) renderDeckDetail();
+        });
+      }
+      var cards = filterAndSortDeckCards(deck.cards || [], {
+        query: q,
+        shortOnly: deckCardShortOnly,
+        sortMode: deckCardSortMode
       });
+      var filtered = !!(q || deckCardShortOnly);
 
       var tagsHtml = (deck.tags || []).length
         ? (deck.tags || []).map(function (t) {
@@ -3842,7 +4060,11 @@
       var cardsHtml = cards.length
         ? cards.map(function (entry) { return buildDeckEntryHtml(entry, 'tile'); }).join('')
         : '<li class="col-modal-hint col-deck-entry-empty">' +
-          (q ? '沒有符合搜尋的卡片。' : '此牌組尚未加入卡片。') +
+          escapeHtml(deckCardEmptyMessage({
+            shortOnly: deckCardShortOnly,
+            query: q,
+            emptyFallback: '此牌組尚未加入卡片。'
+          })) +
           '</li>';
 
       var html = '';
@@ -3897,11 +4119,24 @@
       html += '  </aside>';
       html += '  <div class="col-deck-detail-main">';
       html += '    <div class="col-deck-detail-main-head">';
-      html += '      <h6>卡牌清單（共 ' + cards.length + ' 種' + (q ? '／篩選後' : '') + '）</h6>';
+      html += '      <h6>卡牌清單（共 ' + cards.length + ' 種' + (filtered ? '／篩選後' : '') + '）</h6>';
       html += '      <div class="col-deck-detail-card-search">';
       html += '        <i class="fas fa-search" aria-hidden="true"></i>';
       html += '        <input type="search" class="form-control" id="colDeckDetailCardSearch" placeholder="搜尋卡號、卡名" value="' +
         escapeHtml(deckDetailCardFilter) + '" autocomplete="off" aria-label="搜尋牌組內卡片">';
+      html += '      </div>';
+      html += '      <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">';
+      html += '        <label class="col-deck-card-sort" for="colDeckDetailCardSortSelect">';
+      html += '          <span>排序</span>';
+      html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
+      html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
+      html += '            <option value="level"' + (deckCardSortMode === 'level' ? ' selected' : '') + '>按等級排序</option>';
+      html += '          </select>';
+      html += '        </label>';
+      html += '        <label class="col-deck-card-short-only">';
+      html += '          <input type="checkbox" id="colDeckDetailCardShortOnly"' + (deckCardShortOnly ? ' checked' : '') + '>';
+      html += '          <span>僅列出缺少的牌</span>';
+      html += '        </label>';
       html += '      </div>';
       html += '    </div>';
       html += '    <ul class="col-deck-entry-list" aria-label="牌組卡牌清單">' + cardsHtml + '</ul>';
@@ -3909,6 +4144,7 @@
       html += '</div>';
 
       deckDetailEl.innerHTML = html;
+      syncDeckCardViewControls();
     }
 
     function renderDeckList() {
@@ -3987,6 +4223,8 @@
             shortQty: entryShortQty(c)
           };
           if (c.cardName) out.cardName = c.cardName;
+          var level = entryLevel(c);
+          if (level != null) out.level = level;
           return out;
         }),
         createdAt: deck.createdAt,
@@ -4221,6 +4459,7 @@
       if (!deckDraft) return;
       var isView = deckEditorMode === 'view';
       updateDeckEditorSummary();
+      syncDeckCardViewControls();
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
@@ -4228,7 +4467,25 @@
           '</li>';
         return;
       }
-      deckEntryList.innerHTML = deckDraft.cards.map(function (entry) {
+      if (deckCardSortMode === 'level') {
+        ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
+          if (updated) renderDeckEditor();
+        });
+      }
+      var visibleCards = filterAndSortDeckCards(deckDraft.cards || [], {
+        shortOnly: deckCardShortOnly,
+        sortMode: deckCardSortMode
+      });
+      if (!visibleCards.length) {
+        deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
+          escapeHtml(deckCardEmptyMessage({
+            shortOnly: deckCardShortOnly,
+            emptyFallback: isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。'
+          })) +
+          '</li>';
+        return;
+      }
+      deckEntryList.innerHTML = visibleCards.map(function (entry) {
         return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
       }).join('');
     }
@@ -4284,8 +4541,11 @@
         entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
-      else updateDeckEditorSummary();
+      if (deckCardShortOnly || deckCardSortMode === 'level' || !syncDeckEntryTile(cardNumber)) {
+        renderDeckEditor();
+      } else {
+        updateDeckEditorSummary();
+      }
     }
 
     function setDeckEntryShort(cardNumber, enabled) {
@@ -4300,7 +4560,7 @@
         entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
         if (entry.shortQty < 1) entry.shortQty = 1;
       }
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
     }
 
@@ -4317,7 +4577,7 @@
         entry.shortQty = clampShortQty(next, entry.qty);
         if (entry.shortQty < 1) entry.shortQty = Math.min(1, entry.qty || 1);
       }
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
     }
 
@@ -4939,6 +5199,30 @@
     if (deckListEl) {
       deckListEl.addEventListener('click', handleDeckActionClick);
     }
+    function applyDeckCardSortMode(next) {
+      deckCardSortMode = next === 'level' ? 'level' : 'cardNumber';
+      syncDeckCardViewControls();
+      if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
+      renderDeckDetail();
+    }
+    function applyDeckCardShortOnly(next) {
+      deckCardShortOnly = !!next;
+      syncDeckCardViewControls();
+      if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
+      renderDeckDetail();
+    }
+    var deckCardSortSelect = document.getElementById('colDeckCardSortSelect');
+    var deckCardShortOnlyInput = document.getElementById('colDeckCardShortOnly');
+    if (deckCardSortSelect) {
+      deckCardSortSelect.addEventListener('change', function () {
+        applyDeckCardSortMode(deckCardSortSelect.value);
+      });
+    }
+    if (deckCardShortOnlyInput) {
+      deckCardShortOnlyInput.addEventListener('change', function () {
+        applyDeckCardShortOnly(deckCardShortOnlyInput.checked);
+      });
+    }
     if (deckDetailEl) {
       deckDetailEl.addEventListener('click', handleDeckActionClick);
       deckDetailEl.addEventListener('input', function (e) {
@@ -4954,6 +5238,15 @@
             again.setSelectionRange(len, len);
           } catch (err) { /* ignore */ }
         }
+      });
+      deckDetailEl.addEventListener('change', function (e) {
+        var sortSelect = e.target.closest('#colDeckDetailCardSortSelect');
+        if (sortSelect) {
+          applyDeckCardSortMode(sortSelect.value);
+          return;
+        }
+        var shortOnly = e.target.closest('#colDeckDetailCardShortOnly');
+        if (shortOnly) applyDeckCardShortOnly(shortOnly.checked);
       });
     }
     if (deckViewEditBtn) {
