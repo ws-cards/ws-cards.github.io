@@ -2872,6 +2872,15 @@
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var binderStage = document.getElementById('colBinderStage');
+    var binderPager = document.getElementById('colBinderPager');
+    var binderPrevBtn = document.getElementById('colBinderPrevBtn');
+    var binderNextBtn = document.getElementById('colBinderNextBtn');
+    var binderFirstBtn = document.getElementById('colBinderFirstBtn');
+    var binderLastBtn = document.getElementById('colBinderLastBtn');
+    var binderSidePrev = document.getElementById('colBinderSidePrev');
+    var binderSideNext = document.getElementById('colBinderSideNext');
+    var binderPageNow = document.getElementById('colBinderPageNow');
+    var binderPageTotal = document.getElementById('colBinderPageTotal');
     var binderStatKinds = document.getElementById('colBinderStatKinds');
     var binderStatVisible = document.getElementById('colBinderStatVisible');
     var emptyEl = document.getElementById('colEmpty');
@@ -3241,6 +3250,29 @@
         albumRoot.classList.remove('col-binder-groups');
         albumRoot.innerHTML = html;
       }
+      updateBinderPager(totalPages);
+    }
+
+    function goAlbumPage(nextIndex, dir) {
+      var visible = getVisibleItems();
+      var size = getAlbumSpreadSize();
+      var totalPages = Math.max(1, Math.ceil(visible.length / size));
+      if (nextIndex < 0 || nextIndex > totalPages - 1 || nextIndex === albumPageIndex) return;
+      albumPageIndex = nextIndex;
+      if (!albumRoot) {
+        renderAlbum();
+        return;
+      }
+      albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
+      void albumRoot.offsetWidth;
+      albumRoot.classList.add(dir === 'prev' ? 'is-flip-prev' : 'is-flip-next');
+      if (albumFlipTimer) clearTimeout(albumFlipTimer);
+      albumFlipTimer = setTimeout(function () {
+        renderAlbumSpread(visible);
+        requestAnimationFrame(function () {
+          albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
+        });
+      }, 170);
     }
 
     function renderTile(item, binderCompact) {
