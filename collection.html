@@ -21,7 +21,7 @@
   </style>
   <meta name="description" content="管理已擁有的 Weiss Schwarz 卡冊與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
   <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
-  <meta property="og:description" content="我的卡冊與引用制牌組分層管理：標籤、數量與缺卡提示。">
+  <meta property="og:description" content="我的卡冊與牌組分區管理：標籤、數量；缺卡於牌組編輯中調整。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -759,42 +759,11 @@
       --col-ink: #f3f4f6;
       --col-muted: #9ca3af;
     }
-    .col-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      width: 100%;
-      margin-bottom: 0.75rem;
-      border-bottom: 1px solid var(--col-line);
+    .col-page-status {
+      margin: 0 0 0.85rem;
     }
-    .col-tab {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-      border: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -1px;
-      background: transparent;
-      color: var(--col-muted);
-      font-size: 0.95rem;
-      font-weight: 700;
-      padding: 0.7rem 0.5rem;
-      cursor: pointer;
-      line-height: 1.2;
-      border-radius: 0;
-    }
-    .col-tab i { font-size: 0.95rem; }
-    .col-tab:hover { color: var(--col-ink); }
-    .col-tab.is-active {
-      color: var(--col-accent);
-      border-bottom-color: var(--col-accent);
-      background: transparent;
-      box-shadow: none;
-    }
-    [data-theme="dark"] .col-tab.is-active {
-      background: transparent;
-      color: var(--col-accent);
-      box-shadow: none;
+    .col-section-decks {
+      margin-top: 1.15rem;
     }
     .col-panel[hidden] { display: none !important; }
 
@@ -1762,29 +1731,20 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-12">
-            <div class="card search-card">
+            <div class="col-status col-page-status" id="colStatus" role="status" aria-live="polite">
+              <i class="fas fa-database col-status-icon" aria-hidden="true"></i>
+              <span id="colStatusText"></span>
+            </div>
+
+            <div class="card search-card" id="colSectionAlbum">
               <div class="card-header">
                 <h5 class="card-title">
-                  <i class="fas fa-layer-group mr-2"></i>
-                  收藏庫
+                  <i class="fas fa-clone mr-2"></i>
+                  我的卡冊
                 </h5>
               </div>
               <div class="card-body col-shell">
-                <div class="col-tabs" role="tablist" aria-label="收藏庫分層">
-                  <button type="button" class="col-tab is-active" role="tab" id="colTabCards" data-col-tab="cards" aria-selected="true" aria-controls="colPanelCards">
-                    <i class="fas fa-clone" aria-hidden="true"></i><span>我的卡冊</span>
-                  </button>
-                  <button type="button" class="col-tab" role="tab" id="colTabDecks" data-col-tab="decks" aria-selected="false" aria-controls="colPanelDecks">
-                    <i class="fas fa-layer-group" aria-hidden="true"></i><span>牌組</span>
-                  </button>
-                </div>
-
-                <div class="col-status" id="colStatus" role="status" aria-live="polite">
-                  <i class="fas fa-database col-status-icon" aria-hidden="true"></i>
-                  <span id="colStatusText"></span>
-                </div>
-
-                <div id="colPanelCards" class="col-panel" data-col-panel="cards" role="tabpanel" aria-labelledby="colTabCards">
+                <div id="colPanelCards" class="col-panel" data-col-panel="cards">
                   <div class="col-controls" aria-label="卡冊篩選列">
                     <div class="col-field col-field-search">
                       <label for="colSearchInput">搜尋</label>
@@ -1862,8 +1822,18 @@
                   </div>
                   <div id="colAlbumRoot" aria-label="我的卡冊相簿"></div>
                 </div>
+              </div>
+            </div>
 
-                <div id="colPanelDecks" class="col-panel" data-col-panel="decks" role="tabpanel" aria-labelledby="colTabDecks" hidden>
+            <div class="card search-card col-section-decks" id="colSectionDecks">
+              <div class="card-header">
+                <h5 class="card-title">
+                  <i class="fas fa-layer-group mr-2"></i>
+                  牌組
+                </h5>
+              </div>
+              <div class="card-body col-shell">
+                <div id="colPanelDecks" class="col-panel" data-col-panel="decks">
                   <div class="col-deck-toolbar" aria-label="牌組操作列">
                     <div class="col-search-wrap">
                       <i class="fas fa-search" aria-hidden="true"></i>
@@ -1898,7 +1868,7 @@
                     </div>
                     <div class="col-deck-stat col-deck-stat-note">
                       <i class="fas fa-info-circle" aria-hidden="true"></i>
-                      <span>牌組引用我的卡冊，庫存不足會標示缺卡</span>
+                      <span>牌組引用我的卡冊；缺卡請在編輯中調整</span>
                     </div>
                   </div>
 
@@ -2007,7 +1977,7 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint" id="colDeckModalHint">牌組以引用方式對應我的卡冊；編成張數可超過持有量，但會標示缺卡。</p>
+      <p class="col-modal-hint" id="colDeckModalHint">編成引用我的卡冊持有量；數量不足會標示缺卡，請在編輯中調整。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -2060,7 +2030,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯；編成會引用我的卡冊並標示缺卡。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯，可於編輯中對照持有量並調整缺卡。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -2118,7 +2088,6 @@
     var MAX_QTY = 999;
     var MAX_DECK_ENTRY_QTY = 50;
     var UNTAGGED = '__untagged__';
-    var ACTIVE_TAB_KEY = 'wsCollectionActiveTab';
 
     var allItems = [];
     var allDecks = [];
@@ -2128,8 +2097,6 @@
     var tagFilter = '';
     var sortMode = 'newest';
     var groupMode = 'none';
-    var activeTab = 'cards';
-
     var importPickSet = {};
     var importFilter = '';
     var tagEditTargets = [];
@@ -2315,7 +2282,14 @@
       writeLocal(allItems);
       refreshFilterOptions();
       renderAlbum();
-      if (activeTab === 'decks') renderDeckList();
+      renderDeckList();
+    }
+
+    function focusDeckSection() {
+      var el = document.getElementById('colSectionDecks');
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     function getRareColor(rare) {
@@ -2606,7 +2580,6 @@
       if (next > MAX_QTY) next = MAX_QTY;
       item.quantity = next;
       persistAndRender();
-      if (activeTab === 'decks') renderDeckList();
       setStatus(cardNumber + ' 數量更新為 ' + next, 'is-ok');
     }
 
@@ -2668,20 +2641,6 @@
           decklogConfirmBtn.removeAttribute('aria-busy');
         }
       }
-    }
-
-    function switchTab(tab) {
-      activeTab = tab === 'decks' ? 'decks' : 'cards';
-      try { localStorage.setItem(ACTIVE_TAB_KEY, activeTab); } catch (e) { /* ignore */ }
-      document.querySelectorAll('[data-col-tab]').forEach(function (btn) {
-        var on = btn.getAttribute('data-col-tab') === activeTab;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      if (panelCards) panelCards.hidden = activeTab !== 'cards';
-      if (panelDecks) panelDecks.hidden = activeTab !== 'decks';
-      if (activeTab === 'decks') renderDeckList();
-      else renderAlbum();
     }
 
     function ownedQty(cardNumber) {
@@ -2921,7 +2880,6 @@
 
       var total = deckTotalCards(deck);
       var kinds = (deck.cards || []).length;
-      var short = deckShortage(deck);
       var when = formatTime(deck.updatedAt);
       var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
       var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
@@ -2957,10 +2915,6 @@
           (deck.tags || []).map(function (t) {
             return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
           }).join('') + '</div>';
-      }
-      if (short.shortKinds) {
-        html += '      <div class="col-deck-warn col-deck-detail-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' +
-          short.shortKinds + ' 種（差 ' + short.shortCopies + ' 張）</div>';
       }
       html += '    </div>';
       html += '  </div>';
@@ -3048,15 +3002,13 @@
       visible.forEach(function (deck) {
         var total = deckTotalCards(deck);
         var kinds = (deck.cards || []).length;
-        var short = deckShortage(deck);
         var selected = deck.id === selectedDeckId;
         var tagsHtml = (deck.tags || []).length
           ? '<div class="col-deck-tags">' + (deck.tags || []).map(function (t) {
               return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
             }).join('') + '</div>'
           : '';
-        html += '<li class="col-deck-card' + (short.shortKinds ? ' is-short' : '') +
-          (selected ? ' is-selected' : '') + '" data-deck-id="' + escapeHtml(deck.id) + '">';
+        html += '<li class="col-deck-card' + (selected ? ' is-selected' : '') + '" data-deck-id="' + escapeHtml(deck.id) + '">';
         html += '  <button type="button" class="col-deck-card-select" data-deck-select="' + escapeHtml(deck.id) + '" aria-pressed="' + (selected ? 'true' : 'false') + '">';
         html += '    <div class="col-deck-main">';
         html += deckThumbHtml(deck);
@@ -3066,9 +3018,6 @@
         var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
         html += '        <div class="col-deck-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
         html += tagsHtml;
-        if (short.shortKinds) {
-          html += '        <div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' + short.shortKinds + ' 種（差 ' + short.shortCopies + ' 張）</div>';
-        }
         html += '      </div>';
         html += '    </div>';
         html += '  </button>';
@@ -3142,7 +3091,7 @@
       applyDeckEditorMode();
       renderDeckEditor();
       closeModalByName('decklog');
-      switchTab('decks');
+      focusDeckSection();
       openModal(deckModal);
       setStatus('已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' + deckTotalCards(deckDraft) + ' 張），請確認後儲存', 'is-ok');
     }
@@ -3196,8 +3145,8 @@
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       if (deckModalHint) {
         deckModalHint.textContent = isView
-          ? '唯讀檢視：對照我的卡冊持有量；缺卡會標示。若要修改請按「編輯此牌組」。'
-          : '牌組以引用方式對應我的卡冊；編成張數可超過持有量，但會標示缺卡。';
+          ? '唯讀檢視牌組編成。若要調整數量或缺卡，請按「編輯此牌組」。'
+          : '編成引用我的卡冊持有量；數量不足會標示缺卡，請在此調整編成。';
       }
     }
 
@@ -3205,13 +3154,16 @@
       if (!deckDraft || !deckEditorSummary) return;
       var total = deckTotalCards(deckDraft);
       var kinds = (deckDraft.cards || []).length;
-      var short = deckShortage(deckDraft);
-      deckEditorSummary.innerHTML =
+      var parts =
         '<span>編成 <strong>' + total + '</strong> 張</span>' +
-        '<span>卡種 <strong>' + kinds + '</strong></span>' +
-        (short.shortKinds
+        '<span>卡種 <strong>' + kinds + '</strong></span>';
+      if (deckEditorMode === 'edit') {
+        var short = deckShortage(deckDraft);
+        parts += short.shortKinds
           ? '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（差 ' + short.shortCopies + ' 張）</span>'
-          : '<span>庫存足夠</span>');
+          : '<span>庫存足夠</span>';
+      }
+      deckEditorSummary.innerHTML = parts;
     }
 
     function findDeckEntryTile(cardNumber) {
@@ -3237,8 +3189,9 @@
         return true;
       }
       if (!tile) return false;
+      var showShortage = deckEditorMode === 'edit';
       var owned = ownedQty(entry.cardNumber);
-      var isShort = owned < entry.qty;
+      var isShort = showShortage && owned < entry.qty;
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
@@ -3247,8 +3200,13 @@
       }
       var ownedBadge = tile.querySelector('.col-deck-owned-badge');
       if (ownedBadge) {
-        ownedBadge.textContent = '持有 ' + owned;
-        ownedBadge.classList.toggle('is-short', isShort);
+        if (showShortage) {
+          ownedBadge.hidden = false;
+          ownedBadge.textContent = '持有 ' + owned;
+          ownedBadge.classList.toggle('is-short', isShort);
+        } else {
+          ownedBadge.hidden = true;
+        }
       }
       var qtyValue = tile.querySelector('.col-qty-value');
       if (qtyValue) qtyValue.textContent = String(entry.qty);
@@ -3257,8 +3215,9 @@
 
     function buildDeckEntryHtml(entry, isView) {
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
+      var showShortage = !isView;
       var owned = ownedQty(entry.cardNumber);
-      var isShort = owned < entry.qty;
+      var isShort = showShortage && owned < entry.qty;
       var urls = buildCardImageUrls(entry.cardNumber);
       var html = '';
       html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
@@ -3268,7 +3227,9 @@
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
-      html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+      if (showShortage) {
+        html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+      }
       if (!isView) {
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
       }
@@ -3384,7 +3345,7 @@
       selectedDeckId = deckDraft.id;
       persistDecksAndRender();
       closeModalByName('deck');
-      switchTab('decks');
+      focusDeckSection();
       setStatus('已儲存牌組「' + name + '」', 'is-ok');
     }
 
@@ -3866,12 +3827,6 @@
       });
     });
 
-    document.querySelectorAll('[data-col-tab]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        switchTab(btn.getAttribute('data-col-tab'));
-      });
-    });
-
     document.getElementById('colDeckCreateBtn').addEventListener('click', function () {
       openDeckEditor(null);
     });
@@ -4065,15 +4020,12 @@
     });
     refreshFilterOptions();
     renderAlbum();
+    renderDeckList();
     ingestPendingFromFavoritesQuery();
-
-    var savedTab = 'cards';
-    try { savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || 'cards'; } catch (e) { savedTab = 'cards'; }
-    switchTab(savedTab === 'decks' ? 'decks' : 'cards');
     setStatus(
       allItems.length || allDecks.length
         ? ('已載入卡冊 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
-        : '收藏庫為空，可先至「我的卡冊」從願望清單轉入',
+        : '卡冊與牌組皆為空，可先從願望清單轉入卡片',
       allItems.length || allDecks.length ? 'is-ok' : ''
     );
   })();
