@@ -794,7 +794,7 @@
       --deckbox-accent: #e0b35a;
     }
 
-    .col-binder,
+    .col-album-section,
     .col-deckbox {
       border: 0;
       border-radius: 0;
@@ -802,26 +802,103 @@
       box-shadow: none;
       overflow: visible;
     }
-    .col-binder .col-empty,
-    .col-deckbox .col-empty {
-      color: rgba(238, 243, 238, 0.72);
+    .col-section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      margin-bottom: 0.95rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     }
-    .col-binder .col-empty { color: rgba(232, 238, 248, 0.72); }
+    [data-theme="dark"] .col-section-head {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    .col-section-kicker {
+      margin: 0 0 0.2rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    [data-theme="dark"] .col-section-kicker { color: #9ca3af; }
+    .col-section-title {
+      margin: 0;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: clamp(1.45rem, 2.2vw, 1.95rem);
+      font-weight: 900;
+      line-height: 1.15;
+      color: #111827;
+      letter-spacing: 0.04em;
+    }
+    [data-theme="dark"] .col-section-title { color: #f3f4f6; }
+    .col-section-lede {
+      margin: 0.3rem 0 0;
+      max-width: 28rem;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: #6b7280;
+    }
+    [data-theme="dark"] .col-section-lede { color: #9ca3af; }
+    .col-section-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .col-section-stat {
+      min-width: 4.5rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 10px;
+      background: #f3f4f6;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      text-align: center;
+    }
+    [data-theme="dark"] .col-section-stat {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .col-section-stat strong {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.1;
+    }
+    [data-theme="dark"] .col-section-stat strong { color: #f9fafb; }
+    .col-section-stat span {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #6b7280;
+    }
+    [data-theme="dark"] .col-section-stat span { color: #9ca3af; }
+    .col-album-section .col-shell {
+      background: transparent;
+      padding: 0;
+    }
 
-    .col-binder-shell {
+    /* 僅翻頁舞台使用卡冊外殼 */
+    .col-binder-stage {
+      margin-top: 0.85rem;
+      perspective: 1600px;
+    }
+    .col-binder-stage .col-binder-shell {
       display: grid;
-      grid-template-columns: minmax(3.2rem, 4.2rem) minmax(0, 1fr);
-      border-radius: 18px 22px 22px 14px;
+      grid-template-columns: minmax(3rem, 3.8rem) minmax(0, 1fr);
+      border-radius: 16px 20px 20px 12px;
       overflow: hidden;
       background: linear-gradient(165deg, #1a2f4d 0%, var(--binder-ink-deep) 55%, #101a2b 100%);
       box-shadow:
-        0 18px 40px rgba(12, 23, 40, 0.28),
+        0 14px 32px rgba(12, 23, 40, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
       color: #e8eef8;
     }
-    [data-theme="dark"] .col-binder-shell {
+    [data-theme="dark"] .col-binder-stage .col-binder-shell {
       box-shadow:
-        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 14px 32px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .col-binder-spine {
@@ -839,28 +916,27 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 1.1rem 0.35rem 1.25rem;
-      gap: 1rem;
+      padding: 1rem 0.3rem 1.1rem;
+      gap: 0.85rem;
     }
     .col-binder-spine-title {
       writing-mode: vertical-rl;
-      transform: rotate(180deg);
       font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
       font-weight: 900;
-      font-size: 1.05rem;
-      letter-spacing: 0.28em;
+      font-size: 1rem;
+      letter-spacing: 0.22em;
       color: #f4f7fc;
       text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
     }
     .col-binder-rings {
       display: grid;
-      gap: 1.35rem;
+      gap: 1.2rem;
       width: 100%;
       justify-items: center;
     }
     .col-binder-ring {
-      width: 1.15rem;
-      height: 1.15rem;
+      width: 1.05rem;
+      height: 1.05rem;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 30%, #d7dee8, var(--binder-metal) 55%, #5d6b7c);
       box-shadow:
@@ -870,116 +946,13 @@
     .col-binder-main {
       min-width: 0;
       background:
-        radial-gradient(120% 80% at 0% 0%, rgba(47, 111, 237, 0.16), transparent 50%),
+        radial-gradient(120% 80% at 0% 0%, rgba(47, 111, 237, 0.14), transparent 50%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
         #122033;
-      padding: 1rem 1rem 1.15rem;
+      padding: 0.85rem 0.85rem 1rem;
     }
     @media (min-width: 768px) {
-      .col-binder-main { padding: 1.25rem 1.35rem 1.4rem; }
-    }
-    .col-binder-masthead {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 0.75rem 1rem;
-      margin-bottom: 0.95rem;
-      padding-bottom: 0.85rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .col-binder-kicker {
-      margin: 0 0 0.2rem;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(232, 238, 248, 0.55);
-    }
-    .col-binder-title {
-      margin: 0;
-      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
-      font-size: clamp(1.55rem, 2.4vw, 2.1rem);
-      font-weight: 900;
-      line-height: 1.15;
-      color: #f7f9fc;
-      letter-spacing: 0.04em;
-    }
-    .col-binder-lede {
-      margin: 0.35rem 0 0;
-      max-width: 28rem;
-      font-size: 0.86rem;
-      line-height: 1.5;
-      color: rgba(232, 238, 248, 0.72);
-    }
-    .col-binder-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem;
-      align-items: center;
-    }
-    .col-binder-stat {
-      min-width: 4.5rem;
-      padding: 0.45rem 0.7rem;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
-    }
-    .col-binder-stat strong {
-      display: block;
-      font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.1;
-    }
-    .col-binder-stat span {
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: rgba(232, 238, 248, 0.6);
-    }
-    .col-binder .col-shell {
-      --col-accent: var(--binder-accent);
-      --col-accent-soft: rgba(47, 111, 237, 0.16);
-      --col-line: rgba(255, 255, 255, 0.12);
-      --col-ink: #e8eef8;
-      --col-muted: rgba(232, 238, 248, 0.62);
-      background: transparent;
-      padding: 0;
-    }
-    .col-binder .col-controls label,
-    .col-binder .col-total-main,
-    .col-binder .col-total-sub,
-    .col-binder .col-total-count {
-      color: rgba(232, 238, 248, 0.72);
-    }
-    .col-binder .col-total-value { color: #fff; }
-    .col-binder .col-total-bar {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: none;
-    }
-    .col-binder .col-controls .form-control,
-    .col-binder .col-controls select.form-control {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(255, 255, 255, 0.14);
-      color: #f3f6fb;
-    }
-    .col-binder .col-controls .form-control::placeholder { color: rgba(243, 246, 251, 0.45); }
-    .col-binder .btn-outline-secondary {
-      color: #dce6f5;
-      border-color: rgba(220, 230, 245, 0.35);
-      background: transparent;
-    }
-    .col-binder .btn-outline-secondary:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-    }
-
-    .col-binder-stage {
-      margin-top: 0.85rem;
-      perspective: 1600px;
+      .col-binder-main { padding: 1rem 1.05rem 1.15rem; }
     }
     .col-binder-spread {
       position: relative;
@@ -2048,7 +2021,33 @@
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     }
     .col-deck-entry.is-short .col-deck-entry-art {
-      box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.55);
+      box-shadow:
+        0 0 0 2px rgba(220, 38, 38, 0.7),
+        0 0 0 5px rgba(220, 38, 38, 0.12);
+    }
+    .col-deck-entry.is-short .col-deck-entry-art::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(220, 38, 38, 0.08) 34%, transparent 52%);
+      border-radius: inherit;
+    }
+    .col-deck-entry.is-short .col-deck-entry-art::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 1.55rem 1.55rem 0 0;
+      border-color: #dc2626 transparent transparent transparent;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     }
     .col-deck-entry-art img {
       width: 100%;
@@ -2059,6 +2058,10 @@
       transition: opacity 0.35s ease;
     }
     .col-deck-entry-art img.is-loaded { opacity: 1; }
+    .col-deck-entry.is-short .col-deck-entry-art img.is-loaded {
+      opacity: 1;
+      filter: saturate(0.92);
+    }
     .col-deck-entry-art img.is-broken { display: none; }
     .col-deck-entry-art .col-tile-placeholder {
       font-size: 0.68rem;
@@ -2232,19 +2235,23 @@
       position: absolute;
       left: 0.35rem;
       bottom: 0.35rem;
-      z-index: 2;
-      padding: 0.1rem 0.35rem;
-      border-radius: 4px;
-      background: #fff5f5;
-      color: #c53030;
-      font-size: 0.65rem;
+      z-index: 3;
+      padding: 0.14rem 0.4rem;
+      border-radius: 5px;
+      background: rgba(220, 38, 38, 0.92);
+      color: #fff;
+      font-size: 0.68rem;
       font-weight: 800;
       line-height: 1.2;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 6px rgba(127, 29, 29, 0.35);
     }
     [data-theme="dark"] .col-deck-short-badge {
-      background: rgba(197, 48, 48, 0.28);
-      color: #fc8181;
+      background: rgba(239, 68, 68, 0.95);
+      color: #fff;
+    }
+    .col-deck-entry.is-short .col-deck-remove-btn {
+      top: 1.45rem;
     }
     .col-deck-editor-tools {
       display: flex;
@@ -2357,121 +2364,121 @@
             </div>
 
             <div class="col-stage">
-              <section class="col-binder" id="colSectionAlbum" aria-labelledby="colBinderTitle">
-                <div class="col-binder-shell">
-                  <aside class="col-binder-spine" aria-hidden="true">
-                    <div class="col-binder-rings">
-                      <span class="col-binder-ring"></span>
-                      <span class="col-binder-ring"></span>
-                      <span class="col-binder-ring"></span>
+              <section class="col-album-section" id="colSectionAlbum" aria-labelledby="colBinderTitle">
+                <header class="col-section-head">
+                  <div>
+                    <p class="col-section-kicker">Card Binder</p>
+                    <h2 class="col-section-title" id="colBinderTitle">我的卡冊</h2>
+                    <p class="col-section-lede">管理持有卡；下方卡冊可左右翻頁瀏覽。</p>
+                  </div>
+                  <div class="col-section-stats" aria-live="polite">
+                    <div class="col-section-stat">
+                      <strong id="colBinderStatKinds">0</strong>
+                      <span>種卡</span>
                     </div>
-                    <div class="col-binder-spine-title">我的卡冊</div>
-                    <div class="col-binder-rings">
-                      <span class="col-binder-ring"></span>
-                      <span class="col-binder-ring"></span>
+                    <div class="col-section-stat">
+                      <strong id="colTotalValue">0</strong>
+                      <span>持有張數</span>
                     </div>
-                  </aside>
-                  <div class="col-binder-main">
-                    <header class="col-binder-masthead">
-                      <div>
-                        <p class="col-binder-kicker">Card Binder</p>
-                        <h2 class="col-binder-title" id="colBinderTitle">我的卡冊</h2>
-                        <p class="col-binder-lede">像翻開實體卡冊一樣瀏覽持有卡；左右頁可翻頁檢視。</p>
+                    <div class="col-section-stat">
+                      <strong id="colBinderStatPage">1</strong>
+                      <span>目前頁</span>
+                    </div>
+                  </div>
+                </header>
+
+                <div class="col-shell">
+                  <div id="colPanelCards" class="col-panel" data-col-panel="cards">
+                    <div class="col-controls" aria-label="卡冊篩選列">
+                      <div class="col-field col-field-search">
+                        <label for="colSearchInput">搜尋</label>
+                        <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
                       </div>
-                      <div class="col-binder-stats" aria-live="polite">
-                        <div class="col-binder-stat">
-                          <strong id="colBinderStatKinds">0</strong>
-                          <span>種卡</span>
-                        </div>
-                        <div class="col-binder-stat">
-                          <strong id="colTotalValue">0</strong>
-                          <span>持有張數</span>
-                        </div>
-                        <div class="col-binder-stat">
-                          <strong id="colBinderStatPage">1</strong>
-                          <span>目前頁</span>
-                        </div>
+                      <div class="col-field col-field-rare">
+                        <label for="colRareSelect">稀有度</label>
+                        <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
+                          <option value="" selected>全部稀有度</option>
+                        </select>
                       </div>
-                    </header>
-
-                    <div class="col-shell">
-                      <div id="colPanelCards" class="col-panel" data-col-panel="cards">
-                        <div class="col-controls" aria-label="卡冊篩選列">
-                          <div class="col-field col-field-search">
-                            <label for="colSearchInput">搜尋</label>
-                            <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
-                          </div>
-                          <div class="col-field col-field-rare">
-                            <label for="colRareSelect">稀有度</label>
-                            <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
-                              <option value="" selected>全部稀有度</option>
-                            </select>
-                          </div>
-                          <div class="col-field col-field-tag">
-                            <label for="colTagSelect">標籤</label>
-                            <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
-                              <option value="" selected>全部標籤</option>
-                              <option value="__untagged__">未標籤</option>
-                            </select>
-                          </div>
-                          <div class="col-field col-field-group">
-                            <label for="colGroupSelect">分組檢視</label>
-                            <select id="colGroupSelect" class="form-control">
-                              <option value="none" selected>不分組（翻頁）</option>
-                              <option value="tag">依標籤分組</option>
-                            </select>
-                          </div>
-                          <div class="col-field col-field-sort">
-                            <label for="colSortSelect">排序</label>
-                            <select id="colSortSelect" class="form-control">
-                              <option value="newest" selected>最新加入</option>
-                              <option value="oldest">最早加入</option>
-                              <option value="cardNumber">卡號 A→Z</option>
-                              <option value="qtyDesc">數量多→少</option>
-                              <option value="qtyAsc">數量少→多</option>
-                              <option value="rare">稀有度</option>
-                            </select>
-                          </div>
-                          <div class="col-field col-field-actions">
-                            <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
-                            <div class="col-control-actions">
-                              <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
-                                <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                              </button>
-                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
-                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
-                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-total-bar" id="colTotalBar" aria-live="polite">
-                          <div class="col-total-copy">
-                            <div class="col-total-main">
-                              <span>本冊狀態</span>
-                            </div>
-                            <div class="col-total-sub">
-                              <span class="col-total-count" id="colCountLabel">共 0 種</span>
-                              <span class="col-total-sep" aria-hidden="true">·</span>
-                              <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
-                            </div>
-                          </div>
-                          <div class="col-total-actions">
-                            <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
-                              <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
-                            </a>
-                          </div>
-                        </div>
-
-                        <div id="colEmpty" class="col-empty" style="display:none;">
-                          <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
-                          <p id="colEmptyText">卡冊尚無卡片。</p>
-                          <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
+                      <div class="col-field col-field-tag">
+                        <label for="colTagSelect">標籤</label>
+                        <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
+                          <option value="" selected>全部標籤</option>
+                          <option value="__untagged__">未標籤</option>
+                        </select>
+                      </div>
+                      <div class="col-field col-field-group">
+                        <label for="colGroupSelect">分組檢視</label>
+                        <select id="colGroupSelect" class="form-control">
+                          <option value="none" selected>不分組（翻頁）</option>
+                          <option value="tag">依標籤分組</option>
+                        </select>
+                      </div>
+                      <div class="col-field col-field-sort">
+                        <label for="colSortSelect">排序</label>
+                        <select id="colSortSelect" class="form-control">
+                          <option value="newest" selected>最新加入</option>
+                          <option value="oldest">最早加入</option>
+                          <option value="cardNumber">卡號 A→Z</option>
+                          <option value="qtyDesc">數量多→少</option>
+                          <option value="qtyAsc">數量少→多</option>
+                          <option value="rare">稀有度</option>
+                        </select>
+                      </div>
+                      <div class="col-field col-field-actions">
+                        <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                        <div class="col-control-actions">
+                          <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
                             <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
                           </button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
                         </div>
+                      </div>
+                    </div>
 
-                        <div class="col-binder-stage" id="colBinderStage">
+                    <div class="col-total-bar" id="colTotalBar" aria-live="polite">
+                      <div class="col-total-copy">
+                        <div class="col-total-main">
+                          <span>本冊狀態</span>
+                        </div>
+                        <div class="col-total-sub">
+                          <span class="col-total-count" id="colCountLabel">共 0 種</span>
+                          <span class="col-total-sep" aria-hidden="true">·</span>
+                          <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
+                        </div>
+                      </div>
+                      <div class="col-total-actions">
+                        <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
+                          <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
+                        </a>
+                      </div>
+                    </div>
+
+                    <div id="colEmpty" class="col-empty" style="display:none;">
+                      <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
+                      <p id="colEmptyText">卡冊尚無卡片。</p>
+                      <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
+                        <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                      </button>
+                    </div>
+
+                    <div class="col-binder-stage" id="colBinderStage">
+                      <div class="col-binder-shell">
+                        <aside class="col-binder-spine" aria-hidden="true">
+                          <div class="col-binder-rings">
+                            <span class="col-binder-ring"></span>
+                            <span class="col-binder-ring"></span>
+                            <span class="col-binder-ring"></span>
+                          </div>
+                          <div class="col-binder-spine-title">我的卡冊</div>
+                          <div class="col-binder-rings">
+                            <span class="col-binder-ring"></span>
+                            <span class="col-binder-ring"></span>
+                          </div>
+                        </aside>
+                        <div class="col-binder-main">
                           <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊翻頁區"></div>
                           <nav class="col-binder-pager" id="colBinderPager" hidden aria-label="卡冊翻頁">
                             <div class="col-binder-page-label">
@@ -4023,23 +4030,21 @@
     function buildDeckEntryHtml(entry, mode) {
       var viewMode = mode === 'view' ? 'view' : (mode === 'tile' ? 'tile' : 'edit');
       var isEdit = viewMode === 'edit';
-      var showShort = viewMode !== 'tile';
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
       var owned = ownedQty(entry.cardNumber);
       var shortQty = entryShortQty(entry);
-      var isShort = showShort && shortQty > 0;
+      var isShort = shortQty > 0;
       var urls = buildCardImageUrls(entry.cardNumber);
       var html = '';
-      html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
+      html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '"' +
+        (isShort ? ' title="缺卡 ' + escapeHtml(String(shortQty)) + ' 張"' : '') + '>';
       html += '  <div class="col-deck-entry-art">';
       html += '    <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
       if (urls.primary) {
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
-      if (showShort) {
-        html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺 ' + escapeHtml(String(shortQty || 1)) + '</span>';
-      }
+      html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺 ' + escapeHtml(String(shortQty || 1)) + '</span>';
       if (isEdit) {
         html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
