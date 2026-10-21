@@ -2525,7 +2525,7 @@
                     <div class="col-binder-stage" id="colBinderStage">
                       <button type="button" class="col-binder-nav col-binder-nav-prev" id="colBinderSidePrev" aria-label="上一頁"></button>
                       <div class="col-binder-viewport">
-                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊翻頁區"></div>
+                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊"></div>
                       </div>
                       <button type="button" class="col-binder-nav col-binder-nav-next" id="colBinderSideNext" aria-label="下一頁"></button>
                       <nav class="col-binder-pager" id="colBinderPager" hidden aria-label="卡冊翻頁">
@@ -2872,15 +2872,6 @@
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var binderStage = document.getElementById('colBinderStage');
-    var binderPager = document.getElementById('colBinderPager');
-    var binderPrevBtn = document.getElementById('colBinderPrevBtn');
-    var binderNextBtn = document.getElementById('colBinderNextBtn');
-    var binderFirstBtn = document.getElementById('colBinderFirstBtn');
-    var binderLastBtn = document.getElementById('colBinderLastBtn');
-    var binderSidePrev = document.getElementById('colBinderSidePrev');
-    var binderSideNext = document.getElementById('colBinderSideNext');
-    var binderPageNow = document.getElementById('colBinderPageNow');
-    var binderPageTotal = document.getElementById('colBinderPageTotal');
     var binderStatKinds = document.getElementById('colBinderStatKinds');
     var binderStatVisible = document.getElementById('colBinderStatVisible');
     var emptyEl = document.getElementById('colEmpty');
@@ -3250,29 +3241,6 @@
         albumRoot.classList.remove('col-binder-groups');
         albumRoot.innerHTML = html;
       }
-      updateBinderPager(totalPages);
-    }
-
-    function goAlbumPage(nextIndex, dir) {
-      var visible = getVisibleItems();
-      var size = getAlbumSpreadSize();
-      var totalPages = Math.max(1, Math.ceil(visible.length / size));
-      if (nextIndex < 0 || nextIndex > totalPages - 1 || nextIndex === albumPageIndex) return;
-      albumPageIndex = nextIndex;
-      if (!albumRoot) {
-        renderAlbum();
-        return;
-      }
-      albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
-      void albumRoot.offsetWidth;
-      albumRoot.classList.add(dir === 'prev' ? 'is-flip-prev' : 'is-flip-next');
-      if (albumFlipTimer) clearTimeout(albumFlipTimer);
-      albumFlipTimer = setTimeout(function () {
-        renderAlbumSpread(visible);
-        requestAnimationFrame(function () {
-          albumRoot.classList.remove('is-flip-next', 'is-flip-prev');
-        });
-      }, 170);
     }
 
     function renderTile(item, binderCompact) {
@@ -4722,25 +4690,21 @@
       if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
     }, true);
 
-    function resetAlbumPageAndRender() {
-      albumPageIndex = 0;
-      renderAlbum();
-    }
     searchInput.addEventListener('input', function () {
       filterQuery = searchInput.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     rareSelect.addEventListener('change', function () {
       rareFilter = rareSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     tagSelect.addEventListener('change', function () {
       tagFilter = tagSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     sortSelect.addEventListener('change', function () {
       sortMode = sortSelect.value || 'newest';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     groupSelect.addEventListener('change', function () {
       groupMode = groupSelect.value || 'none';
