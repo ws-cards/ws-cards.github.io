@@ -1549,7 +1549,7 @@
     }
     .col-deck-owned-badge {
       position: absolute;
-      left: 0.35rem;
+      right: 0.35rem;
       bottom: 0.35rem;
       z-index: 2;
       padding: 0.1rem 0.35rem;
@@ -1561,17 +1561,9 @@
       line-height: 1.2;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     }
-    .col-deck-owned-badge.is-short {
-      background: #fff5f5;
-      color: #c53030;
-    }
     [data-theme="dark"] .col-deck-owned-badge {
       background: rgba(36, 36, 36, 0.92);
       color: #e2e8f0;
-    }
-    [data-theme="dark"] .col-deck-owned-badge.is-short {
-      background: rgba(197, 48, 48, 0.28);
-      color: #fc8181;
     }
     .col-deck-remove-btn {
       position: absolute;
@@ -1634,6 +1626,101 @@
     .col-deck-entry .col-qty-value {
       min-width: 1.25rem;
       font-size: 0.85rem;
+    }
+    .col-deck-entry-controls {
+      display: grid;
+      gap: 0.3rem;
+      margin-top: 0.3rem;
+    }
+    .col-deck-ctrl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+    .col-deck-ctrl-label {
+      flex: 0 0 auto;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #718096;
+      letter-spacing: 0.02em;
+    }
+    [data-theme="dark"] .col-deck-ctrl-label { color: #a0aec0; }
+    .col-deck-ctrl-row .col-qty {
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+    .col-deck-short-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin: 0;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #718096;
+      cursor: pointer;
+      user-select: none;
+    }
+    [data-theme="dark"] .col-deck-short-toggle { color: #a0aec0; }
+    .col-deck-short-toggle input {
+      width: 0.95rem;
+      height: 0.95rem;
+      margin: 0;
+      accent-color: #e53e3e;
+      cursor: pointer;
+    }
+    .col-deck-entry.is-short .col-deck-short-toggle {
+      color: #c53030;
+    }
+    [data-theme="dark"] .col-deck-entry.is-short .col-deck-short-toggle {
+      color: #fc8181;
+    }
+    .col-deck-short-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.15rem;
+    }
+    .col-deck-short-stepper[hidden] { display: none !important; }
+    .col-deck-short-stepper .col-qty-btn {
+      width: 26px;
+      height: 26px;
+      font-size: 0.85rem;
+      border-color: rgba(229, 62, 62, 0.35);
+      color: #c53030;
+    }
+    .col-deck-short-stepper .col-qty-value {
+      min-width: 1.25rem;
+      font-size: 0.85rem;
+      color: #c53030;
+      font-weight: 800;
+    }
+    .col-deck-short-badge {
+      position: absolute;
+      left: 0.35rem;
+      bottom: 0.35rem;
+      z-index: 2;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: #fff5f5;
+      color: #c53030;
+      font-size: 0.65rem;
+      font-weight: 800;
+      line-height: 1.2;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+    [data-theme="dark"] .col-deck-short-badge {
+      background: rgba(197, 48, 48, 0.28);
+      color: #fc8181;
+    }
+    .col-deck-editor-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0 0 0.75rem;
+    }
+    .col-deck-editor-tools .btn {
+      font-weight: 700;
     }
   </style>
 </head>
@@ -1977,7 +2064,7 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint" id="colDeckModalHint">編成引用我的卡冊持有量；數量不足會標示缺卡，請在編輯中調整。</p>
+      <p class="col-modal-hint" id="colDeckModalHint">勾選要標記缺卡的牌，並設定缺幾張；可依持有量一鍵帶入。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -1989,9 +2076,15 @@
         </label>
       </div>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
-      <div class="col-tag-input-row" id="colDeckPickRow" style="margin-bottom:0.75rem;">
+      <div class="col-deck-editor-tools" id="colDeckPickRow">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
           <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckShortAutoBtn" title="依我的卡冊持有量帶入缺卡張數">
+          <i class="fas fa-magic mr-1" aria-hidden="true"></i>依持有量標記缺卡
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckShortClearBtn" title="清除所有缺卡標記">
+          清除缺卡
         </button>
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
@@ -2114,6 +2207,8 @@
 
     var deckModalHint = document.getElementById('colDeckModalHint');
     var deckPickRow = document.getElementById('colDeckPickRow');
+    var deckShortAutoBtn = document.getElementById('colDeckShortAutoBtn');
+    var deckShortClearBtn = document.getElementById('colDeckShortClearBtn');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
     var deckSaveBtn = document.getElementById('colDeckSaveBtn');
@@ -2703,6 +2798,14 @@
       return 'deck_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
     }
 
+    function clampShortQty(shortQty, qty) {
+      var n = parseInt(shortQty, 10);
+      if (isNaN(n) || n < 0) n = 0;
+      var max = Math.max(0, qty || 0);
+      if (n > max) n = max;
+      return n;
+    }
+
     function normalizeDeckCards(cards) {
       var map = {};
       (Array.isArray(cards) ? cards : []).forEach(function (entry) {
@@ -2712,12 +2815,17 @@
         var qty = parseInt(entry.qty, 10);
         if (isNaN(qty) || qty < 1) qty = 1;
         if (qty > MAX_DECK_ENTRY_QTY) qty = MAX_DECK_ENTRY_QTY;
+        var shortQty = clampShortQty(entry.shortQty, qty);
         var cardName = normalizeText(entry.cardName);
         if (map[key]) {
           map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
+          map[key].shortQty = clampShortQty(
+            Math.max(map[key].shortQty || 0, shortQty),
+            map[key].qty
+          );
           if (!map[key].cardName && cardName) map[key].cardName = cardName;
         } else {
-          map[key] = { cardNumber: key, qty: qty };
+          map[key] = { cardNumber: key, qty: qty, shortQty: shortQty };
           if (cardName) map[key].cardName = cardName;
         }
       });
@@ -2748,6 +2856,8 @@
         cards: normalizeDeckCards(deck.cards).map(function (c) {
           var out = { cardNumber: c.cardNumber, qty: c.qty };
           if (c.cardName) out.cardName = c.cardName;
+          var shortQty = clampShortQty(c.shortQty, c.qty);
+          if (shortQty > 0) out.shortQty = shortQty;
           return out;
         }),
         createdAt: deck.createdAt || Date.now(),
@@ -2764,15 +2874,26 @@
       return (deck.cards || []).reduce(function (sum, c) { return sum + (c.qty || 0); }, 0);
     }
 
+    function entryShortQty(entry) {
+      if (!entry) return 0;
+      return clampShortQty(entry.shortQty, entry.qty || 0);
+    }
+
+    function suggestedShortQty(entry) {
+      var qty = entry && entry.qty ? entry.qty : 0;
+      var gap = qty - ownedQty(entry && entry.cardNumber);
+      if (gap < 1) return 0;
+      return Math.min(qty, gap);
+    }
+
     function deckShortage(deck) {
       var shortKinds = 0;
       var shortCopies = 0;
       (deck.cards || []).forEach(function (entry) {
-        var owned = ownedQty(entry.cardNumber);
-        var need = entry.qty || 0;
-        if (owned < need) {
+        var shortQty = entryShortQty(entry);
+        if (shortQty > 0) {
           shortKinds += 1;
-          shortCopies += (need - owned);
+          shortCopies += shortQty;
         }
       });
       return { shortKinds: shortKinds, shortCopies: shortCopies };
@@ -2898,7 +3019,7 @@
         : '<span class="col-modal-hint" style="margin:0;">尚未設定標籤</span>';
 
       var cardsHtml = cards.length
-        ? cards.map(function (entry) { return buildDeckEntryHtml(entry, true); }).join('')
+        ? cards.map(function (entry) { return buildDeckEntryHtml(entry, 'tile'); }).join('')
         : '<li class="col-modal-hint col-deck-entry-empty">' +
           (q ? '沒有符合搜尋的卡片。' : '此牌組尚未加入卡片。') +
           '</li>';
@@ -3039,7 +3160,11 @@
         name: deck.name,
         tags: (deck.tags || []).slice(),
         cards: (deck.cards || []).map(function (c) {
-          var out = { cardNumber: c.cardNumber, qty: c.qty };
+          var out = {
+            cardNumber: c.cardNumber,
+            qty: c.qty,
+            shortQty: entryShortQty(c)
+          };
           if (c.cardName) out.cardName = c.cardName;
           return out;
         }),
@@ -3145,23 +3270,25 @@
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       if (deckModalHint) {
         deckModalHint.textContent = isView
-          ? '唯讀檢視牌組編成。若要調整數量或缺卡，請按「編輯此牌組」。'
-          : '編成引用我的卡冊持有量；數量不足會標示缺卡，請在此調整編成。';
+          ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
+          : '勾選要標記缺卡的牌，並設定缺幾張；也可按「依持有量標記缺卡」帶入建議值。';
       }
+      if (deckShortAutoBtn) deckShortAutoBtn.hidden = isView;
+      if (deckShortClearBtn) deckShortClearBtn.hidden = isView;
     }
 
     function updateDeckEditorSummary() {
       if (!deckDraft || !deckEditorSummary) return;
       var total = deckTotalCards(deckDraft);
       var kinds = (deckDraft.cards || []).length;
+      var short = deckShortage(deckDraft);
       var parts =
         '<span>編成 <strong>' + total + '</strong> 張</span>' +
         '<span>卡種 <strong>' + kinds + '</strong></span>';
-      if (deckEditorMode === 'edit') {
-        var short = deckShortage(deckDraft);
-        parts += short.shortKinds
-          ? '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（差 ' + short.shortCopies + ' 張）</span>'
-          : '<span>庫存足夠</span>';
+      if (short.shortKinds) {
+        parts += '<span class="col-deck-warn">缺卡 <strong>' + short.shortKinds + '</strong> 種（共 ' + short.shortCopies + ' 張）</span>';
+      } else {
+        parts += '<span>未標記缺卡</span>';
       }
       deckEditorSummary.innerHTML = parts;
     }
@@ -3189,35 +3316,45 @@
         return true;
       }
       if (!tile) return false;
-      var showShortage = deckEditorMode === 'edit';
+      var shortQty = entryShortQty(entry);
+      var isShort = shortQty > 0;
       var owned = ownedQty(entry.cardNumber);
-      var isShort = showShortage && owned < entry.qty;
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
         qtyBadge.textContent = '×' + entry.qty;
         qtyBadge.setAttribute('aria-label', '編成 ' + entry.qty + ' 張');
       }
-      var ownedBadge = tile.querySelector('.col-deck-owned-badge');
-      if (ownedBadge) {
-        if (showShortage) {
-          ownedBadge.hidden = false;
-          ownedBadge.textContent = '持有 ' + owned;
-          ownedBadge.classList.toggle('is-short', isShort);
+      var shortBadge = tile.querySelector('.col-deck-short-badge');
+      if (shortBadge) {
+        if (isShort) {
+          shortBadge.hidden = false;
+          shortBadge.textContent = '缺 ' + shortQty;
         } else {
-          ownedBadge.hidden = true;
+          shortBadge.hidden = true;
         }
       }
-      var qtyValue = tile.querySelector('.col-qty-value');
+      var ownedBadge = tile.querySelector('.col-deck-owned-badge');
+      if (ownedBadge) ownedBadge.textContent = '持有 ' + owned;
+      var qtyValue = tile.querySelector('.col-qty-value[data-deck-qty-value]');
       if (qtyValue) qtyValue.textContent = String(entry.qty);
+      var shortToggle = tile.querySelector('[data-deck-short-toggle]');
+      if (shortToggle) shortToggle.checked = isShort;
+      var shortStepper = tile.querySelector('.col-deck-short-stepper');
+      if (shortStepper) shortStepper.hidden = !isShort;
+      var shortValue = tile.querySelector('.col-qty-value[data-deck-short-value]');
+      if (shortValue) shortValue.textContent = String(Math.max(1, shortQty || 1));
       return true;
     }
 
-    function buildDeckEntryHtml(entry, isView) {
+    function buildDeckEntryHtml(entry, mode) {
+      var viewMode = mode === 'view' ? 'view' : (mode === 'tile' ? 'tile' : 'edit');
+      var isEdit = viewMode === 'edit';
+      var showShort = viewMode !== 'tile';
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-      var showShortage = !isView;
       var owned = ownedQty(entry.cardNumber);
-      var isShort = showShortage && owned < entry.qty;
+      var shortQty = entryShortQty(entry);
+      var isShort = showShort && shortQty > 0;
       var urls = buildCardImageUrls(entry.cardNumber);
       var html = '';
       html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '">';
@@ -3227,22 +3364,41 @@
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
-      if (showShortage) {
-        html += '    <span class="col-deck-owned-badge' + (isShort ? ' is-short' : '') + '">持有 ' + owned + '</span>';
+      if (showShort) {
+        html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺 ' + escapeHtml(String(shortQty || 1)) + '</span>';
       }
-      if (!isView) {
+      if (isEdit) {
+        html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
       }
       html += '  </div>';
       html += '  <div class="col-deck-entry-caption">';
       html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
       html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
-      if (!isView) {
-        html += '    <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
-        html += '      <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
-        html += '      <span class="col-qty-value">' + escapeHtml(String(entry.qty)) + '</span>';
-        html += '      <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+      if (isEdit) {
+        html += '    <div class="col-deck-entry-controls">';
+        html += '      <div class="col-deck-ctrl-row">';
+        html += '        <span class="col-deck-ctrl-label">編成</span>';
+        html += '        <div class="col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 編成數量">';
+        html += '          <button type="button" class="col-qty-btn" data-deck-qty-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少編成">−</button>';
+        html += '          <span class="col-qty-value" data-deck-qty-value>' + escapeHtml(String(entry.qty)) + '</span>';
+        html += '          <button type="button" class="col-qty-btn" data-deck-qty-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加編成">+</button>';
+        html += '        </div>';
+        html += '      </div>';
+        html += '      <div class="col-deck-ctrl-row">';
+        html += '        <label class="col-deck-short-toggle">';
+        html += '          <input type="checkbox" data-deck-short-toggle="' + escapeHtml(entry.cardNumber) + '"' + (isShort ? ' checked' : '') + '>';
+        html += '          <span>缺卡</span>';
+        html += '        </label>';
+        html += '        <div class="col-deck-short-stepper col-qty" role="group" aria-label="' + escapeHtml(entry.cardNumber) + ' 缺卡張數"' + (isShort ? '' : ' hidden') + '>';
+        html += '          <button type="button" class="col-qty-btn" data-deck-short-dec="' + escapeHtml(entry.cardNumber) + '" aria-label="減少缺卡">−</button>';
+        html += '          <span class="col-qty-value" data-deck-short-value>' + escapeHtml(String(Math.max(1, shortQty || 1))) + '</span>';
+        html += '          <button type="button" class="col-qty-btn" data-deck-short-inc="' + escapeHtml(entry.cardNumber) + '" aria-label="增加缺卡">+</button>';
+        html += '        </div>';
+        html += '      </div>';
         html += '    </div>';
+      } else if (viewMode === 'view' && isShort) {
+        html += '    <div class="col-deck-ctrl-label" style="margin-top:0.25rem;color:#c53030;">缺 ' + escapeHtml(String(shortQty)) + ' 張</div>';
       }
       html += '  </div>';
       html += '</li>';
@@ -3261,7 +3417,7 @@
         return;
       }
       deckEntryList.innerHTML = deckDraft.cards.map(function (entry) {
-        return buildDeckEntryHtml(entry, isView);
+        return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
       }).join('');
     }
 
@@ -3312,10 +3468,69 @@
         deckDraft.cards = deckDraft.cards.filter(function (c) { return c.cardNumber !== cardNumber; });
       } else {
         entry.qty = Math.min(MAX_DECK_ENTRY_QTY, next);
+        entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
       if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
+    }
+
+    function setDeckEntryShort(cardNumber, enabled) {
+      if (!deckDraft || deckEditorMode === 'view') return;
+      var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
+      if (!entry) return;
+      if (!enabled) {
+        entry.shortQty = 0;
+      } else {
+        var suggested = suggestedShortQty(entry);
+        entry.shortQty = suggested > 0 ? suggested : 1;
+        entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
+        if (entry.shortQty < 1) entry.shortQty = 1;
+      }
+      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      else updateDeckEditorSummary();
+    }
+
+    function changeDeckEntryShortQty(cardNumber, delta) {
+      if (!deckDraft || deckEditorMode === 'view') return;
+      var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
+      if (!entry) return;
+      var current = entryShortQty(entry);
+      if (current < 1) current = 1;
+      var next = current + delta;
+      if (next <= 0) {
+        entry.shortQty = 0;
+      } else {
+        entry.shortQty = clampShortQty(next, entry.qty);
+        if (entry.shortQty < 1) entry.shortQty = Math.min(1, entry.qty || 1);
+      }
+      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      else updateDeckEditorSummary();
+    }
+
+    function markDeckShortFromOwned() {
+      if (!deckDraft || deckEditorMode === 'view') return;
+      var changed = 0;
+      (deckDraft.cards || []).forEach(function (entry) {
+        var suggested = suggestedShortQty(entry);
+        var prev = entryShortQty(entry);
+        entry.shortQty = suggested;
+        if (entry.shortQty !== prev) changed += 1;
+      });
+      renderDeckEditor();
+      setStatus(
+        changed
+          ? ('已依持有量更新 ' + changed + ' 種缺卡標記')
+          : '目前編成相對持有量無需標記缺卡',
+        'is-ok'
+      );
+    }
+
+    function clearDeckShortMarks() {
+      if (!deckDraft || deckEditorMode === 'view') return;
+      (deckDraft.cards || []).forEach(function (entry) { entry.shortQty = 0; });
+      renderDeckEditor();
+      setStatus('已清除缺卡標記', 'is-ok');
     }
 
     function saveDeckDraft() {
@@ -3957,6 +4172,12 @@
         renderDeckPickList();
       });
     }
+    if (deckShortAutoBtn) {
+      deckShortAutoBtn.addEventListener('click', markDeckShortFromOwned);
+    }
+    if (deckShortClearBtn) {
+      deckShortClearBtn.addEventListener('click', clearDeckShortMarks);
+    }
     if (deckEntryList) {
       deckEntryList.addEventListener('click', function (e) {
         var dec = e.target.closest('[data-deck-qty-dec]');
@@ -3969,12 +4190,27 @@
           changeDeckDraftQty(inc.getAttribute('data-deck-qty-inc'), 1);
           return;
         }
+        var shortDec = e.target.closest('[data-deck-short-dec]');
+        if (shortDec) {
+          changeDeckEntryShortQty(shortDec.getAttribute('data-deck-short-dec'), -1);
+          return;
+        }
+        var shortInc = e.target.closest('[data-deck-short-inc]');
+        if (shortInc) {
+          changeDeckEntryShortQty(shortInc.getAttribute('data-deck-short-inc'), 1);
+          return;
+        }
         var removeBtn = e.target.closest('[data-deck-entry-remove]');
         if (removeBtn) {
           e.preventDefault();
           e.stopPropagation();
           changeDeckDraftQty(removeBtn.getAttribute('data-deck-entry-remove'), -999);
         }
+      });
+      deckEntryList.addEventListener('change', function (e) {
+        var toggle = e.target.closest('[data-deck-short-toggle]');
+        if (!toggle) return;
+        setDeckEntryShort(toggle.getAttribute('data-deck-short-toggle'), !!toggle.checked);
       });
       deckEntryList.addEventListener('load', function (e) {
         if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
