@@ -2611,7 +2611,7 @@
                     <div>
                       <p class="col-deckbox-kicker">Deck Box</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
-                      <p class="col-deckbox-lede">編成像收進牌盒一樣分開管理；缺卡請在編輯中標記。</p>
+                      <p class="col-deckbox-lede">牌組與卡冊各自管理實體牌；缺卡在編輯中標記，持有＝編成−缺卡。</p>
                     </div>
                     <div class="col-deckbox-badge" aria-live="polite">
                       <i class="fas fa-archive" aria-hidden="true"></i>
@@ -2849,7 +2849,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入時會先把編成張數預設為持有；之後在編輯中標記缺卡，才會從持有量扣除。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後此牌組預設全部持有；之後手動標記缺卡即可。牌組持有與卡冊各自獨立。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -3653,104 +3653,6 @@
       };
     }
 
-    function persistCollectionQuiet() {
-      writeLocal(allItems);
-      refreshFilterOptions();
-      updateTotalBar(getVisibleItems());
-      renderAlbum();
-    }
-
-    /** DeckLog 匯入：編成張數先全部預設為持有（不足才補齊）。 */
-    function ensureOwnedFromDeckCards(cards) {
-      var map = {};
-      allItems.forEach(function (item) { map[item.cardNumber] = item; });
-      var now = Date.now();
-      var added = 0;
-      var bumped = 0;
-      (cards || []).forEach(function (entry) {
-        if (!entry || !entry.cardNumber) return;
-        var key = String(entry.cardNumber).trim().replace(/\\/g, '/');
-        if (!key) return;
-        var need = parseInt(entry.qty, 10);
-        if (isNaN(need) || need < 1) need = 1;
-        if (need > MAX_QTY) need = MAX_QTY;
-        var cardName = normalizeText(entry.cardName);
-        var existing = map[key];
-        if (!existing) {
-          if (Object.keys(map).length >= MAX_ITEMS) return;
-          map[key] = {
-            cardNumber: key,
-            cardName: cardName,
-            cardRare: '',
-            cardTitle: '',
-            quantity: clampQty(need),
-            tags: [],
-            source: 'decklog',
-            timestamp: now
-          };
-          added += 1;
-          return;
-        }
-        if ((existing.quantity || 0) < need) {
-          existing.quantity = clampQty(need);
-          bumped += 1;
-        }
-        if (!existing.cardName && cardName) existing.cardName = cardName;
-        if (!existing.source) existing.source = 'decklog';
-      });
-      if (!added && !bumped) return { added: 0, bumped: 0 };
-      allItems = Object.keys(map)
-        .map(function (k) { return map[k]; })
-        .sort(function (a, b) { return (b.timestamp || 0) - (a.timestamp || 0); })
-        .slice(0, MAX_ITEMS);
-      persistCollectionQuiet();
-      return { added: added, bumped: bumped };
-    }
-
-    /** 缺卡增減時同步調整持有：多缺就扣持有，取消缺卡則加回。 */
-    function adjustOwnedByShortDelta(cardNumber, shortDelta, entry) {
-      var key = normalizeText(cardNumber).replace(/\\/g, '/');
-      var delta = parseInt(shortDelta, 10);
-      if (!key || !delta) return;
-      var item = findItem(key);
-      if (delta > 0) {
-        if (!item) return;
-        var next = (item.quantity || 0) - delta;
-        if (next <= 0) {
-          allItems = allItems.filter(function (it) { return it.cardNumber !== key; });
-        } else {
-          item.quantity = clampQty(next);
-        }
-      } else {
-        var restore = -delta;
-        if (!item) {
-          if (allItems.length >= MAX_ITEMS) return;
-          allItems.unshift({
-            cardNumber: key,
-            cardName: normalizeText(entry && entry.cardName) || '',
-            cardRare: '',
-            cardTitle: '',
-            quantity: clampQty(restore),
-            tags: [],
-            source: 'decklog',
-            timestamp: Date.now()
-          });
-        } else {
-          item.quantity = clampQty((item.quantity || 0) + restore);
-        }
-      }
-      persistCollectionQuiet();
-    }
-
-    function setEntryShortQtyAndSyncOwned(entry, nextShort) {
-      if (!entry) return;
-      var prev = entryShortQty(entry);
-      var next = clampShortQty(nextShort, entry.qty || 0);
-      if (next === prev) return;
-      entry.shortQty = next;
-      adjustOwnedByShortDelta(entry.cardNumber, next - prev, entry);
-    }
-
     function parseCardLevel(value) {
       if (value == null || value === '') return null;
       var n = Number(value);
@@ -3894,6 +3796,14 @@
       return clampShortQty(entry.shortQty, entry.qty || 0);
     }
 
+    /** 牌組內持有＝編成−缺卡；與卡冊持有量無關。 */
+    function entryOwnedQty(entry) {
+      if (!entry) return 0;
+      var qty = entry.qty || 0;
+      var owned = qty - entryShortQty(entry);
+      return owned < 0 ? 0 : owned;
+    }
+
     function entryLevel(entry) {
       if (!entry) return null;
       var fromEntry = parseCardLevel(entry.level);
@@ -4012,10 +3922,10 @@
     }
 
     function suggestedShortQty(entry) {
+      // 牌組缺卡不參照卡冊；啟用缺卡時預設先標 1 張
       var qty = entry && entry.qty ? entry.qty : 0;
-      var gap = qty - ownedQty(entry && entry.cardNumber);
-      if (gap < 1) return 0;
-      return Math.min(qty, gap);
+      if (qty < 1) return 0;
+      return 1;
     }
 
     function deckShortage(deck) {
@@ -4358,9 +4268,8 @@
       var code = normalizeText(result && result.code) || 'DeckLog';
       var name = normalizeText(preferredName) || ('DeckLog ' + code);
       var now = Date.now();
-      // 匯入先預設全部持有（編成張數寫入我的卡冊），缺卡之後再手動扣
+      // 此牌組預設全部持有（缺卡=0）；不寫入／不參照卡冊
       cards.forEach(function (entry) { entry.shortQty = 0; });
-      var ownedSync = ensureOwnedFromDeckCards(cards) || { added: 0, bumped: 0 };
       deckDraft = {
         id: newDeckId(),
         name: name.slice(0, 40),
@@ -4378,18 +4287,9 @@
       closeModalByName('decklog');
       focusDeckSection();
       openModal(deckModal);
-      var ownedMsg = '';
-      if (ownedSync.added || ownedSync.bumped) {
-        ownedMsg = '；已預設持有' +
-          (ownedSync.added ? '新增 ' + ownedSync.added + ' 種' : '') +
-          (ownedSync.added && ownedSync.bumped ? '、' : '') +
-          (ownedSync.bumped ? '補齊 ' + ownedSync.bumped + ' 種' : '');
-      } else {
-        ownedMsg = '；持有量已足夠';
-      }
       setStatus(
         '已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' +
-        deckTotalCards(deckDraft) + ' 張）' + ownedMsg + '，缺卡請再手動標記',
+        deckTotalCards(deckDraft) + ' 張），此牌組預設全部持有；缺卡請再手動標記',
         'is-ok'
       );
     }
@@ -4439,7 +4339,7 @@
       if (deckModalHint) {
         deckModalHint.textContent = isView
           ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
-          : '勾選缺卡並用 ± 設定缺幾張；缺卡張數會同步從我的卡冊持有量扣除。';
+          : '勾選缺卡並用 ± 設定缺幾張；持有＝此牌組編成−缺卡，與卡冊無關。';
       }
     }
 
@@ -4484,7 +4384,7 @@
       if (!tile) return false;
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
-      var owned = ownedQty(entry.cardNumber);
+      var owned = entryOwnedQty(entry);
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
@@ -4517,7 +4417,7 @@
       var viewMode = mode === 'view' ? 'view' : (mode === 'tile' ? 'tile' : 'edit');
       var isEdit = viewMode === 'edit';
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-      var owned = ownedQty(entry.cardNumber);
+      var owned = entryOwnedQty(entry);
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
       var urls = buildCardImageUrls(entry.cardNumber);
@@ -4531,8 +4431,10 @@
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
       html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺' + escapeHtml(String(shortQty || 1)) + '</span>';
-      if (isEdit) {
+      if (viewMode !== 'tile') {
         html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
+      }
+      if (isEdit) {
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
       }
       html += '  </div>';
@@ -4649,13 +4551,10 @@
       if (!entry) return;
       var next = (entry.qty || 1) + delta;
       if (next <= 0) {
-        // 移出牌組時，若有缺卡標記則把持有加回
-        setEntryShortQtyAndSyncOwned(entry, 0);
         deckDraft.cards = deckDraft.cards.filter(function (c) { return c.cardNumber !== cardNumber; });
       } else {
         entry.qty = Math.min(MAX_DECK_ENTRY_QTY, next);
-        // 編成減少可能壓低缺卡上限，同步還原多扣的持有
-        setEntryShortQtyAndSyncOwned(entry, clampShortQty(entry.shortQty, entry.qty));
+        entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
       if (deckCardShortOnly || deckCardSortMode === 'level' || !syncDeckEntryTile(cardNumber)) {
@@ -4670,13 +4569,11 @@
       var entry = (deckDraft.cards || []).find(function (c) { return c.cardNumber === cardNumber; });
       if (!entry) return;
       if (!enabled) {
-        setEntryShortQtyAndSyncOwned(entry, 0);
+        entry.shortQty = 0;
       } else {
-        // 匯入後已預設持有，預設先標缺 1；若持有仍不足再依缺口建議
-        var suggested = suggestedShortQty(entry);
-        var nextShort = suggested > 0 ? suggested : 1;
-        setEntryShortQtyAndSyncOwned(entry, nextShort);
-        if (entryShortQty(entry) < 1) setEntryShortQtyAndSyncOwned(entry, 1);
+        var nextShort = suggestedShortQty(entry);
+        entry.shortQty = clampShortQty(nextShort > 0 ? nextShort : 1, entry.qty);
+        if (entry.shortQty < 1) entry.shortQty = 1;
       }
       if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
@@ -4690,12 +4587,10 @@
       if (current < 1) current = 1;
       var next = current + delta;
       if (next <= 0) {
-        setEntryShortQtyAndSyncOwned(entry, 0);
+        entry.shortQty = 0;
       } else {
-        setEntryShortQtyAndSyncOwned(entry, next);
-        if (entryShortQty(entry) < 1) {
-          setEntryShortQtyAndSyncOwned(entry, Math.min(1, entry.qty || 1));
-        }
+        entry.shortQty = clampShortQty(next, entry.qty);
+        if (entry.shortQty < 1) entry.shortQty = Math.min(1, entry.qty || 1);
       }
       if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
