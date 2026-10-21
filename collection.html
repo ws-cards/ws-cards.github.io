@@ -880,14 +880,28 @@
       padding: 0;
     }
 
-    /* 僅翻頁舞台使用卡冊外殼 */
+    /* 僅翻頁舞台使用卡冊外殼；高度由 JS 依剩餘可視區動態限制，一次看完 */
     .col-binder-stage {
+      --binder-stage-h: clamp(220px, calc(100dvh - 14rem), 520px);
       margin-top: 0.85rem;
+      height: var(--binder-stage-h);
+      max-height: var(--binder-stage-h);
       perspective: 1600px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    @media (max-width: 767px) {
+      .col-binder-stage {
+        --binder-stage-h: clamp(200px, calc(100dvh - 12rem), 440px);
+      }
     }
     .col-binder-stage .col-binder-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
       display: grid;
-      grid-template-columns: minmax(3rem, 3.8rem) minmax(0, 1fr);
+      grid-template-columns: minmax(2.4rem, 3.1rem) minmax(0, 1fr);
       border-radius: 16px 20px 20px 12px;
       overflow: hidden;
       background: linear-gradient(165deg, #1a2f4d 0%, var(--binder-ink-deep) 55%, #101a2b 100%);
@@ -945,27 +959,34 @@
     }
     .col-binder-main {
       min-width: 0;
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       background:
         radial-gradient(120% 80% at 0% 0%, rgba(47, 111, 237, 0.14), transparent 50%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
         #122033;
-      padding: 0.85rem 0.85rem 1rem;
+      padding: 0.5rem 0.55rem 0.55rem;
     }
     @media (min-width: 768px) {
-      .col-binder-main { padding: 1rem 1.05rem 1.15rem; }
+      .col-binder-main { padding: 0.55rem 0.65rem 0.6rem; }
     }
     .col-binder-spread {
       position: relative;
       display: grid;
       grid-template-columns: 1fr;
       gap: 0;
-      min-height: 12rem;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
       transform-origin: left center;
       transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.35s ease;
     }
     @media (min-width: 768px) {
       .col-binder-spread {
-        grid-template-columns: 1fr 14px 1fr;
+        grid-template-columns: 1fr 10px 1fr;
         background: linear-gradient(90deg, #dfe7f2, var(--binder-page) 8%, var(--binder-page) 92%, #dfe7f2);
         border-radius: 4px 14px 14px 4px;
         box-shadow:
@@ -1006,16 +1027,20 @@
     .col-binder-page {
       list-style: none;
       margin: 0;
-      padding: 0.85rem;
+      padding: 0.45rem;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.75rem 0.65rem;
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem 0.35rem;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent 28%),
         var(--binder-page);
-      min-height: 11rem;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
       border-radius: 12px;
       box-shadow: inset 0 0 0 1px var(--binder-page-line);
+      align-content: stretch;
     }
     @media (min-width: 768px) {
       .col-binder-page {
@@ -1029,10 +1054,9 @@
             rgba(20, 35, 58, 0.035) 31px 32px
           ),
           var(--binder-page);
-        padding: 1.1rem 1rem 1.2rem;
+        padding: 0.55rem 0.5rem 0.6rem;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.9rem 0.75rem;
-        align-content: start;
+        gap: 0.45rem 0.4rem;
       }
       .col-binder-page-left {
         box-shadow: inset -10px 0 20px rgba(20, 35, 58, 0.05);
@@ -1041,26 +1065,69 @@
         box-shadow: inset 10px 0 20px rgba(20, 35, 58, 0.05);
       }
     }
+    .col-binder-page .col-tile {
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     .col-binder-page .col-tile-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(20, 35, 58, 0.1);
+      overflow: hidden;
     }
     [data-theme="dark"] .col-binder-page .col-tile-body {
       background: rgba(255, 255, 255, 0.04);
     }
-    .col-binder-page .col-meta,
-    .col-binder-page .col-name,
+    .col-binder-page .col-tile-art {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: auto;
+      max-width: 100%;
+      height: 100%;
+      align-self: center;
+      aspect-ratio: 63 / 88;
+    }
+    .col-binder-page .col-tile-caption {
+      flex: 0 0 auto;
+      padding: 0.15rem 0.12rem 0.12rem;
+    }
     .col-binder-page .col-cardno {
+      font-size: 0.64rem;
       color: #1f2937;
     }
-    [data-theme="dark"] .col-binder-page .col-meta,
+    .col-binder-page .col-name,
+    .col-binder-page .col-meta,
+    .col-binder-page .col-tags {
+      display: none;
+    }
+    .col-binder-page .col-qty {
+      margin-top: 0.15rem;
+    }
+    .col-binder-page .col-qty-btn {
+      width: 24px;
+      height: 24px;
+      font-size: 0.8rem;
+    }
+    .col-binder-page .col-check {
+      width: 28px;
+      height: 28px;
+      top: 0.25rem;
+      left: 0.25rem;
+    }
     [data-theme="dark"] .col-binder-page .col-name,
     [data-theme="dark"] .col-binder-page .col-cardno {
       color: #e5e7eb;
     }
     .col-binder-pocket-empty {
-      min-height: 8rem;
+      min-height: 0;
+      height: 100%;
       border: 1.5px dashed rgba(20, 35, 58, 0.18);
       border-radius: 8px;
       background: rgba(20, 35, 58, 0.03);
@@ -1074,8 +1141,9 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.65rem;
-      margin-top: 0.9rem;
+      gap: 0.4rem;
+      flex: 0 0 auto;
+      margin-top: 0.45rem;
     }
     .col-binder-page-label {
       font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
@@ -2021,9 +2089,7 @@
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     }
     .col-deck-entry.is-short .col-deck-entry-art {
-      box-shadow:
-        0 0 0 2px rgba(220, 38, 38, 0.7),
-        0 0 0 5px rgba(220, 38, 38, 0.12);
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.45);
     }
     .col-deck-entry.is-short .col-deck-entry-art::before {
       content: '';
@@ -2031,23 +2097,8 @@
       inset: 0;
       z-index: 1;
       pointer-events: none;
-      background:
-        linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(220, 38, 38, 0.08) 34%, transparent 52%);
+      background: rgba(17, 24, 39, 0.22);
       border-radius: inherit;
-    }
-    .col-deck-entry.is-short .col-deck-entry-art::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 1.55rem 1.55rem 0 0;
-      border-color: #dc2626 transparent transparent transparent;
-      pointer-events: none;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     }
     .col-deck-entry-art img {
       width: 100%;
@@ -2060,7 +2111,6 @@
     .col-deck-entry-art img.is-loaded { opacity: 1; }
     .col-deck-entry.is-short .col-deck-entry-art img.is-loaded {
       opacity: 1;
-      filter: saturate(0.92);
     }
     .col-deck-entry-art img.is-broken { display: none; }
     .col-deck-entry-art .col-tile-placeholder {
@@ -2233,25 +2283,27 @@
     }
     .col-deck-short-badge {
       position: absolute;
-      left: 0.35rem;
-      bottom: 0.35rem;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       z-index: 3;
-      padding: 0.14rem 0.4rem;
-      border-radius: 5px;
-      background: rgba(220, 38, 38, 0.92);
+      min-width: 2.4rem;
+      padding: 0.32rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(220, 38, 38, 0.86);
       color: #fff;
-      font-size: 0.68rem;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: 0.02em;
-      box-shadow: 0 2px 6px rgba(127, 29, 29, 0.35);
+      font-size: clamp(0.9rem, 2.6vw, 1.1rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-align: center;
+      box-shadow: 0 3px 12px rgba(127, 29, 29, 0.24);
+      pointer-events: none;
+      white-space: nowrap;
     }
     [data-theme="dark"] .col-deck-short-badge {
-      background: rgba(239, 68, 68, 0.95);
+      background: rgba(239, 68, 68, 0.88);
       color: #fff;
-    }
-    .col-deck-entry.is-short .col-deck-remove-btn {
-      top: 1.45rem;
     }
     .col-deck-editor-tools {
       display: flex;
@@ -2261,6 +2313,9 @@
     }
     .col-deck-editor-tools .btn {
       font-weight: 700;
+    }
+    #colDeckMetaModal.col-modal {
+      z-index: 2100;
     }
   </style>
 </head>
@@ -2659,6 +2714,34 @@
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
       <p class="col-modal-hint" id="colDeckModalHint">勾選要標記缺卡的牌，並設定缺幾張。</p>
+      <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
+      <div class="col-deck-editor-tools">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckMetaEditBtn">
+          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤</span>
+        </button>
+        <span id="colDeckPickRow">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
+            <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
+          </button>
+        </span>
+      </div>
+      <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck" id="colDeckCancelBtn">取消</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckViewEditBtn" hidden>編輯此牌組</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
+    </div>
+  </div>
+</div>
+
+<!-- 牌組名稱／標籤 -->
+<div id="colDeckMetaModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckMetaTitle" style="width:min(440px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colDeckMetaTitle">牌組名稱／標籤</h3>
+      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱與標籤。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -2669,18 +2752,10 @@
           <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
         </label>
       </div>
-      <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
-      <div class="col-deck-editor-tools" id="colDeckPickRow">
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
-          <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
-        </button>
-      </div>
-      <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
     </div>
     <div class="col-modal-actions">
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck" id="colDeckCancelBtn">取消</button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckViewEditBtn" hidden>編輯此牌組</button>
-      <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckMeta" id="colDeckMetaCancelBtn">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckMetaConfirmBtn">完成</button>
     </div>
   </div>
 </div>
@@ -2801,6 +2876,12 @@
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
     var deckSaveBtn = document.getElementById('colDeckSaveBtn');
+    var deckMetaModal = document.getElementById('colDeckMetaModal');
+    var deckMetaEditBtn = document.getElementById('colDeckMetaEditBtn');
+    var deckMetaEditBtnLabel = document.getElementById('colDeckMetaEditBtnLabel');
+    var deckMetaConfirmBtn = document.getElementById('colDeckMetaConfirmBtn');
+    var deckMetaCancelBtn = document.getElementById('colDeckMetaCancelBtn');
+    var deckMetaHint = document.getElementById('colDeckMetaHint');
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var binderStage = document.getElementById('colBinderStage');
@@ -3255,6 +3336,31 @@
       return html;
     }
 
+    function fitBinderStageToViewport() {
+      if (!binderStage) return;
+      if (binderStage.hidden) {
+        binderStage.style.height = '';
+        binderStage.style.maxHeight = '';
+        return;
+      }
+      binderStage.style.height = '';
+      binderStage.style.maxHeight = '';
+      void binderStage.offsetHeight;
+      var top = binderStage.getBoundingClientRect().top;
+      var pad = Math.max(10, Math.round(window.innerHeight * 0.015));
+      var navReserve = 56;
+      var vhCap = Math.floor(window.innerHeight - navReserve - pad);
+      var available = Math.floor(window.innerHeight - top - pad);
+      var mobile = window.matchMedia('(max-width: 767px)').matches;
+      var minH = mobile ? 200 : 240;
+      var maxH = mobile ? 480 : 560;
+      var target = available > 0 ? available : vhCap;
+      var h = Math.min(maxH, vhCap, Math.max(minH, target));
+      if (available > 0 && available < minH) h = Math.max(180, Math.min(vhCap, available));
+      binderStage.style.height = h + 'px';
+      binderStage.style.maxHeight = h + 'px';
+    }
+
     function renderAlbum() {
       var visible = getVisibleItems();
       updateTotalBar(visible);
@@ -3271,6 +3377,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        fitBinderStageToViewport();
         return;
       }
 
@@ -3280,6 +3387,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        fitBinderStageToViewport();
         return;
       }
 
@@ -3323,10 +3431,12 @@
           albumRoot.innerHTML = html;
         }
         updateBinderPager(1);
+        requestAnimationFrame(fitBinderStageToViewport);
         return;
       }
 
       renderAlbumSpread(visible);
+      requestAnimationFrame(fitBinderStageToViewport);
     }
 
     function findItem(cardNumber) {
@@ -3399,6 +3509,7 @@
         return;
       }
       if (name === 'deck') {
+        closeModal(deckMetaModal);
         closeModal(deckModal);
         deckDraft = null;
         deckEditorMode = 'edit';
@@ -3417,7 +3528,71 @@
           decklogConfirmBtn.disabled = false;
           decklogConfirmBtn.removeAttribute('aria-busy');
         }
+        return;
       }
+      if (name === 'deckMeta') {
+        closeModal(deckMetaModal);
+        syncDeckMetaInputsFromDraft();
+      }
+    }
+
+    function syncDeckMetaInputsFromDraft() {
+      if (!deckDraft) return;
+      if (deckNameInput) deckNameInput.value = deckDraft.name || '';
+      if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+    }
+
+    function applyDeckMetaFromInputs() {
+      if (!deckDraft) return false;
+      var name = normalizeText(deckNameInput && deckNameInput.value);
+      if (!name) {
+        setStatus('請輸入牌組名稱', 'is-error');
+        if (deckNameInput) deckNameInput.focus();
+        return false;
+      }
+      var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
+      deckDraft.name = name.slice(0, 40);
+      deckDraft.tags = normalizeTags(tagRaw.split(/[,，]/));
+      syncDeckMetaInputsFromDraft();
+      return true;
+    }
+
+    function openDeckMetaModal() {
+      if (!deckDraft) return;
+      syncDeckMetaInputsFromDraft();
+      var isView = deckEditorMode === 'view';
+      if (deckNameInput) {
+        deckNameInput.readOnly = isView;
+        deckNameInput.disabled = isView;
+      }
+      if (deckTagsInput) {
+        deckTagsInput.readOnly = isView;
+        deckTagsInput.disabled = isView;
+      }
+      if (deckMetaHint) {
+        deckMetaHint.textContent = isView
+          ? '目前為檢視模式，僅可查看名稱與標籤。'
+          : '設定此牌組的名稱與標籤。';
+      }
+      if (deckMetaConfirmBtn) {
+        deckMetaConfirmBtn.hidden = isView;
+        deckMetaConfirmBtn.textContent = '完成';
+      }
+      if (deckMetaCancelBtn) deckMetaCancelBtn.textContent = isView ? '關閉' : '取消';
+      openModal(deckMetaModal);
+      if (!isView && deckNameInput) {
+        try { deckNameInput.focus(); deckNameInput.select(); } catch (err) { /* ignore */ }
+      }
+    }
+
+    function confirmDeckMetaModal() {
+      if (deckEditorMode === 'view') {
+        closeModalByName('deckMeta');
+        return;
+      }
+      if (!applyDeckMetaFromInputs()) return;
+      closeModalByName('deckMeta');
+      setStatus('已更新牌組名稱／標籤（儲存後生效）', 'is-ok');
     }
 
     function ownedQty(cardNumber) {
@@ -3938,18 +4113,13 @@
 
     function applyDeckEditorMode() {
       var isView = deckEditorMode === 'view';
-      if (deckNameInput) {
-        deckNameInput.readOnly = isView;
-        deckNameInput.disabled = isView;
-      }
-      if (deckTagsInput) {
-        deckTagsInput.readOnly = isView;
-        deckTagsInput.disabled = isView;
-      }
       if (deckPickRow) deckPickRow.hidden = isView;
       if (deckSaveBtn) deckSaveBtn.hidden = isView;
       if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
+      if (deckMetaEditBtnLabel) {
+        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤' : '編輯名稱／標籤';
+      }
       if (deckModalHint) {
         deckModalHint.textContent = isView
           ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
@@ -4009,7 +4179,7 @@
       if (shortBadge) {
         if (isShort) {
           shortBadge.hidden = false;
-          shortBadge.textContent = '缺 ' + shortQty;
+          shortBadge.textContent = '缺' + shortQty;
         } else {
           shortBadge.hidden = true;
         }
@@ -4044,7 +4214,7 @@
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
-      html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺 ' + escapeHtml(String(shortQty || 1)) + '</span>';
+      html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺' + escapeHtml(String(shortQty || 1)) + '</span>';
       if (isEdit) {
         html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
@@ -4076,7 +4246,7 @@
         html += '      </div>';
         html += '    </div>';
       } else if (viewMode === 'view' && isShort) {
-        html += '    <div class="col-deck-ctrl-label" style="margin-top:0.25rem;color:#c53030;">缺 ' + escapeHtml(String(shortQty)) + ' 張</div>';
+        html += '    <div class="col-deck-ctrl-label" style="margin-top:0.25rem;color:#c53030;">缺' + escapeHtml(String(shortQty)) + ' 張</div>';
       }
       html += '  </div>';
       html += '</li>';
@@ -4125,12 +4295,13 @@
         };
         document.getElementById('colDeckTitle').textContent = '新建牌組';
       }
-      if (deckNameInput) deckNameInput.value = deckDraft.name || '';
-      if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      syncDeckMetaInputsFromDraft();
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
-      if (deckEditorMode === 'edit' && deckNameInput) deckNameInput.focus();
+      if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
+        openDeckMetaModal();
+      }
     }
 
     function openDeckViewer(deckId) {
@@ -4188,18 +4359,18 @@
 
     function saveDeckDraft() {
       if (!deckDraft || deckEditorMode === 'view') return;
-      var name = normalizeText(deckNameInput && deckNameInput.value);
-      if (!name) {
-        setStatus('請輸入牌組名稱', 'is-error');
-        if (deckNameInput) deckNameInput.focus();
+      if (!normalizeText(deckDraft.name) && !applyDeckMetaFromInputs()) {
+        openDeckMetaModal();
         return;
       }
-      var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
-      var tags = normalizeTags(tagRaw.split(/[,，]/));
-      deckDraft.name = name.slice(0, 40);
-      deckDraft.tags = tags;
+      if (!normalizeText(deckDraft.name)) {
+        setStatus('請輸入牌組名稱', 'is-error');
+        openDeckMetaModal();
+        return;
+      }
       deckDraft.cards = normalizeDeckCards(deckDraft.cards);
       deckDraft.updatedAt = Date.now();
+      var name = deckDraft.name;
 
       var idx = allDecks.findIndex(function (d) { return d.id === deckDraft.id; });
       if (idx >= 0) allDecks[idx] = serializeDeck(deckDraft);
@@ -4212,6 +4383,7 @@
       }
       selectedDeckId = deckDraft.id;
       persistDecksAndRender();
+      closeModalByName('deckMeta');
       closeModalByName('deck');
       focusDeckSection();
       setStatus('已儲存牌組「' + name + '」', 'is-ok');
@@ -4638,9 +4810,13 @@
     window.addEventListener('resize', function () {
       if (albumResizeTimer) clearTimeout(albumResizeTimer);
       albumResizeTimer = setTimeout(function () {
+        fitBinderStageToViewport();
         if (groupMode === 'tag') return;
         renderAlbum();
       }, 160);
+    });
+    window.addEventListener('orientationchange', function () {
+      setTimeout(fitBinderStageToViewport, 200);
     });
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
@@ -4830,6 +5006,12 @@
         saveDeckDraft();
       });
     }
+    if (deckMetaEditBtn) {
+      deckMetaEditBtn.addEventListener('click', openDeckMetaModal);
+    }
+    if (deckMetaConfirmBtn) {
+      deckMetaConfirmBtn.addEventListener('click', confirmDeckMetaModal);
+    }
     document.getElementById('colDeckPickBtn').addEventListener('click', openDeckPickModal);
     document.getElementById('colDeckPickConfirmBtn').addEventListener('click', confirmDeckPick);
     document.getElementById('colDeckPickSelectAllBtn').addEventListener('click', function () {
@@ -4907,6 +5089,10 @@
       if (e.key !== 'Escape') return;
       if (confirmModal.classList.contains('is-open')) {
         closeModalByName('confirm');
+        return;
+      }
+      if (deckMetaModal && deckMetaModal.classList.contains('is-open')) {
+        closeModalByName('deckMeta');
         return;
       }
       if (deckPickModal && deckPickModal.classList.contains('is-open')) {
