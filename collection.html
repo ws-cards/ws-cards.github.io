@@ -206,27 +206,32 @@
       .col-controls .col-control-actions .btn { flex: 1 1 0; }
     }
 
-    .col-status {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      min-height: 1.25rem;
-      font-size: 0.82rem;
-      color: #6c757d;
-      margin: 0 0 0.85rem;
+    /* 浮動提示（取代頂部 status 列） */
+    .col-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 1.35rem;
+      z-index: 2400;
+      transform: translateX(-50%) translateY(120%);
+      max-width: min(28rem, calc(100vw - 1.5rem));
+      padding: 0.7rem 1rem;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #f8fafc;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.35s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.28s ease;
     }
-    .col-status-icon {
-      color: #38a169;
-      font-size: 0.85rem;
-      opacity: 0.9;
+    .col-toast.is-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
-    .col-status.is-error .col-status-icon { color: #c53030; }
-    .col-status:not(.is-ok):not(.is-error) .col-status-icon { color: #a0aec0; }
-    [data-theme="dark"] .col-status { color: #a0aec0; }
-    .col-status.is-error { color: #c53030; }
-    .col-status.is-ok { color: #2f855a; }
-    [data-theme="dark"] .col-status.is-error { color: #fc8181; }
-    [data-theme="dark"] .col-status.is-ok { color: #68d391; }
+    .col-toast.is-ok { background: rgba(22, 101, 52, 0.95); }
+    .col-toast.is-error { background: rgba(153, 27, 27, 0.95); }
 
     .col-total-bar {
       display: flex;
@@ -760,9 +765,6 @@
       --col-ink: #f3f4f6;
       --col-muted: #9ca3af;
     }
-    .col-page-status {
-      margin: 0 0 0.85rem;
-    }
     .col-panel[hidden] { display: none !important; }
 
     /* —— 實體卡冊／牌盒區塊 —— */
@@ -779,7 +781,7 @@
       --deckbox-accent: #c9983f;
       --deckbox-well: #2a3d33;
       display: grid;
-      gap: 1.75rem;
+      gap: 1.15rem;
       margin-bottom: 1.5rem;
     }
     [data-theme="dark"] .col-stage {
@@ -796,6 +798,120 @@
       --deckbox-well: #18231e;
     }
 
+    /* 卡冊／牌組鎖扣切換 */
+    .col-view-switch {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem;
+      padding: 0.3rem;
+      border-radius: 16px;
+      background:
+        radial-gradient(120% 80% at 10% 0%, rgba(255, 255, 255, 0.08), transparent 55%),
+        linear-gradient(145deg, #1b2433 0%, #0e1520 55%, #172018 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 14px 36px rgba(8, 12, 20, 0.28);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .col-view-switch::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -18deg,
+        transparent 0,
+        transparent 10px,
+        rgba(255, 255, 255, 0.015) 10px,
+        rgba(255, 255, 255, 0.015) 11px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+    .col-view-thumb {
+      position: absolute;
+      top: 0.3rem;
+      bottom: 0.3rem;
+      left: 0.3rem;
+      width: calc(50% - 0.425rem);
+      border-radius: 12px;
+      background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.18), transparent 42%),
+        linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      box-shadow:
+        0 8px 18px rgba(37, 99, 235, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      transition:
+        transform 0.42s cubic-bezier(0.22, 0.8, 0.28, 1),
+        background 0.35s ease,
+        box-shadow 0.35s ease;
+      z-index: 1;
+    }
+    .col-stage[data-col-view="decks"] .col-view-thumb {
+      transform: translateX(calc(100% + 0.25rem));
+      background:
+        linear-gradient(160deg, rgba(255, 236, 180, 0.22), transparent 45%),
+        linear-gradient(180deg, #3f5a4a 0%, #24352d 100%);
+      box-shadow:
+        0 8px 18px rgba(36, 53, 45, 0.45),
+        inset 0 1px 0 rgba(232, 197, 120, 0.35);
+    }
+    .col-view-btn {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.12rem;
+      margin: 0;
+      padding: 0.78rem 1rem 0.72rem;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: rgba(226, 232, 240, 0.62);
+      text-align: left;
+      cursor: pointer;
+      transition: color 0.25s ease, transform 0.25s ease;
+    }
+    .col-view-btn:hover { color: rgba(248, 250, 252, 0.9); }
+    .col-view-btn:active { transform: translateY(1px); }
+    .col-view-btn[aria-selected="true"] {
+      color: #fff;
+    }
+    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
+      color: #f8f1d8;
+    }
+    .col-view-kicker {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+    .col-view-label {
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      line-height: 1.15;
+    }
+    .col-view-btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 2px;
+    }
+    @media (max-width: 480px) {
+      .col-view-btn { padding: 0.7rem 0.75rem 0.65rem; }
+      .col-view-label { font-size: 1rem; letter-spacing: 0.04em; }
+      .col-view-kicker { letter-spacing: 0.12em; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .col-view-thumb { transition: none; }
+      .col-toast { transition: none; }
+      .col-view-btn { transition: color 0.2s ease; }
+    }
+
     .col-album-section,
     .col-deckbox {
       border: 0;
@@ -803,6 +919,10 @@
       background: transparent;
       box-shadow: none;
       overflow: visible;
+    }
+    .col-stage[data-col-view="album"] .col-deckbox,
+    .col-stage[data-col-view="decks"] .col-album-section {
+      display: none !important;
     }
     .col-section-head {
       display: flex;
@@ -836,14 +956,6 @@
       letter-spacing: 0.04em;
     }
     [data-theme="dark"] .col-section-title { color: #f3f4f6; }
-    .col-section-lede {
-      margin: 0.3rem 0 0;
-      max-width: 28rem;
-      font-size: 0.86rem;
-      line-height: 1.5;
-      color: #6b7280;
-    }
-    [data-theme="dark"] .col-section-lede { color: #9ca3af; }
     .col-section-stats {
       display: flex;
       flex-wrap: wrap;
@@ -1163,13 +1275,6 @@
       font-weight: 900;
       letter-spacing: 0.04em;
       color: #f7faf7;
-    }
-    .col-deckbox-lede {
-      margin: 0.3rem 0 0;
-      font-size: 0.86rem;
-      color: rgba(238, 243, 238, 0.7);
-      max-width: 26rem;
-      line-height: 1.45;
     }
     .col-deckbox-badge {
       display: inline-flex;
@@ -2479,18 +2584,24 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-12">
-            <div class="col-status col-page-status" id="colStatus" role="status" aria-live="polite">
-              <i class="fas fa-database col-status-icon" aria-hidden="true"></i>
-              <span id="colStatusText"></span>
-            </div>
+            <div class="col-stage" id="colStage" data-col-view="album">
+              <div class="col-view-switch" role="tablist" aria-label="卡冊與牌組切換">
+                <span class="col-view-thumb" aria-hidden="true"></span>
+                <button type="button" class="col-view-btn" role="tab" id="colViewAlbumBtn" data-col-view-btn="album" aria-controls="colSectionAlbum" aria-selected="true">
+                  <span class="col-view-kicker">Binder</span>
+                  <span class="col-view-label">我的卡冊</span>
+                </button>
+                <button type="button" class="col-view-btn" role="tab" id="colViewDecksBtn" data-col-view-btn="decks" aria-controls="colSectionDecks" aria-selected="false">
+                  <span class="col-view-kicker">Deck Box</span>
+                  <span class="col-view-label">我的牌組</span>
+                </button>
+              </div>
 
-            <div class="col-stage">
-              <section class="col-album-section" id="colSectionAlbum" aria-labelledby="colBinderTitle">
+              <section class="col-album-section" id="colSectionAlbum" role="tabpanel" aria-labelledby="colViewAlbumBtn colBinderTitle">
                 <header class="col-section-head">
                   <div>
                     <p class="col-section-kicker">Card Binder</p>
                     <h2 class="col-section-title" id="colBinderTitle">我的卡冊</h2>
-                    <p class="col-section-lede">管理持有卡；點兩側或左右滑動可翻頁。</p>
                   </div>
                   <div class="col-section-stats" aria-live="polite">
                     <div class="col-section-stat">
@@ -2549,7 +2660,10 @@
                       <div class="col-field col-field-actions">
                         <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
                         <div class="col-control-actions">
-                          <button type="button" class="btn btn-primary btn-sm" id="colImportBtn">
+                          <button type="button" class="btn btn-primary btn-sm" id="colAddCardBtn">
+                            <i class="fas fa-plus mr-1" aria-hidden="true"></i>新增卡片
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colImportBtn">
                             <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
                           </button>
                           <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
@@ -2580,9 +2694,14 @@
                     <div id="colEmpty" class="col-empty" style="display:none;">
                       <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
                       <p id="colEmptyText">卡冊尚無卡片。</p>
-                      <button type="button" class="btn btn-outline-secondary" id="colEmptyImportBtn">
-                        <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                      </button>
+                      <div class="col-deck-cta-row" style="max-width:22rem;margin:0.35rem auto 0;justify-content:center;">
+                        <button type="button" class="btn btn-primary btn-sm" id="colEmptyAddBtn">
+                          <i class="fas fa-plus mr-1" aria-hidden="true"></i>新增卡片
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="colEmptyImportBtn">
+                          <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                        </button>
+                      </div>
                     </div>
 
                     <div class="col-binder-stage" id="colBinderStage">
@@ -2605,13 +2724,12 @@
                 </div>
               </section>
 
-              <section class="col-deckbox" id="colSectionDecks" aria-labelledby="colDeckboxTitle">
+              <section class="col-deckbox" id="colSectionDecks" role="tabpanel" aria-labelledby="colViewDecksBtn colDeckboxTitle">
                 <div class="col-deckbox-shell">
                   <header class="col-deckbox-lid">
                     <div>
                       <p class="col-deckbox-kicker">Deck Box</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
-                      <p class="col-deckbox-lede">牌組與卡冊各自管理實體牌；缺卡在編輯中標記，持有＝編成−缺卡。</p>
                     </div>
                     <div class="col-deckbox-badge" aria-live="polite">
                       <i class="fas fa-archive" aria-hidden="true"></i>
@@ -2699,6 +2817,50 @@
       <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
     </div>
   </footer>
+</div>
+
+<div id="colToast" class="col-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span id="colToastText"></span>
+</div>
+
+<!-- 新增卡片至卡冊 -->
+<div id="colAddModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="add"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colAddTitle" style="width:min(440px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colAddTitle">新增卡片</h3>
+      <p class="col-modal-hint">直接把實體牌記入卡冊。卡號必填；其餘可之後再補。</p>
+      <div class="col-deck-editor-head" style="display:grid;gap:0.65rem;">
+        <label for="colAddCardNumber">
+          卡號
+          <input id="colAddCardNumber" type="text" class="form-control" placeholder="例如 SAO/S100-001" autocomplete="off" maxlength="40">
+        </label>
+        <label for="colAddCardName">
+          卡名
+          <input id="colAddCardName" type="text" class="form-control" placeholder="選填" autocomplete="off" maxlength="80">
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;">
+          <label for="colAddCardRare">
+            稀有度
+            <input id="colAddCardRare" type="text" class="form-control" placeholder="RR / SR…" autocomplete="off" maxlength="16">
+          </label>
+          <label for="colAddCardQty">
+            數量
+            <input id="colAddCardQty" type="number" class="form-control" min="1" max="999" value="1" inputmode="numeric">
+          </label>
+        </div>
+        <label for="colAddCardTags">
+          標籤
+          <input id="colAddCardTags" type="text" class="form-control" placeholder="以逗號分隔，選填" autocomplete="off" maxlength="80">
+        </label>
+      </div>
+      <p class="col-modal-hint" id="colAddHint" style="margin-top:0.65rem;"></p>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="add">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colAddConfirmBtn">加入卡冊</button>
+    </div>
+  </div>
 </div>
 
 <!-- 從願望清單轉入 -->
@@ -2966,8 +3128,21 @@
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var countEl = document.getElementById('colCountLabel');
-    var statusEl = document.getElementById('colStatus');
-    var statusTextEl = document.getElementById('colStatusText') || statusEl;
+    var toastEl = document.getElementById('colToast');
+    var toastTextEl = document.getElementById('colToastText');
+    var toastTimer = null;
+    var stageEl = document.getElementById('colStage');
+    var viewAlbumBtn = document.getElementById('colViewAlbumBtn');
+    var viewDecksBtn = document.getElementById('colViewDecksBtn');
+    var VIEW_KEY = 'wsCardsCollectionView';
+    var addModal = document.getElementById('colAddModal');
+    var addCardNumberInput = document.getElementById('colAddCardNumber');
+    var addCardNameInput = document.getElementById('colAddCardName');
+    var addCardRareInput = document.getElementById('colAddCardRare');
+    var addCardQtyInput = document.getElementById('colAddCardQty');
+    var addCardTagsInput = document.getElementById('colAddCardTags');
+    var addHintEl = document.getElementById('colAddHint');
+    var addConfirmBtn = document.getElementById('colAddConfirmBtn');
     var searchInput = document.getElementById('colSearchInput');
     var rareSelect = document.getElementById('colRareSelect');
     var tagSelect = document.getElementById('colTagSelect');
@@ -3017,10 +3192,52 @@
     var decklogConfirmBtn = document.getElementById('colDecklogConfirmBtn');
 
     function setStatus(msg, kind) {
-      if (statusTextEl) statusTextEl.textContent = msg || '';
-      if (statusEl) {
-        statusEl.classList.remove('is-error', 'is-ok');
-        if (kind) statusEl.classList.add(kind);
+      if (!toastEl || !toastTextEl) return;
+      toastTextEl.textContent = msg || '';
+      toastEl.classList.remove('is-error', 'is-ok', 'is-show');
+      if (kind === 'is-error' || kind === 'is-ok') toastEl.classList.add(kind);
+      if (!msg) {
+        toastEl.hidden = true;
+        return;
+      }
+      toastEl.hidden = false;
+      void toastEl.offsetWidth;
+      toastEl.classList.add('is-show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toastEl.classList.remove('is-show');
+        setTimeout(function () {
+          if (!toastEl.classList.contains('is-show')) toastEl.hidden = true;
+        }, 280);
+      }, 2600);
+    }
+
+    function setCollectionView(view, opts) {
+      var next = view === 'decks' ? 'decks' : 'album';
+      if (stageEl) stageEl.setAttribute('data-col-view', next);
+      if (viewAlbumBtn) {
+        viewAlbumBtn.setAttribute('aria-selected', next === 'album' ? 'true' : 'false');
+        viewAlbumBtn.tabIndex = next === 'album' ? 0 : -1;
+      }
+      if (viewDecksBtn) {
+        viewDecksBtn.setAttribute('aria-selected', next === 'decks' ? 'true' : 'false');
+        viewDecksBtn.tabIndex = next === 'decks' ? 0 : -1;
+      }
+      try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
+      if (opts && opts.focus && next === 'decks') {
+        var el = document.getElementById('colSectionDecks');
+        if (el && typeof el.scrollIntoView === 'function') {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
+
+    function readCollectionView() {
+      try {
+        var saved = localStorage.getItem(VIEW_KEY);
+        return saved === 'decks' ? 'decks' : 'album';
+      } catch (e) {
+        return 'album';
       }
     }
 
@@ -3130,10 +3347,91 @@
     }
 
     function focusDeckSection() {
-      var el = document.getElementById('colSectionDecks');
+      setCollectionView('decks', { focus: true });
+    }
+
+    function focusAlbumSection() {
+      setCollectionView('album');
+      var el = document.getElementById('colSectionAlbum');
       if (el && typeof el.scrollIntoView === 'function') {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }
+
+    function resetAddCardForm() {
+      if (addCardNumberInput) addCardNumberInput.value = '';
+      if (addCardNameInput) addCardNameInput.value = '';
+      if (addCardRareInput) addCardRareInput.value = '';
+      if (addCardQtyInput) addCardQtyInput.value = '1';
+      if (addCardTagsInput) addCardTagsInput.value = '';
+      if (addHintEl) {
+        addHintEl.textContent = '';
+        addHintEl.style.color = '';
+      }
+    }
+
+    function openAddCardModal() {
+      resetAddCardForm();
+      setCollectionView('album');
+      openModal(addModal);
+      if (addCardNumberInput) addCardNumberInput.focus();
+    }
+
+    function confirmAddCard() {
+      var cardNumber = normalizeText(addCardNumberInput && addCardNumberInput.value).replace(/\\/g, '/');
+      if (!cardNumber) {
+        if (addHintEl) {
+          addHintEl.textContent = '請輸入卡號';
+          addHintEl.style.color = '#c53030';
+        }
+        if (addCardNumberInput) addCardNumberInput.focus();
+        return;
+      }
+      if (allItems.length >= MAX_ITEMS && !findItem(cardNumber)) {
+        if (addHintEl) {
+          addHintEl.textContent = '卡冊已達上限（' + MAX_ITEMS + '）';
+          addHintEl.style.color = '#c53030';
+        }
+        return;
+      }
+      var qty = parseInt(addCardQtyInput && addCardQtyInput.value, 10);
+      if (isNaN(qty) || qty < 1) qty = 1;
+      qty = clampQty(qty);
+      var cardName = normalizeText(addCardNameInput && addCardNameInput.value);
+      var cardRare = normalizeText(addCardRareInput && addCardRareInput.value);
+      var tags = normalizeTags(
+        String(addCardTagsInput && addCardTagsInput.value || '')
+          .split(/[,，、]/)
+          .map(function (t) { return t; })
+      );
+      var existing = findItem(cardNumber);
+      if (existing) {
+        existing.quantity = clampQty((existing.quantity || 0) + qty);
+        if (!existing.cardName && cardName) existing.cardName = cardName;
+        if (!existing.cardRare && cardRare) existing.cardRare = cardRare;
+        if (tags.length) {
+          var merged = normalizeTags((existing.tags || []).concat(tags));
+          existing.tags = merged;
+        }
+        persistAndRender();
+        closeModalByName('add');
+        setStatus(cardNumber + ' 已累加 ×' + qty + '（現有 ' + existing.quantity + '）', 'is-ok');
+        return;
+      }
+      allItems.unshift({
+        cardNumber: cardNumber,
+        cardName: cardName,
+        cardRare: cardRare,
+        cardTitle: '',
+        quantity: qty,
+        tags: tags,
+        source: 'manual',
+        timestamp: Date.now()
+      });
+      allItems = allItems.slice(0, MAX_ITEMS);
+      persistAndRender();
+      closeModalByName('add');
+      setStatus('已新增 ' + cardNumber + ' ×' + qty, 'is-ok');
     }
 
     function getRareColor(rare) {
@@ -3536,6 +3834,11 @@
     }
 
     function closeModalByName(name) {
+      if (name === 'add') {
+        closeModal(addModal);
+        resetAddCardForm();
+        return;
+      }
       if (name === 'import') {
         closeModal(importModal);
         importPickSet = {};
@@ -5068,6 +5371,34 @@
     });
     document.getElementById('colImportBtn').addEventListener('click', openImportModal);
     document.getElementById('colEmptyImportBtn').addEventListener('click', openImportModal);
+    var addCardBtn = document.getElementById('colAddCardBtn');
+    var emptyAddBtn = document.getElementById('colEmptyAddBtn');
+    if (addCardBtn) addCardBtn.addEventListener('click', openAddCardModal);
+    if (emptyAddBtn) emptyAddBtn.addEventListener('click', openAddCardModal);
+    if (addConfirmBtn) addConfirmBtn.addEventListener('click', confirmAddCard);
+    if (addCardNumberInput) {
+      addCardNumberInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          confirmAddCard();
+        }
+      });
+    }
+    function wireViewSwitch(btn, view) {
+      if (!btn) return;
+      btn.addEventListener('click', function () { setCollectionView(view); });
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          var next = (e.key === 'ArrowRight') ? 'decks' : 'album';
+          setCollectionView(next);
+          var focusBtn = next === 'decks' ? viewDecksBtn : viewAlbumBtn;
+          if (focusBtn) focusBtn.focus();
+        }
+      });
+    }
+    wireViewSwitch(viewAlbumBtn, 'album');
+    wireViewSwitch(viewDecksBtn, 'decks');
     document.getElementById('colBulkTagBtn').addEventListener('click', function () {
       openTagEditor(Object.keys(checkedSet), 'bulk');
     });
@@ -5377,6 +5708,10 @@
         closeModalByName('deck');
         return;
       }
+      if (addModal && addModal.classList.contains('is-open')) {
+        closeModalByName('add');
+        return;
+      }
       if (tagModal.classList.contains('is-open')) {
         closeModalByName('tag');
         return;
@@ -5393,6 +5728,7 @@
         delete checkedSet[key];
       }
     });
+    setCollectionView(readCollectionView());
     refreshFilterOptions();
     renderAlbum();
     renderDeckList();
@@ -5400,7 +5736,7 @@
     setStatus(
       allItems.length || allDecks.length
         ? ('已載入卡冊 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
-        : '卡冊與牌組皆為空，可先從願望清單轉入卡片',
+        : '卡冊與牌組皆為空，可新增卡片或從願望清單轉入',
       allItems.length || allDecks.length ? 'is-ok' : ''
     );
   })();
