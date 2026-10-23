@@ -798,72 +798,23 @@
       --deckbox-well: #18231e;
     }
 
-    /* 卡冊／牌組：實體檔案夾鎖扣軌 */
+    /* 卡冊／牌組切換：簡潔滑動分段 */
     .col-view-switch {
-      --switch-pad: 0.34rem;
+      --switch-pad: 0.28rem;
       --switch-gap: 0.2rem;
-      --switch-radius: 18px;
-      --switch-ink: rgba(236, 232, 222, 0.55);
-      --switch-ink-strong: #f4efe4;
-      --switch-metal: #c8b89a;
       position: relative;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--switch-gap);
       padding: var(--switch-pad);
-      border-radius: var(--switch-radius);
-      border: 1px solid rgba(28, 24, 18, 0.55);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 40%),
-        linear-gradient(105deg, #2a2f38 0%, #1a1e26 46%, #1f2a24 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        inset 0 -10px 24px rgba(0, 0, 0, 0.28),
-        0 16px 34px rgba(12, 14, 18, 0.22);
-      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: #f3f4f6;
       isolation: isolate;
     }
-    .col-view-switch::before,
-    .col-view-switch::after {
-      content: '';
-      position: absolute;
-      pointer-events: none;
-      z-index: 0;
-    }
-    /* 雙材質底：左卡冊石板、右牌盒森綠 */
-    .col-view-switch::before {
-      inset: var(--switch-pad);
-      border-radius: calc(var(--switch-radius) - 8px);
-      background:
-        linear-gradient(90deg,
-          rgba(88, 108, 138, 0.22) 0%,
-          rgba(88, 108, 138, 0.08) 46%,
-          rgba(70, 96, 78, 0.1) 54%,
-          rgba(70, 96, 78, 0.26) 100%);
-      opacity: 0.95;
-    }
-    /* 車縫線 */
-    .col-view-switch::after {
-      inset: 0.55rem;
-      border-radius: 12px;
-      border: 1px dashed rgba(232, 220, 190, 0.14);
-      opacity: 0.85;
-    }
-    .col-view-rail {
-      position: absolute;
-      left: calc(var(--switch-pad) + 0.55rem);
-      right: calc(var(--switch-pad) + 0.55rem);
-      top: 50%;
-      height: 3px;
-      transform: translateY(-50%);
-      border-radius: 999px;
-      background:
-        linear-gradient(90deg, transparent, rgba(210, 196, 164, 0.55) 12%, rgba(210, 196, 164, 0.55) 88%, transparent);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 0 1px 1px rgba(0, 0, 0, 0.45);
-      z-index: 1;
-      opacity: 0.7;
+    [data-theme="dark"] .col-view-switch {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
     }
     .col-view-thumb {
       position: absolute;
@@ -871,241 +822,93 @@
       bottom: var(--switch-pad);
       left: var(--switch-pad);
       width: calc(50% - (var(--switch-pad) + var(--switch-gap) / 2));
-      border-radius: 13px;
-      z-index: 2;
-      padding: 2px;
-      background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.35), transparent 40%),
-        linear-gradient(180deg, #ebe2d0 0%, #b7a684 48%, #8f7d5c 100%);
-      box-shadow:
-        0 10px 22px rgba(40, 32, 18, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      border-radius: 10px;
+      z-index: 1;
+      background: #fff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
       transition:
-        transform 0.48s cubic-bezier(0.22, 1.15, 0.28, 1),
-        background 0.35s ease,
-        box-shadow 0.35s ease;
+        transform 0.42s cubic-bezier(0.22, 0.8, 0.28, 1),
+        background 0.28s ease,
+        border-color 0.28s ease;
     }
-    .col-view-thumb-face {
-      display: block;
-      height: 100%;
-      border-radius: 11px;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          rgba(255, 255, 255, 0.045) 0 1px,
-          transparent 1px 3px
-        ),
-        linear-gradient(180deg, #3a4556 0%, #252c38 55%, #1b222c 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.18),
-        inset 0 -8px 14px rgba(0, 0, 0, 0.35);
-    }
-    /* 內側鎖扣：鉚釘＋握槽，不壓到標籤 */
-    .col-view-clasp {
-      position: absolute;
-      top: 50%;
-      right: 0.28rem;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.22rem;
-      width: 0.95rem;
-      padding: 0.35rem 0.12rem;
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, rgba(255, 248, 230, 0.2), transparent 40%),
-        linear-gradient(180deg, #2a3340 0%, #171c24 100%);
-      border: 1px solid rgba(232, 214, 170, 0.42);
-      box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-      pointer-events: none;
-    }
-    .col-view-thumb-rivet {
-      width: 0.42rem;
-      height: 0.42rem;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 35% 30%, #f3ead7, #c2ad86 45%, #6f6046 100%);
-      box-shadow:
-        0 1px 1px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
-      flex: 0 0 auto;
-    }
-    .col-view-thumb-grip {
-      width: 0.42rem;
-      height: 0.95rem;
-      border-radius: 999px;
-      background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.14), transparent),
-        repeating-linear-gradient(
-          180deg,
-          rgba(236, 224, 196, 0.6) 0 2px,
-          transparent 2px 4px
-        );
-      box-shadow:
-        inset 0 0 2px rgba(0, 0, 0, 0.55),
-        0 1px 0 rgba(255, 255, 255, 0.1);
+    [data-theme="dark"] .col-view-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: none;
     }
     .col-stage[data-col-view="decks"] .col-view-thumb {
       transform: translateX(calc(100% + var(--switch-gap)));
-      background:
-        linear-gradient(160deg, rgba(255, 236, 190, 0.4), transparent 42%),
-        linear-gradient(180deg, #e7d7ae 0%, #b8975a 50%, #7d6238 100%);
-      box-shadow:
-        0 10px 22px rgba(40, 48, 34, 0.38),
-        inset 0 1px 0 rgba(255, 244, 214, 0.55);
+      background: #fff;
+      border-color: rgba(47, 143, 107, 0.28);
     }
-    .col-stage[data-col-view="decks"] .col-view-thumb-face {
-      background:
-        repeating-linear-gradient(
-          90deg,
-          rgba(255, 236, 190, 0.05) 0 1px,
-          transparent 1px 3px
-        ),
-        linear-gradient(180deg, #3d5245 0%, #27362d 55%, #1a241e 100%);
-    }
-    .col-stage[data-col-view="decks"] .col-view-clasp {
-      right: auto;
-      left: 0.28rem;
-      background:
-        linear-gradient(180deg, rgba(255, 236, 190, 0.18), transparent 40%),
-        linear-gradient(180deg, #334539 0%, #1c261f 100%);
-      border-color: rgba(232, 197, 120, 0.5);
+    [data-theme="dark"] .col-stage[data-col-view="decks"] .col-view-thumb {
+      background: rgba(63, 143, 107, 0.22);
+      border-color: rgba(224, 179, 90, 0.28);
     }
     .col-view-btn {
       position: relative;
-      z-index: 3;
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      margin: 0;
-      min-height: 3.55rem;
-      padding: 0.7rem 1.35rem 0.7rem 0.85rem;
-      border: 0;
-      border-radius: 13px;
-      background: transparent;
-      color: var(--switch-ink);
-      text-align: left;
-      cursor: pointer;
-      transition: color 0.28s ease, transform 0.22s ease, opacity 0.28s ease;
-    }
-    .col-view-btn:hover { color: rgba(248, 244, 232, 0.92); }
-    .col-view-btn:active { transform: translateY(1px); }
-    .col-view-btn[aria-selected="true"] {
-      color: var(--switch-ink-strong);
-    }
-    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
-      color: #f6edd4;
-      padding-left: 1.35rem;
-      padding-right: 0.85rem;
-    }
-    .col-view-btn[aria-selected="false"] {
-      opacity: 0.72;
-    }
-    .col-view-btn[aria-selected="true"] {
-      opacity: 1;
-    }
-    .col-view-copy {
+      z-index: 2;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 0.1rem;
-      min-width: 0;
+      margin: 0;
+      min-height: 3.1rem;
+      padding: 0.55rem 0.9rem;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #6b7280;
+      text-align: left;
+      cursor: pointer;
+      transition: color 0.22s ease;
     }
-    .col-view-glyph {
-      position: relative;
-      flex: 0 0 auto;
-      width: 1.55rem;
-      height: 1.55rem;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(236, 224, 196, 0.18);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    [data-theme="dark"] .col-view-btn { color: #9ca3af; }
+    .col-view-btn:hover { color: #111827; }
+    [data-theme="dark"] .col-view-btn:hover { color: #f3f4f6; }
+    .col-view-btn[aria-selected="true"] {
+      color: #111827;
     }
-    .col-view-glyph-binder::before,
-    .col-view-glyph-binder::after {
-      content: '';
-      position: absolute;
-      left: 0.28rem;
-      width: 0.34rem;
-      height: 0.34rem;
-      border: 2px solid rgba(196, 214, 236, 0.85);
-      border-radius: 50%;
-      box-shadow: 0.55rem 0 0 rgba(196, 214, 236, 0.85);
+    [data-theme="dark"] .col-view-btn[aria-selected="true"] {
+      color: #f3f4f6;
     }
-    .col-view-glyph-binder::before { top: 0.28rem; }
-    .col-view-glyph-binder::after { bottom: 0.28rem; }
-    .col-view-glyph-deck::before {
-      content: '';
-      position: absolute;
-      inset: 0.28rem 0.32rem 0.34rem;
-      border: 1.5px solid rgba(232, 197, 120, 0.9);
-      border-radius: 3px 3px 5px 5px;
-      background: linear-gradient(180deg, rgba(232, 197, 120, 0.18), transparent 60%);
+    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
+      color: #1f3d30;
     }
-    .col-view-glyph-deck::after {
-      content: '';
-      position: absolute;
-      left: 0.45rem;
-      right: 0.45rem;
-      top: 0.42rem;
-      height: 1.5px;
-      background: rgba(232, 197, 120, 0.85);
-      box-shadow: 0 0.28rem 0 rgba(232, 197, 120, 0.55);
-    }
-    .col-view-btn[aria-selected="true"] .col-view-glyph {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(236, 224, 196, 0.35);
+    [data-theme="dark"] .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
+      color: #f6edd4;
     }
     .col-view-kicker {
       font-family: 'IBM Plex Mono', ui-monospace, monospace;
       font-size: 0.62rem;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      opacity: 0.78;
+      opacity: 0.75;
     }
     .col-view-label {
       font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
-      font-size: clamp(1.02rem, 2.1vw, 1.24rem);
+      font-size: clamp(1rem, 2vw, 1.15rem);
       font-weight: 900;
-      letter-spacing: 0.07em;
-      line-height: 1.15;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
     }
     .col-view-btn:focus-visible {
-      outline: 2px solid rgba(232, 214, 170, 0.75);
+      outline: 2px solid rgba(47, 111, 237, 0.55);
       outline-offset: 2px;
     }
     @media (max-width: 480px) {
       .col-view-btn {
-        gap: 0.45rem;
-        min-height: 3.25rem;
-        padding: 0.62rem 1.15rem 0.62rem 0.65rem;
+        min-height: 2.85rem;
+        padding: 0.48rem 0.7rem;
       }
-      .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
-        padding-left: 1.15rem;
-        padding-right: 0.65rem;
-      }
-      .col-view-glyph { width: 1.3rem; height: 1.3rem; border-radius: 7px; }
-      .col-view-label { font-size: 0.96rem; letter-spacing: 0.04em; }
-      .col-view-kicker { letter-spacing: 0.12em; font-size: 0.56rem; }
-      .col-view-clasp {
-        width: 0.78rem;
-        right: 0.2rem;
-        gap: 0.14rem;
-        padding: 0.28rem 0.08rem;
-      }
-      .col-stage[data-col-view="decks"] .col-view-clasp { left: 0.2rem; right: auto; }
-      .col-view-thumb-rivet { width: 0.34rem; height: 0.34rem; }
-      .col-view-thumb-grip { width: 0.34rem; height: 0.72rem; }
+      .col-view-label { font-size: 0.95rem; }
+      .col-view-kicker { letter-spacing: 0.1em; font-size: 0.58rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       .col-view-thumb { transition: none; }
       .col-toast { transition: none; }
-      .col-view-btn { transition: color 0.2s ease, opacity 0.2s ease; }
     }
 
     .col-album-section,
@@ -2782,28 +2585,14 @@
           <div class="col-lg-12">
             <div class="col-stage" id="colStage" data-col-view="album">
               <div class="col-view-switch" role="tablist" aria-label="卡冊與牌組切換">
-                <span class="col-view-rail" aria-hidden="true"></span>
-                <span class="col-view-thumb" aria-hidden="true">
-                  <span class="col-view-thumb-face"></span>
-                  <span class="col-view-clasp">
-                    <span class="col-view-thumb-rivet"></span>
-                    <span class="col-view-thumb-grip"></span>
-                    <span class="col-view-thumb-rivet"></span>
-                  </span>
-                </span>
+                <span class="col-view-thumb" aria-hidden="true"></span>
                 <button type="button" class="col-view-btn" role="tab" id="colViewAlbumBtn" data-col-view-btn="album" aria-controls="colSectionAlbum" aria-selected="true">
-                  <span class="col-view-glyph col-view-glyph-binder" aria-hidden="true"></span>
-                  <span class="col-view-copy">
-                    <span class="col-view-kicker">Binder</span>
-                    <span class="col-view-label">我的卡冊</span>
-                  </span>
+                  <span class="col-view-kicker">Binder</span>
+                  <span class="col-view-label">我的卡冊</span>
                 </button>
                 <button type="button" class="col-view-btn" role="tab" id="colViewDecksBtn" data-col-view-btn="decks" aria-controls="colSectionDecks" aria-selected="false">
-                  <span class="col-view-glyph col-view-glyph-deck" aria-hidden="true"></span>
-                  <span class="col-view-copy">
-                    <span class="col-view-kicker">Deck Box</span>
-                    <span class="col-view-label">我的牌組</span>
-                  </span>
+                  <span class="col-view-kicker">Deck Box</span>
+                  <span class="col-view-label">我的牌組</span>
                 </button>
               </div>
 
