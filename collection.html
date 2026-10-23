@@ -886,16 +886,13 @@
         box-shadow 0.35s ease;
     }
     .col-view-thumb-face {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: block;
       height: 100%;
-      padding: 0 0.85rem;
       border-radius: 11px;
       background:
         repeating-linear-gradient(
           90deg,
-          rgba(255, 255, 255, 0.05) 0 1px,
+          rgba(255, 255, 255, 0.045) 0 1px,
           transparent 1px 3px
         ),
         linear-gradient(180deg, #3a4556 0%, #252c38 55%, #1b222c 100%);
@@ -903,9 +900,32 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.18),
         inset 0 -8px 14px rgba(0, 0, 0, 0.35);
     }
+    /* 內側鎖扣：鉚釘＋握槽，不壓到標籤 */
+    .col-view-clasp {
+      position: absolute;
+      top: 50%;
+      right: 0.28rem;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.22rem;
+      width: 0.95rem;
+      padding: 0.35rem 0.12rem;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 248, 230, 0.2), transparent 40%),
+        linear-gradient(180deg, #2a3340 0%, #171c24 100%);
+      border: 1px solid rgba(232, 214, 170, 0.42);
+      box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      pointer-events: none;
+    }
     .col-view-thumb-rivet {
-      width: 0.55rem;
-      height: 0.55rem;
+      width: 0.42rem;
+      height: 0.42rem;
       border-radius: 50%;
       background:
         radial-gradient(circle at 35% 30%, #f3ead7, #c2ad86 45%, #6f6046 100%);
@@ -915,19 +935,19 @@
       flex: 0 0 auto;
     }
     .col-view-thumb-grip {
-      width: 2.1rem;
-      height: 0.72rem;
+      width: 0.42rem;
+      height: 0.95rem;
       border-radius: 999px;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.14), transparent),
         repeating-linear-gradient(
-          90deg,
-          rgba(236, 224, 196, 0.55) 0 2px,
-          transparent 2px 5px
+          180deg,
+          rgba(236, 224, 196, 0.6) 0 2px,
+          transparent 2px 4px
         );
       box-shadow:
-        inset 0 1px 2px rgba(0, 0, 0, 0.55),
-        0 1px 0 rgba(255, 255, 255, 0.12);
+        inset 0 0 2px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.1);
     }
     .col-stage[data-col-view="decks"] .col-view-thumb {
       transform: translateX(calc(100% + var(--switch-gap)));
@@ -947,6 +967,14 @@
         ),
         linear-gradient(180deg, #3d5245 0%, #27362d 55%, #1a241e 100%);
     }
+    .col-stage[data-col-view="decks"] .col-view-clasp {
+      right: auto;
+      left: 0.28rem;
+      background:
+        linear-gradient(180deg, rgba(255, 236, 190, 0.18), transparent 40%),
+        linear-gradient(180deg, #334539 0%, #1c261f 100%);
+      border-color: rgba(232, 197, 120, 0.5);
+    }
     .col-view-btn {
       position: relative;
       z-index: 3;
@@ -955,7 +983,7 @@
       gap: 0.7rem;
       margin: 0;
       min-height: 3.55rem;
-      padding: 0.7rem 0.95rem 0.7rem 0.85rem;
+      padding: 0.7rem 1.35rem 0.7rem 0.85rem;
       border: 0;
       border-radius: 13px;
       background: transparent;
@@ -963,6 +991,10 @@
       text-align: left;
       cursor: pointer;
       transition: color 0.28s ease, transform 0.22s ease, opacity 0.28s ease;
+    }
+    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
+      padding-left: 1.35rem;
+      padding-right: 0.85rem;
     }
     .col-view-btn:hover { color: rgba(248, 244, 232, 0.92); }
     .col-view-btn:active { transform: translateY(1px); }
@@ -2743,7 +2775,8 @@
               <div class="col-view-switch" role="tablist" aria-label="卡冊與牌組切換">
                 <span class="col-view-rail" aria-hidden="true"></span>
                 <span class="col-view-thumb" aria-hidden="true">
-                  <span class="col-view-thumb-face">
+                  <span class="col-view-thumb-face"></span>
+                  <span class="col-view-clasp">
                     <span class="col-view-thumb-rivet"></span>
                     <span class="col-view-thumb-grip"></span>
                     <span class="col-view-thumb-rivet"></span>
