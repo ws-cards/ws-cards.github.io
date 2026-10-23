@@ -798,118 +798,273 @@
       --deckbox-well: #18231e;
     }
 
-    /* 卡冊／牌組鎖扣切換 */
+    /* 卡冊／牌組：實體檔案夾鎖扣軌 */
     .col-view-switch {
+      --switch-pad: 0.34rem;
+      --switch-gap: 0.2rem;
+      --switch-radius: 18px;
+      --switch-ink: rgba(236, 232, 222, 0.55);
+      --switch-ink-strong: #f4efe4;
+      --switch-metal: #c8b89a;
       position: relative;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.25rem;
-      padding: 0.3rem;
-      border-radius: 16px;
+      gap: var(--switch-gap);
+      padding: var(--switch-pad);
+      border-radius: var(--switch-radius);
+      border: 1px solid rgba(28, 24, 18, 0.55);
       background:
-        radial-gradient(120% 80% at 10% 0%, rgba(255, 255, 255, 0.08), transparent 55%),
-        linear-gradient(145deg, #1b2433 0%, #0e1520 55%, #172018 100%);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 40%),
+        linear-gradient(105deg, #2a2f38 0%, #1a1e26 46%, #1f2a24 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 14px 36px rgba(8, 12, 20, 0.28);
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -10px 24px rgba(0, 0, 0, 0.28),
+        0 16px 34px rgba(12, 14, 18, 0.22);
       overflow: hidden;
       isolation: isolate;
     }
-    .col-view-switch::before {
+    .col-view-switch::before,
+    .col-view-switch::after {
       content: '';
       position: absolute;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        -18deg,
-        transparent 0,
-        transparent 10px,
-        rgba(255, 255, 255, 0.015) 10px,
-        rgba(255, 255, 255, 0.015) 11px
-      );
       pointer-events: none;
       z-index: 0;
     }
+    /* 雙材質底：左卡冊石板、右牌盒森綠 */
+    .col-view-switch::before {
+      inset: var(--switch-pad);
+      border-radius: calc(var(--switch-radius) - 8px);
+      background:
+        linear-gradient(90deg,
+          rgba(88, 108, 138, 0.22) 0%,
+          rgba(88, 108, 138, 0.08) 46%,
+          rgba(70, 96, 78, 0.1) 54%,
+          rgba(70, 96, 78, 0.26) 100%);
+      opacity: 0.95;
+    }
+    /* 車縫線 */
+    .col-view-switch::after {
+      inset: 0.55rem;
+      border-radius: 12px;
+      border: 1px dashed rgba(232, 220, 190, 0.14);
+      opacity: 0.85;
+    }
+    .col-view-rail {
+      position: absolute;
+      left: calc(var(--switch-pad) + 0.55rem);
+      right: calc(var(--switch-pad) + 0.55rem);
+      top: 50%;
+      height: 3px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, transparent, rgba(210, 196, 164, 0.55) 12%, rgba(210, 196, 164, 0.55) 88%, transparent);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 1px 1px rgba(0, 0, 0, 0.45);
+      z-index: 1;
+      opacity: 0.7;
+    }
     .col-view-thumb {
       position: absolute;
-      top: 0.3rem;
-      bottom: 0.3rem;
-      left: 0.3rem;
-      width: calc(50% - 0.425rem);
-      border-radius: 12px;
+      top: var(--switch-pad);
+      bottom: var(--switch-pad);
+      left: var(--switch-pad);
+      width: calc(50% - (var(--switch-pad) + var(--switch-gap) / 2));
+      border-radius: 13px;
+      z-index: 2;
+      padding: 2px;
       background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.18), transparent 42%),
-        linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+        linear-gradient(160deg, rgba(255, 255, 255, 0.35), transparent 40%),
+        linear-gradient(180deg, #ebe2d0 0%, #b7a684 48%, #8f7d5c 100%);
       box-shadow:
-        0 8px 18px rgba(37, 99, 235, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        0 10px 22px rgba(40, 32, 18, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
       transition:
-        transform 0.42s cubic-bezier(0.22, 0.8, 0.28, 1),
+        transform 0.48s cubic-bezier(0.22, 1.15, 0.28, 1),
         background 0.35s ease,
         box-shadow 0.35s ease;
-      z-index: 1;
+    }
+    .col-view-thumb-face {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      padding: 0 0.85rem;
+      border-radius: 11px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.05) 0 1px,
+          transparent 1px 3px
+        ),
+        linear-gradient(180deg, #3a4556 0%, #252c38 55%, #1b222c 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        inset 0 -8px 14px rgba(0, 0, 0, 0.35);
+    }
+    .col-view-thumb-rivet {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, #f3ead7, #c2ad86 45%, #6f6046 100%);
+      box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      flex: 0 0 auto;
+    }
+    .col-view-thumb-grip {
+      width: 2.1rem;
+      height: 0.72rem;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
+        repeating-linear-gradient(
+          90deg,
+          rgba(236, 224, 196, 0.55) 0 2px,
+          transparent 2px 5px
+        );
+      box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.12);
     }
     .col-stage[data-col-view="decks"] .col-view-thumb {
-      transform: translateX(calc(100% + 0.25rem));
+      transform: translateX(calc(100% + var(--switch-gap)));
       background:
-        linear-gradient(160deg, rgba(255, 236, 180, 0.22), transparent 45%),
-        linear-gradient(180deg, #3f5a4a 0%, #24352d 100%);
+        linear-gradient(160deg, rgba(255, 236, 190, 0.4), transparent 42%),
+        linear-gradient(180deg, #e7d7ae 0%, #b8975a 50%, #7d6238 100%);
       box-shadow:
-        0 8px 18px rgba(36, 53, 45, 0.45),
-        inset 0 1px 0 rgba(232, 197, 120, 0.35);
+        0 10px 22px rgba(40, 48, 34, 0.38),
+        inset 0 1px 0 rgba(255, 244, 214, 0.55);
+    }
+    .col-stage[data-col-view="decks"] .col-view-thumb-face {
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 236, 190, 0.05) 0 1px,
+          transparent 1px 3px
+        ),
+        linear-gradient(180deg, #3d5245 0%, #27362d 55%, #1a241e 100%);
     }
     .col-view-btn {
       position: relative;
-      z-index: 2;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin: 0;
+      min-height: 3.55rem;
+      padding: 0.7rem 0.95rem 0.7rem 0.85rem;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: var(--switch-ink);
+      text-align: left;
+      cursor: pointer;
+      transition: color 0.28s ease, transform 0.22s ease, opacity 0.28s ease;
+    }
+    .col-view-btn:hover { color: rgba(248, 244, 232, 0.92); }
+    .col-view-btn:active { transform: translateY(1px); }
+    .col-view-btn[aria-selected="true"] {
+      color: var(--switch-ink-strong);
+    }
+    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
+      color: #f6edd4;
+    }
+    .col-view-btn[aria-selected="false"] {
+      opacity: 0.72;
+    }
+    .col-view-btn[aria-selected="true"] {
+      opacity: 1;
+    }
+    .col-view-copy {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 0.12rem;
-      margin: 0;
-      padding: 0.78rem 1rem 0.72rem;
-      border: 0;
-      border-radius: 12px;
-      background: transparent;
-      color: rgba(226, 232, 240, 0.62);
-      text-align: left;
-      cursor: pointer;
-      transition: color 0.25s ease, transform 0.25s ease;
+      gap: 0.1rem;
+      min-width: 0;
     }
-    .col-view-btn:hover { color: rgba(248, 250, 252, 0.9); }
-    .col-view-btn:active { transform: translateY(1px); }
-    .col-view-btn[aria-selected="true"] {
-      color: #fff;
+    .col-view-glyph {
+      position: relative;
+      flex: 0 0 auto;
+      width: 1.55rem;
+      height: 1.55rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(236, 224, 196, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .col-stage[data-col-view="decks"] .col-view-btn[data-col-view-btn="decks"] {
-      color: #f8f1d8;
+    .col-view-glyph-binder::before,
+    .col-view-glyph-binder::after {
+      content: '';
+      position: absolute;
+      left: 0.28rem;
+      width: 0.34rem;
+      height: 0.34rem;
+      border: 2px solid rgba(196, 214, 236, 0.85);
+      border-radius: 50%;
+      box-shadow: 0.55rem 0 0 rgba(196, 214, 236, 0.85);
+    }
+    .col-view-glyph-binder::before { top: 0.28rem; }
+    .col-view-glyph-binder::after { bottom: 0.28rem; }
+    .col-view-glyph-deck::before {
+      content: '';
+      position: absolute;
+      inset: 0.28rem 0.32rem 0.34rem;
+      border: 1.5px solid rgba(232, 197, 120, 0.9);
+      border-radius: 3px 3px 5px 5px;
+      background: linear-gradient(180deg, rgba(232, 197, 120, 0.18), transparent 60%);
+    }
+    .col-view-glyph-deck::after {
+      content: '';
+      position: absolute;
+      left: 0.45rem;
+      right: 0.45rem;
+      top: 0.42rem;
+      height: 1.5px;
+      background: rgba(232, 197, 120, 0.85);
+      box-shadow: 0 0.28rem 0 rgba(232, 197, 120, 0.55);
+    }
+    .col-view-btn[aria-selected="true"] .col-view-glyph {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(236, 224, 196, 0.35);
     }
     .col-view-kicker {
       font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-size: 0.66rem;
+      font-size: 0.62rem;
       font-weight: 700;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       opacity: 0.78;
     }
     .col-view-label {
       font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
-      font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+      font-size: clamp(1.02rem, 2.1vw, 1.24rem);
       font-weight: 900;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       line-height: 1.15;
     }
     .col-view-btn:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.55);
+      outline: 2px solid rgba(232, 214, 170, 0.75);
       outline-offset: 2px;
     }
     @media (max-width: 480px) {
-      .col-view-btn { padding: 0.7rem 0.75rem 0.65rem; }
-      .col-view-label { font-size: 1rem; letter-spacing: 0.04em; }
-      .col-view-kicker { letter-spacing: 0.12em; }
+      .col-view-btn {
+        gap: 0.5rem;
+        min-height: 3.25rem;
+        padding: 0.62rem 0.7rem;
+      }
+      .col-view-glyph { width: 1.35rem; height: 1.35rem; border-radius: 7px; }
+      .col-view-label { font-size: 0.98rem; letter-spacing: 0.04em; }
+      .col-view-kicker { letter-spacing: 0.12em; font-size: 0.58rem; }
+      .col-view-thumb-face { padding: 0 0.55rem; }
+      .col-view-thumb-grip { width: 1.45rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       .col-view-thumb { transition: none; }
       .col-toast { transition: none; }
-      .col-view-btn { transition: color 0.2s ease; }
+      .col-view-btn { transition: color 0.2s ease, opacity 0.2s ease; }
     }
 
     .col-album-section,
@@ -2586,14 +2741,27 @@
           <div class="col-lg-12">
             <div class="col-stage" id="colStage" data-col-view="album">
               <div class="col-view-switch" role="tablist" aria-label="卡冊與牌組切換">
-                <span class="col-view-thumb" aria-hidden="true"></span>
+                <span class="col-view-rail" aria-hidden="true"></span>
+                <span class="col-view-thumb" aria-hidden="true">
+                  <span class="col-view-thumb-face">
+                    <span class="col-view-thumb-rivet"></span>
+                    <span class="col-view-thumb-grip"></span>
+                    <span class="col-view-thumb-rivet"></span>
+                  </span>
+                </span>
                 <button type="button" class="col-view-btn" role="tab" id="colViewAlbumBtn" data-col-view-btn="album" aria-controls="colSectionAlbum" aria-selected="true">
-                  <span class="col-view-kicker">Binder</span>
-                  <span class="col-view-label">我的卡冊</span>
+                  <span class="col-view-glyph col-view-glyph-binder" aria-hidden="true"></span>
+                  <span class="col-view-copy">
+                    <span class="col-view-kicker">Binder</span>
+                    <span class="col-view-label">我的卡冊</span>
+                  </span>
                 </button>
                 <button type="button" class="col-view-btn" role="tab" id="colViewDecksBtn" data-col-view-btn="decks" aria-controls="colSectionDecks" aria-selected="false">
-                  <span class="col-view-kicker">Deck Box</span>
-                  <span class="col-view-label">我的牌組</span>
+                  <span class="col-view-glyph col-view-glyph-deck" aria-hidden="true"></span>
+                  <span class="col-view-copy">
+                    <span class="col-view-kicker">Deck Box</span>
+                    <span class="col-view-label">我的牌組</span>
+                  </span>
                 </button>
               </div>
 
