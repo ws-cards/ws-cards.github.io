@@ -882,147 +882,92 @@
       padding: 0;
     }
 
-    /* 卡冊舞台：對開頁／手機單頁，類似 binder 參考版面（高度隨內容，不強制適配視窗） */
+    /* 卡冊舞台：附圖風格格線；翻頁功能保留，不顯示頁碼文字／箭頭圖示
+       高度隨內容（aspect-ratio），不強制適配可視視窗 */
     .col-binder-stage {
-      --binder-frame: #3b82f6;
-      --binder-panel: #eef2f7;
-      --binder-panel-ink: #111827;
-      --binder-gap: 0.45rem;
+      --binder-gap: 0.55rem;
+      --binder-panel: #141414;
       position: relative;
       margin-top: 0.85rem;
-      display: flex;
-      flex-direction: column;
       padding: 0 2.4rem;
+      border-radius: 12px;
+      background: var(--binder-panel);
+      overflow: hidden;
     }
     @media (max-width: 767px) {
       .col-binder-stage {
-        padding: 0 1.35rem;
+        padding: 0 1.5rem;
       }
     }
-    [data-theme="dark"] .col-binder-stage {
-      --binder-frame: #60a5fa;
-      --binder-panel: #1c1f24;
-      --binder-panel-ink: #f3f4f6;
+    [data-theme="light"] .col-binder-stage {
+      --binder-panel: #1a1a1a;
     }
     .col-binder-viewport {
       min-width: 0;
-      display: flex;
-      flex-direction: column;
     }
     .col-binder-spread {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-      /* 固定舒適高度（非依剩餘視窗動態壓縮） */
-      height: clamp(420px, 112vw, 620px);
+      margin: 0;
+      padding: 0;
       transform-origin: center center;
       transition: transform 0.4s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.3s ease;
     }
-    @media (min-width: 768px) {
-      .col-binder-spread {
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        height: clamp(560px, 64vw, 820px);
-      }
-    }
     .col-binder-spread.is-flip-next {
-      transform: translateX(-18px) scale(0.985);
-      opacity: 0.35;
+      transform: translateX(-14px) scale(0.99);
+      opacity: 0.4;
     }
     .col-binder-spread.is-flip-prev {
-      transform: translateX(18px) scale(0.985);
-      opacity: 0.35;
+      transform: translateX(14px) scale(0.99);
+      opacity: 0.4;
     }
     @media (prefers-reduced-motion: reduce) {
       .col-binder-spread { transition: opacity 0.2s ease; }
       .col-binder-spread.is-flip-next,
       .col-binder-spread.is-flip-prev {
         transform: none;
-        opacity: 0.4;
+        opacity: 0.45;
       }
-    }
-    .col-binder-leaf {
-      min-width: 0;
-      min-height: 0;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      border: 2px solid var(--binder-frame);
-      border-radius: 10px;
-      background: var(--binder-panel);
-      color: var(--binder-panel-ink);
-      overflow: hidden;
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
-    }
-    [data-theme="dark"] .col-binder-leaf {
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-    }
-    .col-binder-leaf-label {
-      flex: 0 0 auto;
-      margin: 0;
-      padding: 0.45rem 0.6rem 0.25rem;
-      text-align: center;
-      font-size: 0.92rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--binder-panel-ink);
-      opacity: 0.88;
     }
     .col-binder-page {
       list-style: none;
       margin: 0;
-      padding: 0.35rem 0.45rem 0.55rem;
-      flex: 1 1 auto;
-      min-height: 0;
+      padding: var(--binder-gap);
       display: grid;
-      /* 手機：2×2 */
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(2, minmax(0, 1fr));
       gap: var(--binder-gap);
-      align-content: stretch;
-      overflow: hidden;
+      background: var(--binder-panel);
     }
     @media (min-width: 768px) {
       .col-binder-page {
-        /* 電腦單頁 2×4；左右對開共 4×4 */
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(4, minmax(0, 1fr));
-        gap: 0.4rem;
-        padding: 0.3rem 0.5rem 0.55rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        --binder-gap: 0.65rem;
+        padding: 0.65rem;
       }
     }
     .col-binder-page .col-tile {
-      min-height: 0;
-      height: 100%;
       margin: 0;
+      min-width: 0;
       position: relative;
     }
     .col-binder-page .col-tile-body {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      border-radius: 6px;
+      display: block;
+      border-radius: 8px;
       overflow: hidden;
       background: transparent;
       box-shadow: none;
     }
     .col-binder-page .col-tile-art {
-      flex: 1 1 auto;
-      min-height: 0;
+      position: relative;
       width: 100%;
-      height: 100%;
-      aspect-ratio: auto;
-      border-radius: 6px;
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
       overflow: hidden;
-      background: rgba(15, 23, 42, 0.06);
-    }
-    [data-theme="dark"] .col-binder-page .col-tile-art {
-      background: rgba(255, 255, 255, 0.04);
+      background: #0d0d0d;
     }
     .col-binder-page .col-tile-art img {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      background: transparent;
+      display: block;
     }
     .col-binder-page .col-tile-caption {
       display: none;
@@ -1030,8 +975,8 @@
     .col-binder-page .col-check {
       width: 26px;
       height: 26px;
-      top: 0.28rem;
-      left: 0.28rem;
+      top: 0.35rem;
+      left: 0.35rem;
       border-radius: 7px;
       background: rgba(255, 255, 255, 0.92);
     }
@@ -1040,14 +985,14 @@
     }
     .col-binder-page .col-rare {
       font-size: 0.62rem;
-      left: 0.3rem;
-      bottom: 0.3rem;
+      left: 0.35rem;
+      bottom: 0.35rem;
       padding: 0.08rem 0.3rem;
     }
     .col-binder-page .col-binder-qty-badge {
       position: absolute;
-      right: 0.3rem;
-      bottom: 0.3rem;
+      right: 0.35rem;
+      bottom: 0.35rem;
       z-index: 2;
       min-width: 1.35rem;
       padding: 0.1rem 0.35rem;
@@ -1062,140 +1007,122 @@
       pointer-events: none;
     }
     .col-binder-pocket-empty {
-      min-height: 0;
-      height: 100%;
-      border: 1.5px dashed rgba(15, 23, 42, 0.22);
+      min-width: 0;
+      aspect-ratio: 63 / 88;
       border-radius: 8px;
-      background: rgba(15, 23, 42, 0.04);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(15, 23, 42, 0.28);
-      font-size: 1.35rem;
-    }
-    [data-theme="dark"] .col-binder-pocket-empty {
-      border-color: rgba(255, 255, 255, 0.18);
       background: rgba(255, 255, 255, 0.03);
-      color: rgba(255, 255, 255, 0.28);
+      border: 0;
     }
+    /* 翻頁熱區：保留點擊，不顯示圖示／底色 */
     .col-binder-nav {
       position: absolute;
-      top: 42%;
-      transform: translateY(-50%);
+      top: 0;
+      bottom: 0;
       z-index: 3;
-      width: 2.6rem;
-      height: 2.6rem;
+      width: 2.75rem;
+      margin: 0;
+      padding: 0;
       border: 0;
-      border-radius: 999px;
-      background: rgba(55, 65, 81, 0.55);
-      color: #f9fafb;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      background: transparent;
+      color: transparent;
+      font-size: 0;
+      line-height: 0;
       cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-      transition: background 0.15s ease, transform 0.15s ease;
+      appearance: none;
+      -webkit-appearance: none;
     }
-    .col-binder-nav:hover:not(:disabled) {
-      background: rgba(37, 99, 235, 0.85);
-      transform: translateY(-50%) scale(1.04);
-    }
+    .col-binder-nav i { display: none !important; }
     .col-binder-nav:disabled {
-      opacity: 0.28;
-      cursor: not-allowed;
+      cursor: default;
+      pointer-events: none;
     }
-    .col-binder-nav-prev { left: 0.15rem; }
-    .col-binder-nav-next { right: 0.15rem; }
+    .col-binder-nav-prev { left: 0; }
+    .col-binder-nav-next { right: 0; }
     @media (max-width: 767px) {
-      .col-binder-nav {
-        width: 1.55rem;
-        height: 3.2rem;
-        border-radius: 0 999px 999px 0;
-        top: 46%;
-        background: rgba(75, 85, 99, 0.45);
-        box-shadow: none;
-      }
-      .col-binder-nav-prev {
-        left: 0;
-        border-radius: 0 999px 999px 0;
-      }
-      .col-binder-nav-next {
-        right: 0;
-        border-radius: 999px 0 0 999px;
-      }
-      .col-binder-nav:hover:not(:disabled) {
-        transform: translateY(-50%);
-      }
+      .col-binder-nav { width: 1.85rem; }
     }
+    /* 底部分頁列：功能保留，文字與圖示隱藏 */
     .col-binder-pager {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-top: 0.7rem;
-      width: fit-content;
-      max-width: 100%;
-      align-self: center;
-      padding: 0.2rem;
-      border-radius: 999px;
-      background: rgba(31, 41, 55, 0.88);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .col-binder-pager[hidden] { display: none !important; }
     .col-binder-pager-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 2.35rem;
-      min-height: 2.15rem;
-      padding: 0.25rem 0.55rem;
       border: 0;
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
       background: transparent;
-      color: #f3f4f6;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
+      color: transparent;
+      font-size: 0;
     }
-    .col-binder-pager-btn:last-child { border-right: 0; }
-    .col-binder-pager-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .col-binder-pager-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
+    .col-binder-pager-btn i { display: none !important; }
     .col-binder-page-label {
-      min-width: 4.2rem;
-      padding: 0 0.65rem;
-      text-align: center;
-      font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: #fff;
-      letter-spacing: 0.02em;
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-      line-height: 2.15rem;
+      font-size: 0;
+      color: transparent;
     }
     .col-binder-groups {
       display: grid;
       gap: 1rem;
+      padding: 0.75rem;
+      background: var(--binder-panel);
     }
     .col-binder-groups .col-group-title {
-      color: var(--col-ink, #111827);
-      border-bottom-color: var(--col-line, #e5e7eb);
-    }
-    [data-theme="dark"] .col-binder-groups .col-group-title {
-      color: #f3f6fb;
+      color: #f3f4f6;
       border-bottom-color: rgba(255, 255, 255, 0.14);
     }
     .col-binder-groups .col-album {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      padding: 0.85rem;
-      border-radius: 12px;
-      background: var(--binder-page);
-      box-shadow: inset 0 0 0 1px var(--binder-page-line);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--binder-gap);
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    @media (min-width: 768px) {
+      .col-binder-groups .col-album {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    .col-binder-groups .col-tile {
+      position: relative;
+      margin: 0;
+      min-width: 0;
+    }
+    .col-binder-groups .col-tile-caption { display: none; }
+    .col-binder-groups .col-tile-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+    .col-binder-groups .col-tile-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .col-binder-groups .col-binder-qty-badge {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.35rem;
+      z-index: 2;
+      min-width: 1.35rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 999px;
+      background: rgba(17, 24, 39, 0.78);
+      color: #fff;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      pointer-events: none;
     }
 
     /* 牌盒 */
@@ -2385,11 +2312,74 @@
     .col-deck-editor-tools {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      align-items: center;
+      gap: 0.4rem 0.65rem;
       margin: 0 0 0.75rem;
     }
     .col-deck-editor-tools .btn {
       font-weight: 700;
+    }
+    .col-deck-card-view-tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem 0.75rem;
+      margin-left: auto;
+    }
+    .col-deck-card-sort {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a5568;
+    }
+    [data-theme="dark"] .col-deck-card-sort { color: #cbd5e0; }
+    .col-deck-card-sort select {
+      height: 2rem;
+      min-width: 8.5rem;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid var(--col-line, #e2e8f0);
+      border-radius: 8px;
+      background: #fff;
+      color: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .col-deck-card-sort select {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #e2e8f0;
+    }
+    .col-deck-card-short-only {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a5568;
+      cursor: pointer;
+      user-select: none;
+    }
+    [data-theme="dark"] .col-deck-card-short-only { color: #cbd5e0; }
+    .col-deck-card-short-only input {
+      width: 0.95rem;
+      height: 0.95rem;
+      margin: 0;
+      accent-color: #dc2626;
+    }
+    .col-deck-detail-main-head .col-deck-card-view-tools {
+      flex: 1 1 100%;
+      margin-left: 0;
+      justify-content: flex-start;
+    }
+    @media (min-width: 768px) {
+      .col-deck-detail-main-head .col-deck-card-view-tools {
+        flex: 1 1 auto;
+        justify-content: flex-end;
+      }
     }
     #colDeckMetaModal.col-modal {
       z-index: 2100;
@@ -2501,7 +2491,7 @@
                   <div>
                     <p class="col-section-kicker">Card Binder</p>
                     <h2 class="col-section-title" id="colBinderTitle">我的卡冊</h2>
-                    <p class="col-section-lede">管理持有卡；下方卡冊可左右翻頁瀏覽。</p>
+                    <p class="col-section-lede">管理持有卡；點兩側或左右滑動可翻頁。</p>
                   </div>
                   <div class="col-section-stats" aria-live="polite">
                     <div class="col-section-stat">
@@ -2513,8 +2503,8 @@
                       <span>持有張數</span>
                     </div>
                     <div class="col-section-stat">
-                      <strong id="colBinderStatPage">1</strong>
-                      <span>目前頁</span>
+                      <strong id="colBinderStatVisible">0</strong>
+                      <span>可見</span>
                     </div>
                   </div>
                 </header>
@@ -2542,7 +2532,7 @@
                       <div class="col-field col-field-group">
                         <label for="colGroupSelect">分組檢視</label>
                         <select id="colGroupSelect" class="form-control">
-                          <option value="none" selected>不分組（翻頁）</option>
+                          <option value="none" selected>不分組</option>
                           <option value="tag">依標籤分組</option>
                         </select>
                       </div>
@@ -2597,31 +2587,19 @@
                     </div>
 
                     <div class="col-binder-stage" id="colBinderStage">
-                      <button type="button" class="col-binder-nav col-binder-nav-prev" id="colBinderSidePrev" aria-label="上一頁">
-                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                      </button>
+                      <button type="button" class="col-binder-nav col-binder-nav-prev" id="colBinderSidePrev" aria-label="上一頁"></button>
                       <div class="col-binder-viewport">
-                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊翻頁區"></div>
+                        <div id="colAlbumRoot" class="col-binder-spread" aria-label="我的卡冊"></div>
                       </div>
-                      <button type="button" class="col-binder-nav col-binder-nav-next" id="colBinderSideNext" aria-label="下一頁">
-                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                      </button>
+                      <button type="button" class="col-binder-nav col-binder-nav-next" id="colBinderSideNext" aria-label="下一頁"></button>
                       <nav class="col-binder-pager" id="colBinderPager" hidden aria-label="卡冊翻頁">
-                        <button type="button" class="col-binder-pager-btn" id="colBinderFirstBtn" aria-label="第一頁">
-                          <i class="fas fa-angle-double-left" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderPrevBtn" aria-label="上一頁">
-                          <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                        </button>
-                        <div class="col-binder-page-label">
+                        <button type="button" class="col-binder-pager-btn" id="colBinderFirstBtn" aria-label="第一頁"></button>
+                        <button type="button" class="col-binder-pager-btn" id="colBinderPrevBtn" aria-label="上一頁"></button>
+                        <div class="col-binder-page-label" aria-hidden="true">
                           <span id="colBinderPageNow">1</span> / <span id="colBinderPageTotal">1</span>
                         </div>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderNextBtn" aria-label="下一頁">
-                          <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="col-binder-pager-btn" id="colBinderLastBtn" aria-label="最後一頁">
-                          <i class="fas fa-angle-double-right" aria-hidden="true"></i>
-                        </button>
+                        <button type="button" class="col-binder-pager-btn" id="colBinderNextBtn" aria-label="下一頁"></button>
+                        <button type="button" class="col-binder-pager-btn" id="colBinderLastBtn" aria-label="最後一頁"></button>
                       </nav>
                     </div>
                   </div>
@@ -2634,7 +2612,7 @@
                     <div>
                       <p class="col-deckbox-kicker">Deck Box</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
-                      <p class="col-deckbox-lede">編成像收進牌盒一樣分開管理；缺卡請在編輯中標記。</p>
+                      <p class="col-deckbox-lede">牌組與卡冊各自管理實體牌；缺卡在編輯中標記，持有＝編成−缺卡。</p>
                     </div>
                     <div class="col-deckbox-badge" aria-live="polite">
                       <i class="fas fa-archive" aria-hidden="true"></i>
@@ -2797,6 +2775,19 @@
             <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
           </button>
         </span>
+        <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
+          <label class="col-deck-card-sort" for="colDeckCardSortSelect">
+            <span>排序</span>
+            <select id="colDeckCardSortSelect" aria-label="牌組內排序">
+              <option value="cardNumber" selected>按卡號排序</option>
+              <option value="level">按等級排序</option>
+            </select>
+          </label>
+          <label class="col-deck-card-short-only">
+            <input type="checkbox" id="colDeckCardShortOnly">
+            <span>僅列出缺少的牌</span>
+          </label>
+        </div>
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
     </div>
@@ -2859,7 +2850,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後會開啟編輯，可於編輯中對照持有量並調整缺卡。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後此牌組預設全部持有；之後手動標記缺卡即可。牌組持有與卡冊各自獨立。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -2926,6 +2917,9 @@
     var tagFilter = '';
     var sortMode = 'newest';
     var groupMode = 'none';
+    var albumPageIndex = 0;
+    var albumFlipTimer = null;
+    var albumTouchStartX = null;
     var importPickSet = {};
     var importFilter = '';
     var tagEditTargets = [];
@@ -2940,9 +2934,10 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
-    var albumPageIndex = 0;
-    var albumFlipTimer = null;
-    var albumTouchStartX = null;
+    var deckCardSortMode = 'cardNumber';
+    var deckCardShortOnly = false;
+    var deckLevelCache = {};
+    var deckLevelEnriching = false;
 
     var deckModalHint = document.getElementById('colDeckModalHint');
     var deckPickRow = document.getElementById('colDeckPickRow');
@@ -2968,7 +2963,7 @@
     var binderPageNow = document.getElementById('colBinderPageNow');
     var binderPageTotal = document.getElementById('colBinderPageTotal');
     var binderStatKinds = document.getElementById('colBinderStatKinds');
-    var binderStatPage = document.getElementById('colBinderStatPage');
+    var binderStatVisible = document.getElementById('colBinderStatVisible');
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var countEl = document.getElementById('colCountLabel');
@@ -3283,19 +3278,17 @@
       var checkedCount = Object.keys(checkedSet).filter(function (key) {
         return allItems.some(function (it) { return it.cardNumber === key; });
       }).length;
+      var visibleCount = visible ? visible.length : 0;
       if (totalValueEl) totalValueEl.textContent = String(totalQty);
       if (binderStatKinds) binderStatKinds.textContent = String(allItems.length);
+      if (binderStatVisible) binderStatVisible.textContent = String(visibleCount);
       countEl.textContent = '共 ' + allItems.length + ' 種';
-      totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + (visible ? visible.length : 0) + ' 種';
+      totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + visibleCount + ' 種';
     }
 
     function getAlbumSpreadSize() {
-      /* 手機 2×2=4；電腦左右頁各 2×4，對開共 4×4=16 */
+      /* 手機 2×2=4；桌面 4×4=16 */
       return window.matchMedia('(min-width: 768px)').matches ? 16 : 4;
-    }
-
-    function isAlbumDesktopSpread() {
-      return window.matchMedia('(min-width: 768px)').matches;
     }
 
     function updateBinderPager(totalPages) {
@@ -3305,7 +3298,6 @@
       var atEnd = albumPageIndex >= pages - 1;
       if (binderPageNow) binderPageNow.textContent = String(now);
       if (binderPageTotal) binderPageTotal.textContent = String(pages);
-      if (binderStatPage) binderStatPage.textContent = String(now);
       if (binderPrevBtn) binderPrevBtn.disabled = atStart;
       if (binderNextBtn) binderNextBtn.disabled = atEnd;
       if (binderFirstBtn) binderFirstBtn.disabled = atStart;
@@ -3315,20 +3307,9 @@
       if (binderPager) binderPager.hidden = pages <= 1 || groupMode === 'tag';
       if (binderSidePrev) binderSidePrev.hidden = groupMode === 'tag';
       if (binderSideNext) binderSideNext.hidden = groupMode === 'tag';
-    }
-
-    function buildBinderLeafHtml(items, sideClass, pocketCount, pageLabel) {
-      var html = '<section class="col-binder-leaf ' + sideClass + '">';
-      html += '  <h3 class="col-binder-leaf-label">' + escapeHtml(pageLabel) + '</h3>';
-      html += '  <ul class="col-binder-page">';
-      items.forEach(function (item) { html += renderTile(item, true); });
-      var empty = Math.max(0, pocketCount - items.length);
-      for (var i = 0; i < empty; i++) {
-        html += '<li class="col-binder-pocket-empty" aria-hidden="true"><i class="fas fa-plus" aria-hidden="true"></i></li>';
+      if (binderStage) {
+        binderStage.setAttribute('aria-label', '卡冊第 ' + now + '／' + pages + ' 頁');
       }
-      html += '  </ul>';
-      html += '</section>';
-      return html;
     }
 
     function renderAlbumSpread(visible) {
@@ -3338,16 +3319,13 @@
       if (albumPageIndex < 0) albumPageIndex = 0;
       var start = albumPageIndex * size;
       var slice = visible.slice(start, start + size);
-      var desktop = isAlbumDesktopSpread();
-      var perSide = desktop ? Math.ceil(size / 2) : size;
-      var left = slice.slice(0, perSide);
-      var right = desktop ? slice.slice(perSide) : [];
-      var leftNo = desktop ? (albumPageIndex * 2 + 1) : (albumPageIndex + 1);
-      var rightNo = albumPageIndex * 2 + 2;
-      var html = buildBinderLeafHtml(left, 'col-binder-page-left', perSide, '第 ' + leftNo + ' 頁');
-      if (desktop) {
-        html += buildBinderLeafHtml(right, 'col-binder-page-right', perSide, '第 ' + rightNo + ' 頁');
+      var html = '<ul class="col-binder-page">';
+      slice.forEach(function (item) { html += renderTile(item, true); });
+      var empty = Math.max(0, size - slice.length);
+      for (var i = 0; i < empty; i++) {
+        html += '<li class="col-binder-pocket-empty" aria-hidden="true"></li>';
       }
+      html += '</ul>';
       if (albumRoot) {
         albumRoot.classList.add('col-binder-spread');
         albumRoot.classList.remove('col-binder-groups');
@@ -3490,7 +3468,7 @@
           html += '  <h6 class="col-group-title">' + escapeHtml(tag) +
             '<span class="col-group-count">' + items.length + ' 種</span></h6>';
           html += '  <ul class="col-album">';
-          items.forEach(function (item) { html += renderTile(item); });
+          items.forEach(function (item) { html += renderTile(item, true); });
           html += '  </ul>';
           html += '</section>';
         });
@@ -3676,23 +3654,33 @@
       };
     }
 
+    function parseCardLevel(value) {
+      if (value == null || value === '') return null;
+      var n = Number(value);
+      if (isNaN(n)) return null;
+      return n;
+    }
+
     function aggregateDecklogCards(cards) {
       var map = {};
       (Array.isArray(cards) ? cards : []).forEach(function (c) {
         if (!c) return;
         var key = normalizeText(c.cardNo || c.cardNumber).replace(/\\/g, '/');
         if (!key) return;
+        var level = parseCardLevel(c.level != null ? c.level : c.cardlevel);
         if (!map[key]) {
           map[key] = {
             cardNumber: key,
             qty: 0,
             cardName: normalizeText(c.name || c.cardName)
           };
+          if (level != null) map[key].level = level;
         }
         map[key].qty += 1;
         if (!map[key].cardName && (c.name || c.cardName)) {
           map[key].cardName = normalizeText(c.name || c.cardName);
         }
+        if (map[key].level == null && level != null) map[key].level = level;
       });
       return normalizeDeckCards(Object.keys(map).map(function (k) { return map[k]; }));
     }
@@ -3741,6 +3729,7 @@
         if (qty > MAX_DECK_ENTRY_QTY) qty = MAX_DECK_ENTRY_QTY;
         var shortQty = clampShortQty(entry.shortQty, qty);
         var cardName = normalizeText(entry.cardName);
+        var level = parseCardLevel(entry.level != null ? entry.level : entry.cardlevel);
         if (map[key]) {
           map[key].qty = Math.min(MAX_DECK_ENTRY_QTY, map[key].qty + qty);
           map[key].shortQty = clampShortQty(
@@ -3748,10 +3737,13 @@
             map[key].qty
           );
           if (!map[key].cardName && cardName) map[key].cardName = cardName;
+          if (map[key].level == null && level != null) map[key].level = level;
         } else {
           map[key] = { cardNumber: key, qty: qty, shortQty: shortQty };
           if (cardName) map[key].cardName = cardName;
+          if (level != null) map[key].level = level;
         }
+        if (level != null) deckLevelCache[key] = level;
       });
       return Object.keys(map)
         .map(function (k) { return map[k]; })
@@ -3780,6 +3772,8 @@
         cards: normalizeDeckCards(deck.cards).map(function (c) {
           var out = { cardNumber: c.cardNumber, qty: c.qty };
           if (c.cardName) out.cardName = c.cardName;
+          var level = parseCardLevel(c.level);
+          if (level != null) out.level = level;
           var shortQty = clampShortQty(c.shortQty, c.qty);
           if (shortQty > 0) out.shortQty = shortQty;
           return out;
@@ -3803,11 +3797,136 @@
       return clampShortQty(entry.shortQty, entry.qty || 0);
     }
 
+    /** 牌組內持有＝編成−缺卡；與卡冊持有量無關。 */
+    function entryOwnedQty(entry) {
+      if (!entry) return 0;
+      var qty = entry.qty || 0;
+      var owned = qty - entryShortQty(entry);
+      return owned < 0 ? 0 : owned;
+    }
+
+    function entryLevel(entry) {
+      if (!entry) return null;
+      var fromEntry = parseCardLevel(entry.level);
+      if (fromEntry != null) return fromEntry;
+      var key = entry.cardNumber || '';
+      if (key && Object.prototype.hasOwnProperty.call(deckLevelCache, key)) {
+        return deckLevelCache[key];
+      }
+      return null;
+    }
+
+    function stampDeckEntryLevels(entries) {
+      (entries || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var lv = entryLevel(entry);
+        if (lv != null) entry.level = lv;
+      });
+    }
+
+    function filterAndSortDeckCards(cards, opts) {
+      opts = opts || {};
+      var q = String(opts.query || '').trim().toLowerCase();
+      var shortOnly = !!opts.shortOnly;
+      var sortMode = opts.sortMode || 'cardNumber';
+      var list = (cards || []).filter(function (entry) {
+        if (shortOnly && entryShortQty(entry) < 1) return false;
+        if (!q) return true;
+        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
+        var hay = [entry.cardNumber, meta.cardName, entry.cardName].join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      list.sort(function (a, b) {
+        if (sortMode === 'level') {
+          var la = entryLevel(a);
+          var lb = entryLevel(b);
+          var ra = la == null ? 999 : la;
+          var rb = lb == null ? 999 : lb;
+          if (ra !== rb) return ra - rb;
+        }
+        return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''));
+      });
+      return list;
+    }
+
+    function syncDeckCardViewControls() {
+      var sortSelect = document.getElementById('colDeckCardSortSelect');
+      if (sortSelect && sortSelect.value !== deckCardSortMode) sortSelect.value = deckCardSortMode;
+      var shortOnly = document.getElementById('colDeckCardShortOnly');
+      if (shortOnly) shortOnly.checked = !!deckCardShortOnly;
+      var detailSort = document.getElementById('colDeckDetailCardSortSelect');
+      if (detailSort && detailSort.value !== deckCardSortMode) detailSort.value = deckCardSortMode;
+      var detailShort = document.getElementById('colDeckDetailCardShortOnly');
+      if (detailShort) detailShort.checked = !!deckCardShortOnly;
+    }
+
+    function ensureDeckCardLevels(cards, onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      var need = [];
+      var seen = {};
+      (cards || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        if (entryLevel(entry) != null) return;
+        if (Object.prototype.hasOwnProperty.call(deckLevelCache, entry.cardNumber)) return;
+        if (seen[entry.cardNumber]) return;
+        seen[entry.cardNumber] = true;
+        need.push({
+          cardNo: entry.cardNumber,
+          name: entry.cardName || entry.cardNumber
+        });
+      });
+      if (!need.length || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        stampDeckEntryLevels(cards);
+        done(false);
+        return;
+      }
+      if (deckLevelEnriching) {
+        done(false);
+        return;
+      }
+      deckLevelEnriching = true;
+      window.WsDecklog.enrichCards(need)
+        .then(function (enriched) {
+          (enriched || []).forEach(function (row) {
+            var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
+            if (!key) return;
+            var lv = parseCardLevel(row.level != null ? row.level : row.cardlevel);
+            deckLevelCache[key] = lv;
+          });
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key && !Object.prototype.hasOwnProperty.call(deckLevelCache, key)) {
+              deckLevelCache[key] = null;
+            }
+          });
+          stampDeckEntryLevels(cards);
+          done(true);
+        })
+        .catch(function (err) {
+          console.error(err);
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key) deckLevelCache[key] = null;
+          });
+          done(false);
+        })
+        .then(function () {
+          deckLevelEnriching = false;
+        });
+    }
+
+    function deckCardEmptyMessage(opts) {
+      opts = opts || {};
+      if (opts.shortOnly) return '沒有標記缺少的牌。';
+      if (opts.query) return '沒有符合搜尋的卡片。';
+      return opts.emptyFallback || '此牌組尚未加入卡片。';
+    }
+
     function suggestedShortQty(entry) {
+      // 牌組缺卡不參照卡冊；啟用缺卡時預設先標 1 張
       var qty = entry && entry.qty ? entry.qty : 0;
-      var gap = qty - ownedQty(entry && entry.cardNumber);
-      if (gap < 1) return 0;
-      return Math.min(qty, gap);
+      if (qty < 1) return 0;
+      return 1;
     }
 
     function deckShortage(deck) {
@@ -3929,12 +4048,17 @@
       var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
       var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
       var q = deckDetailCardFilter.trim().toLowerCase();
-      var cards = (deck.cards || []).filter(function (entry) {
-        if (!q) return true;
-        var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-        var hay = [entry.cardNumber, meta.cardName, entry.cardName].join(' ').toLowerCase();
-        return hay.indexOf(q) >= 0;
+      if (deckCardSortMode === 'level') {
+        ensureDeckCardLevels(deck.cards || [], function (updated) {
+          if (updated) renderDeckDetail();
+        });
+      }
+      var cards = filterAndSortDeckCards(deck.cards || [], {
+        query: q,
+        shortOnly: deckCardShortOnly,
+        sortMode: deckCardSortMode
       });
+      var filtered = !!(q || deckCardShortOnly);
 
       var tagsHtml = (deck.tags || []).length
         ? (deck.tags || []).map(function (t) {
@@ -3945,7 +4069,11 @@
       var cardsHtml = cards.length
         ? cards.map(function (entry) { return buildDeckEntryHtml(entry, 'tile'); }).join('')
         : '<li class="col-modal-hint col-deck-entry-empty">' +
-          (q ? '沒有符合搜尋的卡片。' : '此牌組尚未加入卡片。') +
+          escapeHtml(deckCardEmptyMessage({
+            shortOnly: deckCardShortOnly,
+            query: q,
+            emptyFallback: '此牌組尚未加入卡片。'
+          })) +
           '</li>';
 
       var html = '';
@@ -4000,11 +4128,24 @@
       html += '  </aside>';
       html += '  <div class="col-deck-detail-main">';
       html += '    <div class="col-deck-detail-main-head">';
-      html += '      <h6>卡牌清單（共 ' + cards.length + ' 種' + (q ? '／篩選後' : '') + '）</h6>';
+      html += '      <h6>卡牌清單（共 ' + cards.length + ' 種' + (filtered ? '／篩選後' : '') + '）</h6>';
       html += '      <div class="col-deck-detail-card-search">';
       html += '        <i class="fas fa-search" aria-hidden="true"></i>';
       html += '        <input type="search" class="form-control" id="colDeckDetailCardSearch" placeholder="搜尋卡號、卡名" value="' +
         escapeHtml(deckDetailCardFilter) + '" autocomplete="off" aria-label="搜尋牌組內卡片">';
+      html += '      </div>';
+      html += '      <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">';
+      html += '        <label class="col-deck-card-sort" for="colDeckDetailCardSortSelect">';
+      html += '          <span>排序</span>';
+      html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
+      html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
+      html += '            <option value="level"' + (deckCardSortMode === 'level' ? ' selected' : '') + '>按等級排序</option>';
+      html += '          </select>';
+      html += '        </label>';
+      html += '        <label class="col-deck-card-short-only">';
+      html += '          <input type="checkbox" id="colDeckDetailCardShortOnly"' + (deckCardShortOnly ? ' checked' : '') + '>';
+      html += '          <span>僅列出缺少的牌</span>';
+      html += '        </label>';
       html += '      </div>';
       html += '    </div>';
       html += '    <ul class="col-deck-entry-list" aria-label="牌組卡牌清單">' + cardsHtml + '</ul>';
@@ -4012,6 +4153,7 @@
       html += '</div>';
 
       deckDetailEl.innerHTML = html;
+      syncDeckCardViewControls();
     }
 
     function renderDeckList() {
@@ -4090,6 +4232,8 @@
             shortQty: entryShortQty(c)
           };
           if (c.cardName) out.cardName = c.cardName;
+          var level = entryLevel(c);
+          if (level != null) out.level = level;
           return out;
         }),
         createdAt: deck.createdAt,
@@ -4125,6 +4269,8 @@
       var code = normalizeText(result && result.code) || 'DeckLog';
       var name = normalizeText(preferredName) || ('DeckLog ' + code);
       var now = Date.now();
+      // 此牌組預設全部持有（缺卡=0）；不寫入／不參照卡冊
+      cards.forEach(function (entry) { entry.shortQty = 0; });
       deckDraft = {
         id: newDeckId(),
         name: name.slice(0, 40),
@@ -4142,7 +4288,11 @@
       closeModalByName('decklog');
       focusDeckSection();
       openModal(deckModal);
-      setStatus('已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' + deckTotalCards(deckDraft) + ' 張），請確認後儲存', 'is-ok');
+      setStatus(
+        '已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' +
+        deckTotalCards(deckDraft) + ' 張），此牌組預設全部持有；缺卡請再手動標記',
+        'is-ok'
+      );
     }
 
     function importFromDecklog() {
@@ -4190,7 +4340,7 @@
       if (deckModalHint) {
         deckModalHint.textContent = isView
           ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
-          : '勾選要標記缺卡的牌，並用 ± 設定缺幾張。';
+          : '勾選缺卡並用 ± 設定缺幾張；持有＝此牌組編成−缺卡，與卡冊無關。';
       }
     }
 
@@ -4235,7 +4385,7 @@
       if (!tile) return false;
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
-      var owned = ownedQty(entry.cardNumber);
+      var owned = entryOwnedQty(entry);
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
@@ -4268,7 +4418,7 @@
       var viewMode = mode === 'view' ? 'view' : (mode === 'tile' ? 'tile' : 'edit');
       var isEdit = viewMode === 'edit';
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-      var owned = ownedQty(entry.cardNumber);
+      var owned = entryOwnedQty(entry);
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
       var urls = buildCardImageUrls(entry.cardNumber);
@@ -4282,8 +4432,10 @@
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">×' + escapeHtml(String(entry.qty)) + '</span>';
       html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺' + escapeHtml(String(shortQty || 1)) + '</span>';
-      if (isEdit) {
+      if (viewMode !== 'tile') {
         html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
+      }
+      if (isEdit) {
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
       }
       html += '  </div>';
@@ -4324,6 +4476,7 @@
       if (!deckDraft) return;
       var isView = deckEditorMode === 'view';
       updateDeckEditorSummary();
+      syncDeckCardViewControls();
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
@@ -4331,7 +4484,25 @@
           '</li>';
         return;
       }
-      deckEntryList.innerHTML = deckDraft.cards.map(function (entry) {
+      if (deckCardSortMode === 'level') {
+        ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
+          if (updated) renderDeckEditor();
+        });
+      }
+      var visibleCards = filterAndSortDeckCards(deckDraft.cards || [], {
+        shortOnly: deckCardShortOnly,
+        sortMode: deckCardSortMode
+      });
+      if (!visibleCards.length) {
+        deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
+          escapeHtml(deckCardEmptyMessage({
+            shortOnly: deckCardShortOnly,
+            emptyFallback: isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。'
+          })) +
+          '</li>';
+        return;
+      }
+      deckEntryList.innerHTML = visibleCards.map(function (entry) {
         return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
       }).join('');
     }
@@ -4387,8 +4558,11 @@
         entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
-      else updateDeckEditorSummary();
+      if (deckCardShortOnly || deckCardSortMode === 'level' || !syncDeckEntryTile(cardNumber)) {
+        renderDeckEditor();
+      } else {
+        updateDeckEditorSummary();
+      }
     }
 
     function setDeckEntryShort(cardNumber, enabled) {
@@ -4398,12 +4572,11 @@
       if (!enabled) {
         entry.shortQty = 0;
       } else {
-        var suggested = suggestedShortQty(entry);
-        entry.shortQty = suggested > 0 ? suggested : 1;
-        entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
+        var nextShort = suggestedShortQty(entry);
+        entry.shortQty = clampShortQty(nextShort > 0 ? nextShort : 1, entry.qty);
         if (entry.shortQty < 1) entry.shortQty = 1;
       }
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
     }
 
@@ -4420,7 +4593,7 @@
         entry.shortQty = clampShortQty(next, entry.qty);
         if (entry.shortQty < 1) entry.shortQty = Math.min(1, entry.qty || 1);
       }
-      if (!syncDeckEntryTile(cardNumber)) renderDeckEditor();
+      if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
     }
 
@@ -4825,25 +4998,21 @@
       if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
     }, true);
 
-    function resetAlbumPageAndRender() {
-      albumPageIndex = 0;
-      renderAlbum();
-    }
     searchInput.addEventListener('input', function () {
       filterQuery = searchInput.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     rareSelect.addEventListener('change', function () {
       rareFilter = rareSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     tagSelect.addEventListener('change', function () {
       tagFilter = tagSelect.value || '';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     sortSelect.addEventListener('change', function () {
       sortMode = sortSelect.value || 'newest';
-      resetAlbumPageAndRender();
+      renderAlbum();
     });
     groupSelect.addEventListener('change', function () {
       groupMode = groupSelect.value || 'none';
@@ -5046,6 +5215,30 @@
     if (deckListEl) {
       deckListEl.addEventListener('click', handleDeckActionClick);
     }
+    function applyDeckCardSortMode(next) {
+      deckCardSortMode = next === 'level' ? 'level' : 'cardNumber';
+      syncDeckCardViewControls();
+      if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
+      renderDeckDetail();
+    }
+    function applyDeckCardShortOnly(next) {
+      deckCardShortOnly = !!next;
+      syncDeckCardViewControls();
+      if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
+      renderDeckDetail();
+    }
+    var deckCardSortSelect = document.getElementById('colDeckCardSortSelect');
+    var deckCardShortOnlyInput = document.getElementById('colDeckCardShortOnly');
+    if (deckCardSortSelect) {
+      deckCardSortSelect.addEventListener('change', function () {
+        applyDeckCardSortMode(deckCardSortSelect.value);
+      });
+    }
+    if (deckCardShortOnlyInput) {
+      deckCardShortOnlyInput.addEventListener('change', function () {
+        applyDeckCardShortOnly(deckCardShortOnlyInput.checked);
+      });
+    }
     if (deckDetailEl) {
       deckDetailEl.addEventListener('click', handleDeckActionClick);
       deckDetailEl.addEventListener('input', function (e) {
@@ -5061,6 +5254,15 @@
             again.setSelectionRange(len, len);
           } catch (err) { /* ignore */ }
         }
+      });
+      deckDetailEl.addEventListener('change', function (e) {
+        var sortSelect = e.target.closest('#colDeckDetailCardSortSelect');
+        if (sortSelect) {
+          applyDeckCardSortMode(sortSelect.value);
+          return;
+        }
+        var shortOnly = e.target.closest('#colDeckDetailCardShortOnly');
+        if (shortOnly) applyDeckCardShortOnly(shortOnly.checked);
       });
     }
     if (deckViewEditBtn) {
