@@ -1027,9 +1027,21 @@
       --binder-panel: #1a1a1a;
     }
     .col-binder-stage.is-fit {
+      width: max-content;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1.1rem;
+      padding-right: 1.1rem;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.04),
         0 18px 40px rgba(0, 0, 0, 0.22);
+    }
+    @media (max-width: 767px) {
+      .col-binder-stage.is-fit {
+        padding-left: 0.7rem;
+        padding-right: 0.7rem;
+      }
     }
     .col-binder-viewport {
       min-width: 0;
@@ -1261,6 +1273,24 @@
     .col-album-section.is-focus .col-binder-stage {
       margin-top: 0.35rem;
     }
+    /* 一窗檢視時壓縮切換列與標題，把空間留給卡面 */
+    .col-stage:has(.col-album-section.is-focus) {
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-switch {
+      padding: 0.18rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-btn {
+      min-height: 2.35rem;
+      padding: 0.35rem 0.7rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-kicker {
+      display: none;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-label {
+      font-size: 0.95rem;
+    }
     .col-focus-hint {
       display: none;
       margin: 0 0 0.35rem;
@@ -1271,6 +1301,15 @@
     }
     .col-album-section.is-focus .col-focus-hint { display: block; }
     [data-theme="dark"] .col-focus-hint { color: #9ca3af; }
+    @media (max-width: 767px) {
+      .col-album-section.is-focus .col-section-stats {
+        display: none;
+      }
+      .col-album-section.is-focus .col-focus-hint {
+        font-size: 0.65rem;
+        letter-spacing: 0.03em;
+      }
+    }
     /* 翻頁熱區：保留點擊，不顯示圖示／底色 */
     .col-binder-nav {
       position: absolute;
@@ -3290,10 +3329,17 @@
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var BINDER_FOCUS_KEY = 'ws-collection-binder-focus';
-    var binderFocusMode = false;
+    var binderFocusMode = true; /* 預設一窗檢視，整頁卡冊優先 */
+    var binderFocusUserOff = false; /* 使用者手動退出後不再自動打開 */
     var binderFitTimer = null;
     try {
-      binderFocusMode = localStorage.getItem(BINDER_FOCUS_KEY) === '1';
+      var savedFocus = localStorage.getItem(BINDER_FOCUS_KEY);
+      if (savedFocus === '0') {
+        binderFocusMode = false;
+        binderFocusUserOff = true;
+      } else if (savedFocus === '1') {
+        binderFocusMode = true;
+      }
     } catch (e) { /* ignore */ }
     var countEl = document.getElementById('colCountLabel');
     var toastEl = document.getElementById('colToast');
@@ -3788,6 +3834,8 @@
 
     function setBinderFocusMode(on, opts) {
       binderFocusMode = !!on;
+      if (!binderFocusMode) binderFocusUserOff = true;
+      else binderFocusUserOff = false;
       try {
         localStorage.setItem(BINDER_FOCUS_KEY, binderFocusMode ? '1' : '0');
       } catch (e) { /* ignore */ }
@@ -3804,7 +3852,7 @@
     /**
      * 高度優先適配：在剩餘視窗內算出卡槽寬高，維持 63:88，
      * 用縮小格子（非整頁壓扁）把一整頁卡冊塞進同一視窗。
-     * 若空間仍不足且尚未一窗檢視，會自動收合篩選列再重算一次。
+     * 可讀尺寸放不下時，自動開啟一窗檢視（收合篩選列）再重算。
      */
     function fitBinderToViewport(opts) {
       opts = opts || {};
@@ -3827,34 +3875,45 @@
       var rows = mobile ? 2 : 4;
       var gapPx = remPx(mobile ? 0.45 : 0.55);
       var padPx = remPx(mobile ? 0.4 : 0.5);
+      var sidePadPx = remPx(mobile ? 0.7 : 1.1);
       if (binderFocusMode) {
-        gapPx = remPx(mobile ? 0.35 : 0.42);
-        padPx = remPx(mobile ? 0.3 : 0.38);
+        gapPx = remPx(mobile ? 0.32 : 0.4);
+        padPx = remPx(mobile ? 0.28 : 0.36);
       }
 
-      var cs = getComputedStyle(binderStage);
-      var padL = parseFloat(cs.paddingLeft) || 0;
-      var padR = parseFloat(cs.paddingRight) || 0;
-      var availW = Math.max(120, binderStage.clientWidth - padL - padR);
+      var parent = binderStage.parentElement;
+      var parentW = parent ? parent.clientWidth : window.innerWidth;
+      var availW = Math.max(120, parentW - sidePadPx * 2);
       var top = binderStage.getBoundingClientRect().top;
-      var bottomSafe = Math.max(8, Math.round(window.innerHeight * 0.012));
-      var availH = Math.floor((window.visualViewport ? window.visualViewport.height : window.innerHeight) - top - bottomSafe);
-      if (availH < 160) availH = 160;
+      var vv = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      var bottomSafe = Math.max(8, Math.round(vv * 0.012));
+      var availH = Math.floor(vv - top - bottomSafe);
+
+      var readableW = mobile ? 96 : 88;
+      var minReadablePageH = padPx * 2 + gapPx * (rows - 1) + (readableW * 88 / 63) * rows;
+      if (!binderFocusMode && !binderFocusUserOff && !opts.skipAutoFocus && availH < minReadablePageH) {
+        setBinderFocusMode(true, { fit: false });
+        setStatus('已自動開啟一窗檢視，整頁卡冊可一次看完', 'is-ok');
+        requestAnimationFrame(function () {
+          setTimeout(function () {
+            fitBinderToViewport({ skipAutoFocus: true });
+          }, 40);
+        });
+        return;
+      }
+
+      if (availH < 140) availH = 140;
 
       var innerW = Math.max(80, availW - padPx * 2 - gapPx * (cols - 1));
       var innerH = Math.max(80, availH - padPx * 2 - gapPx * (rows - 1));
       var pocketWByWidth = innerW / cols;
-      var pocketHByWidth = pocketWByWidth * (88 / 63);
       var pocketHByHeight = innerH / rows;
       var pocketWByHeight = pocketHByHeight * (63 / 88);
 
       var pocketW = Math.min(pocketWByWidth, pocketWByHeight);
       var pocketH = pocketW * (88 / 63);
-
-      /* 極端矮視窗：仍維持 63:88，允許略小於理想下限；需要更大卡面時請開「一窗檢視」 */
-      var floorW = mobile ? 48 : 56;
-      if (pocketW < floorW) {
-        pocketW = floorW;
+      if (!isFinite(pocketW) || pocketW < 32) {
+        pocketW = 32;
         pocketH = pocketW * (88 / 63);
       }
 
