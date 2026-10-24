@@ -993,32 +993,66 @@
       padding: 0;
     }
 
-    /* 卡冊舞台：附圖風格格線；翻頁功能保留，不顯示頁碼文字／箭頭圖示
-       高度隨內容（aspect-ratio），不強制適配可視視窗 */
+    /* 卡冊舞台：格線翻頁；以「高度優先、維持 63:88」適配一窗，不壓扁卡面 */
     .col-binder-stage {
       --binder-gap: 0.55rem;
+      --binder-pad: 0.55rem;
+      --binder-cols: 2;
+      --binder-rows: 2;
       --binder-panel: #141414;
+      --binder-pocket-w: auto;
+      --binder-pocket-h: auto;
       position: relative;
       margin-top: 0.85rem;
       padding: 0 2.4rem;
       border-radius: 12px;
       background: var(--binder-panel);
       overflow: hidden;
+      transition: margin-top 0.28s ease, box-shadow 0.35s ease;
     }
     @media (max-width: 767px) {
       .col-binder-stage {
         padding: 0 1.5rem;
       }
     }
+    @media (min-width: 768px) {
+      .col-binder-stage {
+        --binder-gap: 0.65rem;
+        --binder-pad: 0.65rem;
+        --binder-cols: 4;
+        --binder-rows: 4;
+      }
+    }
     [data-theme="light"] .col-binder-stage {
       --binder-panel: #1a1a1a;
     }
+    .col-binder-stage.is-fit {
+      width: max-content;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1.1rem;
+      padding-right: 1.1rem;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 18px 40px rgba(0, 0, 0, 0.22);
+    }
+    @media (max-width: 767px) {
+      .col-binder-stage.is-fit {
+        padding-left: 0.7rem;
+        padding-right: 0.7rem;
+      }
+    }
     .col-binder-viewport {
       min-width: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .col-binder-spread {
       margin: 0;
       padding: 0;
+      width: 100%;
       transform-origin: center center;
       transition: transform 0.4s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.3s ease;
     }
@@ -1037,27 +1071,31 @@
         transform: none;
         opacity: 0.45;
       }
+      .col-binder-stage { transition: none; }
+      .col-album-chrome { transition: none; }
     }
     .col-binder-page {
       list-style: none;
-      margin: 0;
-      padding: var(--binder-gap);
+      margin: 0 auto;
+      padding: var(--binder-pad);
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(var(--binder-cols), minmax(0, 1fr));
       gap: var(--binder-gap);
       background: var(--binder-panel);
+      width: 100%;
+      box-sizing: border-box;
     }
-    @media (min-width: 768px) {
-      .col-binder-page {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        --binder-gap: 0.65rem;
-        padding: 0.65rem;
-      }
+    .col-binder-stage.is-fit .col-binder-page {
+      width: max-content;
+      max-width: 100%;
+      grid-template-columns: repeat(var(--binder-cols), var(--binder-pocket-w));
+      justify-content: center;
     }
     .col-binder-page .col-tile {
       margin: 0;
       min-width: 0;
       position: relative;
+      width: var(--binder-pocket-w, auto);
     }
     .col-binder-page .col-tile-body {
       display: block;
@@ -1073,6 +1111,11 @@
       border-radius: 8px;
       overflow: hidden;
       background: #0d0d0d;
+    }
+    .col-binder-stage.is-fit .col-binder-page .col-tile-art {
+      width: var(--binder-pocket-w);
+      height: var(--binder-pocket-h);
+      aspect-ratio: auto;
     }
     .col-binder-page .col-tile-art img {
       width: 100%;
@@ -1119,10 +1162,153 @@
     }
     .col-binder-pocket-empty {
       min-width: 0;
+      width: var(--binder-pocket-w, auto);
       aspect-ratio: 63 / 88;
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.03);
       border: 0;
+    }
+    .col-binder-stage.is-fit .col-binder-pocket-empty {
+      width: var(--binder-pocket-w);
+      height: var(--binder-pocket-h);
+      aspect-ratio: auto;
+    }
+
+    /* 一窗檢視：收合上方工具列，把垂直空間留給卡冊 */
+    .col-focus-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0.42rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: #fff;
+      color: #1f2937;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      cursor: pointer;
+      transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        color 0.22s ease,
+        transform 0.22s cubic-bezier(0.22, 0.8, 0.28, 1);
+    }
+    .col-focus-btn:hover {
+      background: #f8fafc;
+      border-color: rgba(47, 111, 237, 0.35);
+      color: #1d4ed8;
+    }
+    .col-focus-btn[aria-pressed="true"] {
+      background: #14233a;
+      border-color: #14233a;
+      color: #f8fafc;
+    }
+    .col-focus-btn:focus-visible {
+      outline: 2px solid rgba(47, 111, 237, 0.55);
+      outline-offset: 2px;
+    }
+    [data-theme="dark"] .col-focus-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #e5e7eb;
+    }
+    [data-theme="dark"] .col-focus-btn:hover {
+      background: rgba(110, 160, 255, 0.12);
+      border-color: rgba(110, 160, 255, 0.4);
+      color: #dbeafe;
+    }
+    [data-theme="dark"] .col-focus-btn[aria-pressed="true"] {
+      background: #6ea0ff;
+      border-color: #6ea0ff;
+      color: #0b1220;
+    }
+    .col-section-head-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+    }
+    .col-album-chrome {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition:
+        grid-template-rows 0.36s cubic-bezier(0.22, 0.8, 0.28, 1),
+        opacity 0.28s ease,
+        margin 0.28s ease;
+    }
+    .col-album-chrome-inner {
+      overflow: hidden;
+      min-height: 0;
+    }
+    .col-album-section.is-focus .col-album-chrome {
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-bottom: 0;
+      pointer-events: none;
+    }
+    .col-album-section.is-focus .col-section-head {
+      margin-bottom: 0.45rem;
+      padding-bottom: 0.45rem;
+    }
+    .col-album-section.is-focus .col-section-kicker {
+      display: none;
+    }
+    .col-album-section.is-focus .col-section-title {
+      font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    }
+    .col-album-section.is-focus .col-section-stat {
+      min-width: 0;
+      padding: 0.28rem 0.5rem;
+    }
+    .col-album-section.is-focus .col-section-stat strong {
+      font-size: 0.95rem;
+    }
+    .col-album-section.is-focus .col-section-stat span {
+      font-size: 0.6rem;
+    }
+    .col-album-section.is-focus .col-binder-stage {
+      margin-top: 0.35rem;
+    }
+    /* 一窗檢視時壓縮切換列與標題，把空間留給卡面 */
+    .col-stage:has(.col-album-section.is-focus) {
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-switch {
+      padding: 0.18rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-btn {
+      min-height: 2.35rem;
+      padding: 0.35rem 0.7rem;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-kicker {
+      display: none;
+    }
+    .col-stage:has(.col-album-section.is-focus) .col-view-label {
+      font-size: 0.95rem;
+    }
+    .col-focus-hint {
+      display: none;
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #6b7280;
+    }
+    .col-album-section.is-focus .col-focus-hint { display: block; }
+    [data-theme="dark"] .col-focus-hint { color: #9ca3af; }
+    @media (max-width: 767px) {
+      .col-album-section.is-focus .col-section-stats {
+        display: none;
+      }
+      .col-album-section.is-focus .col-focus-hint {
+        font-size: 0.65rem;
+        letter-spacing: 0.03em;
+      }
     }
     /* 翻頁熱區：保留點擊，不顯示圖示／底色 */
     .col-binder-nav {
@@ -2603,93 +2789,105 @@
                     <p class="col-section-kicker">Card Binder</p>
                     <h2 class="col-section-title" id="colBinderTitle">我的卡冊</h2>
                   </div>
-                  <div class="col-section-stats" aria-live="polite">
-                    <div class="col-section-stat">
-                      <strong id="colBinderStatKinds">0</strong>
-                      <span>種卡</span>
+                  <div class="col-section-head-actions">
+                    <div class="col-section-stats" aria-live="polite">
+                      <div class="col-section-stat">
+                        <strong id="colBinderStatKinds">0</strong>
+                        <span>種卡</span>
+                      </div>
+                      <div class="col-section-stat">
+                        <strong id="colTotalValue">0</strong>
+                        <span>持有張數</span>
+                      </div>
+                      <div class="col-section-stat">
+                        <strong id="colBinderStatVisible">0</strong>
+                        <span>可見</span>
+                      </div>
                     </div>
-                    <div class="col-section-stat">
-                      <strong id="colTotalValue">0</strong>
-                      <span>持有張數</span>
-                    </div>
-                    <div class="col-section-stat">
-                      <strong id="colBinderStatVisible">0</strong>
-                      <span>可見</span>
-                    </div>
+                    <button type="button" class="col-focus-btn" id="colBinderFocusBtn" aria-pressed="false" title="收合篩選列，讓整頁卡冊塞進視窗">
+                      <i class="fas fa-expand" aria-hidden="true"></i>
+                      <span id="colBinderFocusBtnLabel">一窗檢視</span>
+                    </button>
                   </div>
                 </header>
 
                 <div class="col-shell">
                   <div id="colPanelCards" class="col-panel" data-col-panel="cards">
-                    <div class="col-controls" aria-label="卡冊篩選列">
-                      <div class="col-field col-field-search">
-                        <label for="colSearchInput">搜尋</label>
-                        <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
-                      </div>
-                      <div class="col-field col-field-rare">
-                        <label for="colRareSelect">稀有度</label>
-                        <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
-                          <option value="" selected>全部稀有度</option>
-                        </select>
-                      </div>
-                      <div class="col-field col-field-tag">
-                        <label for="colTagSelect">標籤</label>
-                        <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
-                          <option value="" selected>全部標籤</option>
-                          <option value="__untagged__">未標籤</option>
-                        </select>
-                      </div>
-                      <div class="col-field col-field-group">
-                        <label for="colGroupSelect">分組檢視</label>
-                        <select id="colGroupSelect" class="form-control">
-                          <option value="none" selected>不分組</option>
-                          <option value="tag">依標籤分組</option>
-                        </select>
-                      </div>
-                      <div class="col-field col-field-sort">
-                        <label for="colSortSelect">排序</label>
-                        <select id="colSortSelect" class="form-control">
-                          <option value="newest" selected>最新加入</option>
-                          <option value="oldest">最早加入</option>
-                          <option value="cardNumber">卡號 A→Z</option>
-                          <option value="qtyDesc">數量多→少</option>
-                          <option value="qtyAsc">數量少→多</option>
-                          <option value="rare">稀有度</option>
-                        </select>
-                      </div>
-                      <div class="col-field col-field-actions">
-                        <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
-                        <div class="col-control-actions">
-                          <button type="button" class="btn btn-primary btn-sm" id="colAddCardBtn">
-                            <i class="fas fa-plus mr-1" aria-hidden="true"></i>新增卡片
-                          </button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colImportBtn">
-                            <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
-                          </button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                    <div class="col-album-chrome" id="colAlbumChrome">
+                      <div class="col-album-chrome-inner">
+                        <div class="col-controls" aria-label="卡冊篩選列">
+                          <div class="col-field col-field-search">
+                            <label for="colSearchInput">搜尋</label>
+                            <input id="colSearchInput" type="search" class="form-control" placeholder="卡號、卡名、作品、標籤" autocomplete="off">
+                          </div>
+                          <div class="col-field col-field-rare">
+                            <label for="colRareSelect">稀有度</label>
+                            <select id="colRareSelect" class="form-control" aria-label="依稀有度篩選">
+                              <option value="" selected>全部稀有度</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-tag">
+                            <label for="colTagSelect">標籤</label>
+                            <select id="colTagSelect" class="form-control" aria-label="依標籤篩選">
+                              <option value="" selected>全部標籤</option>
+                              <option value="__untagged__">未標籤</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-group">
+                            <label for="colGroupSelect">分組檢視</label>
+                            <select id="colGroupSelect" class="form-control">
+                              <option value="none" selected>不分組</option>
+                              <option value="tag">依標籤分組</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-sort">
+                            <label for="colSortSelect">排序</label>
+                            <select id="colSortSelect" class="form-control">
+                              <option value="newest" selected>最新加入</option>
+                              <option value="oldest">最早加入</option>
+                              <option value="cardNumber">卡號 A→Z</option>
+                              <option value="qtyDesc">數量多→少</option>
+                              <option value="qtyAsc">數量少→多</option>
+                              <option value="rare">稀有度</option>
+                            </select>
+                          </div>
+                          <div class="col-field col-field-actions">
+                            <label class="col-field-label-spacer" aria-hidden="true">&nbsp;</label>
+                            <div class="col-control-actions">
+                              <button type="button" class="btn btn-primary btn-sm" id="colAddCardBtn">
+                                <i class="fas fa-plus mr-1" aria-hidden="true"></i>新增卡片
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colImportBtn">
+                                <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>從願望清單轉入
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colBulkTagBtn">批次標籤</button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colSelectVisibleBtn">全選可見</button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" id="colClearCheckBtn">清除勾選</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-total-bar" id="colTotalBar" aria-live="polite">
+                          <div class="col-total-copy">
+                            <div class="col-total-main">
+                              <span>本冊狀態</span>
+                            </div>
+                            <div class="col-total-sub">
+                              <span class="col-total-count" id="colCountLabel">共 0 種</span>
+                              <span class="col-total-sep" aria-hidden="true">·</span>
+                              <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
+                            </div>
+                          </div>
+                          <div class="col-total-actions">
+                            <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
+                              <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
+                            </a>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div class="col-total-bar" id="colTotalBar" aria-live="polite">
-                      <div class="col-total-copy">
-                        <div class="col-total-main">
-                          <span>本冊狀態</span>
-                        </div>
-                        <div class="col-total-sub">
-                          <span class="col-total-count" id="colCountLabel">共 0 種</span>
-                          <span class="col-total-sep" aria-hidden="true">·</span>
-                          <span id="colTotalSub">已勾選 0 種 · 可見 0 種</span>
-                        </div>
-                      </div>
-                      <div class="col-total-actions">
-                        <a class="btn btn-outline-secondary btn-sm" href="favorites.html">
-                          <i class="fas fa-star mr-1" aria-hidden="true"></i>願望清單
-                        </a>
-                      </div>
-                    </div>
+                    <p class="col-focus-hint" id="colFocusHint">篩選列已收合 · 左右滑動或點側邊翻頁 · 再點「退出一窗」可還原</p>
 
                     <div id="colEmpty" class="col-empty" style="display:none;">
                       <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
@@ -3125,8 +3323,24 @@
     var binderPageTotal = document.getElementById('colBinderPageTotal');
     var binderStatKinds = document.getElementById('colBinderStatKinds');
     var binderStatVisible = document.getElementById('colBinderStatVisible');
+    var binderFocusBtn = document.getElementById('colBinderFocusBtn');
+    var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
+    var albumSection = document.getElementById('colSectionAlbum');
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
+    var BINDER_FOCUS_KEY = 'ws-collection-binder-focus';
+    var binderFocusMode = true; /* 預設一窗檢視，整頁卡冊優先 */
+    var binderFocusUserOff = false; /* 使用者手動退出後不再自動打開 */
+    var binderFitTimer = null;
+    try {
+      var savedFocus = localStorage.getItem(BINDER_FOCUS_KEY);
+      if (savedFocus === '0') {
+        binderFocusMode = false;
+        binderFocusUserOff = true;
+      } else if (savedFocus === '1') {
+        binderFocusMode = true;
+      }
+    } catch (e) { /* ignore */ }
     var countEl = document.getElementById('colCountLabel');
     var toastEl = document.getElementById('colToast');
     var toastTextEl = document.getElementById('colToastText');
@@ -3230,6 +3444,8 @@
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
+      if (next === 'album') scheduleBinderFit();
+      else clearBinderFit();
     }
 
     function readCollectionView() {
@@ -3588,6 +3804,133 @@
       return window.matchMedia('(min-width: 768px)').matches ? 16 : 4;
     }
 
+    function remPx(n) {
+      var root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      return n * root;
+    }
+
+    function clearBinderFit() {
+      if (!binderStage) return;
+      binderStage.classList.remove('is-fit');
+      binderStage.style.removeProperty('--binder-pocket-w');
+      binderStage.style.removeProperty('--binder-pocket-h');
+      binderStage.style.removeProperty('--binder-gap');
+      binderStage.style.removeProperty('--binder-pad');
+    }
+
+    function applyBinderFocusUi() {
+      if (albumSection) albumSection.classList.toggle('is-focus', !!binderFocusMode);
+      if (binderFocusBtn) {
+        binderFocusBtn.setAttribute('aria-pressed', binderFocusMode ? 'true' : 'false');
+        var icon = binderFocusBtn.querySelector('i');
+        if (icon) {
+          icon.className = binderFocusMode ? 'fas fa-compress' : 'fas fa-expand';
+        }
+      }
+      if (binderFocusBtnLabel) {
+        binderFocusBtnLabel.textContent = binderFocusMode ? '退出一窗' : '一窗檢視';
+      }
+    }
+
+    function setBinderFocusMode(on, opts) {
+      binderFocusMode = !!on;
+      if (!binderFocusMode) binderFocusUserOff = true;
+      else binderFocusUserOff = false;
+      try {
+        localStorage.setItem(BINDER_FOCUS_KEY, binderFocusMode ? '1' : '0');
+      } catch (e) { /* ignore */ }
+      applyBinderFocusUi();
+      if (!opts || opts.fit !== false) {
+        /* 等 chrome 收合／展開動畫後再量測剩餘高度 */
+        requestAnimationFrame(function () {
+          fitBinderToViewport();
+          setTimeout(fitBinderToViewport, 380);
+        });
+      }
+    }
+
+    /**
+     * 高度優先適配：在剩餘視窗內算出卡槽寬高，維持 63:88，
+     * 用縮小格子（非整頁壓扁）把一整頁卡冊塞進同一視窗。
+     * 可讀尺寸放不下時，自動開啟一窗檢視（收合篩選列）再重算。
+     */
+    function fitBinderToViewport(opts) {
+      opts = opts || {};
+      if (!binderStage) return;
+      if (binderStage.hidden || groupMode === 'tag') {
+        clearBinderFit();
+        return;
+      }
+      var page = binderStage.querySelector('.col-binder-page');
+      if (!page) {
+        clearBinderFit();
+        return;
+      }
+
+      clearBinderFit();
+      void binderStage.offsetHeight;
+
+      var mobile = !window.matchMedia('(min-width: 768px)').matches;
+      var cols = mobile ? 2 : 4;
+      var rows = mobile ? 2 : 4;
+      var gapPx = remPx(mobile ? 0.45 : 0.55);
+      var padPx = remPx(mobile ? 0.4 : 0.5);
+      var sidePadPx = remPx(mobile ? 0.7 : 1.1);
+      if (binderFocusMode) {
+        gapPx = remPx(mobile ? 0.32 : 0.4);
+        padPx = remPx(mobile ? 0.28 : 0.36);
+      }
+
+      var parent = binderStage.parentElement;
+      var parentW = parent ? parent.clientWidth : window.innerWidth;
+      var availW = Math.max(120, parentW - sidePadPx * 2);
+      var top = binderStage.getBoundingClientRect().top;
+      var vv = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      var bottomSafe = Math.max(8, Math.round(vv * 0.012));
+      var availH = Math.floor(vv - top - bottomSafe);
+
+      var readableW = mobile ? 96 : 88;
+      var minReadablePageH = padPx * 2 + gapPx * (rows - 1) + (readableW * 88 / 63) * rows;
+      if (!binderFocusMode && !binderFocusUserOff && !opts.skipAutoFocus && availH < minReadablePageH) {
+        setBinderFocusMode(true, { fit: false });
+        setStatus('已自動開啟一窗檢視，整頁卡冊可一次看完', 'is-ok');
+        requestAnimationFrame(function () {
+          setTimeout(function () {
+            fitBinderToViewport({ skipAutoFocus: true });
+          }, 40);
+        });
+        return;
+      }
+
+      if (availH < 140) availH = 140;
+
+      var innerW = Math.max(80, availW - padPx * 2 - gapPx * (cols - 1));
+      var innerH = Math.max(80, availH - padPx * 2 - gapPx * (rows - 1));
+      var pocketWByWidth = innerW / cols;
+      var pocketHByHeight = innerH / rows;
+      var pocketWByHeight = pocketHByHeight * (63 / 88);
+
+      var pocketW = Math.min(pocketWByWidth, pocketWByHeight);
+      var pocketH = pocketW * (88 / 63);
+      if (!isFinite(pocketW) || pocketW < 32) {
+        pocketW = 32;
+        pocketH = pocketW * (88 / 63);
+      }
+
+      binderStage.style.setProperty('--binder-gap', gapPx + 'px');
+      binderStage.style.setProperty('--binder-pad', padPx + 'px');
+      binderStage.style.setProperty('--binder-pocket-w', Math.floor(pocketW * 100) / 100 + 'px');
+      binderStage.style.setProperty('--binder-pocket-h', Math.floor(pocketH * 100) / 100 + 'px');
+      binderStage.classList.add('is-fit');
+    }
+
+    function scheduleBinderFit() {
+      if (binderFitTimer) clearTimeout(binderFitTimer);
+      binderFitTimer = setTimeout(function () {
+        requestAnimationFrame(fitBinderToViewport);
+      }, 40);
+    }
+
     function updateBinderPager(totalPages) {
       var pages = Math.max(1, totalPages || 1);
       var now = albumPageIndex + 1;
@@ -3629,6 +3972,7 @@
         albumRoot.innerHTML = html;
       }
       updateBinderPager(totalPages);
+      scheduleBinderFit();
     }
 
     function goAlbumPage(nextIndex, dir) {
@@ -3723,6 +4067,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        clearBinderFit();
         return;
       }
 
@@ -3732,6 +4077,7 @@
         if (albumRoot) albumRoot.innerHTML = '';
         if (binderStage) binderStage.hidden = true;
         updateBinderPager(1);
+        clearBinderFit();
         return;
       }
 
@@ -3775,6 +4121,7 @@
           albumRoot.innerHTML = html;
         }
         updateBinderPager(1);
+        clearBinderFit();
         return;
       }
 
@@ -5351,13 +5698,41 @@
       }, { passive: true });
     }
     var albumResizeTimer = null;
+    var albumResizeSpreadSize = getAlbumSpreadSize();
     window.addEventListener('resize', function () {
       if (albumResizeTimer) clearTimeout(albumResizeTimer);
       albumResizeTimer = setTimeout(function () {
+        if (groupMode === 'tag') {
+          clearBinderFit();
+          return;
+        }
+        var nextSize = getAlbumSpreadSize();
+        if (nextSize !== albumResizeSpreadSize) {
+          albumResizeSpreadSize = nextSize;
+          renderAlbum();
+          return;
+        }
+        fitBinderToViewport();
+      }, 120);
+    });
+    window.addEventListener('orientationchange', function () {
+      setTimeout(function () {
+        albumResizeSpreadSize = getAlbumSpreadSize();
         if (groupMode === 'tag') return;
         renderAlbum();
-      }, 160);
+      }, 220);
     });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () {
+        scheduleBinderFit();
+      });
+    }
+    if (binderFocusBtn) {
+      binderFocusBtn.addEventListener('click', function () {
+        setBinderFocusMode(!binderFocusMode);
+      });
+    }
+    applyBinderFocusUi();
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
       getVisibleItems().forEach(function (item) {
