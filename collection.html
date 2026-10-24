@@ -993,13 +993,16 @@
       padding: 0;
     }
 
-    /* 卡冊舞台：格線翻頁；以「高度優先、維持 63:88」適配一窗，不壓扁卡面 */
+    /* 卡冊舞台：手機單頁 2×2；桌面對開左右頁各 2×4；高度優先維持 63:88 */
     .col-binder-stage {
       --binder-gap: 0.55rem;
       --binder-pad: 0.55rem;
       --binder-cols: 2;
       --binder-rows: 2;
+      --binder-pages: 1;
+      --binder-spine: 0px;
       --binder-panel: #141414;
+      --binder-page-bg: #1a1a1a;
       --binder-pocket-w: auto;
       --binder-pocket-h: auto;
       position: relative;
@@ -1017,14 +1020,22 @@
     }
     @media (min-width: 768px) {
       .col-binder-stage {
-        --binder-gap: 0.65rem;
-        --binder-pad: 0.65rem;
-        --binder-cols: 4;
-        --binder-rows: 4;
+        /* 對開：左右頁各 3×2，吃滿桌面寬度、減少兩側空黑 */
+        --binder-gap: 0.55rem;
+        --binder-pad: 0.6rem;
+        --binder-cols: 3;
+        --binder-rows: 2;
+        --binder-pages: 2;
+        --binder-spine: 0.9rem;
+        padding: 0.55rem 1.5rem;
+        background:
+          radial-gradient(ellipse 42% 70% at 50% 50%, rgba(255, 255, 255, 0.04), transparent 70%),
+          linear-gradient(90deg, #0e0e0e 0%, #161616 46%, #101010 50%, #161616 54%, #0e0e0e 100%);
       }
     }
     [data-theme="light"] .col-binder-stage {
       --binder-panel: #1a1a1a;
+      --binder-page-bg: #222;
     }
     .col-binder-stage.is-fit {
       width: max-content;
@@ -1036,6 +1047,15 @@
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.04),
         0 18px 40px rgba(0, 0, 0, 0.22);
+    }
+    /* 桌面對開：舞台拉滿寬，左右頁置中，避免兩側大片空白 */
+    @media (min-width: 768px) {
+      .col-binder-stage.is-fit {
+        width: 100%;
+        max-width: none;
+        padding: 0.45rem 1.25rem;
+        box-sizing: border-box;
+      }
     }
     @media (max-width: 767px) {
       .col-binder-stage.is-fit {
@@ -1053,8 +1073,41 @@
       margin: 0;
       padding: 0;
       width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
       transform-origin: center center;
       transition: transform 0.4s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.3s ease;
+    }
+    @media (min-width: 768px) {
+      .col-binder-spread:not(.col-binder-groups) {
+        grid-template-columns: max-content var(--binder-spine) max-content;
+        justify-content: center;
+        width: max-content;
+        max-width: 100%;
+        margin-inline: auto;
+      }
+    }
+    .col-binder-spine {
+      display: none;
+      width: var(--binder-spine);
+      border-radius: 2px;
+      background:
+        linear-gradient(90deg,
+          rgba(0, 0, 0, 0.55) 0%,
+          rgba(255, 255, 255, 0.08) 45%,
+          rgba(255, 255, 255, 0.14) 50%,
+          rgba(255, 255, 255, 0.08) 55%,
+          rgba(0, 0, 0, 0.55) 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 0 18px rgba(0, 0, 0, 0.35);
+    }
+    @media (min-width: 768px) {
+      .col-binder-spread:not(.col-binder-groups) .col-binder-spine {
+        display: block;
+        min-height: 100%;
+      }
     }
     .col-binder-spread.is-flip-next {
       transform: translateX(-14px) scale(0.99);
@@ -1081,9 +1134,24 @@
       display: grid;
       grid-template-columns: repeat(var(--binder-cols), minmax(0, 1fr));
       gap: var(--binder-gap);
-      background: var(--binder-panel);
+      background: var(--binder-page-bg, var(--binder-panel));
       width: 100%;
       box-sizing: border-box;
+      border-radius: 6px;
+    }
+    @media (min-width: 768px) {
+      .col-binder-page.is-left {
+        border-radius: 8px 2px 2px 8px;
+        box-shadow:
+          inset -10px 0 18px rgba(0, 0, 0, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      }
+      .col-binder-page.is-right {
+        border-radius: 2px 8px 8px 2px;
+        box-shadow:
+          inset 10px 0 18px rgba(0, 0, 0, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      }
     }
     .col-binder-stage.is-fit .col-binder-page {
       width: max-content;
@@ -3799,9 +3867,29 @@
       totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + visibleCount + ' 種';
     }
 
+    function isBinderDesktopSpread() {
+      return window.matchMedia('(min-width: 768px)').matches;
+    }
+
+    function getAlbumPageSize() {
+      /* 單頁格數：手機 2×2=4；桌面每頁 3×2=6 */
+      return isBinderDesktopSpread() ? 6 : 4;
+    }
+
     function getAlbumSpreadSize() {
-      /* 手機 2×2=4；桌面 4×4=16 */
-      return window.matchMedia('(min-width: 768px)').matches ? 16 : 4;
+      /* 手機單頁 4；桌面對開左右各 6＝12 */
+      return isBinderDesktopSpread() ? 12 : 4;
+    }
+
+    function renderBinderPageHtml(items, pageSize, sideClass) {
+      var html = '<ul class="col-binder-page' + (sideClass ? ' ' + sideClass : '') + '">';
+      items.forEach(function (item) { html += renderTile(item, true); });
+      var empty = Math.max(0, pageSize - items.length);
+      for (var i = 0; i < empty; i++) {
+        html += '<li class="col-binder-pocket-empty" aria-hidden="true"></li>';
+      }
+      html += '</ul>';
+      return html;
     }
 
     function remPx(n) {
@@ -3816,6 +3904,7 @@
       binderStage.style.removeProperty('--binder-pocket-h');
       binderStage.style.removeProperty('--binder-gap');
       binderStage.style.removeProperty('--binder-pad');
+      binderStage.style.removeProperty('--binder-spine');
     }
 
     function applyBinderFocusUi() {
@@ -3870,15 +3959,18 @@
       clearBinderFit();
       void binderStage.offsetHeight;
 
-      var mobile = !window.matchMedia('(min-width: 768px)').matches;
-      var cols = mobile ? 2 : 4;
-      var rows = mobile ? 2 : 4;
-      var gapPx = remPx(mobile ? 0.45 : 0.55);
-      var padPx = remPx(mobile ? 0.4 : 0.5);
-      var sidePadPx = remPx(mobile ? 0.7 : 1.1);
+      var mobile = !isBinderDesktopSpread();
+      var cols = mobile ? 2 : 3;
+      var rows = 2;
+      var pageCount = mobile ? 1 : 2;
+      var gapPx = remPx(mobile ? 0.45 : 0.5);
+      var padPx = remPx(mobile ? 0.4 : 0.55);
+      var sidePadPx = remPx(mobile ? 0.7 : 1.25);
+      var spinePx = mobile ? 0 : remPx(0.9);
       if (binderFocusMode) {
-        gapPx = remPx(mobile ? 0.32 : 0.4);
-        padPx = remPx(mobile ? 0.28 : 0.36);
+        gapPx = remPx(mobile ? 0.32 : 0.42);
+        padPx = remPx(mobile ? 0.28 : 0.45);
+        spinePx = mobile ? 0 : remPx(0.75);
       }
 
       var parent = binderStage.parentElement;
@@ -3887,9 +3979,10 @@
       var top = binderStage.getBoundingClientRect().top;
       var vv = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       var bottomSafe = Math.max(8, Math.round(vv * 0.012));
-      var availH = Math.floor(vv - top - bottomSafe);
+      var stagePadY = mobile ? 0 : remPx(0.45) * 2;
+      var availH = Math.floor(vv - top - bottomSafe - stagePadY);
 
-      var readableW = mobile ? 96 : 88;
+      var readableW = mobile ? 96 : 120;
       var minReadablePageH = padPx * 2 + gapPx * (rows - 1) + (readableW * 88 / 63) * rows;
       if (!binderFocusMode && !binderFocusUserOff && !opts.skipAutoFocus && availH < minReadablePageH) {
         setBinderFocusMode(true, { fit: false });
@@ -3904,7 +3997,9 @@
 
       if (availH < 140) availH = 140;
 
-      var innerW = Math.max(80, availW - padPx * 2 - gapPx * (cols - 1));
+      /* 寬度：對開雙頁 + 書脊；高度：單頁列數 */
+      var widthBudget = availW - spinePx - pageCount * (padPx * 2 + gapPx * (cols - 1));
+      var innerW = Math.max(80, widthBudget / pageCount);
       var innerH = Math.max(80, availH - padPx * 2 - gapPx * (rows - 1));
       var pocketWByWidth = innerW / cols;
       var pocketHByHeight = innerH / rows;
@@ -3919,6 +4014,7 @@
 
       binderStage.style.setProperty('--binder-gap', gapPx + 'px');
       binderStage.style.setProperty('--binder-pad', padPx + 'px');
+      binderStage.style.setProperty('--binder-spine', spinePx + 'px');
       binderStage.style.setProperty('--binder-pocket-w', Math.floor(pocketW * 100) / 100 + 'px');
       binderStage.style.setProperty('--binder-pocket-h', Math.floor(pocketH * 100) / 100 + 'px');
       binderStage.classList.add('is-fit');
@@ -3954,24 +4050,36 @@
 
     function renderAlbumSpread(visible) {
       var size = getAlbumSpreadSize();
+      var pageSize = getAlbumPageSize();
       var totalPages = Math.max(1, Math.ceil(visible.length / size));
       if (albumPageIndex > totalPages - 1) albumPageIndex = totalPages - 1;
       if (albumPageIndex < 0) albumPageIndex = 0;
       var start = albumPageIndex * size;
       var slice = visible.slice(start, start + size);
-      var html = '<ul class="col-binder-page">';
-      slice.forEach(function (item) { html += renderTile(item, true); });
-      var empty = Math.max(0, size - slice.length);
-      for (var i = 0; i < empty; i++) {
-        html += '<li class="col-binder-pocket-empty" aria-hidden="true"></li>';
+      var html = '';
+      if (isBinderDesktopSpread()) {
+        var left = slice.slice(0, pageSize);
+        var right = slice.slice(pageSize, pageSize * 2);
+        html += renderBinderPageHtml(left, pageSize, 'is-left');
+        html += '<div class="col-binder-spine" aria-hidden="true"></div>';
+        html += renderBinderPageHtml(right, pageSize, 'is-right');
+      } else {
+        html += renderBinderPageHtml(slice, pageSize, '');
       }
-      html += '</ul>';
       if (albumRoot) {
         albumRoot.classList.add('col-binder-spread');
         albumRoot.classList.remove('col-binder-groups');
         albumRoot.innerHTML = html;
       }
       updateBinderPager(totalPages);
+      if (binderStage) {
+        binderStage.setAttribute(
+          'aria-label',
+          isBinderDesktopSpread()
+            ? ('卡冊對開第 ' + (albumPageIndex + 1) + '／' + totalPages + ' 面')
+            : ('卡冊第 ' + (albumPageIndex + 1) + '／' + totalPages + ' 頁')
+        );
+      }
       scheduleBinderFit();
     }
 
