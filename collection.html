@@ -3460,7 +3460,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（與攻擊紀錄／牌組分析相同讀取規則）。匯入後此牌組預設全部持有；之後手動標記缺卡即可。牌組持有與卡冊各自獨立。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入；匯入後缺卡寫在個人牌組，與卡冊分開。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -4454,6 +4454,13 @@
       openModal(confirmModal);
     }
 
+    function dismissConfirm(invokeCancel) {
+      var cancel = pendingConfirm && pendingConfirm.onCancel;
+      pendingConfirm = null;
+      closeModal(confirmModal);
+      if (invokeCancel && typeof cancel === 'function') cancel();
+    }
+
     function changeQuantity(cardNumber, delta) {
       var item = findItem(cardNumber);
       if (!item) return;
@@ -4512,8 +4519,7 @@
         return;
       }
       if (name === 'confirm') {
-        closeModal(confirmModal);
-        pendingConfirm = null;
+        dismissConfirm(true);
         return;
       }
       if (name === 'deck') {
@@ -4717,38 +4723,186 @@
       if (!deck) return null;
       var id = normalizeText(deck.id) || newDeckId();
       var name = normalizeText(deck.name) || '未命名牌組';
-      return {
+      var decklogCode = normalizeText(deck.decklogCode);
+      var source = normalizeText(deck.source);
+      if (source !== 'decklog' && source !== 'manual') {
+        source = decklogCode ? 'decklog' : 'manual';
+      }
+      var out = {
         id: id,
         name: name.slice(0, 40),
         tags: normalizeTags(deck.tags),
         cards: normalizeDeckCards(deck.cards),
+        source: source,
         createdAt: typeof deck.createdAt === 'number' ? deck.createdAt : Date.now(),
         updatedAt: typeof deck.updatedAt === 'number' ? deck.updatedAt : Date.now()
       };
+      if (decklogCode) out.decklogCode = decklogCode;
+      return out;
     }
 
     function serializeDeck(deck) {
-      return {
+      var out = {
         id: deck.id,
         name: deck.name || '未命名牌組',
         tags: normalizeTags(deck.tags),
         cards: normalizeDeckCards(deck.cards).map(function (c) {
-          var out = { cardNumber: c.cardNumber, qty: c.qty };
-          if (c.cardName) out.cardName = c.cardName;
+          var row = { cardNumber: c.cardNumber, qty: c.qty };
+          if (c.cardName) row.cardName = c.cardName;
           var level = parseCardLevel(c.level);
-          if (level != null) out.level = level;
+          if (level != null) row.level = level;
           var shortQty = clampShortQty(c.shortQty, c.qty);
-          if (shortQty > 0) out.shortQty = shortQty;
-          return out;
+          if (shortQty > 0) row.shortQty = shortQty;
+          return row;
         }),
+        source: deck.source === 'decklog' ? 'decklog' : 'manual',
         createdAt: deck.createdAt || Date.now(),
         updatedAt: deck.updatedAt || Date.now()
       };
+      var code = normalizeText(deck.decklogCode);
+      if (code) {
+        out.decklogCode = code;
+        out.source = 'decklog';
+      }
+      return out;
     }
 
-    function persistDecksAndRender() {
+    var fb = window.WsFirebase || null;
+    var deckCloudUser = null;
+    var deckSyncing = false;
+
+    function decksFirebaseReady() {
+      return !!(fb && fb.ready && fb.firestoreReady && typeof fb.loadUserDecks === 'function');
+    }
+
+    function requireDeckAuth(opts) {
+      opts = opts || {};
+      if (!decksFirebaseReady()) {
+        return Promise.reject(new Error((fb && fb.reason) || 'Firebase 尚未就緒'));
+      }
+      var user = fb.currentUser && fb.currentUser();
+      if (user) {
+        deckCloudUser = user;
+        return Promise.resolve(user);
+      }
+      if (opts.silent) return Promise.reject(new Error('請先登入'));
+      setStatus('請先以 Google 登入後再儲存牌組', 'is-error');
+      return fb.signInWithGoogle().then(function (cred) {
+        return (cred && cred.user) || fb.currentUser();
+      }).then(function (signed) {
+        if (!signed) throw new Error('登入失敗');
+        deckCloudUser = signed;
+        var profileP = typeof fb.ensureUserProfile === 'function'
+          ? fb.ensureUserProfile()
+          : Promise.resolve(null);
+        return profileP.then(function () { return signed; });
+      });
+    }
+
+    function persistDecksAndRender(opts) {
+      opts = opts || {};
       writeDecks(allDecks);
       renderDeckList();
+      if (opts.skipCloud) return Promise.resolve(true);
+      if (!decksFirebaseReady() || !deckCloudUser) {
+        if (opts.requireAuth) {
+          return requireDeckAuth().then(function () {
+            return syncDecksToCloud(opts.deckId);
+          });
+        }
+        return Promise.resolve(false);
+      }
+      return syncDecksToCloud(opts.deckId).catch(function (err) {
+        console.error(err);
+        if (opts.requireAuth) throw err;
+        return false;
+      });
+    }
+
+    function syncDecksToCloud(deckId) {
+      if (!decksFirebaseReady() || !deckCloudUser) return Promise.resolve(false);
+      if (deckId) {
+        var one = allDecks.find(function (d) { return d.id === deckId; });
+        if (!one) return fb.deleteUserDeck(deckId).catch(function () { return false; });
+        return fb.saveUserDeck(serializeDeck(one));
+      }
+      return Promise.all(allDecks.map(function (d) {
+        return fb.saveUserDeck(serializeDeck(d));
+      })).then(function () { return true; });
+    }
+
+    function applyCloudDecks(list) {
+      allDecks = (list || []).map(normalizeDeck).filter(Boolean);
+      writeDecks(allDecks);
+      if (selectedDeckId && !allDecks.some(function (d) { return d.id === selectedDeckId; })) {
+        selectedDeckId = null;
+      }
+      renderDeckList();
+    }
+
+    function migrateLocalDecksIfCloudEmpty(cloudList) {
+      var cloud = Array.isArray(cloudList) ? cloudList : [];
+      if (cloud.length) return Promise.resolve(cloud);
+      var local = readDecks();
+      if (!local.length) return Promise.resolve([]);
+      setStatus('正在將本機牌組上傳到雲端…', 'is-ok');
+      return Promise.all(local.map(function (d) {
+        return fb.saveUserDeck(serializeDeck(d));
+      })).then(function () {
+        return fb.loadUserDecks();
+      });
+    }
+
+    function clearDecksUiKeepLocalCache() {
+      // 未登入時不寫空陣列進 localStorage，保留本機資料供登入後一次性遷移
+      allDecks = [];
+      selectedDeckId = null;
+      renderDeckList();
+    }
+
+    function refreshDecksFromCloud() {
+      if (!decksFirebaseReady() || !deckCloudUser) {
+        clearDecksUiKeepLocalCache();
+        return Promise.resolve([]);
+      }
+      if (deckSyncing) return Promise.resolve(allDecks);
+      deckSyncing = true;
+      return fb.loadUserDecks()
+        .then(function (cloud) {
+          return migrateLocalDecksIfCloudEmpty(cloud);
+        })
+        .then(function (list) {
+          applyCloudDecks(list);
+          return allDecks;
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '牌組雲端同步失敗', 'is-error');
+          return allDecks;
+        })
+        .then(function (list) {
+          deckSyncing = false;
+          return list;
+        });
+    }
+
+    function bindDeckAuth() {
+      if (!(fb && typeof fb.onAuth === 'function')) {
+        clearDecksUiKeepLocalCache();
+        setStatus((fb && fb.reason) || 'Firebase 未載入，牌組需登入後才能使用', 'is-error');
+        return;
+      }
+      fb.onAuth(function (user) {
+        deckCloudUser = user || null;
+        if (!user) {
+          clearDecksUiKeepLocalCache();
+          return;
+        }
+        refreshDecksFromCloud().then(function (list) {
+          if (!(list && list.length)) return;
+          setStatus('已同步雲端牌組 ' + list.length + ' 副', 'is-ok');
+        });
+      });
     }
 
     function deckTotalCards(deck) {
@@ -5127,7 +5281,11 @@
 
       if (!allDecks.length) {
         if (deckEmptyEl) deckEmptyEl.style.display = '';
-        if (deckEmptyTextEl) deckEmptyTextEl.textContent = '尚未建立牌組。';
+        if (deckEmptyTextEl) {
+          deckEmptyTextEl.textContent = deckCloudUser
+            ? '尚未建立牌組。'
+            : '請先登入後建立或匯入牌組（需登入才能儲存）。';
+        }
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
@@ -5184,24 +5342,27 @@
     }
 
     function cloneDeckDraft(deck) {
-      return {
+      var out = {
         id: deck.id,
         name: deck.name,
         tags: (deck.tags || []).slice(),
         cards: (deck.cards || []).map(function (c) {
-          var out = {
+          var row = {
             cardNumber: c.cardNumber,
             qty: c.qty,
             shortQty: entryShortQty(c)
           };
-          if (c.cardName) out.cardName = c.cardName;
+          if (c.cardName) row.cardName = c.cardName;
           var level = entryLevel(c);
-          if (level != null) out.level = level;
-          return out;
+          if (level != null) row.level = level;
+          return row;
         }),
+        source: deck.source === 'decklog' ? 'decklog' : 'manual',
         createdAt: deck.createdAt,
         updatedAt: deck.updatedAt
       };
+      if (deck.decklogCode) out.decklogCode = deck.decklogCode;
+      return out;
     }
 
     function setDecklogStatus(msg, isError) {
@@ -5215,47 +5376,107 @@
         setStatus('DeckLog 讀取模組未載入', 'is-error');
         return;
       }
-      if (decklogCodeInput) decklogCodeInput.value = '';
-      if (decklogNameInput) decklogNameInput.value = '';
-      setDecklogStatus('');
-      if (decklogConfirmBtn) {
-        decklogConfirmBtn.disabled = false;
-        decklogConfirmBtn.removeAttribute('aria-busy');
-      }
-      openModal(decklogModal);
-      if (decklogCodeInput) decklogCodeInput.focus();
+      requireDeckAuth()
+        .then(function () {
+          if (decklogCodeInput) decklogCodeInput.value = '';
+          if (decklogNameInput) decklogNameInput.value = '';
+          setDecklogStatus('');
+          if (decklogConfirmBtn) {
+            decklogConfirmBtn.disabled = false;
+            decklogConfirmBtn.removeAttribute('aria-busy');
+          }
+          openModal(decklogModal);
+          if (decklogCodeInput) decklogCodeInput.focus();
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || '請先登入後再匯入 DeckLog', 'is-error');
+        });
     }
 
-    function openImportedDeckEditor(result, preferredName) {
-      var cards = aggregateDecklogCards(result && result.cards);
+    function openDeckAfterImport(deck) {
+      selectedDeckId = deck.id;
+      persistDecksAndRender({ skipCloud: true });
+      focusDeckSection();
+      openDeckEditor(deck.id, 'edit');
+      setStatus(
+        '已從 DeckLog「' + (deck.decklogCode || '') + '」匯入 ' +
+        (deck.cards || []).length + ' 種（' + deckTotalCards(deck) + ' 張）',
+        'is-ok'
+      );
+    }
+
+    function promptDuplicateDecklog(existing) {
+      return new Promise(function (resolve) {
+        var settled = false;
+        function finish(openExisting) {
+          if (settled) return;
+          settled = true;
+          resolve(!!openExisting);
+        }
+        askConfirm({
+          title: '牌組已匯入過',
+          okLabel: '開啟既有牌組',
+          html: '此 DeckLog 代碼已匯入為「<strong>' +
+            escapeHtml(existing.name || '未命名牌組') +
+            '</strong>」。不會重複建立；要開啟既有牌組嗎？',
+          onOk: function () { finish(true); },
+          onCancel: function () { finish(false); }
+        });
+      });
+    }
+
+    function resolveDecklogCards(code) {
+      setDecklogStatus('正在檢查雲端快取…');
+      return fb.getDecklogData(code).then(function (cached) {
+        if (cached && cached.cards && cached.cards.length) {
+          setDecklogStatus('已從雲端快取載入編成');
+          return {
+            code: cached.decklogCode || code,
+            cards: cached.cards,
+            fromCache: true
+          };
+        }
+        setDecklogStatus('快取沒有資料，正在向 DeckLog 查詢…');
+        return window.WsDecklog.fetchDecklogByCode(code).then(function (result) {
+          var cards = aggregateDecklogCards(result && result.cards);
+          if (!cards.length) throw new Error('匯出為 0 張。');
+          var resolvedCode = normalizeText(result && result.code) || code;
+          return fb.saveDecklogData(resolvedCode, cards).then(function () {
+            return {
+              code: resolvedCode,
+              cards: cards,
+              fromCache: false
+            };
+          });
+        });
+      });
+    }
+
+    function createDeckFromDecklogPayload(payload, preferredName) {
+      var cards = normalizeDeckCards(payload.cards || []);
+      cards.forEach(function (entry) { entry.shortQty = 0; });
       if (!cards.length) throw new Error('匯出為 0 張。');
-      var code = normalizeText(result && result.code) || 'DeckLog';
+      if (allDecks.length >= MAX_DECKS) {
+        throw new Error('牌組數量已達上限（' + MAX_DECKS + '）');
+      }
+      var code = normalizeText(payload.code) || 'DeckLog';
       var name = normalizeText(preferredName) || ('DeckLog ' + code);
       var now = Date.now();
-      // 此牌組預設全部持有（缺卡=0）；不寫入／不參照卡冊
-      cards.forEach(function (entry) { entry.shortQty = 0; });
-      deckDraft = {
+      var deck = serializeDeck({
         id: newDeckId(),
         name: name.slice(0, 40),
         tags: ['DeckLog'],
         cards: cards,
+        decklogCode: code,
+        source: 'decklog',
         createdAt: now,
         updatedAt: now
-      };
-      deckEditorMode = 'edit';
-      document.getElementById('colDeckTitle').textContent = '編輯匯入牌組';
-      if (deckNameInput) deckNameInput.value = deckDraft.name;
-      if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
-      applyDeckEditorMode();
-      renderDeckEditor();
-      closeModalByName('decklog');
-      focusDeckSection();
-      openModal(deckModal);
-      setStatus(
-        '已從 DeckLog「' + code + '」匯入 ' + cards.length + ' 種（' +
-        deckTotalCards(deckDraft) + ' 張），此牌組預設全部持有；缺卡請再手動標記',
-        'is-ok'
-      );
+      });
+      return fb.saveUserDeck(deck).then(function () {
+        allDecks.unshift(deck);
+        writeDecks(allDecks);
+        return deck;
+      });
     }
 
     function importFromDecklog() {
@@ -5274,10 +5495,36 @@
         decklogConfirmBtn.disabled = true;
         decklogConfirmBtn.setAttribute('aria-busy', 'true');
       }
-      setDecklogStatus('正在取得 DeckLog…');
-      window.WsDecklog.fetchDecklogByCode(code)
-        .then(function (result) {
-          openImportedDeckEditor(result, preferredName);
+      requireDeckAuth()
+        .then(function () {
+          setDecklogStatus('正在檢查是否已匯入…');
+          return fb.findUserDeckByDecklogCode(code);
+        })
+        .then(function (existing) {
+          if (existing) {
+            return promptDuplicateDecklog(existing).then(function (openExisting) {
+              closeModalByName('decklog');
+              if (openExisting) {
+                selectedDeckId = existing.id;
+                if (!allDecks.some(function (d) { return d.id === existing.id; })) {
+                  allDecks.unshift(normalizeDeck(existing));
+                  writeDecks(allDecks);
+                }
+                renderDeckList();
+                focusDeckSection();
+                openDeckEditor(existing.id, 'edit');
+                setStatus('此 DeckLog 已匯入過，已開啟既有牌組', 'is-ok');
+              }
+              return null;
+            });
+          }
+          return resolveDecklogCards(code).then(function (payload) {
+            setDecklogStatus('正在儲存到個人牌組…');
+            return createDeckFromDecklogPayload(payload, preferredName);
+          }).then(function (deck) {
+            closeModalByName('decklog');
+            openDeckAfterImport(deck);
+          });
         })
         .catch(function (err) {
           console.error(err);
@@ -5470,7 +5717,7 @@
       }).join('');
     }
 
-    function openDeckEditor(deckId, mode) {
+    function openDeckEditorUi(deckId, mode) {
       var existing = deckId
         ? allDecks.find(function (d) { return d.id === deckId; })
         : null;
@@ -5491,6 +5738,7 @@
           name: '',
           tags: [],
           cards: [],
+          source: 'manual',
           createdAt: now,
           updatedAt: now
         };
@@ -5503,6 +5751,21 @@
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
         openDeckMetaModal();
       }
+    }
+
+    function openDeckEditor(deckId, mode) {
+      // 新建／編輯需登入；唯讀檢視可直接開
+      if (mode === 'view' && deckId) {
+        openDeckEditorUi(deckId, 'view');
+        return;
+      }
+      requireDeckAuth()
+        .then(function () {
+          openDeckEditorUi(deckId, mode);
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || '請先登入後再編輯牌組', 'is-error');
+        });
     }
 
     function openDeckViewer(deckId) {
@@ -5574,22 +5837,36 @@
       deckDraft.cards = normalizeDeckCards(deckDraft.cards);
       deckDraft.updatedAt = Date.now();
       var name = deckDraft.name;
-
-      var idx = allDecks.findIndex(function (d) { return d.id === deckDraft.id; });
-      if (idx >= 0) allDecks[idx] = serializeDeck(deckDraft);
-      else {
-        if (allDecks.length >= MAX_DECKS) {
-          setStatus('牌組數量已達上限（' + MAX_DECKS + '）', 'is-error');
-          return;
-        }
-        allDecks.unshift(serializeDeck(deckDraft));
+      var deckId = deckDraft.id;
+      var idx = allDecks.findIndex(function (d) { return d.id === deckId; });
+      if (idx < 0 && allDecks.length >= MAX_DECKS) {
+        setStatus('牌組數量已達上限（' + MAX_DECKS + '）', 'is-error');
+        return;
       }
-      selectedDeckId = deckDraft.id;
-      persistDecksAndRender();
-      closeModalByName('deckMeta');
-      closeModalByName('deck');
-      focusDeckSection();
-      setStatus('已儲存牌組「' + name + '」', 'is-ok');
+      var packed = serializeDeck(deckDraft);
+      requireDeckAuth()
+        .then(function () {
+          var at = allDecks.findIndex(function (d) { return d.id === deckId; });
+          if (at >= 0) allDecks[at] = packed;
+          else {
+            if (allDecks.length >= MAX_DECKS) {
+              throw new Error('牌組數量已達上限（' + MAX_DECKS + '）');
+            }
+            allDecks.unshift(packed);
+          }
+          selectedDeckId = deckId;
+          return persistDecksAndRender({ requireAuth: true, deckId: deckId });
+        })
+        .then(function () {
+          closeModalByName('deckMeta');
+          closeModalByName('deck');
+          focusDeckSection();
+          setStatus('已儲存牌組「' + name + '」', 'is-ok');
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '儲存牌組失敗', 'is-error');
+        });
     }
 
     function duplicateDeck(deckId) {
@@ -5600,18 +5877,32 @@
         return;
       }
       var now = Date.now();
+      // 副本視為手動牌組，不沿用 decklogCode，避免被當成重複匯入
       var copy = serializeDeck({
         id: newDeckId(),
         name: (src.name || '未命名牌組').slice(0, 36) + ' 副本',
         tags: src.tags,
         cards: src.cards,
+        source: 'manual',
         createdAt: now,
         updatedAt: now
       });
-      allDecks.unshift(copy);
-      selectedDeckId = copy.id;
-      persistDecksAndRender();
-      setStatus('已複製牌組「' + copy.name + '」', 'is-ok');
+      requireDeckAuth()
+        .then(function () {
+          if (allDecks.length >= MAX_DECKS) {
+            throw new Error('牌組數量已達上限（' + MAX_DECKS + '）');
+          }
+          allDecks.unshift(copy);
+          selectedDeckId = copy.id;
+          return persistDecksAndRender({ requireAuth: true, deckId: copy.id });
+        })
+        .then(function () {
+          setStatus('已複製牌組「' + copy.name + '」', 'is-ok');
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '複製牌組失敗', 'is-error');
+        });
     }
 
     function deleteDeck(deckId) {
@@ -5622,10 +5913,19 @@
         okLabel: '確認刪除',
         html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？我的卡冊不會受影響。',
         onOk: function () {
-          allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
-          if (selectedDeckId === deckId) selectedDeckId = null;
-          persistDecksAndRender();
-          setStatus('已刪除牌組「' + src.name + '」', 'is-ok');
+          requireDeckAuth()
+            .then(function () {
+              allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
+              if (selectedDeckId === deckId) selectedDeckId = null;
+              return persistDecksAndRender({ requireAuth: true, deckId: deckId });
+            })
+            .then(function () {
+              setStatus('已刪除牌組「' + src.name + '」', 'is-ok');
+            })
+            .catch(function (err) {
+              console.error(err);
+              setStatus((err && err.message) || '刪除牌組失敗', 'is-error');
+            });
         }
       });
     }
@@ -6159,7 +6459,7 @@
         var action = pendingConfirm && typeof pendingConfirm.onOk === 'function'
           ? pendingConfirm.onOk
           : null;
-        closeModalByName('confirm');
+        dismissConfirm(false);
         if (action) action();
       });
     }
@@ -6417,7 +6717,8 @@
     });
 
     allItems = readLocal();
-    allDecks = readDecks();
+    // 牌組以雲端為準：先不顯示本機快取，等 onAuth 後再 refresh／遷移
+    allDecks = [];
     Object.keys(checkedSet).forEach(function (key) {
       if (!allItems.some(function (it) { return it.cardNumber === key; })) {
         delete checkedSet[key];
@@ -6427,12 +6728,13 @@
     refreshFilterOptions();
     renderAlbum();
     renderDeckList();
+    bindDeckAuth();
     ingestPendingFromFavoritesQuery();
     setStatus(
-      allItems.length || allDecks.length
-        ? ('已載入卡冊 ' + allItems.length + ' 種 · 牌組 ' + allDecks.length + ' 副')
-        : '卡冊與牌組皆為空，可新增卡片或從願望清單轉入',
-      allItems.length || allDecks.length ? 'is-ok' : ''
+      allItems.length
+        ? ('已載入卡冊 ' + allItems.length + ' 種（牌組登入後同步）')
+        : '卡冊為空；牌組需登入後建立或匯入',
+      allItems.length ? 'is-ok' : ''
     );
   })();
 </script>
