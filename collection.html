@@ -1341,22 +1341,27 @@
     .col-album-section.is-focus .col-binder-stage {
       margin-top: 0.35rem;
     }
-    /* 一窗檢視時壓縮切換列與標題，把空間留給卡面 */
-    .col-stage:has(.col-album-section.is-focus) {
+    /* 一窗檢視時壓縮切換列與標題（僅當前分頁生效） */
+    .col-stage[data-col-view="album"]:has(.col-album-section.is-focus),
+    .col-stage[data-col-view="decks"]:has(.col-deckbox.is-focus) {
       gap: 0.55rem;
       margin-bottom: 0.75rem;
     }
-    .col-stage:has(.col-album-section.is-focus) .col-view-switch {
+    .col-stage[data-col-view="album"]:has(.col-album-section.is-focus) .col-view-switch,
+    .col-stage[data-col-view="decks"]:has(.col-deckbox.is-focus) .col-view-switch {
       padding: 0.18rem;
     }
-    .col-stage:has(.col-album-section.is-focus) .col-view-btn {
+    .col-stage[data-col-view="album"]:has(.col-album-section.is-focus) .col-view-btn,
+    .col-stage[data-col-view="decks"]:has(.col-deckbox.is-focus) .col-view-btn {
       min-height: 2.35rem;
       padding: 0.35rem 0.7rem;
     }
-    .col-stage:has(.col-album-section.is-focus) .col-view-kicker {
+    .col-stage[data-col-view="album"]:has(.col-album-section.is-focus) .col-view-kicker,
+    .col-stage[data-col-view="decks"]:has(.col-deckbox.is-focus) .col-view-kicker {
       display: none;
     }
-    .col-stage:has(.col-album-section.is-focus) .col-view-label {
+    .col-stage[data-col-view="album"]:has(.col-album-section.is-focus) .col-view-label,
+    .col-stage[data-col-view="decks"]:has(.col-deckbox.is-focus) .col-view-label {
       font-size: 0.95rem;
     }
     .col-focus-hint {
@@ -1367,16 +1372,83 @@
       letter-spacing: 0.06em;
       color: #6b7280;
     }
-    .col-album-section.is-focus .col-focus-hint { display: block; }
+    .col-album-section.is-focus .col-focus-hint,
+    .col-deckbox.is-focus .col-focus-hint { display: block; }
     [data-theme="dark"] .col-focus-hint { color: #9ca3af; }
+    .col-deckbox .col-focus-hint {
+      color: rgba(238, 243, 238, 0.72);
+    }
     @media (max-width: 767px) {
       .col-album-section.is-focus .col-section-stats {
         display: none;
       }
-      .col-album-section.is-focus .col-focus-hint {
+      .col-album-section.is-focus .col-focus-hint,
+      .col-deckbox.is-focus .col-focus-hint {
         font-size: 0.65rem;
         letter-spacing: 0.03em;
       }
+    }
+
+    /* 牌組一窗：收合搜尋／排序／CTA／統計列 */
+    .col-deck-chrome {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition:
+        grid-template-rows 0.36s cubic-bezier(0.22, 0.8, 0.28, 1),
+        opacity 0.28s ease,
+        margin 0.28s ease;
+      margin-bottom: 0.85rem;
+    }
+    .col-deck-chrome-inner {
+      overflow: hidden;
+      min-height: 0;
+    }
+    .col-deckbox.is-focus .col-deck-chrome {
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-bottom: 0;
+      pointer-events: none;
+    }
+    .col-deckbox-lid-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+    }
+    .col-deckbox .col-focus-btn {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: #eef3ee;
+    }
+    .col-deckbox .col-focus-btn:hover {
+      background: rgba(224, 179, 90, 0.16);
+      border-color: rgba(224, 179, 90, 0.45);
+      color: #f6edd4;
+    }
+    .col-deckbox .col-focus-btn[aria-pressed="true"] {
+      background: var(--deckbox-accent, #c9983f);
+      border-color: var(--deckbox-accent, #c9983f);
+      color: #152019;
+    }
+    .col-deckbox.is-focus .col-deckbox-lid {
+      padding-top: 0.85rem;
+      padding-bottom: 0.85rem;
+    }
+    .col-deckbox.is-focus .col-deckbox-kicker {
+      display: none;
+    }
+    .col-deckbox.is-focus .col-deckbox-title {
+      font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    }
+    .col-deckbox.is-focus .col-deckbox-badge {
+      padding: 0.28rem 0.55rem;
+      font-size: 0.78rem;
+    }
+    .col-deckbox.is-focus .col-deckbox-body {
+      padding-top: 0.75rem;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .col-deck-chrome { transition: none; }
     }
     /* 翻頁熱區：保留點擊，不顯示圖示／底色 */
     .col-binder-nav {
@@ -1707,6 +1779,12 @@
       display: grid;
       gap: 0.7rem;
       margin-bottom: 0.85rem;
+    }
+    .col-deck-chrome .col-deck-toolbar {
+      margin-bottom: 0.7rem;
+    }
+    .col-deck-chrome .col-deck-stats {
+      margin-bottom: 0;
     }
     .col-search-wrap {
       position: relative;
@@ -2997,47 +3075,59 @@
                       <p class="col-deckbox-kicker">Deck Box</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
                     </div>
-                    <div class="col-deckbox-badge" aria-live="polite">
-                      <i class="fas fa-archive" aria-hidden="true"></i>
-                      <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
+                    <div class="col-deckbox-lid-actions">
+                      <div class="col-deckbox-badge" aria-live="polite">
+                        <i class="fas fa-archive" aria-hidden="true"></i>
+                        <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
+                      </div>
+                      <button type="button" class="col-focus-btn" id="colDeckFocusBtn" aria-pressed="false" title="收合篩選列，把空間留給牌組列表">
+                        <i class="fas fa-expand" aria-hidden="true"></i>
+                        <span id="colDeckFocusBtnLabel">一窗檢視</span>
+                      </button>
                     </div>
                   </header>
                   <div class="col-deckbox-body">
                     <div class="col-shell">
                       <div id="colPanelDecks" class="col-panel" data-col-panel="decks">
-                        <div class="col-deck-toolbar" aria-label="牌組操作列">
-                          <div class="col-search-wrap">
-                            <i class="fas fa-search" aria-hidden="true"></i>
-                            <input id="colDeckSearchInput" type="search" class="form-control" placeholder="搜尋牌組名稱、標籤、卡號" autocomplete="off" aria-label="搜尋牌組">
-                          </div>
-                          <div class="col-sort-chip">
-                            <i class="fas fa-sort" aria-hidden="true"></i>
-                            <select id="colDeckSortSelect" aria-label="牌組排序">
-                              <option value="updated" selected>最近更新</option>
-                              <option value="name">名稱 A→Z</option>
-                              <option value="cardsDesc">張數多→少</option>
-                            </select>
-                          </div>
-                          <div class="col-deck-cta-row">
-                            <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
-                              <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
-                            </button>
-                            <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
-                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
-                            </button>
+                        <div class="col-deck-chrome" id="colDeckChrome">
+                          <div class="col-deck-chrome-inner">
+                            <div class="col-deck-toolbar" aria-label="牌組操作列">
+                              <div class="col-search-wrap">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <input id="colDeckSearchInput" type="search" class="form-control" placeholder="搜尋牌組名稱、標籤、卡號" autocomplete="off" aria-label="搜尋牌組">
+                              </div>
+                              <div class="col-sort-chip">
+                                <i class="fas fa-sort" aria-hidden="true"></i>
+                                <select id="colDeckSortSelect" aria-label="牌組排序">
+                                  <option value="updated" selected>最近更新</option>
+                                  <option value="name">名稱 A→Z</option>
+                                  <option value="cardsDesc">張數多→少</option>
+                                </select>
+                              </div>
+                              <div class="col-deck-cta-row">
+                                <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
+                                  <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                                </button>
+                                <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
+                                  <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
+                                </button>
+                              </div>
+                            </div>
+
+                            <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
+                              <div class="col-deck-stat">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                                <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
+                              </div>
+                              <div class="col-deck-stat col-deck-stat-note">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                <span>牌組與卡冊分開保存；缺卡請在編輯中調整</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
-                          <div class="col-deck-stat">
-                            <i class="fas fa-eye" aria-hidden="true"></i>
-                            <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
-                          </div>
-                          <div class="col-deck-stat col-deck-stat-note">
-                            <i class="fas fa-info-circle" aria-hidden="true"></i>
-                            <span>牌組與卡冊分開保存；缺卡請在編輯中調整</span>
-                          </div>
-                        </div>
+                        <p class="col-focus-hint" id="colDeckFocusHint">篩選列已收合 · 再點「退出一窗」可還原搜尋與新建</p>
 
                         <div id="colDeckEmpty" class="col-empty" style="display:none;">
                           <div><i class="fas fa-archive" aria-hidden="true"></i></div>
@@ -3394,11 +3484,16 @@
     var binderFocusBtn = document.getElementById('colBinderFocusBtn');
     var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
     var albumSection = document.getElementById('colSectionAlbum');
+    var deckSection = document.getElementById('colSectionDecks');
+    var deckFocusBtn = document.getElementById('colDeckFocusBtn');
+    var deckFocusBtnLabel = document.getElementById('colDeckFocusBtnLabel');
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var BINDER_FOCUS_KEY = 'ws-collection-binder-focus';
+    var DECK_FOCUS_KEY = 'ws-collection-deck-focus';
     var binderFocusMode = true; /* 預設一窗檢視，整頁卡冊優先 */
     var binderFocusUserOff = false; /* 使用者手動退出後不再自動打開 */
+    var deckFocusMode = true; /* 預設一窗檢視，牌組列表優先 */
     var binderFitTimer = null;
     try {
       var savedFocus = localStorage.getItem(BINDER_FOCUS_KEY);
@@ -3409,6 +3504,11 @@
         binderFocusMode = true;
       }
     } catch (e) { /* ignore */ }
+    try {
+      var savedDeckFocus = localStorage.getItem(DECK_FOCUS_KEY);
+      if (savedDeckFocus === '0') deckFocusMode = false;
+      else if (savedDeckFocus === '1') deckFocusMode = true;
+    } catch (e2) { /* ignore */ }
     var countEl = document.getElementById('colCountLabel');
     var toastEl = document.getElementById('colToast');
     var toastTextEl = document.getElementById('colToastText');
@@ -3907,18 +4007,23 @@
       binderStage.style.removeProperty('--binder-spine');
     }
 
+    function applyFocusBtnUi(btn, labelEl, on) {
+      if (btn) {
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        var icon = btn.querySelector('i');
+        if (icon) icon.className = on ? 'fas fa-compress' : 'fas fa-expand';
+      }
+      if (labelEl) labelEl.textContent = on ? '退出一窗' : '一窗檢視';
+    }
+
     function applyBinderFocusUi() {
       if (albumSection) albumSection.classList.toggle('is-focus', !!binderFocusMode);
-      if (binderFocusBtn) {
-        binderFocusBtn.setAttribute('aria-pressed', binderFocusMode ? 'true' : 'false');
-        var icon = binderFocusBtn.querySelector('i');
-        if (icon) {
-          icon.className = binderFocusMode ? 'fas fa-compress' : 'fas fa-expand';
-        }
-      }
-      if (binderFocusBtnLabel) {
-        binderFocusBtnLabel.textContent = binderFocusMode ? '退出一窗' : '一窗檢視';
-      }
+      applyFocusBtnUi(binderFocusBtn, binderFocusBtnLabel, binderFocusMode);
+    }
+
+    function applyDeckFocusUi() {
+      if (deckSection) deckSection.classList.toggle('is-focus', !!deckFocusMode);
+      applyFocusBtnUi(deckFocusBtn, deckFocusBtnLabel, deckFocusMode);
     }
 
     function setBinderFocusMode(on, opts) {
@@ -3936,6 +4041,14 @@
           setTimeout(fitBinderToViewport, 380);
         });
       }
+    }
+
+    function setDeckFocusMode(on) {
+      deckFocusMode = !!on;
+      try {
+        localStorage.setItem(DECK_FOCUS_KEY, deckFocusMode ? '1' : '0');
+      } catch (e) { /* ignore */ }
+      applyDeckFocusUi();
     }
 
     /**
@@ -5840,7 +5953,13 @@
         setBinderFocusMode(!binderFocusMode);
       });
     }
+    if (deckFocusBtn) {
+      deckFocusBtn.addEventListener('click', function () {
+        setDeckFocusMode(!deckFocusMode);
+      });
+    }
     applyBinderFocusUi();
+    applyDeckFocusUi();
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
       getVisibleItems().forEach(function (item) {
