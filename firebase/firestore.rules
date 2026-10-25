@@ -38,6 +38,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // DeckLog 編成快取（共享唯讀副本；缺卡／改編寫在 users/{uid}/decks）
+    match /decklogData/{decklogCode} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && isNonEmptyString(request.resource.data.decklogCode, 40)
+        && request.resource.data.cards is list
+        && request.resource.data.cards.size() > 0
+        && request.resource.data.cards.size() <= 80;
+      allow delete: if false;
+    }
+
     // --- 拍賣（公開競標過程；金流／物流不在站內） ---
     match /auctions/{auctionId} {
       allow read: if true;

@@ -10,6 +10,8 @@
   var COLLECTION_USERS = "users";
   var COLLECTION_SESSIONS = "countingSessions";
   var COLLECTION_FAVORITES = "cardFavorites";
+  var COLLECTION_DECKS = "decks";
+  var COLLECTION_DECKLOG_DATA = "decklogData";
   var COLLECTION_AUCTIONS = "auctions";
   var COLLECTION_BIDS = "bids";
   var COLLECTION_AUCTION_ACTIVITY = "auctionActivity";
@@ -43,12 +45,95 @@
       .collection(COLLECTION_FAVORITES);
   }
 
+  function decksCol(db, uid) {
+    return db
+      .collection(COLLECTION_USERS)
+      .doc(uid)
+      .collection(COLLECTION_DECKS);
+  }
+
+  function decklogDataCol(db) {
+    return db.collection(COLLECTION_DECKLOG_DATA);
+  }
+
   /** 卡號 → Firestore doc id（不可含 /） */
   function favoriteCardId(cardNumber) {
     return String(cardNumber || "")
       .trim()
       .replace(/\//g, "_")
       .replace(/[.#$\[\]]/g, "_");
+  }
+
+  /** DeckLog 代碼／牌組 id → 安全 doc id */
+  function safeDocId(value) {
+    return String(value || "")
+      .trim()
+      .replace(/\//g, "_")
+      .replace(/[.#$\[\]]/g, "_")
+      .slice(0, 700);
+  }
+
+  function clampDeckQty(n, max) {
+    var q = parseInt(n, 10);
+    if (isNaN(q) || q < 1) q = 1;
+    if (q > (max || 99)) q = max || 99;
+    return q;
+  }
+
+  function clampShortQty(shortQty, qty) {
+    var n = parseInt(shortQty, 10);
+    if (isNaN(n) || n < 0) n = 0;
+    var max = Math.max(0, qty || 0);
+    if (n > max) n = max;
+    return n;
+  }
+
+  function normalizeDeckCard(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    var cardNumber = String(entry.cardNumber || entry.cardNo || "")
+      .trim()
+      .replace(/\\/g, "/");
+    if (!cardNumber) return null;
+    var qty = clampDeckQty(entry.qty, 99);
+    var out = { cardNumber: cardNumber, qty: qty };
+    var name = String(entry.cardName || entry.name || "").trim();
+    if (name && name !== "-" && name !== "?") out.cardName = name.slice(0, 80);
+    var level = entry.level != null ? Number(entry.level) : NaN;
+    if (!isNaN(level)) out.level = level;
+    var shortQty = clampShortQty(entry.shortQty, qty);
+    if (shortQty > 0) out.shortQty = shortQty;
+    return out;
+  }
+
+  function normalizeDeckCards(cards) {
+    var map = {};
+    (Array.isArray(cards) ? cards : []).forEach(function (entry) {
+      var card = normalizeDeckCard(entry);
+      if (!card) return;
+      if (map[card.cardNumber]) {
+        map[card.cardNumber].qty = Math.min(
+          99,
+          map[card.cardNumber].qty + card.qty
+        );
+        map[card.cardNumber].shortQty = clampShortQty(
+          Math.max(map[card.cardNumber].shortQty || 0, card.shortQty || 0),
+          map[card.cardNumber].qty
+        );
+        if (!map[card.cardNumber].cardName && card.cardName) {
+          map[card.cardNumber].cardName = card.cardName;
+        }
+        if (map[card.cardNumber].level == null && card.level != null) {
+          map[card.cardNumber].level = card.level;
+        }
+      } else {
+        map[card.cardNumber] = card;
+      }
+    });
+    return Object.keys(map)
+      .map(function (k) { return map[k]; })
+      .sort(function (a, b) {
+        return String(a.cardNumber).localeCompare(String(b.cardNumber));
+      });
   }
 
   function normalizeFavoriteMeta(meta) {
@@ -96,6 +181,13 @@
       loadCardFavorites: function () { return Promise.resolve([]); },
       addCardFavorite: function () { return Promise.resolve(false); },
       removeCardFavorite: function () { return Promise.resolve(false); },
+      safeDocId: safeDocId,
+      loadUserDecks: function () { return Promise.resolve([]); },
+      saveUserDeck: function () { return Promise.resolve(false); },
+      deleteUserDeck: function () { return Promise.resolve(false); },
+      findUserDeckByDecklogCode: function () { return Promise.resolve(null); },
+      getDecklogData: function () { return Promise.resolve(null); },
+      saveDecklogData: function () { return Promise.resolve(false); },
       getAuctionIdFromLocation: function () { return ""; },
       watchAuction: function () { return function () {}; },
       placeBid: function () {
@@ -366,6 +458,193 @@
         .doc(id)
         .delete()
         .then(function () { return true; });
+    }
+
+    function timestampToMillisDeck(value) {
+      return timestampToMillis(value);
+    }
+
+    function deckFromDoc(docSnap) {
+      if (!docSnap || !docSnap.exists) return null;
+      var data = docSnap.data() || {};
+      var id = String(data.id || docSnap.id || "").trim();
+      if (!id) return null;
+      var name = String(data.name || "").trim() || "未命名牌組";
+      var tags = Array.isArray(data.tags)
+        ? data.tags.map(function (t) { return String(t || "").trim(); }).filter(Boolean)
+        : [];
+      var cards = normalizeDeckCards(data.cards);
+      var createdAt = timestampToMillisDeck(data.createdAt) || Date.now();
+      var updatedAt = timestampToMillisDeck(data.updatedAt) || createdAt;
+      var out = {
+        id: id,
+        name: name.slice(0, 40),
+        tags: tags.slice(0, 20),
+        cards: cards,
+        createdAt: createdAt,
+        updatedAt: updatedAt
+      };
+      var code = String(data.decklogCode || "").trim();
+      if (code) out.decklogCode = code;
+      var source = String(data.source || "").trim();
+      if (source === "decklog" || source === "manual") out.source = source;
+      else if (code) out.source = "decklog";
+      else out.source = "manual";
+      return out;
+    }
+
+    function serializeDeckForCloud(deck) {
+      if (!deck || typeof deck !== "object") return null;
+      var id = safeDocId(deck.id);
+      if (!id) return null;
+      var name = String(deck.name || "").trim() || "未命名牌組";
+      var tags = Array.isArray(deck.tags)
+        ? deck.tags.map(function (t) { return String(t || "").trim(); }).filter(Boolean)
+        : [];
+      var cards = normalizeDeckCards(deck.cards).map(function (c) {
+        var row = { cardNumber: c.cardNumber, qty: c.qty };
+        if (c.cardName) row.cardName = c.cardName;
+        if (c.level != null) row.level = c.level;
+        if (c.shortQty > 0) row.shortQty = c.shortQty;
+        return row;
+      });
+      var payload = {
+        id: id,
+        name: name.slice(0, 40),
+        tags: tags.slice(0, 20),
+        cards: cards,
+        source: deck.source === "decklog" ? "decklog" : "manual",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      var code = String(deck.decklogCode || "").trim();
+      if (code) {
+        payload.decklogCode = code;
+        payload.source = "decklog";
+      }
+      if (typeof deck.createdAt === "number" && isFinite(deck.createdAt)) {
+        payload.createdAt = deck.createdAt;
+      }
+      return { id: id, payload: payload };
+    }
+
+    function loadUserDecks() {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user) return Promise.resolve([]);
+      return decksCol(db, user.uid)
+        .get()
+        .then(function (snap) {
+          var list = [];
+          snap.forEach(function (docSnap) {
+            var deck = deckFromDoc(docSnap);
+            if (deck) list.push(deck);
+          });
+          list.sort(function (a, b) {
+            return (b.updatedAt || 0) - (a.updatedAt || 0);
+          });
+          return list;
+        });
+    }
+
+    function saveUserDeck(deck) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var packed = serializeDeckForCloud(deck);
+      if (!user || !packed) return Promise.resolve(false);
+      var ref = decksCol(db, user.uid).doc(packed.id);
+      return ref.get().then(function (snap) {
+        var payload = packed.payload;
+        if (!snap.exists && payload.createdAt == null) {
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        return ref.set(payload, { merge: true }).then(function () { return true; });
+      });
+    }
+
+    function deleteUserDeck(deckId) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var id = safeDocId(deckId);
+      if (!user || !id) return Promise.resolve(false);
+      return decksCol(db, user.uid)
+        .doc(id)
+        .delete()
+        .then(function () { return true; });
+    }
+
+    function findUserDeckByDecklogCode(decklogCode) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var code = String(decklogCode || "").trim();
+      if (!user || !code) return Promise.resolve(null);
+      return decksCol(db, user.uid)
+        .where("decklogCode", "==", code)
+        .limit(1)
+        .get()
+        .then(function (snap) {
+          if (snap.empty) return null;
+          return deckFromDoc(snap.docs[0]);
+        });
+    }
+
+    function getDecklogData(decklogCode) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var code = String(decklogCode || "").trim();
+      var id = safeDocId(code);
+      if (!id) return Promise.resolve(null);
+      return decklogDataCol(db)
+        .doc(id)
+        .get()
+        .then(function (snap) {
+          if (!snap.exists) return null;
+          var data = snap.data() || {};
+          return {
+            decklogCode: String(data.decklogCode || code).trim() || code,
+            cards: normalizeDeckCards(data.cards).map(function (c) {
+              var row = { cardNumber: c.cardNumber, qty: c.qty };
+              if (c.cardName) row.cardName = c.cardName;
+              if (c.level != null) row.level = c.level;
+              return row;
+            }),
+            createdAt: timestampToMillisDeck(data.createdAt) || 0,
+            updatedAt: timestampToMillisDeck(data.updatedAt) || 0,
+            fetchedAt: timestampToMillisDeck(data.fetchedAt) || 0
+          };
+        });
+    }
+
+    function saveDecklogData(decklogCode, cards) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var code = String(decklogCode || "").trim();
+      var id = safeDocId(code);
+      if (!user || !id) return Promise.resolve(false);
+      var normalized = normalizeDeckCards(cards).map(function (c) {
+        var row = { cardNumber: c.cardNumber, qty: c.qty };
+        if (c.cardName) row.cardName = c.cardName;
+        if (c.level != null) row.level = c.level;
+        return row;
+      });
+      if (!normalized.length) return Promise.resolve(false);
+      var ref = decklogDataCol(db).doc(id);
+      return ref.get().then(function (snap) {
+        var payload = {
+          decklogCode: code,
+          cards: normalized,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          fetchedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (!snap.exists) {
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        return ref.set(payload, { merge: true }).then(function () { return true; });
+      });
     }
 
     function auctionRef(auctionId) {
@@ -954,6 +1233,13 @@
       loadCardFavorites: loadCardFavorites,
       addCardFavorite: addCardFavorite,
       removeCardFavorite: removeCardFavorite,
+      safeDocId: safeDocId,
+      loadUserDecks: loadUserDecks,
+      saveUserDeck: saveUserDeck,
+      deleteUserDeck: deleteUserDeck,
+      findUserDeckByDecklogCode: findUserDeckByDecklogCode,
+      getDecklogData: getDecklogData,
+      saveDecklogData: saveDecklogData,
       getAuctionIdFromLocation: getAuctionIdFromLocation,
       watchAuction: watchAuction,
       placeBid: placeBid,
