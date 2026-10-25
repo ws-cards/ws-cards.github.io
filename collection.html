@@ -3374,17 +3374,12 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint" id="colDeckModalHint">勾選要標記缺卡的牌，並設定缺幾張。</p>
+      <p class="col-modal-hint" id="colDeckModalHint" hidden></p>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckMetaEditBtn">
           <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤</span>
         </button>
-        <span id="colDeckPickRow">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
-            <i class="fas fa-plus mr-1" aria-hidden="true"></i>從我的卡冊加入
-          </button>
-        </span>
         <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
             <span>排序</span>
@@ -5271,6 +5266,7 @@
 
       deckDetailEl.innerHTML = html;
       syncDeckCardViewControls();
+      revealLoadedDeckImages(deckDetailEl);
     }
 
     function renderDeckList() {
@@ -5337,7 +5333,10 @@
         html += '  </div>';
         html += '</li>';
       });
-      if (deckListEl) deckListEl.innerHTML = html;
+      if (deckListEl) {
+        deckListEl.innerHTML = html;
+        revealLoadedDeckImages(deckListEl);
+      }
       renderDeckDetail();
     }
 
@@ -5540,7 +5539,6 @@
 
     function applyDeckEditorMode() {
       var isView = deckEditorMode === 'view';
-      if (deckPickRow) deckPickRow.hidden = isView;
       if (deckSaveBtn) deckSaveBtn.hidden = isView;
       if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
@@ -5548,9 +5546,13 @@
         deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤' : '編輯名稱／標籤';
       }
       if (deckModalHint) {
-        deckModalHint.textContent = isView
-          ? '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。'
-          : '勾選缺卡並用 ± 設定缺幾張；持有＝此牌組編成−缺卡，與卡冊無關。';
+        if (isView) {
+          deckModalHint.hidden = false;
+          deckModalHint.textContent = '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。';
+        } else {
+          deckModalHint.hidden = true;
+          deckModalHint.textContent = '';
+        }
       }
     }
 
@@ -5587,7 +5589,7 @@
         if (tile) tile.remove();
         if (!(deckDraft.cards || []).length) {
           deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
-            (deckEditorMode === 'view' ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。') +
+            (deckEditorMode === 'view' ? '此牌組尚未加入卡片。' : '尚未加入卡片。') +
             '</li>';
         }
         return true;
@@ -5690,7 +5692,7 @@
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
-          (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。') +
+          (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片。') +
           '</li>';
         return;
       }
@@ -5707,7 +5709,7 @@
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
           escapeHtml(deckCardEmptyMessage({
             shortOnly: deckCardShortOnly,
-            emptyFallback: isView ? '此牌組尚未加入卡片。' : '尚未加入卡片，請按「從我的卡冊加入」。'
+            emptyFallback: isView ? '此牌組尚未加入卡片。' : '尚未加入卡片。'
           })) +
           '</li>';
         return;
@@ -5715,6 +5717,7 @@
       deckEntryList.innerHTML = visibleCards.map(function (entry) {
         return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
       }).join('');
+      revealLoadedDeckImages(deckEntryList);
     }
 
     function openDeckEditorUi(deckId, mode) {
@@ -6167,6 +6170,16 @@
       if (art) art.classList.add('has-image');
     }
 
+    /** 快取命中時 load 可能已結束，補套 is-loaded */
+    function revealLoadedDeckImages(root) {
+      if (!root) return;
+      root.querySelectorAll('.col-deck-entry-art img, .col-deck-thumb-img img').forEach(function (img) {
+        if (img.classList.contains('is-loaded') || img.classList.contains('is-broken')) return;
+        if (img.complete && img.naturalWidth > 0) onAlbumImageLoad(img);
+        else if (img.complete) onAlbumImageError(img);
+      });
+    }
+
     function onAlbumImageError(img) {
       var fallback = img.getAttribute('data-fallback');
       if (fallback && img.getAttribute('src') !== fallback) {
@@ -6589,6 +6602,18 @@
         var shortOnly = e.target.closest('#colDeckDetailCardShortOnly');
         if (shortOnly) applyDeckCardShortOnly(shortOnly.checked);
       });
+      // 桌面詳情預覽：卡圖需 is-loaded 才會顯示（opacity）
+      deckDetailEl.addEventListener('load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      deckDetailEl.addEventListener('error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
+    }
+    if (deckListEl) {
+      deckListEl.addEventListener('error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
     }
     if (deckViewEditBtn) {
       deckViewEditBtn.addEventListener('click', function () {
@@ -6608,20 +6633,25 @@
     if (deckMetaConfirmBtn) {
       deckMetaConfirmBtn.addEventListener('click', confirmDeckMetaModal);
     }
-    document.getElementById('colDeckPickBtn').addEventListener('click', openDeckPickModal);
-    document.getElementById('colDeckPickConfirmBtn').addEventListener('click', confirmDeckPick);
-    document.getElementById('colDeckPickSelectAllBtn').addEventListener('click', function () {
-      var q = deckPickFilter.trim().toLowerCase();
-      allItems.forEach(function (item) {
-        if (!item || !item.cardNumber) return;
-        if (q) {
-          var hay = [item.cardNumber, item.cardName, item.cardTitle, item.cardRare, (item.tags || []).join(' ')].join(' ').toLowerCase();
-          if (hay.indexOf(q) < 0) return;
-        }
-        deckPickSet[item.cardNumber] = true;
+    var deckPickBtn = document.getElementById('colDeckPickBtn');
+    if (deckPickBtn) deckPickBtn.addEventListener('click', openDeckPickModal);
+    var deckPickConfirmBtn = document.getElementById('colDeckPickConfirmBtn');
+    if (deckPickConfirmBtn) deckPickConfirmBtn.addEventListener('click', confirmDeckPick);
+    var deckPickSelectAllBtn = document.getElementById('colDeckPickSelectAllBtn');
+    if (deckPickSelectAllBtn) {
+      deckPickSelectAllBtn.addEventListener('click', function () {
+        var q = deckPickFilter.trim().toLowerCase();
+        allItems.forEach(function (item) {
+          if (!item || !item.cardNumber) return;
+          if (q) {
+            var hay = [item.cardNumber, item.cardName, item.cardTitle, item.cardRare, (item.tags || []).join(' ')].join(' ').toLowerCase();
+            if (hay.indexOf(q) < 0) return;
+          }
+          deckPickSet[item.cardNumber] = true;
+        });
+        renderDeckPickList();
       });
-      renderDeckPickList();
-    });
+    }
     if (deckPickSearch) {
       deckPickSearch.addEventListener('input', function () {
         deckPickFilter = deckPickSearch.value || '';
