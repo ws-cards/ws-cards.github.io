@@ -775,11 +775,14 @@
       --binder-page-line: rgba(20, 35, 58, 0.1);
       --binder-accent: #2f6fed;
       --binder-metal: #9aa7b8;
-      --deckbox-shell: #24352d;
-      --deckbox-lid: #31483c;
+      /* 淺色：紙感鼠尾草牌盒，深色只作點綴 */
+      --deckbox-shell: #eef4f0;
+      --deckbox-lid: #e7efe9;
       --deckbox-paper: #ffffff;
-      --deckbox-accent: #c9983f;
-      --deckbox-well: #2a3d33;
+      --deckbox-accent: #b08a3a;
+      --deckbox-well: #f7faf8;
+      --deckbox-ink: #243830;
+      --deckbox-muted: #667a70;
       display: grid;
       gap: 1.15rem;
       margin-bottom: 1.5rem;
@@ -796,6 +799,8 @@
       --deckbox-paper: #1b2420;
       --deckbox-accent: #e0b35a;
       --deckbox-well: #18231e;
+      --deckbox-ink: #eef3ee;
+      --deckbox-muted: rgba(238, 243, 238, 0.68);
     }
 
     /* 卡冊／牌組切換：簡潔滑動分段 */
@@ -1490,17 +1495,27 @@
       pointer-events: none;
     }
 
-    /* 牌盒 */
+    /* 牌盒：淺色紙感鼠尾草；深色維持深綠牌盒 */
     .col-deckbox-shell {
       border-radius: 18px;
       overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(166, 124, 45, 0.1), transparent 42%),
+        linear-gradient(180deg, var(--deckbox-lid), var(--deckbox-shell));
+      box-shadow:
+        0 14px 32px rgba(26, 46, 36, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
+      color: var(--deckbox-ink);
+      border: 1px solid rgba(26, 46, 36, 0.08);
+    }
+    [data-theme="dark"] .col-deckbox-shell {
       background:
         linear-gradient(145deg, rgba(212, 162, 76, 0.14), transparent 40%),
         linear-gradient(180deg, var(--deckbox-lid), var(--deckbox-shell));
       box-shadow:
         0 18px 40px rgba(20, 32, 26, 0.28),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
-      color: #eef3ee;
+      border-color: transparent;
     }
     .col-deckbox-lid {
       display: flex;
@@ -1509,7 +1524,13 @@
       justify-content: space-between;
       gap: 0.75rem 1rem;
       padding: 1.15rem 1.2rem 1rem;
-      border-bottom: 1px solid rgba(212, 162, 76, 0.28);
+      border-bottom: 1px solid rgba(26, 46, 36, 0.1);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent),
+        var(--deckbox-lid);
+    }
+    [data-theme="dark"] .col-deckbox-lid {
+      border-bottom-color: rgba(212, 162, 76, 0.28);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
         var(--deckbox-lid);
@@ -1520,7 +1541,7 @@
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(238, 243, 238, 0.55);
+      color: var(--deckbox-muted);
     }
     .col-deckbox-title {
       margin: 0;
@@ -1528,7 +1549,7 @@
       font-size: clamp(1.45rem, 2.2vw, 1.95rem);
       font-weight: 900;
       letter-spacing: 0.04em;
-      color: #f7faf7;
+      color: var(--deckbox-ink);
     }
     .col-deckbox-badge {
       display: inline-flex;
@@ -1536,51 +1557,98 @@
       gap: 0.4rem;
       padding: 0.45rem 0.75rem;
       border-radius: 999px;
-      border: 1px solid rgba(212, 162, 76, 0.45);
-      background: rgba(212, 162, 76, 0.12);
+      border: 1px solid rgba(166, 124, 45, 0.35);
+      background: rgba(166, 124, 45, 0.1);
       color: var(--deckbox-accent);
       font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.04em;
     }
+    [data-theme="dark"] .col-deckbox-badge {
+      border-color: rgba(212, 162, 76, 0.45);
+      background: rgba(212, 162, 76, 0.12);
+    }
     .col-deckbox-body {
       padding: 1rem 1.1rem 1.2rem;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 30%),
+        var(--deckbox-well);
+    }
+    [data-theme="dark"] .col-deckbox-body {
       background:
         linear-gradient(180deg, rgba(245, 247, 244, 0.06), transparent 28%),
         var(--deckbox-well);
     }
     .col-deckbox .col-shell {
-      --col-accent: #3f8f6b;
-      --col-accent-soft: rgba(63, 143, 107, 0.16);
-      --col-line: rgba(255, 255, 255, 0.14);
-      --col-ink: #eef3ee;
-      --col-muted: rgba(238, 243, 238, 0.68);
+      --col-accent: #2f6b4f;
+      --col-accent-soft: rgba(47, 107, 79, 0.12);
+      --col-line: rgba(26, 46, 36, 0.12);
+      --col-ink: var(--deckbox-ink);
+      --col-muted: var(--deckbox-muted);
       background: transparent;
       padding: 0;
     }
+    [data-theme="dark"] .col-deckbox .col-shell {
+      --col-accent: #3f8f6b;
+      --col-accent-soft: rgba(63, 143, 107, 0.16);
+      --col-line: rgba(255, 255, 255, 0.14);
+    }
     .col-deckbox .col-search-wrap .form-control,
     .col-deckbox .col-sort-chip {
+      background: #fff !important;
+      border-color: rgba(36, 56, 48, 0.14);
+      color: var(--deckbox-ink);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control,
+    [data-theme="dark"] .col-deckbox .col-sort-chip {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.22);
       color: #f3f6f3;
+      box-shadow: none;
     }
     .col-deckbox .col-search-wrap .form-control::placeholder {
+      color: rgba(26, 46, 36, 0.42);
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control::placeholder {
       color: rgba(243, 246, 243, 0.55);
     }
     .col-deckbox .col-search-wrap > i,
     .col-deckbox .col-sort-chip > i,
     .col-deckbox .col-sort-chip::after {
+      color: rgba(26, 46, 36, 0.45);
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap > i,
+    [data-theme="dark"] .col-deckbox .col-sort-chip > i,
+    [data-theme="dark"] .col-deckbox .col-sort-chip::after {
       color: rgba(243, 246, 243, 0.6);
     }
     .col-deckbox .col-sort-chip select,
     .col-deckbox .col-sort-chip select option {
+      color: var(--deckbox-ink) !important;
+      background-color: #fff;
+    }
+    [data-theme="dark"] .col-deckbox .col-sort-chip select,
+    [data-theme="dark"] .col-deckbox .col-sort-chip select option {
       color: #f3f6f3 !important;
       background-color: #24352d;
     }
     .col-deckbox .col-search-wrap .form-control {
+      color: var(--deckbox-ink) !important;
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control {
       color: #f3f6f3 !important;
     }
     .col-deckbox .col-cta-secondary {
+      background: #fff;
+      border-color: rgba(176, 138, 58, 0.45);
+      color: #9a7428;
+    }
+    .col-deckbox .col-cta-secondary:hover {
+      background: rgba(176, 138, 58, 0.1);
+      color: #9a7428;
+    }
+    [data-theme="dark"] .col-deckbox .col-cta-secondary {
       background: rgba(212, 162, 76, 0.08);
       border-color: var(--deckbox-accent);
       color: var(--deckbox-accent);
@@ -1590,12 +1658,25 @@
       border-color: #3f8f6b;
       color: #fff;
     }
+    .col-deckbox .col-cta-primary:hover {
+      filter: brightness(1.04);
+      color: #fff;
+    }
+    [data-theme="dark"] .col-deckbox .col-cta-primary {
+      background: #3f8f6b;
+      border-color: #3f8f6b;
+    }
     .col-deckbox .col-deck-stats {
+      background: rgba(47, 107, 79, 0.07);
+      border-color: rgba(47, 107, 79, 0.14);
+    }
+    [data-theme="dark"] .col-deckbox .col-deck-stats {
       background: rgba(212, 162, 76, 0.1);
       border-color: rgba(212, 162, 76, 0.22);
     }
     .col-deckbox .col-deck-stat,
-    .col-deckbox .col-deck-stat-note { color: rgba(238, 243, 238, 0.85); }
+    .col-deckbox .col-deck-stat-note { color: var(--deckbox-muted); }
+    .col-deckbox .col-deck-stat strong { color: var(--deckbox-ink); }
     .col-deckbox .col-deck-stat i { color: var(--deckbox-accent); }
     @media (min-width: 992px) {
       /* 淺色模式：牌盒內側欄／詳情為紙面淺底，重設文字變數避免沿用外殼淺字色 */
@@ -1692,12 +1773,24 @@
     }
     @media (max-width: 991px) {
       .col-deckbox .col-deck-card {
+        background: #fff;
+        border-color: rgba(26, 46, 36, 0.1);
+        box-shadow: 0 1px 2px rgba(26, 46, 36, 0.04);
+      }
+      .col-deckbox .col-deck-name { color: var(--deckbox-ink); }
+      .col-deckbox .col-deck-meta { color: var(--deckbox-muted); }
+      .col-deckbox .col-deck-actions {
+        background: rgba(47, 107, 79, 0.06);
+        border-left-color: rgba(26, 46, 36, 0.08);
+      }
+      [data-theme="dark"] .col-deckbox .col-deck-card {
         background: rgba(255, 255, 255, 0.04);
         border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: none;
       }
-      .col-deckbox .col-deck-name { color: #f3f6f3; }
-      .col-deckbox .col-deck-meta { color: rgba(238, 243, 238, 0.62); }
-      .col-deckbox .col-deck-actions {
+      [data-theme="dark"] .col-deckbox .col-deck-name { color: #f3f6f3; }
+      [data-theme="dark"] .col-deckbox .col-deck-meta { color: rgba(238, 243, 238, 0.62); }
+      [data-theme="dark"] .col-deckbox .col-deck-actions {
         background: rgba(0, 0, 0, 0.18);
         border-left-color: rgba(255, 255, 255, 0.1);
       }
