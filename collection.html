@@ -3389,7 +3389,8 @@
             <span>排序</span>
             <select id="colDeckCardSortSelect" aria-label="牌組內排序">
               <option value="cardNumber" selected>按卡號排序</option>
-              <option value="level">按等級排序</option>
+              <option value="levelAsc">按等級排序 (升序)</option>
+              <option value="levelDesc">按等級排序 (降序)</option>
             </select>
           </label>
           <label class="col-deck-card-short-only">
@@ -4940,11 +4941,22 @@
       });
     }
 
+    function isDeckLevelSortMode(mode) {
+      return mode === 'level' || mode === 'levelAsc' || mode === 'levelDesc';
+    }
+
+    function normalizeDeckCardSortMode(mode) {
+      if (mode === 'levelDesc') return 'levelDesc';
+      // 舊值 level 視為升序
+      if (mode === 'level' || mode === 'levelAsc') return 'levelAsc';
+      return 'cardNumber';
+    }
+
     function filterAndSortDeckCards(cards, opts) {
       opts = opts || {};
       var q = String(opts.query || '').trim().toLowerCase();
       var shortOnly = !!opts.shortOnly;
-      var sortMode = opts.sortMode || 'cardNumber';
+      var sortMode = normalizeDeckCardSortMode(opts.sortMode);
       var list = (cards || []).filter(function (entry) {
         if (shortOnly && entryShortQty(entry) < 1) return false;
         if (!q) return true;
@@ -4953,12 +4965,16 @@
         return hay.indexOf(q) >= 0;
       });
       list.sort(function (a, b) {
-        if (sortMode === 'level') {
+        if (isDeckLevelSortMode(sortMode)) {
           var la = entryLevel(a);
           var lb = entryLevel(b);
-          var ra = la == null ? 999 : la;
-          var rb = lb == null ? 999 : lb;
-          if (ra !== rb) return ra - rb;
+          var hasA = la != null;
+          var hasB = lb != null;
+          if (hasA && hasB && la !== lb) {
+            return sortMode === 'levelDesc' ? (lb - la) : (la - lb);
+          }
+          // 無等級資料排最後
+          if (hasA !== hasB) return hasA ? -1 : 1;
         }
         return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''));
       });
@@ -5164,7 +5180,7 @@
       var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
       var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
       var q = deckDetailCardFilter.trim().toLowerCase();
-      if (deckCardSortMode === 'level') {
+      if (isDeckLevelSortMode(deckCardSortMode)) {
         ensureDeckCardLevels(deck.cards || [], function (updated) {
           if (updated) renderDeckDetail();
         });
@@ -5255,7 +5271,8 @@
       html += '          <span>排序</span>';
       html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
       html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
-      html += '            <option value="level"' + (deckCardSortMode === 'level' ? ' selected' : '') + '>按等級排序</option>';
+      html += '            <option value="levelAsc"' + (deckCardSortMode === 'levelAsc' ? ' selected' : '') + '>按等級排序 (升序)</option>';
+      html += '            <option value="levelDesc"' + (deckCardSortMode === 'levelDesc' ? ' selected' : '') + '>按等級排序 (降序)</option>';
       html += '          </select>';
       html += '        </label>';
       html += '        <label class="col-deck-card-short-only">';
@@ -5702,7 +5719,7 @@
           '</li>';
         return;
       }
-      if (deckCardSortMode === 'level') {
+      if (isDeckLevelSortMode(deckCardSortMode)) {
         ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
           if (updated) renderDeckEditor();
         });
@@ -5793,7 +5810,7 @@
         entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
-      if (deckCardShortOnly || deckCardSortMode === 'level' || !syncDeckEntryTile(cardNumber)) {
+      if (deckCardShortOnly || isDeckLevelSortMode(deckCardSortMode) || !syncDeckEntryTile(cardNumber)) {
         renderDeckEditor();
       } else {
         updateDeckEditorSummary();
@@ -6560,7 +6577,7 @@
       deckListEl.addEventListener('click', handleDeckActionClick);
     }
     function applyDeckCardSortMode(next) {
-      deckCardSortMode = next === 'level' ? 'level' : 'cardNumber';
+      deckCardSortMode = normalizeDeckCardSortMode(next);
       syncDeckCardViewControls();
       if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
       renderDeckDetail();
