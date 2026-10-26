@@ -14,11 +14,60 @@
     })();
   </script>
   <style>
+    /* 頁面就緒前藏內文（進度 overlay 除外），避免字體 swap 閃爍與半載入畫面 */
     html { background: #ffffff; }
     html[data-theme="dark"] { background: #141414; }
-    html:not(.fonts-ready) body { visibility: hidden; }
-    html.fonts-ready body { visibility: visible; }
+    html:not(.page-ready) body > *:not(#wsPageLoader) { visibility: hidden; }
+    html.page-ready body > *:not(#wsPageLoader) { visibility: visible; }
+    /* 關鍵 CSS：外部 stylesheet 尚未到位時也能先畫出進度條 */
+    #wsPageLoader.ws-page-loader {
+      position: fixed; inset: 0; z-index: 20000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; visibility: visible !important;
+      background: #ffffff; color: #2d3748;
+    }
+    html[data-theme="dark"] #wsPageLoader.ws-page-loader {
+      background: #141414; color: #e9e7e1;
+    }
+    #wsPageLoader .ws-page-loader-panel {
+      width: min(20.5rem, 100%); text-align: center;
+    }
+    #wsPageLoader .ws-page-loader-brand {
+      display: inline-flex; align-items: center; gap: 0.65rem; margin-bottom: 0.85rem;
+    }
+    #wsPageLoader .ws-page-loader-mark {
+      display: block; width: 1.15rem; height: 1px; background: #b07c28; opacity: 0.72;
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-mark { background: #cbb083; }
+    #wsPageLoader .ws-page-loader-name {
+      font-family: 'UoqMunThenKhung', 'Noto Serif TC', serif;
+      font-size: 1.55rem; letter-spacing: 0.18em;
+    }
+    #wsPageLoader .ws-page-loader-label {
+      margin: 0.85rem 0 1rem; font-size: 0.84rem; opacity: 0.72;
+    }
+    #wsPageLoader .ws-page-loader-track {
+      height: 5px; border-radius: 999px; overflow: hidden;
+      background: rgba(45, 55, 72, 0.12);
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-track {
+      background: rgba(233, 231, 225, 0.14);
+    }
+    #wsPageLoader .ws-page-loader-fill {
+      display: block; height: 100%; width: 0%;
+      border-radius: inherit; background: #b07c28;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-fill {
+      background: #cbb083;
+    }
+    #wsPageLoader .ws-page-loader-pct {
+      margin-top: 0.7rem;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 600; font-variant-numeric: tabular-nums;
+    }
   </style>
+  <script src="assets/js/ws-page-loader.js"></script>
   <meta name="description" content="管理已擁有的 Weiss Schwarz 卡冊與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
   <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
   <meta property="og:description" content="我的卡冊與牌組分區管理：標籤、數量；缺卡於牌組編輯中調整。">
@@ -37,8 +86,11 @@
   <title>收藏庫｜WS-Cards 卡片雲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
   <script>
+    // 必須放在字體 stylesheet 之後。等首屏關鍵字就緒再開字；
+    // 1.5s 保底，CDN 掛掉也不要永遠白屏。
+    // 同時推進 WsPageLoader 的 fonts 里程碑。
     (function () {
       var root = document.documentElement;
       var done = false;
@@ -46,6 +98,7 @@
         if (done) return;
         done = true;
         root.classList.add('fonts-ready');
+        if (window.WsPageLoader) WsPageLoader.mark('fonts', '字體就緒');
       }
       if (!document.fonts || !document.fonts.load) {
         markReady();
@@ -55,6 +108,7 @@
         document.fonts.load('400 16px "Zen Kaku Gothic New"'),
         document.fonts.load('700 16px "Zen Kaku Gothic New"'),
         document.fonts.load('700 16px "Noto Serif TC"'),
+        document.fonts.load('400 20px "UoqMunThenKhung"'),
         document.fonts.load('700 16px "IBM Plex Mono"')
       ];
       Promise.all(jobs)
@@ -1381,6 +1435,9 @@
     .col-deckbox.is-focus .col-focus-hint { display: block; }
     [data-theme="dark"] .col-focus-hint { color: #9ca3af; }
     .col-deckbox .col-focus-hint {
+      color: var(--deckbox-muted, #6b7280);
+    }
+    [data-theme="dark"] .col-deckbox .col-focus-hint {
       color: rgba(238, 243, 238, 0.72);
     }
     @media (max-width: 767px) {
@@ -1420,17 +1477,36 @@
       align-items: center;
       gap: 0.55rem 0.75rem;
     }
+    /* 淺色紙感蓋：深字＋實底，避免淺字融進背景 */
     .col-deckbox .col-focus-btn {
+      border-color: rgba(26, 46, 36, 0.18);
+      background: #fff;
+      color: var(--deckbox-ink, #1a2e24);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+    .col-deckbox .col-focus-btn:hover {
+      background: rgba(47, 107, 79, 0.08);
+      border-color: rgba(47, 107, 79, 0.4);
+      color: #1f5a3f;
+    }
+    .col-deckbox .col-focus-btn[aria-pressed="true"] {
+      background: var(--deckbox-accent, #a67c2d);
+      border-color: var(--deckbox-accent, #a67c2d);
+      color: #fff8e8;
+      box-shadow: none;
+    }
+    [data-theme="dark"] .col-deckbox .col-focus-btn {
       border-color: rgba(255, 255, 255, 0.18);
       background: rgba(255, 255, 255, 0.08);
       color: #eef3ee;
+      box-shadow: none;
     }
-    .col-deckbox .col-focus-btn:hover {
+    [data-theme="dark"] .col-deckbox .col-focus-btn:hover {
       background: rgba(224, 179, 90, 0.16);
       border-color: rgba(224, 179, 90, 0.45);
       color: #f6edd4;
     }
-    .col-deckbox .col-focus-btn[aria-pressed="true"] {
+    [data-theme="dark"] .col-deckbox .col-focus-btn[aria-pressed="true"] {
       background: var(--deckbox-accent, #c9983f);
       border-color: var(--deckbox-accent, #c9983f);
       color: #152019;
@@ -2913,9 +2989,84 @@
     #colDeckMetaModal.col-modal {
       z-index: 2100;
     }
+    /* 確認框需蓋過 DeckLog／編輯等其他 modal，否則會被「檢查中」畫面擋住 */
+    #colConfirmModal.col-modal {
+      z-index: 2200;
+    }
+    .col-deck-desc-input {
+      min-height: 4.5rem;
+      resize: vertical;
+    }
+    .col-deck-modal-desc {
+      margin: 0 0 0.65rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid var(--col-line);
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--col-muted, #4a5568);
+      font-size: 0.86rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="dark"] .col-deck-modal-desc {
+      background: rgba(255, 255, 255, 0.04);
+      color: #cbd5e0;
+    }
+    /* 桌面改在詳情側欄顯示描述；手機編輯／檢視 modal 才顯示此區塊 */
+    @media (min-width: 768px) {
+      .col-deck-modal-desc {
+        display: none !important;
+      }
+    }
+    .col-deck-detail-desc {
+      margin: 0.55rem 0 0;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--col-muted, #4a5568);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="dark"] .col-deck-detail-desc {
+      color: #a0aec0;
+    }
+    .col-deck-detail-desc.is-empty {
+      opacity: 0.72;
+      font-style: italic;
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<!-- 全頁載入進度 overlay（百分比）；內容就緒後由 WsPageLoader.complete 關閉 -->
+<div id="wsPageLoader" class="ws-page-loader" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-busy="true" aria-label="頁面載入中">
+  <div class="ws-page-loader-panel">
+    <div class="ws-page-loader-brand" aria-hidden="true">
+      <span class="ws-page-loader-mark"></span>
+      <span class="ws-page-loader-name">卡片雲</span>
+      <span class="ws-page-loader-mark"></span>
+    </div>
+    <p class="ws-page-loader-label" data-loader-label>載入中…</p>
+    <div class="ws-page-loader-track" aria-hidden="true">
+      <span class="ws-page-loader-fill" data-loader-fill></span>
+    </div>
+    <div class="ws-page-loader-pct" data-loader-pct>0%</div>
+  </div>
+</div>
+<script>
+  (function () {
+    if (!window.WsPageLoader) return;
+    WsPageLoader.configure([
+      { id: 'fonts', weight: 22, label: '載入字體…' },
+      { id: 'boot', weight: 18, label: '初始化…' },
+      { id: 'album', weight: 30, label: '載入卡冊…' },
+      { id: 'decks', weight: 30, label: '同步牌組…' }
+    ]);
+    WsPageLoader.armSafety(12000);
+    if (document.documentElement.classList.contains('fonts-ready')) {
+      WsPageLoader.mark('fonts', '字體就緒');
+    }
+  })();
+</script>
 <div class="wrapper">
 
   <div data-navbar data-page-title="收藏庫"></div>
@@ -3374,17 +3525,19 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
+      <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckMetaEditBtn">
-          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤</span>
+          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤／描述</span>
         </button>
         <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
             <span>排序</span>
             <select id="colDeckCardSortSelect" aria-label="牌組內排序">
               <option value="cardNumber" selected>按卡號排序</option>
-              <option value="level">按等級排序</option>
+              <option value="levelAsc">按等級排序 (升序)</option>
+              <option value="levelDesc">按等級排序 (降序)</option>
             </select>
           </label>
           <label class="col-deck-card-short-only">
@@ -3408,8 +3561,8 @@
   <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckMetaTitle" style="width:min(440px,100%);">
     <div class="col-modal-body">
-      <h3 id="colDeckMetaTitle">牌組名稱／標籤</h3>
-      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱與標籤。</p>
+      <h3 id="colDeckMetaTitle">牌組名稱／標籤／描述</h3>
+      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱、標籤與描述。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -3418,6 +3571,10 @@
         <label for="colDeckTagsInput">
           牌組標籤（逗號分隔，選填）
           <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
+        </label>
+        <label for="colDeckDescInput">
+          牌組描述（選填）
+          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="3" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
         </label>
       </div>
     </div>
@@ -3509,6 +3666,7 @@
     var FAVORITES_KEY = 'wsCardsFavorites';
     var MAX_ITEMS = 500;
     var MAX_DECKS = 100;
+    var MAX_DECK_DESC = 200;
     var MAX_QTY = 999;
     var MAX_DECK_ENTRY_QTY = 50;
     var UNTAGGED = '__untagged__';
@@ -3543,6 +3701,7 @@
     var deckLevelCache = {};
     var deckLevelEnriching = false;
 
+    var deckModalDesc = document.getElementById('colDeckModalDesc');
     var deckPickRow = document.getElementById('colDeckPickRow');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
@@ -3648,6 +3807,7 @@
     var deckModal = document.getElementById('colDeckModal');
     var deckNameInput = document.getElementById('colDeckNameInput');
     var deckTagsInput = document.getElementById('colDeckTagsInput');
+    var deckDescInput = document.getElementById('colDeckDescInput');
     var deckEntryList = document.getElementById('colDeckEntryList');
     var deckEditorSummary = document.getElementById('colDeckEditorSummary');
     var deckPickModal = document.getElementById('colDeckPickModal');
@@ -4543,10 +4703,27 @@
       }
     }
 
+    function normalizeDeckDescription(value) {
+      return normalizeText(value).slice(0, MAX_DECK_DESC);
+    }
+
+    function syncDeckModalDesc() {
+      if (!deckModalDesc) return;
+      var desc = deckDraft ? normalizeDeckDescription(deckDraft.deckDescription) : '';
+      if (desc) {
+        deckModalDesc.hidden = false;
+        deckModalDesc.textContent = desc;
+      } else {
+        deckModalDesc.hidden = true;
+        deckModalDesc.textContent = '';
+      }
+    }
+
     function syncDeckMetaInputsFromDraft() {
       if (!deckDraft) return;
       if (deckNameInput) deckNameInput.value = deckDraft.name || '';
       if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      if (deckDescInput) deckDescInput.value = deckDraft.deckDescription || '';
     }
 
     function applyDeckMetaFromInputs() {
@@ -4560,7 +4737,11 @@
       var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
       deckDraft.name = name.slice(0, 40);
       deckDraft.tags = normalizeTags(tagRaw.split(/[,，]/));
+      var desc = normalizeDeckDescription(deckDescInput && deckDescInput.value);
+      if (desc) deckDraft.deckDescription = desc;
+      else delete deckDraft.deckDescription;
       syncDeckMetaInputsFromDraft();
+      syncDeckModalDesc();
       return true;
     }
 
@@ -4576,10 +4757,14 @@
         deckTagsInput.readOnly = isView;
         deckTagsInput.disabled = isView;
       }
+      if (deckDescInput) {
+        deckDescInput.readOnly = isView;
+        deckDescInput.disabled = isView;
+      }
       if (deckMetaHint) {
         deckMetaHint.textContent = isView
-          ? '目前為檢視模式，僅可查看名稱與標籤。'
-          : '設定此牌組的名稱與標籤。';
+          ? '目前為檢視模式，僅可查看名稱、標籤與描述。'
+          : '設定此牌組的名稱、標籤與描述。';
       }
       if (deckMetaConfirmBtn) {
         deckMetaConfirmBtn.hidden = isView;
@@ -4599,7 +4784,7 @@
       }
       if (!applyDeckMetaFromInputs()) return;
       closeModalByName('deckMeta');
-      setStatus('已更新牌組名稱／標籤（儲存後生效）', 'is-ok');
+      setStatus('已更新牌組名稱／標籤／描述（儲存後生效）', 'is-ok');
     }
 
     function ownedQty(cardNumber) {
@@ -4730,6 +4915,8 @@
         createdAt: typeof deck.createdAt === 'number' ? deck.createdAt : Date.now(),
         updatedAt: typeof deck.updatedAt === 'number' ? deck.updatedAt : Date.now()
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       if (decklogCode) out.decklogCode = decklogCode;
       return out;
     }
@@ -4752,6 +4939,8 @@
         createdAt: deck.createdAt || Date.now(),
         updatedAt: deck.updatedAt || Date.now()
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       var code = normalizeText(deck.decklogCode);
       if (code) {
         out.decklogCode = code;
@@ -4879,19 +5068,29 @@
         });
     }
 
+    var pageLoaderDecksMarked = false;
+    function markPageLoaderDecks(label) {
+      if (pageLoaderDecksMarked) return;
+      pageLoaderDecksMarked = true;
+      if (window.WsPageLoader) WsPageLoader.mark('decks', label || '牌組就緒');
+    }
+
     function bindDeckAuth() {
       if (!(fb && typeof fb.onAuth === 'function')) {
         clearDecksUiKeepLocalCache();
         setStatus((fb && fb.reason) || 'Firebase 未載入，牌組需登入後才能使用', 'is-error');
+        markPageLoaderDecks('略過雲端牌組');
         return;
       }
       fb.onAuth(function (user) {
         deckCloudUser = user || null;
         if (!user) {
           clearDecksUiKeepLocalCache();
+          markPageLoaderDecks('未登入');
           return;
         }
         refreshDecksFromCloud().then(function (list) {
+          markPageLoaderDecks('牌組已同步');
           if (!(list && list.length)) return;
           setStatus('已同步雲端牌組 ' + list.length + ' 副', 'is-ok');
         });
@@ -4934,11 +5133,22 @@
       });
     }
 
+    function isDeckLevelSortMode(mode) {
+      return mode === 'level' || mode === 'levelAsc' || mode === 'levelDesc';
+    }
+
+    function normalizeDeckCardSortMode(mode) {
+      if (mode === 'levelDesc') return 'levelDesc';
+      // 舊值 level 視為升序
+      if (mode === 'level' || mode === 'levelAsc') return 'levelAsc';
+      return 'cardNumber';
+    }
+
     function filterAndSortDeckCards(cards, opts) {
       opts = opts || {};
       var q = String(opts.query || '').trim().toLowerCase();
       var shortOnly = !!opts.shortOnly;
-      var sortMode = opts.sortMode || 'cardNumber';
+      var sortMode = normalizeDeckCardSortMode(opts.sortMode);
       var list = (cards || []).filter(function (entry) {
         if (shortOnly && entryShortQty(entry) < 1) return false;
         if (!q) return true;
@@ -4947,12 +5157,16 @@
         return hay.indexOf(q) >= 0;
       });
       list.sort(function (a, b) {
-        if (sortMode === 'level') {
+        if (isDeckLevelSortMode(sortMode)) {
           var la = entryLevel(a);
           var lb = entryLevel(b);
-          var ra = la == null ? 999 : la;
-          var rb = lb == null ? 999 : lb;
-          if (ra !== rb) return ra - rb;
+          var hasA = la != null;
+          var hasB = lb != null;
+          if (hasA && hasB && la !== lb) {
+            return sortMode === 'levelDesc' ? (lb - la) : (la - lb);
+          }
+          // 無等級資料排最後
+          if (hasA !== hasB) return hasA ? -1 : 1;
         }
         return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''));
       });
@@ -5158,7 +5372,7 @@
       var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
       var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
       var q = deckDetailCardFilter.trim().toLowerCase();
-      if (deckCardSortMode === 'level') {
+      if (isDeckLevelSortMode(deckCardSortMode)) {
         ensureDeckCardLevels(deck.cards || [], function (updated) {
           if (updated) renderDeckDetail();
         });
@@ -5226,6 +5440,12 @@
       html += '    <div class="col-deck-info-card">';
       html += '      <h6>標籤</h6>';
       html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
+      var detailDesc = normalizeDeckDescription(deck.deckDescription);
+      if (detailDesc) {
+        html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
+      } else {
+        html += '      <p class="col-deck-detail-desc is-empty">尚未填寫描述</p>';
+      }
       html += '    </div>';
       html += '    <div class="col-deck-info-card">';
       html += '      <h6>快速操作</h6>';
@@ -5249,7 +5469,8 @@
       html += '          <span>排序</span>';
       html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
       html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
-      html += '            <option value="level"' + (deckCardSortMode === 'level' ? ' selected' : '') + '>按等級排序</option>';
+      html += '            <option value="levelAsc"' + (deckCardSortMode === 'levelAsc' ? ' selected' : '') + '>按等級排序 (升序)</option>';
+      html += '            <option value="levelDesc"' + (deckCardSortMode === 'levelDesc' ? ' selected' : '') + '>按等級排序 (降序)</option>';
       html += '          </select>';
       html += '        </label>';
       html += '        <label class="col-deck-card-short-only">';
@@ -5358,6 +5579,8 @@
         createdAt: deck.createdAt,
         updatedAt: deck.updatedAt
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       if (deck.decklogCode) out.decklogCode = deck.decklogCode;
       return out;
     }
@@ -5499,8 +5722,10 @@
         })
         .then(function (existing) {
           if (existing) {
+            // 先關匯入窗並清掉「檢查中」，避免確認框被擋在下層造成誤會
+            setDecklogStatus('');
+            closeModalByName('decklog');
             return promptDuplicateDecklog(existing).then(function (openExisting) {
-              closeModalByName('decklog');
               if (openExisting) {
                 selectedDeckId = existing.id;
                 if (!allDecks.some(function (d) { return d.id === existing.id; })) {
@@ -5541,8 +5766,9 @@
       if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       if (deckMetaEditBtnLabel) {
-        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤' : '編輯名稱／標籤';
+        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤／描述' : '編輯名稱／標籤／描述';
       }
+      syncDeckModalDesc();
     }
 
     function updateDeckEditorSummary() {
@@ -5685,7 +5911,7 @@
           '</li>';
         return;
       }
-      if (deckCardSortMode === 'level') {
+      if (isDeckLevelSortMode(deckCardSortMode)) {
         ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
           if (updated) renderDeckEditor();
         });
@@ -5776,7 +6002,7 @@
         entry.shortQty = clampShortQty(entry.shortQty, entry.qty);
       }
       // 只更新該張卡的數量／缺卡狀態，避免整表重繪造成卡面閃爍
-      if (deckCardShortOnly || deckCardSortMode === 'level' || !syncDeckEntryTile(cardNumber)) {
+      if (deckCardShortOnly || isDeckLevelSortMode(deckCardSortMode) || !syncDeckEntryTile(cardNumber)) {
         renderDeckEditor();
       } else {
         updateDeckEditorSummary();
@@ -5875,6 +6101,7 @@
         name: (src.name || '未命名牌組').slice(0, 36) + ' 副本',
         tags: src.tags,
         cards: src.cards,
+        deckDescription: src.deckDescription,
         source: 'manual',
         createdAt: now,
         updatedAt: now
@@ -6543,7 +6770,7 @@
       deckListEl.addEventListener('click', handleDeckActionClick);
     }
     function applyDeckCardSortMode(next) {
-      deckCardSortMode = next === 'level' ? 'level' : 'cardNumber';
+      deckCardSortMode = normalizeDeckCardSortMode(next);
       syncDeckCardViewControls();
       if (deckModal && deckModal.classList.contains('is-open')) renderDeckEditor();
       renderDeckDetail();
@@ -6735,6 +6962,7 @@
       }
     });
 
+    if (window.WsPageLoader) WsPageLoader.mark('boot', '初始化…');
     allItems = readLocal();
     // 牌組以雲端為準：先不顯示本機快取，等 onAuth 後再 refresh／遷移
     allDecks = [];
@@ -6747,6 +6975,12 @@
     refreshFilterOptions();
     renderAlbum();
     renderDeckList();
+    if (window.WsPageLoader) {
+      WsPageLoader.mark(
+        'album',
+        allItems.length ? ('卡冊 ' + allItems.length + ' 種') : '卡冊就緒'
+      );
+    }
     bindDeckAuth();
     ingestPendingFromFavoritesQuery();
     setStatus(
