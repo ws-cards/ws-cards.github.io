@@ -2913,6 +2913,10 @@
     #colDeckMetaModal.col-modal {
       z-index: 2100;
     }
+    /* 確認框需蓋過 DeckLog／編輯等其他 modal，否則會被「檢查中」畫面擋住 */
+    #colConfirmModal.col-modal {
+      z-index: 2200;
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
@@ -5501,8 +5505,10 @@
         })
         .then(function (existing) {
           if (existing) {
+            // 先關匯入窗並清掉「檢查中」，避免確認框被擋在下層造成誤會
+            setDecklogStatus('');
+            closeModalByName('decklog');
             return promptDuplicateDecklog(existing).then(function (openExisting) {
-              closeModalByName('decklog');
               if (openExisting) {
                 selectedDeckId = existing.id;
                 if (!allDecks.some(function (d) { return d.id === existing.id; })) {
