@@ -34,6 +34,8 @@
   var summaryChart = null;
   var summaryTab = "stats";
   var lastHeaderBottom = 96;
+  var slotDrag = null;
+  var deploySlotRects = [];
 
   var state = createEmptyState();
   var SELF_REASON_OPTIONS = [
@@ -78,7 +80,8 @@
       startedAt: null,
       endedAt: null,
       encoreFrom: null,
-      endReason: null
+      endReason: null,
+      deployPressAnswered: null
     };
   }
 
@@ -188,21 +191,24 @@
 
   /**
    * Self-inflicted clock damage for the active (current-turn) player.
-   * kind: "refresh" (洗傷) | "press1draw2" (壓1抽2) | "other" (其他自傷)
+   * kind: "refresh" (洗傷) | "press1draw2" (壓1抽2) | "other" (其他自傷) | "opponentRefresh" (對手洗傷)
    * selfReason: only for other — charEffect | other
+   * targetSide: optional receiver; defaults to the active player
    */
-  function applySelfDamage(amount, kind, selfReason) {
+  function applySelfDamage(amount, kind, selfReason, targetSide) {
     if (state.ended || state.phase === "summary" || state.phase === "setup") {
       toast("對局未進行中");
       return false;
     }
-    var side = state.activeSide === "second" ? "second" : "first";
+    var side = targetSide === "first" || targetSide === "second"
+      ? targetSide
+      : (state.activeSide === "second" ? "second" : "first");
     var n = Math.max(0, Number(amount) || 0);
     if (!n) {
       toast("傷害需大於 0");
       return false;
     }
-    if (kind !== "other" && kind !== "press1draw2") kind = "refresh";
+    if (kind !== "other" && kind !== "press1draw2" && kind !== "opponentRefresh") kind = "refresh";
     if (kind === "other" && !SELF_REASON_LABELS[selfReason]) selfReason = "other";
     ensureLife();
     var before = lifeSnapshot(side);
@@ -228,6 +234,7 @@
     persist();
     var kindLabel = "洗傷";
     if (kind === "press1draw2") kindLabel = "壓1抽2";
+    else if (kind === "opponentRefresh") kindLabel = "對手洗傷";
     else if (kind === "other") kindLabel = "其他自傷・" + (SELF_REASON_LABELS[selfReason] || "其他");
     if (checkLevelOut()) {
       toast(sideLabel(side) + " 到達等級 4・對局結束");
@@ -257,6 +264,45 @@
     uiState.selfDamageAmount = null;
     uiState.selfDamageStep = "amount";
     render();
+  }
+
+  function doOpponentRefreshDamage() {
+    uiState.selfDamageStep = null;
+    uiState.selfDamageAmount = null;
+    applySelfDamage(1, "opponentRefresh", null, opponentSide());
+  }
+
+  function deployPressPending() {
+    return state.phase === "deploy" && state.deployPressAnswered === false;
+  }
+
+  function answerDeployPress(yes) {
+    if (!deployPressPending()) return;
+    state.deployPressAnswered = true;
+    if (yes) {
+      applySelfDamage(1, "press1draw2");
+      return;
+    }
+    persist();
+    render();
+    toast("本回合不壓1抽2");
+  }
+
+  function relocateStageSlot(side, fromKey, toKey) {
+    side = side === "second" ? "second" : "first";
+    if (!state.stages[side] || fromKey === toKey) return false;
+    if (SLOT_KEYS.indexOf(fromKey) < 0 || SLOT_KEYS.indexOf(toKey) < 0) return false;
+    var from = state.stages[side][fromKey];
+    var to = state.stages[side][toKey];
+    if (!from || !to || !from.card) return false;
+    var tmpCard = to.card;
+    var tmpResolved = !!to.resolvedOnce;
+    to.card = from.card;
+    to.resolvedOnce = !!from.resolvedOnce;
+    from.card = tmpCard;
+    from.resolvedOnce = tmpResolved;
+    persist();
+    return true;
   }
 
   function closeSelfDamageSheet() {
@@ -892,6 +938,7 @@
   function selfDamageLabel(log) {
     var name = "洗傷";
     if (log && log.selfKind === "press1draw2") name = "壓1抽2";
+    else if (log && log.selfKind === "opponentRefresh") name = "對手洗傷";
     else if (log && log.selfKind === "other") {
       name = "其他自傷・" + (SELF_REASON_LABELS[log.selfReason] || "其他");
     }
@@ -977,6 +1024,16 @@
     return host;
   }
 
+  function appendBattleEndBlock(host) {
+    var end = document.createElement("section");
+    end.className = "agl-battle-block agl-battle-end";
+    var label = document.createElement("p");
+    label.className = "agl-battle-end-label";
+    label.textContent = "對戰結束";
+    end.appendChild(label);
+    host.appendChild(end);
+  }
+
   function fillBattleDetail(groups) {
     var host = ensureBattleDetailHost();
     if (!host) return;
@@ -987,6 +1044,7 @@
       empty.className = "agl-battle-detail-empty";
       empty.textContent = "本局尚無對戰紀錄";
       host.appendChild(empty);
+      appendBattleEndBlock(host);
       return;
     }
     for (var i = 0; i < groups.length; i++) {
@@ -995,8 +1053,14 @@
       block.className = "agl-battle-block is-" + g.side;
       var head = document.createElement("h3");
       head.className = "agl-battle-block-head";
-      head.textContent =
-        sideLabel(g.side) + " 第" + g.turn + "回 等級" + g.level;
+      var badge = document.createElement("span");
+      badge.className = "agl-side-badge";
+      badge.textContent = sideLabel(g.side);
+      var rest = document.createElement("span");
+      rest.className = "agl-battle-block-rest";
+      rest.textContent = "第" + g.turn + "回　等級" + g.level;
+      head.appendChild(badge);
+      head.appendChild(rest);
       block.appendChild(head);
       var ul = document.createElement("ul");
       var entries = g.entries || g.attacks || [];
@@ -1028,6 +1092,7 @@
       block.appendChild(ul);
       host.appendChild(block);
     }
+    appendBattleEndBlock(host);
   }
 
   function fillCardDamageList(listId, stats, name) {
@@ -1377,6 +1442,7 @@
     state.endedAt = null;
     state.encoreFrom = null;
     state.endReason = null;
+    state.deployPressAnswered = false;
     uiState.attackStep = null;
     uiState.draft = null;
     uiState.pickerSlot = null;
@@ -1736,6 +1802,7 @@
     var layer = $("agl-card-layer");
     if (!layer) return;
     layer.innerHTML = "";
+    if (state.phase === "deploy" && state.deployPressAnswered === false) return;
     if (!rects || !rects.length) return;
     if (state.phase !== "deploy" && state.phase !== "attack" && state.phase !== "encore") return;
     if (state.phase === "summary" || state.ended) return;
@@ -1771,6 +1838,7 @@
       img.className = "agl-slot-art" + (r.rested ? " is-rested" : "");
       img.alt = "";
       img.draggable = false;
+      img.dataset.slot = r.key;
       img.src = r.url;
       img.style.left = left + "px";
       img.style.top = top + "px";
@@ -1954,7 +2022,9 @@
     render();
     var undoMsg = "已撤銷上一筆攻擊";
     if (last.kind === "lifeAdjust") undoMsg = "已撤銷生命調整";
-    else if (last.kind === "selfDamage") undoMsg = "已撤銷自傷";
+    else if (last.kind === "selfDamage") {
+      undoMsg = last.selfKind === "opponentRefresh" ? "已撤銷對手洗傷" : "已撤銷自傷";
+    }
     toast(undoMsg);
   }
 
@@ -1977,6 +2047,7 @@
     uiState.pickerSlot = null;
     var from = state.encoreFrom || state.activeSide;
     state.encoreFrom = null;
+    state.deployPressAnswered = false;
     if (from === "first") {
       state.activeSide = "second";
       state.phase = "deploy";
@@ -2047,6 +2118,7 @@
   /* ——— Render screens ——— */
   function render() {
     if (!root) return;
+    if (slotDrag) finishSlotDrag();
     clearLayer(root);
     var w = app.screen.width;
     var h = app.screen.height;
@@ -2342,38 +2414,214 @@
       root.addChild(undoBtn);
     }
 
-    // Top-center: 洗傷 → 壓1抽2 → 其他自傷
-    var refreshBtn = makeBtn("洗傷", land ? 70 : 64, 34, COLORS.panel2, {
-      size: 14, stroke: COLORS.coral, textFill: COLORS.coral, radius: 10
-    });
-    var pressBtn = makeBtn("壓1抽2", land ? 86 : 80, 34, COLORS.panel2, {
-      size: 14, stroke: COLORS.teal, textFill: COLORS.teal, radius: 10
-    });
-    var otherSelfBtn = makeBtn("其他自傷", land ? 96 : 88, 34, COLORS.panel2, {
-      size: 14, stroke: COLORS.amber, textFill: COLORS.amber, radius: 10
-    });
-    var selfGap = 8;
-    var selfGroupW = refreshBtn._w + selfGap + pressBtn._w + selfGap + otherSelfBtn._w;
+    // Top row: 洗傷 → 壓1抽2 → 其他自傷 → 對手洗傷
+    var selfGap = 6;
+    var selfSpecs = [
+      { label: "洗傷", w: land ? 70 : 64, stroke: COLORS.coral, textFill: COLORS.coral, fn: doRefreshDamage },
+      { label: "壓1抽2", w: land ? 86 : 80, stroke: COLORS.teal, textFill: COLORS.teal, fn: doPress1Draw2 },
+      { label: "其他自傷", w: land ? 96 : 88, stroke: COLORS.amber, textFill: COLORS.amber, fn: doOtherSelfDamage },
+      { label: "對手洗傷", w: land ? 100 : 92, stroke: COLORS.red, textFill: 0xf0a29a, fn: doOpponentRefreshDamage }
+    ];
     var rightLimit = liveBtn.x - 8;
     if (state.lastUndo) rightLimit = liveBtn.x - 72 - 8 - 8;
+    var leftReserve = 108;
+    var selfAvail = Math.max(200, rightLimit - leftReserve);
+    var selfNatural = selfGap * (selfSpecs.length - 1);
+    var si;
+    for (si = 0; si < selfSpecs.length; si++) selfNatural += selfSpecs[si].w;
+    if (selfNatural > selfAvail) {
+      var scale = selfAvail / selfNatural;
+      for (si = 0; si < selfSpecs.length; si++) {
+        selfSpecs[si].w = Math.max(52, Math.floor(selfSpecs[si].w * scale));
+      }
+    }
+    var selfGroupW = selfGap * (selfSpecs.length - 1);
+    var minBtnW = 999;
+    for (si = 0; si < selfSpecs.length; si++) {
+      selfGroupW += selfSpecs[si].w;
+      if (selfSpecs[si].w < minBtnW) minBtnW = selfSpecs[si].w;
+    }
+    if (selfGroupW > selfAvail) {
+      var shrink = selfGroupW - selfAvail;
+      selfSpecs[selfSpecs.length - 1].w = Math.max(52, selfSpecs[selfSpecs.length - 1].w - shrink);
+      selfGroupW = selfGap * (selfSpecs.length - 1);
+      for (si = 0; si < selfSpecs.length; si++) selfGroupW += selfSpecs[si].w;
+    }
     var selfX = Math.floor((w - selfGroupW) / 2);
-    selfX = Math.max(pad, Math.min(selfX, rightLimit - selfGroupW));
-    refreshBtn.x = selfX;
-    refreshBtn.y = pad;
-    pressBtn.x = refreshBtn.x + refreshBtn._w + selfGap;
-    pressBtn.y = pad;
-    otherSelfBtn.x = pressBtn.x + pressBtn._w + selfGap;
-    otherSelfBtn.y = pad;
-    hit(refreshBtn, doRefreshDamage);
-    hit(pressBtn, doPress1Draw2);
-    hit(otherSelfBtn, doOtherSelfDamage);
-    root.addChild(refreshBtn);
-    root.addChild(pressBtn);
-    root.addChild(otherSelfBtn);
+    selfX = Math.max(leftReserve, Math.min(selfX, rightLimit - selfGroupW));
+    var selfFont = minBtnW >= 88 ? 14 : (minBtnW >= 72 ? 13 : 12);
+    var selfCursorX = selfX;
+    for (si = 0; si < selfSpecs.length; si++) {
+      var spec = selfSpecs[si];
+      var selfBtn = makeBtn(spec.label, spec.w, 34, COLORS.panel2, {
+        size: selfFont, stroke: spec.stroke, textFill: spec.textFill, radius: 10
+      });
+      selfBtn.x = selfCursorX;
+      selfBtn.y = pad;
+      hit(selfBtn, spec.fn);
+      root.addChild(selfBtn);
+      selfCursorX += spec.w + selfGap;
+    }
+  }
+
+  function finishSlotDrag() {
+    if (!slotDrag) return;
+    if (app && app.stage && slotDrag.bound) {
+      app.stage.off("pointermove", onSlotDragMove);
+      app.stage.off("pointerup", onSlotDragEnd);
+      app.stage.off("pointerupoutside", onSlotDragEnd);
+      app.stage.off("pointercancel", onSlotDragEnd);
+    }
+    if (slotDrag.ghost && slotDrag.ghost.parent) {
+      slotDrag.ghost.parent.removeChild(slotDrag.ghost);
+      slotDrag.ghost.destroy({ children: true });
+    }
+    if (slotDrag.hi && slotDrag.hi.parent) {
+      slotDrag.hi.parent.removeChild(slotDrag.hi);
+      slotDrag.hi.destroy();
+    }
+    slotDrag = null;
+  }
+
+  function slotAtPoint(x, y) {
+    for (var i = 0; i < deploySlotRects.length; i++) {
+      var r = deploySlotRects[i];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r.key;
+    }
+    return null;
+  }
+
+  function highlightDropSlot(targetKey) {
+    if (!slotDrag) return;
+    if (slotDrag.hi && slotDrag.hi.parent) {
+      slotDrag.hi.parent.removeChild(slotDrag.hi);
+      slotDrag.hi.destroy();
+      slotDrag.hi = null;
+    }
+    if (!targetKey || targetKey === slotDrag.slotKey) return;
+    var rect = null;
+    for (var i = 0; i < deploySlotRects.length; i++) {
+      if (deploySlotRects[i].key === targetKey) rect = deploySlotRects[i];
+    }
+    if (!rect) return;
+    var hi = new PIXI.Graphics();
+    gStrokeRound(hi, rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4, 12, COLORS.amber, 3);
+    hi.eventMode = "none";
+    root.addChild(hi);
+    slotDrag.hi = hi;
+  }
+
+  function positionDragArt(img, x, y) {
+    var iw = img.offsetWidth || parseFloat(img.style.width) || 80;
+    var ih = img.offsetHeight || parseFloat(img.style.height) || 110;
+    img.style.left = Math.round(x - iw / 2) + "px";
+    img.style.top = Math.round(y - ih / 2) + "px";
+  }
+
+  function showSlotGhost(x, y, card) {
+    var ghost = new PIXI.Container();
+    ghost.eventMode = "none";
+    var plate = new PIXI.Graphics();
+    gFillRound(plate, -78, -28, 156, 56, 10, COLORS.panel2, 0.96);
+    gStrokeRound(plate, -78, -28, 156, 56, 10, COLORS.amber, 2);
+    ghost.addChild(plate);
+    var label = makeText(card.name || card.cardNo || "角色", {
+      size: 13, fill: COLORS.ink, display: true, wrap: true, wrapWidth: 140
+    });
+    label.anchor.set(0.5);
+    ghost.addChild(label);
+    ghost.x = x;
+    ghost.y = y;
+    root.addChild(ghost);
+    slotDrag.ghost = ghost;
+
+    var layer = $("agl-card-layer");
+    if (layer) {
+      var img = layer.querySelector('[data-slot="' + slotDrag.side + "-" + slotDrag.slotKey + '"]');
+      if (img) {
+        slotDrag.artEl = img;
+        img.style.zIndex = "5";
+        img.style.opacity = "0.96";
+        positionDragArt(img, x, y);
+      }
+    }
+    highlightDropSlot(slotAtPoint(x, y));
+  }
+
+  function beginDeploySlotDrag(ev, slotKey, side) {
+    if (!ev || !ev.global || deployPressPending()) return;
+    finishSlotDrag();
+    slotDrag = {
+      slotKey: slotKey,
+      side: side,
+      startX: ev.global.x,
+      startY: ev.global.y,
+      moved: false,
+      bound: false,
+      ghost: null,
+      hi: null,
+      artEl: null
+    };
+    if (app && app.stage) {
+      app.stage.eventMode = "static";
+      app.stage.on("pointermove", onSlotDragMove);
+      app.stage.on("pointerup", onSlotDragEnd);
+      app.stage.on("pointerupoutside", onSlotDragEnd);
+      app.stage.on("pointercancel", onSlotDragEnd);
+      slotDrag.bound = true;
+    }
+    if (ev.stopPropagation) ev.stopPropagation();
+  }
+
+  function onSlotDragMove(ev) {
+    if (!slotDrag || !ev || !ev.global) return;
+    var dx = ev.global.x - slotDrag.startX;
+    var dy = ev.global.y - slotDrag.startY;
+    if (!slotDrag.moved) {
+      if (Math.abs(dx) + Math.abs(dy) < 12) return;
+      var stage = state.stages[slotDrag.side];
+      var slot = stage && stage[slotDrag.slotKey];
+      if (!slot || !slot.card) return;
+      slotDrag.moved = true;
+      showSlotGhost(ev.global.x, ev.global.y, slot.card);
+      return;
+    }
+    if (slotDrag.ghost) {
+      slotDrag.ghost.x = ev.global.x;
+      slotDrag.ghost.y = ev.global.y;
+    }
+    if (slotDrag.artEl) positionDragArt(slotDrag.artEl, ev.global.x, ev.global.y);
+    highlightDropSlot(slotAtPoint(ev.global.x, ev.global.y));
+  }
+
+  function onSlotDragEnd(ev) {
+    if (!slotDrag) return;
+    var fromKey = slotDrag.slotKey;
+    var side = slotDrag.side;
+    var moved = slotDrag.moved;
+    var x = ev && ev.global ? ev.global.x : slotDrag.startX;
+    var y = ev && ev.global ? ev.global.y : slotDrag.startY;
+    finishSlotDrag();
+    if (!moved) {
+      openPicker(fromKey);
+      return;
+    }
+    var target = slotAtPoint(x, y);
+    if (target && target !== fromKey) {
+      var destOccupied = !!(state.stages[side][target] && state.stages[side][target].card);
+      if (relocateStageSlot(side, fromKey, target)) {
+        toast(destOccupied
+          ? ("已對調 " + SLOT_LABELS[fromKey] + " 與 " + SLOT_LABELS[target])
+          : ("已移到" + SLOT_LABELS[target]));
+        return;
+      }
+    }
+    render();
   }
 
   function drawSlotsRow(y, interactiveMode, opts) {
     opts = opts || {};
+    if (interactiveMode === "deploy") deploySlotRects = [];
     var dim = opts.dim || cardAspect();
     var totalW = dim.slotW * 3 + dim.gap * 2;
     var startX = opts.startX != null
@@ -2395,7 +2643,7 @@
       box.x = x;
       box.y = y;
       box.eventMode = "static";
-      box.cursor = "pointer";
+      box.cursor = (interactiveMode === "deploy" && slot.card) ? "grab" : "pointer";
 
       var g = new PIXI.Graphics();
       var selected = draftSlot === key || (uiState.pickerSlot === key && side === state.activeSide);
@@ -2436,18 +2684,34 @@
         box.addChild(empty);
       }
 
-      (function (slotKey, slotSide) {
+      (function (slotKey, slotSide, slotX, slotY, slotW, slotH) {
+        if (interactiveMode === "deploy") {
+          deploySlotRects.push({
+            key: slotKey,
+            side: slotSide,
+            x: slotX,
+            y: slotY,
+            w: slotW,
+            h: slotH
+          });
+          if (!deployPressPending()) {
+            box.on("pointerdown", function (ev) {
+              beginDeploySlotDrag(ev, slotKey, slotSide);
+            });
+          }
+          return;
+        }
         hit(box, function () {
           if (interactiveMode === "encore") {
             removeEncoreCard(slotSide, slotKey);
-          } else if (interactiveMode === "deploy" || uiState.redeployMode) {
+          } else if (uiState.redeployMode) {
             openPicker(slotKey);
           } else if (interactiveMode === "attack") {
             if (uiState.attackStep) return;
             startAttackOnSlot(slotKey);
           }
         });
-      })(key, side);
+      })(key, side, x, y, dim.slotW, dim.slotH);
 
       root.addChild(box);
     }
@@ -2481,11 +2745,73 @@
     parent.addChild(meta);
   }
 
+  function drawDeployPressPrompt(x, y, w, h) {
+    var sheet = new PIXI.Container();
+    sheet.x = x;
+    sheet.y = y;
+    sheet.eventMode = "static";
+    sheet.cursor = "default";
+    sheet.on("pointerdown", function (e) { if (e && e.stopPropagation) e.stopPropagation(); });
+    sheet.on("pointertap", function (e) { if (e && e.stopPropagation) e.stopPropagation(); });
+
+    var bg = new PIXI.Graphics();
+    gFillRound(bg, 0, 0, w, h, 14, COLORS.panel, 1);
+    gStrokeRound(bg, 0, 0, w, h, 14, COLORS.teal, 2.5);
+    sheet.addChild(bg);
+
+    var tight = h < 150;
+    var title = makeText("是否做壓1抽2？", {
+      size: tight ? 18 : (h < 180 ? 20 : 26), weight: "700", fill: COLORS.ink, display: true
+    });
+    var sub = makeText("是：＋1 傷害　　否：不加傷害", {
+      size: tight ? 12 : 14, fill: COLORS.muted, display: true, align: "center",
+      wrap: true, wrapWidth: Math.max(120, w - 36)
+    });
+    var bw = Math.max(88, Math.min(168, Math.floor((w - 40) / 2)));
+    var bh = tight ? 36 : (h < 170 ? 40 : 48);
+    var gapAfterTitle = tight ? 6 : 12;
+    var gapBeforeBtns = tight ? 10 : 22;
+    var yes = makeBtn("是", bw, bh, COLORS.teal, {
+      textFill: COLORS.bg, size: 18, radius: 12
+    });
+    var no = makeBtn("否", bw, bh, COLORS.panel2, {
+      textFill: COLORS.ink, size: 18, stroke: COLORS.line, radius: 12
+    });
+    var blockH = title.height + gapAfterTitle + sub.height + gapBeforeBtns + bh;
+    var top = Math.max(8, Math.floor((h - blockH) / 2));
+    title.anchor.set(0.5, 0);
+    title.x = w / 2;
+    title.y = top;
+    sheet.addChild(title);
+    sub.anchor.set(0.5, 0);
+    sub.x = w / 2;
+    sub.y = title.y + title.height + gapAfterTitle;
+    sheet.addChild(sub);
+    var rowY = sub.y + sub.height + gapBeforeBtns;
+    var gap = 16;
+    var rowW = bw * 2 + gap;
+    yes.x = Math.floor((w - rowW) / 2);
+    no.x = yes.x + bw + gap;
+    yes.y = rowY;
+    no.y = rowY;
+    hit(yes, function () { answerDeployPress(true); });
+    hit(no, function () { answerDeployPress(false); });
+    sheet.addChild(yes);
+    sheet.addChild(no);
+    root.addChild(sheet);
+  }
+
   function drawDeploy(w, h) {
     var land = isLandscape();
     var dim = cardAspect("hero");
     var totalW = dim.slotW * 3 + dim.gap * 2;
     var tPanel = sidePanelProgress();
+    if (deployPressPending()) {
+      uiState.sidePanelOpen = false;
+      uiState.panelAnim = 0;
+      uiState.panelAnimTarget = 0;
+      tPanel = 0;
+    }
     var panelOpen = tPanel > 0.5;
 
     var title = makeText(
@@ -2498,14 +2824,16 @@
     root.addChild(title);
 
     var hintText;
-    if (isFirstTurnOneLimit()) {
-      hintText = "第 1 回合・先攻僅可放 1 隻（可不放）";
+    if (deployPressPending()) {
+      hintText = "布陣前請先回答是否壓1抽2";
+    } else if (isFirstTurnOneLimit()) {
+      hintText = "第 1 回合・先攻僅可放 1 隻（可不放）・拖曳可調動左中右";
     } else if (panelOpen) {
       hintText = uiState.pickerSlot
-        ? ("選卡中・" + SLOT_LABELS[uiState.pickerSlot] + "槽")
-        : "選卡面板已展開";
+        ? ("選卡中・" + SLOT_LABELS[uiState.pickerSlot] + "槽・拖曳可調動")
+        : "選卡面板已展開・拖曳卡片可調動左中右";
     } else {
-      hintText = "點槽位選卡・右側「選卡」可展開篩選";
+      hintText = "點槽位選卡・拖曳卡片可調動左中右";
     }
     var sub = makeText(hintText, { size: 12, fill: COLORS.muted });
     sub.anchor.set(0.5, 0);
@@ -2517,16 +2845,21 @@
       textFill: COLORS.onAccent, size: 16, radius: 12
     });
     var ctaTop = placeBottomCta(startBtn, w, h);
-    hit(startBtn, function () {
-      uiState.pickerSlot = null;
-      uiState.redeployMode = false;
-      setSidePanel(false);
-      clearToast();
-      state.phase = "attack";
-      persist();
-      render();
-      toast("戰階開始・任選槽攻擊");
-    });
+    if (deployPressPending()) {
+      startBtn.alpha = 0.4;
+      hit(startBtn, function () { toast("請先回答是否壓1抽2"); });
+    } else {
+      hit(startBtn, function () {
+        uiState.pickerSlot = null;
+        uiState.redeployMode = false;
+        setSidePanel(false);
+        clearToast();
+        state.phase = "attack";
+        persist();
+        render();
+        toast("戰階開始・任選槽攻擊");
+      });
+    }
 
     var bandTop = sub.y + 28;
     var fitted = fitSlotsInBand(bandTop, ctaTop - 10, dim);
@@ -2537,6 +2870,9 @@
     slotsStartX = Math.min(slotsStartX, w - 48 - totalW);
     slotsStartX = Math.max(8, slotsStartX);
     drawSlotsRow(fitted.y, "deploy", { startX: slotsStartX, dim: dim, side: state.activeSide });
+    if (deployPressPending()) {
+      drawDeployPressPrompt(slotsStartX, fitted.y, totalW, dim.slotH);
+    }
     root.addChild(startBtn);
 
     if (tPanel > 0.01) drawDeploySidePanel(w, h, tPanel);
@@ -2580,6 +2916,10 @@
     tab.addChild(t2);
 
     hit(tab, function () {
+      if (deployPressPending()) {
+        toast("請先回答是否壓1抽2");
+        return;
+      }
       if (isSidePanelOpen()) {
         setSidePanel(false);
       } else {
@@ -3104,7 +3444,8 @@
       return;
     }
 
-    if (!uiState.attackStep) {
+    if (!uiState.attackStep || !uiState.draft) {
+      if (!uiState.draft) uiState.attackStep = null;
       var tip = makeText("點任意有卡的槽開始攻擊；空槽可跳過。可中途換人後再攻。", {
         size: 13, fill: COLORS.muted, wrap: true, wrapWidth: rightW
       });
@@ -3293,9 +3634,16 @@
     panel.addChild(t);
     y += 28;
     var bw = Math.floor((w - 24 - 12) / 3);
-    for (var i = 0; i <= 5; i++) {
-      var b = makeBtn(String(i), bw, 44, COLORS.panel2, {
-        size: 18, display: true, stroke: COLORS.line, radius: 10
+    var damageOptions = [1, 2, 3, 4, 5, 0];
+    for (var i = 0; i < damageOptions.length; i++) {
+      var nOpt = damageOptions[i];
+      var isZero = nOpt === 0;
+      var b = makeBtn(String(nOpt), bw, 44, COLORS.panel2, {
+        size: 18,
+        display: true,
+        stroke: isZero ? COLORS.muted : COLORS.line,
+        textFill: isZero ? COLORS.muted : COLORS.ink,
+        radius: 10
       });
       b.x = 12 + (i % 3) * (bw + 6);
       b.y = y + Math.floor(i / 3) * 52;
@@ -3305,7 +3653,7 @@
           uiState.attackStep = "result";
           render();
         });
-      })(i);
+      })(nOpt);
       panel.addChild(b);
     }
     y += 112;
@@ -3315,8 +3663,12 @@
     plus.x = 12;
     plus.y = y;
     hit(plus, async function () {
-      var n = await askNumber("6+ 打點", "輸入正整數（≥ 0）。", true);
+      var n = await askNumber("6+ 打點", "請輸入 6 以上的整數。", true);
       if (n == null) return;
+      if (n < 6) {
+        toast("請輸入 6 以上的打點");
+        return;
+      }
       uiState.draft.declaredDamage = n;
       uiState.attackStep = "result";
       render();
@@ -3554,7 +3906,7 @@
         uiState.toast = "";
         needRender = true;
       }
-      if (needRender) render();
+      if (needRender && !slotDrag) render();
     });
 
     syncOrientGate();
@@ -3606,6 +3958,29 @@
       return true;
     },
     doOtherSelfDamage: doOtherSelfDamage,
+    doOpponentRefreshDamage: doOpponentRefreshDamage,
+    answerDeployPress: answerDeployPress,
+    deployPressPending: deployPressPending,
+    relocateStageSlot: relocateStageSlot,
+    listLabels: function () {
+      var out = [];
+      function walk(n) {
+        if (!n) return;
+        if (n.text != null && typeof n.getGlobalPosition === "function") {
+          var p = n.getGlobalPosition();
+          out.push({ t: String(n.text), x: Math.round(p.x), y: Math.round(p.y) });
+        }
+        var kids = n.children || [];
+        for (var i = 0; i < kids.length; i++) walk(kids[i]);
+      }
+      if (app && app.stage) walk(app.stage);
+      return out;
+    },
+    getDeploySlots: function () {
+      return deploySlotRects.map(function (r) {
+        return { key: r.key, side: r.side, x: r.x, y: r.y, w: r.w, h: r.h };
+      });
+    },
     closeSelfDamageSheet: closeSelfDamageSheet,
     showLiveStats: showLiveStats,
     hideLiveStats: hideLiveStats,
