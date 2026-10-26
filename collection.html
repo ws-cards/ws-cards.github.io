@@ -436,7 +436,7 @@
       object-fit: cover;
       display: block;
       opacity: 0;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.15s ease;
     }
     .col-tile-art img.is-loaded { opacity: 1; }
     .col-tile-art img.is-broken { display: none; }
@@ -549,6 +549,7 @@
       justify-content: center;
       cursor: pointer;
       padding: 0;
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
     .col-qty-btn:hover { background: #edf2f7; }
@@ -2304,6 +2305,8 @@
       padding: 0.45rem 0.2rem;
       cursor: pointer;
       line-height: 1.1;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     .col-deck-actions button:nth-child(1),
     .col-deck-actions button:nth-child(2) {
@@ -2335,8 +2338,9 @@
     .col-deck-workspace { display: block; }
     .col-deck-sidebar-head { display: none; }
     .col-deck-detail { display: none; }
+    /* 手機用真實 button 區塊，避免 display:contents 造成點擊熱區／延遲怪異 */
     .col-deck-card-select {
-      display: contents;
+      display: block;
       cursor: pointer;
       text-align: left;
       border: 0;
@@ -2346,6 +2350,9 @@
       color: inherit;
       font: inherit;
       width: 100%;
+      min-width: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     @media (min-width: 992px) {
@@ -2779,7 +2786,7 @@
       object-fit: cover;
       display: block;
       opacity: 0;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.15s ease;
     }
     .col-deck-entry-art img.is-loaded { opacity: 1; }
     .col-deck-entry.is-short .col-deck-entry-art img.is-loaded {
@@ -5183,6 +5190,25 @@
       });
     }
 
+    /** 已登入則同步執行，避免 Promise tick 造成手機點按晚一拍才開窗 */
+    function withDeckAuth(fn, errMsg) {
+      if (decksFirebaseReady()) {
+        var user = fb.currentUser && fb.currentUser();
+        if (user) {
+          deckCloudUser = user;
+          try {
+            return Promise.resolve(fn(user));
+          } catch (err) {
+            return Promise.reject(err);
+          }
+        }
+      }
+      return requireDeckAuth().then(fn).catch(function (err) {
+        setStatus((err && err.message) || errMsg || '請先登入', 'is-error');
+        return null;
+      });
+    }
+
     function persistDecksAndRender(opts) {
       opts = opts || {};
       writeDecks(allDecks);
@@ -5702,14 +5728,10 @@
         run();
         return;
       }
-      requireDeckAuth()
-        .then(function () {
-          openDeckEditorUi(id, 'edit');
-          return toggleDeckDraftRarityMode();
-        })
-        .catch(function (err) {
-          setStatus((err && err.message) || '請先登入後再編輯牌組', 'is-error');
-        });
+      withDeckAuth(function () {
+        openDeckEditorUi(id, 'edit');
+        return toggleDeckDraftRarityMode();
+      }, '請先登入後再編輯牌組');
     }
 
     function isDeckLevelSortMode(mode) {
@@ -6199,21 +6221,17 @@
         setStatus('DeckLog 讀取模組未載入', 'is-error');
         return;
       }
-      requireDeckAuth()
-        .then(function () {
-          if (decklogCodeInput) decklogCodeInput.value = '';
-          if (decklogNameInput) decklogNameInput.value = '';
-          setDecklogStatus('');
-          if (decklogConfirmBtn) {
-            decklogConfirmBtn.disabled = false;
-            decklogConfirmBtn.removeAttribute('aria-busy');
-          }
-          openModal(decklogModal);
-          if (decklogCodeInput) decklogCodeInput.focus();
-        })
-        .catch(function (err) {
-          setStatus((err && err.message) || '請先登入後再匯入 DeckLog', 'is-error');
-        });
+      withDeckAuth(function () {
+        if (decklogCodeInput) decklogCodeInput.value = '';
+        if (decklogNameInput) decklogNameInput.value = '';
+        setDecklogStatus('');
+        if (decklogConfirmBtn) {
+          decklogConfirmBtn.disabled = false;
+          decklogConfirmBtn.removeAttribute('aria-busy');
+        }
+        openModal(decklogModal);
+        if (decklogCodeInput) decklogCodeInput.focus();
+      }, '請先登入後再匯入 DeckLog');
     }
 
     function openDeckAfterImport(deck) {
@@ -6576,9 +6594,14 @@
       deckEditorRarityMode = countDeckHighRarityKinds(deckDraft.cards) > 0 ? 'high' : 'normal';
       syncDeckMetaInputsFromDraft();
       applyDeckEditorMode();
-      renderDeckEditor();
       openModal(deckModal);
-      prefetchDeckRaritySetMaps();
+      // 先開窗再灌列表，讓手機先看到回饋；卡表預取放到下一幀避免搶首繪
+      renderDeckEditor();
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(function () { prefetchDeckRaritySetMaps(); });
+      } else {
+        setTimeout(function () { prefetchDeckRaritySetMaps(); }, 0);
+      }
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
         openDeckMetaModal();
       }
@@ -6590,13 +6613,9 @@
         openDeckEditorUi(deckId, 'view');
         return;
       }
-      requireDeckAuth()
-        .then(function () {
-          openDeckEditorUi(deckId, mode);
-        })
-        .catch(function (err) {
-          setStatus((err && err.message) || '請先登入後再編輯牌組', 'is-error');
-        });
+      withDeckAuth(function () {
+        openDeckEditorUi(deckId, mode);
+      }, '請先登入後再編輯牌組');
     }
 
     function openDeckViewer(deckId) {
