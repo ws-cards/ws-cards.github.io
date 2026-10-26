@@ -5306,47 +5306,135 @@
       }));
     }
 
+    function loadDeckSetMapsForCards(cards) {
+      if (!(window.WsDecklog && typeof window.WsDecklog.loadSetJson === 'function')) {
+        return Promise.resolve({});
+      }
+      var codes = {};
+      (cards || []).forEach(function (c) {
+        if (!c || !c.cardNumber) return;
+        var tc = window.WsDecklog.titleCodeFromCardNo
+          ? window.WsDecklog.titleCodeFromCardNo(c.cardNumber)
+          : '';
+        if (tc) codes[tc] = true;
+      });
+      var keys = Object.keys(codes);
+      if (!keys.length) return Promise.resolve({});
+      var maps = {};
+      return Promise.all(keys.map(function (tc) {
+        return window.WsDecklog.loadSetJson(tc).then(function (m) {
+          // null = 該系列讀取失敗，之後走後綴 fallback
+          maps[tc] = m || null;
+        }).catch(function () {
+          maps[tc] = null;
+        });
+      })).then(function () { return maps; });
+    }
+
+    function setMapHasCardId(byId, cardId) {
+      if (!byId || !cardId) return false;
+      if (typeof byId.has === 'function' && byId.has(cardId)) return true;
+      if (typeof byId.get === 'function' && byId.get(cardId)) return true;
+      return false;
+    }
+
+    /**
+     * 高版本 → 普通版目標卡號：
+     * - 有系列 JSON：驗證基底卡號存在才轉換，否則略過
+     * - 無系列 JSON：fallback 直接去掉高稀有後綴
+     */
+    function resolveHighToNormalCardNo(cardNumber, setMaps) {
+      var cn = normalizeText(cardNumber).replace(/\\/g, '/');
+      if (!isDeckHighRarityCardNo(cn)) {
+        return { cardNumber: cn, switched: false, reason: 'not-high' };
+      }
+      var base = deckCardBaseNumber(cn);
+      if (!base || base === cn) {
+        return { cardNumber: cn, switched: false, reason: 'no-base' };
+      }
+      var tc = window.WsDecklog && window.WsDecklog.titleCodeFromCardNo
+        ? window.WsDecklog.titleCodeFromCardNo(cn)
+        : '';
+      var byId = (tc && setMaps && Object.prototype.hasOwnProperty.call(setMaps, tc))
+        ? setMaps[tc]
+        : undefined;
+      // 有成功載入的系列表：必須驗證普通版卡號存在
+      if (byId) {
+        if (setMapHasCardId(byId, base)) {
+          return { cardNumber: base, switched: true, reason: 'json-validated' };
+        }
+        return { cardNumber: cn, switched: false, reason: 'json-missing-base' };
+      }
+      // 無 JSON（未載入／失敗）：後綴 fallback
+      return { cardNumber: base, switched: true, reason: 'suffix-fallback' };
+    }
+
     function toggleDeckDraftRarityMode() {
       if (!deckDraft || deckEditorMode === 'view') {
         setStatus('請先進入編輯模式再改為普通版', 'is-error');
         return Promise.resolve(null);
       }
       if (deckRarityToggleBusy) return Promise.resolve(null);
-      // 只允許高版本 → 普通版（高版本種類多，反向不知該選哪張）
-      var switched = 0;
-      var skipped = 0;
-      var next = (deckDraft.cards || []).map(function (entry) {
-        var cn = normalizeText(entry.cardNumber).replace(/\\/g, '/');
-        var base = deckCardBaseNumber(cn);
-        var out = {
-          cardNumber: cn,
-          qty: entry.qty || 1,
-          shortQty: entryShortQty(entry),
-          cardName: entry.cardName || '',
-          level: entry.level
-        };
-        if (isDeckHighRarityCardNo(cn) && base && base !== cn) {
-          out.cardNumber = base;
-          switched += 1;
-        } else {
-          skipped += 1;
-        }
-        return out;
-      });
-      if (!switched) {
-        setStatus('沒有可改回的高版本卡號', 'is-error');
-        syncDeckRarityToggleUi();
-        return Promise.resolve({ switched: 0, skipped: skipped, mode: 'normal' });
-      }
       deckRarityToggleBusy = true;
       syncDeckRarityToggleUi();
-      rematerializeDeckDraftCards(next);
-      deckEditorRarityMode = 'normal';
-      renderDeckEditor();
-      deckRarityToggleBusy = false;
-      syncDeckRarityToggleUi();
-      setStatus('已改回普通版 ' + switched + ' 種（略過 ' + skipped + ' 種；尚未儲存）', 'is-ok');
-      return Promise.resolve({ switched: switched, skipped: skipped, mode: 'normal' });
+      setStatus('正在改為普通版…', 'is-ok');
+      return loadDeckSetMapsForCards(deckDraft.cards)
+        .then(function (maps) {
+          var switched = 0;
+          var skipped = 0;
+          var viaJson = 0;
+          var viaFallback = 0;
+          var next = (deckDraft.cards || []).map(function (entry) {
+            var resolved = resolveHighToNormalCardNo(entry.cardNumber, maps);
+            var out = {
+              cardNumber: resolved.cardNumber,
+              qty: entry.qty || 1,
+              shortQty: entryShortQty(entry),
+              cardName: entry.cardName || '',
+              level: entry.level
+            };
+            if (resolved.switched) {
+              switched += 1;
+              if (resolved.reason === 'json-validated') viaJson += 1;
+              else if (resolved.reason === 'suffix-fallback') viaFallback += 1;
+            } else if (resolved.reason === 'json-missing-base' || resolved.reason === 'no-base') {
+              // 僅計高版本卻無法對應普通版者（普通版卡號不計入略過）
+              skipped += 1;
+            }
+            return out;
+          });
+          if (!switched) {
+            setStatus('沒有可改回的高版本卡號', 'is-error');
+            return { switched: 0, skipped: skipped, mode: 'normal' };
+          }
+          rematerializeDeckDraftCards(next);
+          deckEditorRarityMode = 'normal';
+          renderDeckEditor();
+          var note = viaJson && viaFallback
+            ? '（卡表驗證 ' + viaJson + '／後綴 ' + viaFallback + '）'
+            : (viaJson ? '（已用卡表驗證）' : (viaFallback ? '（無卡表，後綴 fallback）' : ''));
+          setStatus(
+            '已改回普通版 ' + switched + ' 種（略過 ' + skipped + ' 種' + note + '；尚未儲存）',
+            'is-ok'
+          );
+          return {
+            switched: switched,
+            skipped: skipped,
+            viaJson: viaJson,
+            viaFallback: viaFallback,
+            mode: 'normal'
+          };
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '改為普通版失敗', 'is-error');
+          return null;
+        })
+        .then(function (result) {
+          deckRarityToggleBusy = false;
+          syncDeckRarityToggleUi();
+          return result;
+        });
     }
 
     function startDeckRarityToggleForDeck(deckId) {
