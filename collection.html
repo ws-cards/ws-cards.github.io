@@ -2213,6 +2213,61 @@
       font-weight: 700;
       padding: 0.12rem 0.45rem;
     }
+    .col-deck-origin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.35rem;
+      max-width: 100%;
+      padding: 0.18rem 0.5rem;
+      border-radius: 0.35rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #27500a;
+      background: #eaf6df;
+      border: 1px solid #c5e3ad;
+    }
+    .col-deck-origin-badge.is-detached {
+      color: #7a4b00;
+      background: #fff4df;
+      border-color: #f0d19a;
+    }
+    [data-theme="dark"] .col-deck-origin-badge {
+      color: #c6f0a4;
+      background: rgba(72, 120, 40, 0.28);
+      border-color: rgba(140, 190, 90, 0.35);
+    }
+    [data-theme="dark"] .col-deck-origin-badge.is-detached {
+      color: #ffd89a;
+      background: rgba(140, 90, 20, 0.32);
+      border-color: rgba(220, 160, 60, 0.35);
+    }
+    .col-deck-origin-note {
+      margin: 0.35rem 0 0;
+      padding: 0.55rem 0.7rem;
+      border-radius: 0.45rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #27500a;
+      background: #eaf6df;
+      border: 1px solid #c5e3ad;
+    }
+    .col-deck-origin-note.is-detached {
+      color: #7a4b00;
+      background: #fff4df;
+      border-color: #f0d19a;
+    }
+    [data-theme="dark"] .col-deck-origin-note {
+      color: #c6f0a4;
+      background: rgba(72, 120, 40, 0.28);
+      border-color: rgba(140, 190, 90, 0.35);
+    }
+    [data-theme="dark"] .col-deck-origin-note.is-detached {
+      color: #ffd89a;
+      background: rgba(140, 90, 20, 0.32);
+      border-color: rgba(220, 160, 60, 0.35);
+    }
     .col-deck-warn {
       display: inline-flex;
       align-items: center;
@@ -3552,6 +3607,7 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
+      <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
       <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
@@ -3641,7 +3697,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入；匯入後缺卡寫在個人牌組，與卡冊分開。</p>
+      <p class="col-modal-hint">輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入。匯入後是<strong>本站個人副本</strong>，編輯／缺卡只寫在你的牌組，<strong>不會同步回 DeckLog</strong>；與卡冊也分開。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -3732,6 +3788,7 @@
     var deckLevelEnriching = false;
 
     var deckModalDesc = document.getElementById('colDeckModalDesc');
+    var deckOriginNote = document.getElementById('colDeckOriginNote');
     var deckPickRow = document.getElementById('colDeckPickRow');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
@@ -4975,6 +5032,60 @@
         .sort(function (a, b) { return String(a.cardNumber).localeCompare(String(b.cardNumber)); });
     }
 
+    function deckCardsFingerprint(cards) {
+      return normalizeDeckCards(cards).map(function (c) {
+        return c.cardNumber + ':' + c.qty;
+      }).join('|');
+    }
+
+    function isDecklogOriginDeck(deck) {
+      return !!(deck && normalizeText(deck.decklogCode));
+    }
+
+    function isDecklogDetached(deck) {
+      return !!(isDecklogOriginDeck(deck) && deck.decklogDetached);
+    }
+
+    /** 已標記改編，或草稿編成已與匯入快照不同 */
+    function isDecklogDetachedOrDiverged(deck) {
+      if (!isDecklogOriginDeck(deck)) return false;
+      if (deck.decklogDetached) return true;
+      var importFp = normalizeText(deck.decklogImportFingerprint);
+      if (!importFp) return false;
+      return deckCardsFingerprint(deck.cards) !== importFp;
+    }
+
+    function decklogOriginBadgeText(deck) {
+      if (!isDecklogOriginDeck(deck)) return '';
+      var code = normalizeText(deck.decklogCode);
+      if (isDecklogDetachedOrDiverged(deck)) {
+        return '已自 DeckLog「' + code + '」改編 · 不同步回 DeckLog';
+      }
+      return '個人副本（來源 DeckLog「' + code + '」）· 不會同步回 DeckLog';
+    }
+
+    function decklogOriginBadgeHtml(deck) {
+      var text = decklogOriginBadgeText(deck);
+      if (!text) return '';
+      return '<span class="col-deck-origin-badge' +
+        (isDecklogDetachedOrDiverged(deck) ? ' is-detached' : '') +
+        '">' + escapeHtml(text) + '</span>';
+    }
+
+    function syncDeckOriginNote() {
+      if (!deckOriginNote) return;
+      if (!deckDraft || !isDecklogOriginDeck(deckDraft)) {
+        deckOriginNote.hidden = true;
+        deckOriginNote.textContent = '';
+        deckOriginNote.classList.remove('is-detached');
+        return;
+      }
+      var detached = isDecklogDetachedOrDiverged(deckDraft);
+      deckOriginNote.hidden = false;
+      deckOriginNote.classList.toggle('is-detached', detached);
+      deckOriginNote.textContent = decklogOriginBadgeText(deckDraft);
+    }
+
     function normalizeDeck(deck) {
       if (!deck) return null;
       var id = normalizeText(deck.id) || newDeckId();
@@ -4995,7 +5106,14 @@
       };
       var desc = normalizeDeckDescription(deck.deckDescription);
       if (desc) out.deckDescription = desc;
-      if (decklogCode) out.decklogCode = decklogCode;
+      if (decklogCode) {
+        out.decklogCode = decklogCode;
+        out.source = 'decklog';
+        if (deck.decklogDetached) out.decklogDetached = true;
+        // 舊資料沒有 fingerprint 時，以目前編成當作匯入快照，避免一載入就被標成已改編
+        out.decklogImportFingerprint = normalizeText(deck.decklogImportFingerprint) ||
+          deckCardsFingerprint(out.cards);
+      }
       return out;
     }
 
@@ -5023,6 +5141,12 @@
       if (code) {
         out.decklogCode = code;
         out.source = 'decklog';
+        var importFp = normalizeText(deck.decklogImportFingerprint) || deckCardsFingerprint(out.cards);
+        out.decklogImportFingerprint = importFp;
+        var currentFp = deckCardsFingerprint(out.cards);
+        if (deck.decklogDetached || (importFp && currentFp !== importFp)) {
+          out.decklogDetached = true;
+        }
       }
       return out;
     }
@@ -5862,6 +5986,7 @@
       html += '    <div>';
       html += '      <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
       html += '      <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
+      html += decklogOriginBadgeHtml(deck);
       if ((deck.tags || []).length) {
         html += '      <div class="col-deck-detail-tags">' +
           (deck.tags || []).map(function (t) {
@@ -5914,6 +6039,14 @@
         (detailHighKinds > 0 ? '將高版本卡號改回普通版（僅草稿，需儲存）' : '此牌組沒有可改回的高版本卡號') + '"' +
         (detailHighKinds > 0 ? '' : ' disabled') + '>' +
         '<i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i><span data-deck-rarity-toggle-label>改為普通版</span></button>';
+      if (isDecklogOriginDeck(deck)) {
+        html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-restore-decklog="' +
+          escapeHtml(deck.id) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
+          '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
+        html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-save-as-new="' +
+          escapeHtml(deck.id) + '" title="另存一份新的手動牌組，與原 DeckLog 來源脫鉤">' +
+          '<i class="fas fa-copy mr-1" aria-hidden="true"></i>另存新牌組</button>';
+      }
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' + escapeHtml(deck.id) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' + escapeHtml(deck.id) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       html += '      </div>';
@@ -6003,6 +6136,7 @@
         var when = formatTime(deck.updatedAt);
         var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
         html += '        <div class="col-deck-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
+        html += decklogOriginBadgeHtml(deck);
         html += tagsHtml;
         html += '      </div>';
         html += '    </div>';
@@ -6044,7 +6178,13 @@
       };
       var desc = normalizeDeckDescription(deck.deckDescription);
       if (desc) out.deckDescription = desc;
-      if (deck.decklogCode) out.decklogCode = deck.decklogCode;
+      if (deck.decklogCode) {
+        out.decklogCode = deck.decklogCode;
+        out.source = 'decklog';
+        if (deck.decklogDetached) out.decklogDetached = true;
+        out.decklogImportFingerprint = normalizeText(deck.decklogImportFingerprint) ||
+          deckCardsFingerprint(out.cards);
+      }
       return out;
     }
 
@@ -6082,8 +6222,8 @@
       focusDeckSection();
       openDeckEditor(deck.id, 'edit');
       setStatus(
-        '已從 DeckLog「' + (deck.decklogCode || '') + '」匯入 ' +
-        (deck.cards || []).length + ' 種（' + deckTotalCards(deck) + ' 張）',
+        '已匯入 DeckLog「' + (deck.decklogCode || '') + '」個人副本 ' +
+        (deck.cards || []).length + ' 種（' + deckTotalCards(deck) + ' 張；不會同步回 DeckLog）',
         'is-ok'
       );
     }
@@ -6152,9 +6292,13 @@
         cards: cards,
         decklogCode: code,
         source: 'decklog',
+        decklogDetached: false,
+        decklogImportFingerprint: deckCardsFingerprint(cards),
         createdAt: now,
         updatedAt: now
       });
+      // 新建匯入不應帶上 detached
+      delete deck.decklogDetached;
       return fb.saveUserDeck(deck).then(function () {
         allDecks.unshift(deck);
         writeDecks(allDecks);
@@ -6232,6 +6376,7 @@
         deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤／描述' : '編輯名稱／標籤／描述';
       }
       syncDeckModalDesc();
+      syncDeckOriginNote();
       syncDeckRarityToggleUi();
     }
 
@@ -6367,6 +6512,7 @@
       if (!deckDraft) return;
       var isView = deckEditorMode === 'view';
       updateDeckEditorSummary();
+      syncDeckOriginNote();
       syncDeckCardViewControls();
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
@@ -6529,6 +6675,7 @@
         return;
       }
       var packed = serializeDeck(deckDraft);
+      var becameDetached = !!(packed.decklogDetached && !deckDraft.decklogDetached);
       requireDeckAuth()
         .then(function () {
           var at = allDecks.findIndex(function (d) { return d.id === deckId; });
@@ -6546,12 +6693,80 @@
           closeModalByName('deckMeta');
           closeModalByName('deck');
           focusDeckSection();
-          setStatus('已儲存牌組「' + name + '」', 'is-ok');
+          setStatus(
+            becameDetached
+              ? '已儲存「' + name + '」（已自 DeckLog 改編，僅個人副本）'
+              : (isDecklogOriginDeck(packed)
+                ? '已儲存個人副本「' + name + '」（不會同步回 DeckLog）'
+                : '已儲存牌組「' + name + '」'),
+            'is-ok'
+          );
         })
         .catch(function (err) {
           console.error(err);
           setStatus((err && err.message) || '儲存牌組失敗', 'is-error');
         });
+    }
+
+    function restoreDeckFromDecklog(deckId) {
+      var id = normalizeText(deckId) || selectedDeckId;
+      var deck = allDecks.find(function (d) { return d.id === id; });
+      if (!deck || !isDecklogOriginDeck(deck)) {
+        setStatus('此牌組沒有 DeckLog 來源可還原', 'is-error');
+        return;
+      }
+      var code = normalizeText(deck.decklogCode);
+      askConfirm({
+        title: '用原 DeckLog 覆蓋',
+        okLabel: '覆蓋為原版',
+        html: '會以 DeckLog「<strong>' + escapeHtml(code) +
+          '</strong>」的編成覆蓋此<strong>個人副本</strong>的卡牌清單（名稱／標籤／描述／缺卡標記會重設缺卡）。' +
+          '<br><br>此操作<strong>不會修改 DeckLog 上的資料</strong>。確定覆蓋？',
+        onOk: function () {
+          requireDeckAuth()
+            .then(function () {
+              setStatus('正在取得 DeckLog「' + code + '」編成…', 'is-ok');
+              return resolveDecklogCards(code);
+            })
+            .then(function (payload) {
+              var cards = normalizeDeckCards(payload.cards || []);
+              cards.forEach(function (entry) { entry.shortQty = 0; });
+              if (!cards.length) throw new Error('DeckLog 編成為 0 張，無法覆蓋');
+              var next = serializeDeck({
+                id: deck.id,
+                name: deck.name,
+                tags: deck.tags,
+                cards: cards,
+                deckDescription: deck.deckDescription,
+                decklogCode: code,
+                source: 'decklog',
+                decklogDetached: false,
+                decklogImportFingerprint: deckCardsFingerprint(cards),
+                createdAt: deck.createdAt,
+                updatedAt: Date.now()
+              });
+              delete next.decklogDetached;
+              var at = allDecks.findIndex(function (d) { return d.id === deck.id; });
+              if (at < 0) throw new Error('找不到該牌組');
+              allDecks[at] = next;
+              selectedDeckId = deck.id;
+              if (deckDraft && deckDraft.id === deck.id) {
+                deckDraft = cloneDeckDraft(next);
+              }
+              return persistDecksAndRender({ requireAuth: true, deckId: deck.id });
+            })
+            .then(function () {
+              setStatus(
+                '已用 DeckLog「' + code + '」覆蓋個人副本（不會同步回 DeckLog）',
+                'is-ok'
+              );
+            })
+            .catch(function (err) {
+              console.error(err);
+              setStatus((err && err.message) || '覆蓋失敗', 'is-error');
+            });
+        }
+      });
     }
 
     function duplicateDeck(deckId) {
@@ -7256,6 +7471,16 @@
       var dupBtn = e.target.closest('[data-deck-dup]');
       if (dupBtn) {
         duplicateDeck(dupBtn.getAttribute('data-deck-dup'));
+        return;
+      }
+      var saveAsNewBtn = e.target.closest('[data-deck-save-as-new]');
+      if (saveAsNewBtn) {
+        duplicateDeck(saveAsNewBtn.getAttribute('data-deck-save-as-new'));
+        return;
+      }
+      var restoreBtn = e.target.closest('[data-deck-restore-decklog]');
+      if (restoreBtn) {
+        restoreDeckFromDecklog(restoreBtn.getAttribute('data-deck-restore-decklog'));
         return;
       }
       var delBtn = e.target.closest('[data-deck-del]');

@@ -492,6 +492,11 @@
       if (source === "decklog" || source === "manual") out.source = source;
       else if (code) out.source = "decklog";
       else out.source = "manual";
+      if (code) {
+        if (data.decklogDetached === true) out.decklogDetached = true;
+        var fp = String(data.decklogImportFingerprint || "").trim();
+        if (fp) out.decklogImportFingerprint = fp.slice(0, 4000);
+      }
       return out;
     }
 
@@ -525,6 +530,15 @@
       if (code) {
         payload.decklogCode = code;
         payload.source = "decklog";
+        var fp = String(deck.decklogImportFingerprint || "").trim().slice(0, 4000);
+        if (fp) payload.decklogImportFingerprint = fp;
+        else payload.decklogImportFingerprint = firebase.firestore.FieldValue.delete();
+        if (deck.decklogDetached === true) payload.decklogDetached = true;
+        else payload.decklogDetached = firebase.firestore.FieldValue.delete();
+      } else {
+        payload.decklogCode = firebase.firestore.FieldValue.delete();
+        payload.decklogImportFingerprint = firebase.firestore.FieldValue.delete();
+        payload.decklogDetached = firebase.firestore.FieldValue.delete();
       }
       if (typeof deck.createdAt === "number" && isFinite(deck.createdAt)) {
         payload.createdAt = deck.createdAt;
