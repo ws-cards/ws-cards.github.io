@@ -355,6 +355,8 @@
     wsImageUrlFromCardNo: wsImageUrlFromCardNo,
     classifyKind: classifyKind,
     aggregateUniqueCharacters: aggregateUniqueCharacters,
+    titleCodeFromCardNo: titleCodeFromCardNo,
+    loadSetJson: loadSetJson,
     DECKLOG_PROXY: DECKLOG_PROXY
   };
 })(typeof window !== "undefined" ? window : globalThis);
