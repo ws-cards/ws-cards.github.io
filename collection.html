@@ -3746,6 +3746,8 @@
     var deckMetaHint = document.getElementById('colDeckMetaHint');
     var deckEditorRarityMode = 'normal';
     var deckRarityToggleBusy = false;
+    /** 編輯中牌組的系列卡表快取（titleCode → Map|null）；null=載入失敗 */
+    var deckRaritySetMaps = {};
 
     var albumRoot = document.getElementById('colAlbumRoot');
     var binderStage = document.getElementById('colBinderStage');
@@ -5209,12 +5211,27 @@
       });
     }
 
-    /** 高稀有後綴優先序（越前越優先） */
-    var DECK_HIGH_SUFFIX_RANK = ['SSP', 'SEC', 'SP', 'SNR', 'BFR', 'SIR', 'SKR'];
+    /**
+     * 普卡稀有度白名單；其餘（SSP/SEC/SP/SR/RRR/SPM…）視為高版本。
+     * 比對時不分大小寫，全形＋正規成半形 +。
+     */
+    var DECK_NORMAL_RARES = ['FR', 'AR', 'RR+', 'RR', 'R', 'U', 'C', 'CR', 'CC', 'TD', 'N', 'PR', 'CAR'];
+    var DECK_NORMAL_RARE_SET = {};
+    DECK_NORMAL_RARES.forEach(function (r) { DECK_NORMAL_RARE_SET[r] = true; });
 
+    function normalizeDeckRare(rare) {
+      return String(rare || '').trim().toUpperCase().replace(/＋/g, '+');
+    }
+
+    function isDeckNormalRare(rare) {
+      var r = normalizeDeckRare(rare);
+      return !!(r && DECK_NORMAL_RARE_SET[r]);
+    }
+
+    /** 基底卡號：含一般編號與 T12／P12 等試玩／特典編號 */
     function deckCardBaseNumber(cardNumber) {
       var cn = normalizeText(cardNumber).replace(/\\/g, '/');
-      var m = cn.match(/^([A-Za-z0-9]+\/[A-Za-z0-9]+-\d+)/);
+      var m = cn.match(/^([A-Za-z0-9]+\/[A-Za-z0-9]+-[A-Za-z]*\d+)/);
       return m ? m[1] : cn;
     }
 
@@ -5227,23 +5244,100 @@
       return rest;
     }
 
-    function isDeckHighRareSuffix(suffix) {
-      var s = String(suffix || '').toUpperCase();
-      if (!s) return false;
-      for (var i = 0; i < DECK_HIGH_SUFFIX_RANK.length; i++) {
-        if (s.indexOf(DECK_HIGH_SUFFIX_RANK[i]) === 0) return true;
+    function deckTitleCodeFromCardNo(cardNumber) {
+      if (window.WsDecklog && typeof window.WsDecklog.titleCodeFromCardNo === 'function') {
+        return window.WsDecklog.titleCodeFromCardNo(cardNumber) || '';
       }
-      return false;
+      return '';
     }
 
-    function isDeckHighRarityCardNo(cardNumber) {
-      return isDeckHighRareSuffix(deckCardRareSuffix(cardNumber));
+    function getDeckSetMapForCardNo(cardNumber, setMaps) {
+      var tc = deckTitleCodeFromCardNo(cardNumber);
+      if (!tc || !setMaps || !Object.prototype.hasOwnProperty.call(setMaps, tc)) return undefined;
+      return setMaps[tc];
     }
 
-    function countDeckHighRarityKinds(cards) {
+    function getSetMapCard(byId, cardId) {
+      if (!byId || !cardId) return null;
+      if (typeof byId.get === 'function') return byId.get(cardId) || null;
+      return byId[cardId] || null;
+    }
+
+    function getSetMapCardRare(card) {
+      if (!card) return '';
+      return card.rarity || card.cardrare || card.cardRare || '';
+    }
+
+    function getSetMapCardName(card) {
+      if (!card) return '';
+      return card.name || card.cardName || card.cardname || '';
+    }
+
+    function forEachSetMapCard(byId, fn) {
+      if (!byId) return;
+      if (typeof byId.forEach === 'function') {
+        byId.forEach(function (card, id) { fn(id, card); });
+        return;
+      }
+      Object.keys(byId).forEach(function (id) {
+        if (id === 'metadata') return;
+        fn(id, byId[id]);
+      });
+    }
+
+    /** 同基底下、稀有度落在普卡白名單的目標卡號（優先精確基底） */
+    function findNormalCardNoFromSet(cardNumber, byId) {
+      if (!byId) return null;
+      var cn = normalizeText(cardNumber).replace(/\\/g, '/');
+      var base = deckCardBaseNumber(cn);
+      if (!base) return null;
+      var candidates = [];
+      forEachSetMapCard(byId, function (id, card) {
+        if (!id || !card) return;
+        if (!isDeckNormalRare(getSetMapCardRare(card))) return;
+        if (id === base) {
+          candidates.push(id);
+          return;
+        }
+        if (id.indexOf(base) !== 0) return;
+        var rest = id.slice(base.length);
+        if (!rest || /^\d/.test(rest)) return;
+        candidates.push(id);
+      });
+      if (!candidates.length) return null;
+      candidates.sort(function (a, b) {
+        if (a === base) return -1;
+        if (b === base) return 1;
+        return a.length - b.length || a.localeCompare(b);
+      });
+      return candidates[0];
+    }
+
+    /**
+     * 是否為高版本：
+     * - 有系列 JSON：以卡表 rarity 是否落在普卡白名單判定
+     * - 無卡表：卡號相對基底有後綴則視為可能高版本（fallback）
+     */
+    function isDeckHighRarityCardNo(cardNumber, setMaps) {
+      var cn = normalizeText(cardNumber).replace(/\\/g, '/');
+      if (!cn) return false;
+      var maps = setMaps || deckRaritySetMaps;
+      var byId = getDeckSetMapForCardNo(cn, maps);
+      if (byId) {
+        var self = getSetMapCard(byId, cn);
+        var rare = getSetMapCardRare(self);
+        if (self && rare) return !isDeckNormalRare(rare);
+        // 卡表有載入但找不到此卡／無 rarity：後綴啟發式
+      }
+      var base = deckCardBaseNumber(cn);
+      return !!(base && base !== cn && deckCardRareSuffix(cn));
+    }
+
+    function countDeckHighRarityKinds(cards, setMaps) {
       var n = 0;
+      var maps = setMaps || deckRaritySetMaps;
       (cards || []).forEach(function (c) {
-        if (c && c.cardNumber && isDeckHighRarityCardNo(c.cardNumber)) n += 1;
+        if (c && c.cardNumber && isDeckHighRarityCardNo(c.cardNumber, maps)) n += 1;
       });
       return n;
     }
@@ -5340,33 +5434,61 @@
 
     /**
      * 高版本 → 普通版目標卡號：
-     * - 有系列 JSON：驗證基底卡號存在才轉換，否則略過
-     * - 無系列 JSON：fallback 直接去掉高稀有後綴
+     * - 有系列 JSON：以 rarity 白名單判定高版本，並找同基底普卡
+     * - 無系列 JSON：fallback 直接去掉卡號後綴
      */
     function resolveHighToNormalCardNo(cardNumber, setMaps) {
       var cn = normalizeText(cardNumber).replace(/\\/g, '/');
-      if (!isDeckHighRarityCardNo(cn)) {
-        return { cardNumber: cn, switched: false, reason: 'not-high' };
+      if (!cn) {
+        return { cardNumber: cn, switched: false, reason: 'not-high', cardName: '' };
       }
-      var base = deckCardBaseNumber(cn);
-      if (!base || base === cn) {
-        return { cardNumber: cn, switched: false, reason: 'no-base' };
-      }
-      var tc = window.WsDecklog && window.WsDecklog.titleCodeFromCardNo
-        ? window.WsDecklog.titleCodeFromCardNo(cn)
-        : '';
-      var byId = (tc && setMaps && Object.prototype.hasOwnProperty.call(setMaps, tc))
-        ? setMaps[tc]
-        : undefined;
-      // 有成功載入的系列表：必須驗證普通版卡號存在
+      var byId = getDeckSetMapForCardNo(cn, setMaps);
       if (byId) {
-        if (setMapHasCardId(byId, base)) {
-          return { cardNumber: base, switched: true, reason: 'json-validated' };
+        var self = getSetMapCard(byId, cn);
+        var selfRare = getSetMapCardRare(self);
+        if (self && selfRare && isDeckNormalRare(selfRare)) {
+          return { cardNumber: cn, switched: false, reason: 'not-high', cardName: '' };
         }
-        return { cardNumber: cn, switched: false, reason: 'json-missing-base' };
+        var target = findNormalCardNoFromSet(cn, byId);
+        var knownHigh = !!(self && selfRare && !isDeckNormalRare(selfRare));
+        var maybeHigh = knownHigh || (!selfRare && !!(deckCardBaseNumber(cn) !== cn && deckCardRareSuffix(cn)));
+        if (target && target !== cn && (knownHigh || maybeHigh)) {
+          var targetCard = getSetMapCard(byId, target);
+          return {
+            cardNumber: target,
+            switched: true,
+            reason: 'json-validated',
+            cardName: getSetMapCardName(targetCard)
+          };
+        }
+        if (knownHigh) {
+          return { cardNumber: cn, switched: false, reason: 'json-missing-base', cardName: '' };
+        }
+        return { cardNumber: cn, switched: false, reason: 'not-high', cardName: '' };
       }
-      // 無 JSON（未載入／失敗）：後綴 fallback
-      return { cardNumber: base, switched: true, reason: 'suffix-fallback' };
+      // 無 JSON：後綴 fallback
+      var base = deckCardBaseNumber(cn);
+      if (base && base !== cn && deckCardRareSuffix(cn)) {
+        return { cardNumber: base, switched: true, reason: 'suffix-fallback', cardName: '' };
+      }
+      return { cardNumber: cn, switched: false, reason: 'not-high', cardName: '' };
+    }
+
+    function prefetchDeckRaritySetMaps() {
+      if (!deckDraft) {
+        deckRaritySetMaps = {};
+        return Promise.resolve({});
+      }
+      return loadDeckSetMapsForCards(deckDraft.cards).then(function (maps) {
+        deckRaritySetMaps = maps || {};
+        deckEditorRarityMode = countDeckHighRarityKinds(deckDraft.cards, deckRaritySetMaps) > 0
+          ? 'high'
+          : 'normal';
+        syncDeckRarityToggleUi();
+        return deckRaritySetMaps;
+      }).catch(function () {
+        return deckRaritySetMaps;
+      });
     }
 
     function toggleDeckDraftRarityMode() {
@@ -5380,6 +5502,7 @@
       setStatus('正在改為普通版…', 'is-ok');
       return loadDeckSetMapsForCards(deckDraft.cards)
         .then(function (maps) {
+          deckRaritySetMaps = maps || {};
           var switched = 0;
           var skipped = 0;
           var viaJson = 0;
@@ -5390,7 +5513,7 @@
               cardNumber: resolved.cardNumber,
               qty: entry.qty || 1,
               shortQty: entryShortQty(entry),
-              cardName: entry.cardName || '',
+              cardName: resolved.cardName || entry.cardName || '',
               level: entry.level
             };
             if (resolved.switched) {
@@ -6303,11 +6426,13 @@
         };
         document.getElementById('colDeckTitle').textContent = '新建牌組';
       }
+      deckRaritySetMaps = {};
       deckEditorRarityMode = countDeckHighRarityKinds(deckDraft.cards) > 0 ? 'high' : 'normal';
       syncDeckMetaInputsFromDraft();
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
+      prefetchDeckRaritySetMaps();
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
         openDeckMetaModal();
       }
