@@ -2917,6 +2917,47 @@
     #colConfirmModal.col-modal {
       z-index: 2200;
     }
+    .col-deck-desc-input {
+      min-height: 4.5rem;
+      resize: vertical;
+    }
+    .col-deck-modal-desc {
+      margin: 0 0 0.65rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid var(--col-line);
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--col-muted, #4a5568);
+      font-size: 0.86rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="dark"] .col-deck-modal-desc {
+      background: rgba(255, 255, 255, 0.04);
+      color: #cbd5e0;
+    }
+    /* 桌面改在詳情側欄顯示描述；手機編輯／檢視 modal 才顯示此區塊 */
+    @media (min-width: 768px) {
+      .col-deck-modal-desc {
+        display: none !important;
+      }
+    }
+    .col-deck-detail-desc {
+      margin: 0.55rem 0 0;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--col-muted, #4a5568);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="dark"] .col-deck-detail-desc {
+      color: #a0aec0;
+    }
+    .col-deck-detail-desc.is-empty {
+      opacity: 0.72;
+      font-style: italic;
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
@@ -3378,11 +3419,11 @@
   <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body">
       <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-modal-hint" id="colDeckModalHint" hidden></p>
+      <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckMetaEditBtn">
-          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤</span>
+          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤／描述</span>
         </button>
         <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
@@ -3414,8 +3455,8 @@
   <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckMetaTitle" style="width:min(440px,100%);">
     <div class="col-modal-body">
-      <h3 id="colDeckMetaTitle">牌組名稱／標籤</h3>
-      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱與標籤。</p>
+      <h3 id="colDeckMetaTitle">牌組名稱／標籤／描述</h3>
+      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱、標籤與描述。</p>
       <div class="col-deck-editor-head">
         <label for="colDeckNameInput">
           牌組名稱
@@ -3424,6 +3465,10 @@
         <label for="colDeckTagsInput">
           牌組標籤（逗號分隔，選填）
           <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
+        </label>
+        <label for="colDeckDescInput">
+          牌組描述（選填）
+          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="3" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
         </label>
       </div>
     </div>
@@ -3515,6 +3560,7 @@
     var FAVORITES_KEY = 'wsCardsFavorites';
     var MAX_ITEMS = 500;
     var MAX_DECKS = 100;
+    var MAX_DECK_DESC = 200;
     var MAX_QTY = 999;
     var MAX_DECK_ENTRY_QTY = 50;
     var UNTAGGED = '__untagged__';
@@ -3549,7 +3595,7 @@
     var deckLevelCache = {};
     var deckLevelEnriching = false;
 
-    var deckModalHint = document.getElementById('colDeckModalHint');
+    var deckModalDesc = document.getElementById('colDeckModalDesc');
     var deckPickRow = document.getElementById('colDeckPickRow');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
@@ -3655,6 +3701,7 @@
     var deckModal = document.getElementById('colDeckModal');
     var deckNameInput = document.getElementById('colDeckNameInput');
     var deckTagsInput = document.getElementById('colDeckTagsInput');
+    var deckDescInput = document.getElementById('colDeckDescInput');
     var deckEntryList = document.getElementById('colDeckEntryList');
     var deckEditorSummary = document.getElementById('colDeckEditorSummary');
     var deckPickModal = document.getElementById('colDeckPickModal');
@@ -4550,10 +4597,27 @@
       }
     }
 
+    function normalizeDeckDescription(value) {
+      return normalizeText(value).slice(0, MAX_DECK_DESC);
+    }
+
+    function syncDeckModalDesc() {
+      if (!deckModalDesc) return;
+      var desc = deckDraft ? normalizeDeckDescription(deckDraft.deckDescription) : '';
+      if (desc) {
+        deckModalDesc.hidden = false;
+        deckModalDesc.textContent = desc;
+      } else {
+        deckModalDesc.hidden = true;
+        deckModalDesc.textContent = '';
+      }
+    }
+
     function syncDeckMetaInputsFromDraft() {
       if (!deckDraft) return;
       if (deckNameInput) deckNameInput.value = deckDraft.name || '';
       if (deckTagsInput) deckTagsInput.value = (deckDraft.tags || []).join(', ');
+      if (deckDescInput) deckDescInput.value = deckDraft.deckDescription || '';
     }
 
     function applyDeckMetaFromInputs() {
@@ -4567,7 +4631,11 @@
       var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
       deckDraft.name = name.slice(0, 40);
       deckDraft.tags = normalizeTags(tagRaw.split(/[,，]/));
+      var desc = normalizeDeckDescription(deckDescInput && deckDescInput.value);
+      if (desc) deckDraft.deckDescription = desc;
+      else delete deckDraft.deckDescription;
       syncDeckMetaInputsFromDraft();
+      syncDeckModalDesc();
       return true;
     }
 
@@ -4583,10 +4651,14 @@
         deckTagsInput.readOnly = isView;
         deckTagsInput.disabled = isView;
       }
+      if (deckDescInput) {
+        deckDescInput.readOnly = isView;
+        deckDescInput.disabled = isView;
+      }
       if (deckMetaHint) {
         deckMetaHint.textContent = isView
-          ? '目前為檢視模式，僅可查看名稱與標籤。'
-          : '設定此牌組的名稱與標籤。';
+          ? '目前為檢視模式，僅可查看名稱、標籤與描述。'
+          : '設定此牌組的名稱、標籤與描述。';
       }
       if (deckMetaConfirmBtn) {
         deckMetaConfirmBtn.hidden = isView;
@@ -4606,7 +4678,7 @@
       }
       if (!applyDeckMetaFromInputs()) return;
       closeModalByName('deckMeta');
-      setStatus('已更新牌組名稱／標籤（儲存後生效）', 'is-ok');
+      setStatus('已更新牌組名稱／標籤／描述（儲存後生效）', 'is-ok');
     }
 
     function ownedQty(cardNumber) {
@@ -4737,6 +4809,8 @@
         createdAt: typeof deck.createdAt === 'number' ? deck.createdAt : Date.now(),
         updatedAt: typeof deck.updatedAt === 'number' ? deck.updatedAt : Date.now()
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       if (decklogCode) out.decklogCode = decklogCode;
       return out;
     }
@@ -4759,6 +4833,8 @@
         createdAt: deck.createdAt || Date.now(),
         updatedAt: deck.updatedAt || Date.now()
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       var code = normalizeText(deck.decklogCode);
       if (code) {
         out.decklogCode = code;
@@ -5248,6 +5324,12 @@
       html += '    <div class="col-deck-info-card">';
       html += '      <h6>標籤</h6>';
       html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
+      var detailDesc = normalizeDeckDescription(deck.deckDescription);
+      if (detailDesc) {
+        html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
+      } else {
+        html += '      <p class="col-deck-detail-desc is-empty">尚未填寫描述</p>';
+      }
       html += '    </div>';
       html += '    <div class="col-deck-info-card">';
       html += '      <h6>快速操作</h6>';
@@ -5381,6 +5463,8 @@
         createdAt: deck.createdAt,
         updatedAt: deck.updatedAt
       };
+      var desc = normalizeDeckDescription(deck.deckDescription);
+      if (desc) out.deckDescription = desc;
       if (deck.decklogCode) out.decklogCode = deck.decklogCode;
       return out;
     }
@@ -5566,17 +5650,9 @@
       if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       if (deckMetaEditBtnLabel) {
-        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤' : '編輯名稱／標籤';
+        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤／描述' : '編輯名稱／標籤／描述';
       }
-      if (deckModalHint) {
-        if (isView) {
-          deckModalHint.hidden = false;
-          deckModalHint.textContent = '唯讀檢視牌組編成與缺卡標記。若要調整，請按「編輯此牌組」。';
-        } else {
-          deckModalHint.hidden = true;
-          deckModalHint.textContent = '';
-        }
-      }
+      syncDeckModalDesc();
     }
 
     function updateDeckEditorSummary() {
@@ -5909,6 +5985,7 @@
         name: (src.name || '未命名牌組').slice(0, 36) + ' 副本',
         tags: src.tags,
         cards: src.cards,
+        deckDescription: src.deckDescription,
         source: 'manual',
         createdAt: now,
         updatedAt: now

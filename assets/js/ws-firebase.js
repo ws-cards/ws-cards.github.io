@@ -484,6 +484,8 @@
         createdAt: createdAt,
         updatedAt: updatedAt
       };
+      var desc = String(data.deckDescription || "").trim();
+      if (desc) out.deckDescription = desc.slice(0, 200);
       var code = String(data.decklogCode || "").trim();
       if (code) out.decklogCode = code;
       var source = String(data.source || "").trim();
@@ -516,6 +518,9 @@
         source: deck.source === "decklog" ? "decklog" : "manual",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
+      var desc = String(deck.deckDescription || "").trim().slice(0, 200);
+      if (desc) payload.deckDescription = desc;
+      else payload.deckDescription = firebase.firestore.FieldValue.delete();
       var code = String(deck.decklogCode || "").trim();
       if (code) {
         payload.decklogCode = code;
