@@ -1065,6 +1065,9 @@
       --binder-pocket-w: auto;
       --binder-pocket-h: auto;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
       margin-top: 0.85rem;
       padding: 0 2.4rem;
       border-radius: 12px;
@@ -1122,11 +1125,17 @@
         padding-right: 0.7rem;
       }
     }
+    /* 高度由 fitBinderToViewport 寫成固定 px；不可隨捲動再被撐高 */
     .col-binder-viewport {
       min-width: 0;
+      width: 100%;
+      flex: 0 0 auto;
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+    .col-binder-stage.is-fit .col-binder-viewport {
+      overflow: hidden;
     }
     .col-binder-spread {
       margin: 0;
@@ -4268,6 +4277,41 @@
       return n * root;
     }
 
+    function binderViewportEl() {
+      return binderStage ? binderStage.querySelector('.col-binder-viewport') : null;
+    }
+
+    /* 把視窗與內層捲動容器的位移加回去，得到「沒有往下滑」時的頂端位置。 */
+    function binderScrollOffset(el) {
+      var offset = window.pageYOffset || document.documentElement.scrollTop || 0;
+      var node = el ? el.parentElement : null;
+      while (node && node !== document.body && node !== document.documentElement) {
+        offset += node.scrollTop || 0;
+        node = node.parentElement;
+      }
+      return offset;
+    }
+
+    function binderRestingTop(el) {
+      if (!el) return 0;
+      return el.getBoundingClientRect().top + binderScrollOffset(el);
+    }
+
+    function clearBinderViewportLock() {
+      var viewportEl = binderViewportEl();
+      if (!viewportEl) return;
+      viewportEl.style.removeProperty('height');
+      viewportEl.style.removeProperty('max-height');
+    }
+
+    function lockBinderViewport(heightPx) {
+      var viewportEl = binderViewportEl();
+      if (!viewportEl) return;
+      var locked = Math.max(1, Math.ceil(heightPx)) + 'px';
+      viewportEl.style.height = locked;
+      viewportEl.style.maxHeight = locked;
+    }
+
     function clearBinderFit() {
       if (!binderStage) return;
       binderStage.classList.remove('is-fit');
@@ -4276,6 +4320,7 @@
       binderStage.style.removeProperty('--binder-gap');
       binderStage.style.removeProperty('--binder-pad');
       binderStage.style.removeProperty('--binder-spine');
+      clearBinderViewportLock();
     }
 
     function applyFocusBtnUi(btn, labelEl, on) {
@@ -4326,6 +4371,8 @@
      * 高度優先適配：在剩餘視窗內算出卡槽寬高，維持 63:88，
      * 用縮小格子（非整頁壓扁）把一整頁卡冊塞進同一視窗。
      * 可讀尺寸放不下時，自動開啟一窗檢視（收合篩選列）再重算。
+     * 可用高度以未捲動時的頂端位置計算，並把 .col-binder-viewport 鎖成固定 px，
+     * 避免往下滑後 getBoundingClientRect().top 變小、卡冊被越算越大。
      */
     function fitBinderToViewport(opts) {
       opts = opts || {};
@@ -4339,9 +4386,6 @@
         clearBinderFit();
         return;
       }
-
-      clearBinderFit();
-      void binderStage.offsetHeight;
 
       var mobile = !isBinderDesktopSpread();
       var cols = mobile ? 2 : 3;
@@ -4360,11 +4404,15 @@
       var parent = binderStage.parentElement;
       var parentW = parent ? parent.clientWidth : window.innerWidth;
       var availW = Math.max(120, parentW - sidePadPx * 2);
-      var top = binderStage.getBoundingClientRect().top;
-      var vv = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      /* 先量測再清掉舊尺寸，避免中間那一幀被捲動錨點把 top 拉走。 */
+      var top = binderRestingTop(binderStage);
+      var vv = window.innerHeight || (window.visualViewport ? window.visualViewport.height : 0);
       var bottomSafe = Math.max(8, Math.round(vv * 0.012));
       var stagePadY = mobile ? 0 : remPx(0.45) * 2;
       var availH = Math.floor(vv - top - bottomSafe - stagePadY);
+
+      clearBinderFit();
+      void binderStage.offsetHeight;
 
       var readableW = mobile ? 96 : 120;
       var minReadablePageH = padPx * 2 + gapPx * (rows - 1) + (readableW * 88 / 63) * rows;
@@ -4395,13 +4443,16 @@
         pocketW = 32;
         pocketH = pocketW * (88 / 63);
       }
+      pocketW = Math.floor(pocketW * 100) / 100;
+      pocketH = Math.floor(pocketH * 100) / 100;
 
       binderStage.style.setProperty('--binder-gap', gapPx + 'px');
       binderStage.style.setProperty('--binder-pad', padPx + 'px');
       binderStage.style.setProperty('--binder-spine', spinePx + 'px');
-      binderStage.style.setProperty('--binder-pocket-w', Math.floor(pocketW * 100) / 100 + 'px');
-      binderStage.style.setProperty('--binder-pocket-h', Math.floor(pocketH * 100) / 100 + 'px');
+      binderStage.style.setProperty('--binder-pocket-w', pocketW + 'px');
+      binderStage.style.setProperty('--binder-pocket-h', pocketH + 'px');
       binderStage.classList.add('is-fit');
+      lockBinderViewport(padPx * 2 + gapPx * (rows - 1) + pocketH * rows);
     }
 
     function scheduleBinderFit() {
@@ -6828,6 +6879,26 @@
     }
     var albumResizeTimer = null;
     var albumResizeSpreadSize = getAlbumSpreadSize();
+    var binderViewportSnapshot = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      ready: true
+    };
+    /* 手機網址列收合會在捲動時改變視窗高度。寬度沒變、又已經往下滑時不要重算。 */
+    function shouldRefitBinderAfterViewportChange() {
+      var nextW = window.innerWidth;
+      var nextH = window.innerHeight;
+      var prev = binderViewportSnapshot;
+      var widthChanged = !prev.ready || Math.abs(nextW - prev.width) > 1;
+      var heightDelta = nextH - prev.height;
+      binderViewportSnapshot = { width: nextW, height: nextH, ready: true };
+      if (widthChanged) return true;
+      if (Math.abs(heightDelta) <= 1) return false;
+      var scrolled = binderScrollOffset(binderStage) > 2;
+      var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (coarse && scrolled && heightDelta > 0 && heightDelta < 180) return false;
+      return true;
+    }
     window.addEventListener('resize', function () {
       if (albumResizeTimer) clearTimeout(albumResizeTimer);
       albumResizeTimer = setTimeout(function () {
@@ -6841,6 +6912,7 @@
           renderAlbum();
           return;
         }
+        if (!shouldRefitBinderAfterViewportChange()) return;
         fitBinderToViewport();
       }, 120);
     });
@@ -6853,6 +6925,20 @@
     });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', function () {
+        if (!shouldRefitBinderAfterViewportChange()) return;
+        scheduleBinderFit();
+      });
+    }
+    /* 導覽列是非同步插入的；插好後上方高度變了，要按未捲動位置重鎖一次。 */
+    var navbarHost = document.querySelector('[data-navbar]');
+    if (navbarHost && window.ResizeObserver) {
+      var navbarFitObserver = new ResizeObserver(function () {
+        scheduleBinderFit();
+      });
+      navbarFitObserver.observe(navbarHost);
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
         scheduleBinderFit();
       });
     }
