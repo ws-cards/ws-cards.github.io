@@ -5,15 +5,13 @@
  * Call WsTriggerMap.ready() once before using lookups; pages may keep
  * working with the embedded fallback if remote fetch fails.
  *
- * Layers (v2 — id === code):
- *   id          — primary trigger code on card JSON (`1G`, `2`, `B`, …)
- *   altCodes    — rare legacy aliases (e.g. `A` → same as `1`)
+ * Layers (v3 — codes === id):
+ *   id          — English key (bounce, gate, soul2, …)
+ *   codes       — same as id; future card JSON / program writes this
+ *   altCodes    — legacy official codes (1A, 1G, B, …) for existing GCS
  *   icons       — official GIF filenames; crawler join key (`;`-joined)
  *   labelZh     — crawler / display Chinese name
  *   axisLabelZh — community CX-axis nickname (凱旋門 / 二爆 / …)
- *
- * Entries with id:null (discovery/chance/focus) are indexed by icons only
- * until the crawler supplies a real code.
  */
 (function (global) {
   "use strict";
@@ -24,25 +22,28 @@
 
   /** Embedded fallback — keep in sync with json/cxTriggerMap.json */
   var FALLBACK = {
-    version: 2,
+    version: 3,
     updatedAt: "2026-10-27",
-    axisOrder: ["1G", "2", "C", "B", "1H", "I", "1E", "1A", "F", "D"],
+    axisOrder: [
+      "gate", "soul2", "salvage", "treasure", "standby",
+      "choice", "shot", "bounce", "stock", "draw"
+    ],
     triggers: [
-      { id: "0", altCodes: [], icons: [], labelZh: "無", aliasesZh: [], axisLabelZh: null, isCxAxis: false },
-      { id: "1", altCodes: ["A"], icons: ["soul.gif"], labelZh: "魂+1", aliasesZh: ["靈魂+1", "魂", "靈魂"], axisLabelZh: null, isCxAxis: false },
-      { id: "2", altCodes: [], icons: ["soul.gif", "soul.gif"], labelZh: "魂+2", aliasesZh: ["二爆", "二暴", "靈魂+2"], axisLabelZh: "二爆", isCxAxis: true },
-      { id: "F", altCodes: [], icons: ["stock.gif"], labelZh: "寶袋", aliasesZh: ["庫存"], axisLabelZh: "寶袋", isCxAxis: true },
-      { id: "C", altCodes: [], icons: ["salvage.gif"], labelZh: "木門", aliasesZh: ["歸來", "comeback"], axisLabelZh: "木門", isCxAxis: true },
-      { id: "1A", altCodes: [], icons: ["soul.gif", "bounce.gif"], labelZh: "風", aliasesZh: ["風吹", "彈回"], axisLabelZh: "風吹", isCxAxis: true },
-      { id: "D", altCodes: [], icons: ["draw.gif"], labelZh: "書", aliasesZh: ["抽牌"], axisLabelZh: "書", isCxAxis: true },
-      { id: "B", altCodes: [], icons: ["treasure.gif"], labelZh: "磚", aliasesZh: ["金磚", "寶箱"], axisLabelZh: "金磚", isCxAxis: true },
-      { id: "1E", altCodes: [], icons: ["soul.gif", "shot.gif"], labelZh: "燒", aliasesZh: ["火燒", "射擊"], axisLabelZh: "火燒", isCxAxis: true },
-      { id: "1G", altCodes: [], icons: ["gate.gif"], labelZh: "城門", aliasesZh: ["凱旋門"], axisLabelZh: "凱旋門", isCxAxis: true },
-      { id: "1H", altCodes: [], icons: ["soul.gif", "standby.gif"], labelZh: "開機", aliasesZh: ["待機"], axisLabelZh: "開機", isCxAxis: true },
-      { id: "I", altCodes: [], icons: ["choice.gif"], labelZh: "箭頭", aliasesZh: ["選擇"], axisLabelZh: "箭頭", isCxAxis: true },
-      { id: null, altCodes: [], icons: ["discovery.gif"], labelZh: "望遠鏡", aliasesZh: ["發現"], axisLabelZh: null, isCxAxis: false },
-      { id: null, altCodes: [], icons: ["chance.gif"], labelZh: "燈泡", aliasesZh: ["機會"], axisLabelZh: null, isCxAxis: false },
-      { id: null, altCodes: [], icons: ["focus.gif"], labelZh: "快門", aliasesZh: ["聚焦"], axisLabelZh: null, isCxAxis: false }
+      { id: "none", codes: ["none"], altCodes: ["0"], icons: [], labelZh: "無", aliasesZh: [], axisLabelZh: null, isCxAxis: false },
+      { id: "soul", codes: ["soul"], altCodes: ["1", "A"], icons: ["soul.gif"], labelZh: "魂+1", aliasesZh: ["靈魂+1", "魂", "靈魂"], axisLabelZh: null, isCxAxis: false },
+      { id: "soul2", codes: ["soul2"], altCodes: ["2"], icons: ["soul.gif", "soul.gif"], labelZh: "魂+2", aliasesZh: ["二爆", "二暴", "靈魂+2"], axisLabelZh: "二爆", isCxAxis: true },
+      { id: "stock", codes: ["stock"], altCodes: ["F"], icons: ["stock.gif"], labelZh: "寶袋", aliasesZh: ["庫存"], axisLabelZh: "寶袋", isCxAxis: true },
+      { id: "salvage", codes: ["salvage"], altCodes: ["C"], icons: ["salvage.gif"], labelZh: "木門", aliasesZh: ["歸來", "comeback"], axisLabelZh: "木門", isCxAxis: true },
+      { id: "bounce", codes: ["bounce"], altCodes: ["1A"], icons: ["soul.gif", "bounce.gif"], labelZh: "風", aliasesZh: ["風吹", "彈回"], axisLabelZh: "風吹", isCxAxis: true },
+      { id: "draw", codes: ["draw"], altCodes: ["D"], icons: ["draw.gif"], labelZh: "書", aliasesZh: ["抽牌"], axisLabelZh: "書", isCxAxis: true },
+      { id: "treasure", codes: ["treasure"], altCodes: ["B"], icons: ["treasure.gif"], labelZh: "磚", aliasesZh: ["金磚", "寶箱"], axisLabelZh: "金磚", isCxAxis: true },
+      { id: "shot", codes: ["shot"], altCodes: ["1E"], icons: ["soul.gif", "shot.gif"], labelZh: "燒", aliasesZh: ["火燒", "射擊"], axisLabelZh: "火燒", isCxAxis: true },
+      { id: "gate", codes: ["gate"], altCodes: ["1G"], icons: ["gate.gif"], labelZh: "城門", aliasesZh: ["凱旋門"], axisLabelZh: "凱旋門", isCxAxis: true },
+      { id: "standby", codes: ["standby"], altCodes: ["1H"], icons: ["soul.gif", "standby.gif"], labelZh: "開機", aliasesZh: ["待機"], axisLabelZh: "開機", isCxAxis: true },
+      { id: "choice", codes: ["choice"], altCodes: ["I"], icons: ["choice.gif"], labelZh: "箭頭", aliasesZh: ["選擇"], axisLabelZh: "箭頭", isCxAxis: true },
+      { id: "discovery", codes: ["discovery"], altCodes: [], icons: ["discovery.gif"], labelZh: "望遠鏡", aliasesZh: ["發現"], axisLabelZh: null, isCxAxis: false },
+      { id: "chance", codes: ["chance"], altCodes: [], icons: ["chance.gif"], labelZh: "燈泡", aliasesZh: ["機會"], axisLabelZh: null, isCxAxis: false },
+      { id: "focus", codes: ["focus"], altCodes: [], icons: ["focus.gif"], labelZh: "快門", aliasesZh: ["聚焦"], axisLabelZh: null, isCxAxis: false }
     ]
   };
 
@@ -67,13 +68,15 @@
 
   function allCodesOf(t) {
     var out = [];
-    var primary = normalizeCode(t && t.id);
-    if (primary) out.push(primary);
-    var alts = (t && t.altCodes) || (t && t.codes) || [];
-    for (var i = 0; i < alts.length; i++) {
-      var c = normalizeCode(alts[i]);
+    function push(v) {
+      var c = normalizeCode(v);
       if (c && out.indexOf(c) === -1) out.push(c);
     }
+    if (t && t.id != null && t.id !== "") push(t.id);
+    var codes = (t && t.codes) || [];
+    for (var i = 0; i < codes.length; i++) push(codes[i]);
+    var alts = (t && t.altCodes) || [];
+    for (var j = 0; j < alts.length; j++) push(alts[j]);
     return out;
   }
 
@@ -86,12 +89,10 @@
     var list = (data && data.triggers) || [];
     for (var i = 0; i < list.length; i++) {
       var t = list[i];
-      if (!t) continue;
+      if (!t || t.id == null || t.id === "") continue;
+      byId[normalizeCode(t.id)] = t;
       var codes = allCodesOf(t);
-      for (var c = 0; c < codes.length; c++) {
-        byCode[codes[c]] = t;
-        byId[codes[c]] = t;
-      }
+      for (var c = 0; c < codes.length; c++) byCode[codes[c]] = t;
       var ik = iconsKey(t.icons);
       if (ik) byIcons[ik] = t;
       if (t.axisLabelZh) byAxisLabel[t.axisLabelZh] = t;
@@ -149,15 +150,15 @@
     return state.readyPromise;
   }
 
-  /** Lookup by trigger code (id === code). */
+  /** Lookup by English id / codes[] / altCodes[] (case-insensitive). */
   function fromCode(code) {
     var key = normalizeCode(code);
     return key ? (idx.byCode[key] || null) : null;
   }
 
-  /** Alias of fromCode — id is the code. */
   function fromId(id) {
-    return fromCode(id);
+    var key = normalizeCode(id);
+    return key ? (idx.byId[key] || fromCode(id)) : null;
   }
 
   /** Lookup by official GIF list or crawler "a.gif;b.gif" string. */
@@ -170,21 +171,18 @@
     return idx.byAnyZh[String(name || "").trim()] || null;
   }
 
-  /** Chart / UI label for a raw card trigger code. */
   function labelForCode(code) {
     var t = fromCode(code);
     if (!t) return code == null || code === "" ? "-" : String(code);
-    return t.axisLabelZh || t.labelZh || normalizeCode(t.id) || String(code);
+    return t.axisLabelZh || t.labelZh || t.id;
   }
 
-  /** CX-axis nickname used by collection / top-record compare; null if not axis. */
   function axisLabelForCode(code) {
     var t = fromCode(code);
     if (!t || !t.isCxAxis) return null;
     return t.axisLabelZh || t.labelZh || null;
   }
 
-  /** code → axisLabel map (compat with old CX_TRIGGER_AXIS / TOP_TRIGGER_AXIS). */
   function codeToAxisLabelMap() {
     var out = Object.create(null);
     var list = state.data.triggers || [];
@@ -199,21 +197,16 @@
     return out;
   }
 
-  /** Ordered axis nicknames (compat with CX_AXIS_ORDER / TOP_AXIS_TOKENS). */
   function axisOrderLabels() {
     var order = state.data.axisOrder || [];
     var out = [];
     for (var i = 0; i < order.length; i++) {
-      var t = fromCode(order[i]);
+      var t = fromId(order[i]);
       if (t && (t.axisLabelZh || t.labelZh)) out.push(t.axisLabelZh || t.labelZh);
     }
     return out;
   }
 
-  /**
-   * Alias pairs for parsing free-text axis strings from sheets
-   * (e.g. 城門→凱旋門, 燒→火燒). Derived from labelZh / aliasesZh → axisLabelZh.
-   */
   function axisAliasPairs() {
     var pairs = [];
     var list = state.data.triggers || [];
@@ -231,17 +224,17 @@
     return pairs;
   }
 
-  /** code → short display label map (compat with TRIGGER_LABEL). */
   function codeToLabelMap() {
     var out = Object.create(null);
     var list = state.data.triggers || [];
     for (var i = 0; i < list.length; i++) {
       var t = list[i];
       if (!t) continue;
-      var label = t.labelZh || t.axisLabelZh || normalizeCode(t.id);
+      var label = t.labelZh || t.axisLabelZh || t.id;
       if (!label) continue;
       var codes = allCodesOf(t);
       for (var c = 0; c < codes.length; c++) out[codes[c]] = label;
+      if (t.id) out[normalizeCode(t.id)] = label;
     }
     return out;
   }
