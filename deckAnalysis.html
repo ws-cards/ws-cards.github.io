@@ -1071,6 +1071,7 @@
   <script src="assets/js/firebase-config.js"></script>
   <script src="assets/js/ws-firebase.js"></script>
   <script src="assets/js/deck-ai-guide.js"></script>
+  <script src="assets/js/ws-trigger-map.js?v=20261027a"></script>
   <script src="dist/js/include-navbar.js"></script>
 
   <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -1451,11 +1452,9 @@
 
     const KIND_GCS = { "0": "角色", "1": "事件", "2": "CX" };
     const KIND_DECKLOG = { "2": "角色", "3": "事件", "4": "CX" };
-    const TRIGGER_LABEL = {
-      "0": "無", "1": "靈魂+1", "2": "靈魂+2",
-      "soul": "靈魂", "gate": "門", "book": "書", "treasure": "寶袋",
-      "standby": "待機", "shot": "射擊", "bounce": "彈回", "comeback": "歸來",
-      "draw": "抽牌", "choice": "選擇", "stock": "庫存"
+    /* 顯示標籤改由 WsTriggerMap（勿再把 treasure 當成寶袋；寶袋=stock/F、金磚=treasure/B） */
+    let TRIGGER_LABEL = (window.WsTriggerMap && window.WsTriggerMap.codeToLabelMap()) || {
+      "0": "無", "1": "魂+1", "2": "魂+2"
     };
 
     const GUIDE = {
@@ -2530,12 +2529,17 @@
     /* ——— Top records compare ——— */
     const TOP_SHEET_URL = "https://docs.google.com/spreadsheets/d/1Nq5spFj7s6rU3CHhCfLWfk6fq__aQm_5f1hXNo7gBEk/gviz/tq";
     const TOP_SHEET_TAB = "牌組清單";
-    const TOP_TRIGGER_AXIS = {
-      "2": "二爆", "C": "木門", "1G": "凱旋門", "B": "金磚", "1H": "開機",
-      "I": "箭頭", "D": "書", "1E": "火燒", "1A": "風吹", "F": "寶袋"
-    };
-    const TOP_AXIS_TOKENS = ["凱旋門", "二爆", "木門", "金磚", "開機", "箭頭", "火燒", "風吹", "寶袋", "書"];
-    const TOP_AXIS_ALIAS = [["二暴", "二爆"], ["城門", "凱旋門"], ["燒", "火燒"]];
+    let TOP_TRIGGER_AXIS = (window.WsTriggerMap && window.WsTriggerMap.codeToAxisLabelMap()) || {};
+    let TOP_AXIS_TOKENS = (window.WsTriggerMap && window.WsTriggerMap.axisOrderLabels()) || [];
+    let TOP_AXIS_ALIAS = (window.WsTriggerMap && window.WsTriggerMap.axisAliasPairs()) || [];
+    if (window.WsTriggerMap && typeof window.WsTriggerMap.ready === "function") {
+      window.WsTriggerMap.ready().then(function () {
+        TOP_TRIGGER_AXIS = window.WsTriggerMap.codeToAxisLabelMap();
+        TOP_AXIS_TOKENS = window.WsTriggerMap.axisOrderLabels();
+        TOP_AXIS_ALIAS = window.WsTriggerMap.axisAliasPairs();
+        TRIGGER_LABEL = window.WsTriggerMap.codeToLabelMap();
+      });
+    }
     let topCompareToken = 0;
 
     function parseCsv(text) {
