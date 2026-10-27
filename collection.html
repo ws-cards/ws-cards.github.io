@@ -1874,8 +1874,17 @@
       .col-deckbox .col-deck-info-grid span {
         color: var(--col-muted);
       }
-      .col-deckbox .col-deck-card.is-selected {
-        background: var(--col-accent-soft);
+      .col-deckbox .col-deck-card.is-selected .col-deck-cover-art {
+        box-shadow:
+          0 0 0 2px #fff,
+          0 0 0 4px var(--col-accent),
+          0 14px 26px rgba(20, 32, 26, 0.2);
+      }
+      [data-theme="dark"] .col-deckbox .col-deck-card.is-selected .col-deck-cover-art {
+        box-shadow:
+          0 0 0 2px #152019,
+          0 0 0 4px var(--col-accent),
+          0 14px 26px rgba(0, 0, 0, 0.4);
       }
       .col-deckbox .col-deck-detail-tabs {
         background: var(--col-accent-soft);
@@ -1929,27 +1938,13 @@
       }
     }
     @media (max-width: 991px) {
-      .col-deckbox .col-deck-card {
-        background: #fff;
-        border-color: rgba(26, 46, 36, 0.1);
-        box-shadow: 0 1px 2px rgba(26, 46, 36, 0.04);
-      }
-      .col-deckbox .col-deck-name { color: var(--deckbox-ink); }
-      .col-deckbox .col-deck-meta { color: var(--deckbox-muted); }
       .col-deckbox .col-deck-actions {
-        background: rgba(47, 107, 79, 0.06);
-        border-left-color: rgba(26, 46, 36, 0.08);
+        background: rgba(255, 255, 255, 0.78);
+        border-color: rgba(26, 46, 36, 0.1);
       }
-      [data-theme="dark"] .col-deckbox .col-deck-card {
-        background: rgba(255, 255, 255, 0.04);
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: none;
-      }
-      [data-theme="dark"] .col-deckbox .col-deck-name { color: #f3f6f3; }
-      [data-theme="dark"] .col-deckbox .col-deck-meta { color: rgba(238, 243, 238, 0.62); }
       [data-theme="dark"] .col-deckbox .col-deck-actions {
-        background: rgba(0, 0, 0, 0.18);
-        border-left-color: rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.22);
+        border-color: rgba(255, 255, 255, 0.1);
       }
     }
 
@@ -2128,90 +2123,238 @@
       .col-deck-stat:nth-child(2) { justify-content: flex-end; }
     }
 
+    /* 牌組封面牆：TCG 圖片優先（卡面為主、資訊當角標／疊字） */
     .col-deck-list {
       list-style: none;
       margin: 0;
-      padding: 0;
+      padding: 0.15rem 0 0;
       display: grid;
-      gap: 0.75rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.95rem 0.7rem;
+    }
+    @media (min-width: 576px) {
+      .col-deck-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem 0.85rem;
+      }
     }
     .col-deck-card {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 0;
-      align-items: stretch;
+      position: relative;
+      margin: 0;
       padding: 0;
-      border-radius: 12px;
-      background: #fff;
-      border: 1px solid var(--col-line);
-      overflow: hidden;
-    }
-    [data-theme="dark"] .col-deck-card {
-      background: rgba(255, 255, 255, 0.04);
-    }
-    .col-deck-card.is-short {
-      border-color: rgba(239, 68, 68, 0.35);
-    }
-    .col-deck-main {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 0.7rem;
-      align-items: start;
-      padding: 0.85rem 0.85rem;
+      border: 0;
+      background: transparent;
       min-width: 0;
     }
-    .col-deck-thumb {
-      width: 2.6rem;
-      height: 2.6rem;
-      border-radius: 10px;
-      background: var(--col-accent-soft);
-      color: var(--col-accent);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      flex: 0 0 auto;
-      overflow: hidden;
-    }
-    .col-deck-thumb-img {
+    .col-deck-cover {
+      display: block;
+      width: 100%;
+      margin: 0;
       padding: 0;
-      background: #e5e7eb;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 12px;
     }
-    .col-deck-thumb-img img {
+    .col-deck-cover:focus-visible {
+      outline: 2px solid var(--col-accent);
+      outline-offset: 3px;
+    }
+    .col-deck-cover-art {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      border-radius: 12px;
+      overflow: hidden;
+      background:
+        linear-gradient(160deg, rgba(47, 107, 79, 0.18), transparent 55%),
+        #1a2420;
+      box-shadow:
+        0 10px 22px rgba(20, 32, 26, 0.16),
+        0 1px 0 rgba(255, 255, 255, 0.35) inset;
+      transform: translateZ(0);
+      transition:
+        transform 0.28s cubic-bezier(0.22, 0.8, 0.28, 1),
+        box-shadow 0.28s ease;
+    }
+    [data-theme="dark"] .col-deck-cover-art {
+      box-shadow:
+        0 12px 26px rgba(0, 0, 0, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    }
+    .col-deck-cover:hover .col-deck-cover-art,
+    .col-deck-cover:focus-visible .col-deck-cover-art {
+      transform: translateY(-3px);
+      box-shadow:
+        0 16px 28px rgba(20, 32, 26, 0.22),
+        0 1px 0 rgba(255, 255, 255, 0.4) inset;
+    }
+    .col-deck-card.is-selected .col-deck-cover-art {
+      box-shadow:
+        0 0 0 2px #fff,
+        0 0 0 4px var(--col-accent),
+        0 14px 26px rgba(20, 32, 26, 0.2);
+    }
+    [data-theme="dark"] .col-deck-card.is-selected .col-deck-cover-art {
+      box-shadow:
+        0 0 0 2px #152019,
+        0 0 0 4px var(--col-accent),
+        0 14px 26px rgba(0, 0, 0, 0.4);
+    }
+    .col-deck-card.is-short .col-deck-cover-art {
+      box-shadow:
+        0 0 0 1.5px rgba(239, 68, 68, 0.55),
+        0 10px 22px rgba(20, 32, 26, 0.16);
+    }
+    .col-deck-card.is-short.is-selected .col-deck-cover-art {
+      box-shadow:
+        0 0 0 2px #fff,
+        0 0 0 4px #ef4444,
+        0 14px 26px rgba(20, 32, 26, 0.2);
+    }
+    .col-deck-cover-art img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center top;
       display: block;
+      opacity: 0;
+      transition:
+        opacity 0.35s ease,
+        transform 0.45s cubic-bezier(0.22, 0.8, 0.28, 1);
     }
-    .col-deck-thumb-img img.is-broken { display: none; }
-    .col-deck-info { min-width: 0; }
+    .col-deck-cover-art img.is-loaded { opacity: 1; }
+    .col-deck-cover-art img.is-broken { display: none; }
+    .col-deck-cover:hover .col-deck-cover-art img.is-loaded {
+      transform: scale(1.045);
+    }
+    .col-deck-cover-fallback {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 248, 232, 0.55);
+      font-size: 1.6rem;
+      background:
+        repeating-linear-gradient(
+          -18deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 255, 255, 0.03) 10px,
+          rgba(255, 255, 255, 0.03) 11px
+        );
+    }
+    .col-deck-cover-art:not(.has-image) .col-deck-cover-fallback {
+      display: flex;
+    }
+    .col-deck-cover-scrim {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      padding: 2.1rem 0.55rem 0.55rem;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(12, 18, 16, 0.55) 42%,
+        rgba(8, 12, 11, 0.88) 100%
+      );
+      color: #f7f3ea;
+      pointer-events: none;
+    }
     .col-deck-name {
       margin: 0;
-      font-size: 1rem;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: 0.88rem;
       font-weight: 800;
-      color: var(--col-ink);
+      letter-spacing: 0.02em;
+      line-height: 1.25;
       word-break: break-word;
-      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     }
     .col-deck-meta {
-      margin-top: 0.25rem;
-      font-size: 0.76rem;
-      color: var(--col-muted);
-      line-height: 1.4;
+      margin-top: 0.2rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: rgba(247, 243, 234, 0.78);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .col-deck-tags {
+    .col-deck-cover-count,
+    .col-deck-cover-short,
+    .col-deck-cover-source {
+      position: absolute;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.22rem;
+      max-width: calc(100% - 0.7rem);
+      padding: 0.18rem 0.42rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .col-deck-cover-count {
+      top: 0.45rem;
+      right: 0.45rem;
+      color: #fff8e8;
+      background: rgba(15, 23, 42, 0.72);
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+    .col-deck-cover-short {
+      top: 0.45rem;
+      left: 0.45rem;
+      color: #fff;
+      background: rgba(185, 28, 28, 0.88);
+    }
+    .col-deck-cover-source {
+      top: 0.45rem;
+      left: 0.45rem;
+      color: #eaf6df;
+      background: rgba(39, 80, 10, 0.78);
+    }
+    .col-deck-card.is-short .col-deck-cover-source {
+      top: 2rem;
+    }
+    .col-deck-cover-source.is-detached {
+      color: #fff4df;
+      background: rgba(122, 75, 0, 0.82);
+    }
+    .col-deck-cover-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: 0.4rem;
+      gap: 0.22rem;
+      margin-top: 0.35rem;
+      pointer-events: none;
     }
-    .col-deck-tags .col-tag-chip {
-      background: var(--col-accent-soft);
-      color: var(--col-accent);
+    .col-deck-cover-tags .col-tag-chip {
+      background: rgba(255, 248, 232, 0.16);
+      color: #fff8e8;
+      border: 1px solid rgba(255, 248, 232, 0.22);
       border-radius: 999px;
-      font-size: 0.68rem;
+      font-size: 0.6rem;
       font-weight: 700;
-      padding: 0.12rem 0.45rem;
+      padding: 0.08rem 0.38rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .col-deck-origin-badge {
       display: inline-flex;
@@ -2279,74 +2422,60 @@
       line-height: 1.3;
     }
     [data-theme="dark"] .col-deck-warn { color: #f87171; }
+    /* 手機：封面下方精簡圖示列（詳情面板僅桌面顯示） */
     .col-deck-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      width: 6.4rem;
-      border-left: 1px solid var(--col-line);
-      background: #fafafa;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.2rem;
+      margin-top: 0.4rem;
+      padding: 0.15rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(26, 46, 36, 0.08);
     }
     [data-theme="dark"] .col-deck-actions {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
     }
     .col-deck-actions button {
-      display: flex;
-      flex-direction: column;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.2rem;
+      min-height: 2rem;
       border: 0;
+      border-radius: 8px;
       background: transparent;
-      color: var(--col-muted);
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 0.45rem 0.2rem;
+      color: var(--deckbox-muted, var(--col-muted));
+      font-size: 0.85rem;
+      padding: 0.25rem;
       cursor: pointer;
-      line-height: 1.1;
     }
-    .col-deck-actions button:nth-child(1),
-    .col-deck-actions button:nth-child(2) {
-      border-bottom: 1px solid var(--col-line);
-    }
-    .col-deck-actions button:nth-child(odd) {
-      border-right: 1px solid var(--col-line);
-    }
-    .col-deck-actions button i {
-      font-size: 0.95rem;
-      color: #64748b;
-    }
-    .col-deck-actions button:hover {
+    .col-deck-actions button span { display: none; }
+    .col-deck-actions button:hover,
+    .col-deck-actions button:focus-visible {
       background: var(--col-accent-soft);
       color: var(--col-accent);
+      outline: none;
     }
-    .col-deck-actions button:hover i { color: var(--col-accent); }
     .col-deck-actions button.is-danger:hover,
-    .col-deck-actions button.is-danger:hover i {
+    .col-deck-actions button.is-danger:focus-visible {
       color: #ef4444;
-      background: #fef2f2;
+      background: rgba(239, 68, 68, 0.1);
     }
-    [data-theme="dark"] .col-deck-actions button.is-danger:hover {
-      background: rgba(239, 68, 68, 0.12);
+    @media (prefers-reduced-motion: reduce) {
+      .col-deck-cover-art,
+      .col-deck-cover-art img,
+      .col-deck-cover:hover .col-deck-cover-art {
+        transition: none;
+        transform: none;
+      }
     }
 
-    /* 桌面主從：左列表／右詳情；手機維持列表＋操作格 */
+    /* 桌面主從：左封面牆／右詳情 */
     .col-deck-workspace[hidden] { display: none !important; }
     .col-deck-workspace { display: block; }
     .col-deck-sidebar-head { display: none; }
     .col-deck-detail { display: none; }
-    .col-deck-card-select {
-      display: contents;
-      cursor: pointer;
-      text-align: left;
-      border: 0;
-      background: transparent;
-      padding: 0;
-      margin: 0;
-      color: inherit;
-      font: inherit;
-      width: 100%;
-    }
 
     @media (min-width: 992px) {
       .col-deck-toolbar {
@@ -2369,7 +2498,7 @@
       .col-deck-stats { display: none; }
       .col-deck-workspace {
         display: grid;
-        grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+        grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
         gap: 1rem;
         align-items: start;
       }
@@ -2420,45 +2549,15 @@
         font-family: 'IBM Plex Mono', ui-monospace, monospace;
       }
       .col-deck-list {
-        gap: 0;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
         overflow: auto;
         flex: 1 1 auto;
-        padding: 0.35rem 0;
+        padding: 0.7rem;
       }
-      .col-deck-card {
-        display: block;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        border-bottom: 1px solid transparent;
-        overflow: visible;
-      }
-      .col-deck-card + .col-deck-card {
-        border-top: 1px solid var(--col-line);
-      }
-      .col-deck-card.is-short { border-color: transparent; }
-      .col-deck-card.is-selected {
-        outline: none;
-        background: var(--col-accent-soft);
-      }
-      .col-deck-card-select {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        gap: 0.7rem;
-        align-items: start;
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border-radius: 0;
-      }
-      .col-deck-card-select:hover {
-        background: rgba(59, 130, 246, 0.06);
-      }
-      .col-deck-card.is-selected .col-deck-card-select:hover {
-        background: transparent;
-      }
-      .col-deck-main { display: contents; }
-      .col-deck-info { min-width: 0; }
       .col-deck-actions { display: none; }
+      .col-deck-name { font-size: 0.8rem; }
+      .col-deck-meta { font-size: 0.62rem; }
 
       .col-deck-detail {
         display: block;
@@ -2498,9 +2597,26 @@
       .col-deck-detail-title-row {
         display: flex;
         align-items: flex-start;
-        gap: 0.75rem;
+        gap: 0.9rem;
         min-width: 0;
         flex: 1 1 220px;
+      }
+      .col-deck-detail-cover {
+        width: 4.6rem;
+        flex: 0 0 auto;
+      }
+      .col-deck-detail-cover .col-deck-cover-art {
+        border-radius: 9px;
+        box-shadow:
+          0 8px 18px rgba(20, 32, 26, 0.16),
+          0 1px 0 rgba(255, 255, 255, 0.3) inset;
+      }
+      .col-deck-detail-cover .col-deck-cover-scrim,
+      .col-deck-detail-cover .col-deck-cover-count,
+      .col-deck-detail-cover .col-deck-cover-short,
+      .col-deck-detail-cover .col-deck-cover-source,
+      .col-deck-detail-cover .col-deck-cover-tags {
+        display: none;
       }
       .col-deck-detail-icon {
         width: 2.75rem;
@@ -2516,7 +2632,8 @@
       }
       .col-deck-detail-title {
         margin: 0;
-        font-size: 1.2rem;
+        font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+        font-size: 1.25rem;
         font-weight: 800;
         color: var(--col-ink);
         line-height: 1.3;
@@ -5870,17 +5987,50 @@
       deckDetailCardFilter = '';
     }
 
-    function deckThumbHtml(deck) {
-      var first = (deck.cards || [])[0];
-      if (first && first.cardNumber) {
-        var urls = buildCardImageUrls(first.cardNumber);
-        if (urls.primary) {
-          return '<div class="col-deck-thumb col-deck-thumb-img" aria-hidden="true">' +
-            '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="" loading="lazy" decoding="async">' +
-            '</div>';
+    function pickDeckCoverCard(deck) {
+      var cards = (deck && deck.cards) || [];
+      if (!cards.length) return null;
+      // 優先取張數最多的卡當封面（通常是主力／CX），否則第一張
+      var best = cards[0];
+      var bestQty = best && best.qty ? best.qty : 0;
+      for (var i = 1; i < cards.length; i++) {
+        var q = cards[i] && cards[i].qty ? cards[i].qty : 0;
+        if (q > bestQty) {
+          best = cards[i];
+          bestQty = q;
         }
       }
-      return '<div class="col-deck-thumb" aria-hidden="true"><i class="fas fa-layer-group"></i></div>';
+      return best && best.cardNumber ? best : cards[0];
+    }
+
+    function deckCoverArtHtml(deck, opts) {
+      opts = opts || {};
+      var cover = pickDeckCoverCard(deck);
+      var artClass = 'col-deck-cover-art';
+      var imgHtml = '';
+      if (cover && cover.cardNumber) {
+        var urls = buildCardImageUrls(cover.cardNumber);
+        if (urls.primary) {
+          imgHtml = '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' +
+            escapeHtml(urls.fallback) + '" alt="" loading="lazy" decoding="async">';
+        }
+      }
+      return '<div class="' + artClass + '" aria-hidden="true">' +
+        imgHtml +
+        '<div class="col-deck-cover-fallback"><i class="fas fa-layer-group"></i></div>' +
+        (opts.inner || '') +
+        '</div>';
+    }
+
+    function deckCoverSourceBadgeHtml(deck) {
+      if (!isDecklogOriginDeck(deck)) return '';
+      var detached = isDecklogDetachedOrDiverged(deck);
+      var code = normalizeText(deck.decklogCode);
+      var label = detached ? ('改編 · ' + code) : ('DeckLog · ' + code);
+      return '<span class="col-deck-cover-source' + (detached ? ' is-detached' : '') +
+        '" title="' + escapeHtml(decklogOriginBadgeText(deck)) + '">' +
+        '<i class="fas fa-cloud" aria-hidden="true"></i>' + escapeHtml(label) +
+        '</span>';
     }
 
     function selectDeck(deckId) {
@@ -5892,7 +6042,10 @@
       deckDetailCardFilter = '';
       if (deckListEl) {
         deckListEl.querySelectorAll('.col-deck-card').forEach(function (node) {
-          node.classList.toggle('is-selected', node.getAttribute('data-deck-id') === deckId);
+          var on = node.getAttribute('data-deck-id') === deckId;
+          node.classList.toggle('is-selected', on);
+          var btn = node.querySelector('[data-deck-open], [data-deck-select]');
+          if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
       }
       renderDeckDetail();
@@ -5979,14 +6132,19 @@
           })) +
           '</li>';
 
+      var short = deckShortage(deck);
       var html = '';
       html += '<div class="col-deck-detail-head">';
       html += '  <div class="col-deck-detail-title-row">';
-      html += '    <div class="col-deck-detail-icon" aria-hidden="true"><i class="fas fa-layer-group"></i></div>';
+      html += '    <div class="col-deck-detail-cover">' + deckCoverArtHtml(deck) + '</div>';
       html += '    <div>';
       html += '      <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
       html += '      <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
       html += decklogOriginBadgeHtml(deck);
+      if (short.shortKinds) {
+        html += '<div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' +
+          short.shortKinds + ' 種（共 ' + short.shortCopies + ' 張）</div>';
+      }
       if ((deck.tags || []).length) {
         html += '      <div class="col-deck-detail-tags">' +
           (deck.tags || []).map(function (t) {
@@ -6122,30 +6280,44 @@
         var total = deckTotalCards(deck);
         var kinds = (deck.cards || []).length;
         var selected = deck.id === selectedDeckId;
-        var tagsHtml = (deck.tags || []).length
-          ? '<div class="col-deck-tags">' + (deck.tags || []).map(function (t) {
-              return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
-            }).join('') + '</div>'
-          : '';
-        html += '<li class="col-deck-card' + (selected ? ' is-selected' : '') + '" data-deck-id="' + escapeHtml(deck.id) + '">';
-        html += '  <button type="button" class="col-deck-card-select" data-deck-select="' + escapeHtml(deck.id) + '" aria-pressed="' + (selected ? 'true' : 'false') + '">';
-        html += '    <div class="col-deck-main">';
-        html += deckThumbHtml(deck);
-        html += '      <div class="col-deck-info">';
-        html += '        <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>';
+        var short = deckShortage(deck);
         var when = formatTime(deck.updatedAt);
-        var whenLabel = (/前$|剛剛$/.test(when)) ? (when + '更新') : ('更新於 ' + when);
-        html += '        <div class="col-deck-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
-        html += decklogOriginBadgeHtml(deck);
-        html += tagsHtml;
-        html += '      </div>';
-        html += '    </div>';
+        var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
+        var tags = deck.tags || [];
+        var tagsHtml = tags.length
+          ? '<div class="col-deck-cover-tags">' + tags.slice(0, 2).map(function (t) {
+              return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
+            }).join('') +
+            (tags.length > 2 ? '<span class="col-tag-chip">+' + (tags.length - 2) + '</span>' : '') +
+            '</div>'
+          : '';
+        var badges = '';
+        if (short.shortKinds) {
+          badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種">' +
+            '<i class="fas fa-exclamation" aria-hidden="true"></i>缺 ' + short.shortCopies + '</span>';
+        }
+        badges += deckCoverSourceBadgeHtml(deck);
+        badges += '<span class="col-deck-cover-count" title="' + kinds + ' 種卡">' + total + ' 張</span>';
+        var scrim =
+          '<div class="col-deck-cover-scrim">' +
+          '  <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>' +
+          '  <div class="col-deck-meta">' + kinds + ' 種 · ' + escapeHtml(whenShort) + '</div>' +
+          tagsHtml +
+          '</div>';
+        html += '<li class="col-deck-card' +
+          (selected ? ' is-selected' : '') +
+          (short.shortKinds ? ' is-short' : '') +
+          '" data-deck-id="' + escapeHtml(deck.id) + '">';
+        html += '  <button type="button" class="col-deck-cover" data-deck-open="' + escapeHtml(deck.id) +
+          '" aria-pressed="' + (selected ? 'true' : 'false') +
+          '" aria-label="' + escapeHtml(deck.name) + '，' + total + ' 張">';
+        html += deckCoverArtHtml(deck, { inner: badges + scrim });
         html += '  </button>';
         html += '  <div class="col-deck-actions">';
-        html += '    <button type="button" data-deck-view="' + escapeHtml(deck.id) + '" title="查看"><i class="fas fa-eye" aria-hidden="true"></i><span>查看</span></button>';
-        html += '    <button type="button" data-deck-edit="' + escapeHtml(deck.id) + '" title="編輯"><i class="fas fa-pen" aria-hidden="true"></i><span>編輯</span></button>';
-        html += '    <button type="button" data-deck-dup="' + escapeHtml(deck.id) + '" title="複製"><i class="fas fa-copy" aria-hidden="true"></i><span>複製</span></button>';
-        html += '    <button type="button" class="is-danger" data-deck-del="' + escapeHtml(deck.id) + '" title="刪除"><i class="fas fa-trash-alt" aria-hidden="true"></i><span>刪除</span></button>';
+        html += '    <button type="button" data-deck-view="' + escapeHtml(deck.id) + '" title="查看" aria-label="查看"><i class="fas fa-eye" aria-hidden="true"></i><span>查看</span></button>';
+        html += '    <button type="button" data-deck-edit="' + escapeHtml(deck.id) + '" title="編輯" aria-label="編輯"><i class="fas fa-pen" aria-hidden="true"></i><span>編輯</span></button>';
+        html += '    <button type="button" data-deck-dup="' + escapeHtml(deck.id) + '" title="複製" aria-label="複製"><i class="fas fa-copy" aria-hidden="true"></i><span>複製</span></button>';
+        html += '    <button type="button" class="is-danger" data-deck-del="' + escapeHtml(deck.id) + '" title="刪除" aria-label="刪除"><i class="fas fa-trash-alt" aria-hidden="true"></i><span>刪除</span></button>';
         html += '  </div>';
         html += '</li>';
       });
@@ -7064,14 +7236,14 @@
 
     function onAlbumImageLoad(img) {
       img.classList.add('is-loaded');
-      var art = img.closest('.col-tile-art, .col-deck-entry-art');
+      var art = img.closest('.col-tile-art, .col-deck-entry-art, .col-deck-cover-art');
       if (art) art.classList.add('has-image');
     }
 
     /** 快取命中時 load 可能已結束，補套 is-loaded */
     function revealLoadedDeckImages(root) {
       if (!root) return;
-      root.querySelectorAll('.col-deck-entry-art img, .col-deck-thumb-img img').forEach(function (img) {
+      root.querySelectorAll('.col-deck-entry-art img, .col-deck-cover-art img').forEach(function (img) {
         if (img.classList.contains('is-loaded') || img.classList.contains('is-broken')) return;
         if (img.complete && img.naturalWidth > 0) onAlbumImageLoad(img);
         else if (img.complete) onAlbumImageError(img);
@@ -7087,16 +7259,11 @@
       }
       img.classList.add('is-broken');
       img.removeAttribute('src');
-      var art = img.closest('.col-tile-art, .col-deck-entry-art');
+      var art = img.closest('.col-tile-art, .col-deck-entry-art, .col-deck-cover-art');
       if (art) {
         art.classList.remove('has-image');
         var label = art.querySelector('.col-tile-placeholder span');
         if (label) label.textContent = '無卡面';
-      }
-      var thumb = img.closest('.col-deck-thumb-img');
-      if (thumb && !thumb.querySelector('i')) {
-        thumb.classList.remove('col-deck-thumb-img');
-        thumb.innerHTML = '<i class="fas fa-layer-group"></i>';
       }
     }
 
@@ -7448,6 +7615,17 @@
       });
     }
     function handleDeckActionClick(e) {
+      var openBtn = e.target.closest('[data-deck-open]');
+      if (openBtn) {
+        var openId = openBtn.getAttribute('data-deck-open');
+        // 桌面：選取右側詳情；手機無詳情面板 → 直接開啟檢視
+        if (window.matchMedia && window.matchMedia('(min-width: 992px)').matches) {
+          selectDeck(openId);
+        } else {
+          openDeckViewer(openId);
+        }
+        return;
+      }
       var selectBtn = e.target.closest('[data-deck-select]');
       if (selectBtn) {
         selectDeck(selectBtn.getAttribute('data-deck-select'));
@@ -7559,6 +7737,9 @@
       }, true);
     }
     if (deckListEl) {
+      deckListEl.addEventListener('load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
       deckListEl.addEventListener('error', function (e) {
         if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
       }, true);
