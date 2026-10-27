@@ -794,6 +794,7 @@
   </div>
 
   <script src="assets/js/ws-decklog.js"></script>
+  <script src="assets/js/ws-trigger-map.js?v=20261027a"></script>
   <script>
 (function () {
   "use strict";
@@ -810,11 +811,15 @@
     "無": "#94a3b8", "未標": "#64748b"
   };
 
-  const TRIGGER_LABEL = {
-    "0": "無", "1": "魂+1", "2": "魂+2",
-    "B": "門", "C": "書", "A": "魂", "D": "袋",
-    "soul": "魂", "gate": "門", "book": "書"
+  /* 舊版曾把 B/C 對錯（B=門、C=書）；改由 WsTriggerMap 統一（B=磚、C=木門、D=書、F=寶袋） */
+  let TRIGGER_LABEL = (window.WsTriggerMap && window.WsTriggerMap.codeToLabelMap()) || {
+    "0": "無", "1": "魂+1", "2": "魂+2"
   };
+  if (window.WsTriggerMap && typeof window.WsTriggerMap.ready === "function") {
+    window.WsTriggerMap.ready().then(function () {
+      TRIGGER_LABEL = window.WsTriggerMap.codeToLabelMap();
+    });
+  }
 
   const charts = {};
   let deckCards = [];
