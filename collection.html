@@ -2322,25 +2322,29 @@
       color: #fff;
       background: rgba(185, 28, 28, 0.88);
     }
-    .col-deck-cover-tags {
+    .col-deck-cover-axis {
       display: flex;
       flex-wrap: wrap;
       gap: 0.22rem;
       margin-top: 0.35rem;
       pointer-events: none;
+      min-height: 0;
     }
-    .col-deck-cover-tags .col-tag-chip {
-      background: rgba(255, 248, 232, 0.16);
+    .col-deck-cover-axis:empty { display: none; }
+    .col-deck-axis-chip {
+      background: rgba(255, 248, 232, 0.18);
       color: #fff8e8;
-      border: 1px solid rgba(255, 248, 232, 0.22);
+      border: 1px solid rgba(255, 248, 232, 0.28);
       border-radius: 999px;
-      font-size: 0.6rem;
-      font-weight: 700;
-      padding: 0.08rem 0.38rem;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 0.1rem 0.42rem;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-family: 'IBM Plex Mono', 'Zen Kaku Gothic New', ui-monospace, monospace;
     }
     .col-deck-origin-badge {
       display: inline-flex;
@@ -2600,7 +2604,7 @@
       .col-deck-detail-cover .col-deck-cover-scrim,
       .col-deck-detail-cover .col-deck-cover-count,
       .col-deck-detail-cover .col-deck-cover-short,
-      .col-deck-detail-cover .col-deck-cover-tags {
+      .col-deck-detail-cover .col-deck-cover-axis {
         display: none;
       }
       .col-deck-detail-icon {
@@ -3888,6 +3892,24 @@
     var deckCardShortOnly = false;
     var deckLevelCache = {};
     var deckLevelEnriching = false;
+    /** CX 軸心對照（與 deckAnalysis 相同 trigger code；此處只列 CX，不檢查連動） */
+    var CX_TRIGGER_AXIS = {
+      '2': '二爆',
+      C: '木門',
+      '1G': '凱旋門',
+      B: '金磚',
+      '1H': '開機',
+      I: '箭頭',
+      D: '書',
+      '1E': '火燒',
+      '1A': '風吹',
+      F: '寶袋'
+    };
+    var CX_AXIS_ORDER = ['凱旋門', '二爆', '木門', '金磚', '開機', '箭頭', '火燒', '風吹', '寶袋', '書'];
+    /** fingerprint → string|null；null=不顯示 */
+    var deckCxAxisCache = {};
+    /** fingerprint → true while enriching */
+    var deckCxAxisPending = {};
 
     var deckModalDesc = document.getElementById('colDeckModalDesc');
     var deckOriginNote = document.getElementById('colDeckOriginNote');
@@ -6007,6 +6029,158 @@
         '</div>';
     }
 
+    function deckCxAxisCacheKey(deck) {
+      return deckCardsFingerprint((deck && deck.cards) || []);
+    }
+
+    function formatDeckCxAxisLabel(countByName) {
+      var names = Object.keys(countByName || {});
+      if (!names.length) return null;
+      var total = names.reduce(function (sum, name) {
+        return sum + (countByName[name] || 0);
+      }, 0);
+      // CX 總張數必須剛好 8，否則不顯示
+      if (total !== 8) return null;
+      names.sort(function (a, b) {
+        var d = (countByName[b] || 0) - (countByName[a] || 0);
+        if (d) return d;
+        var ia = CX_AXIS_ORDER.indexOf(a);
+        var ib = CX_AXIS_ORDER.indexOf(b);
+        if (ia < 0) ia = 999;
+        if (ib < 0) ib = 999;
+        return ia - ib || a.localeCompare(b, 'zh-Hant');
+      });
+      if (names.length === 1) return '8' + names[0];
+      return names.join('');
+    }
+
+    function computeDeckCxAxisLabel(enrichedRows, deckCards) {
+      var qtyByNo = {};
+      (deckCards || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var key = normalizeText(entry.cardNumber).replace(/\\/g, '/');
+        if (!key) return;
+        qtyByNo[key] = (qtyByNo[key] || 0) + (entry.qty || 0);
+      });
+      var countByName = {};
+      var sawCx = false;
+      for (var i = 0; i < (enrichedRows || []).length; i++) {
+        var row = enrichedRows[i];
+        if (!row) continue;
+        var kind = '';
+        if (window.WsDecklog && typeof window.WsDecklog.classifyKind === 'function') {
+          kind = window.WsDecklog.classifyKind(row);
+        } else {
+          kind = row.kindClass || '';
+        }
+        if (kind !== 'CX') continue;
+        sawCx = true;
+        var axisName = CX_TRIGGER_AXIS[String(row.trigger || '').toUpperCase()];
+        // 有 CX 但 trigger 對不到 → 視為資料不完整，不顯示
+        if (!axisName) return null;
+        var key = normalizeText(row.cardNo || row.cardNumber).replace(/\\/g, '/');
+        var qty = qtyByNo[key] || 0;
+        if (qty < 1) continue;
+        countByName[axisName] = (countByName[axisName] || 0) + qty;
+      }
+      if (!sawCx) return null;
+      return formatDeckCxAxisLabel(countByName);
+    }
+
+    function deckCoverAxisHtml(label) {
+      if (!label) return '<div class="col-deck-cover-axis" data-deck-axis-slot></div>';
+      return '<div class="col-deck-cover-axis" data-deck-axis-slot>' +
+        '<span class="col-deck-axis-chip">' + escapeHtml(label) + '</span>' +
+        '</div>';
+    }
+
+    function applyDeckCxAxisToDom(deckId, label) {
+      if (!deckListEl || !deckId) return;
+      var card = null;
+      deckListEl.querySelectorAll('.col-deck-card[data-deck-id]').forEach(function (node) {
+        if (node.getAttribute('data-deck-id') === deckId) card = node;
+      });
+      if (!card) return;
+      var slot = card.querySelector('[data-deck-axis-slot]');
+      if (!slot) return;
+      slot.innerHTML = label
+        ? '<span class="col-deck-axis-chip">' + escapeHtml(label) + '</span>'
+        : '';
+    }
+
+    function ensureDeckCxAxis(deck, onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      if (!deck) {
+        done(null);
+        return;
+      }
+      var fp = deckCxAxisCacheKey(deck);
+      if (!fp) {
+        done(null);
+        return;
+      }
+      if (Object.prototype.hasOwnProperty.call(deckCxAxisCache, fp)) {
+        done(deckCxAxisCache[fp]);
+        return;
+      }
+      if (!(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        deckCxAxisCache[fp] = null;
+        done(null);
+        return;
+      }
+      // 同一編成已在 enrich：等進行中的請求寫入 cache，避免中途清空 DOM
+      if (deckCxAxisPending[fp]) return;
+      var need = [];
+      var seen = {};
+      (deck.cards || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var key = normalizeText(entry.cardNumber).replace(/\\/g, '/');
+        if (!key || seen[key]) return;
+        seen[key] = true;
+        need.push({
+          cardNo: key,
+          name: entry.cardName || key
+        });
+      });
+      if (!need.length) {
+        deckCxAxisCache[fp] = null;
+        done(null);
+        return;
+      }
+      deckCxAxisPending[fp] = true;
+      window.WsDecklog.enrichCards(need)
+        .then(function (enriched) {
+          var label = computeDeckCxAxisLabel(enriched, deck.cards);
+          deckCxAxisCache[fp] = label;
+          done(label);
+        })
+        .catch(function (err) {
+          console.error(err);
+          deckCxAxisCache[fp] = null;
+          done(null);
+        })
+        .then(function () {
+          delete deckCxAxisPending[fp];
+        });
+    }
+
+    function hydrateVisibleDeckCxAxes(decks) {
+      (decks || []).forEach(function (deck) {
+        if (!deck || !deck.id) return;
+        var fp = deckCxAxisCacheKey(deck);
+        if (Object.prototype.hasOwnProperty.call(deckCxAxisCache, fp)) {
+          applyDeckCxAxisToDom(deck.id, deckCxAxisCache[fp]);
+          return;
+        }
+        ensureDeckCxAxis(deck, function (label) {
+          // 編成可能已變；以目前列表中的同 id 再對一次 fingerprint
+          var live = allDecks.find(function (d) { return d.id === deck.id; });
+          if (!live || deckCxAxisCacheKey(live) !== fp) return;
+          applyDeckCxAxisToDom(deck.id, label);
+        });
+      });
+    }
+
     function selectDeck(deckId) {
       if (!deckId || selectedDeckId === deckId) {
         if (selectedDeckId === deckId) renderDeckDetail();
@@ -6257,14 +6431,11 @@
         var short = deckShortage(deck);
         var when = formatTime(deck.updatedAt);
         var whenShort = (/前$|剛剛$/.test(when)) ? when : when;
-        var tags = deck.tags || [];
-        var tagsHtml = tags.length
-          ? '<div class="col-deck-cover-tags">' + tags.slice(0, 2).map(function (t) {
-              return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
-            }).join('') +
-            (tags.length > 2 ? '<span class="col-tag-chip">+' + (tags.length - 2) + '</span>' : '') +
-            '</div>'
-          : '';
+        var axisFp = deckCxAxisCacheKey(deck);
+        var axisLabel = Object.prototype.hasOwnProperty.call(deckCxAxisCache, axisFp)
+          ? deckCxAxisCache[axisFp]
+          : null;
+        var axisHtml = deckCoverAxisHtml(axisLabel);
         var badges = '';
         if (short.shortKinds) {
           badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種">' +
@@ -6275,7 +6446,7 @@
           '<div class="col-deck-cover-scrim">' +
           '  <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>' +
           '  <div class="col-deck-meta">' + kinds + ' 種 · ' + escapeHtml(whenShort) + '</div>' +
-          tagsHtml +
+          axisHtml +
           '</div>';
         html += '<li class="col-deck-card' +
           (selected ? ' is-selected' : '') +
@@ -6297,6 +6468,7 @@
       if (deckListEl) {
         deckListEl.innerHTML = html;
         revealLoadedDeckImages(deckListEl);
+        hydrateVisibleDeckCxAxes(visible);
       }
       renderDeckDetail();
     }
