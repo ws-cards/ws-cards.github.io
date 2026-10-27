@@ -2292,8 +2292,7 @@
       text-overflow: ellipsis;
     }
     .col-deck-cover-count,
-    .col-deck-cover-short,
-    .col-deck-cover-source {
+    .col-deck-cover-short {
       position: absolute;
       z-index: 3;
       display: inline-flex;
@@ -2322,19 +2321,6 @@
       left: 0.45rem;
       color: #fff;
       background: rgba(185, 28, 28, 0.88);
-    }
-    .col-deck-cover-source {
-      top: 0.45rem;
-      left: 0.45rem;
-      color: #eaf6df;
-      background: rgba(39, 80, 10, 0.78);
-    }
-    .col-deck-card.is-short .col-deck-cover-source {
-      top: 2rem;
-    }
-    .col-deck-cover-source.is-detached {
-      color: #fff4df;
-      background: rgba(122, 75, 0, 0.82);
     }
     .col-deck-cover-tags {
       display: flex;
@@ -2614,7 +2600,6 @@
       .col-deck-detail-cover .col-deck-cover-scrim,
       .col-deck-detail-cover .col-deck-cover-count,
       .col-deck-detail-cover .col-deck-cover-short,
-      .col-deck-detail-cover .col-deck-cover-source,
       .col-deck-detail-cover .col-deck-cover-tags {
         display: none;
       }
@@ -6022,17 +6007,6 @@
         '</div>';
     }
 
-    function deckCoverSourceBadgeHtml(deck) {
-      if (!isDecklogOriginDeck(deck)) return '';
-      var detached = isDecklogDetachedOrDiverged(deck);
-      var code = normalizeText(deck.decklogCode);
-      var label = detached ? ('改編 · ' + code) : ('DeckLog · ' + code);
-      return '<span class="col-deck-cover-source' + (detached ? ' is-detached' : '') +
-        '" title="' + escapeHtml(decklogOriginBadgeText(deck)) + '">' +
-        '<i class="fas fa-cloud" aria-hidden="true"></i>' + escapeHtml(label) +
-        '</span>';
-    }
-
     function selectDeck(deckId) {
       if (!deckId || selectedDeckId === deckId) {
         if (selectedDeckId === deckId) renderDeckDetail();
@@ -6296,7 +6270,6 @@
           badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種">' +
             '<i class="fas fa-exclamation" aria-hidden="true"></i>缺 ' + short.shortCopies + '</span>';
         }
-        badges += deckCoverSourceBadgeHtml(deck);
         badges += '<span class="col-deck-cover-count" title="' + kinds + ' 種卡">' + total + ' 張</span>';
         var scrim =
           '<div class="col-deck-cover-scrim">' +
