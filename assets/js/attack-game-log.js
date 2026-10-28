@@ -1746,9 +1746,19 @@
     if (lifeHost2) lifeHost2.classList.toggle("is-active", frame.side === "second");
     if ($("sumReplayLife1Name")) $("sumReplayLife1Name").textContent = playerShortName("first");
     if ($("sumReplayLife2Name")) $("sumReplayLife2Name").textContent = playerShortName("second");
+    if ($("sumReplayFrontLabel1")) {
+      $("sumReplayFrontLabel1").textContent = playerShortName("first") + "・前列";
+    }
+    if ($("sumReplayFrontLabel2")) {
+      $("sumReplayFrontLabel2").textContent = playerShortName("second") + "・前列";
+    }
 
     var board1 = $("sumReplayBoard1");
     var board2 = $("sumReplayBoard2");
+    var rowSelf = $("sumReplayRowSelf");
+    var rowOpp = $("sumReplayRowOpp");
+    if (rowSelf) rowSelf.classList.toggle("is-active-side", frame.side === "first");
+    if (rowOpp) rowOpp.classList.toggle("is-active-side", frame.side === "second");
     if (boardMode) {
       if (board1) board1.hidden = false;
       if (board2) board2.hidden = false;
