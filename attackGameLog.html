@@ -798,6 +798,8 @@
       border: 1px solid rgba(240, 238, 230, 0.1);
       background: #141210;
       box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+      perspective: 1400px;
+      perspective-origin: 50% 52%;
     }
     .agl-replay-mat-row {
       min-width: 0;
@@ -811,16 +813,23 @@
       position: relative;
       gap: 0;
       align-items: stretch;
+      transform-style: preserve-3d;
+      will-change: transform;
     }
+    /* Light perspective: opp slightly farther/smaller, self slightly nearer */
     .agl-replay-stage.is-board-mode .agl-replay-mat-row.is-opp {
       background:
         linear-gradient(180deg, rgba(8, 12, 18, 0.28) 0%, rgba(8, 12, 18, 0.52) 100%),
         url("assets/img/attack-replay/field-opp.jpg") center / cover no-repeat;
+      transform: rotateX(5deg) scale(0.94);
+      transform-origin: 50% 100%;
     }
     .agl-replay-stage.is-board-mode .agl-replay-mat-row.is-self {
       background:
         linear-gradient(0deg, rgba(12, 10, 6, 0.32) 0%, rgba(12, 10, 6, 0.5) 100%),
         url("assets/img/attack-replay/field-self.jpg") center / cover no-repeat;
+      transform: rotateX(-4deg) scale(1.03);
+      transform-origin: 50% 0%;
     }
     .agl-replay-front {
       display: none;
@@ -1016,6 +1025,7 @@
       min-height: 0;
       border-radius: 999px;
       border: 1px solid rgba(212, 175, 55, 0.42);
+      transform: translateZ(28px);
       background:
         linear-gradient(90deg, transparent, rgba(18, 16, 12, 0.94) 12%, rgba(18, 16, 12, 0.94) 88%, transparent),
         linear-gradient(180deg, rgba(203, 176, 131, 0.16), rgba(20, 18, 14, 0.9));
@@ -1456,10 +1466,17 @@
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
       gap: 0;
+      perspective: 1100px;
     }
     .agl-summary.is-replay-compact .agl-replay-stage.is-board-mode .agl-replay-mat-row {
       grid-template-columns: minmax(0, 1fr);
       gap: 0;
+    }
+    .agl-summary.is-replay-compact .agl-replay-stage.is-board-mode .agl-replay-mat-row.is-opp {
+      transform: rotateX(4deg) scale(0.95);
+    }
+    .agl-summary.is-replay-compact .agl-replay-stage.is-board-mode .agl-replay-mat-row.is-self {
+      transform: rotateX(-3deg) scale(1.02);
     }
     .agl-summary.is-replay-compact .agl-replay-stage.is-board-mode .agl-replay-front {
       padding: 10px 8% 8px;
@@ -2010,6 +2027,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
-  <script src="assets/js/attack-game-log.js?v=20261028h"></script>
+  <script src="assets/js/attack-game-log.js?v=20261028i"></script>
 </body>
 </html>
