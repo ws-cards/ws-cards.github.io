@@ -43,7 +43,8 @@
     playing: false,
     timer: null,
     speedIdx: 1,
-    animToken: 0
+    animToken: 0,
+    hasBoard: false
   };
 
   var state = createEmptyState();
@@ -310,6 +311,12 @@
     to.resolvedOnce = !!from.resolvedOnce;
     from.card = tmpCard;
     from.resolvedOnce = tmpResolved;
+    pushStageLog({
+      kind: "stageMove",
+      side: side,
+      fromSlot: fromKey,
+      toSlot: toKey
+    });
     persist();
     return true;
   }
@@ -402,8 +409,115 @@
     uiState.toastUntil = 0;
   }
 
+  function isStageLog(l) {
+    if (!l || !l.kind) return false;
+    return l.kind === "stageSet" || l.kind === "stageMove" ||
+      l.kind === "stageClear" || l.kind === "stageStand";
+  }
+
   function isAttackLog(l) {
-    return !!(l && l.kind !== "lifeAdjust" && l.attackerCard);
+    return !!(l && !isStageLog(l) && l.kind !== "lifeAdjust" && l.kind !== "selfDamage" && l.attackerCard);
+  }
+
+  function cardBrief(card) {
+    if (!card) return null;
+    return {
+      cardNo: card.cardNo || "",
+      name: card.name || "",
+      imageUrl: card.imageUrl || "",
+      level: card.level,
+      color: card.color
+    };
+  }
+
+  function slotBrief(slot) {
+    slot = slot || {};
+    // Accept live slots ({ resolvedOnce }) and stored briefs ({ rested })
+    return {
+      card: cardBrief(slot.card),
+      rested: !!(slot.rested || slot.resolvedOnce)
+    };
+  }
+
+  function stageBrief(stage) {
+    stage = stage || emptyStage();
+    return {
+      left: slotBrief(stage.left),
+      center: slotBrief(stage.center),
+      right: slotBrief(stage.right)
+    };
+  }
+
+  function stagesBrief(src) {
+    src = src || state.stages || {};
+    // Live state uses first/second stages; stored snapshots already match that shape
+    return {
+      first: stageBrief(src.first),
+      second: stageBrief(src.second)
+    };
+  }
+
+  function cloneStoredStages(brief) {
+    return {
+      first: stageBrief(brief && brief.first),
+      second: stageBrief(brief && brief.second)
+    };
+  }
+
+  function emptyStagesBrief() {
+    return {
+      first: stageBrief(emptyStage()),
+      second: stageBrief(emptyStage())
+    };
+  }
+
+  function cloneStagesBrief(src) {
+    return stagesBrief(src || emptyStagesBrief());
+  }
+
+  function hydrateStage(brief) {
+    var out = emptyStage();
+    for (var i = 0; i < SLOT_KEYS.length; i++) {
+      var key = SLOT_KEYS[i];
+      var slot = brief && brief[key];
+      out[key] = {
+        card: slot && slot.card ? Object.assign({}, slot.card) : null,
+        resolvedOnce: !!(slot && slot.rested)
+      };
+    }
+    return out;
+  }
+
+  function applyStagesBrief(brief) {
+    state.stages = {
+      first: hydrateStage(brief && brief.first),
+      second: hydrateStage(brief && brief.second)
+    };
+  }
+
+  function restoreStagesFromLogs() {
+    var logs = Array.isArray(state.logs) ? state.logs : [];
+    for (var i = logs.length - 1; i >= 0; i--) {
+      if (logs[i] && logs[i].stagesAfter) {
+        applyStagesBrief(logs[i].stagesAfter);
+        return true;
+      }
+    }
+    state.stages = { first: emptyStage(), second: emptyStage() };
+    return false;
+  }
+
+  function pushStageLog(partial) {
+    var log = Object.assign({
+      id: uid(),
+      turn: state.turn,
+      activeSide: state.activeSide,
+      timestamp: Date.now()
+    }, partial || {});
+    log.stagesAfter = stagesBrief();
+    state.logs.push(log);
+    state.lastUndo = { logId: log.id, kind: log.kind };
+    return log;
   }
 
   function totalsFor(side) {
@@ -1006,7 +1120,7 @@
     var logs = Array.isArray(state.logs) ? state.logs : [];
     for (var i = 0; i < logs.length; i++) {
       var log = logs[i];
-      if (!log) continue;
+      if (!log || isStageLog(log)) continue;
       var turn = Number(log.turn) || 1;
       var side = log.side === "second" ? "second" : "first";
       var key = turn + "|" + side;
@@ -1187,11 +1301,46 @@
     }
     if (frame.kind === "selfDamage") return "R" + frame.turn + " 自傷";
     if (frame.kind === "lifeAdjust") return "R" + frame.turn + " 調整";
+    if (frame.kind === "stageSet") {
+      return "布陣" + (frame.slotLabel ? " " + frame.slotLabel : "");
+    }
+    if (frame.kind === "stageClear") {
+      return "退場" + (frame.slotLabel ? " " + frame.slotLabel : "");
+    }
+    if (frame.kind === "stageMove") return "換位";
+    if (frame.kind === "stageStand") return "站起";
     return "R" + (frame.turn || "?");
+  }
+
+  function applyLogToReplayBoard(board, log) {
+    if (!log) return { focusSide: null, focusSlot: null };
+    if (log.stagesAfter) {
+      var cloned = cloneStoredStages(log.stagesAfter);
+      board.first = cloned.first;
+      board.second = cloned.second;
+      var focusSlot = log.slot || log.toSlot || null;
+      var focusSide = log.side === "second" ? "second" : (log.side === "first" ? "first" : null);
+      if (log.kind === "stageStand") {
+        focusSide = null;
+        focusSlot = null;
+      }
+      return { focusSide: focusSide, focusSlot: focusSlot };
+    }
+    // Legacy attack logs: only place the attacker as rested
+    if (isAttackLog(log) && log.slot) {
+      var atkSide = log.side === "second" ? "second" : "first";
+      board[atkSide][log.slot] = {
+        card: cardBrief(log.attackerCard),
+        rested: true
+      };
+      return { focusSide: atkSide, focusSlot: log.slot };
+    }
+    return { focusSide: null, focusSlot: null };
   }
 
   function applyLogToReplayLife(life, log) {
     if (!log) return { hitSide: null, delta: 0 };
+    if (isStageLog(log)) return { hitSide: null, delta: 0 };
     if (log.kind === "lifeAdjust" || log.kind === "selfDamage") {
       var side = log.side === "second" ? "second" : "first";
       if (log.lifeAfter) {
@@ -1233,15 +1382,27 @@
     return { hitSide: dealt > 0 ? receiver : null, delta: dealt };
   }
 
+  function logsHaveBoardData(logs) {
+    logs = Array.isArray(logs) ? logs : [];
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
+      if (!log) continue;
+      if (isStageLog(log) || log.stagesAfter) return true;
+    }
+    return false;
+  }
+
   function buildReplayFrames() {
     var logs = Array.isArray(state.logs) ? state.logs : [];
     if (!logs.length) return [];
 
     var frames = [];
+    var hasBoard = logsHaveBoardData(logs);
     var life = cloneLifePair({
       first: { level: 0, damage: 0 },
       second: { level: 0, damage: 0 }
     });
+    var board = emptyStagesBrief();
     frames.push({
       kind: "start",
       turn: 1,
@@ -1254,15 +1415,24 @@
       floatText: "",
       floatClass: "",
       hitSide: null,
-      life: cloneLifePair(life)
+      focusSide: null,
+      focusSlot: null,
+      slotLabel: "",
+      life: cloneLifePair(life),
+      stages: cloneStagesBrief(board),
+      hasBoard: hasBoard
     });
 
     for (var i = 0; i < logs.length; i++) {
       var log = logs[i];
       if (!log) continue;
+      var boardFocus = applyLogToReplayBoard(board, log);
       var effect = applyLogToReplayLife(life, log);
       var turn = Number(log.turn) || 1;
-      var side = log.side === "second" ? "second" : "first";
+      var side = log.side === "second" ? "second" : (log.side === "first" ? "first" : null);
+      var slotLabel = "";
+      if (log.slot && SLOT_LABELS[log.slot]) slotLabel = SLOT_LABELS[log.slot];
+      else if (log.toSlot && SLOT_LABELS[log.toSlot]) slotLabel = SLOT_LABELS[log.toSlot];
       var frame = {
         kind: "attack",
         turn: turn,
@@ -1275,7 +1445,12 @@
         floatText: "",
         floatClass: "",
         hitSide: effect.hitSide,
-        life: cloneLifePair(life)
+        focusSide: boardFocus.focusSide,
+        focusSlot: boardFocus.focusSlot,
+        slotLabel: slotLabel,
+        life: cloneLifePair(life),
+        stages: cloneStagesBrief(board),
+        hasBoard: hasBoard
       };
 
       if (log.kind === "lifeAdjust") {
@@ -1294,6 +1469,38 @@
           frame.floatText = "+" + effect.delta;
           frame.floatClass = "";
         }
+      } else if (log.kind === "stageSet") {
+        var setCard = log.card || {};
+        frame.kind = "stageSet";
+        frame.title = setCard.name || setCard.cardNo || "布陣";
+        frame.card = setCard.cardNo || setCard.name || setCard.imageUrl ? {
+          name: setCard.name || "",
+          cardNo: setCard.cardNo || "",
+          imageUrl: setCard.imageUrl || ""
+        } : null;
+        frame.metaHtml = escapeHtml("布陣・" + (slotLabel ? slotLabel + "列" : "場上"));
+      } else if (log.kind === "stageClear") {
+        var cleared = log.cardBefore || {};
+        frame.kind = "stageClear";
+        frame.title = cleared.name || cleared.cardNo || "退場";
+        frame.card = cleared.cardNo || cleared.name || cleared.imageUrl ? {
+          name: cleared.name || "",
+          cardNo: cleared.cardNo || "",
+          imageUrl: cleared.imageUrl || ""
+        } : null;
+        frame.metaHtml = escapeHtml("退場・" + (slotLabel ? slotLabel + "列" : "場上"));
+      } else if (log.kind === "stageMove") {
+        frame.kind = "stageMove";
+        frame.title = "換位";
+        var fromL = log.fromSlot && SLOT_LABELS[log.fromSlot] ? SLOT_LABELS[log.fromSlot] : "?";
+        var toL = log.toSlot && SLOT_LABELS[log.toSlot] ? SLOT_LABELS[log.toSlot] : "?";
+        frame.metaHtml = escapeHtml(fromL + "列 → " + toL + "列");
+        frame.focusSlot = log.toSlot || null;
+      } else if (log.kind === "stageStand") {
+        frame.kind = "stageStand";
+        frame.side = null;
+        frame.title = "全體站起";
+        frame.metaHtml = escapeHtml("新回合・Rest 解除");
       } else {
         var ac = log.attackerCard || {};
         var typeLabel = attackTypeLabel(log.attackType);
@@ -1301,7 +1508,7 @@
         var declared = Number(log.declaredDamage) || 0;
         var resultLabel = attackResultLabel(log);
         var resultClass = attackResultClass(log);
-        var slotText = log.slot && SLOT_LABELS[log.slot] ? SLOT_LABELS[log.slot] + "列" : "";
+        var slotText = slotLabel ? slotLabel + "列" : "";
         frame.kind = "attack";
         frame.title = ac.name || ac.cardNo || "未知角色";
         frame.card = {
@@ -1348,14 +1555,23 @@
       floatText: "",
       floatClass: "",
       hitSide: null,
-      life: endLife
+      focusSide: null,
+      focusSlot: null,
+      slotLabel: "",
+      life: endLife,
+      stages: stagesBrief(state.stages),
+      hasBoard: hasBoard
     });
     return frames;
   }
 
   function replayIntervalMs() {
     var speed = REPLAY_SPEEDS[replayState.speedIdx] || 1;
-    return Math.max(320, Math.round(1350 / speed));
+    var frame = replayState.frames[replayState.index];
+    var base = 1350;
+    if (frame && isStageLog(frame)) base = 520;
+    else if (frame && (frame.kind === "start" || frame.kind === "end")) base = 900;
+    return Math.max(260, Math.round(base / speed));
   }
 
   function stopReplayPlayback() {
@@ -1426,6 +1642,65 @@
     }
   }
 
+  function ensureReplayBoard(hostId) {
+    var host = $(hostId);
+    if (!host) return null;
+    if (host.querySelector(".agl-replay-slot")) return host;
+    host.innerHTML = "";
+    for (var i = 0; i < SLOT_KEYS.length; i++) {
+      var key = SLOT_KEYS[i];
+      var slot = document.createElement("div");
+      slot.className = "agl-replay-slot";
+      slot.dataset.slot = key;
+      var art = document.createElement("div");
+      art.className = "agl-replay-slot-art";
+      var tag = document.createElement("span");
+      tag.className = "agl-replay-slot-tag";
+      tag.textContent = SLOT_LABELS[key];
+      slot.appendChild(art);
+      slot.appendChild(tag);
+      host.appendChild(slot);
+    }
+    return host;
+  }
+
+  function fillReplayBoard(hostId, stageBriefData, focusSlot, animate) {
+    var host = ensureReplayBoard(hostId);
+    if (!host) return;
+    stageBriefData = stageBriefData || stageBrief(emptyStage());
+    for (var i = 0; i < SLOT_KEYS.length; i++) {
+      var key = SLOT_KEYS[i];
+      var slotEl = host.querySelector('.agl-replay-slot[data-slot="' + key + '"]');
+      if (!slotEl) continue;
+      var data = stageBriefData[key] || { card: null, rested: false };
+      var art = slotEl.querySelector(".agl-replay-slot-art");
+      if (!art) continue;
+      art.innerHTML = "";
+      slotEl.classList.toggle("is-empty", !data.card);
+      slotEl.classList.toggle("is-rested", !!(data.card && data.rested));
+      slotEl.classList.toggle("is-focus", !!(focusSlot && focusSlot === key));
+      if (animate && focusSlot && focusSlot === key) {
+        slotEl.classList.remove("is-pulse");
+        void slotEl.offsetWidth;
+        slotEl.classList.add("is-pulse");
+      } else {
+        slotEl.classList.remove("is-pulse");
+      }
+      if (data.card && data.card.imageUrl) {
+        var img = document.createElement("img");
+        img.alt = data.card.name || data.card.cardNo || "";
+        img.draggable = false;
+        img.src = data.card.imageUrl;
+        art.appendChild(img);
+      } else if (data.card) {
+        var fb = document.createElement("div");
+        fb.className = "agl-replay-slot-fallback";
+        fb.textContent = data.card.cardNo || data.card.name || "卡";
+        art.appendChild(fb);
+      }
+    }
+  }
+
   function renderReplayFrame(animate) {
     var frames = replayState.frames;
     var idx = replayState.index;
@@ -1435,6 +1710,7 @@
     var scrub = $("sumReplayScrub");
     var controls = $("sumReplayControls");
     var rail = $("sumReplayRail");
+    var rootReplay = $("sumReplay");
     if (!frames.length) {
       if (empty) empty.hidden = false;
       if (stage) stage.hidden = true;
@@ -1444,6 +1720,7 @@
         rail.hidden = true;
         rail.innerHTML = "";
       }
+      if (rootReplay) rootReplay.classList.remove("is-board-mode");
       return;
     }
     if (empty) empty.hidden = true;
@@ -1452,6 +1729,10 @@
     if (controls) controls.hidden = false;
     if (rail) rail.hidden = false;
     if (!frame) return;
+
+    var boardMode = !!(replayState.hasBoard || frame.hasBoard);
+    if (rootReplay) rootReplay.classList.toggle("is-board-mode", boardMode);
+    if (stage) stage.classList.toggle("is-board-mode", boardMode);
 
     var token = ++replayState.animToken;
     var life1 = frame.life.first;
@@ -1465,6 +1746,29 @@
     if (lifeHost2) lifeHost2.classList.toggle("is-active", frame.side === "second");
     if ($("sumReplayLife1Name")) $("sumReplayLife1Name").textContent = playerShortName("first");
     if ($("sumReplayLife2Name")) $("sumReplayLife2Name").textContent = playerShortName("second");
+
+    var board1 = $("sumReplayBoard1");
+    var board2 = $("sumReplayBoard2");
+    if (boardMode) {
+      if (board1) board1.hidden = false;
+      if (board2) board2.hidden = false;
+      var stages = frame.stages || emptyStagesBrief();
+      fillReplayBoard(
+        "sumReplayBoard1",
+        stages.first,
+        frame.focusSide === "first" ? frame.focusSlot : null,
+        animate
+      );
+      fillReplayBoard(
+        "sumReplayBoard2",
+        stages.second,
+        frame.focusSide === "second" ? frame.focusSlot : null,
+        animate
+      );
+    } else {
+      if (board1) board1.hidden = true;
+      if (board2) board2.hidden = true;
+    }
 
     var eventEl = $("sumReplayEvent");
     if (eventEl) {
@@ -1487,25 +1791,32 @@
 
     var cardHost = $("sumReplayCard");
     if (cardHost) {
+      cardHost.hidden = !!boardMode;
       cardHost.innerHTML = "";
-      if (frame.card && frame.card.imageUrl) {
-        var img = document.createElement("img");
-        img.alt = frame.card.name || "";
-        img.draggable = false;
-        img.src = frame.card.imageUrl;
-        cardHost.appendChild(img);
-      } else {
-        var fb = document.createElement("div");
-        fb.className = "agl-replay-card-fallback";
-        fb.id = "sumReplayCardFallback";
-        if (frame.kind === "start") fb.textContent = "開局";
-        else if (frame.kind === "end") fb.textContent = "終局";
-        else if (frame.card && (frame.card.name || frame.card.cardNo)) {
-          fb.textContent = frame.card.cardNo || frame.card.name;
-        } else if (frame.kind === "selfDamage") fb.textContent = "自傷";
-        else if (frame.kind === "lifeAdjust") fb.textContent = "調整";
-        else fb.textContent = "事件";
-        cardHost.appendChild(fb);
+      if (!boardMode) {
+        if (frame.card && frame.card.imageUrl) {
+          var img = document.createElement("img");
+          img.alt = frame.card.name || "";
+          img.draggable = false;
+          img.src = frame.card.imageUrl;
+          cardHost.appendChild(img);
+        } else {
+          var fb = document.createElement("div");
+          fb.className = "agl-replay-card-fallback";
+          fb.id = "sumReplayCardFallback";
+          if (frame.kind === "start") fb.textContent = "開局";
+          else if (frame.kind === "end") fb.textContent = "終局";
+          else if (frame.card && (frame.card.name || frame.card.cardNo)) {
+            fb.textContent = frame.card.cardNo || frame.card.name;
+          } else if (frame.kind === "selfDamage") fb.textContent = "自傷";
+          else if (frame.kind === "lifeAdjust") fb.textContent = "調整";
+          else if (frame.kind === "stageSet") fb.textContent = "布陣";
+          else if (frame.kind === "stageClear") fb.textContent = "退場";
+          else if (frame.kind === "stageMove") fb.textContent = "換位";
+          else if (frame.kind === "stageStand") fb.textContent = "站起";
+          else fb.textContent = "事件";
+          cardHost.appendChild(fb);
+        }
       }
     }
 
@@ -1593,7 +1904,9 @@
   function initReplayView(resetIndex) {
     stopReplayPlayback();
     replayState.frames = buildReplayFrames();
+    replayState.hasBoard = !!(replayState.frames[0] && replayState.frames[0].hasBoard);
     if (!replayState.frames.length) {
+      replayState.hasBoard = false;
       renderReplayFrame(false);
       return;
     }
@@ -2447,8 +2760,23 @@
         return false;
       }
     }
-    stage[slotKey].card = card ? Object.assign({}, card) : null;
+    var before = cardBrief(stage[slotKey] && stage[slotKey].card);
+    var nextCard = card ? Object.assign({}, card) : null;
+    var after = cardBrief(nextCard);
+    var same = (!before && !after) ||
+      (before && after && before.cardNo === after.cardNo && before.name === after.name &&
+        before.imageUrl === after.imageUrl);
+    stage[slotKey].card = nextCard;
     if (!card) stage[slotKey].resolvedOnce = false;
+    if (!same) {
+      pushStageLog({
+        kind: card ? "stageSet" : "stageClear",
+        side: state.activeSide,
+        slot: slotKey,
+        card: after,
+        cardBefore: before
+      });
+    }
     persist();
     render();
     return true;
@@ -2491,6 +2819,7 @@
     var lifeBefore = lifeSnapshot(receiver);
     if (dealt > 0) applyClockDamage(receiver, dealt);
     var lifeAfter = lifeSnapshot(receiver);
+    activeStage()[d.slot].resolvedOnce = true;
     var log = {
       id: uid(),
       turn: state.turn,
@@ -2514,11 +2843,11 @@
       attackerLife: lifeSnapshot(state.activeSide),
       lifeBefore: lifeBefore,
       lifeAfter: lifeAfter,
+      stagesAfter: stagesBrief(),
       timestamp: Date.now()
     };
     state.logs.push(log);
     state.lastUndo = { logId: log.id };
-    activeStage()[d.slot].resolvedOnce = true;
     uiState.draft = null;
     uiState.attackStep = null;
     persist();
@@ -2563,7 +2892,9 @@
         damage: Number(last.lifeBefore.damage) || 0
       };
     }
-    if (last.kind !== "lifeAdjust" && last.kind !== "selfDamage" &&
+    if (last.stagesAfter || isStageLog(last)) {
+      restoreStagesFromLogs();
+    } else if (last.kind !== "lifeAdjust" && last.kind !== "selfDamage" &&
         last.side && last.slot &&
         state.stages[last.side] && state.stages[last.side][last.slot]) {
       state.stages[last.side][last.slot].resolvedOnce = false;
@@ -2574,7 +2905,10 @@
     if (last.kind === "lifeAdjust") undoMsg = "已撤銷生命調整";
     else if (last.kind === "selfDamage") {
       undoMsg = last.selfKind === "opponentRefresh" ? "已撤銷對手洗傷" : "已撤銷自傷";
-    }
+    } else if (last.kind === "stageSet") undoMsg = "已撤銷布陣";
+    else if (last.kind === "stageClear") undoMsg = "已撤銷退場";
+    else if (last.kind === "stageMove") undoMsg = "已撤銷換位";
+    else if (last.kind === "stageStand") undoMsg = "已撤銷站起";
     toast(undoMsg);
   }
 
@@ -2609,6 +2943,10 @@
       // Keep characters on stage; stand them for the new turn
       standStage(state.stages.first);
       standStage(state.stages.second);
+      pushStageLog({
+        kind: "stageStand",
+        side: null
+      });
       toast("第 " + state.turn + " 回合・先攻布陣（場上角色保留）");
     }
     persist();
@@ -2621,8 +2959,16 @@
       toast("此槽沒有卡");
       return;
     }
+    var before = cardBrief(stage[slotKey].card);
     stage[slotKey].card = null;
     stage[slotKey].resolvedOnce = false;
+    pushStageLog({
+      kind: "stageClear",
+      side: side === "second" ? "second" : "first",
+      slot: slotKey,
+      card: null,
+      cardBefore: before
+    });
     persist();
     render();
     toast("已移除" + sideLabel(side) + "・" + SLOT_LABELS[slotKey]);
@@ -4495,6 +4841,8 @@
     initReplayView: initReplayView,
     setReplayIndex: setReplayIndex,
     getReplayState: function () { return replayState; },
+    isStageLog: isStageLog,
+    stagesBrief: stagesBrief,
     isMobileSummaryLayout: isMobileSummaryLayout,
     syncSummaryReplayCompact: syncSummaryReplayCompact,
     setSummaryTab: setSummaryTab,
