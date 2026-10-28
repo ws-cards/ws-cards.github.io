@@ -3435,8 +3435,9 @@
 
     /* =========================================================
        Motion Library 適配（kittenjam-motion-library）
-       取材：#289 全息閃卡、#112 卡片浮起、#205 彈出視窗、
-             #109 光澤掃過、#220 聚焦淡化、#104 依序浮現、#243 分段滑塊
+       取材：#113 光暈邊框、#112/#220 浮起淡化、#205 彈窗、
+             #104 依序浮現、#243 分段滑塊、#234 漣漪、#147 數量步進、
+             #232 立體按壓、#118 toast 彈入
        ========================================================= */
     .col-modal-backdrop {
       opacity: 0;
@@ -3466,40 +3467,6 @@
       }
     }
 
-    .collection-page .btn-primary,
-    .collection-page .col-cta-primary {
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-    }
-    .collection-page .btn-primary::after,
-    .collection-page .col-cta-primary::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -70%;
-      width: 45%;
-      height: 100%;
-      background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-      transform: skewX(-20deg);
-      animation: colShineSweep 2.6s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .collection-page .btn-primary > *,
-    .collection-page .col-cta-primary > * {
-      position: relative;
-      z-index: 1;
-    }
-    .collection-page .btn-primary:hover::after,
-    .collection-page .col-cta-primary:hover::after {
-      animation-duration: 0.9s;
-    }
-    @keyframes colShineSweep {
-      0%, 55% { left: -70%; }
-      100% { left: 130%; }
-    }
-
     .col-view-thumb {
       transition:
         transform 0.48s cubic-bezier(0.5, 1.45, 0.5, 1),
@@ -3508,6 +3475,8 @@
     }
 
     .col-filter-chip {
+      position: relative;
+      overflow: hidden;
       transition:
         background 0.18s ease,
         border-color 0.18s ease,
@@ -3517,71 +3486,77 @@
     .col-filter-chip:active { transform: scale(0.96); }
     .col-filter-chip.is-active { transform: scale(1.03); }
 
-    .col-holo-foil,
-    .col-holo-glare {
+    /* #113 光暈邊框：游標附近柔光，取代過亮全息 */
+    .col-binder-page .col-tile-art {
+      transition: transform 0.28s cubic-bezier(0.22, 0.8, 0.28, 1), box-shadow 0.28s ease;
+    }
+    .col-binder-page .col-tile-art::before {
+      content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-    .col-holo-foil {
-      mix-blend-mode: color-dodge;
-      background:
-        repeating-linear-gradient(
-          115deg,
-          #ff4d6d 0%,
-          #ffd23f 7%,
-          #3dd9b8 14%,
-          #7c5cff 21%,
-          #ff4d6d 28%
-        ) 0 0 / 300% 300%;
-      background-position: var(--holo-px, 50%) var(--holo-py, 50%);
-      opacity: calc(0.12 + var(--holo-d, 0) * 0.55);
-    }
-    .col-holo-glare {
-      mix-blend-mode: overlay;
+      padding: 1.5px;
       background:
         radial-gradient(
-          circle at var(--holo-px, 50%) var(--holo-py, 50%),
-          rgba(255, 255, 255, 0.72),
-          transparent 45%
+          140px circle at var(--spot-x, -999px) var(--spot-y, -999px),
+          rgba(176, 124, 40, 0.85),
+          transparent 55%
         );
-      opacity: calc(0.15 + var(--holo-d, 0) * 0.7);
-    }
-    .col-tile.is-holo-active .col-holo-foil,
-    .col-tile.is-holo-active .col-holo-glare { opacity: 1; }
-    .col-binder-page .col-tile-art {
-      transform-style: preserve-3d;
-      transition:
-        transform 0.18s ease,
-        box-shadow 0.28s ease;
-      will-change: transform;
-    }
-    .col-binder-page .col-tile.is-holo-active .col-tile-art {
-      transform:
-        rotateY(calc((var(--holo-x, 0.5) - 0.5) * 14deg))
-        rotateX(calc((0.5 - var(--holo-y, 0.5)) * 14deg))
-        scale(1.03);
-      box-shadow:
-        0 10px 22px rgba(0, 0, 0, 0.28),
-        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      pointer-events: none;
       z-index: 2;
+      transition: opacity 0.2s ease;
+    }
+    .col-binder-page .col-tile-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(
+          160px circle at var(--spot-x, -999px) var(--spot-y, -999px),
+          rgba(255, 255, 255, 0.1),
+          transparent 55%
+        );
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.2s ease;
+    }
+    [data-theme="dark"] .col-binder-page .col-tile-art::before {
+      background:
+        radial-gradient(
+          140px circle at var(--spot-x, -999px) var(--spot-y, -999px),
+          rgba(203, 176, 131, 0.9),
+          transparent 55%
+        );
+    }
+    .col-binder-page .col-tile.is-spot-active .col-tile-art {
+      transform: translateY(-3px) scale(1.02);
+      z-index: 2;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+    }
+    .col-binder-page .col-tile.is-spot-active .col-tile-art::before,
+    .col-binder-page .col-tile.is-spot-active .col-tile-art::after {
+      opacity: 1;
     }
     .col-binder-page .col-tile-art img {
-      transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.28, 1);
+      transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.28, 1);
     }
-    .col-binder-page .col-tile.is-holo-active .col-tile-art img {
-      transform: scale(1.06);
+    .col-binder-page .col-tile.is-spot-active .col-tile-art img {
+      transform: scale(1.04);
     }
 
     @media (hover: hover) and (pointer: fine) {
-      .col-binder-page:hover .col-tile:not(:hover):not(.is-holo-active),
-      .col-binder-page:has(.is-holo-active) .col-tile:not(.is-holo-active) {
-        opacity: 0.55;
-        filter: saturate(0.7);
+      .col-binder-page:hover .col-tile:not(:hover):not(.is-spot-active),
+      .col-binder-page:has(.is-spot-active) .col-tile:not(.is-spot-active) {
+        opacity: 0.58;
+        filter: saturate(0.75);
         transition:
           opacity 0.35s ease,
           filter 0.35s ease,
@@ -3632,48 +3607,151 @@
         filter: none;
       }
     }
-
     .col-section-stat.col-fx-enter,
     .col-deckbox-badge.col-fx-enter {
       filter: none;
     }
 
+    /* #232 立體按壓：一窗／漏斗按鈕 */
     .col-filter-btn,
     .col-focus-btn {
+      overflow: hidden;
+      box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
       transition:
         background 0.22s ease,
         border-color 0.22s ease,
         color 0.22s ease,
-        transform 0.22s cubic-bezier(0.3, 1.4, 0.5, 1),
-        box-shadow 0.22s ease;
+        transform 0.16s cubic-bezier(0.3, 1.2, 0.5, 1),
+        box-shadow 0.16s ease;
     }
     .col-filter-btn:hover,
     .col-focus-btn:hover {
       transform: translateY(-1px);
+      box-shadow: 0 3px 0 rgba(15, 23, 42, 0.14);
     }
     .col-filter-btn:active,
     .col-focus-btn:active {
-      transform: scale(0.96);
+      transform: translateY(2px);
+      box-shadow: 0 0 0 rgba(15, 23, 42, 0.12);
+    }
+    [data-theme="dark"] .col-filter-btn,
+    [data-theme="dark"] .col-focus-btn {
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    /* #147 數量步進：數字滾動回饋 */
+    .col-qty-btn {
+      transition: transform 0.14s ease, background 0.18s ease;
+    }
+    .col-qty-btn:active { transform: scale(0.88); }
+    .col-qty-value {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .col-qty-value.is-bump-up {
+      animation: colQtyBumpUp 0.28s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+    .col-qty-value.is-bump-down {
+      animation: colQtyBumpDown 0.28s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+    @keyframes colQtyBumpUp {
+      0% { transform: translateY(0.35em); opacity: 0.35; }
+      100% { transform: none; opacity: 1; }
+    }
+    @keyframes colQtyBumpDown {
+      0% { transform: translateY(-0.35em); opacity: 0.35; }
+      100% { transform: none; opacity: 1; }
+    }
+
+    /* #234 漣漪點擊 */
+    .col-ripple-host {
+      position: relative;
+      overflow: hidden;
+    }
+    .col-ripple {
+      position: absolute;
+      border-radius: 999px;
+      transform: scale(0);
+      background: rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      animation: colRipple 0.55s ease-out forwards;
+      z-index: 2;
+    }
+    .col-filter-chip .col-ripple,
+    .btn-outline-secondary .col-ripple,
+    .col-focus-btn .col-ripple,
+    .col-filter-btn .col-ripple {
+      background: rgba(49, 130, 206, 0.28);
+    }
+    [data-theme="dark"] .col-filter-chip .col-ripple,
+    [data-theme="dark"] .btn-outline-secondary .col-ripple {
+      background: rgba(144, 205, 244, 0.28);
+    }
+    @keyframes colRipple {
+      to {
+        transform: scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* #118 toast 彈入過衝 */
+    .col-toast.is-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      animation: colToastIn 0.42s cubic-bezier(0.3, 1.45, 0.5, 1) both;
+    }
+    @keyframes colToastIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(120%);
+      }
+      70% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    /* 統計數字輕跳 */
+    .col-section-stat strong.is-tick,
+    #colTotalValue.is-tick,
+    #colBinderStatKinds.is-tick,
+    #colBinderStatVisible.is-tick {
+      animation: colStatTick 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+      display: inline-block;
+    }
+    @keyframes colStatTick {
+      0% { transform: translateY(0.25em) scale(0.92); opacity: 0.5; }
+      100% { transform: none; opacity: 1; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .col-modal.is-open .col-modal-dialog,
       .col-fx-enter,
-      .collection-page .btn-primary::after,
-      .collection-page .col-cta-primary::after {
+      .col-toast.is-show,
+      .col-qty-value.is-bump-up,
+      .col-qty-value.is-bump-down,
+      .col-ripple,
+      .col-section-stat strong.is-tick,
+      #colTotalValue.is-tick,
+      #colBinderStatKinds.is-tick,
+      #colBinderStatVisible.is-tick {
         animation: none !important;
       }
       .col-modal-backdrop,
-      .col-holo-foil,
-      .col-holo-glare,
       .col-binder-page .col-tile-art,
       .col-filter-chip,
-      .col-view-thumb {
+      .col-view-thumb,
+      .col-filter-btn,
+      .col-focus-btn {
         transition: none !important;
       }
-      .col-holo-foil,
-      .col-holo-glare { display: none !important; }
-      .col-binder-page .col-tile.is-holo-active .col-tile-art {
+      .col-binder-page .col-tile-art::before,
+      .col-binder-page .col-tile-art::after { display: none !important; }
+      .col-binder-page .col-tile.is-spot-active .col-tile-art {
         transform: none !important;
       }
     }
@@ -5256,15 +5334,27 @@
       return sortItems(allItems.filter(matchesFilters));
     }
 
+    function tickStatEl(el, nextText) {
+      if (!el) return;
+      var prev = el.textContent;
+      var next = String(nextText);
+      if (prev === next) return;
+      el.textContent = next;
+      if (prefersReducedMotion()) return;
+      el.classList.remove('is-tick');
+      void el.offsetWidth;
+      el.classList.add('is-tick');
+    }
+
     function updateTotalBar(visible) {
       var totalQty = allItems.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
       var checkedCount = Object.keys(checkedSet).filter(function (key) {
         return allItems.some(function (it) { return it.cardNumber === key; });
       }).length;
       var visibleCount = visible ? visible.length : 0;
-      if (totalValueEl) totalValueEl.textContent = String(totalQty);
-      if (binderStatKinds) binderStatKinds.textContent = String(allItems.length);
-      if (binderStatVisible) binderStatVisible.textContent = String(visibleCount);
+      tickStatEl(totalValueEl, totalQty);
+      tickStatEl(binderStatKinds, allItems.length);
+      tickStatEl(binderStatVisible, visibleCount);
       countEl.textContent = '共 ' + allItems.length + ' 種';
       totalSubEl.textContent = '已勾選 ' + checkedCount + ' 種 · 可見 ' + visibleCount + ' 種';
     }
@@ -5591,8 +5681,6 @@
       if (urls.primary) {
         html += '      <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(cardNumber) + '" loading="lazy" decoding="async">';
       }
-      html += '      <span class="col-holo-foil" aria-hidden="true"></span>';
-      html += '      <span class="col-holo-glare" aria-hidden="true"></span>';
       html += rareHtml;
       if (binderCompact) {
         html += '      <span class="col-binder-qty-badge" aria-label="數量 ' + escapeHtml(String(qty)) + '">×' + escapeHtml(String(qty)) + '</span>';
@@ -5716,6 +5804,13 @@
       if (invokeCancel && typeof cancel === 'function') cancel();
     }
 
+    function bumpQtyEl(el, wentUp) {
+      if (!el || prefersReducedMotion()) return;
+      el.classList.remove('is-bump-up', 'is-bump-down');
+      void el.offsetWidth;
+      el.classList.add(wentUp ? 'is-bump-up' : 'is-bump-down');
+    }
+
     function changeQuantity(cardNumber, delta) {
       var item = findItem(cardNumber);
       if (!item) return;
@@ -5732,6 +5827,8 @@
       if (next > MAX_QTY) next = MAX_QTY;
       item.quantity = next;
       persistAndRender();
+      var qtyEl = document.querySelector('.col-qty-value[data-qty-for="' + String(cardNumber).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+      bumpQtyEl(qtyEl, delta > 0);
       setStatus(cardNumber + ' 數量更新為 ' + next, 'is-ok');
     }
 
@@ -5765,59 +5862,82 @@
       }
     }
 
-    var holoActiveTile = null;
-    function clearHoloTile(tile) {
+    var spotActiveTile = null;
+    function clearSpotTile(tile) {
       if (!tile) return;
-      tile.classList.remove('is-holo-active');
-      tile.style.removeProperty('--holo-x');
-      tile.style.removeProperty('--holo-y');
-      tile.style.removeProperty('--holo-px');
-      tile.style.removeProperty('--holo-py');
-      tile.style.removeProperty('--holo-d');
+      tile.classList.remove('is-spot-active');
+      var art = tile.querySelector('.col-tile-art');
+      if (!art) return;
+      art.style.removeProperty('--spot-x');
+      art.style.removeProperty('--spot-y');
     }
-    function updateHoloTile(tile, clientX, clientY) {
+    function updateSpotTile(tile, clientX, clientY) {
       if (!tile) return;
       var art = tile.querySelector('.col-tile-art');
       if (!art) return;
       var r = art.getBoundingClientRect();
       if (!r.width || !r.height) return;
-      var x = (clientX - r.left) / r.width;
-      var y = (clientY - r.top) / r.height;
-      x = Math.max(0, Math.min(1, x));
-      y = Math.max(0, Math.min(1, y));
-      var d = Math.hypot(x - 0.5, y - 0.5) * 1.6;
-      tile.classList.add('is-holo-active');
-      tile.style.setProperty('--holo-x', String(x));
-      tile.style.setProperty('--holo-y', String(y));
-      tile.style.setProperty('--holo-px', (x * 100) + '%');
-      tile.style.setProperty('--holo-py', (y * 100) + '%');
-      tile.style.setProperty('--holo-d', String(d));
+      art.style.setProperty('--spot-x', (clientX - r.left) + 'px');
+      art.style.setProperty('--spot-y', (clientY - r.top) + 'px');
+      tile.classList.add('is-spot-active');
     }
-    function bindBinderHoloMotion() {
+    function bindBinderSpotlightMotion() {
       if (!binderStage || prefersReducedMotion()) return;
-      if (binderStage.getAttribute('data-holo-bound') === '1') return;
-      binderStage.setAttribute('data-holo-bound', '1');
+      if (binderStage.getAttribute('data-spot-bound') === '1') return;
+      binderStage.setAttribute('data-spot-bound', '1');
       binderStage.addEventListener('pointermove', function (e) {
         if (e.pointerType === 'touch') return;
         var art = e.target.closest('.col-tile-art');
         var tile = art ? art.closest('.col-tile') : null;
         if (!tile || !binderStage.contains(tile)) {
-          if (holoActiveTile) {
-            clearHoloTile(holoActiveTile);
-            holoActiveTile = null;
+          if (spotActiveTile) {
+            clearSpotTile(spotActiveTile);
+            spotActiveTile = null;
           }
           return;
         }
-        if (holoActiveTile && holoActiveTile !== tile) clearHoloTile(holoActiveTile);
-        holoActiveTile = tile;
-        updateHoloTile(tile, e.clientX, e.clientY);
+        if (spotActiveTile && spotActiveTile !== tile) clearSpotTile(spotActiveTile);
+        spotActiveTile = tile;
+        updateSpotTile(tile, e.clientX, e.clientY);
       });
       binderStage.addEventListener('pointerleave', function () {
-        if (holoActiveTile) {
-          clearHoloTile(holoActiveTile);
-          holoActiveTile = null;
+        if (spotActiveTile) {
+          clearSpotTile(spotActiveTile);
+          spotActiveTile = null;
         }
       });
+    }
+
+    function spawnRipple(host, clientX, clientY) {
+      if (!host || prefersReducedMotion()) return;
+      if (host.getAttribute('aria-disabled') === 'true' || host.disabled) return;
+      host.classList.add('col-ripple-host');
+      var rect = host.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      var size = Math.max(rect.width, rect.height) * 2.2;
+      var ripple = document.createElement('span');
+      ripple.className = 'col-ripple';
+      ripple.style.width = size + 'px';
+      ripple.style.height = size + 'px';
+      ripple.style.left = (clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (clientY - rect.top - size / 2) + 'px';
+      host.appendChild(ripple);
+      ripple.addEventListener('animationend', function () {
+        if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+      });
+    }
+
+    function bindCollectionRipples() {
+      if (document.documentElement.getAttribute('data-col-ripple-bound') === '1') return;
+      document.documentElement.setAttribute('data-col-ripple-bound', '1');
+      document.addEventListener('pointerdown', function (e) {
+        if (e.button != null && e.button !== 0) return;
+        var host = e.target.closest(
+          '.col-filter-chip, .col-filter-btn, .col-focus-btn, .col-qty-btn, .btn-outline-secondary, .col-view-thumb'
+        );
+        if (!host) return;
+        spawnRipple(host, e.clientX, e.clientY);
+      }, true);
     }
 
     function openModal(modal) {
@@ -7902,6 +8022,11 @@
       } else {
         updateDeckEditorSummary();
       }
+      if (next > 0) {
+        var tile = findDeckEntryTile(cardNumber);
+        var qtyValue = tile ? tile.querySelector('.col-qty-value[data-deck-qty-value]') : null;
+        bumpQtyEl(qtyValue, delta > 0);
+      }
     }
 
     function setDeckEntryShort(cardNumber, enabled) {
@@ -7934,6 +8059,11 @@
       }
       if (deckCardShortOnly || !syncDeckEntryTile(cardNumber)) renderDeckEditor();
       else updateDeckEditorSummary();
+      if (entry.shortQty > 0) {
+        var shortTile = findDeckEntryTile(cardNumber);
+        var shortValue = shortTile ? shortTile.querySelector('.col-qty-value[data-deck-short-value]') : null;
+        bumpQtyEl(shortValue, delta > 0);
+      }
     }
 
     function saveDeckDraft() {
@@ -8602,7 +8732,8 @@
     applyDeckFocusUi();
     syncBinderFilterBtnUi();
     syncDeckFilterBtnUi();
-    bindBinderHoloMotion();
+    bindBinderSpotlightMotion();
+    bindCollectionRipples();
     applyEnterStagger(document.querySelector('.col-section-stats'), '.col-section-stat');
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
