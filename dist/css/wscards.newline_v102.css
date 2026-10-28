@@ -5757,6 +5757,11 @@ body.market-desk-page .result-identity-art {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
+/* 名場面等橫向卡：外框改橫向比例，避免 contain 上下留黑 */
+body.market-desk-page .result-identity-art.is-landscape {
+    aspect-ratio: 86 / 59;
+}
+
 body.market-desk-page .result-identity-art-placeholder {
     position: absolute;
     inset: 0;
@@ -5939,9 +5944,18 @@ body.market-desk-page .result-identity-asof {
         max-width: 100%;
     }
 
+    /* 橫向卡：加寬左欄，避免 96px 寬度下縮圖過扁 */
+    body.market-desk-page .result-identity-inner:has(.result-identity-art.is-landscape) {
+        grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) minmax(240px, 0.75fr);
+    }
+
     body.market-desk-page .result-identity-art {
         width: 100%;
         max-width: 112px;
+    }
+
+    body.market-desk-page .result-identity-art.is-landscape {
+        max-width: 200px;
     }
 
     body.market-desk-page .result-identity-body {
@@ -6021,6 +6035,14 @@ body.market-desk-page .result-identity-asof {
         grid-template-columns: 112px minmax(0, 1fr) minmax(340px, 0.65fr);
         gap: 2rem;
         padding-inline: 2.25rem;
+    }
+
+    body.market-desk-page .result-identity-inner:has(.result-identity-art.is-landscape) {
+        grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(340px, 0.65fr);
+    }
+
+    body.market-desk-page .result-identity-art.is-landscape {
+        max-width: 220px;
     }
 
     body.market-desk-page .result-identity-name {

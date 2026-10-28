@@ -2510,6 +2510,26 @@ console.log("進入繪圖區:"+cardNum);
 }
 
 /**
+* 依卡圖實際長寬調整 #identityArt 外框比例。
+* 名場面等橫向卡不再卡在直向 63:88，避免 object-fit:contain 上下留黑。
+*/
+function applyIdentityArtOrientation(img) {
+    var art = document.getElementById('identityArt');
+    if (!art) return;
+
+    var w = img && img.naturalWidth ? img.naturalWidth : 0;
+    var h = img && img.naturalHeight ? img.naturalHeight : 0;
+    if (w > 0 && h > 0) {
+        art.classList.toggle('is-landscape', w > h);
+        art.style.aspectRatio = w + ' / ' + h;
+        return;
+    }
+
+    art.classList.remove('is-landscape');
+    art.style.aspectRatio = '';
+}
+
+/**
 * 刷新結果識別帶：把卡圖、卡號／卡名、今日價鏡射到搜尋下方的摘要區，
 * 讓查到後第一眼就能對上「哪張卡、今天多少錢」。
 * 資料來源是畫面上既有欄位，避免重算造成識別帶與摘要不一致。
@@ -2566,24 +2586,35 @@ function refreshResultIdentity() {
         var altName = idName ? idName.textContent : cardNo;
         idImg.alt = altName && altName !== '—' ? (altName + ' 卡圖') : '卡片圖';
         if (src) {
-            if (idImg.getAttribute('src') !== src) idImg.setAttribute('src', src);
+            var srcChanged = idImg.getAttribute('src') !== src;
+            if (srcChanged) {
+                idImg.setAttribute('src', src);
+                // 換圖先回到預設直向，載入完成後再依實際長寬調整
+                applyIdentityArtOrientation(null);
+            }
             // 主圖已就緒，或識別帶自己已載入完成，就揭開縮圖
             var ready = (imgEl && imgEl.naturalWidth > 0 && imgEl.style.display !== 'none')
                 || (idImg.complete && idImg.naturalWidth > 0);
             if (ready) {
                 idImg.hidden = false;
                 if (idPlaceholder) idPlaceholder.hidden = true;
+                // 優先用已量到 natural size 的那張圖調外框
+                applyIdentityArtOrientation(
+                    (imgEl && imgEl.naturalWidth > 0) ? imgEl : idImg
+                );
             } else if (!idImg._identityLoadBound) {
                 idImg._identityLoadBound = true;
                 idImg.addEventListener('load', function onIdentityImgLoad() {
                     idImg.hidden = false;
                     if (idPlaceholder) idPlaceholder.hidden = true;
+                    applyIdentityArtOrientation(idImg);
                 });
             }
         } else {
             idImg.removeAttribute('src');
             idImg.hidden = true;
             if (idPlaceholder) idPlaceholder.hidden = false;
+            applyIdentityArtOrientation(null);
         }
     }
 
