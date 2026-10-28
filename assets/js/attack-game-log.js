@@ -868,39 +868,8 @@
     if (c1) c1.addEventListener("change", function () { renderSummaryChart(); });
     if (c2) c2.addEventListener("change", function () { renderSummaryChart(); });
     if ($("btnSumHome")) $("btnSumHome").onclick = resetGame;
-    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchImage;
-    if ($("btnSumLoad")) {
-      $("btnSumLoad").onclick = function () {
-        var f = $("sumLoadFile");
-        if (f) f.click();
-      };
-    }
-    if ($("sumLoadFile")) {
-      $("sumLoadFile").addEventListener("change", function (ev) {
-        var file = ev.target.files && ev.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function () {
-          try {
-            var parsed = JSON.parse(String(reader.result || ""));
-            var next = parsed.state || parsed;
-            if (!next || !next.logs) throw new Error("格式不符");
-            state = next;
-            if (!Array.isArray(state.logs)) state.logs = [];
-            ensureLife();
-            state.ended = true;
-            state.phase = "summary";
-            if (!state.endedAt) state.endedAt = Date.now();
-            persist();
-            render();
-          } catch (e) {
-            alert("讀取失敗：" + (e.message || e));
-          }
-        };
-        reader.readAsText(file);
-        ev.target.value = "";
-      });
-    }
+    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchData;
+    if ($("btnSumExportImg")) $("btnSumExportImg").onclick = exportMatchImage;
     bindReplayControls();
   }
 
@@ -2188,6 +2157,115 @@
     });
   }
 
+  function downloadJsonFile(payload, filename) {
+    var text = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+    var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    try {
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename || ("attack-game-log-" + Date.now() + ".json");
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      return { ok: true, detail: "download" };
+    } catch (e) {
+      try { URL.revokeObjectURL(url); } catch (e2) { /* */ }
+      return { ok: false, detail: String((e && e.message) || e) };
+    }
+  }
+
+  function buildExportPayload() {
+    var report = buildMatchReport();
+    return {
+      format: "ws-attack-game-log-export",
+      version: 1,
+      exportedAt: Date.now(),
+      players: {
+        first: {
+          name: report.p1Name,
+          code: state.first && state.first.code ? state.first.code : null
+        },
+        second: {
+          name: report.p2Name,
+          code: state.second && state.second.code ? state.second.code : null
+        }
+      },
+      summary: {
+        winner: report.winner,
+        endReason: report.endReason,
+        startedAt: report.startedAt,
+        endedAt: report.endedAt,
+        durationMs: report.durationMs,
+        turns: report.turns,
+        decisions: report.decisions,
+        life: report.life
+      },
+      quickStats: {
+        first: report.first,
+        second: report.second
+      },
+      cardDamage: {
+        first: report.cardDamageFirst,
+        second: report.cardDamageSecond
+      },
+      battleDetail: report.battleDetail,
+      turnCharts: {
+        damageReceived: turnSeries("damageReceived"),
+        cancelDamage: turnSeries("cancelDamage"),
+        attacks: turnSeries("attacks")
+      }
+    };
+  }
+
+  function exportMatchData() {
+    var root = $("overlay-summary");
+    if (!root || !root.classList.contains("is-open")) {
+      alert("尚無可匯出的結算資料");
+      return false;
+    }
+    if (!state || (!state.ended && state.phase !== "summary")) {
+      alert("尚無可匯出的結算資料");
+      return false;
+    }
+    var btn = $("btnSumExport");
+    var prevLabel = btn ? btn.textContent : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "匯出中…";
+    }
+    try {
+      var payload = buildExportPayload();
+      var stamp = new Date();
+      var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+      var filename = "attack-game-log-" +
+        stamp.getFullYear() +
+        pad(stamp.getMonth() + 1) +
+        pad(stamp.getDate()) + "-" +
+        pad(stamp.getHours()) +
+        pad(stamp.getMinutes()) +
+        pad(stamp.getSeconds()) +
+        ".json";
+      var res = downloadJsonFile(payload, filename);
+      if (!res || !res.ok) throw new Error((res && res.detail) || "下載失敗");
+      if (btn) btn.textContent = "已匯出";
+      setTimeout(function () {
+        if (btn && btn.textContent === "已匯出") btn.textContent = prevLabel || "匯出";
+      }, 1600);
+      return true;
+    } catch (e) {
+      alert("匯出失敗：" + ((e && e.message) || e));
+      return false;
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        if (btn.textContent === "匯出中…") btn.textContent = prevLabel || "匯出";
+      }
+    }
+  }
+
   function exportMatchImage() {
     var root = $("overlay-summary");
     if (!root || !root.classList.contains("is-open")) {
@@ -2198,7 +2276,7 @@
       alert("圖片輸出元件尚未載入，請重新整理後再試");
       return Promise.resolve(false);
     }
-    var btn = $("btnSumExport");
+    var btn = $("btnSumExportImg") || $("btnSumExport");
     var prevLabel = btn ? btn.textContent : "";
     if (btn) {
       btn.disabled = true;
@@ -2281,7 +2359,7 @@
           body.style.height = "auto";
           body.style.flex = "none";
         }
-        // Stack stats + battle detail in the export image (hide chart)
+        // Stack stats + battle detail in the export image (hide chart / replay)
         var panes = cloned.querySelectorAll(".agl-summary-pane");
         for (var i = 0; i < panes.length; i++) {
           var pane = panes[i];
@@ -2295,7 +2373,6 @@
             pane.classList.remove("is-active");
           }
         }
-        // Element has no getElementById — use querySelector / doc
         var detailHost = cloned.querySelector("#sumBattleDetail") ||
           doc.getElementById("sumBattleDetail");
         if (detailHost) {
@@ -4912,6 +4989,8 @@
     undoLast: undoLast,
     resetGame: resetGame,
     exportMatchImage: exportMatchImage,
+    exportMatchData: exportMatchData,
+    buildExportPayload: buildExportPayload,
     buildMatchReport: buildMatchReport,
     buildBattleDetail: buildBattleDetail,
     buildReplayFrames: buildReplayFrames,
