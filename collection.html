@@ -1410,7 +1410,44 @@
         color 0.22s ease,
         transform 0.22s cubic-bezier(0.22, 0.8, 0.28, 1);
     }
-    .col-album-section.is-focus .col-filter-btn { display: inline-flex; }
+    .col-album-section.is-focus .col-filter-btn,
+    .col-deckbox.is-focus > .col-deckbox-shell > .col-deckbox-lid .col-filter-btn,
+    .col-filter-btn.is-inline { display: inline-flex; }
+    .col-deckbox .col-filter-btn {
+      border-color: rgba(26, 46, 36, 0.18);
+      color: var(--deckbox-ink, #1a2e24);
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .col-deckbox .col-filter-btn:hover {
+      border-color: rgba(47, 107, 79, 0.4);
+      color: #1f5a3f;
+    }
+    .col-deckbox .col-filter-btn.is-active {
+      background: var(--deckbox-accent, #a67c2d);
+      border-color: var(--deckbox-accent, #a67c2d);
+      color: #fff8e8;
+    }
+    [data-theme="dark"] .col-deckbox .col-filter-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #eef3ee;
+    }
+    [data-theme="dark"] .col-deckbox .col-filter-btn:hover {
+      border-color: rgba(224, 179, 90, 0.45);
+      color: #f6edd4;
+    }
+    [data-theme="dark"] .col-deckbox .col-filter-btn.is-active {
+      background: var(--deckbox-accent, #c9983f);
+      border-color: var(--deckbox-accent, #c9983f);
+      color: #152019;
+    }
+    .col-deck-editor-tools .col-filter-btn,
+    .col-deck-card-view-tools .col-filter-btn {
+      width: 2rem;
+      height: 2rem;
+      font-size: 0.8rem;
+      flex: 0 0 auto;
+    }
     .col-filter-btn:hover {
       background: #f8fafc;
       border-color: rgba(47, 111, 237, 0.35);
@@ -3689,6 +3726,10 @@
                         <i class="fas fa-archive" aria-hidden="true"></i>
                         <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
                       </div>
+                      <button type="button" class="col-filter-btn" id="colDeckFilterBtn" aria-haspopup="dialog" aria-controls="colFilterModal" title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片">
+                        <i class="fas fa-filter" aria-hidden="true"></i>
+                        <span class="col-filter-btn-badge" id="colDeckFilterBadge" hidden>0</span>
+                      </button>
                       <button type="button" class="col-focus-btn" id="colDeckFocusBtn" aria-pressed="false" title="收合篩選列，把空間留給牌組列表">
                         <i class="fas fa-expand" aria-hidden="true"></i>
                         <span id="colDeckFocusBtnLabel">一窗檢視</span>
@@ -3736,7 +3777,7 @@
                           </div>
                         </div>
 
-                        <p class="col-focus-hint" id="colDeckFocusHint">篩選列已收合 · 再點「退出一窗」可還原搜尋與新建</p>
+                        <p class="col-focus-hint" id="colDeckFocusHint">篩選列已收合 · 點漏斗可篩選目前牌組的等級／稀有度／顏色 · 再點「退出一窗」可還原</p>
 
                         <div id="colDeckEmpty" class="col-empty" style="display:none;">
                           <div><i class="fas fa-archive" aria-hidden="true"></i></div>
@@ -3848,13 +3889,13 @@
   </div>
 </div>
 
-<!-- 卡冊篩選（一窗檢視）：等級／稀有度／顏色 -->
+<!-- 卡冊／牌組篩選（一窗／檢視）：等級／稀有度／顏色 -->
 <div id="colFilterModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="filter"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colFilterTitle" style="width:min(420px,100%);">
     <div class="col-modal-body">
       <h3 id="colFilterTitle">篩選卡片</h3>
-      <p class="col-modal-hint">目前可依等級、稀有度、顏色縮小卡冊範圍。</p>
+      <p class="col-modal-hint" id="colFilterHint">目前可依等級、稀有度、顏色縮小卡冊範圍。</p>
 
       <div class="col-filter-section">
         <p class="col-filter-section-title">等級</p>
@@ -3954,6 +3995,10 @@
           <i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i><span id="colDeckRarityToggleBtnLabel">改為普通版</span>
         </button>
         <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
+          <button type="button" class="col-filter-btn is-inline" id="colDeckModalFilterBtn" aria-haspopup="dialog" aria-controls="colFilterModal" title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片" hidden>
+            <i class="fas fa-filter" aria-hidden="true"></i>
+            <span class="col-filter-btn-badge" id="colDeckModalFilterBadge" hidden>0</span>
+          </button>
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
             <span>排序</span>
             <select id="colDeckCardSortSelect" aria-label="牌組內排序">
@@ -4101,8 +4146,12 @@
     var tagFilter = '';
     var levelFilter = ''; /* '' | '0' | '1' | '2' | '3' */
     var colorFilter = ''; /* '' | yellow|red|blue|green */
+    var deckLevelFilter = '';
+    var deckRareFilter = '';
+    var deckColorFilter = '';
+    var filterTarget = 'album'; /* album | deck */
     var filterDraft = { level: '', rare: '', color: '' };
-    var albumMetaCache = {}; /* cardNumber → { level, color } */
+    var albumMetaCache = {}; /* cardNumber → { level, color, rarity } */
     var albumMetaEnriching = false;
     var albumMetaPendingRender = false;
     var sortMode = 'newest';
@@ -4178,7 +4227,13 @@
     var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
     var binderFilterBtn = document.getElementById('colBinderFilterBtn');
     var binderFilterBadge = document.getElementById('colBinderFilterBadge');
+    var deckFilterBtn = document.getElementById('colDeckFilterBtn');
+    var deckFilterBadge = document.getElementById('colDeckFilterBadge');
+    var deckModalFilterBtn = document.getElementById('colDeckModalFilterBtn');
+    var deckModalFilterBadge = document.getElementById('colDeckModalFilterBadge');
     var filterModal = document.getElementById('colFilterModal');
+    var filterTitleEl = document.getElementById('colFilterTitle');
+    var filterHintEl = document.getElementById('colFilterHint');
     var filterLevelChips = document.getElementById('colFilterLevelChips');
     var filterRareChips = document.getElementById('colFilterRareChips');
     var filterColorChips = document.getElementById('colFilterColorChips');
@@ -4615,21 +4670,79 @@
       return n;
     }
 
-    function syncBinderFilterBtnUi() {
-      var n = countActiveAttrFilters();
-      if (binderFilterBtn) {
-        binderFilterBtn.classList.toggle('is-active', n > 0);
-        binderFilterBtn.setAttribute('aria-label', n > 0 ? ('篩選卡片（已套用 ' + n + ' 項）') : '篩選卡片');
+    function countActiveDeckAttrFilters() {
+      var n = 0;
+      if (deckLevelFilter !== '') n += 1;
+      if (deckRareFilter) n += 1;
+      if (deckColorFilter) n += 1;
+      return n;
+    }
+
+    function syncFilterBtnBadge(btn, badge, count, idleLabel) {
+      if (btn) {
+        btn.classList.toggle('is-active', count > 0);
+        btn.setAttribute('aria-label', count > 0 ? (idleLabel + '（已套用 ' + count + ' 項）') : idleLabel);
       }
-      if (binderFilterBadge) {
-        if (n > 0) {
-          binderFilterBadge.hidden = false;
-          binderFilterBadge.textContent = String(n);
+      if (badge) {
+        if (count > 0) {
+          badge.hidden = false;
+          badge.textContent = String(count);
         } else {
-          binderFilterBadge.hidden = true;
-          binderFilterBadge.textContent = '0';
+          badge.hidden = true;
+          badge.textContent = '0';
         }
       }
+    }
+
+    function syncBinderFilterBtnUi() {
+      syncFilterBtnBadge(binderFilterBtn, binderFilterBadge, countActiveAttrFilters(), '篩選卡片');
+    }
+
+    function syncDeckFilterBtnUi() {
+      var n = countActiveDeckAttrFilters();
+      syncFilterBtnBadge(deckFilterBtn, deckFilterBadge, n, '篩選牌組內卡片');
+      syncFilterBtnBadge(deckModalFilterBtn, deckModalFilterBadge, n, '篩選牌組內卡片');
+      document.querySelectorAll('[data-deck-inline-filter-badge]').forEach(function (el) {
+        if (n > 0) {
+          el.hidden = false;
+          el.textContent = String(n);
+        } else {
+          el.hidden = true;
+          el.textContent = '0';
+        }
+      });
+      document.querySelectorAll('[data-deck-inline-filter]').forEach(function (btn) {
+        btn.classList.toggle('is-active', n > 0);
+      });
+    }
+
+    function entryCardRare(entry) {
+      if (!entry) return '';
+      var meta = inventoryMeta(entry.cardNumber, entry.cardName);
+      if (meta && meta.cardRare) return meta.cardRare;
+      var cached = getAlbumMeta(entry.cardNumber);
+      if (cached && cached.rarity) return cached.rarity;
+      return normalizeText(entry.cardRare || entry.rarity || '');
+    }
+
+    function collectDeckRareList(cards) {
+      var rares = {};
+      (cards || []).forEach(function (entry) {
+        var rare = entryCardRare(entry);
+        if (rare) rares[rare] = true;
+      });
+      return Object.keys(rares).sort(function (a, b) {
+        return rareRank(a) - rareRank(b) || a.localeCompare(b);
+      });
+    }
+
+    function currentDeckFilterCards() {
+      if (deckDraft && deckDraft.cards) return deckDraft.cards;
+      if (selectedDeckId) {
+        var deck = allDecks.find(function (d) { return d.id === selectedDeckId; });
+        if (deck) return deck.cards || [];
+      }
+      return [];
     }
 
     function setChipGroupValue(root, attr, value) {
@@ -4714,20 +4827,22 @@
       return hay.indexOf(q) >= 0;
     }
 
-    function ensureAlbumCardMeta(onDone) {
+    function ensureCardMetaForEntries(entries, onDone) {
       var done = typeof onDone === 'function' ? onDone : function () {};
       var need = [];
       var seen = {};
-      allItems.forEach(function (item) {
-        if (!item || !item.cardNumber) return;
-        var key = normalizeText(item.cardNumber).replace(/\\/g, '/');
+      (entries || []).forEach(function (item) {
+        if (!item) return;
+        var cardNumber = item.cardNumber || item.cardNo;
+        if (!cardNumber) return;
+        var key = normalizeText(cardNumber).replace(/\\/g, '/');
         if (!key) return;
         if (Object.prototype.hasOwnProperty.call(albumMetaCache, key)) return;
         if (seen[key]) return;
         seen[key] = true;
         need.push({
           cardNo: key,
-          name: item.cardName || key
+          name: item.cardName || item.name || key
         });
       });
       if (!need.length || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
@@ -4745,19 +4860,24 @@
           (enriched || []).forEach(function (row) {
             var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
             if (!key) return;
+            var lv = parseCardLevel(row.level != null ? row.level : row.cardlevel);
             albumMetaCache[key] = {
-              level: parseCardLevel(row.level != null ? row.level : row.cardlevel),
-              color: normalizeText(row.color || row.cardcolor || '')
+              level: lv,
+              color: normalizeText(row.color || row.cardcolor || ''),
+              rarity: normalizeText(row.rarity || row.cardrare || row.cardRare || '')
             };
+            if (lv != null) deckLevelCache[key] = lv;
           });
           need.forEach(function (row) {
             var key = normalizeText(row.cardNo).replace(/\\/g, '/');
             if (key && !Object.prototype.hasOwnProperty.call(albumMetaCache, key)) {
-              albumMetaCache[key] = { level: null, color: '' };
+              albumMetaCache[key] = { level: null, color: '', rarity: '' };
             }
           });
           albumMetaEnriching = false;
-          var shouldRender = albumMetaPendingRender || levelFilter !== '' || !!colorFilter;
+          var shouldRender = albumMetaPendingRender ||
+            levelFilter !== '' || !!colorFilter ||
+            deckLevelFilter !== '' || !!deckColorFilter;
           albumMetaPendingRender = false;
           done(shouldRender);
         })
@@ -4765,12 +4885,20 @@
           console.error(err);
           need.forEach(function (row) {
             var key = normalizeText(row.cardNo).replace(/\\/g, '/');
-            if (key) albumMetaCache[key] = { level: null, color: '' };
+            if (key) albumMetaCache[key] = { level: null, color: '', rarity: '' };
           });
           albumMetaEnriching = false;
           albumMetaPendingRender = false;
           done(false);
         });
+    }
+
+    function ensureAlbumCardMeta(onDone) {
+      ensureCardMetaForEntries(allItems, onDone);
+    }
+
+    function ensureDeckFilterMeta(onDone) {
+      ensureCardMetaForEntries(currentDeckFilterCards(), onDone);
     }
 
     function syncFilterModalUi() {
@@ -4779,13 +4907,37 @@
       setChipGroupValue(filterColorChips, 'data-filter-color', filterDraft.color);
     }
 
-    function openFilterModal() {
+    function openFilterModal(target) {
+      filterTarget = target === 'deck' ? 'deck' : 'album';
+      if (filterTarget === 'deck') {
+        var cards = currentDeckFilterCards();
+        if (!cards.length && !selectedDeckId && !(deckDraft && deckDraft.cards && deckDraft.cards.length)) {
+          setStatus('請先選取或開啟一副牌組再篩選', 'is-error');
+          return;
+        }
+        filterDraft = {
+          level: deckLevelFilter,
+          rare: deckRareFilter,
+          color: deckColorFilter
+        };
+        refreshFilterRareChips(collectDeckRareList(cards), filterDraft.rare);
+        if (filterTitleEl) filterTitleEl.textContent = '篩選牌組卡片';
+        if (filterHintEl) filterHintEl.textContent = '目前可依等級、稀有度、顏色縮小此牌組可見卡片。';
+        syncFilterModalUi();
+        openModal(filterModal);
+        ensureDeckFilterMeta(function (shouldRender) {
+          if (shouldRender) rerenderDeckCardViews();
+        });
+        return;
+      }
       filterDraft = {
         level: levelFilter,
         rare: rareFilter,
         color: colorFilter
       };
       refreshFilterOptions();
+      if (filterTitleEl) filterTitleEl.textContent = '篩選卡片';
+      if (filterHintEl) filterHintEl.textContent = '目前可依等級、稀有度、顏色縮小卡冊範圍。';
       syncFilterModalUi();
       openModal(filterModal);
       ensureAlbumCardMeta(function (shouldRender) {
@@ -4793,13 +4945,34 @@
       });
     }
 
+    function rerenderDeckCardViews() {
+      if (deckDraft) renderDeckEditor();
+      if (selectedDeckId) renderDeckDetail();
+      syncDeckFilterBtnUi();
+    }
+
     function applyFilterModal() {
+      closeModal(filterModal);
+      if (filterTarget === 'deck') {
+        deckLevelFilter = filterDraft.level !== '' ? String(filterDraft.level) : '';
+        deckRareFilter = filterDraft.rare || '';
+        deckColorFilter = filterDraft.color || '';
+        syncDeckFilterBtnUi();
+        if ((deckLevelFilter !== '' || deckColorFilter) &&
+            !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+          setStatus('無法載入卡片屬性，等級／顏色篩選暫不可用', 'is-error');
+        }
+        ensureDeckFilterMeta(function () {
+          rerenderDeckCardViews();
+        });
+        rerenderDeckCardViews();
+        return;
+      }
       levelFilter = filterDraft.level !== '' ? String(filterDraft.level) : '';
       rareFilter = filterDraft.rare || '';
       colorFilter = filterDraft.color || '';
       if (rareSelect) rareSelect.value = rareFilter;
       syncBinderFilterBtnUi();
-      closeModal(filterModal);
       if ((levelFilter !== '' || colorFilter) &&
           !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
         setStatus('無法載入卡片屬性，等級／顏色篩選暫不可用', 'is-error');
@@ -6276,8 +6449,25 @@
       var q = String(opts.query || '').trim().toLowerCase();
       var shortOnly = !!opts.shortOnly;
       var sortMode = normalizeDeckCardSortMode(opts.sortMode);
+      var level = opts.levelFilter != null ? opts.levelFilter : deckLevelFilter;
+      var rare = opts.rareFilter != null ? opts.rareFilter : deckRareFilter;
+      var color = opts.colorFilter != null ? opts.colorFilter : deckColorFilter;
       var list = (cards || []).filter(function (entry) {
         if (shortOnly && entryShortQty(entry) < 1) return false;
+        if (rare && entryCardRare(entry) !== rare) return false;
+        if (level !== '') {
+          var lv = entryLevel(entry);
+          if (lv == null) {
+            var metaLv = getAlbumMeta(entry.cardNumber);
+            lv = metaLv && metaLv.level != null ? Number(metaLv.level) : null;
+          }
+          if (lv == null || String(lv) !== String(level)) return false;
+        }
+        if (color) {
+          var metaColor = getAlbumMeta(entry.cardNumber);
+          var colorKey = metaColor ? normalizeColorKey(metaColor.color) : '';
+          if (colorKey !== color) return false;
+        }
         if (!q) return true;
         var meta = inventoryMeta(entry.cardNumber, entry.cardName);
         var hay = [entry.cardNumber, meta.cardName, entry.cardName].join(' ').toLowerCase();
@@ -6370,6 +6560,7 @@
       opts = opts || {};
       if (opts.shortOnly) return '沒有標記缺少的牌。';
       if (opts.query) return '沒有符合搜尋的卡片。';
+      if (opts.attrFiltered) return '沒有符合篩選條件的卡片。';
       return opts.emptyFallback || '此牌組尚未加入卡片。';
     }
 
@@ -6686,7 +6877,13 @@
         shortOnly: deckCardShortOnly,
         sortMode: deckCardSortMode
       });
-      var filtered = !!(q || deckCardShortOnly);
+      var attrFiltered = !!(deckLevelFilter !== '' || deckRareFilter || deckColorFilter);
+      var filtered = !!(q || deckCardShortOnly || attrFiltered);
+      if (attrFiltered || deckLevelFilter !== '' || deckColorFilter) {
+        ensureDeckFilterMeta(function (shouldRender) {
+          if (shouldRender) renderDeckDetail();
+        });
+      }
 
       var tagsHtml = (deck.tags || []).length
         ? (deck.tags || []).map(function (t) {
@@ -6700,6 +6897,7 @@
           escapeHtml(deckCardEmptyMessage({
             shortOnly: deckCardShortOnly,
             query: q,
+            attrFiltered: attrFiltered,
             emptyFallback: '此牌組尚未加入卡片。'
           })) +
           '</li>';
@@ -6791,6 +6989,11 @@
         escapeHtml(deckDetailCardFilter) + '" autocomplete="off" aria-label="搜尋牌組內卡片">';
       html += '      </div>';
       html += '      <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">';
+      html += '        <button type="button" class="col-filter-btn is-inline' + (attrFiltered ? ' is-active' : '') + '" data-deck-inline-filter title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片" aria-haspopup="dialog" aria-controls="colFilterModal">';
+      html += '          <i class="fas fa-filter" aria-hidden="true"></i>';
+      html += '          <span class="col-filter-btn-badge" data-deck-inline-filter-badge' + (attrFiltered ? '' : ' hidden') + '>' +
+        escapeHtml(String(countActiveDeckAttrFilters() || 0)) + '</span>';
+      html += '        </button>';
       html += '        <label class="col-deck-card-sort" for="colDeckDetailCardSortSelect">';
       html += '          <span>排序</span>';
       html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
@@ -6811,6 +7014,7 @@
 
       deckDetailEl.innerHTML = html;
       syncDeckCardViewControls();
+      syncDeckFilterBtnUi();
       revealLoadedDeckImages(deckDetailEl);
     }
 
@@ -7116,9 +7320,11 @@
       if (deckMetaEditBtnLabel) {
         deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤／描述' : '編輯名稱／標籤／描述';
       }
+      if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView;
       syncDeckModalDesc();
       syncDeckOriginNote();
       syncDeckRarityToggleUi();
+      syncDeckFilterBtnUi();
     }
 
     function updateDeckEditorSummary() {
@@ -7255,6 +7461,7 @@
       updateDeckEditorSummary();
       syncDeckOriginNote();
       syncDeckCardViewControls();
+      syncDeckFilterBtnUi();
       if (!deckEntryList) return;
       if (!(deckDraft.cards || []).length) {
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
@@ -7262,11 +7469,15 @@
           '</li>';
         return;
       }
-      if (isDeckLevelSortMode(deckCardSortMode)) {
+      if (isDeckLevelSortMode(deckCardSortMode) || deckLevelFilter !== '' || deckColorFilter) {
         ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
           if (updated) renderDeckEditor();
         });
+        ensureDeckFilterMeta(function (shouldRender) {
+          if (shouldRender) renderDeckEditor();
+        });
       }
+      var attrFiltered = !!(deckLevelFilter !== '' || deckRareFilter || deckColorFilter);
       var visibleCards = filterAndSortDeckCards(deckDraft.cards || [], {
         shortOnly: deckCardShortOnly,
         sortMode: deckCardSortMode
@@ -7275,6 +7486,7 @@
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
           escapeHtml(deckCardEmptyMessage({
             shortOnly: deckCardShortOnly,
+            attrFiltered: attrFiltered,
             emptyFallback: isView ? '此牌組尚未加入卡片。' : '尚未加入卡片。'
           })) +
           '</li>';
@@ -8030,7 +8242,13 @@
       });
     }
     if (binderFilterBtn) {
-      binderFilterBtn.addEventListener('click', openFilterModal);
+      binderFilterBtn.addEventListener('click', function () { openFilterModal('album'); });
+    }
+    if (deckFilterBtn) {
+      deckFilterBtn.addEventListener('click', function () { openFilterModal('deck'); });
+    }
+    if (deckModalFilterBtn) {
+      deckModalFilterBtn.addEventListener('click', function () { openFilterModal('deck'); });
     }
     function wireFilterChipGroup(root, attr, draftKey) {
       if (!root) return;
@@ -8054,6 +8272,7 @@
     applyBinderFocusUi();
     applyDeckFocusUi();
     syncBinderFilterBtnUi();
+    syncDeckFilterBtnUi();
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
       getVisibleItems().forEach(function (item) {
@@ -8292,7 +8511,13 @@
       });
     }
     if (deckDetailEl) {
-      deckDetailEl.addEventListener('click', handleDeckActionClick);
+      deckDetailEl.addEventListener('click', function (e) {
+        if (e.target.closest('[data-deck-inline-filter]')) {
+          openFilterModal('deck');
+          return;
+        }
+        handleDeckActionClick(e);
+      });
       deckDetailEl.addEventListener('input', function (e) {
         var input = e.target.closest('#colDeckDetailCardSearch');
         if (!input) return;
