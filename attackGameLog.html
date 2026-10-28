@@ -930,17 +930,72 @@
       color: var(--muted);
       letter-spacing: 0.08em;
     }
+    /* Board mode: keep event as a slim horizontal strip */
     .agl-replay.is-board-mode .agl-replay-event {
-      grid-template-columns: minmax(0, 1fr);
-      align-content: center;
-      padding: 8px 12px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 12px;
       min-height: 0;
+      border-radius: 10px;
     }
     .agl-replay.is-board-mode .agl-replay-card[hidden] {
       display: none !important;
     }
+    .agl-replay.is-board-mode .agl-replay-copy {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 8px 12px;
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+    .agl-replay.is-board-mode .agl-replay-kicker {
+      margin: 0;
+      flex: 0 0 auto;
+      gap: 6px;
+      font-size: 0.7rem;
+    }
+    .agl-replay.is-board-mode .agl-replay-kicker .side {
+      min-width: 2.8em;
+      padding: 2px 8px 3px;
+      font-size: 0.78rem;
+    }
     .agl-replay.is-board-mode .agl-replay-title {
+      margin: 0;
+      flex: 0 1 auto;
+      max-width: 34%;
+      font-size: clamp(0.92rem, 1.8vw, 1.12rem);
       white-space: nowrap;
+    }
+    .agl-replay.is-board-mode .agl-replay-meta {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.78rem;
+    }
+    .agl-replay.is-board-mode .agl-replay-float {
+      position: static;
+      flex: 0 0 auto;
+      margin-left: auto;
+      min-width: 2.4em;
+      text-align: right;
+      font-size: 1.12rem;
+      line-height: 1;
+      opacity: 0;
+    }
+    .agl-replay.is-board-mode .agl-replay-float.is-show {
+      animation: aglReplayFloatInline 0.85s var(--replay-ease);
+    }
+    @keyframes aglReplayFloatInline {
+      0% { opacity: 0; transform: translateX(8px); }
+      22% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-6px); }
     }
     .agl-replay-life {
       position: relative;
@@ -1321,6 +1376,25 @@
       gap: 10px;
       border-radius: 10px;
     }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-event {
+      padding: 3px 10px;
+      gap: 8px;
+      border-radius: 8px;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-copy {
+      gap: 6px 8px;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-title {
+      max-width: 30%;
+      font-size: 0.88rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-meta {
+      font-size: 0.7rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-float {
+      font-size: 0.98rem;
+      min-width: 2em;
+    }
     .agl-summary.is-replay-compact .agl-replay-card {
       width: clamp(52px, 9.5vw, 76px);
     }
@@ -1334,6 +1408,13 @@
     .agl-summary.is-replay-compact .agl-replay-kicker {
       margin-bottom: 3px;
       font-size: 0.68rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-kicker {
+      margin: 0;
+      font-size: 0.64rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay.is-board-mode .agl-replay-title {
+      margin: 0;
     }
     .agl-summary.is-replay-compact .agl-replay-scrub {
       padding: 4px 8px;
@@ -1701,6 +1782,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
-  <script src="assets/js/attack-game-log.js?v=20261028d"></script>
+  <script src="assets/js/attack-game-log.js?v=20261028e"></script>
 </body>
 </html>
