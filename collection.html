@@ -1387,6 +1387,153 @@
       border-color: #6ea0ff;
       color: #0b1220;
     }
+    /* 一窗檢視專用：漏斗篩選（等級／稀有度／顏色） */
+    .col-filter-btn {
+      display: none;
+      position: relative;
+      align-items: center;
+      justify-content: center;
+      width: 2.15rem;
+      height: 2.15rem;
+      margin: 0;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: #fff;
+      color: #1f2937;
+      font-size: 0.88rem;
+      line-height: 1;
+      cursor: pointer;
+      transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        color 0.22s ease,
+        transform 0.22s cubic-bezier(0.22, 0.8, 0.28, 1);
+    }
+    .col-album-section.is-focus .col-filter-btn { display: inline-flex; }
+    .col-filter-btn:hover {
+      background: #f8fafc;
+      border-color: rgba(47, 111, 237, 0.35);
+      color: #1d4ed8;
+    }
+    .col-filter-btn:focus-visible {
+      outline: 2px solid rgba(47, 111, 237, 0.55);
+      outline-offset: 2px;
+    }
+    .col-filter-btn.is-active {
+      background: #14233a;
+      border-color: #14233a;
+      color: #f8fafc;
+    }
+    .col-filter-btn-badge {
+      position: absolute;
+      top: -0.15rem;
+      right: -0.15rem;
+      min-width: 1rem;
+      height: 1rem;
+      padding: 0 0.28rem;
+      border-radius: 999px;
+      background: #b07c28;
+      color: #fff;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.58rem;
+      font-weight: 700;
+      line-height: 1rem;
+      text-align: center;
+      pointer-events: none;
+    }
+    [data-theme="dark"] .col-filter-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #e5e7eb;
+    }
+    [data-theme="dark"] .col-filter-btn:hover {
+      background: rgba(110, 160, 255, 0.12);
+      border-color: rgba(110, 160, 255, 0.4);
+      color: #dbeafe;
+    }
+    [data-theme="dark"] .col-filter-btn.is-active {
+      background: #6ea0ff;
+      border-color: #6ea0ff;
+      color: #0b1220;
+    }
+    [data-theme="dark"] .col-filter-btn-badge { background: #cbb083; color: #141414; }
+    .col-filter-section {
+      margin: 0 0 1rem;
+    }
+    .col-filter-section:last-child { margin-bottom: 0.35rem; }
+    .col-filter-section-title {
+      margin: 0 0 0.45rem;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    [data-theme="dark"] .col-filter-section-title { color: #9ca3af; }
+    .col-filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .col-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      padding: 0.42rem 0.72rem;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: #f8fafc;
+      color: #1f2937;
+      font-size: 0.84rem;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+      transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+    }
+    .col-filter-chip:hover {
+      border-color: rgba(47, 111, 237, 0.35);
+      color: #1d4ed8;
+    }
+    .col-filter-chip.is-active {
+      background: #14233a;
+      border-color: #14233a;
+      color: #f8fafc;
+    }
+    .col-filter-chip:focus-visible {
+      outline: 2px solid rgba(47, 111, 237, 0.55);
+      outline-offset: 2px;
+    }
+    [data-theme="dark"] .col-filter-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #e5e7eb;
+    }
+    [data-theme="dark"] .col-filter-chip:hover {
+      border-color: rgba(110, 160, 255, 0.4);
+      color: #dbeafe;
+    }
+    [data-theme="dark"] .col-filter-chip.is-active {
+      background: #6ea0ff;
+      border-color: #6ea0ff;
+      color: #0b1220;
+    }
+    .col-filter-swatch {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      flex: 0 0 auto;
+    }
+    .col-filter-swatch[data-color="yellow"] { background: #eab308; }
+    .col-filter-swatch[data-color="red"] { background: #ef4444; }
+    .col-filter-swatch[data-color="blue"] { background: #3b82f6; }
+    .col-filter-swatch[data-color="green"] { background: #22c55e; }
     .col-section-head-actions {
       display: flex;
       flex-wrap: wrap;
@@ -3408,6 +3555,10 @@
                         <span>可見</span>
                       </div>
                     </div>
+                    <button type="button" class="col-filter-btn" id="colBinderFilterBtn" aria-haspopup="dialog" aria-controls="colFilterModal" title="篩選卡片（等級／稀有度／顏色）" aria-label="篩選卡片">
+                      <i class="fas fa-filter" aria-hidden="true"></i>
+                      <span class="col-filter-btn-badge" id="colBinderFilterBadge" hidden>0</span>
+                    </button>
                     <button type="button" class="col-focus-btn" id="colBinderFocusBtn" aria-pressed="false" title="收合篩選列，讓整頁卡冊塞進視窗">
                       <i class="fas fa-expand" aria-hidden="true"></i>
                       <span id="colBinderFocusBtnLabel">一窗檢視</span>
@@ -3491,7 +3642,7 @@
                       </div>
                     </div>
 
-                    <p class="col-focus-hint" id="colFocusHint">篩選列已收合 · 左右滑動或點側邊翻頁 · 再點「退出一窗」可還原</p>
+                    <p class="col-focus-hint" id="colFocusHint">篩選列已收合 · 點漏斗可篩選等級／稀有度／顏色 · 左右滑動或點側邊翻頁</p>
 
                     <div id="colEmpty" class="col-empty" style="display:none;">
                       <div><i class="fas fa-book-open" aria-hidden="true"></i></div>
@@ -3697,6 +3848,59 @@
   </div>
 </div>
 
+<!-- 卡冊篩選（一窗檢視）：等級／稀有度／顏色 -->
+<div id="colFilterModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="filter"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colFilterTitle" style="width:min(420px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colFilterTitle">篩選卡片</h3>
+      <p class="col-modal-hint">目前可依等級、稀有度、顏色縮小卡冊範圍。</p>
+
+      <div class="col-filter-section">
+        <p class="col-filter-section-title">等級</p>
+        <div class="col-filter-chips" id="colFilterLevelChips" role="group" aria-label="依等級篩選">
+          <button type="button" class="col-filter-chip is-active" data-filter-level="" aria-pressed="true">全部</button>
+          <button type="button" class="col-filter-chip" data-filter-level="0" aria-pressed="false">Lv0</button>
+          <button type="button" class="col-filter-chip" data-filter-level="1" aria-pressed="false">Lv1</button>
+          <button type="button" class="col-filter-chip" data-filter-level="2" aria-pressed="false">Lv2</button>
+          <button type="button" class="col-filter-chip" data-filter-level="3" aria-pressed="false">Lv3</button>
+        </div>
+      </div>
+
+      <div class="col-filter-section">
+        <p class="col-filter-section-title">稀有度</p>
+        <div class="col-filter-chips" id="colFilterRareChips" role="group" aria-label="依稀有度篩選">
+          <button type="button" class="col-filter-chip is-active" data-filter-rare="" aria-pressed="true">全部</button>
+        </div>
+      </div>
+
+      <div class="col-filter-section">
+        <p class="col-filter-section-title">顏色</p>
+        <div class="col-filter-chips" id="colFilterColorChips" role="group" aria-label="依顏色篩選">
+          <button type="button" class="col-filter-chip is-active" data-filter-color="" aria-pressed="true">全部</button>
+          <button type="button" class="col-filter-chip" data-filter-color="yellow" aria-pressed="false">
+            <span class="col-filter-swatch" data-color="yellow" aria-hidden="true"></span>黃
+          </button>
+          <button type="button" class="col-filter-chip" data-filter-color="red" aria-pressed="false">
+            <span class="col-filter-swatch" data-color="red" aria-hidden="true"></span>赤
+          </button>
+          <button type="button" class="col-filter-chip" data-filter-color="blue" aria-pressed="false">
+            <span class="col-filter-swatch" data-color="blue" aria-hidden="true"></span>青
+          </button>
+          <button type="button" class="col-filter-chip" data-filter-color="green" aria-pressed="false">
+            <span class="col-filter-swatch" data-color="green" aria-hidden="true"></span>綠
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="colFilterClearBtn">清除條件</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="filter">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colFilterApplyBtn">套用</button>
+    </div>
+  </div>
+</div>
+
 <!-- 標籤編輯 / 批次標籤 -->
 <div id="colTagModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="tag"></div>
@@ -3895,6 +4099,12 @@
     var filterQuery = '';
     var rareFilter = '';
     var tagFilter = '';
+    var levelFilter = ''; /* '' | '0' | '1' | '2' | '3' */
+    var colorFilter = ''; /* '' | yellow|red|blue|green */
+    var filterDraft = { level: '', rare: '', color: '' };
+    var albumMetaCache = {}; /* cardNumber → { level, color } */
+    var albumMetaEnriching = false;
+    var albumMetaPendingRender = false;
     var sortMode = 'newest';
     var groupMode = 'none';
     var albumPageIndex = 0;
@@ -3966,6 +4176,14 @@
     var binderStatVisible = document.getElementById('colBinderStatVisible');
     var binderFocusBtn = document.getElementById('colBinderFocusBtn');
     var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
+    var binderFilterBtn = document.getElementById('colBinderFilterBtn');
+    var binderFilterBadge = document.getElementById('colBinderFilterBadge');
+    var filterModal = document.getElementById('colFilterModal');
+    var filterLevelChips = document.getElementById('colFilterLevelChips');
+    var filterRareChips = document.getElementById('colFilterRareChips');
+    var filterColorChips = document.getElementById('colFilterColorChips');
+    var filterClearBtn = document.getElementById('colFilterClearBtn');
+    var filterApplyBtn = document.getElementById('colFilterApplyBtn');
     var albumSection = document.getElementById('colSectionAlbum');
     var deckSection = document.getElementById('colSectionDecks');
     var deckFocusBtn = document.getElementById('colDeckFocusBtn');
@@ -4211,6 +4429,9 @@
       writeLocal(allItems);
       refreshFilterOptions();
       renderAlbum();
+      ensureAlbumCardMeta(function (shouldRender) {
+        if (shouldRender) renderAlbum();
+      });
       renderDeckList();
     }
 
@@ -4368,6 +4589,71 @@
       });
     }
 
+    function normalizeColorKey(color) {
+      var c = String(color || '');
+      if (/黃|黄|yellow/i.test(c)) return 'yellow';
+      if (/綠|緑|green/i.test(c)) return 'green';
+      if (/赤|紅|red/i.test(c)) return 'red';
+      if (/青|藍|blue/i.test(c)) return 'blue';
+      return '';
+    }
+
+    function getAlbumMeta(cardNumber) {
+      var key = normalizeText(cardNumber).replace(/\\/g, '/');
+      if (!key) return null;
+      if (Object.prototype.hasOwnProperty.call(albumMetaCache, key)) {
+        return albumMetaCache[key];
+      }
+      return null;
+    }
+
+    function countActiveAttrFilters() {
+      var n = 0;
+      if (levelFilter !== '') n += 1;
+      if (rareFilter) n += 1;
+      if (colorFilter) n += 1;
+      return n;
+    }
+
+    function syncBinderFilterBtnUi() {
+      var n = countActiveAttrFilters();
+      if (binderFilterBtn) {
+        binderFilterBtn.classList.toggle('is-active', n > 0);
+        binderFilterBtn.setAttribute('aria-label', n > 0 ? ('篩選卡片（已套用 ' + n + ' 項）') : '篩選卡片');
+      }
+      if (binderFilterBadge) {
+        if (n > 0) {
+          binderFilterBadge.hidden = false;
+          binderFilterBadge.textContent = String(n);
+        } else {
+          binderFilterBadge.hidden = true;
+          binderFilterBadge.textContent = '0';
+        }
+      }
+    }
+
+    function setChipGroupValue(root, attr, value) {
+      if (!root) return;
+      var chips = root.querySelectorAll('[' + attr + ']');
+      for (var i = 0; i < chips.length; i++) {
+        var chip = chips[i];
+        var on = String(chip.getAttribute(attr) || '') === String(value || '');
+        chip.classList.toggle('is-active', on);
+        chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+    }
+
+    function refreshFilterRareChips(rareList, selectedRare) {
+      if (!filterRareChips) return;
+      var html = '<button type="button" class="col-filter-chip" data-filter-rare="" aria-pressed="false">全部</button>';
+      html += (rareList || []).map(function (r) {
+        return '<button type="button" class="col-filter-chip" data-filter-rare="' +
+          escapeHtml(r) + '" aria-pressed="false">' + escapeHtml(r) + '</button>';
+      }).join('');
+      filterRareChips.innerHTML = html;
+      setChipGroupValue(filterRareChips, 'data-filter-rare', selectedRare || '');
+    }
+
     function refreshFilterOptions() {
       var rares = {};
       allItems.forEach(function (item) {
@@ -4383,6 +4669,7 @@
         }).join('');
       rareSelect.value = rares[prevRare] ? prevRare : '';
       rareFilter = rareSelect.value || '';
+      refreshFilterRareChips(rareList, rareFilter);
 
       var tags = collectAllTags();
       var prevTag = tagFilter;
@@ -4395,10 +4682,21 @@
       var stillValid = prevTag === UNTAGGED || !prevTag || tags.indexOf(prevTag) >= 0;
       tagSelect.value = stillValid ? prevTag : '';
       tagFilter = tagSelect.value || '';
+      syncBinderFilterBtnUi();
     }
 
     function matchesFilters(item) {
       if (rareFilter && item.cardRare !== rareFilter) return false;
+      if (levelFilter !== '') {
+        var metaLv = getAlbumMeta(item.cardNumber);
+        var lv = metaLv && metaLv.level != null ? Number(metaLv.level) : null;
+        if (lv == null || String(lv) !== String(levelFilter)) return false;
+      }
+      if (colorFilter) {
+        var metaColor = getAlbumMeta(item.cardNumber);
+        var colorKey = metaColor ? normalizeColorKey(metaColor.color) : '';
+        if (colorKey !== colorFilter) return false;
+      }
       if (tagFilter === UNTAGGED) {
         if (item.tags && item.tags.length) return false;
       } else if (tagFilter) {
@@ -4414,6 +4712,107 @@
         (item.tags || []).join(' ')
       ].join(' ').toLowerCase();
       return hay.indexOf(q) >= 0;
+    }
+
+    function ensureAlbumCardMeta(onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      var need = [];
+      var seen = {};
+      allItems.forEach(function (item) {
+        if (!item || !item.cardNumber) return;
+        var key = normalizeText(item.cardNumber).replace(/\\/g, '/');
+        if (!key) return;
+        if (Object.prototype.hasOwnProperty.call(albumMetaCache, key)) return;
+        if (seen[key]) return;
+        seen[key] = true;
+        need.push({
+          cardNo: key,
+          name: item.cardName || key
+        });
+      });
+      if (!need.length || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        done(false);
+        return;
+      }
+      if (albumMetaEnriching) {
+        albumMetaPendingRender = true;
+        done(false);
+        return;
+      }
+      albumMetaEnriching = true;
+      window.WsDecklog.enrichCards(need)
+        .then(function (enriched) {
+          (enriched || []).forEach(function (row) {
+            var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
+            if (!key) return;
+            albumMetaCache[key] = {
+              level: parseCardLevel(row.level != null ? row.level : row.cardlevel),
+              color: normalizeText(row.color || row.cardcolor || '')
+            };
+          });
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key && !Object.prototype.hasOwnProperty.call(albumMetaCache, key)) {
+              albumMetaCache[key] = { level: null, color: '' };
+            }
+          });
+          albumMetaEnriching = false;
+          var shouldRender = albumMetaPendingRender || levelFilter !== '' || !!colorFilter;
+          albumMetaPendingRender = false;
+          done(shouldRender);
+        })
+        .catch(function (err) {
+          console.error(err);
+          need.forEach(function (row) {
+            var key = normalizeText(row.cardNo).replace(/\\/g, '/');
+            if (key) albumMetaCache[key] = { level: null, color: '' };
+          });
+          albumMetaEnriching = false;
+          albumMetaPendingRender = false;
+          done(false);
+        });
+    }
+
+    function syncFilterModalUi() {
+      setChipGroupValue(filterLevelChips, 'data-filter-level', filterDraft.level);
+      setChipGroupValue(filterRareChips, 'data-filter-rare', filterDraft.rare);
+      setChipGroupValue(filterColorChips, 'data-filter-color', filterDraft.color);
+    }
+
+    function openFilterModal() {
+      filterDraft = {
+        level: levelFilter,
+        rare: rareFilter,
+        color: colorFilter
+      };
+      refreshFilterOptions();
+      syncFilterModalUi();
+      openModal(filterModal);
+      ensureAlbumCardMeta(function (shouldRender) {
+        if (shouldRender) renderAlbum();
+      });
+    }
+
+    function applyFilterModal() {
+      levelFilter = filterDraft.level !== '' ? String(filterDraft.level) : '';
+      rareFilter = filterDraft.rare || '';
+      colorFilter = filterDraft.color || '';
+      if (rareSelect) rareSelect.value = rareFilter;
+      syncBinderFilterBtnUi();
+      closeModal(filterModal);
+      if ((levelFilter !== '' || colorFilter) &&
+          !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        setStatus('無法載入卡片屬性，等級／顏色篩選暫不可用', 'is-error');
+      }
+      ensureAlbumCardMeta(function () {
+        renderAlbum();
+      });
+      renderAlbum();
+    }
+
+    function clearFilterModalDraft() {
+      filterDraft = { level: '', rare: '', color: '' };
+      syncFilterModalUi();
     }
 
     function sortItems(list) {
@@ -4980,6 +5379,10 @@
       if (name === 'deckMeta') {
         closeModal(deckMetaModal);
         syncDeckMetaInputsFromDraft();
+        return;
+      }
+      if (name === 'filter') {
+        closeModal(filterModal);
       }
     }
 
@@ -7511,6 +7914,7 @@
     });
     rareSelect.addEventListener('change', function () {
       rareFilter = rareSelect.value || '';
+      syncBinderFilterBtnUi();
       renderAlbum();
     });
     tagSelect.addEventListener('change', function () {
@@ -7625,6 +8029,23 @@
         setBinderFocusMode(!binderFocusMode);
       });
     }
+    if (binderFilterBtn) {
+      binderFilterBtn.addEventListener('click', openFilterModal);
+    }
+    function wireFilterChipGroup(root, attr, draftKey) {
+      if (!root) return;
+      root.addEventListener('click', function (e) {
+        var chip = e.target.closest('[' + attr + ']');
+        if (!chip || !root.contains(chip)) return;
+        filterDraft[draftKey] = chip.getAttribute(attr) || '';
+        setChipGroupValue(root, attr, filterDraft[draftKey]);
+      });
+    }
+    wireFilterChipGroup(filterLevelChips, 'data-filter-level', 'level');
+    wireFilterChipGroup(filterRareChips, 'data-filter-rare', 'rare');
+    wireFilterChipGroup(filterColorChips, 'data-filter-color', 'color');
+    if (filterClearBtn) filterClearBtn.addEventListener('click', clearFilterModalDraft);
+    if (filterApplyBtn) filterApplyBtn.addEventListener('click', applyFilterModal);
     if (deckFocusBtn) {
       deckFocusBtn.addEventListener('click', function () {
         setDeckFocusMode(!deckFocusMode);
@@ -7632,6 +8053,7 @@
     }
     applyBinderFocusUi();
     applyDeckFocusUi();
+    syncBinderFilterBtnUi();
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
       getVisibleItems().forEach(function (item) {
@@ -8058,6 +8480,9 @@
     setCollectionView(readCollectionView());
     refreshFilterOptions();
     renderAlbum();
+    ensureAlbumCardMeta(function (shouldRender) {
+      if (shouldRender) renderAlbum();
+    });
     renderDeckList();
     if (window.WsPageLoader) {
       WsPageLoader.mark(
