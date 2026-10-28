@@ -2586,7 +2586,12 @@ function refreshResultIdentity() {
         var altName = idName ? idName.textContent : cardNo;
         idImg.alt = altName && altName !== '—' ? (altName + ' 卡圖') : '卡片圖';
         if (src) {
-            if (idImg.getAttribute('src') !== src) idImg.setAttribute('src', src);
+            var srcChanged = idImg.getAttribute('src') !== src;
+            if (srcChanged) {
+                idImg.setAttribute('src', src);
+                // 換圖先回到預設直向，載入完成後再依實際長寬調整
+                applyIdentityArtOrientation(null);
+            }
             // 主圖已就緒，或識別帶自己已載入完成，就揭開縮圖
             var ready = (imgEl && imgEl.naturalWidth > 0 && imgEl.style.display !== 'none')
                 || (idImg.complete && idImg.naturalWidth > 0);
