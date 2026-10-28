@@ -5750,6 +5750,9 @@ body.market-desk-page .result-identity-art {
     position: relative;
     width: 100%;
     aspect-ratio: 63 / 88;
+    height: auto;
+    /* 勿被 grid stretch 拉高，否則橫圖 contain 會上下留黑 */
+    align-self: start;
     justify-self: start;
     overflow: hidden;
     background:
@@ -6068,13 +6071,21 @@ body.market-desk-page .result-identity-asof {
         grid-template-columns: minmax(132px, 0.44fr) minmax(0, 0.56fr);
         gap: 0.75rem 0.9rem;
         padding: 0.8rem 0.85rem;
+        /* 右側資訊可拉高；左側卡面靠 align-self:start + aspect-ratio 定高 */
         align-items: stretch;
         width: 100%;
+    }
+
+    /* 橫向卡：左欄略加寬，縮圖較可辨、高度也不會被右欄撐出黑邊 */
+    body.market-desk-page .result-identity-inner:has(.result-identity-art.is-landscape) {
+        grid-template-columns: minmax(156px, 0.52fr) minmax(0, 0.48fr);
     }
 
     body.market-desk-page .result-identity-art {
         width: 100%;
         max-width: none;
+        align-self: start;
+        height: auto;
     }
 
     body.market-desk-page .result-identity-body {
@@ -6122,6 +6133,10 @@ body.market-desk-page .result-identity-asof {
         grid-template-columns: minmax(124px, 0.46fr) minmax(0, 0.54fr);
         gap: 0.65rem 0.75rem;
         padding: 0.7rem 0.7rem;
+    }
+
+    body.market-desk-page .result-identity-inner:has(.result-identity-art.is-landscape) {
+        grid-template-columns: minmax(148px, 0.54fr) minmax(0, 0.46fr);
     }
 
     body.market-desk-page .result-identity-price-label {
