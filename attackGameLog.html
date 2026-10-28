@@ -1445,6 +1445,151 @@
       font-size: 0.66rem;
       max-width: 120px;
     }
+    /* —— Replay field fullscreen (facing front rows fill the screen) —— */
+    .agl-summary.is-replay-fs .agl-summary-head,
+    .agl-summary.is-replay-fs .agl-summary-tabs,
+    .agl-summary.is-replay-fs .agl-summary-footmeta,
+    .agl-summary.is-replay-fs .agl-summary-actions {
+      display: none !important;
+    }
+    .agl-summary.is-replay-fs .agl-summary-body {
+      padding: 0;
+      overflow: hidden;
+    }
+    .agl-summary.is-replay-fs .agl-summary-pane.is-active[data-pane="replay"] {
+      height: 100%;
+    }
+    .agl-summary.is-replay-fs .agl-replay {
+      height: 100%;
+      min-height: 0;
+      gap: 0;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(203, 176, 131, 0.08), transparent 42%),
+        radial-gradient(ellipse at 50% 100%, rgba(145, 169, 199, 0.08), transparent 42%),
+        var(--bg);
+    }
+    .agl-summary.is-replay-fs .agl-replay-rail {
+      display: none !important;
+    }
+    .agl-summary.is-replay-fs .agl-replay-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 8px 10px 4px;
+      gap: 6px;
+    }
+    .agl-summary.is-replay-fs .agl-replay-stage.is-board-mode {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-areas:
+        "opp"
+        "event"
+        "self";
+    }
+    .agl-summary.is-replay-fs .agl-replay-stage.is-board-mode .agl-replay-mat-row {
+      grid-template-columns: minmax(0, 1fr);
+      position: relative;
+      gap: 0;
+    }
+    .agl-summary.is-replay-fs .agl-replay-stage.is-board-mode .agl-replay-life {
+      position: absolute;
+      z-index: 3;
+      left: 8px;
+      width: auto;
+      min-width: 76px;
+      height: auto;
+      padding: 6px 8px;
+      gap: 2px;
+      border-radius: 10px;
+      background: rgba(20, 20, 18, 0.78);
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+    }
+    .agl-summary.is-replay-fs .agl-replay-mat-row.is-opp .agl-replay-life {
+      top: 8px;
+    }
+    .agl-summary.is-replay-fs .agl-replay-mat-row.is-self .agl-replay-life {
+      bottom: 8px;
+      top: auto;
+    }
+    .agl-summary.is-replay-fs .agl-replay-life-name {
+      font-size: 0.72rem;
+    }
+    .agl-summary.is-replay-fs .agl-replay-life-lv {
+      font-size: 1.15rem;
+    }
+    .agl-summary.is-replay-fs .agl-replay-life-dmg {
+      font-size: 0.68rem;
+    }
+    .agl-summary.is-replay-fs .agl-replay-front {
+      height: 100%;
+      min-height: 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border-width: 2px;
+    }
+    .agl-summary.is-replay-fs .agl-replay-front-label {
+      display: none;
+    }
+    .agl-summary.is-replay-fs .agl-replay-board {
+      height: 100%;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .agl-summary.is-replay-fs .agl-replay-slot {
+      justify-content: center;
+      padding: 8px;
+      border-radius: 12px;
+      border-style: solid;
+      border-color: rgba(220, 138, 128, 0.55);
+      background: rgba(0, 0, 0, 0.28);
+    }
+    .agl-summary.is-replay-fs .agl-replay-slot-tag {
+      display: none;
+    }
+    .agl-summary.is-replay-fs .agl-replay-slot-art {
+      width: min(100%, calc((var(--vv-height, 100dvh) - 160px) / 2 * 0.63));
+      max-height: none;
+      height: auto;
+      aspect-ratio: 63 / 88;
+    }
+    /* Opponent front faces the viewer in fullscreen */
+    .agl-summary.is-replay-fs .agl-replay-mat-row.is-opp .agl-replay-board {
+      direction: rtl;
+    }
+    .agl-summary.is-replay-fs .agl-replay-mat-row.is-opp .agl-replay-slot-art {
+      transform: rotate(180deg);
+    }
+    .agl-summary.is-replay-fs .agl-replay-mat-row.is-opp .agl-replay-slot.is-rested .agl-replay-slot-art {
+      transform: rotate(180deg) rotate(90deg) scale(0.78);
+    }
+    .agl-summary.is-replay-fs .agl-replay.is-board-mode .agl-replay-event {
+      padding: 6px 14px;
+      border-radius: 10px;
+      margin: 0 2px;
+    }
+    .agl-summary.is-replay-fs .agl-replay-scrub,
+    .agl-summary.is-replay-fs .agl-replay-controls {
+      flex: 0 0 auto;
+      margin: 0;
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+      background: rgba(28, 27, 24, 0.96);
+    }
+    .agl-summary.is-replay-fs .agl-replay-scrub {
+      border-top: 1px solid var(--line);
+      padding: 6px 12px;
+    }
+    .agl-summary.is-replay-fs .agl-replay-controls {
+      border-bottom: 0;
+      padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+      gap: 6px;
+    }
+    .agl-summary.is-replay-fs #btnReplayFs {
+      background: var(--foil);
+      border-color: transparent;
+      color: var(--foil-text);
+    }
     @media (max-height: 340px) {
       .agl-summary.is-replay-compact .agl-replay-rail { display: none; }
       .agl-summary.is-replay-compact .agl-summary-actions .left #btnSumExport {
@@ -1760,6 +1905,7 @@
             <button type="button" id="btnReplayNext" title="下一步">下一步</button>
             <button type="button" id="btnReplayLast" title="最後">最後</button>
             <button type="button" class="agl-replay-speed" id="btnReplaySpeed" title="播放速度">1×</button>
+            <button type="button" id="btnReplayFs" title="全螢幕場地" aria-pressed="false">全螢幕</button>
           </div>
           <ol class="agl-replay-rail" id="sumReplayRail" hidden aria-label="時間軸"></ol>
         </div>
@@ -1782,6 +1928,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
-  <script src="assets/js/attack-game-log.js?v=20261028e"></script>
+  <script src="assets/js/attack-game-log.js?v=20261028f"></script>
 </body>
 </html>
