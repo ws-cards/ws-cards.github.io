@@ -960,6 +960,7 @@
     if (el) {
       el.classList.remove("is-open");
       el.classList.remove("is-replay-compact");
+      el.classList.remove("is-replay-chrome-min");
     }
     setReplayFullscreen(false);
     stopReplayPlayback();
