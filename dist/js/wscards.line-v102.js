@@ -3963,8 +3963,19 @@ document.getElementById('cardpower').textContent = cardData.cardpower || '-' ;
 // 更新サイド
 document.getElementById('cardside').textContent = cardData.cardside || '-' ;
 
-// 更新觸發
-document.getElementById('cardtrigger').textContent = cardData.cardtrigger || '-' ;
+// 更新觸發（WsTriggerMap：舊碼 1/1G 與英文 id bounce/gate 皆可對到顯示名）
+(function () {
+    var raw = cardData.cardtrigger;
+    var el = document.getElementById('cardtrigger');
+    var label = '-';
+    if (window.WsTriggerMap && typeof window.WsTriggerMap.labelForCode === 'function') {
+        label = window.WsTriggerMap.labelForCode(raw);
+    } else if (raw != null && raw !== '') {
+        label = String(raw);
+    }
+    el.textContent = label;
+    el.title = (raw != null && String(raw) !== '' && String(raw) !== label) ? String(raw) : '';
+})();
 
 // 更新特徵
 document.getElementById('cardfeatures').textContent = cardData.cardfeatures || '-' ;
