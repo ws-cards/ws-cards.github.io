@@ -868,39 +868,7 @@
     if (c1) c1.addEventListener("change", function () { renderSummaryChart(); });
     if (c2) c2.addEventListener("change", function () { renderSummaryChart(); });
     if ($("btnSumHome")) $("btnSumHome").onclick = resetGame;
-    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchImage;
-    if ($("btnSumLoad")) {
-      $("btnSumLoad").onclick = function () {
-        var f = $("sumLoadFile");
-        if (f) f.click();
-      };
-    }
-    if ($("sumLoadFile")) {
-      $("sumLoadFile").addEventListener("change", function (ev) {
-        var file = ev.target.files && ev.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function () {
-          try {
-            var parsed = JSON.parse(String(reader.result || ""));
-            var next = parsed.state || parsed;
-            if (!next || !next.logs) throw new Error("格式不符");
-            state = next;
-            if (!Array.isArray(state.logs)) state.logs = [];
-            ensureLife();
-            state.ended = true;
-            state.phase = "summary";
-            if (!state.endedAt) state.endedAt = Date.now();
-            persist();
-            render();
-          } catch (e) {
-            alert("讀取失敗：" + (e.message || e));
-          }
-        };
-        reader.readAsText(file);
-        ev.target.value = "";
-      });
-    }
+    if ($("btnSumExport")) $("btnSumExport").onclick = exportMatchData;
     bindReplayControls();
   }
 
@@ -2188,146 +2156,118 @@
     });
   }
 
-  function exportMatchImage() {
+  function downloadJsonFile(payload, filename) {
+    var text = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+    var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    try {
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename || ("attack-game-log-" + Date.now() + ".json");
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      return { ok: true, detail: "download" };
+    } catch (e) {
+      try { URL.revokeObjectURL(url); } catch (e2) { /* */ }
+      return { ok: false, detail: String((e && e.message) || e) };
+    }
+  }
+
+  function buildExportPayload() {
+    var report = buildMatchReport();
+    return {
+      format: "ws-attack-game-log-export",
+      version: 1,
+      exportedAt: Date.now(),
+      players: {
+        first: {
+          name: report.p1Name,
+          code: state.first && state.first.code ? state.first.code : null
+        },
+        second: {
+          name: report.p2Name,
+          code: state.second && state.second.code ? state.second.code : null
+        }
+      },
+      summary: {
+        winner: report.winner,
+        endReason: report.endReason,
+        startedAt: report.startedAt,
+        endedAt: report.endedAt,
+        durationMs: report.durationMs,
+        turns: report.turns,
+        decisions: report.decisions,
+        life: report.life
+      },
+      quickStats: {
+        first: report.first,
+        second: report.second
+      },
+      cardDamage: {
+        first: report.cardDamageFirst,
+        second: report.cardDamageSecond
+      },
+      battleDetail: report.battleDetail,
+      turnCharts: {
+        damageReceived: turnSeries("damageReceived"),
+        cancelDamage: turnSeries("cancelDamage"),
+        attacks: turnSeries("attacks")
+      }
+    };
+  }
+
+  function exportMatchData() {
     var root = $("overlay-summary");
     if (!root || !root.classList.contains("is-open")) {
-      alert("尚無可輸出的結算畫面");
-      return Promise.resolve(false);
+      alert("尚無可匯出的結算資料");
+      return false;
     }
-    if (typeof html2canvas !== "function") {
-      alert("圖片輸出元件尚未載入，請重新整理後再試");
-      return Promise.resolve(false);
+    if (!state || (!state.ended && state.phase !== "summary")) {
+      alert("尚無可匯出的結算資料");
+      return false;
     }
     var btn = $("btnSumExport");
     var prevLabel = btn ? btn.textContent : "";
     if (btn) {
       btn.disabled = true;
-      btn.textContent = "輸出中…";
+      btn.textContent = "匯出中…";
     }
-
-    var bodyEl = root.querySelector(".agl-summary-body");
-    var prev = {
-      rootHeight: root.style.height,
-      rootMaxHeight: root.style.maxHeight,
-      rootOverflow: root.style.overflow,
-      rootTop: root.style.top,
-      rootLeft: root.style.left,
-      rootWidth: root.style.width,
-      rootPos: root.style.position,
-      bodyOverflow: bodyEl ? bodyEl.style.overflow : "",
-      bodyMaxHeight: bodyEl ? bodyEl.style.maxHeight : "",
-      bodyHeight: bodyEl ? bodyEl.style.height : ""
-    };
-
-    // Expand fixed overlay so html2canvas can capture full scroll content
-    root.style.position = "fixed";
-    root.style.top = "0px";
-    root.style.left = "0px";
-    root.style.width = Math.min(1100, Math.max(320, window.innerWidth)) + "px";
-    root.style.height = "auto";
-    root.style.maxHeight = "none";
-    root.style.overflow = "visible";
-    if (bodyEl) {
-      bodyEl.style.overflow = "visible";
-      bodyEl.style.maxHeight = "none";
-      bodyEl.style.height = "auto";
-      bodyEl.scrollTop = 0;
-    }
-
-    var filename = "attack-game-log-" + Date.now() + ".png";
-    var restoreStyles = function () {
-      root.style.height = prev.rootHeight;
-      root.style.maxHeight = prev.rootMaxHeight;
-      root.style.overflow = prev.rootOverflow;
-      root.style.top = prev.rootTop;
-      root.style.left = prev.rootLeft;
-      root.style.width = prev.rootWidth;
-      root.style.position = prev.rootPos;
-      if (bodyEl) {
-        bodyEl.style.overflow = prev.bodyOverflow;
-        bodyEl.style.maxHeight = prev.bodyMaxHeight;
-        bodyEl.style.height = prev.bodyHeight;
-      }
-    };
-
-    return html2canvas(root, {
-      backgroundColor: "#141414",
-      useCORS: true,
-      allowTaint: true,
-      scale: Math.min(2, window.devicePixelRatio || 2),
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: root.scrollWidth || root.offsetWidth,
-      windowHeight: root.scrollHeight || root.offsetHeight,
-      onclone: function (doc) {
-        var cloned = doc.getElementById("overlay-summary");
-        if (!cloned) return;
-        cloned.style.display = "flex";
-        cloned.style.flexDirection = "column";
-        cloned.style.position = "static";
-        cloned.style.width = Math.min(1100, Math.max(320, window.innerWidth)) + "px";
-        cloned.style.height = "auto";
-        cloned.style.maxHeight = "none";
-        cloned.style.overflow = "visible";
-        cloned.style.inset = "auto";
-        cloned.style.background = "#141414";
-        var actions = cloned.querySelector(".agl-summary-actions");
-        if (actions) actions.style.display = "none";
-        var body = cloned.querySelector(".agl-summary-body");
-        if (body) {
-          body.style.overflow = "visible";
-          body.style.maxHeight = "none";
-          body.style.height = "auto";
-          body.style.flex = "none";
-        }
-        // Stack stats + battle detail in the export image (hide chart)
-        var panes = cloned.querySelectorAll(".agl-summary-pane");
-        for (var i = 0; i < panes.length; i++) {
-          var pane = panes[i];
-          var kind = pane.getAttribute("data-pane");
-          if (kind === "stats" || kind === "detail") {
-            pane.style.display = "block";
-            pane.style.height = "auto";
-            pane.classList.add("is-active");
-          } else {
-            pane.style.display = "none";
-            pane.classList.remove("is-active");
-          }
-        }
-        // Element has no getElementById — use querySelector / doc
-        var detailHost = cloned.querySelector("#sumBattleDetail") ||
-          doc.getElementById("sumBattleDetail");
-        if (detailHost) {
-          detailHost.style.height = "auto";
-          detailHost.style.overflow = "visible";
-          detailHost.style.minHeight = "0";
-        }
-      }
-    }).then(function (canvas) {
-      restoreStyles();
-      if (!canvas || canvas.width < 2 || canvas.height < 2) {
-        throw new Error("截圖結果是空白的");
-      }
-      return downloadCanvasPng(canvas, filename);
-    }).then(function (res) {
+    try {
+      var payload = buildExportPayload();
+      var stamp = new Date();
+      var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+      var filename = "attack-game-log-" +
+        stamp.getFullYear() +
+        pad(stamp.getMonth() + 1) +
+        pad(stamp.getDate()) + "-" +
+        pad(stamp.getHours()) +
+        pad(stamp.getMinutes()) +
+        pad(stamp.getSeconds()) +
+        ".json";
+      var res = downloadJsonFile(payload, filename);
       if (!res || !res.ok) throw new Error((res && res.detail) || "下載失敗");
-      if (btn) btn.textContent = "已下載";
+      if (btn) btn.textContent = "已匯出";
       setTimeout(function () {
-        if (btn && btn.textContent === "已下載") btn.textContent = prevLabel || "輸出圖片";
+        if (btn && btn.textContent === "已匯出") btn.textContent = prevLabel || "匯出";
       }, 1600);
       return true;
-    }).catch(function (e) {
-      restoreStyles();
-      alert("輸出圖片失敗：" + ((e && e.message) || e));
+    } catch (e) {
+      alert("匯出失敗：" + ((e && e.message) || e));
       return false;
-    }).then(function (ok) {
+    } finally {
       if (btn) {
         btn.disabled = false;
-        if (btn.textContent === "輸出中…") btn.textContent = prevLabel || "輸出圖片";
+        if (btn.textContent === "匯出中…") btn.textContent = prevLabel || "匯出";
       }
-      return ok;
-    });
+    }
+  }
+
+  /** @deprecated kept for __AGL / older callers; prefer exportMatchData */
+  function exportMatchImage() {
+    return exportMatchData();
   }
 
   function setSetupStatus(msg, isErr) {
@@ -4912,6 +4852,8 @@
     undoLast: undoLast,
     resetGame: resetGame,
     exportMatchImage: exportMatchImage,
+    exportMatchData: exportMatchData,
+    buildExportPayload: buildExportPayload,
     buildMatchReport: buildMatchReport,
     buildBattleDetail: buildBattleDetail,
     buildReplayFrames: buildReplayFrames,
