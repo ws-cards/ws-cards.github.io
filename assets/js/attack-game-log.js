@@ -788,6 +788,34 @@
     bindReplayControls();
   }
 
+  /** Phone / short-landscape summary: collapse chrome for replay focus. */
+  function isMobileSummaryLayout() {
+    var vv = window.visualViewport;
+    var w = vv && vv.width ? vv.width : window.innerWidth;
+    var h = vv && vv.height ? vv.height : window.innerHeight;
+    if (!(w > 0 && h > 0)) return false;
+    // Typical phone landscape is short; also catch narrow tablets in landscape.
+    if (h <= 500) return true;
+    if (w <= 920 && h <= 560) return true;
+    try {
+      if (window.matchMedia &&
+          window.matchMedia("(hover: none) and (pointer: coarse) and (max-height: 600px)").matches) {
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
+  function syncSummaryReplayCompact() {
+    var el = $("overlay-summary");
+    if (!el) return false;
+    var on = el.classList.contains("is-open") &&
+      summaryTab === "replay" &&
+      isMobileSummaryLayout();
+    el.classList.toggle("is-replay-compact", on);
+    return on;
+  }
+
   function setSummaryTab(tab) {
     var prev = summaryTab;
     summaryTab = tab || "stats";
@@ -799,6 +827,7 @@
     for (var p = 0; p < panes.length; p++) {
       panes[p].classList.toggle("is-active", panes[p].getAttribute("data-pane") === summaryTab);
     }
+    syncSummaryReplayCompact();
     if (summaryTab === "chart") renderSummaryChart();
     // Always rebuild when opening detail — avoids blank pane after cache / restore races
     if (summaryTab === "detail") fillBattleDetail(buildBattleDetail());
@@ -811,7 +840,10 @@
 
   function hideSummaryUI() {
     var el = $("overlay-summary");
-    if (el) el.classList.remove("is-open");
+    if (el) {
+      el.classList.remove("is-open");
+      el.classList.remove("is-replay-compact");
+    }
     stopReplayPlayback();
     if (summaryChart) {
       try { summaryChart.destroy(); } catch (e) { /* */ }
@@ -2216,6 +2248,7 @@
     root.style.setProperty("--vv-height", Math.round(height) + "px");
     document.body.classList.toggle("is-chrome-compact", isLandscape() && height >= (window.outerHeight || height) * 0.92);
     document.body.classList.toggle("is-fullscreen", isAppFullscreen());
+    syncSummaryReplayCompact();
   }
 
   var chromeCollapseTimer = 0;
@@ -4462,6 +4495,9 @@
     initReplayView: initReplayView,
     setReplayIndex: setReplayIndex,
     getReplayState: function () { return replayState; },
+    isMobileSummaryLayout: isMobileSummaryLayout,
+    syncSummaryReplayCompact: syncSummaryReplayCompact,
+    setSummaryTab: setSummaryTab,
     showSummaryUI: showSummaryUI,
     commitDraft: function (partial) {
       if (!uiState.draft) return false;
