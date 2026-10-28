@@ -419,7 +419,7 @@
     }
     .agl-summary-tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       border-bottom: 1px solid var(--line);
       background: var(--panel);
     }
@@ -429,7 +429,7 @@
       background: transparent;
       min-height: 42px;
       font-family: var(--body);
-      font-size: 0.95rem;
+      font-size: clamp(0.78rem, 1.6vw, 0.95rem);
       font-weight: 600;
       cursor: pointer;
       color: var(--muted);
@@ -448,8 +448,9 @@
     }
     .agl-summary-pane { display: none; }
     .agl-summary-pane.is-active { display: block; height: auto; min-height: 100%; }
-    /* Chart needs a definite height for Canvas layout */
-    .agl-summary-pane.is-active[data-pane="chart"] { height: 100%; }
+    /* Chart / replay need a definite height for layout */
+    .agl-summary-pane.is-active[data-pane="chart"],
+    .agl-summary-pane.is-active[data-pane="replay"] { height: 100%; }
     .agl-stat-table {
       width: 100%;
       border-collapse: collapse;
@@ -721,6 +722,349 @@
     .agl-battle-block li.is-self-damage .atk-name { color: var(--muted); font-weight: 600; }
     .agl-battle-block li.is-life-adjust .atk-meta { color: var(--foil); }
     .agl-battle-block li.is-self-damage .atk-meta { color: var(--coral); }
+
+    /* —— Timeline replay —— */
+    .agl-replay {
+      --replay-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      height: 100%;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .agl-replay-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(108px, 0.9fr) minmax(0, 2.2fr) minmax(108px, 0.9fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+    .agl-replay-life {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 12px;
+      background:
+        linear-gradient(165deg, rgba(240, 238, 230, 0.04), transparent 55%),
+        var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .agl-replay-life::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--life-accent, var(--muted));
+    }
+    .agl-replay-life.is-first { --life-accent: var(--teal); }
+    .agl-replay-life.is-second { --life-accent: var(--foil); }
+    .agl-replay-life.is-first.is-active {
+      box-shadow: inset 0 0 0 1px rgba(145, 169, 199, 0.55);
+    }
+    .agl-replay-life.is-second.is-active {
+      box-shadow: inset 0 0 0 1px rgba(203, 176, 131, 0.55);
+    }
+    .agl-replay [hidden] {
+      display: none !important;
+    }
+    .agl-replay-life.is-hit {
+      animation: aglReplayLifeHit 0.7s var(--replay-ease);
+    }
+    @keyframes aglReplayLifeHit {
+      0% { background-color: rgba(220, 138, 128, 0.22); }
+      100% { background-color: transparent; }
+    }
+    .agl-replay-life-name {
+      font-family: var(--display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--life-accent, var(--ink));
+    }
+    .agl-replay-life-lv {
+      font-family: var(--display);
+      font-size: clamp(1.55rem, 3.4vw, 2.1rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .agl-replay-life-lv span {
+      font-family: var(--mono);
+      font-size: 0.55em;
+      font-weight: 600;
+      color: var(--muted);
+      margin-left: 0.2em;
+    }
+    .agl-replay-life-dmg {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .agl-replay-life-dmg strong {
+      color: var(--coral);
+      font-weight: 700;
+    }
+    .agl-replay-event {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(203, 176, 131, 0.14), transparent 50%),
+        radial-gradient(ellipse at 88% 100%, rgba(145, 169, 199, 0.1), transparent 48%),
+        var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .agl-replay-event.is-first { border-color: rgba(145, 169, 199, 0.35); }
+    .agl-replay-event.is-second { border-color: rgba(203, 176, 131, 0.4); }
+    .agl-replay-event.is-swap .agl-replay-card,
+    .agl-replay-event.is-swap .agl-replay-copy {
+      animation: aglReplayIn 0.45s var(--replay-ease);
+    }
+    @keyframes aglReplayIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+    .agl-replay-card {
+      width: clamp(64px, 11vw, 92px);
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    }
+    .agl-replay-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .agl-replay-card-fallback {
+      font-family: var(--display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-align: center;
+      padding: 8px;
+      line-height: 1.35;
+    }
+    .agl-replay-copy { min-width: 0; }
+    .agl-replay-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 6px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .agl-replay-kicker .side {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 3.2em;
+      padding: 3px 10px 4px;
+      border-radius: 999px;
+      font-family: var(--display);
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: #141414;
+      background: var(--muted);
+    }
+    .agl-replay-event.is-first .agl-replay-kicker .side {
+      background: var(--teal);
+    }
+    .agl-replay-event.is-second .agl-replay-kicker .side {
+      background: var(--foil);
+      color: var(--foil-text);
+    }
+    .agl-replay-title {
+      margin: 0 0 6px;
+      font-family: var(--display);
+      font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.25;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .agl-replay-meta {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .agl-replay-meta .res-damage { color: var(--coral); }
+    .agl-replay-meta .res-cancel { color: var(--good); }
+    .agl-replay-meta .res-other { color: var(--foil); }
+    .agl-replay-event.is-first .agl-replay-meta .res-damage { color: var(--teal); }
+    .agl-replay-float {
+      position: absolute;
+      right: 16px;
+      top: 14px;
+      font-family: var(--display);
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      color: var(--coral);
+      opacity: 0;
+      pointer-events: none;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    }
+    .agl-replay-float.is-show {
+      animation: aglReplayFloat 0.85s var(--replay-ease);
+    }
+    .agl-replay-float.is-cancel { color: var(--good); }
+    @keyframes aglReplayFloat {
+      0% { opacity: 0; transform: translateY(8px) scale(0.9); }
+      25% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-18px) scale(1.05); }
+    }
+    .agl-replay-scrub {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .agl-replay-scrub-index {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      min-width: 4.8em;
+    }
+    .agl-replay-scrub input[type="range"] {
+      width: 100%;
+      accent-color: var(--foil);
+      cursor: pointer;
+    }
+    .agl-replay-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .agl-replay-controls button {
+      min-height: 40px;
+      min-width: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(240, 238, 228, 0.09);
+      color: var(--ink);
+      font-family: var(--body);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .agl-replay-controls button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .agl-replay-controls button.is-primary {
+      background: var(--foil);
+      border-color: transparent;
+      color: var(--foil-text);
+      min-width: 96px;
+    }
+    .agl-replay-controls .agl-replay-speed {
+      margin-left: 4px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .agl-replay-rail {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 2px 2px 6px;
+      margin: 0;
+      list-style: none;
+      scrollbar-width: thin;
+    }
+    .agl-replay-rail button {
+      flex: 0 0 auto;
+      max-width: 148px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-family: var(--body);
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .agl-replay-rail button.is-active {
+      color: var(--foil-text);
+      background: var(--foil);
+      border-color: transparent;
+    }
+    .agl-replay-rail button.is-past {
+      color: var(--ink);
+      border-color: rgba(203, 176, 131, 0.35);
+    }
+    .agl-replay-empty {
+      height: 100%;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    @media (max-height: 420px) {
+      .agl-replay { gap: 6px; }
+      .agl-replay-stage { gap: 6px; }
+      .agl-replay-life { padding: 8px 10px; }
+      .agl-replay-event { padding: 8px 12px; gap: 10px; }
+      .agl-replay-rail { display: none; }
+    }
+    @media (max-width: 720px) {
+      .agl-replay-stage {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .agl-replay-event {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+      .agl-replay-life.is-first { grid-column: 1; grid-row: 2; }
+      .agl-replay-life.is-second { grid-column: 2; grid-row: 2; }
+    }
     .agl-summary-footmeta {
       display: flex;
       flex-wrap: wrap;
@@ -911,6 +1255,7 @@
       <button type="button" class="is-active" data-sum-tab="stats">快速統計</button>
       <button type="button" data-sum-tab="chart">回合圖表</button>
       <button type="button" data-sum-tab="detail">對戰詳細資訊</button>
+      <button type="button" data-sum-tab="replay">過程重播</button>
     </nav>
     <div class="agl-summary-body">
       <section class="agl-summary-pane is-active" id="sumPaneStats" data-pane="stats">
@@ -955,6 +1300,48 @@
       <section class="agl-summary-pane" id="sumPaneDetail" data-pane="detail">
         <div class="agl-battle-detail" id="sumBattleDetail" aria-label="對戰詳細資訊"></div>
       </section>
+      <section class="agl-summary-pane" id="sumPaneReplay" data-pane="replay">
+        <div class="agl-replay" id="sumReplay" aria-label="對戰過程重播">
+          <div class="agl-replay-empty" id="sumReplayEmpty">本局尚無對戰紀錄</div>
+          <div class="agl-replay-stage" id="sumReplayStage" hidden>
+            <aside class="agl-replay-life is-first" id="sumReplayLife1" aria-label="先攻生命">
+              <div class="agl-replay-life-name" id="sumReplayLife1Name">先攻</div>
+              <div class="agl-replay-life-lv" id="sumReplayLife1Lv">0<span>Lv</span></div>
+              <div class="agl-replay-life-dmg">傷害區 <strong id="sumReplayLife1Dmg">0</strong></div>
+            </aside>
+            <div class="agl-replay-event" id="sumReplayEvent">
+              <div class="agl-replay-card" id="sumReplayCard">
+                <div class="agl-replay-card-fallback" id="sumReplayCardFallback">開局</div>
+              </div>
+              <div class="agl-replay-copy">
+                <p class="agl-replay-kicker" id="sumReplayKicker"><span class="side">—</span><span id="sumReplayTurn">對戰開始</span></p>
+                <h2 class="agl-replay-title" id="sumReplayTitle">對戰開始</h2>
+                <p class="agl-replay-meta" id="sumReplayMeta">準備重播</p>
+              </div>
+              <div class="agl-replay-float" id="sumReplayFloat" aria-hidden="true"></div>
+            </div>
+            <aside class="agl-replay-life is-second" id="sumReplayLife2" aria-label="後攻生命">
+              <div class="agl-replay-life-name" id="sumReplayLife2Name">後攻</div>
+              <div class="agl-replay-life-lv" id="sumReplayLife2Lv">0<span>Lv</span></div>
+              <div class="agl-replay-life-dmg">傷害區 <strong id="sumReplayLife2Dmg">0</strong></div>
+            </aside>
+          </div>
+          <div class="agl-replay-scrub" id="sumReplayScrub" hidden>
+            <span class="agl-replay-scrub-index" id="sumReplayIndex">0 / 0</span>
+            <input type="range" id="sumReplayRange" min="0" max="0" value="0" aria-label="重播進度">
+            <span class="agl-replay-scrub-index" id="sumReplayTurnHint">—</span>
+          </div>
+          <div class="agl-replay-controls" id="sumReplayControls" hidden>
+            <button type="button" id="btnReplayFirst" title="最前">最前</button>
+            <button type="button" id="btnReplayPrev" title="上一步">上一步</button>
+            <button type="button" class="is-primary" id="btnReplayPlay" aria-label="播放或暫停">播放</button>
+            <button type="button" id="btnReplayNext" title="下一步">下一步</button>
+            <button type="button" id="btnReplayLast" title="最後">最後</button>
+            <button type="button" class="agl-replay-speed" id="btnReplaySpeed" title="播放速度">1×</button>
+          </div>
+          <ol class="agl-replay-rail" id="sumReplayRail" hidden aria-label="時間軸"></ol>
+        </div>
+      </section>
     </div>
     <div class="agl-summary-footmeta" id="sumFootMeta"></div>
     <div class="agl-summary-actions">
@@ -973,6 +1360,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
-  <script src="assets/js/attack-game-log.js?v=20261027a"></script>
+  <script src="assets/js/attack-game-log.js?v=20261028a"></script>
 </body>
 </html>
