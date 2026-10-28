@@ -45,7 +45,8 @@
     speedIdx: 1,
     animToken: 0,
     hasBoard: false,
-    fullscreen: false
+    fullscreen: false,
+    chromeMin: false
   };
 
   var state = createEmptyState();
@@ -959,6 +960,7 @@
     if (el) {
       el.classList.remove("is-open");
       el.classList.remove("is-replay-compact");
+      el.classList.remove("is-replay-chrome-min");
     }
     setReplayFullscreen(false);
     stopReplayPlayback();
@@ -1599,6 +1601,30 @@
     }
   }
 
+  function syncReplayChromeUi() {
+    var min = !!replayState.chromeMin;
+    var root = $("sumReplay");
+    if (root) root.classList.toggle("is-chrome-min", min);
+    var el = $("overlay-summary");
+    if (el) el.classList.toggle("is-replay-chrome-min", min);
+    var btn = $("btnReplayChrome");
+    if (btn) {
+      btn.textContent = min ? "展開" : "縮小";
+      btn.setAttribute("aria-pressed", min ? "true" : "false");
+      btn.title = min ? "展開播放列" : "縮小播放列";
+    }
+  }
+
+  function setReplayChromeMin(on) {
+    replayState.chromeMin = !!on;
+    syncReplayChromeUi();
+  }
+
+  function toggleReplayChromeMin() {
+    if (!replayState.frames.length) return;
+    setReplayChromeMin(!replayState.chromeMin);
+  }
+
   function setReplayFullscreen(on) {
     replayState.fullscreen = !!on;
     syncReplayFullscreenUi();
@@ -1888,6 +1914,7 @@
     if ($("btnReplayNext")) $("btnReplayNext").disabled = idx >= frames.length - 1;
     if ($("btnReplayLast")) $("btnReplayLast").disabled = idx >= frames.length - 1;
     if ($("btnReplayFs")) $("btnReplayFs").disabled = false;
+    if ($("btnReplayChrome")) $("btnReplayChrome").disabled = false;
 
     if (rail) {
       var buttons = rail.querySelectorAll("button");
@@ -1957,6 +1984,7 @@
     }
     buildReplayRail();
     syncReplayFullscreenUi();
+    syncReplayChromeUi();
     renderReplayFrame(false);
   }
 
@@ -1987,6 +2015,7 @@
       };
     }
     if ($("btnReplaySpeed")) $("btnReplaySpeed").onclick = cycleReplaySpeed;
+    if ($("btnReplayChrome")) $("btnReplayChrome").onclick = toggleReplayChromeMin;
     if ($("btnReplayFs")) $("btnReplayFs").onclick = toggleReplayFullscreen;
     if ($("sumReplayRange")) {
       $("sumReplayRange").addEventListener("input", function (ev) {
@@ -4891,6 +4920,8 @@
     getReplayState: function () { return replayState; },
     setReplayFullscreen: setReplayFullscreen,
     toggleReplayFullscreen: toggleReplayFullscreen,
+    setReplayChromeMin: setReplayChromeMin,
+    toggleReplayChromeMin: toggleReplayChromeMin,
     isStageLog: isStageLog,
     stagesBrief: stagesBrief,
     isMobileSummaryLayout: isMobileSummaryLayout,
