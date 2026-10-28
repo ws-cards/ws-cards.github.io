@@ -1303,12 +1303,13 @@
       left: 0.35rem;
       bottom: 0.35rem;
       padding: 0.08rem 0.3rem;
+      z-index: 3;
     }
     .col-binder-page .col-binder-qty-badge {
       position: absolute;
       right: 0.35rem;
       bottom: 0.35rem;
-      z-index: 2;
+      z-index: 3;
       min-width: 1.35rem;
       padding: 0.1rem 0.35rem;
       border-radius: 999px;
@@ -3431,6 +3432,251 @@
       opacity: 0.72;
       font-style: italic;
     }
+
+    /* =========================================================
+       Motion Library 適配（kittenjam-motion-library）
+       取材：#289 全息閃卡、#112 卡片浮起、#205 彈出視窗、
+             #109 光澤掃過、#220 聚焦淡化、#104 依序浮現、#243 分段滑塊
+       ========================================================= */
+    .col-modal-backdrop {
+      opacity: 0;
+      -webkit-backdrop-filter: blur(0);
+      backdrop-filter: blur(0);
+      transition:
+        opacity 0.35s ease,
+        backdrop-filter 0.35s ease,
+        -webkit-backdrop-filter 0.35s ease;
+    }
+    .col-modal.is-open .col-modal-backdrop {
+      opacity: 1;
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+    .col-modal.is-open .col-modal-dialog {
+      animation: colModalIn 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+    }
+    @keyframes colModalIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .collection-page .btn-primary,
+    .collection-page .col-cta-primary {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .collection-page .btn-primary::after,
+    .collection-page .col-cta-primary::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -70%;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      transform: skewX(-20deg);
+      animation: colShineSweep 2.6s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .collection-page .btn-primary > *,
+    .collection-page .col-cta-primary > * {
+      position: relative;
+      z-index: 1;
+    }
+    .collection-page .btn-primary:hover::after,
+    .collection-page .col-cta-primary:hover::after {
+      animation-duration: 0.9s;
+    }
+    @keyframes colShineSweep {
+      0%, 55% { left: -70%; }
+      100% { left: 130%; }
+    }
+
+    .col-view-thumb {
+      transition:
+        transform 0.48s cubic-bezier(0.5, 1.45, 0.5, 1),
+        background 0.28s ease,
+        border-color 0.28s ease;
+    }
+
+    .col-filter-chip {
+      transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+    .col-filter-chip:active { transform: scale(0.96); }
+    .col-filter-chip.is-active { transform: scale(1.03); }
+
+    .col-holo-foil,
+    .col-holo-glare {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .col-holo-foil {
+      mix-blend-mode: color-dodge;
+      background:
+        repeating-linear-gradient(
+          115deg,
+          #ff4d6d 0%,
+          #ffd23f 7%,
+          #3dd9b8 14%,
+          #7c5cff 21%,
+          #ff4d6d 28%
+        ) 0 0 / 300% 300%;
+      background-position: var(--holo-px, 50%) var(--holo-py, 50%);
+      opacity: calc(0.12 + var(--holo-d, 0) * 0.55);
+    }
+    .col-holo-glare {
+      mix-blend-mode: overlay;
+      background:
+        radial-gradient(
+          circle at var(--holo-px, 50%) var(--holo-py, 50%),
+          rgba(255, 255, 255, 0.72),
+          transparent 45%
+        );
+      opacity: calc(0.15 + var(--holo-d, 0) * 0.7);
+    }
+    .col-tile.is-holo-active .col-holo-foil,
+    .col-tile.is-holo-active .col-holo-glare { opacity: 1; }
+    .col-binder-page .col-tile-art {
+      transform-style: preserve-3d;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.28s ease;
+      will-change: transform;
+    }
+    .col-binder-page .col-tile.is-holo-active .col-tile-art {
+      transform:
+        rotateY(calc((var(--holo-x, 0.5) - 0.5) * 14deg))
+        rotateX(calc((0.5 - var(--holo-y, 0.5)) * 14deg))
+        scale(1.03);
+      box-shadow:
+        0 10px 22px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+      z-index: 2;
+    }
+    .col-binder-page .col-tile-art img {
+      transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.28, 1);
+    }
+    .col-binder-page .col-tile.is-holo-active .col-tile-art img {
+      transform: scale(1.06);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .col-binder-page:hover .col-tile:not(:hover):not(.is-holo-active),
+      .col-binder-page:has(.is-holo-active) .col-tile:not(.is-holo-active) {
+        opacity: 0.55;
+        filter: saturate(0.7);
+        transition:
+          opacity 0.35s ease,
+          filter 0.35s ease,
+          transform 0.35s ease;
+      }
+      .col-deck-list:hover .col-deck-card:not(:hover) {
+        opacity: 0.62;
+        filter: saturate(0.75);
+        transition: opacity 0.35s ease, filter 0.35s ease, transform 0.35s ease;
+      }
+      .col-deck-list .col-deck-card {
+        transition:
+          opacity 0.35s ease,
+          filter 0.35s ease,
+          transform 0.35s cubic-bezier(0.22, 0.8, 0.28, 1);
+      }
+      .col-deck-list .col-deck-card:hover {
+        transform: translateY(-4px);
+        opacity: 1;
+        filter: none;
+      }
+    }
+
+    .col-deck-cover:hover .col-deck-cover-art,
+    .col-deck-cover:focus-visible .col-deck-cover-art {
+      transform: translateY(-8px) scale(1.015);
+      box-shadow:
+        0 18px 32px rgba(20, 32, 26, 0.26),
+        0 1px 0 rgba(255, 255, 255, 0.42) inset;
+    }
+    .col-deck-cover:hover .col-deck-cover-art img.is-loaded {
+      transform: scale(1.12);
+    }
+
+    .col-fx-enter {
+      animation: colFxEnter 0.55s cubic-bezier(0.22, 0.8, 0.28, 1) both;
+      animation-delay: calc(var(--fx-i, 0) * 0.045s);
+    }
+    @keyframes colFxEnter {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.96);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+
+    .col-section-stat.col-fx-enter,
+    .col-deckbox-badge.col-fx-enter {
+      filter: none;
+    }
+
+    .col-filter-btn,
+    .col-focus-btn {
+      transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        color 0.22s ease,
+        transform 0.22s cubic-bezier(0.3, 1.4, 0.5, 1),
+        box-shadow 0.22s ease;
+    }
+    .col-filter-btn:hover,
+    .col-focus-btn:hover {
+      transform: translateY(-1px);
+    }
+    .col-filter-btn:active,
+    .col-focus-btn:active {
+      transform: scale(0.96);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .col-modal.is-open .col-modal-dialog,
+      .col-fx-enter,
+      .collection-page .btn-primary::after,
+      .collection-page .col-cta-primary::after {
+        animation: none !important;
+      }
+      .col-modal-backdrop,
+      .col-holo-foil,
+      .col-holo-glare,
+      .col-binder-page .col-tile-art,
+      .col-filter-chip,
+      .col-view-thumb {
+        transition: none !important;
+      }
+      .col-holo-foil,
+      .col-holo-glare { display: none !important; }
+      .col-binder-page .col-tile.is-holo-active .col-tile-art {
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed collection-page">
@@ -3889,8 +4135,8 @@
   </div>
 </div>
 
-<!-- 卡冊／牌組篩選（一窗／檢視）：等級／稀有度／顏色 -->
-<div id="colFilterModal" class="col-modal" hidden aria-hidden="true">
+<!-- 卡冊／牌組篩選（一窗／檢視）：等級／稀有度／顏色（需蓋過牌組檢視 modal） -->
+<div id="colFilterModal" class="col-modal" hidden aria-hidden="true" style="z-index:2100;">
   <div class="col-modal-backdrop" data-modal-close="filter"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colFilterTitle" style="width:min(420px,100%);">
     <div class="col-modal-body">
@@ -5281,6 +5527,7 @@
         albumRoot.classList.add('col-binder-spread');
         albumRoot.classList.remove('col-binder-groups');
         albumRoot.innerHTML = html;
+        applyEnterStagger(albumRoot, '.col-tile');
       }
       updateBinderPager(totalPages);
       if (binderStage) {
@@ -5344,6 +5591,8 @@
       if (urls.primary) {
         html += '      <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(cardNumber) + '" loading="lazy" decoding="async">';
       }
+      html += '      <span class="col-holo-foil" aria-hidden="true"></span>';
+      html += '      <span class="col-holo-glare" aria-hidden="true"></span>';
       html += rareHtml;
       if (binderCompact) {
         html += '      <span class="col-binder-qty-badge" aria-label="數量 ' + escapeHtml(String(qty)) + '">×' + escapeHtml(String(qty)) + '</span>';
@@ -5438,6 +5687,7 @@
           albumRoot.classList.remove('col-binder-spread');
           albumRoot.classList.add('col-binder-groups');
           albumRoot.innerHTML = html;
+          applyEnterStagger(albumRoot, '.col-tile');
         }
         updateBinderPager(1);
         clearBinderFit();
@@ -5490,6 +5740,84 @@
       delete checkedSet[cardNumber];
       persistAndRender();
       setStatus('已從收藏庫移除 ' + cardNumber, 'is-ok');
+    }
+
+    function prefersReducedMotion() {
+      try {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function applyEnterStagger(root, selector) {
+      if (!root || prefersReducedMotion()) return;
+      var nodes = root.querySelectorAll(selector || '.col-fx-enter');
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        el.classList.remove('col-fx-enter');
+        el.style.removeProperty('--fx-i');
+      }
+      void root.offsetWidth;
+      for (var j = 0; j < nodes.length; j++) {
+        nodes[j].style.setProperty('--fx-i', String(Math.min(j, 14)));
+        nodes[j].classList.add('col-fx-enter');
+      }
+    }
+
+    var holoActiveTile = null;
+    function clearHoloTile(tile) {
+      if (!tile) return;
+      tile.classList.remove('is-holo-active');
+      tile.style.removeProperty('--holo-x');
+      tile.style.removeProperty('--holo-y');
+      tile.style.removeProperty('--holo-px');
+      tile.style.removeProperty('--holo-py');
+      tile.style.removeProperty('--holo-d');
+    }
+    function updateHoloTile(tile, clientX, clientY) {
+      if (!tile) return;
+      var art = tile.querySelector('.col-tile-art');
+      if (!art) return;
+      var r = art.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var x = (clientX - r.left) / r.width;
+      var y = (clientY - r.top) / r.height;
+      x = Math.max(0, Math.min(1, x));
+      y = Math.max(0, Math.min(1, y));
+      var d = Math.hypot(x - 0.5, y - 0.5) * 1.6;
+      tile.classList.add('is-holo-active');
+      tile.style.setProperty('--holo-x', String(x));
+      tile.style.setProperty('--holo-y', String(y));
+      tile.style.setProperty('--holo-px', (x * 100) + '%');
+      tile.style.setProperty('--holo-py', (y * 100) + '%');
+      tile.style.setProperty('--holo-d', String(d));
+    }
+    function bindBinderHoloMotion() {
+      if (!binderStage || prefersReducedMotion()) return;
+      if (binderStage.getAttribute('data-holo-bound') === '1') return;
+      binderStage.setAttribute('data-holo-bound', '1');
+      binderStage.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch') return;
+        var art = e.target.closest('.col-tile-art');
+        var tile = art ? art.closest('.col-tile') : null;
+        if (!tile || !binderStage.contains(tile)) {
+          if (holoActiveTile) {
+            clearHoloTile(holoActiveTile);
+            holoActiveTile = null;
+          }
+          return;
+        }
+        if (holoActiveTile && holoActiveTile !== tile) clearHoloTile(holoActiveTile);
+        holoActiveTile = tile;
+        updateHoloTile(tile, e.clientX, e.clientY);
+      });
+      binderStage.addEventListener('pointerleave', function () {
+        if (holoActiveTile) {
+          clearHoloTile(holoActiveTile);
+          holoActiveTile = null;
+        }
+      });
     }
 
     function openModal(modal) {
@@ -7096,6 +7424,7 @@
       if (deckListEl) {
         deckListEl.innerHTML = html;
         revealLoadedDeckImages(deckListEl);
+        applyEnterStagger(deckListEl, '.col-deck-card');
         hydrateVisibleDeckCxAxes(visible);
       }
       renderDeckDetail();
@@ -8273,6 +8602,8 @@
     applyDeckFocusUi();
     syncBinderFilterBtnUi();
     syncDeckFilterBtnUi();
+    bindBinderHoloMotion();
+    applyEnterStagger(document.querySelector('.col-section-stats'), '.col-section-stat');
 
     document.getElementById('colSelectVisibleBtn').addEventListener('click', function () {
       getVisibleItems().forEach(function (item) {
