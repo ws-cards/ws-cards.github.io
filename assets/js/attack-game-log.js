@@ -44,7 +44,8 @@
     timer: null,
     speedIdx: 1,
     animToken: 0,
-    hasBoard: false
+    hasBoard: false,
+    fullscreen: false
   };
 
   var state = createEmptyState();
@@ -949,6 +950,7 @@
       initReplayView(prev !== "replay");
     } else if (prev === "replay") {
       stopReplayPlayback();
+      setReplayFullscreen(false);
     }
   }
 
@@ -958,6 +960,7 @@
       el.classList.remove("is-open");
       el.classList.remove("is-replay-compact");
     }
+    setReplayFullscreen(false);
     stopReplayPlayback();
     if (summaryChart) {
       try { summaryChart.destroy(); } catch (e) { /* */ }
@@ -1584,6 +1587,28 @@
     if (playBtn) playBtn.textContent = "播放";
   }
 
+  function syncReplayFullscreenUi() {
+    var el = $("overlay-summary");
+    var on = !!replayState.fullscreen;
+    if (el) el.classList.toggle("is-replay-fs", on);
+    var btn = $("btnReplayFs");
+    if (btn) {
+      btn.textContent = on ? "離開全螢幕" : "全螢幕";
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.title = on ? "離開全螢幕" : "全螢幕場地";
+    }
+  }
+
+  function setReplayFullscreen(on) {
+    replayState.fullscreen = !!on;
+    syncReplayFullscreenUi();
+  }
+
+  function toggleReplayFullscreen() {
+    if (!replayState.frames.length) return;
+    setReplayFullscreen(!replayState.fullscreen);
+  }
+
   function scheduleReplayAdvance() {
     if (replayState.timer) {
       clearTimeout(replayState.timer);
@@ -1862,6 +1887,7 @@
     if ($("btnReplayPrev")) $("btnReplayPrev").disabled = idx <= 0;
     if ($("btnReplayNext")) $("btnReplayNext").disabled = idx >= frames.length - 1;
     if ($("btnReplayLast")) $("btnReplayLast").disabled = idx >= frames.length - 1;
+    if ($("btnReplayFs")) $("btnReplayFs").disabled = false;
 
     if (rail) {
       var buttons = rail.querySelectorAll("button");
@@ -1917,6 +1943,7 @@
     replayState.hasBoard = !!(replayState.frames[0] && replayState.frames[0].hasBoard);
     if (!replayState.frames.length) {
       replayState.hasBoard = false;
+      setReplayFullscreen(false);
       renderReplayFrame(false);
       return;
     }
@@ -1929,6 +1956,7 @@
       $("btnReplaySpeed").textContent = String(speed).replace(/\.0$/, "") + "×";
     }
     buildReplayRail();
+    syncReplayFullscreenUi();
     renderReplayFrame(false);
   }
 
@@ -1959,10 +1987,20 @@
       };
     }
     if ($("btnReplaySpeed")) $("btnReplaySpeed").onclick = cycleReplaySpeed;
+    if ($("btnReplayFs")) $("btnReplayFs").onclick = toggleReplayFullscreen;
     if ($("sumReplayRange")) {
       $("sumReplayRange").addEventListener("input", function (ev) {
         stopReplayPlayback();
         setReplayIndex(ev.target.value, false);
+      });
+    }
+    if (!bindReplayControls._escBound) {
+      bindReplayControls._escBound = true;
+      document.addEventListener("keydown", function (ev) {
+        if (!replayState.fullscreen) return;
+        if (ev.key === "Escape" || ev.key === "Esc") {
+          setReplayFullscreen(false);
+        }
       });
     }
   }
@@ -4851,6 +4889,8 @@
     initReplayView: initReplayView,
     setReplayIndex: setReplayIndex,
     getReplayState: function () { return replayState; },
+    setReplayFullscreen: setReplayFullscreen,
+    toggleReplayFullscreen: toggleReplayFullscreen,
     isStageLog: isStageLog,
     stagesBrief: stagesBrief,
     isMobileSummaryLayout: isMobileSummaryLayout,
