@@ -392,6 +392,44 @@
       background: rgba(28, 27, 24, 0.94);
       border-bottom: 1px solid var(--line);
       align-items: center;
+      overflow: hidden;
+      max-height: 140px;
+      opacity: 1;
+      transition:
+        max-height 0.3s var(--ease),
+        opacity 0.22s ease,
+        padding 0.3s var(--ease),
+        border-width 0.3s ease;
+    }
+    /* Phone + 過程重播：收合分頁上方抬頭，把高度留給重播舞台 */
+    .agl-summary.is-replay-compact .agl-summary-head {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-bottom-width: 0;
+      pointer-events: none;
+    }
+    .agl-summary.is-replay-compact .agl-summary-tabs button {
+      min-height: 34px;
+      font-size: 0.72rem;
+    }
+    .agl-summary.is-replay-compact .agl-summary-body {
+      padding: 6px 8px;
+    }
+    .agl-summary.is-replay-compact .agl-summary-footmeta {
+      display: none;
+    }
+    .agl-summary.is-replay-compact .agl-summary-actions {
+      padding: 6px 10px 8px;
+    }
+    .agl-summary.is-replay-compact .agl-summary-actions button {
+      min-height: 36px;
+      padding: 0 12px;
+      font-size: 0.82rem;
+    }
+    .agl-summary.is-replay-compact .agl-summary-actions .primary {
+      min-width: 112px;
     }
     .agl-summary-vs {
       margin: 0;
@@ -1053,6 +1091,84 @@
       .agl-replay-event { padding: 8px 12px; gap: 10px; }
       .agl-replay-rail { display: none; }
     }
+    /* Compact phone replay: denser stage after header collapse */
+    .agl-summary.is-replay-compact .agl-replay {
+      gap: 5px;
+      min-height: 0;
+    }
+    .agl-summary.is-replay-compact .agl-replay-stage {
+      grid-template-columns: minmax(64px, 0.72fr) minmax(0, 2.5fr) minmax(64px, 0.72fr);
+      gap: 6px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-life {
+      padding: 8px 8px;
+      gap: 3px;
+      border-radius: 10px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-life-name {
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+    }
+    .agl-summary.is-replay-compact .agl-replay-life-lv {
+      font-size: clamp(1.2rem, 4.2vh, 1.7rem);
+    }
+    .agl-summary.is-replay-compact .agl-replay-life-dmg {
+      font-size: 0.72rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay-event {
+      padding: 8px 10px;
+      gap: 10px;
+      border-radius: 10px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-card {
+      width: clamp(52px, 9.5vw, 76px);
+    }
+    .agl-summary.is-replay-compact .agl-replay-title {
+      font-size: clamp(0.95rem, 2.8vw, 1.2rem);
+      margin-bottom: 3px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-meta {
+      font-size: 0.78rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay-kicker {
+      margin-bottom: 3px;
+      font-size: 0.68rem;
+    }
+    .agl-summary.is-replay-compact .agl-replay-scrub {
+      padding: 4px 8px;
+      gap: 8px;
+      border-radius: 10px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-controls {
+      gap: 5px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-controls button {
+      min-height: 34px;
+      min-width: 0;
+      padding: 0 10px;
+      font-size: 0.78rem;
+      border-radius: 8px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-controls button.is-primary {
+      min-width: 72px;
+    }
+    /* Header collapsed frees height — keep a slim rail when possible */
+    .agl-summary.is-replay-compact .agl-replay-rail {
+      display: flex;
+      gap: 4px;
+      padding-bottom: 2px;
+    }
+    .agl-summary.is-replay-compact .agl-replay-rail button {
+      padding: 5px 8px;
+      font-size: 0.66rem;
+      max-width: 120px;
+    }
+    @media (max-height: 340px) {
+      .agl-summary.is-replay-compact .agl-replay-rail { display: none; }
+      .agl-summary.is-replay-compact .agl-summary-actions .left #btnSumExport {
+        display: none;
+      }
+    }
     @media (max-width: 720px) {
       .agl-replay-stage {
         grid-template-columns: 1fr 1fr;
@@ -1064,6 +1180,10 @@
       }
       .agl-replay-life.is-first { grid-column: 1; grid-row: 2; }
       .agl-replay-life.is-second { grid-column: 2; grid-row: 2; }
+      .agl-summary.is-replay-compact .agl-replay-stage {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: minmax(0, 1.35fr) auto;
+      }
     }
     .agl-summary-footmeta {
       display: flex;
@@ -1360,6 +1480,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js-legacy@7.4.2/dist/pixi-legacy.min.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
-  <script src="assets/js/attack-game-log.js?v=20261028a"></script>
+  <script src="assets/js/attack-game-log.js?v=20261028b"></script>
 </body>
 </html>
