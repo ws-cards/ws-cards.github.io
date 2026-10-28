@@ -36,6 +36,15 @@
   var lastHeaderBottom = 96;
   var slotDrag = null;
   var deploySlotRects = [];
+  var REPLAY_SPEEDS = [0.75, 1, 1.5, 2];
+  var replayState = {
+    frames: [],
+    index: 0,
+    playing: false,
+    timer: null,
+    speedIdx: 1,
+    animToken: 0
+  };
 
   var state = createEmptyState();
   var SELF_REASON_OPTIONS = [
@@ -776,9 +785,11 @@
         ev.target.value = "";
       });
     }
+    bindReplayControls();
   }
 
   function setSummaryTab(tab) {
+    var prev = summaryTab;
     summaryTab = tab || "stats";
     var tabs = document.querySelectorAll("[data-sum-tab]");
     for (var i = 0; i < tabs.length; i++) {
@@ -791,11 +802,17 @@
     if (summaryTab === "chart") renderSummaryChart();
     // Always rebuild when opening detail — avoids blank pane after cache / restore races
     if (summaryTab === "detail") fillBattleDetail(buildBattleDetail());
+    if (summaryTab === "replay") {
+      initReplayView(prev !== "replay");
+    } else if (prev === "replay") {
+      stopReplayPlayback();
+    }
   }
 
   function hideSummaryUI() {
     var el = $("overlay-summary");
     if (el) el.classList.remove("is-open");
+    stopReplayPlayback();
     if (summaryChart) {
       try { summaryChart.destroy(); } catch (e) { /* */ }
       summaryChart = null;
@@ -1093,6 +1110,506 @@
       host.appendChild(block);
     }
     appendBattleEndBlock(host);
+  }
+
+  /* ——— Timeline replay ——— */
+  function cloneLifePair(src) {
+    src = src || {};
+    return {
+      first: {
+        level: Number(src.first && src.first.level) || 0,
+        damage: Number(src.first && src.first.damage) || 0
+      },
+      second: {
+        level: Number(src.second && src.second.level) || 0,
+        damage: Number(src.second && src.second.damage) || 0
+      }
+    };
+  }
+
+  function simulateClockOnLife(lifeSide, amount) {
+    var n = Math.max(0, Number(amount) || 0);
+    lifeSide.damage = (Number(lifeSide.damage) || 0) + n;
+    while (lifeSide.damage >= 7) {
+      lifeSide.damage -= 7;
+      lifeSide.level += 1;
+    }
+  }
+
+  function attackTypeLabel(t) {
+    if (t === "direct") return "直攻";
+    if (t === "front") return "正面";
+    if (t === "side") return "側面";
+    if (t === "effect") return "效果";
+    return "";
+  }
+
+  function replayRailLabel(frame) {
+    if (!frame) return "—";
+    if (frame.kind === "start") return "開始";
+    if (frame.kind === "end") return "結束";
+    if (frame.kind === "attack") {
+      var shortName = frame.title || "攻擊";
+      if (shortName.length > 8) shortName = shortName.slice(0, 8) + "…";
+      return "R" + frame.turn + " " + shortName;
+    }
+    if (frame.kind === "selfDamage") return "R" + frame.turn + " 自傷";
+    if (frame.kind === "lifeAdjust") return "R" + frame.turn + " 調整";
+    return "R" + (frame.turn || "?");
+  }
+
+  function applyLogToReplayLife(life, log) {
+    if (!log) return { hitSide: null, delta: 0 };
+    if (log.kind === "lifeAdjust" || log.kind === "selfDamage") {
+      var side = log.side === "second" ? "second" : "first";
+      if (log.lifeAfter) {
+        life[side] = {
+          level: Number(log.lifeAfter.level) || 0,
+          damage: Number(log.lifeAfter.damage) || 0
+        };
+      } else if (log.kind === "selfDamage") {
+        simulateClockOnLife(life[side], log.amount);
+      } else if (log.kind === "lifeAdjust") {
+        var field = log.field === "level" ? "level" : "damage";
+        life[side][field] = Math.max(0, (Number(life[side][field]) || 0) + (Number(log.delta) || 0));
+        if (field === "level") life[side].level = Math.min(4, life[side].level);
+      }
+      var deltaAdj = log.kind === "selfDamage"
+        ? (Number(log.amount) || 0)
+        : (Number(log.delta) || 0);
+      return { hitSide: side, delta: deltaAdj };
+    }
+    var atkSide = log.side === "second" ? "second" : "first";
+    var receiver = log.dealtTo === "first" || log.dealtTo === "second"
+      ? log.dealtTo
+      : (atkSide === "first" ? "second" : "first");
+    if (log.attackerLife) {
+      life[atkSide] = {
+        level: Number(log.attackerLife.level) || 0,
+        damage: Number(log.attackerLife.damage) || 0
+      };
+    }
+    var dealt = Math.max(0, Number(log.actualDamage) || 0);
+    if (log.lifeAfter) {
+      life[receiver] = {
+        level: Number(log.lifeAfter.level) || 0,
+        damage: Number(log.lifeAfter.damage) || 0
+      };
+    } else if (dealt > 0) {
+      simulateClockOnLife(life[receiver], dealt);
+    }
+    return { hitSide: dealt > 0 ? receiver : null, delta: dealt };
+  }
+
+  function buildReplayFrames() {
+    var logs = Array.isArray(state.logs) ? state.logs : [];
+    if (!logs.length) return [];
+
+    var frames = [];
+    var life = cloneLifePair({
+      first: { level: 0, damage: 0 },
+      second: { level: 0, damage: 0 }
+    });
+    frames.push({
+      kind: "start",
+      turn: 1,
+      side: null,
+      title: "對戰開始",
+      turnText: "開局",
+      metaHtml: escapeHtml(playerShortName("first") + " vs " + playerShortName("second")),
+      rail: "開始",
+      card: null,
+      floatText: "",
+      floatClass: "",
+      hitSide: null,
+      life: cloneLifePair(life)
+    });
+
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
+      if (!log) continue;
+      var effect = applyLogToReplayLife(life, log);
+      var turn = Number(log.turn) || 1;
+      var side = log.side === "second" ? "second" : "first";
+      var frame = {
+        kind: "attack",
+        turn: turn,
+        side: side,
+        title: "",
+        turnText: "第" + turn + "回",
+        metaHtml: "",
+        rail: "",
+        card: null,
+        floatText: "",
+        floatClass: "",
+        hitSide: effect.hitSide,
+        life: cloneLifePair(life)
+      };
+
+      if (log.kind === "lifeAdjust") {
+        var adj = lifeAdjustLabel(log);
+        frame.kind = "lifeAdjust";
+        frame.title = adj.name;
+        frame.metaHtml = "<span class=\"" + adj.resultClass + "\">" + escapeHtml(adj.meta) + "</span>";
+        frame.floatText = (Number(log.delta) > 0 ? "+" : "") + (Number(log.delta) || 0);
+        frame.floatClass = "is-cancel";
+      } else if (log.kind === "selfDamage") {
+        var sd = selfDamageLabel(log);
+        frame.kind = "selfDamage";
+        frame.title = sd.name;
+        frame.metaHtml = "<span class=\"" + sd.resultClass + "\">" + escapeHtml(sd.meta) + "</span>";
+        if (effect.delta > 0) {
+          frame.floatText = "+" + effect.delta;
+          frame.floatClass = "";
+        }
+      } else {
+        var ac = log.attackerCard || {};
+        var typeLabel = attackTypeLabel(log.attackType);
+        var dmgWord = log.attackType === "effect" ? "效果傷害" : "攻擊";
+        var declared = Number(log.declaredDamage) || 0;
+        var resultLabel = attackResultLabel(log);
+        var resultClass = attackResultClass(log);
+        var slotText = log.slot && SLOT_LABELS[log.slot] ? SLOT_LABELS[log.slot] + "列" : "";
+        frame.kind = "attack";
+        frame.title = ac.name || ac.cardNo || "未知角色";
+        frame.card = {
+          name: ac.name || "",
+          cardNo: ac.cardNo || "",
+          imageUrl: ac.imageUrl || ""
+        };
+        frame.metaHtml =
+          escapeHtml((typeLabel ? typeLabel + "・" : "") + dmgWord + " " + declared) +
+          "（<span class=\"" + resultClass + "\">" + escapeHtml(resultLabel) + "</span>）" +
+          (slotText ? "　" + escapeHtml(slotText) : "");
+        if (log.result === "cancel" || log.otherKind === "triggerCancel" || log.otherKind === "block") {
+          frame.floatText = "取消";
+          frame.floatClass = "is-cancel";
+        } else if (effect.delta > 0) {
+          frame.floatText = "+" + effect.delta;
+          frame.floatClass = "";
+        } else if (log.otherKind === "reduce") {
+          frame.floatText = "→" + (Number(log.actualDamage) || 0);
+          frame.floatClass = "is-cancel";
+        }
+      }
+      frame.rail = replayRailLabel(frame);
+      frames.push(frame);
+    }
+
+    ensureLife();
+    var endLife = cloneLifePair(state.life);
+    var winnerText = "";
+    try {
+      winnerText = buildMatchReport().winner || "";
+    } catch (e) {
+      winnerText = "";
+    }
+    frames.push({
+      kind: "end",
+      turn: Math.max(1, Number(state.turn) || 1),
+      side: null,
+      title: "對戰結束",
+      turnText: "終局",
+      metaHtml: escapeHtml(winnerText ? ("勝者：" + winnerText) : "紀錄播放完畢"),
+      rail: "結束",
+      card: null,
+      floatText: "",
+      floatClass: "",
+      hitSide: null,
+      life: endLife
+    });
+    return frames;
+  }
+
+  function replayIntervalMs() {
+    var speed = REPLAY_SPEEDS[replayState.speedIdx] || 1;
+    return Math.max(320, Math.round(1350 / speed));
+  }
+
+  function stopReplayPlayback() {
+    replayState.playing = false;
+    if (replayState.timer) {
+      clearTimeout(replayState.timer);
+      replayState.timer = null;
+    }
+    var playBtn = $("btnReplayPlay");
+    if (playBtn) playBtn.textContent = "播放";
+  }
+
+  function scheduleReplayAdvance() {
+    if (replayState.timer) {
+      clearTimeout(replayState.timer);
+      replayState.timer = null;
+    }
+    if (!replayState.playing) return;
+    if (replayState.index >= replayState.frames.length - 1) {
+      stopReplayPlayback();
+      return;
+    }
+    replayState.timer = setTimeout(function () {
+      replayState.timer = null;
+      if (!replayState.playing) return;
+      setReplayIndex(replayState.index + 1, true);
+      scheduleReplayAdvance();
+    }, replayIntervalMs());
+  }
+
+  function toggleReplayPlayback() {
+    if (!replayState.frames.length) return;
+    if (replayState.playing) {
+      stopReplayPlayback();
+      return;
+    }
+    if (replayState.index >= replayState.frames.length - 1) {
+      setReplayIndex(0, true);
+    }
+    replayState.playing = true;
+    var playBtn = $("btnReplayPlay");
+    if (playBtn) playBtn.textContent = "暫停";
+    scheduleReplayAdvance();
+  }
+
+  function cycleReplaySpeed() {
+    replayState.speedIdx = (replayState.speedIdx + 1) % REPLAY_SPEEDS.length;
+    var speed = REPLAY_SPEEDS[replayState.speedIdx] || 1;
+    var btn = $("btnReplaySpeed");
+    if (btn) btn.textContent = String(speed).replace(/\.0$/, "") + "×";
+    if (replayState.playing) scheduleReplayAdvance();
+  }
+
+  function setReplayLifeDisplay(side, life, hit) {
+    var isFirst = side === "first";
+    var host = $(isFirst ? "sumReplayLife1" : "sumReplayLife2");
+    var lvEl = $(isFirst ? "sumReplayLife1Lv" : "sumReplayLife2Lv");
+    var dmgEl = $(isFirst ? "sumReplayLife1Dmg" : "sumReplayLife2Dmg");
+    if (lvEl) {
+      lvEl.innerHTML = (Number(life.level) || 0) + "<span>Lv</span>";
+    }
+    if (dmgEl) dmgEl.textContent = String(Number(life.damage) || 0);
+    if (!host) return;
+    host.classList.remove("is-hit");
+    if (hit) {
+      void host.offsetWidth;
+      host.classList.add("is-hit");
+    }
+  }
+
+  function renderReplayFrame(animate) {
+    var frames = replayState.frames;
+    var idx = replayState.index;
+    var frame = frames[idx];
+    var empty = $("sumReplayEmpty");
+    var stage = $("sumReplayStage");
+    var scrub = $("sumReplayScrub");
+    var controls = $("sumReplayControls");
+    var rail = $("sumReplayRail");
+    if (!frames.length) {
+      if (empty) empty.hidden = false;
+      if (stage) stage.hidden = true;
+      if (scrub) scrub.hidden = true;
+      if (controls) controls.hidden = true;
+      if (rail) {
+        rail.hidden = true;
+        rail.innerHTML = "";
+      }
+      return;
+    }
+    if (empty) empty.hidden = true;
+    if (stage) stage.hidden = false;
+    if (scrub) scrub.hidden = false;
+    if (controls) controls.hidden = false;
+    if (rail) rail.hidden = false;
+    if (!frame) return;
+
+    var token = ++replayState.animToken;
+    var life1 = frame.life.first;
+    var life2 = frame.life.second;
+    setReplayLifeDisplay("first", life1, animate && frame.hitSide === "first");
+    setReplayLifeDisplay("second", life2, animate && frame.hitSide === "second");
+
+    var lifeHost1 = $("sumReplayLife1");
+    var lifeHost2 = $("sumReplayLife2");
+    if (lifeHost1) lifeHost1.classList.toggle("is-active", frame.side === "first");
+    if (lifeHost2) lifeHost2.classList.toggle("is-active", frame.side === "second");
+    if ($("sumReplayLife1Name")) $("sumReplayLife1Name").textContent = playerShortName("first");
+    if ($("sumReplayLife2Name")) $("sumReplayLife2Name").textContent = playerShortName("second");
+
+    var eventEl = $("sumReplayEvent");
+    if (eventEl) {
+      eventEl.classList.remove("is-first", "is-second", "is-swap");
+      if (frame.side === "first") eventEl.classList.add("is-first");
+      if (frame.side === "second") eventEl.classList.add("is-second");
+      if (animate) {
+        void eventEl.offsetWidth;
+        eventEl.classList.add("is-swap");
+      }
+    }
+
+    var kickerSide = eventEl ? eventEl.querySelector(".agl-replay-kicker .side") : null;
+    if (kickerSide) {
+      kickerSide.textContent = frame.side ? sideLabel(frame.side) : "雙方";
+    }
+    if ($("sumReplayTurn")) $("sumReplayTurn").textContent = frame.turnText || "";
+    if ($("sumReplayTitle")) $("sumReplayTitle").textContent = frame.title || "—";
+    if ($("sumReplayMeta")) $("sumReplayMeta").innerHTML = frame.metaHtml || "";
+
+    var cardHost = $("sumReplayCard");
+    if (cardHost) {
+      cardHost.innerHTML = "";
+      if (frame.card && frame.card.imageUrl) {
+        var img = document.createElement("img");
+        img.alt = frame.card.name || "";
+        img.draggable = false;
+        img.src = frame.card.imageUrl;
+        cardHost.appendChild(img);
+      } else {
+        var fb = document.createElement("div");
+        fb.className = "agl-replay-card-fallback";
+        fb.id = "sumReplayCardFallback";
+        if (frame.kind === "start") fb.textContent = "開局";
+        else if (frame.kind === "end") fb.textContent = "終局";
+        else if (frame.card && (frame.card.name || frame.card.cardNo)) {
+          fb.textContent = frame.card.cardNo || frame.card.name;
+        } else if (frame.kind === "selfDamage") fb.textContent = "自傷";
+        else if (frame.kind === "lifeAdjust") fb.textContent = "調整";
+        else fb.textContent = "事件";
+        cardHost.appendChild(fb);
+      }
+    }
+
+    var floatEl = $("sumReplayFloat");
+    if (floatEl) {
+      floatEl.classList.remove("is-show", "is-cancel");
+      floatEl.textContent = "";
+      if (animate && frame.floatText) {
+        floatEl.textContent = frame.floatText;
+        if (frame.floatClass) floatEl.classList.add(frame.floatClass);
+        void floatEl.offsetWidth;
+        floatEl.classList.add("is-show");
+        setTimeout(function () {
+          if (token !== replayState.animToken) return;
+          floatEl.classList.remove("is-show");
+        }, 900);
+      }
+    }
+
+    if ($("sumReplayIndex")) {
+      $("sumReplayIndex").textContent = (idx + 1) + " / " + frames.length;
+    }
+    if ($("sumReplayTurnHint")) {
+      $("sumReplayTurnHint").textContent = frame.turnText || "—";
+    }
+    var range = $("sumReplayRange");
+    if (range) {
+      range.max = String(Math.max(0, frames.length - 1));
+      range.value = String(idx);
+    }
+
+    if ($("btnReplayFirst")) $("btnReplayFirst").disabled = idx <= 0;
+    if ($("btnReplayPrev")) $("btnReplayPrev").disabled = idx <= 0;
+    if ($("btnReplayNext")) $("btnReplayNext").disabled = idx >= frames.length - 1;
+    if ($("btnReplayLast")) $("btnReplayLast").disabled = idx >= frames.length - 1;
+
+    if (rail) {
+      var buttons = rail.querySelectorAll("button");
+      for (var b = 0; b < buttons.length; b++) {
+        buttons[b].classList.toggle("is-active", b === idx);
+        buttons[b].classList.toggle("is-past", b < idx);
+      }
+      var activeBtn = buttons[idx];
+      if (activeBtn && typeof activeBtn.scrollIntoView === "function") {
+        try {
+          activeBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+        } catch (e) {
+          activeBtn.scrollIntoView();
+        }
+      }
+    }
+  }
+
+  function buildReplayRail() {
+    var rail = $("sumReplayRail");
+    if (!rail) return;
+    rail.innerHTML = "";
+    for (var i = 0; i < replayState.frames.length; i++) {
+      (function (index) {
+        var li = document.createElement("li");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = replayState.frames[index].rail || ("#" + (index + 1));
+        btn.addEventListener("click", function () {
+          stopReplayPlayback();
+          setReplayIndex(index, true);
+        });
+        li.appendChild(btn);
+        rail.appendChild(li);
+      })(i);
+    }
+  }
+
+  function setReplayIndex(index, animate) {
+    if (!replayState.frames.length) {
+      renderReplayFrame(false);
+      return;
+    }
+    var max = replayState.frames.length - 1;
+    var next = Math.max(0, Math.min(max, Number(index) || 0));
+    replayState.index = next;
+    renderReplayFrame(!!animate);
+  }
+
+  function initReplayView(resetIndex) {
+    stopReplayPlayback();
+    replayState.frames = buildReplayFrames();
+    if (!replayState.frames.length) {
+      renderReplayFrame(false);
+      return;
+    }
+    // start + end only still counts as playable timeline
+    if (resetIndex || replayState.index > replayState.frames.length - 1) {
+      replayState.index = 0;
+    }
+    var speed = REPLAY_SPEEDS[replayState.speedIdx] || 1;
+    if ($("btnReplaySpeed")) {
+      $("btnReplaySpeed").textContent = String(speed).replace(/\.0$/, "") + "×";
+    }
+    buildReplayRail();
+    renderReplayFrame(false);
+  }
+
+  function bindReplayControls() {
+    if ($("btnReplayPlay")) $("btnReplayPlay").onclick = toggleReplayPlayback;
+    if ($("btnReplayPrev")) {
+      $("btnReplayPrev").onclick = function () {
+        stopReplayPlayback();
+        setReplayIndex(replayState.index - 1, true);
+      };
+    }
+    if ($("btnReplayNext")) {
+      $("btnReplayNext").onclick = function () {
+        stopReplayPlayback();
+        setReplayIndex(replayState.index + 1, true);
+      };
+    }
+    if ($("btnReplayFirst")) {
+      $("btnReplayFirst").onclick = function () {
+        stopReplayPlayback();
+        setReplayIndex(0, true);
+      };
+    }
+    if ($("btnReplayLast")) {
+      $("btnReplayLast").onclick = function () {
+        stopReplayPlayback();
+        setReplayIndex(replayState.frames.length - 1, true);
+      };
+    }
+    if ($("btnReplaySpeed")) $("btnReplaySpeed").onclick = cycleReplaySpeed;
+    if ($("sumReplayRange")) {
+      $("sumReplayRange").addEventListener("input", function (ev) {
+        stopReplayPlayback();
+        setReplayIndex(ev.target.value, false);
+      });
+    }
   }
 
   function fillCardDamageList(listId, stats, name) {
@@ -3941,6 +4458,10 @@
     exportMatchImage: exportMatchImage,
     buildMatchReport: buildMatchReport,
     buildBattleDetail: buildBattleDetail,
+    buildReplayFrames: buildReplayFrames,
+    initReplayView: initReplayView,
+    setReplayIndex: setReplayIndex,
+    getReplayState: function () { return replayState; },
     showSummaryUI: showSummaryUI,
     commitDraft: function (partial) {
       if (!uiState.draft) return false;
