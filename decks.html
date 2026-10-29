@@ -3708,7 +3708,7 @@
        Motion Library 適配（kittenjam-motion-library）
        取材：#113 光暈邊框、#112/#220 浮起淡化、#205 彈窗、
              #104 依序浮現、#243 分段滑塊、#234 漣漪、#147 數量步進、
-             #232 立體按壓、#118 toast 彈入
+             #232 立體按壓、#118 toast 彈入、#5 粒子消散（刪除牌組）
        ========================================================= */
     .col-modal-backdrop {
       opacity: 0;
@@ -3999,6 +3999,134 @@
       100% { transform: none; opacity: 1; }
     }
 
+    /* #5 粒子消散 Disintegrate：刪除牌組時由下往上逐字模糊飄散 */
+    .col-fx-disintegrate {
+      position: relative;
+      pointer-events: none !important;
+      z-index: 6;
+      overflow: visible !important;
+    }
+    .col-fx-disintegrate.col-deck-card,
+    .col-fx-disintegrate .col-deck-cover,
+    .col-fx-disintegrate .col-deck-cover-art {
+      overflow: visible !important;
+    }
+    .col-fx-disintegrate.is-running {
+      animation: colFxDisHost 2.95s cubic-bezier(0.22, 0.8, 0.28, 1) both;
+    }
+    .col-fx-disintegrate.is-running::after {
+      content: '';
+      position: absolute;
+      inset: -2%;
+      z-index: 7;
+      pointer-events: none;
+      background: linear-gradient(
+        to top,
+        transparent 0%,
+        transparent 18%,
+        var(--col-accent-soft) 48%,
+        transparent 72%
+      );
+      opacity: 0;
+      animation: colFxDisSweep 2.95s ease-in both;
+    }
+    .col-fx-dis-char {
+      display: inline-block;
+      white-space: pre;
+      will-change: transform, filter, opacity;
+      animation: colFxDisChar 1.9s cubic-bezier(0.22, 0.8, 0.28, 1) calc(var(--dis-i, 0) * 0.062s) both;
+    }
+    .col-fx-dis-layer {
+      position: absolute;
+      inset: -16% -22% -10% -14%;
+      pointer-events: none;
+      z-index: 8;
+      overflow: visible;
+    }
+    .col-fx-dis-particle {
+      position: absolute;
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: var(--col-accent);
+      opacity: 0;
+      pointer-events: none;
+      animation: colFxDisParticle 2.35s ease-out calc(var(--dis-delay, 0s)) both;
+    }
+    .col-fx-dis-particle.is-ink { background: var(--col-ink); }
+    .col-fx-dis-particle.is-muted { background: var(--col-muted); }
+    .col-fx-dis-particle.is-soft {
+      width: 2px;
+      height: 2px;
+      background: var(--col-accent);
+      opacity: 0;
+    }
+    @keyframes colFxDisHost {
+      0%, 8% {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+      40% {
+        opacity: 0.72;
+        filter: blur(1.5px) saturate(0.85);
+        transform: translate(3%, -4%) scale(1.01);
+      }
+      68% {
+        opacity: 0.22;
+        filter: blur(4px) saturate(0.6);
+        transform: translate(6%, -9%) scale(1.025);
+      }
+      100% {
+        opacity: 0;
+        filter: blur(8px) saturate(0.4);
+        transform: translate(10%, -14%) scale(1.045);
+      }
+    }
+    @keyframes colFxDisSweep {
+      0% {
+        opacity: 0;
+        transform: translateY(42%);
+      }
+      24% { opacity: 0.85; }
+      70% {
+        opacity: 0.35;
+        transform: translateY(-55%);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-90%);
+      }
+    }
+    @keyframes colFxDisChar {
+      0%, 12% {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+      58% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translate(16%, -34%) scale(1.26);
+      }
+      100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: translate(22%, -44%) scale(1.32);
+      }
+    }
+    @keyframes colFxDisParticle {
+      0%, 10% {
+        opacity: 0;
+        transform: translate(0, 0) scale(1);
+      }
+      22% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx, 22px), var(--dy, -36px)) scale(0.3);
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .col-modal.is-open .col-modal-dialog,
       .col-fx-enter,
@@ -4009,7 +4137,11 @@
       .col-section-stat strong.is-tick,
       #colTotalValue.is-tick,
       #colBinderStatKinds.is-tick,
-      #colBinderStatVisible.is-tick {
+      #colBinderStatVisible.is-tick,
+      .col-fx-disintegrate.is-running,
+      .col-fx-disintegrate.is-running::after,
+      .col-fx-dis-char,
+      .col-fx-dis-particle {
         animation: none !important;
       }
       .col-modal-backdrop,
@@ -5919,6 +6051,125 @@
         nodes[j].style.setProperty('--fx-i', String(Math.min(j, 14)));
         nodes[j].classList.add('col-fx-enter');
       }
+    }
+
+    /* #5 粒子消散：刪除牌組時由下往上逐字模糊並飄散 */
+    var deckDisintegrateBusy = false;
+
+    function wrapTextNodesForDisintegrate(root) {
+      if (!root) return;
+      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      var nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var str = node.nodeValue;
+        if (!str || !/\S/.test(str)) return;
+        var parent = node.parentElement;
+        if (!parent) return;
+        if (parent.closest('script, style, svg, .col-fx-dis-layer')) return;
+        if (parent.classList.contains('col-fx-dis-char')) return;
+        var frag = document.createDocumentFragment();
+        Array.prototype.forEach.call(str, function (ch) {
+          if (ch === '\n' || ch === '\r') {
+            frag.appendChild(document.createTextNode(ch));
+            return;
+          }
+          var span = document.createElement('span');
+          span.className = 'col-fx-dis-char';
+          span.textContent = ch === ' ' ? '\u00a0' : ch;
+          frag.appendChild(span);
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+
+    function assignDisintegrateOrderBottomUp(root) {
+      var chars = root ? root.querySelectorAll('.col-fx-dis-char') : [];
+      if (!chars.length) return 0;
+      var ranked = Array.prototype.map.call(chars, function (el) {
+        var r = el.getBoundingClientRect();
+        return { el: el, y: r.top + r.height / 2, x: r.left };
+      });
+      ranked.sort(function (a, b) {
+        if (Math.abs(b.y - a.y) > 3) return b.y - a.y;
+        return a.x - b.x;
+      });
+      ranked.forEach(function (item, i) {
+        item.el.style.setProperty('--dis-i', String(i));
+      });
+      return ranked.length;
+    }
+
+    function spawnDisintegrateParticles(root, count) {
+      if (!root) return;
+      Array.prototype.forEach.call(root.children, function (child) {
+        if (child.classList && child.classList.contains('col-fx-dis-layer')) child.remove();
+      });
+      var layer = document.createElement('div');
+      layer.className = 'col-fx-dis-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      var kinds = ['', 'is-ink', 'is-muted', 'is-soft'];
+      for (var i = 0; i < count; i++) {
+        var p = document.createElement('i');
+        p.className = 'col-fx-dis-particle ' + kinds[i % kinds.length];
+        p.style.left = (4 + Math.random() * 92) + '%';
+        p.style.top = (6 + Math.random() * 88) + '%';
+        /* 往右上飄散 */
+        p.style.setProperty('--dx', (10 + Math.random() * 54) + 'px');
+        p.style.setProperty('--dy', (-14 - Math.random() * 58) + 'px');
+        p.style.setProperty('--dis-delay', (Math.random() * 0.65) + 's');
+        layer.appendChild(p);
+      }
+      root.appendChild(layer);
+    }
+
+    function isElementVisiblyLaidOut(el) {
+      if (!el) return false;
+      var style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      var r = el.getBoundingClientRect();
+      return r.width > 2 && r.height > 2;
+    }
+
+    function collectDeckDisintegrateTargets(deckId) {
+      var targets = [];
+      if (!deckId) return targets;
+      var safeId = String(deckId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      var card = deckListEl && deckListEl.querySelector('.col-deck-card[data-deck-id="' + safeId + '"]');
+      if (card && isElementVisiblyLaidOut(card)) targets.push(card);
+      if (deckDetailEl && selectedDeckId === deckId && isElementVisiblyLaidOut(deckDetailEl)) {
+        targets.push(deckDetailEl);
+      }
+      return targets;
+    }
+
+    function playDeckDisintegrate(deckId) {
+      if (prefersReducedMotion()) return Promise.resolve();
+      var targets = collectDeckDisintegrateTargets(deckId);
+      if (!targets.length) return Promise.resolve();
+
+      var maxChars = 0;
+      targets.forEach(function (target) {
+        /* 收起 overflow，避免選單蓋住消散過程 */
+        Array.prototype.forEach.call(target.querySelectorAll('details.col-deck-overflow[open]'), function (d) {
+          d.open = false;
+        });
+        target.classList.add('col-fx-disintegrate');
+        wrapTextNodesForDisintegrate(target);
+        var n = assignDisintegrateOrderBottomUp(target);
+        if (n > maxChars) maxChars = n;
+        var area = Math.max(1, target.clientWidth * target.clientHeight);
+        var count = Math.max(48, Math.min(110, Math.round(area / 3200)));
+        spawnDisintegrateParticles(target, count);
+        void target.offsetWidth;
+        target.classList.add('is-running');
+      });
+
+      /* 約 3 秒一輪：由下往上錯開 + 粒子飄散後，列表再浮現 */
+      var waitMs = Math.min(3100, Math.max(2800, 1850 + maxChars * 52));
+      return new Promise(function (resolve) {
+        window.setTimeout(resolve, waitMs);
+      });
     }
 
     var spotActiveTile = null;
@@ -8395,13 +8646,17 @@
 
     function deleteDeck(deckId) {
       var src = allDecks.find(function (d) { return d.id === deckId; });
-      if (!src) return;
+      if (!src || deckDisintegrateBusy) return;
       askConfirm({
         title: '刪除牌組',
         okLabel: '確認刪除',
         html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？我的卡冊不會受影響。',
         onOk: function () {
+          deckDisintegrateBusy = true;
           requireDeckAuth()
+            .then(function () {
+              return playDeckDisintegrate(deckId);
+            })
             .then(function () {
               allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
               if (selectedDeckId === deckId) selectedDeckId = null;
@@ -8413,6 +8668,9 @@
             .catch(function (err) {
               console.error(err);
               setStatus((err && err.message) || '刪除牌組失敗', 'is-error');
+            })
+            .then(function () {
+              deckDisintegrateBusy = false;
             });
         }
       });
