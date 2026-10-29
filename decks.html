@@ -902,38 +902,73 @@
       --deckbox-muted: rgba(238, 243, 238, 0.68);
     }
 
-    /* 1) 牌組頁氣氛底：暖鼠尾草＋米金，淡點紋（微調濃度） */
+    /* 1) 牌組頁氣氛底：暖鼠尾草＋米金，淡點紋併入底色 */
     html:has(.col-stage[data-col-page="decks"]),
     body:has(.col-stage[data-col-page="decks"]) {
-      background:
+      background-color: #e4efe8 !important;
+      background-image:
+        radial-gradient(rgba(36, 56, 48, 0.08) 0.75px, transparent 0.75px),
         radial-gradient(1180px 720px at 8% -12%, rgba(176, 138, 58, 0.24), transparent 58%),
         radial-gradient(980px 640px at 96% 4%, rgba(63, 143, 107, 0.28), transparent 52%),
         radial-gradient(860px 520px at 78% 108%, rgba(47, 107, 79, 0.16), transparent 58%),
         linear-gradient(180deg, #eaf2ea 0%, #e4efe8 40%, #f2ebe0 100%) !important;
+      background-size: 13px 13px, auto, auto, auto, auto;
+      background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
     }
     html[data-theme="dark"]:has(.col-stage[data-col-page="decks"]),
     html[data-theme="dark"] body:has(.col-stage[data-col-page="decks"]) {
-      background:
+      background-color: #132017 !important;
+      background-image:
+        radial-gradient(rgba(238, 243, 238, 0.07) 0.75px, transparent 0.75px),
         radial-gradient(1100px 680px at 10% -14%, rgba(224, 179, 90, 0.2), transparent 55%),
         radial-gradient(920px 600px at 94% 0%, rgba(63, 143, 107, 0.24), transparent 50%),
         radial-gradient(780px 480px at 70% 110%, rgba(36, 56, 48, 0.62), transparent 58%),
         linear-gradient(180deg, #101812 0%, #132017 48%, #16130f 100%) !important;
+      background-size: 13px 13px, auto, auto, auto, auto;
     }
-    body:has(.col-stage[data-col-page="decks"])::before {
+    /*
+      3) 背景卡面：掛在 body 偽元素、內容層（z:1）下方，
+      避免 stage 內 z-index:-1 被 wrapper 堆疊上下文壓淡。
+    */
+    body:has(.col-stage[data-col-page="decks"])::before,
+    body:has(.col-stage[data-col-page="decks"])::after {
       content: '';
       position: fixed;
-      inset: 0;
-      z-index: 0;
       pointer-events: none;
-      opacity: 0.5;
-      background-image: radial-gradient(rgba(36, 56, 48, 0.14) 0.75px, transparent 0.75px);
-      background-size: 13px 13px;
-      mix-blend-mode: multiply;
+      z-index: 0;
+      aspect-ratio: 63 / 88;
+      border-radius: 22px;
+      background-repeat: no-repeat;
+      background-position: center top;
+      background-size: cover;
+    }
+    body:has(.col-stage[data-col-page="decks"])::before {
+      left: clamp(-4rem, -5vw, 0.25rem);
+      bottom: clamp(1.5rem, 7vh, 4.5rem);
+      width: min(48vw, 440px);
+      background-image: url('assets/landing-page/bd_w54_070ssp.png');
+      filter: blur(2px) saturate(1.22);
+      opacity: 0.88;
+      transform: rotate(-10deg);
+    }
+    body:has(.col-stage[data-col-page="decks"])::after {
+      right: clamp(-4rem, -4vw, 0.5rem);
+      top: clamp(4rem, 9vh, 6.5rem);
+      width: min(62vw, 620px);
+      background-image: url('assets/landing-page/bd_w54_070.png');
+      filter: blur(1.5px) saturate(1.28);
+      opacity: 0.92;
+      transform: rotate(7deg);
+      mask-image: linear-gradient(145deg, transparent 1%, #000 16%, #000 90%, transparent 100%);
+      -webkit-mask-image: linear-gradient(145deg, transparent 1%, #000 16%, #000 90%, transparent 100%);
     }
     html[data-theme="dark"] body:has(.col-stage[data-col-page="decks"])::before {
-      opacity: 0.34;
-      background-image: radial-gradient(rgba(238, 243, 238, 0.12) 0.75px, transparent 0.75px);
-      mix-blend-mode: soft-light;
+      opacity: 0.72;
+      filter: blur(2.5px) saturate(1.1) brightness(0.94);
+    }
+    html[data-theme="dark"] body:has(.col-stage[data-col-page="decks"])::after {
+      opacity: 0.8;
+      filter: blur(2px) saturate(1.18) brightness(0.95);
     }
     body:has(.col-stage[data-col-page="decks"]) > * {
       position: relative;
@@ -942,68 +977,25 @@
     .col-stage[data-col-page="decks"] {
       position: relative;
     }
-    /*
-      3) 背景圖層：fixed 掛在內容後方（避開 isolation），
-      才能穿過半透明詳情、在頁緣露出，不會被右欄白底完全蓋掉。
-    */
-    body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::before,
-    body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::after {
-      content: '';
-      position: fixed;
-      pointer-events: none;
-      z-index: -1; /* 在封面／詳情後方，但仍高於 body 底色 */
-      aspect-ratio: 63 / 88;
-      border-radius: 22px;
-      background-repeat: no-repeat;
-      background-position: center top;
-      background-size: cover;
-    }
-    body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::before {
-      left: clamp(-3rem, -4vw, 0.5rem);
-      bottom: clamp(2rem, 8vh, 5rem);
-      width: min(38vw, 340px);
-      background-image: url('assets/landing-page/bd_w54_070ssp.png');
-      filter: blur(12px) saturate(1.12);
-      opacity: 0.38;
-      transform: rotate(-10deg);
-    }
-    body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::after {
-      right: clamp(-3rem, -3vw, 1rem);
-      top: clamp(4.5rem, 10vh, 7rem);
-      width: min(50vw, 500px);
-      background-image: url('assets/landing-page/bd_w54_070.png');
-      filter: blur(7px) saturate(1.18);
-      opacity: 0.52;
-      transform: rotate(7deg);
-      mask-image: linear-gradient(145deg, transparent 4%, #000 34%, #000 84%, transparent 100%);
-      -webkit-mask-image: linear-gradient(145deg, transparent 4%, #000 34%, #000 84%, transparent 100%);
-    }
-    html[data-theme="dark"] body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::before {
-      opacity: 0.26;
-      filter: blur(14px) saturate(1) brightness(0.88);
-    }
-    html[data-theme="dark"] body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::after {
-      opacity: 0.38;
-      filter: blur(9px) saturate(1.08) brightness(0.9);
-    }
     @media (max-width: 719.98px) {
-      body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::before {
-        width: min(50vw, 200px);
-        opacity: 0.28;
-        left: -1.5rem;
-        bottom: 4.5rem;
+      body:has(.col-stage[data-col-page="decks"])::before {
+        width: min(62vw, 260px);
+        opacity: 0.78;
+        left: -1.75rem;
+        bottom: 4.25rem;
+        filter: blur(2px) saturate(1.18);
       }
-      body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::after {
-        width: min(72vw, 300px);
-        opacity: 0.42;
-        right: -2rem;
-        top: 5.25rem;
-        filter: blur(6px) saturate(1.12);
+      body:has(.col-stage[data-col-page="decks"])::after {
+        width: min(88vw, 360px);
+        opacity: 0.86;
+        right: -2.25rem;
+        top: 5rem;
+        filter: blur(1.5px) saturate(1.22);
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::before { opacity: 0.18; }
-      body:has(.col-stage[data-col-page="decks"]) .col-stage[data-col-page="decks"]::after { opacity: 0.28; }
+      body:has(.col-stage[data-col-page="decks"])::before { opacity: 0.55; }
+      body:has(.col-stage[data-col-page="decks"])::after { opacity: 0.65; }
     }
 
     /* 卡冊／牌組切換：簡潔滑動分段 */
