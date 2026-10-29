@@ -68,9 +68,10 @@
     }
   </style>
   <script src="assets/js/ws-page-loader.js"></script>
-  <meta name="description" content="管理已擁有的 Weiss Schwarz 卡冊與牌組編成，支援從願望清單轉入、標籤分組與數量增減。">
-  <meta property="og:title" content="收藏庫｜WS-Cards 卡片雲">
-  <meta property="og:description" content="我的卡冊與牌組分區管理：標籤、數量；缺卡於牌組編輯中調整。">
+  <script src="assets/js/ws-collection-store.js"></script>
+  <meta name="description" content="管理已擁有的 Weiss Schwarz 單卡卡冊：從願望清單轉入、標籤分組與數量增減。牌組請至我的牌組頁。">
+  <meta property="og:title" content="我的卡冊｜WS-Cards 卡片雲">
+  <meta property="og:description" content="我的卡冊：標籤、數量與 binder 檢視。牌組編成請至我的牌組頁。">
   <meta property="og:site_name" content="WS-Cards 卡片雲">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:type" content="website">
@@ -83,7 +84,7 @@
   <meta name="msapplication-TileImage" content="https://ws-cards.cloud/favicon.ico">
   <meta name="msapplication-TileColor" content="#fff">
   <link rel="manifest" href="/manifest.json">
-  <title>收藏庫｜WS-Cards 卡片雲</title>
+  <title>我的卡冊｜WS-Cards 卡片雲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
@@ -828,6 +829,25 @@
         padding-right: 0.5rem !important;
       }
     }
+
+
+    a.col-view-btn {
+      text-decoration: none;
+      color: inherit;
+      box-sizing: border-box;
+    }
+    a.col-view-btn:hover { color: inherit; }
+    a.col-view-btn[aria-current="page"] {
+      cursor: default;
+    }
+    .col-view-bridge {
+      margin: 0.35rem 0 0.85rem;
+      max-width: 40rem;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: #64748b;
+    }
+    [data-theme="dark"] .col-view-bridge { color: #94a3b8; }
 
     /* —— 我的卡冊 / 牌組 分頁（mockup 版型） —— */
     .col-shell {
@@ -3790,7 +3810,7 @@
 </script>
 <div class="wrapper">
 
-  <div data-navbar data-page-title="收藏庫"></div>
+  <div data-navbar data-page-title="我的卡冊"></div>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -3882,20 +3902,20 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-12">
-            <div class="col-stage" id="colStage" data-col-view="album">
-              <div class="col-view-switch" role="tablist" aria-label="卡冊與牌組切換">
+            <div class="col-stage" id="colStage" data-col-view="album" data-col-page="album">
+                            <nav class="col-view-switch" aria-label="卡冊與牌組分頁">
                 <span class="col-view-thumb" aria-hidden="true"></span>
-                <button type="button" class="col-view-btn" role="tab" id="colViewAlbumBtn" data-col-view-btn="album" aria-controls="colSectionAlbum" aria-selected="true">
+                <a href="collection.html" class="col-view-btn" id="colViewAlbumBtn" data-col-view-btn="album" aria-current="page">
                   <span class="col-view-kicker">Binder</span>
                   <span class="col-view-label">我的卡冊</span>
-                </button>
-                <button type="button" class="col-view-btn" role="tab" id="colViewDecksBtn" data-col-view-btn="decks" aria-controls="colSectionDecks" aria-selected="false">
+                </a>
+                <a href="decks.html" class="col-view-btn" id="colViewDecksBtn" data-col-view-btn="decks">
                   <span class="col-view-kicker">Deck Box</span>
                   <span class="col-view-label">我的牌組</span>
-                </button>
-              </div>
-
-              <section class="col-album-section" id="colSectionAlbum" role="tabpanel" aria-labelledby="colViewAlbumBtn colBinderTitle">
+                </a>
+              </nav>
+              <p class="col-view-bridge">單卡與牌組都是實體庫存；分開兩頁管理會比較單純，資料仍互通。</p>
+<section class="col-album-section" id="colSectionAlbum" role="tabpanel" aria-labelledby="colViewAlbumBtn colBinderTitle">
                 <header class="col-section-head">
                   <div>
                     <p class="col-section-kicker">Card Binder</p>
@@ -4095,7 +4115,7 @@
                               </div>
                               <div class="col-deck-stat col-deck-stat-note">
                                 <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                <span>牌組與卡冊分開保存；缺卡請在編輯中調整</span>
+                                <span>與「我的牌組」資料互通；缺卡請到牌組頁編輯</span>
                               </div>
                             </div>
                           </div>
@@ -4452,9 +4472,12 @@
   }
 
   (function () {
-    var STORAGE_KEY = 'wsCardsCollection';
-    var DECKS_KEY = 'wsCardsDecks';
-    var FAVORITES_KEY = 'wsCardsFavorites';
+    var Store = window.WsCollectionStore || {};
+    var COL_PAGE = (Store.pageMode && Store.pageMode()) || 'album';
+    if (Store.maybeRedirectLegacyDeckView && Store.maybeRedirectLegacyDeckView()) return;
+    var STORAGE_KEY = Store.STORAGE_KEY || 'wsCardsCollection';
+    var DECKS_KEY = Store.DECKS_KEY || 'wsCardsDecks';
+    var FAVORITES_KEY = Store.FAVORITES_KEY || 'wsCardsFavorites';
     var MAX_ITEMS = 500;
     var MAX_DECKS = 100;
     var MAX_DECK_DESC = 200;
@@ -4596,7 +4619,7 @@
     var stageEl = document.getElementById('colStage');
     var viewAlbumBtn = document.getElementById('colViewAlbumBtn');
     var viewDecksBtn = document.getElementById('colViewDecksBtn');
-    var VIEW_KEY = 'wsCardsCollectionView';
+    var VIEW_KEY = Store.VIEW_KEY || 'wsCardsCollectionView';
     var addModal = document.getElementById('colAddModal');
     var addCardNumberInput = document.getElementById('colAddCardNumber');
     var addCardNameInput = document.getElementById('colAddCardName');
@@ -4677,16 +4700,27 @@
 
     function setCollectionView(view, opts) {
       var next = view === 'decks' ? 'decks' : 'album';
+      if (next !== COL_PAGE) {
+        if (Store.rememberView) Store.rememberView(next);
+        else try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
+        var target = next === 'decks'
+          ? ((Store.decksUrl && Store.decksUrl()) || 'decks.html')
+          : ((Store.albumUrl && Store.albumUrl()) || 'collection.html');
+        window.location.href = target;
+        return;
+      }
       if (stageEl) stageEl.setAttribute('data-col-view', next);
       if (viewAlbumBtn) {
-        viewAlbumBtn.setAttribute('aria-selected', next === 'album' ? 'true' : 'false');
-        viewAlbumBtn.tabIndex = next === 'album' ? 0 : -1;
+        viewAlbumBtn.setAttribute('aria-current', next === 'album' ? 'page' : null);
+        if (next !== 'album') viewAlbumBtn.removeAttribute('aria-current');
+        else viewAlbumBtn.setAttribute('aria-current', 'page');
       }
       if (viewDecksBtn) {
-        viewDecksBtn.setAttribute('aria-selected', next === 'decks' ? 'true' : 'false');
-        viewDecksBtn.tabIndex = next === 'decks' ? 0 : -1;
+        if (next === 'decks') viewDecksBtn.setAttribute('aria-current', 'page');
+        else viewDecksBtn.removeAttribute('aria-current');
       }
-      try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
+      if (Store.rememberView) Store.rememberView(next);
+      else try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
       if (opts && opts.focus && next === 'decks') {
         var el = document.getElementById('colSectionDecks');
         if (el && typeof el.scrollIntoView === 'function') {
@@ -4698,12 +4732,7 @@
     }
 
     function readCollectionView() {
-      try {
-        var saved = localStorage.getItem(VIEW_KEY);
-        return saved === 'decks' ? 'decks' : 'album';
-      } catch (e) {
-        return 'album';
-      }
+      return COL_PAGE === 'decks' ? 'decks' : 'album';
     }
 
     function normalizeText(value) {
@@ -4807,11 +4836,15 @@
     function persistAndRender() {
       writeLocal(allItems);
       refreshFilterOptions();
-      renderAlbum();
-      ensureAlbumCardMeta(function (shouldRender) {
-        if (shouldRender) renderAlbum();
-      });
-      renderDeckList();
+      if (COL_PAGE === 'album') {
+        renderAlbum();
+        ensureAlbumCardMeta(function (shouldRender) {
+          if (shouldRender) renderAlbum();
+        });
+      } else {
+        ensureAlbumCardMeta(function () { /* deck page uses owned qty */ });
+        renderDeckList();
+      }
     }
 
     function focusDeckSection() {
@@ -4820,10 +4853,6 @@
 
     function focusAlbumSection() {
       setCollectionView('album');
-      var el = document.getElementById('colSectionAlbum');
-      if (el && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
     }
 
     function resetAddCardForm() {
@@ -8252,7 +8281,7 @@
       });
       if (!visible.length) {
         deckPickList.innerHTML = '<li class="col-modal-hint" style="margin:0;">' +
-          (allItems.length ? '沒有符合篩選的卡片。' : '卡冊尚無卡片，請先至「我的卡冊」分頁轉入。') +
+          (allItems.length ? '沒有符合篩選的卡片。' : '卡冊尚無卡片，請先到「我的卡冊」頁轉入。') +
           '</li>';
         return;
       }
@@ -8282,7 +8311,7 @@
       if (!deckDraft) return;
       if (deckEditorMode === 'view') return;
       if (!allItems.length) {
-        setStatus('卡冊尚無卡片，請先轉入我的卡冊', 'is-error');
+        setStatus('卡冊尚無卡片，請先到「我的卡冊」頁轉入', 'is-error');
         return;
       }
       deckPickSet = {};
@@ -8762,16 +8791,10 @@
       });
     }
     function wireViewSwitch(btn, view) {
+      /* 分頁已改為 <a href>；僅同步記住的視圖 */
       if (!btn) return;
-      btn.addEventListener('click', function () { setCollectionView(view); });
-      btn.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-          e.preventDefault();
-          var next = (e.key === 'ArrowRight') ? 'decks' : 'album';
-          setCollectionView(next);
-          var focusBtn = next === 'decks' ? viewDecksBtn : viewAlbumBtn;
-          if (focusBtn) focusBtn.focus();
-        }
+      btn.addEventListener('click', function () {
+        if (Store.rememberView) Store.rememberView(view);
       });
     }
     wireViewSwitch(viewAlbumBtn, 'album');
@@ -9164,27 +9187,41 @@
         delete checkedSet[key];
       }
     });
-    setCollectionView(readCollectionView());
+    setCollectionView(COL_PAGE);
     refreshFilterOptions();
-    renderAlbum();
-    ensureAlbumCardMeta(function (shouldRender) {
-      if (shouldRender) renderAlbum();
-    });
-    renderDeckList();
-    if (window.WsPageLoader) {
-      WsPageLoader.mark(
-        'album',
-        allItems.length ? ('卡冊 ' + allItems.length + ' 種') : '卡冊就緒'
+    if (COL_PAGE === 'album') {
+      renderAlbum();
+      ensureAlbumCardMeta(function (shouldRender) {
+        if (shouldRender) renderAlbum();
+      });
+      if (window.WsPageLoader) {
+        WsPageLoader.mark(
+          'album',
+          allItems.length ? ('卡冊 ' + allItems.length + ' 種') : '卡冊就緒'
+        );
+      }
+      ingestPendingFromFavoritesQuery();
+      setStatus(
+        allItems.length
+          ? ('已載入卡冊 ' + allItems.length + ' 種')
+          : '卡冊為空，可新增或從願望清單轉入',
+        allItems.length ? 'is-ok' : ''
+      );
+    } else {
+      // 牌組頁仍讀取卡冊持有量（缺卡／從卡冊加入）
+      ensureAlbumCardMeta(function () { /* meta ready for deck filters */ });
+      renderDeckList();
+      if (window.WsPageLoader) {
+        WsPageLoader.mark('album', allItems.length ? ('持有 ' + allItems.length + ' 種可編成') : '牌組就緒');
+      }
+      bindDeckAuth();
+      setStatus(
+        allItems.length
+          ? ('牌組頁已就緒（卡冊持有 ' + allItems.length + ' 種）')
+          : '牌組需登入；卡冊尚無卡片時可先到「我的卡冊」轉入',
+        allItems.length ? 'is-ok' : ''
       );
     }
-    bindDeckAuth();
-    ingestPendingFromFavoritesQuery();
-    setStatus(
-      allItems.length
-        ? ('已載入卡冊 ' + allItems.length + ' 種（牌組登入後同步）')
-        : '卡冊為空；牌組需登入後建立或匯入',
-      allItems.length ? 'is-ok' : ''
-    );
   })();
 </script>
 </body>
