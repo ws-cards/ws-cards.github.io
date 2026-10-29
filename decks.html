@@ -2521,6 +2521,68 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .col-deck-meta-short {
+      color: #fecaca;
+      font-weight: 800;
+    }
+    .col-deck-meta-ok {
+      color: #bbf7d0;
+      font-weight: 700;
+    }
+    .col-deck-empty {
+      max-width: 26rem;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 2.25rem 1.25rem 2rem;
+    }
+    .col-deck-empty-icon {
+      width: 3.25rem;
+      height: 3.25rem;
+      margin: 0 auto 0.85rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(36, 56, 48, 0.06);
+      color: var(--deckbox-muted, #667a70);
+      font-size: 1.25rem;
+    }
+    [data-theme="dark"] .col-deck-empty-icon {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .col-deck-empty-title {
+      margin: 0 0 0.4rem;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--deckbox-ink, #243830);
+      letter-spacing: 0.02em;
+    }
+    .col-deck-empty-text {
+      margin: 0;
+      color: var(--deckbox-muted, #667a70);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    .col-deck-empty-hint {
+      margin: 0.75rem 0 0;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--deckbox-muted, #667a70);
+    }
+    .col-deck-empty-hint a {
+      color: inherit;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 0.12em;
+    }
+    .col-deck-empty-actions {
+      margin-top: 1.15rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .col-deck-empty[data-empty-mode="guest"] .col-cta-primary {
+      min-width: 11rem;
+    }
     .col-deck-cover-count,
     .col-deck-cover-short {
       position: absolute;
@@ -3921,14 +3983,6 @@
                         <i class="fas fa-archive" aria-hidden="true"></i>
                         <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
                       </div>
-                      <button type="button" class="col-filter-btn" id="colDeckFilterBtn" aria-haspopup="dialog" aria-controls="colFilterModal" title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片">
-                        <i class="fas fa-filter" aria-hidden="true"></i>
-                        <span class="col-filter-btn-badge" id="colDeckFilterBadge" hidden>0</span>
-                      </button>
-                      <button type="button" class="col-focus-btn" id="colDeckFocusBtn" aria-pressed="false" title="收合篩選列，把空間留給牌組列表">
-                        <i class="fas fa-expand" aria-hidden="true"></i>
-                        <span id="colDeckFocusBtnLabel">一窗檢視</span>
-                      </button>
                     </div>
                   </header>
                   <div class="col-deckbox-body">
@@ -3964,25 +4018,21 @@
                                 <i class="fas fa-eye" aria-hidden="true"></i>
                                 <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
                               </div>
-                              <div class="col-deck-stat col-deck-stat-note">
-                                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                <span>與「我的卡冊」資料互通；缺卡請在編輯中調整</span>
-                              </div>
                             </div>
                           </div>
                         </div>
 
-                        <p class="col-focus-hint" id="colDeckFocusHint">篩選列已收合 · 點漏斗可篩選目前牌組的等級／稀有度／顏色 · 再點「退出一窗」可還原</p>
-
-                        <div id="colDeckEmpty" class="col-empty" style="display:none;">
-                          <div><i class="fas fa-archive" aria-hidden="true"></i></div>
-                          <p id="colDeckEmptyText">尚未建立牌組。</p>
-                          <div class="col-deck-cta-row" style="max-width:22rem;margin:0 auto;">
-                            <button type="button" class="col-cta-secondary" id="colDeckEmptyCreateBtn">
-                              <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                        <div id="colDeckEmpty" class="col-empty col-deck-empty" style="display:none;" data-empty-mode="">
+                          <div class="col-deck-empty-icon" aria-hidden="true"><i class="fas fa-archive"></i></div>
+                          <h3 class="col-deck-empty-title" id="colDeckEmptyTitle">尚未建立牌組</h3>
+                          <p class="col-deck-empty-text" id="colDeckEmptyText">建立空白牌組，或從 DeckLog 匯入編成。</p>
+                          <p class="col-deck-empty-hint" id="colDeckEmptyHint" hidden></p>
+                          <div class="col-deck-cta-row col-deck-empty-actions" id="colDeckEmptyActions">
+                            <button type="button" class="col-cta-primary" id="colDeckEmptyPrimaryBtn">
+                              <i class="fas fa-plus" aria-hidden="true"></i><span id="colDeckEmptyPrimaryLabel">新建牌組</span>
                             </button>
-                            <button type="button" class="col-cta-secondary" id="colDeckEmptyDecklogBtn">
-                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
+                            <button type="button" class="col-cta-secondary" id="colDeckEmptySecondaryBtn">
+                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i><span id="colDeckEmptySecondaryLabel">匯入 DeckLog</span>
                             </button>
                           </div>
                         </div>
@@ -4348,8 +4398,8 @@
     var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
     var binderFilterBtn = document.getElementById('colBinderFilterBtn');
     var binderFilterBadge = document.getElementById('colBinderFilterBadge');
-    var deckFilterBtn = document.getElementById('colDeckFilterBtn');
-    var deckFilterBadge = document.getElementById('colDeckFilterBadge');
+    var deckFilterBtn = null; /* 列表層漏斗已移除；牌組內篩選改走 modal／詳情工具列 */
+    var deckFilterBadge = null;
     var deckModalFilterBtn = document.getElementById('colDeckModalFilterBtn');
     var deckModalFilterBadge = document.getElementById('colDeckModalFilterBadge');
     var filterModal = document.getElementById('colFilterModal');
@@ -4362,15 +4412,14 @@
     var filterApplyBtn = document.getElementById('colFilterApplyBtn');
     var albumSection = document.getElementById('colSectionAlbum');
     var deckSection = document.getElementById('colSectionDecks');
-    var deckFocusBtn = document.getElementById('colDeckFocusBtn');
-    var deckFocusBtnLabel = document.getElementById('colDeckFocusBtnLabel');
+    var deckFocusBtn = null; /* 列表層一窗已移除 */
+    var deckFocusBtnLabel = null;
     var emptyEl = document.getElementById('colEmpty');
     var emptyTextEl = document.getElementById('colEmptyText');
     var BINDER_FOCUS_KEY = 'ws-collection-binder-focus';
-    var DECK_FOCUS_KEY = 'ws-collection-deck-focus';
     var binderFocusMode = true; /* 預設一窗檢視，整頁卡冊優先 */
     var binderFocusUserOff = false; /* 使用者手動退出後不再自動打開 */
-    var deckFocusMode = true; /* 預設一窗檢視，牌組列表優先 */
+    var deckFocusMode = false; /* 列表層一窗已移除；不再收合工具列 */
     var binderFitTimer = null;
     try {
       var savedFocus = localStorage.getItem(BINDER_FOCUS_KEY);
@@ -4381,11 +4430,6 @@
         binderFocusMode = true;
       }
     } catch (e) { /* ignore */ }
-    try {
-      var savedDeckFocus = localStorage.getItem(DECK_FOCUS_KEY);
-      if (savedDeckFocus === '0') deckFocusMode = false;
-      else if (savedDeckFocus === '1') deckFocusMode = true;
-    } catch (e2) { /* ignore */ }
     var countEl = document.getElementById('colCountLabel');
     var toastEl = document.getElementById('colToast');
     var toastTextEl = document.getElementById('colToastText');
@@ -4414,7 +4458,14 @@
     var panelDecks = document.getElementById('colPanelDecks');
     var deckListEl = document.getElementById('colDeckList');
     var deckEmptyEl = document.getElementById('colDeckEmpty');
+    var deckEmptyTitleEl = document.getElementById('colDeckEmptyTitle');
     var deckEmptyTextEl = document.getElementById('colDeckEmptyText');
+    var deckEmptyHintEl = document.getElementById('colDeckEmptyHint');
+    var deckEmptyPrimaryBtn = document.getElementById('colDeckEmptyPrimaryBtn');
+    var deckEmptyPrimaryLabel = document.getElementById('colDeckEmptyPrimaryLabel');
+    var deckEmptySecondaryBtn = document.getElementById('colDeckEmptySecondaryBtn');
+    var deckEmptySecondaryLabel = document.getElementById('colDeckEmptySecondaryLabel');
+    var deckEmptyIconEl = deckEmptyEl ? deckEmptyEl.querySelector('.col-deck-empty-icon i') : null;
     var deckSearchInput = document.getElementById('colDeckSearchInput');
     var deckSortSelect = document.getElementById('colDeckSortSelect');
     var deckTotalValueEl = document.getElementById('colDeckTotalValue');
@@ -5259,8 +5310,9 @@
     }
 
     function applyDeckFocusUi() {
-      if (deckSection) deckSection.classList.toggle('is-focus', !!deckFocusMode);
-      applyFocusBtnUi(deckFocusBtn, deckFocusBtnLabel, deckFocusMode);
+      /* 列表層一窗已移除：確保不會因舊 localStorage／殘留 class 收合工具列 */
+      deckFocusMode = false;
+      if (deckSection) deckSection.classList.remove('is-focus');
     }
 
     function setBinderFocusMode(on, opts) {
@@ -5280,11 +5332,7 @@
       }
     }
 
-    function setDeckFocusMode(on) {
-      deckFocusMode = !!on;
-      try {
-        localStorage.setItem(DECK_FOCUS_KEY, deckFocusMode ? '1' : '0');
-      } catch (e) { /* ignore */ }
+    function setDeckFocusMode() {
       applyDeckFocusUi();
     }
 
@@ -7279,6 +7327,82 @@
       revealLoadedDeckImages(deckDetailEl);
     }
 
+    function renderDeckEmptyState(mode) {
+      if (!deckEmptyEl) return;
+      deckEmptyEl.style.display = '';
+      deckEmptyEl.setAttribute('data-empty-mode', mode || '');
+
+      var albumEmpty = !allItems.length;
+      var title = '尚未建立牌組';
+      var text = '建立空白牌組，或從 DeckLog 匯入編成。';
+      var hintHtml = '';
+      var primaryLabel = '新建牌組';
+      var primaryIcon = 'fa-plus';
+      var primaryAction = 'create';
+      var secondaryLabel = '匯入 DeckLog';
+      var secondaryIcon = 'fa-cloud-download-alt';
+      var secondaryAction = 'decklog';
+      var showSecondary = true;
+      var iconClass = 'fa-archive';
+
+      if (mode === 'guest') {
+        title = '登入後管理牌組';
+        text = '牌組需登入才能雲端同步與儲存。登入後可新建空白牌組，或從 DeckLog 匯入。';
+        primaryLabel = '登入後同步牌組';
+        primaryIcon = 'fa-sign-in-alt';
+        primaryAction = 'login';
+        secondaryLabel = '前往我的卡冊';
+        secondaryIcon = 'fa-book-open';
+        secondaryAction = 'album';
+        iconClass = 'fa-user-lock';
+        if (albumEmpty) {
+          hintHtml = '目前卡冊尚無卡片 · <a href="collection.html">先去整理卡冊</a>';
+        }
+      } else if (mode === 'filtered') {
+        title = '沒有符合的牌組';
+        text = '試著調整關鍵字，或清除搜尋後再看全部牌組。';
+        primaryLabel = '清除搜尋';
+        primaryIcon = 'fa-times';
+        primaryAction = 'clear';
+        showSecondary = false;
+        iconClass = 'fa-search';
+      } else {
+        if (albumEmpty) {
+          hintHtml = '卡冊尚無卡片時，缺卡對照會偏多 · <a href="collection.html">前往我的卡冊</a>';
+        }
+      }
+
+      if (deckEmptyTitleEl) deckEmptyTitleEl.textContent = title;
+      if (deckEmptyTextEl) deckEmptyTextEl.textContent = text;
+      if (deckEmptyHintEl) {
+        if (hintHtml) {
+          deckEmptyHintEl.innerHTML = hintHtml;
+          deckEmptyHintEl.hidden = false;
+        } else {
+          deckEmptyHintEl.textContent = '';
+          deckEmptyHintEl.hidden = true;
+        }
+      }
+      if (deckEmptyIconEl) deckEmptyIconEl.className = 'fas ' + iconClass;
+      if (deckEmptyPrimaryLabel) deckEmptyPrimaryLabel.textContent = primaryLabel;
+      if (deckEmptyPrimaryBtn) {
+        var primaryIconEl = deckEmptyPrimaryBtn.querySelector('i');
+        if (primaryIconEl) primaryIconEl.className = 'fas ' + primaryIcon;
+        deckEmptyPrimaryBtn.setAttribute('data-empty-action', primaryAction);
+      }
+      if (deckEmptySecondaryBtn) {
+        deckEmptySecondaryBtn.hidden = !showSecondary;
+        if (showSecondary) {
+          if (deckEmptySecondaryLabel) deckEmptySecondaryLabel.textContent = secondaryLabel;
+          var secondaryIconEl = deckEmptySecondaryBtn.querySelector('i');
+          if (secondaryIconEl) secondaryIconEl.className = 'fas ' + secondaryIcon;
+          deckEmptySecondaryBtn.setAttribute('data-empty-action', secondaryAction);
+        } else {
+          deckEmptySecondaryBtn.removeAttribute('data-empty-action');
+        }
+      }
+    }
+
     function renderDeckList() {
       if (COL_PAGE !== 'decks') return;
       var visible = getVisibleDecks();
@@ -7287,12 +7411,7 @@
       if (deckSidebarCountEl) deckSidebarCountEl.textContent = String(visible.length);
 
       if (!allDecks.length) {
-        if (deckEmptyEl) deckEmptyEl.style.display = '';
-        if (deckEmptyTextEl) {
-          deckEmptyTextEl.textContent = deckCloudUser
-            ? '尚未建立牌組。'
-            : '請先登入後建立或匯入牌組（需登入才能儲存）。';
-        }
+        renderDeckEmptyState(deckCloudUser ? 'ready' : 'guest');
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
@@ -7300,8 +7419,7 @@
         return;
       }
       if (!visible.length) {
-        if (deckEmptyEl) deckEmptyEl.style.display = '';
-        if (deckEmptyTextEl) deckEmptyTextEl.textContent = '沒有符合搜尋條件的牌組。';
+        renderDeckEmptyState('filtered');
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
@@ -7309,7 +7427,10 @@
         return;
       }
 
-      if (deckEmptyEl) deckEmptyEl.style.display = 'none';
+      if (deckEmptyEl) {
+        deckEmptyEl.style.display = 'none';
+        deckEmptyEl.setAttribute('data-empty-mode', '');
+      }
       if (deckWorkspaceEl) deckWorkspaceEl.hidden = false;
       ensureSelectedDeck(visible);
 
@@ -7326,16 +7447,22 @@
           ? deckCxAxisCache[axisFp]
           : null;
         var axisHtml = deckCoverAxisHtml(axisLabel);
+        var shortMeta = short.shortKinds
+          ? '<span class="col-deck-meta-short">缺 ' + short.shortCopies + ' 張（' + short.shortKinds + ' 種）</span>'
+          : '<span class="col-deck-meta-ok">齊全</span>';
+        var shortAria = short.shortKinds
+          ? '，缺 ' + short.shortCopies + ' 張（' + short.shortKinds + ' 種）'
+          : '，齊全';
         var badges = '';
         if (short.shortKinds) {
-          badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種">' +
+          badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種／共缺 ' + short.shortCopies + ' 張">' +
             '<i class="fas fa-exclamation" aria-hidden="true"></i>缺 ' + short.shortCopies + '</span>';
         }
         badges += '<span class="col-deck-cover-count" title="' + kinds + ' 種卡">' + total + ' 張</span>';
         var scrim =
           '<div class="col-deck-cover-scrim">' +
           '  <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>' +
-          '  <div class="col-deck-meta">' + kinds + ' 種 · ' + escapeHtml(whenShort) + '</div>' +
+          '  <div class="col-deck-meta">' + kinds + ' 種 · ' + shortMeta + ' · ' + escapeHtml(whenShort) + '</div>' +
           axisHtml +
           '</div>';
         html += '<li class="col-deck-card' +
@@ -7344,7 +7471,7 @@
           '" data-deck-id="' + escapeHtml(deck.id) + '">';
         html += '  <button type="button" class="col-deck-cover" data-deck-open="' + escapeHtml(deck.id) +
           '" aria-pressed="' + (selected ? 'true' : 'false') +
-          '" aria-label="' + escapeHtml(deck.name) + '，' + total + ' 張">';
+          '" aria-label="' + escapeHtml(deck.name) + '，' + total + ' 張' + shortAria + '">';
         html += deckCoverArtHtml(deck, { inner: badges + scrim });
         html += '  </button>';
         html += '  <div class="col-deck-actions">';
@@ -8517,9 +8644,6 @@
     if (binderFilterBtn) {
       bindEl(binderFilterBtn, 'click', function () { openFilterModal('album'); });
     }
-    if (deckFilterBtn) {
-      bindEl(deckFilterBtn, 'click', function () { openFilterModal('deck'); });
-    }
     if (deckModalFilterBtn) {
       bindEl(deckModalFilterBtn, 'click', function () { openFilterModal('deck'); });
     }
@@ -8537,11 +8661,6 @@
     wireFilterChipGroup(filterColorChips, 'data-filter-color', 'color');
     if (filterClearBtn) bindEl(filterClearBtn, 'click', clearFilterModalDraft);
     if (filterApplyBtn) bindEl(filterApplyBtn, 'click', applyFilterModal);
-    if (deckFocusBtn) {
-      bindEl(deckFocusBtn, 'click', function () {
-        setDeckFocusMode(!deckFocusMode);
-      });
-    }
     if (COL_PAGE === 'album') {
       applyBinderFocusUi();
       syncBinderFilterBtnUi();
@@ -8657,11 +8776,38 @@
     bindEl(document.getElementById('colDeckCreateBtn'), 'click', function () {
       openDeckEditor(null);
     });
-    bindEl(document.getElementById('colDeckEmptyCreateBtn'), 'click', function () {
-      openDeckEditor(null);
-    });
     bindEl(document.getElementById('colDecklogImportBtn'), 'click', openDecklogModal);
-    bindEl(document.getElementById('colDeckEmptyDecklogBtn'), 'click', openDecklogModal);
+    function handleDeckEmptyPrimaryClick() {
+      var action = deckEmptyPrimaryBtn && deckEmptyPrimaryBtn.getAttribute('data-empty-action');
+      if (action === 'login') {
+        requireDeckAuth()
+          .then(function () {
+            setStatus('已登入，可以建立或匯入牌組', 'is-ok');
+            return refreshDecksFromCloud();
+          })
+          .catch(function (err) {
+            setStatus((err && err.message) || '登入失敗', 'is-error');
+          });
+        return;
+      }
+      if (action === 'clear') {
+        deckFilterQuery = '';
+        if (deckSearchInput) deckSearchInput.value = '';
+        renderDeckList();
+        return;
+      }
+      openDeckEditor(null);
+    }
+    function handleDeckEmptySecondaryClick() {
+      var action = deckEmptySecondaryBtn && deckEmptySecondaryBtn.getAttribute('data-empty-action');
+      if (action === 'album') {
+        window.location.href = 'collection.html';
+        return;
+      }
+      openDecklogModal();
+    }
+    if (deckEmptyPrimaryBtn) bindEl(deckEmptyPrimaryBtn, 'click', handleDeckEmptyPrimaryClick);
+    if (deckEmptySecondaryBtn) bindEl(deckEmptySecondaryBtn, 'click', handleDeckEmptySecondaryClick);
     if (decklogConfirmBtn) {
       bindEl(decklogConfirmBtn, 'click', importFromDecklog);
     }
