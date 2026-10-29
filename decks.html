@@ -4030,6 +4030,33 @@
       opacity: 0;
       animation: colFxDisSweep 2.95s ease-in both;
     }
+    /* 手機詳情為透明底，消散時補實底才看得清飄散 */
+    @media (max-width: 991.98px) {
+      .col-deck-detail.col-fx-disintegrate.is-running {
+        background: #fff !important;
+        border-radius: 14px;
+        box-shadow: 0 10px 28px rgba(20, 32, 26, 0.12);
+        margin: 0.15rem 0 1rem;
+        padding: 0.65rem 0.7rem 1rem;
+      }
+      [data-theme="dark"] .col-deck-detail.col-fx-disintegrate.is-running {
+        background: rgba(255, 255, 255, 0.04) !important;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      }
+      .col-fx-dis-layer.is-viewport {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1200;
+        pointer-events: none;
+      }
+      .col-fx-dis-layer.is-viewport .col-fx-dis-particle {
+        width: 4px;
+        height: 4px;
+      }
+    }
+    .col-fx-dis-clip-unlock {
+      overflow: visible !important;
+    }
     .col-fx-dis-char {
       display: inline-block;
       white-space: pre;
@@ -6086,41 +6113,80 @@
     function assignDisintegrateOrderBottomUp(root) {
       var chars = root ? root.querySelectorAll('.col-fx-dis-char') : [];
       if (!chars.length) return 0;
+      /* 以視窗可見區為準：先消散視窗內由下往上，避免手機長頁從螢幕外開始 */
+      var viewTop = 0;
+      var viewBottom = window.innerHeight || 800;
       var ranked = Array.prototype.map.call(chars, function (el) {
         var r = el.getBoundingClientRect();
-        return { el: el, y: r.top + r.height / 2, x: r.left };
+        var y = r.top + r.height / 2;
+        var inView = y >= viewTop - 8 && y <= viewBottom + 8;
+        return { el: el, y: y, x: r.left, inView: inView };
       });
       ranked.sort(function (a, b) {
+        if (a.inView !== b.inView) return a.inView ? -1 : 1;
         if (Math.abs(b.y - a.y) > 3) return b.y - a.y;
         return a.x - b.x;
       });
+      /* 限制錯開數量，長頁不會把動畫拖太久 */
+      var staggerCap = 36;
       ranked.forEach(function (item, i) {
-        item.el.style.setProperty('--dis-i', String(i));
+        item.el.style.setProperty('--dis-i', String(Math.min(i, staggerCap)));
       });
-      return ranked.length;
+      return Math.min(ranked.length, staggerCap);
     }
 
-    function spawnDisintegrateParticles(root, count) {
-      if (!root) return;
+    function spawnDisintegrateParticles(root, count, opts) {
+      if (!root) return null;
+      opts = opts || {};
       Array.prototype.forEach.call(root.children, function (child) {
-        if (child.classList && child.classList.contains('col-fx-dis-layer')) child.remove();
+        if (child.classList && child.classList.contains('col-fx-dis-layer') &&
+          !child.classList.contains('is-viewport')) {
+          child.remove();
+        }
       });
       var layer = document.createElement('div');
-      layer.className = 'col-fx-dis-layer';
+      layer.className = 'col-fx-dis-layer' + (opts.viewport ? ' is-viewport' : '');
       layer.setAttribute('aria-hidden', 'true');
       var kinds = ['', 'is-ink', 'is-muted', 'is-soft'];
       for (var i = 0; i < count; i++) {
         var p = document.createElement('i');
         p.className = 'col-fx-dis-particle ' + kinds[i % kinds.length];
-        p.style.left = (4 + Math.random() * 92) + '%';
-        p.style.top = (6 + Math.random() * 88) + '%';
+        if (opts.viewport) {
+          /* 手機：粒子落在視窗下半先冒出，再往右上飄 */
+          p.style.left = (6 + Math.random() * 88) + '%';
+          p.style.top = (28 + Math.random() * 62) + '%';
+        } else {
+          p.style.left = (4 + Math.random() * 92) + '%';
+          p.style.top = (6 + Math.random() * 88) + '%';
+        }
         /* 往右上飄散 */
         p.style.setProperty('--dx', (10 + Math.random() * 54) + 'px');
         p.style.setProperty('--dy', (-14 - Math.random() * 58) + 'px');
         p.style.setProperty('--dis-delay', (Math.random() * 0.65) + 's');
         layer.appendChild(p);
       }
-      root.appendChild(layer);
+      if (opts.viewport) {
+        document.body.appendChild(layer);
+      } else {
+        root.appendChild(layer);
+      }
+      return layer;
+    }
+
+    function unlockOverflowForDisintegrate(el) {
+      var unlocked = [];
+      var node = el;
+      while (node && node !== document.body) {
+        if (node.nodeType === 1) {
+          var style = window.getComputedStyle(node);
+          if (/(hidden|auto|scroll|clip)/.test(style.overflow + style.overflowX + style.overflowY)) {
+            node.classList.add('col-fx-dis-clip-unlock');
+            unlocked.push(node);
+          }
+        }
+        node = node.parentElement;
+      }
+      return unlocked;
     }
 
     function isElementVisiblyLaidOut(el) {
@@ -6135,10 +6201,14 @@
       var targets = [];
       if (!deckId) return targets;
       var safeId = String(deckId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      var mobile = !isDeckDesktopLayout();
       var card = deckListEl && deckListEl.querySelector('.col-deck-card[data-deck-id="' + safeId + '"]');
-      if (card && isElementVisiblyLaidOut(card)) targets.push(card);
+      /* 手機詳情單頁時側欄已藏，改打詳情面板；桌面則封面＋詳情一起消散 */
+      if (!mobile && card && isElementVisiblyLaidOut(card)) targets.push(card);
       if (deckDetailEl && selectedDeckId === deckId && isElementVisiblyLaidOut(deckDetailEl)) {
         targets.push(deckDetailEl);
+      } else if (mobile && card && isElementVisiblyLaidOut(card)) {
+        targets.push(card);
       }
       return targets;
     }
@@ -6148,19 +6218,32 @@
       var targets = collectDeckDisintegrateTargets(deckId);
       if (!targets.length) return Promise.resolve();
 
+      var mobile = !isDeckDesktopLayout();
+      var unlocked = [];
+      var viewportLayers = [];
       var maxChars = 0;
+
       targets.forEach(function (target) {
         /* 收起 overflow，避免選單蓋住消散過程 */
         Array.prototype.forEach.call(target.querySelectorAll('details.col-deck-overflow[open]'), function (d) {
           d.open = false;
         });
+        if (mobile && target.id === 'colDeckDetail') {
+          try { target.scrollIntoView(true); } catch (eScroll) { /* ignore */ }
+          try { window.scrollBy(0, -8); } catch (eBy) { /* ignore */ }
+        }
+        unlocked = unlocked.concat(unlockOverflowForDisintegrate(target));
         target.classList.add('col-fx-disintegrate');
         wrapTextNodesForDisintegrate(target);
         var n = assignDisintegrateOrderBottomUp(target);
         if (n > maxChars) maxChars = n;
-        var area = Math.max(1, target.clientWidth * target.clientHeight);
-        var count = Math.max(48, Math.min(110, Math.round(area / 3200)));
+        var area = Math.max(1, Math.min(target.clientWidth * target.clientHeight, window.innerWidth * window.innerHeight));
+        var count = Math.max(mobile ? 64 : 48, Math.min(mobile ? 120 : 110, Math.round(area / (mobile ? 2600 : 3200))));
         spawnDisintegrateParticles(target, count);
+        if (mobile) {
+          var layer = spawnDisintegrateParticles(target, Math.max(56, Math.round(count * 0.7)), { viewport: true });
+          if (layer) viewportLayers.push(layer);
+        }
         void target.offsetWidth;
         target.classList.add('is-running');
       });
@@ -6168,7 +6251,19 @@
       /* 約 3 秒一輪：由下往上錯開 + 粒子飄散後，列表再浮現 */
       var waitMs = Math.min(3100, Math.max(2800, 1850 + maxChars * 52));
       return new Promise(function (resolve) {
-        window.setTimeout(resolve, waitMs);
+        window.setTimeout(function () {
+          viewportLayers.forEach(function (layer) {
+            if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+          });
+          unlocked.forEach(function (node) {
+            node.classList.remove('col-fx-dis-clip-unlock');
+          });
+          /* 清掉 host 上的動畫 class，避免 opacity:0 殘留讓詳情／列表空白 */
+          targets.forEach(function (target) {
+            target.classList.remove('is-running', 'col-fx-disintegrate');
+          });
+          resolve();
+        }, waitMs);
       });
     }
 
@@ -8653,6 +8748,7 @@
         html: '確定刪除牌組「<strong>' + escapeHtml(src.name) + '</strong>」？我的卡冊不會受影響。',
         onOk: function () {
           deckDisintegrateBusy = true;
+          var mobileDelete = !isDeckDesktopLayout();
           requireDeckAuth()
             .then(function () {
               return playDeckDisintegrate(deckId);
@@ -8663,6 +8759,11 @@
               return persistDecksAndRender({ requireAuth: true, deckId: deckId });
             })
             .then(function () {
+              /* 手機詳情單頁刪除後回到封面列表，其餘牌組進場浮現 */
+              if (mobileDelete) {
+                showDeckListPane({ skipHistory: true });
+                if (deckListEl) applyEnterStagger(deckListEl, '.col-deck-card');
+              }
               setStatus('已刪除牌組「' + src.name + '」', 'is-ok');
             })
             .catch(function (err) {
