@@ -2167,17 +2167,6 @@
         color: #e5e7eb;
       }
     }
-    @media (max-width: 991px) {
-      .col-deckbox .col-deck-actions {
-        background: rgba(255, 255, 255, 0.78);
-        border-color: rgba(26, 46, 36, 0.1);
-      }
-      [data-theme="dark"] .col-deckbox .col-deck-actions {
-        background: rgba(0, 0, 0, 0.22);
-        border-color: rgba(255, 255, 255, 0.1);
-      }
-    }
-
     .col-deck-toolbar {
       display: grid;
       gap: 0.7rem;
@@ -2521,14 +2510,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .col-deck-meta-short {
-      color: #fecaca;
-      font-weight: 800;
-    }
-    .col-deck-meta-ok {
-      color: #bbf7d0;
-      font-weight: 700;
-    }
     .col-deck-empty {
       max-width: 26rem;
       margin-left: auto;
@@ -2704,46 +2685,6 @@
       line-height: 1.3;
     }
     [data-theme="dark"] .col-deck-warn { color: #f87171; }
-    /* 手機：封面下方精簡圖示列（詳情面板僅桌面顯示） */
-    .col-deck-actions {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.2rem;
-      margin-top: 0.4rem;
-      padding: 0.15rem;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(26, 46, 36, 0.08);
-    }
-    [data-theme="dark"] .col-deck-actions {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    .col-deck-actions button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 2rem;
-      border: 0;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--deckbox-muted, var(--col-muted));
-      font-size: 0.85rem;
-      padding: 0.25rem;
-      cursor: pointer;
-    }
-    .col-deck-actions button span { display: none; }
-    .col-deck-actions button:hover,
-    .col-deck-actions button:focus-visible {
-      background: var(--col-accent-soft);
-      color: var(--col-accent);
-      outline: none;
-    }
-    .col-deck-actions button.is-danger:hover,
-    .col-deck-actions button.is-danger:focus-visible {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
-    }
     @media (prefers-reduced-motion: reduce) {
       .col-deck-cover-art,
       .col-deck-cover-art img,
@@ -2753,11 +2694,212 @@
       }
     }
 
-    /* 桌面主從：左封面牆／右詳情 */
+    /* 主從工作台：桌面左右並排；手機列表 → 詳情單頁推進 */
     .col-deck-workspace[hidden] { display: none !important; }
     .col-deck-workspace { display: block; }
     .col-deck-sidebar-head { display: none; }
     .col-deck-detail { display: none; }
+    .col-deck-detail-back {
+      display: none;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0 0 0.75rem;
+      padding: 0.35rem 0.55rem;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--deckbox-muted, var(--col-muted));
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .col-deck-detail-back:hover,
+    .col-deck-detail-back:focus-visible {
+      background: var(--col-accent-soft);
+      color: var(--col-accent);
+      outline: none;
+    }
+    .col-deck-overflow {
+      position: relative;
+      display: inline-flex;
+    }
+    .col-deck-overflow > summary {
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.2rem;
+      min-height: 2.2rem;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid var(--col-line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--col-ink);
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+    .col-deck-overflow > summary::-webkit-details-marker { display: none; }
+    [data-theme="dark"] .col-deck-overflow > summary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #eef3ee;
+    }
+    .col-deck-overflow-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.3rem);
+      z-index: 8;
+      min-width: 11.5rem;
+      padding: 0.35rem;
+      border: 1px solid var(--col-line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+      display: grid;
+      gap: 0.15rem;
+    }
+    [data-theme="dark"] .col-deck-overflow-menu {
+      background: #1f1f1f;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+    .col-deck-overflow-menu .btn {
+      justify-content: flex-start;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .col-deck-overflow-menu .btn:hover,
+    .col-deck-overflow-menu .btn:focus-visible {
+      background: var(--col-accent-soft);
+    }
+
+    /* 手機：點進詳情時單頁推進 */
+    @media (max-width: 991.98px) {
+      .col-deck-workspace[data-deck-pane="detail"] .col-deck-sidebar {
+        display: none;
+      }
+      .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail {
+        display: block;
+        border: 1px solid var(--col-line);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+        min-height: 70vh;
+      }
+      [data-theme="dark"] .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail-back {
+        display: inline-flex;
+      }
+      .col-deckbox.is-deck-detail .col-deck-chrome {
+        display: none;
+      }
+      .col-deck-detail-head {
+        display: grid;
+        gap: 0.85rem;
+        padding: 0.9rem 1rem 0.75rem;
+        border-bottom: 1px solid var(--col-line);
+      }
+      .col-deck-detail-title-row {
+        display: grid;
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+      }
+      .col-deck-detail-cover .col-deck-cover-art {
+        aspect-ratio: 63 / 88;
+        border-radius: 8px;
+      }
+      .col-deck-detail-cover .col-deck-cover-scrim,
+      .col-deck-detail-cover .col-deck-cover-count,
+      .col-deck-detail-cover .col-deck-cover-short,
+      .col-deck-detail-cover .col-deck-cover-axis {
+        display: none;
+      }
+      .col-deck-detail-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        color: var(--col-ink);
+      }
+      .col-deck-detail-meta {
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        color: var(--col-muted);
+      }
+      .col-deck-detail-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin-top: 0.45rem;
+      }
+      .col-deck-detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-items: center;
+      }
+      .col-deck-detail-body {
+        display: grid;
+        gap: 0.85rem;
+        padding: 0.85rem 1rem 1rem;
+      }
+      .col-deck-detail-aside {
+        display: grid;
+        gap: 0.65rem;
+      }
+      .col-deck-info-card {
+        border: 1px solid var(--col-line);
+        border-radius: 10px;
+        padding: 0.75rem 0.85rem;
+        background: rgba(36, 56, 48, 0.03);
+      }
+      [data-theme="dark"] .col-deck-info-card {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .col-deck-info-card h6 {
+        margin: 0 0 0.45rem;
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: var(--col-ink);
+      }
+      .col-deck-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem;
+      }
+      .col-deck-info-grid strong {
+        display: block;
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        font-size: 0.95rem;
+        color: var(--col-ink);
+      }
+      .col-deck-info-grid span {
+        font-size: 0.72rem;
+        color: var(--col-muted);
+      }
+      .col-deck-detail-main {
+        border: 1px solid var(--col-line);
+        border-radius: 10px;
+        padding: 0.75rem;
+        background: rgba(36, 56, 48, 0.03);
+      }
+      [data-theme="dark"] .col-deck-detail-main {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .col-deck-detail-main-head {
+        display: grid;
+        gap: 0.55rem;
+        margin-bottom: 0.65rem;
+      }
+      .col-deck-detail-main-head h6 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 800;
+      }
+    }
 
     @media (min-width: 992px) {
       .col-deck-toolbar {
@@ -3093,10 +3235,54 @@
     .col-modal-dialog.col-modal-wide {
       width: min(880px, 100%);
     }
+    .col-deck-editor-dialog {
+      width: min(920px, 100%);
+    }
+    @media (max-width: 991.98px) {
+      #colDeckModal .col-deck-editor-dialog {
+        width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
+      #colDeckModal.col-modal {
+        padding: 0;
+      }
+    }
+    .col-deck-editor-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .col-deck-editor-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .col-deck-editor-top-main {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .col-deck-editor-top-main h3 {
+      margin-bottom: 0.35rem;
+    }
+    .col-deck-editor-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+    }
     .col-deck-editor-head {
       display: grid;
       gap: 0.65rem;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.15rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid var(--col-line, rgba(0,0,0,0.08));
+      border-radius: 12px;
+      background: rgba(36, 56, 48, 0.03);
+    }
+    [data-theme="dark"] .col-deck-editor-head {
+      background: rgba(255, 255, 255, 0.04);
     }
     .col-deck-editor-head label {
       display: grid;
@@ -4037,7 +4223,7 @@
                           </div>
                         </div>
 
-                        <div class="col-deck-workspace" id="colDeckWorkspace" hidden>
+                        <div class="col-deck-workspace" id="colDeckWorkspace" data-deck-pane="list" hidden>
                           <aside class="col-deck-sidebar" aria-label="牌組側欄">
                             <div class="col-deck-sidebar-head">
                               <div class="col-deck-sidebar-title">
@@ -4139,18 +4325,42 @@
   </div>
 </div>
 
-<!-- 牌組編輯 -->
+<!-- 牌組編輯：編成＋缺卡單頁 -->
 <div id="colDeckModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deck"></div>
-  <div class="col-modal-dialog col-modal-wide" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
-    <div class="col-modal-body">
-      <h3 id="colDeckTitle">編輯牌組</h3>
-      <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
+  <div class="col-modal-dialog col-modal-wide col-deck-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
+    <div class="col-modal-body col-deck-editor-body">
+      <div class="col-deck-editor-top">
+        <div class="col-deck-editor-top-main">
+          <h3 id="colDeckTitle">編輯牌組</h3>
+          <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
+        </div>
+        <details class="col-deck-overflow" id="colDeckEditorOverflow" hidden>
+          <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>
+          <div class="col-deck-overflow-menu" id="colDeckEditorOverflowMenu"></div>
+        </details>
+      </div>
       <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
+
+      <div class="col-deck-editor-head" id="colDeckEditorMeta">
+        <label for="colDeckNameInput">
+          牌組名稱
+          <input id="colDeckNameInput" type="text" class="form-control" maxlength="40" placeholder="例如：SAO 八橋" autocomplete="off">
+        </label>
+        <label for="colDeckTagsInput">
+          牌組標籤（逗號分隔，選填）
+          <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
+        </label>
+        <label for="colDeckDescInput">
+          牌組描述（選填）
+          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="2" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
+        </label>
+      </div>
+
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckMetaEditBtn">
-          <i class="fas fa-pen mr-1" aria-hidden="true"></i><span id="colDeckMetaEditBtnLabel">名稱／標籤／描述</span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
+          <i class="fas fa-book-open mr-1" aria-hidden="true"></i>從卡冊加入
         </button>
         <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-mobile" id="colDeckRarityToggleBtn" hidden title="將高版本卡號改回普通版（僅草稿，需儲存）">
           <i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i><span id="colDeckRarityToggleBtnLabel">改為普通版</span>
@@ -4176,7 +4386,7 @@
       </div>
       <ul class="col-deck-entry-list" id="colDeckEntryList" aria-label="牌組編成"></ul>
     </div>
-    <div class="col-modal-actions">
+    <div class="col-modal-actions col-deck-editor-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck" id="colDeckCancelBtn">取消</button>
       <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckViewEditBtn" hidden>編輯此牌組</button>
       <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
@@ -4184,31 +4394,17 @@
   </div>
 </div>
 
-<!-- 牌組名稱／標籤 -->
+<!-- 保留空殼供舊 closeModalByName('deckMeta') 安全關閉；欄位已併入編輯單頁 -->
 <div id="colDeckMetaModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckMetaTitle" style="width:min(440px,100%);">
     <div class="col-modal-body">
       <h3 id="colDeckMetaTitle">牌組名稱／標籤／描述</h3>
-      <p class="col-modal-hint" id="colDeckMetaHint">設定此牌組的名稱、標籤與描述。</p>
-      <div class="col-deck-editor-head">
-        <label for="colDeckNameInput">
-          牌組名稱
-          <input id="colDeckNameInput" type="text" class="form-control" maxlength="40" placeholder="例如：SAO 八橋" autocomplete="off">
-        </label>
-        <label for="colDeckTagsInput">
-          牌組標籤（逗號分隔，選填）
-          <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
-        </label>
-        <label for="colDeckDescInput">
-          牌組描述（選填）
-          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="3" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
-        </label>
-      </div>
+      <p class="col-modal-hint" id="colDeckMetaHint">此設定已改在編輯頁頂部直接填寫。</p>
     </div>
     <div class="col-modal-actions">
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckMeta" id="colDeckMetaCancelBtn">取消</button>
-      <button type="button" class="btn btn-primary btn-sm" id="colDeckMetaConfirmBtn">完成</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckMeta" id="colDeckMetaCancelBtn">關閉</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckMetaConfirmBtn" hidden>完成</button>
     </div>
   </div>
 </div>
@@ -5872,12 +6068,8 @@
     }
 
     function syncDeckModalDesc() {
-      if (!deckModalDesc) return;
-      var desc = deckDraft ? normalizeDeckDescription(deckDraft.deckDescription) : '';
-      if (desc) {
-        deckModalDesc.hidden = false;
-        deckModalDesc.textContent = desc;
-      } else {
+      /* 描述已併入編輯頁欄位，不再另顯示摘要列 */
+      if (deckModalDesc) {
         deckModalDesc.hidden = true;
         deckModalDesc.textContent = '';
       }
@@ -5909,46 +6101,61 @@
       return true;
     }
 
-    function openDeckMetaModal() {
-      if (!deckDraft) return;
-      syncDeckMetaInputsFromDraft();
-      var isView = deckEditorMode === 'view';
+    function focusDeckMetaFields() {
       if (deckNameInput) {
-        deckNameInput.readOnly = isView;
-        deckNameInput.disabled = isView;
-      }
-      if (deckTagsInput) {
-        deckTagsInput.readOnly = isView;
-        deckTagsInput.disabled = isView;
-      }
-      if (deckDescInput) {
-        deckDescInput.readOnly = isView;
-        deckDescInput.disabled = isView;
-      }
-      if (deckMetaHint) {
-        deckMetaHint.textContent = isView
-          ? '目前為檢視模式，僅可查看名稱、標籤與描述。'
-          : '設定此牌組的名稱、標籤與描述。';
-      }
-      if (deckMetaConfirmBtn) {
-        deckMetaConfirmBtn.hidden = isView;
-        deckMetaConfirmBtn.textContent = '完成';
-      }
-      if (deckMetaCancelBtn) deckMetaCancelBtn.textContent = isView ? '關閉' : '取消';
-      openModal(deckMetaModal);
-      if (!isView && deckNameInput) {
-        try { deckNameInput.focus(); deckNameInput.select(); } catch (err) { /* ignore */ }
+        try { deckNameInput.focus(); } catch (e) { /* ignore */ }
       }
     }
 
-    function confirmDeckMetaModal() {
-      if (deckEditorMode === 'view') {
-        closeModalByName('deckMeta');
-        return;
+    function setDeckMetaFieldsEditable(editable) {
+      var canEdit = !!editable;
+      [deckNameInput, deckTagsInput, deckDescInput].forEach(function (el) {
+        if (!el) return;
+        el.readOnly = !canEdit;
+        el.disabled = !canEdit;
+      });
+      var pickBtn = document.getElementById('colDeckPickBtn');
+      if (pickBtn) pickBtn.hidden = !canEdit;
+    }
+
+    function syncDeckEditorOverflow() {
+      var overflow = document.getElementById('colDeckEditorOverflow');
+      var menu = document.getElementById('colDeckEditorOverflowMenu');
+      if (!overflow || !menu || !deckDraft) return;
+      var isView = deckEditorMode === 'view';
+      var deckId = deckDraft.id;
+      var highKinds = countDeckHighRarityKinds(deckDraft.cards);
+      var html = '';
+      if (!isView) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-editor-rarity' +
+          (highKinds > 0 ? '' : ' disabled') + ' title="' +
+          (highKinds > 0 ? '將高版本卡號改回普通版（僅草稿，需儲存）' : '此牌組沒有可改回的高版本卡號') + '">' +
+          '<i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i>改為普通版</button>';
       }
+      if (isDecklogOriginDeck(deckDraft)) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-restore-decklog="' +
+          escapeHtml(deckId) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
+          '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-save-as-new="' +
+          escapeHtml(deckId) + '" title="另存一份新的手動牌組，與原 DeckLog 來源脫鉤">' +
+          '<i class="fas fa-copy mr-1" aria-hidden="true"></i>另存新牌組</button>';
+      }
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' +
+        escapeHtml(deckId) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' +
+        escapeHtml(deckId) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
+      menu.innerHTML = html;
+      overflow.hidden = !html;
+    }
+
+    function openDeckMetaModal() {
+      /* 名稱／標籤／描述已併入編輯單頁 */
+      focusDeckMetaFields();
+    }
+
+    function confirmDeckMetaModal() {
       if (!applyDeckMetaFromInputs()) return;
       closeModalByName('deckMeta');
-      setStatus('已更新牌組名稱／標籤／描述（儲存後生效）', 'is-ok');
     }
 
     function ownedQty(cardNumber) {
@@ -6505,10 +6712,11 @@
         deckRarityToggleBtn.title = canConvert
           ? title
           : '此牌組沒有可改回的高版本卡號';
-        deckRarityToggleBtn.hidden = deckEditorMode === 'view';
+        deckRarityToggleBtn.hidden = true; /* 編輯頁改走 overflow */
         deckRarityToggleBtn.disabled = !!deckRarityToggleBusy || !canConvert;
         deckRarityToggleBtn.setAttribute('aria-busy', deckRarityToggleBusy ? 'true' : 'false');
       }
+      syncDeckEditorOverflow();
       if (deckDetailEl) {
         deckDetailEl.querySelectorAll('[data-deck-rarity-toggle-label]').forEach(function (el) {
           el.textContent = label;
@@ -7104,13 +7312,41 @@
       });
     }
 
-    function selectDeck(deckId) {
-      if (!deckId || selectedDeckId === deckId) {
-        if (selectedDeckId === deckId) renderDeckDetail();
-        return;
+    function isDeckDesktopLayout() {
+      return !!(window.matchMedia && window.matchMedia('(min-width: 992px)').matches);
+    }
+
+    function setDeckMobilePane(pane, opts) {
+      opts = opts || {};
+      var next = pane === 'detail' ? 'detail' : 'list';
+      if (deckWorkspaceEl) deckWorkspaceEl.setAttribute('data-deck-pane', next);
+      if (deckSection) deckSection.classList.toggle('is-deck-detail', next === 'detail' && !isDeckDesktopLayout());
+      if (!opts.skipHistory && !isDeckDesktopLayout() && next === 'detail' && selectedDeckId) {
+        try {
+          var cur = history.state;
+          if (!(cur && cur.wsDeckPane === 'detail' && cur.deckId === selectedDeckId)) {
+            history.pushState({ wsDeckPane: 'detail', deckId: selectedDeckId }, '');
+          }
+        } catch (e) { /* ignore */ }
       }
-      selectedDeckId = deckId;
-      deckDetailCardFilter = '';
+    }
+
+    function showDeckListPane(opts) {
+      setDeckMobilePane('list', opts || {});
+    }
+
+    function showDeckDetailPane(opts) {
+      setDeckMobilePane('detail', opts || {});
+    }
+
+    function selectDeck(deckId, opts) {
+      opts = opts || {};
+      if (!deckId) return;
+      var same = selectedDeckId === deckId;
+      if (!same) {
+        selectedDeckId = deckId;
+        deckDetailCardFilter = '';
+      }
       if (deckListEl) {
         deckListEl.querySelectorAll('.col-deck-card').forEach(function (node) {
           var on = node.getAttribute('data-deck-id') === deckId;
@@ -7120,6 +7356,11 @@
         });
       }
       renderDeckDetail();
+      if (!isDeckDesktopLayout() && opts.openDetail !== false) {
+        showDeckDetailPane({ skipHistory: !!opts.skipHistory });
+      } else if (isDeckDesktopLayout()) {
+        showDeckListPane({ skipHistory: true });
+      }
     }
 
     function exportDeckJson(deckId) {
@@ -7211,7 +7452,13 @@
           '</li>';
 
       var short = deckShortage(deck);
+      var detailHighKinds = (deckDraft && deckDraft.id === deck.id)
+        ? countDeckHighRarityKinds(deckDraft.cards)
+        : countDeckHighRarityKinds(deck.cards);
+      var detailDesc = normalizeDeckDescription(deck.deckDescription);
       var html = '';
+      html += '<button type="button" class="col-deck-detail-back" data-deck-back>' +
+        '<i class="fas fa-arrow-left" aria-hidden="true"></i>牌組列表</button>';
       html += '<div class="col-deck-detail-head">';
       html += '  <div class="col-deck-detail-title-row">';
       html += '    <div class="col-deck-detail-cover">' + deckCoverArtHtml(deck) + '</div>';
@@ -7233,43 +7480,10 @@
       html += '  </div>';
       html += '  <div class="col-deck-detail-actions">';
       html += '    <button type="button" class="btn btn-primary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
-      html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
-      html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-view="' + escapeHtml(deck.id) + '"><i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>檢視</button>';
-      html += '    <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
-      html += '  </div>';
-      html += '</div>';
-
-      html += '<div class="col-deck-detail-tabs" role="tablist" aria-label="牌組詳情分頁">';
-      html += '  <button type="button" class="col-deck-detail-tab is-active" aria-selected="true">卡牌列表</button>';
-      html += '</div>';
-
-      html += '<div class="col-deck-detail-body">';
-      html += '  <aside class="col-deck-detail-aside">';
-      html += '    <div class="col-deck-info-card">';
-      html += '      <h6>牌組資訊</h6>';
-      html += '      <div class="col-deck-info-grid">';
-      html += '        <div><strong>' + kinds + '</strong><span>種卡</span></div>';
-      html += '        <div><strong>' + total + '</strong><span>總張數</span></div>';
-      html += '        <div><strong>' + escapeHtml(whenShort) + '</strong><span>更新</span></div>';
-      html += '      </div>';
-      html += '    </div>';
-      html += '    <div class="col-deck-info-card">';
-      html += '      <h6>標籤</h6>';
-      html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
-      var detailDesc = normalizeDeckDescription(deck.deckDescription);
-      if (detailDesc) {
-        html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
-      } else {
-        html += '      <p class="col-deck-detail-desc is-empty">尚未填寫描述</p>';
-      }
-      html += '    </div>';
-      html += '    <div class="col-deck-info-card">';
-      html += '      <h6>快速操作</h6>';
-      html += '      <div class="col-deck-quick-actions">';
-      html += '        <button type="button" class="btn btn-primary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯牌組</button>';
-      var detailHighKinds = (deckDraft && deckDraft.id === deck.id)
-        ? countDeckHighRarityKinds(deckDraft.cards)
-        : countDeckHighRarityKinds(deck.cards);
+      html += '    <details class="col-deck-overflow">';
+      html += '      <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
+      html += '      <div class="col-deck-overflow-menu">';
+      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-desktop" data-deck-rarity-toggle="' +
         escapeHtml(deck.id) + '" title="' +
         (detailHighKinds > 0 ? '將高版本卡號改回普通版（僅草稿，需儲存）' : '此牌組沒有可改回的高版本卡號') + '"' +
@@ -7285,7 +7499,30 @@
       }
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' + escapeHtml(deck.id) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' + escapeHtml(deck.id) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
+      html += '        <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
       html += '      </div>';
+      html += '    </details>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="col-deck-detail-body">';
+      html += '  <aside class="col-deck-detail-aside">';
+      html += '    <div class="col-deck-info-card">';
+      html += '      <h6>牌組資訊</h6>';
+      html += '      <div class="col-deck-info-grid">';
+      html += '        <div><strong>' + kinds + '</strong><span>種卡</span></div>';
+      html += '        <div><strong>' + total + '</strong><span>總張數</span></div>';
+      html += '        <div><strong>' + escapeHtml(whenShort) + '</strong><span>更新</span></div>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="col-deck-info-card">';
+      html += '      <h6>標籤／描述</h6>';
+      html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
+      if (detailDesc) {
+        html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
+      } else {
+        html += '      <p class="col-deck-detail-desc is-empty">尚未填寫描述</p>';
+      }
       html += '    </div>';
       html += '  </aside>';
       html += '  <div class="col-deck-detail-main">';
@@ -7415,6 +7652,7 @@
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
+        showDeckListPane({ skipHistory: true });
         if (deckDetailEl) deckDetailEl.innerHTML = '';
         return;
       }
@@ -7423,6 +7661,7 @@
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
+        showDeckListPane({ skipHistory: true });
         if (deckDetailEl) deckDetailEl.innerHTML = '';
         return;
       }
@@ -7433,6 +7672,9 @@
       }
       if (deckWorkspaceEl) deckWorkspaceEl.hidden = false;
       ensureSelectedDeck(visible);
+      if (isDeckDesktopLayout()) {
+        showDeckListPane({ skipHistory: true });
+      }
 
       var html = '';
       visible.forEach(function (deck) {
@@ -7447,12 +7689,6 @@
           ? deckCxAxisCache[axisFp]
           : null;
         var axisHtml = deckCoverAxisHtml(axisLabel);
-        var shortMeta = short.shortKinds
-          ? '<span class="col-deck-meta-short">缺 ' + short.shortCopies + ' 張（' + short.shortKinds + ' 種）</span>'
-          : '<span class="col-deck-meta-ok">齊全</span>';
-        var shortAria = short.shortKinds
-          ? '，缺 ' + short.shortCopies + ' 張（' + short.shortKinds + ' 種）'
-          : '，齊全';
         var badges = '';
         if (short.shortKinds) {
           badges += '<span class="col-deck-cover-short" title="缺卡 ' + short.shortKinds + ' 種／共缺 ' + short.shortCopies + ' 張">' +
@@ -7462,7 +7698,7 @@
         var scrim =
           '<div class="col-deck-cover-scrim">' +
           '  <h6 class="col-deck-name">' + escapeHtml(deck.name) + '</h6>' +
-          '  <div class="col-deck-meta">' + kinds + ' 種 · ' + shortMeta + ' · ' + escapeHtml(whenShort) + '</div>' +
+          '  <div class="col-deck-meta">' + kinds + ' 種 · ' + escapeHtml(whenShort) + '</div>' +
           axisHtml +
           '</div>';
         html += '<li class="col-deck-card' +
@@ -7471,15 +7707,10 @@
           '" data-deck-id="' + escapeHtml(deck.id) + '">';
         html += '  <button type="button" class="col-deck-cover" data-deck-open="' + escapeHtml(deck.id) +
           '" aria-pressed="' + (selected ? 'true' : 'false') +
-          '" aria-label="' + escapeHtml(deck.name) + '，' + total + ' 張' + shortAria + '">';
+          '" aria-label="' + escapeHtml(deck.name) + '，' + total + ' 張' +
+          (short.shortKinds ? '，缺 ' + short.shortCopies + ' 張' : '') + '">';
         html += deckCoverArtHtml(deck, { inner: badges + scrim });
         html += '  </button>';
-        html += '  <div class="col-deck-actions">';
-        html += '    <button type="button" data-deck-view="' + escapeHtml(deck.id) + '" title="查看" aria-label="查看"><i class="fas fa-eye" aria-hidden="true"></i><span>查看</span></button>';
-        html += '    <button type="button" data-deck-edit="' + escapeHtml(deck.id) + '" title="編輯" aria-label="編輯"><i class="fas fa-pen" aria-hidden="true"></i><span>編輯</span></button>';
-        html += '    <button type="button" data-deck-dup="' + escapeHtml(deck.id) + '" title="複製" aria-label="複製"><i class="fas fa-copy" aria-hidden="true"></i><span>複製</span></button>';
-        html += '    <button type="button" class="is-danger" data-deck-del="' + escapeHtml(deck.id) + '" title="刪除" aria-label="刪除"><i class="fas fa-trash-alt" aria-hidden="true"></i><span>刪除</span></button>';
-        html += '  </div>';
         html += '</li>';
       });
       if (deckListEl) {
@@ -7707,14 +7938,14 @@
       if (deckSaveBtn) deckSaveBtn.hidden = isView;
       if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
-      if (deckMetaEditBtnLabel) {
-        deckMetaEditBtnLabel.textContent = isView ? '名稱／標籤／描述' : '編輯名稱／標籤／描述';
-      }
+      setDeckMetaFieldsEditable(!isView);
       if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView;
+      if (deckRarityToggleBtn) deckRarityToggleBtn.hidden = true; /* 改走 overflow */
       syncDeckModalDesc();
       syncDeckOriginNote();
       syncDeckRarityToggleUi();
       syncDeckFilterBtnUi();
+      syncDeckEditorOverflow();
     }
 
     function updateDeckEditorSummary() {
@@ -7923,7 +8154,7 @@
       openModal(deckModal);
       prefetchDeckRaritySetMaps();
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
-        openDeckMetaModal();
+        focusDeckMetaFields();
       }
     }
 
@@ -8009,13 +8240,13 @@
 
     function saveDeckDraft() {
       if (!deckDraft || deckEditorMode === 'view') return;
-      if (!normalizeText(deckDraft.name) && !applyDeckMetaFromInputs()) {
-        openDeckMetaModal();
+      if (!applyDeckMetaFromInputs()) {
+        focusDeckMetaFields();
         return;
       }
       if (!normalizeText(deckDraft.name)) {
         setStatus('請輸入牌組名稱', 'is-error');
-        openDeckMetaModal();
+        focusDeckMetaFields();
         return;
       }
       deckDraft.cards = normalizeDeckCards(deckDraft.cards);
@@ -8832,15 +9063,17 @@
       });
     }
     function handleDeckActionClick(e) {
+      var backBtn = e.target.closest('[data-deck-back]');
+      if (backBtn) {
+        showDeckListPane({ skipHistory: true, fromBack: true });
+        if (!isDeckDesktopLayout() && history.state && history.state.wsDeckPane === 'detail') {
+          try { history.back(); } catch (errBack) { /* ignore */ }
+        }
+        return;
+      }
       var openBtn = e.target.closest('[data-deck-open]');
       if (openBtn) {
-        var openId = openBtn.getAttribute('data-deck-open');
-        // 桌面：選取右側詳情；手機無詳情面板 → 直接開啟檢視
-        if (window.matchMedia && window.matchMedia('(min-width: 992px)').matches) {
-          selectDeck(openId);
-        } else {
-          openDeckViewer(openId);
-        }
+        selectDeck(openBtn.getAttribute('data-deck-open'));
         return;
       }
       var selectBtn = e.target.closest('[data-deck-select]');
@@ -8850,7 +9083,7 @@
       }
       var viewBtn = e.target.closest('[data-deck-view]');
       if (viewBtn) {
-        openDeckViewer(viewBtn.getAttribute('data-deck-view'));
+        selectDeck(viewBtn.getAttribute('data-deck-view'));
         return;
       }
       var editBtn = e.target.closest('[data-deck-edit]');
@@ -8896,6 +9129,24 @@
     if (deckListEl) {
       bindEl(deckListEl, 'click', handleDeckActionClick);
     }
+    bindEl(window, 'popstate', function (e) {
+      if (isDeckDesktopLayout()) return;
+      var st = e && e.state;
+      if (st && st.wsDeckPane === 'detail' && st.deckId) {
+        selectDeck(st.deckId, { skipHistory: true, openDetail: true });
+        return;
+      }
+      showDeckListPane({ skipHistory: true, fromBack: true });
+    });
+    bindEl(window, 'resize', function () {
+      if (isDeckDesktopLayout()) {
+        if (deckSection) deckSection.classList.remove('is-deck-detail');
+        if (deckWorkspaceEl) deckWorkspaceEl.setAttribute('data-deck-pane', 'list');
+      } else if (selectedDeckId && deckWorkspaceEl &&
+        deckWorkspaceEl.getAttribute('data-deck-pane') === 'detail') {
+        if (deckSection) deckSection.classList.add('is-deck-detail');
+      }
+    });
     function applyDeckCardSortMode(next) {
       deckCardSortMode = normalizeDeckCardSortMode(next);
       syncDeckCardViewControls();
@@ -8979,9 +9230,6 @@
         saveDeckDraft();
       });
     }
-    if (deckMetaEditBtn) {
-      bindEl(deckMetaEditBtn, 'click', openDeckMetaModal);
-    }
     if (deckRarityToggleBtn) {
       bindEl(deckRarityToggleBtn, 'click', function () {
         toggleDeckDraftRarityMode();
@@ -8990,8 +9238,18 @@
     if (deckMetaConfirmBtn) {
       bindEl(deckMetaConfirmBtn, 'click', confirmDeckMetaModal);
     }
+    if (deckModal) {
+      bindEl(deckModal, 'click', function (e) {
+        if (e.target.closest('[data-deck-editor-rarity]')) {
+          toggleDeckDraftRarityMode();
+          syncDeckEditorOverflow();
+          return;
+        }
+        handleDeckActionClick(e);
+      });
+    }
     var deckPickBtn = document.getElementById('colDeckPickBtn');
-    if (deckPickBtn) deckPickBtn.addEventListener('click', openDeckPickModal);
+    if (deckPickBtn) bindEl(deckPickBtn, 'click', openDeckPickModal);
     var deckPickConfirmBtn = document.getElementById('colDeckPickConfirmBtn');
     if (deckPickConfirmBtn) deckPickConfirmBtn.addEventListener('click', confirmDeckPick);
     var deckPickSelectAllBtn = document.getElementById('colDeckPickSelectAllBtn');
