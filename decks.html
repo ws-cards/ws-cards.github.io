@@ -2478,12 +2478,12 @@
       right: 0;
       bottom: 0;
       z-index: 2;
-      padding: 2.1rem 0.55rem 0.55rem;
+      padding: 1.35rem 0.55rem 0.5rem;
       background: linear-gradient(
         180deg,
         transparent 0%,
-        rgba(12, 18, 16, 0.55) 42%,
-        rgba(8, 12, 11, 0.88) 100%
+        rgba(12, 18, 16, 0.22) 38%,
+        rgba(8, 12, 11, 0.78) 100%
       );
       color: #f7f3ea;
       pointer-events: none;
@@ -2749,6 +2749,7 @@
     .col-deck-overflow-menu {
       position: absolute;
       right: 0;
+      left: auto;
       top: calc(100% + 0.3rem);
       z-index: 8;
       min-width: 11.5rem;
@@ -2759,6 +2760,19 @@
       box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
       display: grid;
       gap: 0.15rem;
+    }
+    @media (max-width: 991.98px) {
+      .col-deck-detail-actions {
+        width: 100%;
+      }
+      .col-deck-overflow {
+        margin-left: auto;
+      }
+      .col-deck-overflow-menu {
+        right: 0;
+        left: auto;
+        min-width: 12.5rem;
+      }
     }
     [data-theme="dark"] .col-deck-overflow-menu {
       background: #1f1f1f;
@@ -2933,7 +2947,7 @@
         border: 0;
         border-radius: 0;
         background: transparent;
-        overflow: hidden;
+        overflow: visible;
         position: sticky;
         top: 0.75rem;
         max-height: calc(100vh - 8rem);
@@ -2978,9 +2992,36 @@
       .col-deck-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.85rem 0.75rem;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
         flex: 1 1 auto;
-        padding: 0.15rem 0.15rem 0.35rem 0;
+        /* 預留懸浮抬起／選取描邊空間，避免封面被裁切 */
+        padding: 0.55rem 0.55rem 0.85rem 0.35rem;
+        margin: 0 -0.25rem;
+        scrollbar-width: none;
+        scrollbar-color: transparent transparent;
+      }
+      .col-deck-list::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+      .col-deck-list.is-scrolling {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(47, 107, 79, 0.45) transparent;
+      }
+      .col-deck-list.is-scrolling::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .col-deck-list.is-scrolling::-webkit-scrollbar-thumb {
+        background: rgba(47, 107, 79, 0.45);
+        border-radius: 999px;
+      }
+      [data-theme="dark"] .col-deck-list.is-scrolling {
+        scrollbar-color: rgba(63, 143, 107, 0.5) transparent;
+      }
+      [data-theme="dark"] .col-deck-list.is-scrolling::-webkit-scrollbar-thumb {
+        background: rgba(63, 143, 107, 0.5);
       }
       .col-deck-actions { display: none; }
       .col-deck-name { font-size: 0.8rem; }
@@ -3708,7 +3749,8 @@
        Motion Library 適配（kittenjam-motion-library）
        取材：#113 光暈邊框、#112/#220 浮起淡化、#205 彈窗、
              #104 依序浮現、#243 分段滑塊、#234 漣漪、#147 數量步進、
-             #232 立體按壓、#118 toast 彈入、#5 粒子消散（刪除牌組）
+             #232 立體按壓、#118 toast 彈入、#5 粒子消散（刪除牌組）、
+             #267 點圖放大燈箱（檢視／編輯卡面）
        ========================================================= */
     .col-modal-backdrop {
       opacity: 0;
@@ -4012,7 +4054,7 @@
       overflow: visible !important;
     }
     .col-fx-disintegrate.is-running {
-      animation: colFxDisHost 2.95s cubic-bezier(0.22, 0.8, 0.28, 1) both;
+      animation: colFxDisHost 1.65s cubic-bezier(0.22, 0.8, 0.28, 1) both;
     }
     .col-fx-disintegrate.is-running::after {
       content: '';
@@ -4028,7 +4070,7 @@
         transparent 72%
       );
       opacity: 0;
-      animation: colFxDisSweep 2.95s ease-in both;
+      animation: colFxDisSweep 1.65s ease-in both;
     }
     /* 手機詳情為透明底，消散時補實底才看得清飄散 */
     @media (max-width: 991.98px) {
@@ -4061,7 +4103,7 @@
       display: inline-block;
       white-space: pre;
       will-change: transform, filter, opacity;
-      animation: colFxDisChar 1.9s cubic-bezier(0.22, 0.8, 0.28, 1) calc(var(--dis-i, 0) * 0.062s) both;
+      animation: colFxDisChar 1.05s cubic-bezier(0.22, 0.8, 0.28, 1) calc(var(--dis-i, 0) * 0.032s) both;
     }
     .col-fx-dis-layer {
       position: absolute;
@@ -4078,7 +4120,7 @@
       background: var(--col-accent);
       opacity: 0;
       pointer-events: none;
-      animation: colFxDisParticle 2.35s ease-out calc(var(--dis-delay, 0s)) both;
+      animation: colFxDisParticle 1.35s ease-out calc(var(--dis-delay, 0s)) both;
     }
     .col-fx-dis-particle.is-ink { background: var(--col-ink); }
     .col-fx-dis-particle.is-muted { background: var(--col-muted); }
@@ -4154,6 +4196,68 @@
       }
     }
 
+    /* #267 點圖放大燈箱 Lightbox Zoom（檢視／編輯卡面） */
+    .col-deck-entry-art {
+      cursor: zoom-in;
+    }
+    .col-lb-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1290;
+      background: rgba(15, 23, 22, 0.62);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+    }
+    [data-theme="dark"] .col-lb-backdrop {
+      background: rgba(0, 0, 0, 0.72);
+    }
+    .col-lb-backdrop.is-on {
+      opacity: 1;
+      pointer-events: auto;
+      cursor: zoom-out;
+    }
+    .col-lb-spacer {
+      flex: 0 0 auto;
+      border-radius: 8px;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .col-deck-entry-art.is-lightbox {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(78vw, 22rem);
+      height: auto;
+      aspect-ratio: 63 / 88;
+      max-height: min(82vh, 32rem);
+      z-index: 1305;
+      margin: 0;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: zoom-out;
+      box-shadow:
+        0 22px 48px rgba(8, 12, 11, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+    .col-deck-entry-art.is-lightbox::before { display: none; }
+    .col-deck-entry-art.is-lightbox .col-deck-qty-badge,
+    .col-deck-entry-art.is-lightbox .col-deck-owned-badge,
+    .col-deck-entry-art.is-lightbox .col-deck-short-badge,
+    .col-deck-entry-art.is-lightbox .col-deck-remove-btn,
+    .col-deck-entry-art.is-lightbox .col-tile-placeholder {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .col-deck-entry-art.is-lightbox img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .col-modal.is-open .col-modal-dialog,
       .col-fx-enter,
@@ -4170,6 +4274,9 @@
       .col-fx-dis-char,
       .col-fx-dis-particle {
         animation: none !important;
+      }
+      .col-lb-backdrop {
+        transition: none !important;
       }
       .col-modal-backdrop,
       .col-binder-page .col-tile-art,
@@ -4221,6 +4328,8 @@
 <div class="wrapper">
 
   <div data-navbar data-page-title="我的牌組"></div>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -6162,7 +6271,7 @@
         /* 往右上飄散 */
         p.style.setProperty('--dx', (10 + Math.random() * 54) + 'px');
         p.style.setProperty('--dy', (-14 - Math.random() * 58) + 'px');
-        p.style.setProperty('--dis-delay', (Math.random() * 0.65) + 's');
+        p.style.setProperty('--dis-delay', (Math.random() * 0.35) + 's');
         layer.appendChild(p);
       }
       if (opts.viewport) {
@@ -6248,8 +6357,8 @@
         target.classList.add('is-running');
       });
 
-      /* 約 3 秒一輪：由下往上錯開 + 粒子飄散後，列表再浮現 */
-      var waitMs = Math.min(3100, Math.max(2800, 1850 + maxChars * 52));
+      /* 加快節奏：約 1.6–1.8 秒完成消散後列表再浮現 */
+      var waitMs = Math.min(1800, Math.max(1450, 1050 + maxChars * 28));
       return new Promise(function (resolve) {
         window.setTimeout(function () {
           viewportLayers.forEach(function (layer) {
@@ -6265,6 +6374,135 @@
           resolve();
         }, waitMs);
       });
+    }
+
+    /* #267 點圖放大燈箱 */
+    var lightboxArt = null;
+    var lightboxSpacer = null;
+    var lightboxBusy = false;
+    var lightboxBackdrop = null;
+
+    function ensureLightboxBackdrop() {
+      if (lightboxBackdrop) return lightboxBackdrop;
+      lightboxBackdrop = document.createElement('div');
+      lightboxBackdrop.className = 'col-lb-backdrop';
+      lightboxBackdrop.setAttribute('aria-hidden', 'true');
+      bindEl(lightboxBackdrop, 'click', function () {
+        closeCardLightbox();
+      });
+      document.body.appendChild(lightboxBackdrop);
+      return lightboxBackdrop;
+    }
+
+    function gsapFlipReady() {
+      return !!(window.gsap && window.Flip);
+    }
+
+    function closeCardLightbox(force) {
+      if (!lightboxArt) return;
+      if (lightboxBusy && !force) return;
+      var art = lightboxArt;
+      var spacer = lightboxSpacer;
+      var bd = ensureLightboxBackdrop();
+      lightboxBusy = true;
+      bd.classList.remove('is-on');
+
+      function restoreDom() {
+        art.classList.remove('is-lightbox');
+        if (spacer && spacer.parentNode) spacer.parentNode.removeChild(spacer);
+        lightboxArt = null;
+        lightboxSpacer = null;
+      }
+
+      if (force || prefersReducedMotion() || !gsapFlipReady()) {
+        if (window.gsap) gsap.killTweensOf(art);
+        restoreDom();
+        lightboxBusy = false;
+        return;
+      }
+      var state = Flip.getState(art);
+      restoreDom();
+      Flip.from(state, {
+        duration: 0.5,
+        ease: 'power2.inOut',
+        absolute: true,
+        onComplete: function () {
+          lightboxBusy = false;
+        }
+      });
+    }
+
+    function openCardLightbox(art) {
+      if (!art) return;
+      if (lightboxArt === art) {
+        closeCardLightbox();
+        return;
+      }
+      if (lightboxArt) closeCardLightbox(true);
+      lightboxBusy = false;
+
+      var bd = ensureLightboxBackdrop();
+      var rect = art.getBoundingClientRect();
+      var spacer = document.createElement('div');
+      spacer.className = 'col-lb-spacer';
+      spacer.style.width = Math.max(1, rect.width) + 'px';
+      spacer.style.height = Math.max(1, rect.height) + 'px';
+      if (art.parentNode) art.parentNode.insertBefore(spacer, art.nextSibling);
+      lightboxArt = art;
+      lightboxSpacer = spacer;
+      lightboxBusy = true;
+
+      if (prefersReducedMotion() || !gsapFlipReady()) {
+        art.classList.add('is-lightbox');
+        bd.classList.add('is-on');
+        lightboxBusy = false;
+        return;
+      }
+      var state = Flip.getState(art);
+      art.classList.add('is-lightbox');
+      bd.classList.add('is-on');
+      Flip.from(state, {
+        duration: 0.55,
+        ease: 'power2.inOut',
+        absolute: true,
+        onComplete: function () {
+          lightboxBusy = false;
+        }
+      });
+    }
+
+    function toggleCardLightbox(art) {
+      if (!art) return;
+      if (lightboxArt === art) closeCardLightbox();
+      else openCardLightbox(art);
+    }
+
+    function bindDeckCardLightbox() {
+      try {
+        if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
+      } catch (eReg) { /* ignore */ }
+      /* 點大圖本身也可關閉（capture，避免被其他 handler 吃掉） */
+      document.addEventListener('click', function (e) {
+        if (!lightboxArt) return;
+        if (e.target.closest('.col-deck-entry-art.is-lightbox')) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeCardLightbox();
+        }
+      }, true);
+    }
+
+    function bindDeckListScrollbarAutohide() {
+      if (!deckListEl) return;
+      var hideTimer = null;
+      function markScrolling() {
+        deckListEl.classList.add('is-scrolling');
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(function () {
+          deckListEl.classList.remove('is-scrolling');
+        }, 900);
+      }
+      bindEl(deckListEl, 'scroll', markScrolling, { passive: true });
     }
 
     var spotActiveTile = null;
@@ -8755,14 +8993,20 @@
             })
             .then(function () {
               allDecks = allDecks.filter(function (d) { return d.id !== deckId; });
-              if (selectedDeckId === deckId) selectedDeckId = null;
+              /* 刪除後補上列表第一筆為選取，避免詳情／側欄空缺 */
+              var remaining = getVisibleDecks();
+              selectedDeckId = remaining.length ? remaining[0].id : null;
+              deckDetailCardFilter = '';
               return persistDecksAndRender({ requireAuth: true, deckId: deckId });
             })
             .then(function () {
-              /* 手機詳情單頁刪除後回到封面列表，其餘牌組進場浮現 */
               if (mobileDelete) {
+                /* 手機：先回封面列表並讓其餘牌組進場浮現 */
                 showDeckListPane({ skipHistory: true });
                 if (deckListEl) applyEnterStagger(deckListEl, '.col-deck-card');
+              } else if (selectedDeckId) {
+                /* 桌面：明確選取第一筆並刷新詳情 */
+                selectDeck(selectedDeckId, { skipHistory: true, openDetail: false });
               }
               setStatus('已刪除牌組「' + src.name + '」', 'is-ok');
             })
@@ -9264,6 +9508,8 @@
       syncDeckFilterBtnUi();
     }
     bindCollectionRipples();
+    bindDeckCardLightbox();
+    bindDeckListScrollbarAutohide();
 
     bindEl(document.getElementById('colSelectVisibleBtn'), 'click', function () {
       getVisibleItems().forEach(function (item) {
@@ -9425,6 +9671,15 @@
       });
     }
     function handleDeckActionClick(e) {
+      var artHit = e.target.closest('.col-deck-entry-art');
+      if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
+        var artImg = artHit.querySelector('img.is-loaded, img');
+        if (artImg && !artImg.classList.contains('is-broken')) {
+          e.preventDefault();
+          toggleCardLightbox(artHit);
+          return;
+        }
+      }
       var backBtn = e.target.closest('[data-deck-back]');
       if (backBtn) {
         showDeckListPane({ skipHistory: true, fromBack: true });
@@ -9648,6 +9903,15 @@
     }
     if (deckEntryList) {
       bindEl(deckEntryList, 'click', function (e) {
+        var artHit = e.target.closest('.col-deck-entry-art');
+        if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
+          var artImg = artHit.querySelector('img.is-loaded, img');
+          if (artImg && !artImg.classList.contains('is-broken')) {
+            e.preventDefault();
+            toggleCardLightbox(artHit);
+            return;
+          }
+        }
         var dec = e.target.closest('[data-deck-qty-dec]');
         if (dec) {
           changeDeckDraftQty(dec.getAttribute('data-deck-qty-dec'), -1);
@@ -9690,6 +9954,10 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
+      if (lightboxArt) {
+        closeCardLightbox(true);
+        return;
+      }
       if (confirmModal && confirmModal.classList.contains('is-open')) {
         closeModalByName('confirm');
         return;
