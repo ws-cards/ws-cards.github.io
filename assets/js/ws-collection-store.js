@@ -59,6 +59,46 @@
     return false;
   }
 
+  function readJson(key, fallback) {
+    try {
+      var raw = global.localStorage.getItem(key);
+      if (!raw) return fallback;
+      var parsed = JSON.parse(raw);
+      return parsed == null ? fallback : parsed;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function writeJson(key, value) {
+    try {
+      global.localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** 由卡冊陣列建立 cardNumber → quantity map（牌組缺卡／持有量用） */
+  function ownedQtyMap(items) {
+    var map = Object.create(null);
+    (Array.isArray(items) ? items : []).forEach(function (item) {
+      if (!item || !item.cardNumber) return;
+      var key = String(item.cardNumber).trim();
+      if (!key) return;
+      var qty = Number(item.quantity);
+      map[key] = (!isFinite(qty) || qty < 0) ? 0 : qty;
+    });
+    return map;
+  }
+
+  function ownedQty(items, cardNumber) {
+    if (!cardNumber) return 0;
+    var map = ownedQtyMap(items);
+    var key = String(cardNumber).trim();
+    return map[key] || 0;
+  }
+
   global.WsCollectionStore = {
     STORAGE_KEY: STORAGE_KEY,
     DECKS_KEY: DECKS_KEY,
@@ -69,6 +109,10 @@
     decksUrl: decksUrl,
     rememberView: rememberView,
     readRememberedView: readRememberedView,
-    maybeRedirectLegacyDeckView: maybeRedirectLegacyDeckView
+    maybeRedirectLegacyDeckView: maybeRedirectLegacyDeckView,
+    readJson: readJson,
+    writeJson: writeJson,
+    ownedQtyMap: ownedQtyMap,
+    ownedQty: ownedQty
   };
 })(typeof window !== 'undefined' ? window : this);
