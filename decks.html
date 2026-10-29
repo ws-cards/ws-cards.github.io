@@ -3750,8 +3750,51 @@
        取材：#113 光暈邊框、#112/#220 浮起淡化、#205 彈窗、
              #104 依序浮現、#243 分段滑塊、#234 漣漪、#147 數量步進、
              #232 立體按壓、#118 toast 彈入、#5 粒子消散（刪除牌組）、
-             #267 點圖放大燈箱（檢視／編輯卡面）
+             #267 點圖放大燈箱（檢視／編輯卡面）、
+             #228 閃爍星空（牌組頁背景）
        ========================================================= */
+
+    /* #228 閃爍星空：fixed Canvas 鋪在內容後方 */
+    .col-twinkle-sky {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+    body.collection-page.has-twinkle-sky > .wrapper {
+      position: relative;
+      z-index: 1;
+    }
+    html:has(body.collection-page.has-twinkle-sky),
+    body.collection-page.has-twinkle-sky {
+      background: transparent !important;
+    }
+    /* 淺色主題：標題／說明直接壓在夜空上，改用紙色／柔和色保持可讀 */
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deckbox-title {
+      color: var(--deckbox-paper);
+      text-shadow: 0 1px 18px color-mix(in srgb, var(--binder-ink-deep) 55%, transparent);
+    }
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deckbox-kicker {
+      color: color-mix(in srgb, var(--deckbox-paper) 72%, var(--deckbox-accent));
+    }
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deckbox-lid {
+      border-bottom-color: color-mix(in srgb, var(--deckbox-paper) 18%, transparent);
+    }
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deck-empty-title {
+      color: var(--deckbox-paper);
+    }
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deck-empty-text,
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deck-empty-hint,
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-focus-hint {
+      color: color-mix(in srgb, var(--deckbox-paper) 70%, var(--deckbox-muted));
+    }
+    html[data-theme="light"] body.collection-page.has-twinkle-sky .col-deck-sidebar-count,
+    html[data-theme="light"] body.collection-page.has-twinkle-sky #colDeckCountLabel {
+      color: color-mix(in srgb, var(--deckbox-paper) 78%, var(--deckbox-muted));
+    }
     .col-modal-backdrop {
       opacity: 0;
       -webkit-backdrop-filter: blur(0);
@@ -4295,6 +4338,8 @@
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed collection-page">
+<!-- #228 閃爍星空：牌組頁背景 Canvas（pointer-events:none） -->
+<canvas id="colTwinkleSky" class="col-twinkle-sky" aria-hidden="true"></canvas>
 <!-- 全頁載入進度 overlay（百分比）；內容就緒後由 WsPageLoader.complete 關閉 -->
 <div id="wsPageLoader" class="ws-page-loader" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-busy="true" aria-label="頁面載入中">
   <div class="ws-page-loader-panel">
@@ -6173,6 +6218,262 @@
         return false;
       }
     }
+
+    /* #228 閃爍星空 Twinkling Sky：夜空＋星星閃爍＋流星＋視差 */
+    (function initTwinklingSky() {
+      var canvas = document.getElementById('colTwinkleSky');
+      if (!canvas || !canvas.getContext) return;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      var STAR_COUNT = 220;
+      var PARALLAX = 0.04;
+      var LERP = 0.06;
+      var stars = [];
+      var shooting = null;
+      var nextMeteor = 1.2;
+      var ox = 0;
+      var oy = 0;
+      var mx = 0.5;
+      var my = 0.5;
+      var pointerIn = false;
+      var raf = 0;
+      var lastT = 0;
+      var W = 0;
+      var H = 0;
+      var dpr = 1;
+      var colors = { deep: [12, 23, 40], accent: [176, 138, 58], star: [255, 255, 255] };
+      var reduced = prefersReducedMotion();
+      var running = false;
+
+      function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+      function rnd(a, b) { return a + Math.random() * (b - a); }
+
+      function parseCssColor(raw) {
+        if (!raw) return null;
+        var s = String(raw).trim();
+        if (!s) return null;
+        var m = s.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (m) {
+          var h = m[1];
+          if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+          return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+        }
+        m = s.match(/^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/i);
+        if (m) return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3])];
+        return null;
+      }
+
+      function luminance(rgb) {
+        return (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+      }
+
+      function sampleThemeColors() {
+        var root = stageEl || document.documentElement;
+        var cs = getComputedStyle(root);
+        var deep = parseCssColor(cs.getPropertyValue('--binder-ink-deep'))
+          || parseCssColor(cs.getPropertyValue('--deckbox-shell'))
+          || colors.deep;
+        var accent = parseCssColor(cs.getPropertyValue('--deckbox-accent')) || colors.accent;
+        var paper = parseCssColor(cs.getPropertyValue('--deckbox-paper'));
+        var ink = parseCssColor(cs.getPropertyValue('--deckbox-ink'));
+        var star = paper && luminance(paper) > 0.55 ? paper
+          : (ink && luminance(ink) > 0.55 ? ink : [238, 243, 238]);
+        // 夜空再壓暗一階，避免淺色主題的殼色不夠深
+        deep = [
+          Math.round(deep[0] * 0.55),
+          Math.round(deep[1] * 0.55),
+          Math.round(deep[2] * 0.62)
+        ];
+        colors = { deep: deep, accent: accent, star: star };
+      }
+
+      function seedStars() {
+        stars = [];
+        for (var i = 0; i < STAR_COUNT; i++) {
+          stars.push({
+            x: rnd(0, W),
+            y: rnd(0, H),
+            r: rnd(0.3, 1.5),
+            z: rnd(0.2, 1),
+            p: rnd(0, Math.PI * 2),
+            f: rnd(0.6, 2.4)
+          });
+        }
+      }
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = Math.max(1, window.innerWidth);
+        H = Math.max(1, window.innerHeight);
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        seedStars();
+        shooting = null;
+        nextMeteor = rnd(1.2, 2.8);
+      }
+
+      function rgba(rgb, a) {
+        return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      }
+
+      function paint(t, dt) {
+        var deep = colors.deep;
+        var acc = colors.accent;
+        var starRgb = colors.star;
+
+        ctx.fillStyle = rgba(deep, 1);
+        ctx.fillRect(0, 0, W, H);
+        var g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, rgba(deep, 1));
+        g.addColorStop(1, rgba(acc, 0.18));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        var tx = pointerIn ? (mx - 0.5) * -W * PARALLAX : 0;
+        var ty = pointerIn ? (my - 0.5) * -H * PARALLAX : 0;
+        ox += (tx - ox) * LERP;
+        oy += (ty - oy) * LERP;
+
+        for (var i = 0; i < stars.length; i++) {
+          var p = stars[i];
+          var a = reduced
+            ? (0.35 + 0.45 * p.z)
+            : (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * p.f + p.p)));
+          var X = (p.x + ox * p.z + W) % W;
+          var Y = (p.y + oy * p.z + H) % H;
+          var rad = p.r * (0.7 + p.z * 0.6);
+          ctx.fillStyle = rgba(starRgb, a * p.z);
+          ctx.beginPath();
+          ctx.arc(X, Y, rad, 0, Math.PI * 2);
+          ctx.fill();
+          if (!reduced && p.r > 1.35 && a > 0.9) {
+            ctx.strokeStyle = rgba(starRgb, (a - 0.9) * 4 * p.z);
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(X - p.r * 4, Y);
+            ctx.lineTo(X + p.r * 4, Y);
+            ctx.moveTo(X, Y - p.r * 4);
+            ctx.lineTo(X, Y + p.r * 4);
+            ctx.stroke();
+          }
+        }
+
+        if (!reduced) {
+          nextMeteor -= dt;
+          if (!shooting && nextMeteor < 0) {
+            shooting = { x: rnd(W * 0.2, W), y: rnd(0, H * 0.4), l: 0 };
+          }
+          if (shooting) {
+            var q = shooting;
+            q.l += dt * 1.6;
+            var L = W * 0.22;
+            var px = q.x - q.l * W * 0.5;
+            var py = q.y + q.l * W * 0.25;
+            var gr = ctx.createLinearGradient(px, py, px + L, py - L / 2);
+            gr.addColorStop(0, rgba(acc, Math.max(0, 1 - q.l)));
+            gr.addColorStop(1, rgba(starRgb, 0));
+            ctx.strokeStyle = gr;
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px + L, py - L / 2);
+            ctx.stroke();
+            if (q.l > 1) {
+              shooting = null;
+              nextMeteor = rnd(1.5, 3.5);
+            }
+          }
+        }
+      }
+
+      function frame(now) {
+        if (!running) return;
+        var t = now * 0.001;
+        var dt = lastT ? clamp((now - lastT) * 0.001, 0, 0.05) : 0.016;
+        lastT = now;
+        paint(t, dt);
+        if (reduced) {
+          running = false;
+          raf = 0;
+          return;
+        }
+        raf = requestAnimationFrame(frame);
+      }
+
+      function start() {
+        if (running) return;
+        running = true;
+        lastT = 0;
+        raf = requestAnimationFrame(frame);
+      }
+
+      function stop() {
+        running = false;
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+      }
+
+      function onMove(e) {
+        pointerIn = true;
+        mx = clamp(e.clientX / Math.max(1, W), 0, 1);
+        my = clamp(e.clientY / Math.max(1, H), 0, 1);
+      }
+
+      function onLeave() {
+        pointerIn = false;
+      }
+
+      function onTheme() {
+        sampleThemeColors();
+        if (reduced) paint(0, 0);
+      }
+
+      document.body.classList.add('has-twinkle-sky');
+      sampleThemeColors();
+      resize();
+      start();
+
+      window.addEventListener('resize', function () {
+        sampleThemeColors();
+        resize();
+        if (reduced) paint(0, 0);
+        else if (!running) start();
+      }, { passive: true });
+      window.addEventListener('mousemove', onMove, { passive: true });
+      window.addEventListener('mouseleave', onLeave, { passive: true });
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop();
+        else {
+          sampleThemeColors();
+          start();
+        }
+      });
+
+      try {
+        var mo = new MutationObserver(onTheme);
+        mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      } catch (e) { /* ignore */ }
+
+      try {
+        var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        var onMq = function () {
+          reduced = prefersReducedMotion();
+          shooting = null;
+          if (reduced) {
+            stop();
+            paint(0, 0);
+          } else {
+            start();
+          }
+        };
+        if (mq.addEventListener) mq.addEventListener('change', onMq);
+        else if (mq.addListener) mq.addListener(onMq);
+      } catch (e2) { /* ignore */ }
+    })();
 
     function applyEnterStagger(root, selector) {
       if (!root || prefersReducedMotion()) return;
