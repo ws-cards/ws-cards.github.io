@@ -1883,25 +1883,18 @@
     }
 
     /* 牌盒：淺色紙感鼠尾草；深色維持深綠牌盒 */
+    /* 牌組工作台：去掉大牌盒殼層，讓封面格成為視覺主體（與卡冊 binder 拉開） */
     .col-deckbox-shell {
-      border-radius: 18px;
-      overflow: hidden;
-      background:
-        linear-gradient(145deg, rgba(166, 124, 45, 0.1), transparent 42%),
-        linear-gradient(180deg, var(--deckbox-lid), var(--deckbox-shell));
-      box-shadow:
-        0 14px 32px rgba(26, 46, 36, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.65);
+      border-radius: 0;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
       color: var(--deckbox-ink);
-      border: 1px solid rgba(26, 46, 36, 0.08);
+      border: 0;
     }
     [data-theme="dark"] .col-deckbox-shell {
-      background:
-        linear-gradient(145deg, rgba(212, 162, 76, 0.14), transparent 40%),
-        linear-gradient(180deg, var(--deckbox-lid), var(--deckbox-shell));
-      box-shadow:
-        0 18px 40px rgba(20, 32, 26, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      background: transparent;
+      box-shadow: none;
       border-color: transparent;
     }
     .col-deckbox-lid {
@@ -1910,17 +1903,14 @@
       align-items: flex-end;
       justify-content: space-between;
       gap: 0.75rem 1rem;
-      padding: 1.15rem 1.2rem 1rem;
+      padding: 0.15rem 0 0.9rem;
+      margin-bottom: 0.85rem;
       border-bottom: 1px solid rgba(26, 46, 36, 0.1);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent),
-        var(--deckbox-lid);
+      background: transparent;
     }
     [data-theme="dark"] .col-deckbox-lid {
-      border-bottom-color: rgba(212, 162, 76, 0.28);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
-        var(--deckbox-lid);
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+      background: transparent;
     }
     .col-deckbox-kicker {
       margin: 0 0 0.2rem;
@@ -1956,15 +1946,11 @@
       background: rgba(212, 162, 76, 0.12);
     }
     .col-deckbox-body {
-      padding: 1rem 1.1rem 1.2rem;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 30%),
-        var(--deckbox-well);
+      padding: 0;
+      background: transparent;
     }
     [data-theme="dark"] .col-deckbox-body {
-      background:
-        linear-gradient(180deg, rgba(245, 247, 244, 0.06), transparent 28%),
-        var(--deckbox-well);
+      background: transparent;
     }
     .col-deckbox .col-shell {
       --col-accent: #2f6b4f;
@@ -2066,18 +2052,24 @@
     .col-deckbox .col-deck-stat strong { color: var(--deckbox-ink); }
     .col-deckbox .col-deck-stat i { color: var(--deckbox-accent); }
     @media (min-width: 992px) {
-      /* 淺色模式：牌盒內側欄／詳情為紙面淺底，重設文字變數避免沿用外殼淺字色 */
+      /* 桌面主從：側欄透明讓封面浮起；詳情只留一層輕表面 */
       .col-deckbox .col-deck-sidebar,
       .col-deckbox .col-deck-detail {
         --col-ink: #1f2937;
         --col-muted: #6b7280;
-        --col-line: #d7e0d9;
+        --col-line: rgba(26, 46, 36, 0.1);
         --col-accent: #2f6b4f;
         --col-accent-soft: rgba(47, 107, 79, 0.12);
-        background: #fff;
-        border: 1px solid rgba(20, 32, 26, 0.1);
         color: #1f2937;
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+        box-shadow: none;
+      }
+      .col-deckbox .col-deck-sidebar {
+        background: transparent;
+        border: 0;
+      }
+      .col-deckbox .col-deck-detail {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(26, 46, 36, 0.08);
       }
       [data-theme="dark"] .col-deckbox .col-deck-sidebar,
       [data-theme="dark"] .col-deckbox .col-deck-detail {
@@ -2086,10 +2078,16 @@
         --col-line: rgba(255, 255, 255, 0.12);
         --col-accent: #3f8f6b;
         --col-accent-soft: rgba(63, 143, 107, 0.16);
-        background: var(--deckbox-paper);
-        border-color: rgba(255, 255, 255, 0.1);
         color: #e5e7eb;
         box-shadow: none;
+      }
+      [data-theme="dark"] .col-deckbox .col-deck-sidebar {
+        background: transparent;
+        border: 0;
+      }
+      [data-theme="dark"] .col-deckbox .col-deck-detail {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.1);
       }
       .col-deckbox .col-deck-sidebar-title,
       .col-deckbox .col-deck-detail-title,
@@ -2133,19 +2131,24 @@
         box-shadow: none;
       }
       .col-deckbox .col-deck-info-card {
-        background: rgba(47, 107, 79, 0.06);
-        border: 1px solid rgba(47, 107, 79, 0.1);
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
       }
       [data-theme="dark"] .col-deckbox .col-deck-info-card {
-        background: rgba(63, 143, 107, 0.08);
-        border-color: rgba(255, 255, 255, 0.08);
+        background: transparent;
+        border: 0;
       }
       .col-deckbox .col-deck-detail-main {
-        background: #f8faf8;
-        border-color: var(--col-line);
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
       }
       [data-theme="dark"] .col-deckbox .col-deck-detail-main {
         background: transparent;
+        border: 0;
       }
       .col-deckbox .col-deck-detail-card-search .form-control {
         background: #fff;
@@ -2342,19 +2345,19 @@
       .col-deck-stat:nth-child(2) { justify-content: flex-end; }
     }
 
-    /* 牌組封面牆：TCG 圖片優先（卡面為主、資訊當角標／疊字） */
+    /* 牌組封面牆：卡面為導向（維持封面格，不改緊湊列） */
     .col-deck-list {
       list-style: none;
       margin: 0;
-      padding: 0.15rem 0 0;
+      padding: 0.1rem 0 0;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.95rem 0.7rem;
+      gap: 1.05rem 0.8rem;
     }
     @media (min-width: 576px) {
       .col-deck-list {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem 0.85rem;
+        gap: 1.15rem 0.95rem;
       }
     }
     .col-deck-card {
@@ -2780,14 +2783,14 @@
       }
       .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail {
         display: block;
-        border: 1px solid var(--col-line);
-        border-radius: 12px;
-        background: #fff;
-        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        overflow: visible;
         min-height: 70vh;
       }
       [data-theme="dark"] .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail {
-        background: rgba(255, 255, 255, 0.04);
+        background: transparent;
       }
       .col-deck-workspace[data-deck-pane="detail"] .col-deck-detail-back {
         display: inline-flex;
@@ -2798,7 +2801,7 @@
       .col-deck-detail-head {
         display: grid;
         gap: 0.85rem;
-        padding: 0.9rem 1rem 0.75rem;
+        padding: 0.15rem 0 0.85rem;
         border-bottom: 1px solid var(--col-line);
       }
       .col-deck-detail-title-row {
@@ -2843,21 +2846,21 @@
       }
       .col-deck-detail-body {
         display: grid;
-        gap: 0.85rem;
-        padding: 0.85rem 1rem 1rem;
+        gap: 1rem;
+        padding: 0.85rem 0 0.25rem;
       }
       .col-deck-detail-aside {
         display: grid;
-        gap: 0.65rem;
+        gap: 0.85rem;
       }
       .col-deck-info-card {
-        border: 1px solid var(--col-line);
-        border-radius: 10px;
-        padding: 0.75rem 0.85rem;
-        background: rgba(36, 56, 48, 0.03);
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
       }
       [data-theme="dark"] .col-deck-info-card {
-        background: rgba(255, 255, 255, 0.04);
+        background: transparent;
       }
       .col-deck-info-card h6 {
         margin: 0 0 0.45rem;
@@ -2881,13 +2884,13 @@
         color: var(--col-muted);
       }
       .col-deck-detail-main {
-        border: 1px solid var(--col-line);
-        border-radius: 10px;
-        padding: 0.75rem;
-        background: rgba(36, 56, 48, 0.03);
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
       }
       [data-theme="dark"] .col-deck-detail-main {
-        background: rgba(255, 255, 255, 0.03);
+        background: transparent;
       }
       .col-deck-detail-main-head {
         display: grid;
@@ -2927,9 +2930,9 @@
         align-items: start;
       }
       .col-deck-sidebar {
-        border: 1px solid var(--col-line);
-        border-radius: 12px;
-        background: #fff;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
         overflow: hidden;
         position: sticky;
         top: 0.75rem;
@@ -2938,15 +2941,15 @@
         flex-direction: column;
       }
       [data-theme="dark"] .col-deck-sidebar {
-        background: rgba(255, 255, 255, 0.04);
+        background: transparent;
       }
       .col-deck-sidebar-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
-        padding: 0.85rem 1rem;
-        border-bottom: 1px solid var(--col-line);
+        padding: 0.15rem 0 0.65rem;
+        border-bottom: 0;
         flex: 0 0 auto;
       }
       .col-deck-sidebar-title {
@@ -2974,10 +2977,10 @@
       }
       .col-deck-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.7rem;
+        gap: 0.85rem 0.75rem;
         overflow: auto;
         flex: 1 1 auto;
-        padding: 0.7rem;
+        padding: 0.15rem 0.15rem 0.35rem 0;
       }
       .col-deck-actions { display: none; }
       .col-deck-name { font-size: 0.8rem; }
@@ -2986,8 +2989,8 @@
       .col-deck-detail {
         display: block;
         border: 1px solid var(--col-line);
-        border-radius: 12px;
-        background: #fff;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
         min-height: 28rem;
         overflow: hidden;
       }
@@ -3015,7 +3018,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.85rem 1rem;
-        padding: 1.1rem 1.2rem 0.9rem;
+        padding: 1rem 1.15rem 0.85rem;
         border-bottom: 1px solid var(--col-line);
       }
       .col-deck-detail-title-row {
@@ -3121,22 +3124,22 @@
       .col-deck-detail-body {
         display: grid;
         grid-template-columns: minmax(200px, 230px) minmax(0, 1fr);
-        gap: 1rem;
-        padding: 1rem 1.1rem 1.15rem;
+        gap: 1.15rem;
+        padding: 1rem 1.15rem 1.15rem;
         align-items: start;
       }
       .col-deck-detail-aside {
         display: grid;
-        gap: 0.75rem;
+        gap: 1rem;
       }
       .col-deck-info-card {
-        border: 1px solid var(--col-line);
-        border-radius: 10px;
-        padding: 0.85rem 0.9rem;
-        background: #fafafa;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
       }
       [data-theme="dark"] .col-deck-info-card {
-        background: rgba(255, 255, 255, 0.03);
+        background: transparent;
       }
       .col-deck-info-card h6 {
         margin: 0 0 0.65rem;
@@ -3175,10 +3178,10 @@
       }
       .col-deck-detail-main {
         min-width: 0;
-        border: 1px solid var(--col-line);
-        border-radius: 10px;
-        padding: 0.85rem 0.9rem 1rem;
-        background: #fff;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
       }
       [data-theme="dark"] .col-deck-detail-main {
         background: transparent;
@@ -4161,7 +4164,7 @@
                 <div class="col-deckbox-shell">
                   <header class="col-deckbox-lid">
                     <div>
-                      <p class="col-deckbox-kicker">Deck Box</p>
+                      <p class="col-deckbox-kicker">Decks</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
                     </div>
                     <div class="col-deckbox-lid-actions">
