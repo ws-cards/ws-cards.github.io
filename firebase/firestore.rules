@@ -49,6 +49,41 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // 牌組分享快照（公開唯讀；不含缺卡／庫存；擁有者可更新或刪除）
+    match /deckShares/{shareId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.shareId == shareId
+        && isNonEmptyString(request.resource.data.shareId, 40)
+        && isNonEmptyString(request.resource.data.sourceDeckId, 80)
+        && isNonEmptyString(request.resource.data.name, 40)
+        && request.resource.data.cards is list
+        && request.resource.data.cards.size() > 0
+        && request.resource.data.cards.size() <= 80
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 20
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.shareId == resource.data.shareId
+        && request.resource.data.sourceDeckId == resource.data.sourceDeckId
+        && isNonEmptyString(request.resource.data.name, 40)
+        && request.resource.data.cards is list
+        && request.resource.data.cards.size() > 0
+        && request.resource.data.cards.size() <= 80
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 20
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if signedIn()
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
     // --- 拍賣（公開競標過程；金流／物流不在站內） ---
     match /auctions/{auctionId} {
       allow read: if true;

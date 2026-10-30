@@ -663,6 +663,50 @@
       color: #718096;
     }
     [data-theme="dark"] .col-modal-hint { color: #a0aec0; }
+    .col-share-url-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: stretch;
+      margin: 0.65rem 0 0.35rem;
+    }
+    .col-share-url-row input {
+      flex: 1 1 12rem;
+      min-width: 0;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.82rem;
+    }
+    .col-share-preview-meta {
+      margin: 0 0 0.55rem;
+      font-size: 0.86rem;
+      opacity: 0.78;
+    }
+    .col-share-preview-list {
+      max-height: min(42vh, 22rem);
+      overflow: auto;
+      margin: 0.35rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .col-share-preview-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid rgba(45, 55, 72, 0.08);
+      font-size: 0.86rem;
+    }
+    [data-theme="dark"] .col-share-preview-list li {
+      border-bottom-color: rgba(233, 231, 225, 0.1);
+    }
+    .col-share-preview-list .col-share-cardno {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.8rem;
+    }
+    .col-share-preview-list .col-share-qty {
+      flex: 0 0 auto;
+      opacity: 0.72;
+    }
     .col-modal-actions {
       display: flex;
       flex-wrap: wrap;
@@ -4823,6 +4867,46 @@
   </div>
 </div>
 
+<!-- 產生／管理牌組分享連結 -->
+<div id="colDeckShareModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckShare"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckShareTitle" style="width:min(480px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colDeckShareTitle">分享連結</h3>
+      <p class="col-modal-hint">產生<strong>唯讀快照</strong>連結給別人預覽與加入。不含缺卡／庫存；之後在本站改編不會自動更新連結內容，可按「更新內容」同步。</p>
+      <p class="col-modal-hint" id="colDeckShareDeckLabel" style="margin:0;"></p>
+      <div class="col-share-url-row">
+        <input id="colDeckShareUrlInput" type="text" class="form-control" readonly autocomplete="off" spellcheck="false" aria-label="分享連結">
+        <button type="button" class="btn btn-primary btn-sm" id="colDeckShareCopyBtn">複製連結</button>
+      </div>
+      <p class="col-modal-hint" id="colDeckShareStatus" role="status" aria-live="polite" style="margin:0.35rem 0 0;"></p>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-danger btn-sm" id="colDeckShareRevokeBtn">停用連結</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckShareRefreshBtn">更新內容</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckShare">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 開啟分享連結時的預覽 -->
+<div id="colDeckShareViewModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckShareView"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckShareViewTitle" style="width:min(480px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colDeckShareViewTitle">分享的牌組</h3>
+      <p class="col-share-preview-meta" id="colDeckShareViewMeta"></p>
+      <p class="col-modal-hint" id="colDeckShareViewDesc" hidden></p>
+      <ul class="col-share-preview-list" id="colDeckShareViewList" aria-label="分享牌組卡表"></ul>
+      <p class="col-modal-hint" id="colDeckShareViewStatus" role="status" aria-live="polite" style="margin:0.55rem 0 0;"></p>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckShareView">關閉</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckShareImportBtn">加入我的牌組</button>
+    </div>
+  </div>
+</div>
+
 <script>
   function toggleCustomDrawer(e) {
     if (e) e.preventDefault();
@@ -5065,6 +5149,22 @@
     var decklogNameInput = document.getElementById('colDecklogNameInput');
     var decklogStatusEl = document.getElementById('colDecklogStatus');
     var decklogConfirmBtn = document.getElementById('colDecklogConfirmBtn');
+    var deckShareModal = document.getElementById('colDeckShareModal');
+    var deckShareDeckLabel = document.getElementById('colDeckShareDeckLabel');
+    var deckShareUrlInput = document.getElementById('colDeckShareUrlInput');
+    var deckShareStatusEl = document.getElementById('colDeckShareStatus');
+    var deckShareCopyBtn = document.getElementById('colDeckShareCopyBtn');
+    var deckShareRefreshBtn = document.getElementById('colDeckShareRefreshBtn');
+    var deckShareRevokeBtn = document.getElementById('colDeckShareRevokeBtn');
+    var deckShareViewModal = document.getElementById('colDeckShareViewModal');
+    var deckShareViewTitle = document.getElementById('colDeckShareViewTitle');
+    var deckShareViewMeta = document.getElementById('colDeckShareViewMeta');
+    var deckShareViewDesc = document.getElementById('colDeckShareViewDesc');
+    var deckShareViewList = document.getElementById('colDeckShareViewList');
+    var deckShareViewStatus = document.getElementById('colDeckShareViewStatus');
+    var deckShareImportBtn = document.getElementById('colDeckShareImportBtn');
+    var shareManageDeckId = null;
+    var pendingShareImport = null;
 
     function setStatus(msg, kind) {
       if (!toastEl || !toastTextEl) return;
@@ -6777,6 +6877,19 @@
         }
         return;
       }
+      if (name === 'deckShare') {
+        closeModal(deckShareModal);
+        shareManageDeckId = null;
+        if (deckShareStatusEl) deckShareStatusEl.textContent = '';
+        return;
+      }
+      if (name === 'deckShareView') {
+        closeModal(deckShareViewModal);
+        pendingShareImport = null;
+        if (deckShareViewStatus) deckShareViewStatus.textContent = '';
+        clearShareQueryFromUrl();
+        return;
+      }
       if (name === 'deckMeta') {
         closeModal(deckMetaModal);
         syncDeckMetaInputsFromDraft();
@@ -6866,6 +6979,8 @@
       }
       html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' +
         escapeHtml(deckId) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share-link="' +
+        escapeHtml(deckId) + '"><i class="fas fa-link mr-1" aria-hidden="true"></i>分享連結</button>';
       html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' +
         escapeHtml(deckId) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       menu.innerHTML = html;
@@ -7109,6 +7224,8 @@
         out.decklogImportFingerprint = normalizeText(deck.decklogImportFingerprint) ||
           deckCardsFingerprint(out.cards);
       }
+      var shareId = normalizeText(deck.shareId).slice(0, 40);
+      if (shareId) out.shareId = shareId;
       return out;
     }
 
@@ -7144,6 +7261,8 @@
           out.decklogDetached = true;
         }
       }
+      var shareId = normalizeText(deck.shareId).slice(0, 40);
+      if (shareId) out.shareId = shareId;
       return out;
     }
 
@@ -8176,6 +8295,351 @@
       }
     }
 
+    function buildDeckShareUrl(shareId) {
+      var id = normalizeText(shareId).slice(0, 40);
+      if (!id) return '';
+      try {
+        var url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        url.pathname = url.pathname.replace(/[^/]+$/, 'decks.html');
+        url.searchParams.set('share', id);
+        return url.toString();
+      } catch (e) {
+        return 'https://ws-cards.cloud/decks.html?share=' + encodeURIComponent(id);
+      }
+    }
+
+    function clearShareQueryFromUrl() {
+      try {
+        if (!window.history || !window.history.replaceState) return;
+        var params = new URLSearchParams(window.location.search || '');
+        if (!params.has('share')) return;
+        params.delete('share');
+        var qs = params.toString();
+        var next = window.location.pathname + (qs ? ('?' + qs) : '') + (window.location.hash || '');
+        window.history.replaceState({}, '', next);
+      } catch (e) { /* ignore */ }
+    }
+
+    function setDeckShareStatus(msg, isError) {
+      if (!deckShareStatusEl) return;
+      deckShareStatusEl.textContent = msg || '';
+      deckShareStatusEl.style.color = isError ? '#c53030' : '';
+    }
+
+    function setDeckShareViewStatus(msg, isError) {
+      if (!deckShareViewStatus) return;
+      deckShareViewStatus.textContent = msg || '';
+      deckShareViewStatus.style.color = isError ? '#c53030' : '';
+    }
+
+    function copyTextToClipboard(text) {
+      text = String(text || '');
+      if (!text) return Promise.reject(new Error('沒有可複製的內容'));
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function (resolve, reject) {
+        try {
+          window.prompt('請手動複製：', text);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }
+
+    function persistDeckShareId(deckId, shareId) {
+      var deck = allDecks.find(function (d) { return d.id === deckId; });
+      if (!deck) return Promise.resolve(false);
+      var next = normalizeText(shareId).slice(0, 40);
+      if (next) deck.shareId = next;
+      else if (Object.prototype.hasOwnProperty.call(deck, 'shareId')) delete deck.shareId;
+      deck.updatedAt = Date.now();
+      return persistDecksAndRender({ requireAuth: true, deckId: deckId });
+    }
+
+    function ensureDeckShareSnapshot(deckId, opts) {
+      opts = opts || {};
+      var deck = allDecks.find(function (d) { return d.id === deckId; });
+      if (!deck) return Promise.reject(new Error('找不到牌組'));
+      if (!(deck.cards || []).length) {
+        return Promise.reject(new Error('牌組尚無卡片，無法分享'));
+      }
+      if (!decksFirebaseReady() || typeof fb.saveDeckShare !== 'function') {
+        return Promise.reject(new Error((fb && fb.reason) || 'Firebase 尚未就緒'));
+      }
+      return requireDeckAuth().then(function () {
+        return fb.saveDeckShare(serializeDeck(deck), {
+          shareId: opts.forceNew ? '' : (deck.shareId || '')
+        });
+      }).then(function (result) {
+        if (!result || !result.shareId) throw new Error('無法產生分享連結');
+        var needPersist = deck.shareId !== result.shareId;
+        deck.shareId = result.shareId;
+        if (!needPersist && !opts.forcePersist) {
+          return result;
+        }
+        return persistDeckShareId(deckId, result.shareId).then(function () {
+          return result;
+        });
+      });
+    }
+
+    function fillDeckShareModal(deck) {
+      if (deckShareDeckLabel) {
+        var total = deckTotalCards(deck);
+        var kinds = (deck.cards || []).length;
+        deckShareDeckLabel.textContent =
+          '「' + (deck.name || '未命名牌組') + '」· ' + kinds + ' 種 / ' + total + ' 張';
+      }
+      if (deckShareUrlInput) {
+        deckShareUrlInput.value = deck.shareId ? buildDeckShareUrl(deck.shareId) : '';
+      }
+    }
+
+    function openDeckShareModal(deckId) {
+      var deck = allDecks.find(function (d) { return d.id === deckId; });
+      if (!deck) return;
+      if (!(deck.cards || []).length) {
+        setStatus('牌組尚無卡片，無法分享', 'is-error');
+        return;
+      }
+      shareManageDeckId = deckId;
+      fillDeckShareModal(deck);
+      setDeckShareStatus(deck.shareId ? '載入既有連結…' : '正在產生分享連結…');
+      openModal(deckShareModal);
+
+      function afterReady(result, reused) {
+        var latest = allDecks.find(function (d) { return d.id === deckId; }) || deck;
+        fillDeckShareModal(latest);
+        if (reused) setDeckShareStatus('已載入分享連結（內容如需同步請按「更新內容」）');
+        else setDeckShareStatus(result && result.created ? '已產生分享連結' : '已載入分享連結');
+        if (deckShareUrlInput) deckShareUrlInput.select();
+      }
+
+      requireDeckAuth()
+        .then(function () {
+          var existing = normalizeText(deck.shareId).slice(0, 40);
+          if (!existing || typeof fb.getDeckShare !== 'function') {
+            return ensureDeckShareSnapshot(deckId).then(function (result) {
+              afterReady(result, false);
+            });
+          }
+          return fb.getDeckShare(existing).then(function (share) {
+            var uid = deckCloudUser && deckCloudUser.uid;
+            if (share && share.ownerUid && uid && share.ownerUid === uid) {
+              afterReady({ shareId: existing, created: false }, true);
+              return;
+            }
+            return ensureDeckShareSnapshot(deckId, { forceNew: true }).then(function (result) {
+              afterReady(result, false);
+            });
+          });
+        })
+        .catch(function (err) {
+          console.error(err);
+          setDeckShareStatus((err && err.message) || '產生分享連結失敗', true);
+        });
+    }
+
+    function refreshDeckShareSnapshot() {
+      if (!shareManageDeckId) return;
+      setDeckShareStatus('正在更新分享內容…');
+      ensureDeckShareSnapshot(shareManageDeckId)
+        .then(function () {
+          var deck = allDecks.find(function (d) { return d.id === shareManageDeckId; });
+          if (deck) fillDeckShareModal(deck);
+          setDeckShareStatus('已更新分享內容（連結不變）');
+          setStatus('分享內容已更新', 'is-ok');
+        })
+        .catch(function (err) {
+          console.error(err);
+          setDeckShareStatus((err && err.message) || '更新失敗', true);
+        });
+    }
+
+    function revokeDeckShareLink() {
+      if (!shareManageDeckId) return;
+      var deck = allDecks.find(function (d) { return d.id === shareManageDeckId; });
+      if (!deck || !deck.shareId) {
+        setDeckShareStatus('目前沒有可停用的連結', true);
+        return;
+      }
+      askConfirm({
+        title: '停用分享連結',
+        okLabel: '確認停用',
+        html: '停用後，既有連結將無法開啟。確定停用「<strong>' +
+          escapeHtml(deck.name || '未命名牌組') + '</strong>」的分享？',
+        onOk: function () {
+          var shareId = deck.shareId;
+          setDeckShareStatus('正在停用…');
+          requireDeckAuth()
+            .then(function () {
+              return fb.deleteDeckShare(shareId);
+            })
+            .then(function () {
+              return persistDeckShareId(shareManageDeckId, '');
+            })
+            .then(function () {
+              var latest = allDecks.find(function (d) { return d.id === shareManageDeckId; });
+              if (latest) fillDeckShareModal(latest);
+              if (deckShareUrlInput) deckShareUrlInput.value = '';
+              setDeckShareStatus('已停用分享連結');
+              setStatus('已停用分享連結', 'is-ok');
+            })
+            .catch(function (err) {
+              console.error(err);
+              setDeckShareStatus((err && err.message) || '停用失敗', true);
+            });
+        }
+      });
+    }
+
+    function copyDeckShareLink() {
+      var url = deckShareUrlInput && deckShareUrlInput.value;
+      if (!url) {
+        setDeckShareStatus('尚無連結可複製', true);
+        return;
+      }
+      copyTextToClipboard(url)
+        .then(function () {
+          setDeckShareStatus('已複製分享連結');
+          setStatus('已複製分享連結', 'is-ok');
+        })
+        .catch(function () {
+          setDeckShareStatus('複製失敗，請手動選取連結', true);
+        });
+    }
+
+    function renderSharedDeckPreview(share) {
+      if (!share) return;
+      if (deckShareViewTitle) {
+        deckShareViewTitle.textContent = share.name || '分享的牌組';
+      }
+      var kinds = (share.cards || []).length;
+      var total = (share.cards || []).reduce(function (sum, c) {
+        return sum + (c.qty || 0);
+      }, 0);
+      if (deckShareViewMeta) {
+        deckShareViewMeta.textContent = kinds + ' 種卡 · ' + total + ' 張（唯讀快照）';
+      }
+      if (deckShareViewDesc) {
+        var desc = normalizeText(share.deckDescription);
+        if (desc) {
+          deckShareViewDesc.hidden = false;
+          deckShareViewDesc.textContent = desc;
+        } else {
+          deckShareViewDesc.hidden = true;
+          deckShareViewDesc.textContent = '';
+        }
+      }
+      if (deckShareViewList) {
+        if (!(share.cards || []).length) {
+          deckShareViewList.innerHTML = '<li class="col-modal-hint" style="margin:0;">此分享沒有卡片</li>';
+        } else {
+          deckShareViewList.innerHTML = (share.cards || []).map(function (c) {
+            var label = escapeHtml(c.cardNumber || '');
+            if (c.cardName) {
+              label += ' <span style="opacity:0.65;">' + escapeHtml(c.cardName) + '</span>';
+            }
+            return '<li><span class="col-share-cardno">' + label +
+              '</span><span class="col-share-qty">×' + (c.qty || 0) + '</span></li>';
+          }).join('');
+        }
+      }
+    }
+
+    function openSharedDeckPreview(share) {
+      pendingShareImport = share;
+      renderSharedDeckPreview(share);
+      setDeckShareViewStatus('可預覽內容；登入後可加入你的牌組。');
+      openModal(deckShareViewModal);
+    }
+
+    function importSharedDeck() {
+      if (!pendingShareImport) return;
+      if (allDecks.length >= MAX_DECKS && deckCloudUser) {
+        setDeckShareViewStatus('牌組數量已達上限（' + MAX_DECKS + '）', true);
+        return;
+      }
+      var share = pendingShareImport;
+      var now = Date.now();
+      var copy = serializeDeck({
+        id: newDeckId(),
+        name: (share.name || '分享牌組').slice(0, 40),
+        tags: share.tags,
+        cards: (share.cards || []).map(function (c) {
+          return {
+            cardNumber: c.cardNumber,
+            qty: c.qty,
+            cardName: c.cardName,
+            level: c.level
+          };
+        }),
+        deckDescription: share.deckDescription,
+        coverCardNumber: share.coverCardNumber,
+        source: 'manual',
+        createdAt: now,
+        updatedAt: now
+      });
+      setDeckShareViewStatus('正在加入牌組…');
+      if (deckShareImportBtn) {
+        deckShareImportBtn.disabled = true;
+        deckShareImportBtn.setAttribute('aria-busy', 'true');
+      }
+      requireDeckAuth()
+        .then(function () {
+          if (allDecks.length >= MAX_DECKS) {
+            throw new Error('牌組數量已達上限（' + MAX_DECKS + '）');
+          }
+          allDecks.unshift(copy);
+          selectedDeckId = copy.id;
+          return persistDecksAndRender({ requireAuth: true, deckId: copy.id });
+        })
+        .then(function () {
+          setDeckShareViewStatus('已加入「' + copy.name + '」');
+          setStatus('已從分享加入牌組「' + copy.name + '」', 'is-ok');
+          clearShareQueryFromUrl();
+          closeModal(deckShareViewModal);
+          pendingShareImport = null;
+          if (selectedDeckId) {
+            selectDeck(selectedDeckId, { openDetail: true });
+          }
+        })
+        .catch(function (err) {
+          console.error(err);
+          setDeckShareViewStatus((err && err.message) || '加入失敗', true);
+        })
+        .then(function () {
+          if (deckShareImportBtn) {
+            deckShareImportBtn.disabled = false;
+            deckShareImportBtn.removeAttribute('aria-busy');
+          }
+        });
+    }
+
+    function ingestShareQuery() {
+      if (!decksFirebaseReady() || typeof fb.getShareIdFromLocation !== 'function') return;
+      var shareId = fb.getShareIdFromLocation();
+      if (!shareId) return;
+      setStatus('正在開啟分享牌組…', 'is-ok');
+      fb.getDeckShare(shareId)
+        .then(function (share) {
+          if (!share || !(share.cards || []).length) {
+            setStatus('分享連結無效或已停用', 'is-error');
+            clearShareQueryFromUrl();
+            return;
+          }
+          openSharedDeckPreview(share);
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '無法載入分享連結', 'is-error');
+        });
+    }
+
     function renderDeckDetail() {
       if (!deckDetailEl) return;
       var deck = selectedDeckId
@@ -8278,6 +8742,7 @@
           '<i class="fas fa-copy mr-1" aria-hidden="true"></i>另存新牌組</button>';
       }
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' + escapeHtml(deck.id) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
+      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share-link="' + escapeHtml(deck.id) + '"><i class="fas fa-link mr-1" aria-hidden="true"></i>分享連結</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' + escapeHtml(deck.id) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       html += '        <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
       html += '      </div>';
@@ -9890,6 +10355,15 @@
         }
       });
     }
+    if (deckShareCopyBtn) bindEl(deckShareCopyBtn, 'click', copyDeckShareLink);
+    if (deckShareRefreshBtn) bindEl(deckShareRefreshBtn, 'click', refreshDeckShareSnapshot);
+    if (deckShareRevokeBtn) bindEl(deckShareRevokeBtn, 'click', revokeDeckShareLink);
+    if (deckShareImportBtn) bindEl(deckShareImportBtn, 'click', importSharedDeck);
+    if (deckShareUrlInput) {
+      bindEl(deckShareUrlInput, 'focus', function () {
+        try { deckShareUrlInput.select(); } catch (e) { /* ignore */ }
+      });
+    }
     if (deckSearchInput) {
       bindEl(deckSearchInput, 'input', function () {
         deckFilterQuery = deckSearchInput.value || '';
@@ -9968,6 +10442,11 @@
       var exportBtn = e.target.closest('[data-deck-export]');
       if (exportBtn) {
         exportDeckJson(exportBtn.getAttribute('data-deck-export'));
+        return;
+      }
+      var shareLinkBtn = e.target.closest('[data-deck-share-link]');
+      if (shareLinkBtn) {
+        openDeckShareModal(shareLinkBtn.getAttribute('data-deck-share-link'));
         return;
       }
       var shareBtn = e.target.closest('[data-deck-share]');
@@ -10213,6 +10692,14 @@
         closeModalByName('decklog');
         return;
       }
+      if (deckShareModal && deckShareModal.classList.contains('is-open')) {
+        closeModalByName('deckShare');
+        return;
+      }
+      if (deckShareViewModal && deckShareViewModal.classList.contains('is-open')) {
+        closeModalByName('deckShareView');
+        return;
+      }
       if (deckModal && deckModal.classList.contains('is-open')) {
         closeModalByName('deck');
         return;
@@ -10271,12 +10758,18 @@
         WsPageLoader.mark('album', allItems.length ? ('持有 ' + allItems.length + ' 種可編成') : '牌組就緒');
       }
       bindDeckAuth();
-      setStatus(
-        allItems.length
-          ? ('牌組頁已就緒（卡冊持有 ' + allItems.length + ' 種）')
-          : '牌組需登入；卡冊尚無卡片時可先到「我的卡冊」轉入',
-        allItems.length ? 'is-ok' : ''
-      );
+      var pendingShareId = (fb && typeof fb.getShareIdFromLocation === 'function')
+        ? fb.getShareIdFromLocation()
+        : '';
+      if (!pendingShareId) {
+        setStatus(
+          allItems.length
+            ? ('牌組頁已就緒（卡冊持有 ' + allItems.length + ' 種）')
+            : '牌組需登入；卡冊尚無卡片時可先到「我的卡冊」轉入',
+          allItems.length ? 'is-ok' : ''
+        );
+      }
+      ingestShareQuery();
     }
   })();
 </script>

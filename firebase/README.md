@@ -50,9 +50,26 @@ auctions/{auctionId}/bids/{bidId}        ← 出價明細（公開讀；登入�
 users/{uid}/auctionActivity/{auctionId}  ← 我的競標索引（賣家／出價者）
   role ("seller"|"bidder"), title, coverImage,
   myHighestAmount?, lastBidAt?, createdAt, updatedAt
+
+users/{uid}/decks/{deckId}               ← 個人牌組（需登入）
+  id, name, tags, cards[], source,
+  deckDescription?, decklogCode?, shareId?, …
+
+deckShares/{shareId}                     ← 牌組分享快照（公開讀；登入可建立）
+  shareId, ownerUid, sourceDeckId,
+  name, tags[], cards[],                 ← 不含 shortQty／缺卡
+  deckDescription?, coverCardNumber?,
+  createdAt, updatedAt
 ```
 
-> 請將最新 `firebase/firestore.rules` 發布到 Console（需允許 `users/{uid}` 本體讀寫，以及 `auctions` 公開讀／登入開標與下標）。
+> 請將最新 `firebase/firestore.rules` 發布到 Console（需允許 `users/{uid}` 本體讀寫、`auctions` 公開讀／登入開標與下標，以及 `deckShares` 公開讀／擁有者寫入）。
+
+### 牌組分享
+
+| 頁面 | 用途 |
+|------|------|
+| `decks.html` | 「分享連結」產生唯讀快照 |
+| `decks.html?share=…` | 開啟分享預覽，可「加入我的牌組」 |
 
 ### 拍賣頁面
 

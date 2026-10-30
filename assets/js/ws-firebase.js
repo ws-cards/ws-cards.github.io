@@ -12,6 +12,7 @@
   var COLLECTION_FAVORITES = "cardFavorites";
   var COLLECTION_DECKS = "decks";
   var COLLECTION_DECKLOG_DATA = "decklogData";
+  var COLLECTION_DECK_SHARES = "deckShares";
   var COLLECTION_AUCTIONS = "auctions";
   var COLLECTION_BIDS = "bids";
   var COLLECTION_AUCTION_ACTIVITY = "auctionActivity";
@@ -54,6 +55,10 @@
 
   function decklogDataCol(db) {
     return db.collection(COLLECTION_DECKLOG_DATA);
+  }
+
+  function deckSharesCol(db) {
+    return db.collection(COLLECTION_DECK_SHARES);
   }
 
   /** 卡號 → Firestore doc id（不可含 /） */
@@ -188,6 +193,11 @@
       findUserDeckByDecklogCode: function () { return Promise.resolve(null); },
       getDecklogData: function () { return Promise.resolve(null); },
       saveDecklogData: function () { return Promise.resolve(false); },
+      makeDeckShareId: function () { return ""; },
+      getShareIdFromLocation: function () { return ""; },
+      getDeckShare: function () { return Promise.resolve(null); },
+      saveDeckShare: function () { return Promise.resolve(null); },
+      deleteDeckShare: function () { return Promise.resolve(false); },
       getAuctionIdFromLocation: function () { return ""; },
       watchAuction: function () { return function () {}; },
       placeBid: function () {
@@ -497,6 +507,10 @@
         var fp = String(data.decklogImportFingerprint || "").trim();
         if (fp) out.decklogImportFingerprint = fp.slice(0, 4000);
       }
+      var shareId = String(data.shareId || "").trim();
+      if (shareId) out.shareId = shareId.slice(0, 40);
+      var cover = String(data.coverCardNumber || "").trim().replace(/\\/g, "/");
+      if (cover) out.coverCardNumber = cover.slice(0, 80);
       return out;
     }
 
@@ -540,6 +554,12 @@
         payload.decklogImportFingerprint = firebase.firestore.FieldValue.delete();
         payload.decklogDetached = firebase.firestore.FieldValue.delete();
       }
+      var shareId = String(deck.shareId || "").trim().slice(0, 40);
+      if (shareId) payload.shareId = shareId;
+      else payload.shareId = firebase.firestore.FieldValue.delete();
+      var cover = String(deck.coverCardNumber || "").trim().replace(/\\/g, "/").slice(0, 80);
+      if (cover) payload.coverCardNumber = cover;
+      else payload.coverCardNumber = firebase.firestore.FieldValue.delete();
       if (typeof deck.createdAt === "number" && isFinite(deck.createdAt)) {
         payload.createdAt = deck.createdAt;
       }
@@ -663,6 +683,169 @@
           payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         }
         return ref.set(payload, { merge: true }).then(function () { return true; });
+      });
+    }
+
+    function makeDeckShareId() {
+      var rand = "";
+      try {
+        if (global.crypto && typeof global.crypto.getRandomValues === "function") {
+          var buf = new Uint8Array(9);
+          global.crypto.getRandomValues(buf);
+          for (var i = 0; i < buf.length; i++) {
+            rand += (buf[i] % 36).toString(36);
+          }
+        }
+      } catch (e) { /* fall through */ }
+      if (!rand || rand.length < 8) {
+        rand = Math.random().toString(36).slice(2, 11) +
+          Math.random().toString(36).slice(2, 6);
+      }
+      return ("ds_" + rand).slice(0, 40);
+    }
+
+    function getShareIdFromLocation(loc) {
+      try {
+        var href = (loc && loc.href) || (global.location && global.location.href) || "";
+        if (!href) return "";
+        var url = new URL(href, "https://ws-cards.cloud");
+        return String(url.searchParams.get("share") || "").trim().slice(0, 40);
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function shareCardsForPublic(cards) {
+      return normalizeDeckCards(cards).map(function (c) {
+        var row = { cardNumber: c.cardNumber, qty: c.qty };
+        if (c.cardName) row.cardName = c.cardName;
+        if (c.level != null) row.level = c.level;
+        return row;
+      });
+    }
+
+    function deckShareFromDoc(docSnap) {
+      if (!docSnap || !docSnap.exists) return null;
+      var data = docSnap.data() || {};
+      var shareId = String(data.shareId || docSnap.id || "").trim();
+      if (!shareId) return null;
+      var name = String(data.name || "").trim() || "未命名牌組";
+      var tags = Array.isArray(data.tags)
+        ? data.tags.map(function (t) { return String(t || "").trim(); }).filter(Boolean)
+        : [];
+      var out = {
+        shareId: shareId.slice(0, 40),
+        ownerUid: String(data.ownerUid || "").trim(),
+        sourceDeckId: String(data.sourceDeckId || "").trim().slice(0, 80),
+        name: name.slice(0, 40),
+        tags: tags.slice(0, 20),
+        cards: shareCardsForPublic(data.cards),
+        createdAt: timestampToMillisDeck(data.createdAt) || 0,
+        updatedAt: timestampToMillisDeck(data.updatedAt) || 0
+      };
+      var desc = String(data.deckDescription || "").trim();
+      if (desc) out.deckDescription = desc.slice(0, 200);
+      var cover = String(data.coverCardNumber || "").trim().replace(/\\/g, "/");
+      if (cover) out.coverCardNumber = cover.slice(0, 80);
+      return out;
+    }
+
+    function getDeckShare(shareId) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var id = safeDocId(shareId);
+      if (!id) return Promise.resolve(null);
+      return deckSharesCol(db)
+        .doc(id)
+        .get()
+        .then(function (snap) {
+          return deckShareFromDoc(snap);
+        });
+    }
+
+    /**
+     * 建立或更新公開分享快照。回傳 { shareId, created }。
+     * 不含 shortQty（缺卡為個人資料）。
+     */
+    function saveDeckShare(deck, opts) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      if (!user || !deck || typeof deck !== "object") {
+        return Promise.resolve(null);
+      }
+      opts = opts || {};
+      var sourceDeckId = safeDocId(deck.id || opts.sourceDeckId);
+      var cards = shareCardsForPublic(deck.cards);
+      if (!sourceDeckId || !cards.length) return Promise.resolve(null);
+      if (cards.length > 80) cards = cards.slice(0, 80);
+
+      var existingId = safeDocId(opts.shareId || deck.shareId);
+      var name = String(deck.name || "").trim() || "未命名牌組";
+      var tags = Array.isArray(deck.tags)
+        ? deck.tags.map(function (t) { return String(t || "").trim(); }).filter(Boolean)
+        : [];
+      var desc = String(deck.deckDescription || "").trim().slice(0, 200);
+      var cover = String(deck.coverCardNumber || "").trim().replace(/\\/g, "/").slice(0, 80);
+
+      function writeShare(shareId, isCreate) {
+        var ref = deckSharesCol(db).doc(shareId);
+        var payload = {
+          shareId: shareId,
+          ownerUid: user.uid,
+          sourceDeckId: sourceDeckId,
+          name: name.slice(0, 40),
+          tags: tags.slice(0, 20),
+          cards: cards,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (desc) payload.deckDescription = desc;
+        else if (!isCreate) payload.deckDescription = firebase.firestore.FieldValue.delete();
+        if (cover) payload.coverCardNumber = cover;
+        else if (!isCreate) payload.coverCardNumber = firebase.firestore.FieldValue.delete();
+        if (isCreate) {
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          return ref.set(payload).then(function () {
+            return { shareId: shareId, created: true };
+          });
+        }
+        return ref.set(payload, { merge: true }).then(function () {
+          return { shareId: shareId, created: false };
+        });
+      }
+
+      if (existingId) {
+        return deckSharesCol(db)
+          .doc(existingId)
+          .get()
+          .then(function (snap) {
+            if (snap.exists) {
+              var data = snap.data() || {};
+              if (String(data.ownerUid || "") === user.uid) {
+                return writeShare(existingId, false);
+              }
+            }
+            var freshId = makeDeckShareId();
+            return writeShare(freshId, true);
+          });
+      }
+      return writeShare(makeDeckShareId(), true);
+    }
+
+    function deleteDeckShare(shareId) {
+      var missing = requireDb();
+      if (missing) return missing;
+      var user = auth.currentUser;
+      var id = safeDocId(shareId);
+      if (!user || !id) return Promise.resolve(false);
+      var ref = deckSharesCol(db).doc(id);
+      return ref.get().then(function (snap) {
+        if (!snap.exists) return true;
+        var data = snap.data() || {};
+        if (String(data.ownerUid || "") !== user.uid) {
+          return Promise.reject(new Error("無權停用此分享連結"));
+        }
+        return ref.delete().then(function () { return true; });
       });
     }
 
@@ -1259,6 +1442,11 @@
       findUserDeckByDecklogCode: findUserDeckByDecklogCode,
       getDecklogData: getDecklogData,
       saveDecklogData: saveDecklogData,
+      makeDeckShareId: makeDeckShareId,
+      getShareIdFromLocation: getShareIdFromLocation,
+      getDeckShare: getDeckShare,
+      saveDeckShare: saveDeckShare,
+      deleteDeckShare: deleteDeckShare,
       getAuctionIdFromLocation: getAuctionIdFromLocation,
       watchAuction: watchAuction,
       placeBid: placeBid,
