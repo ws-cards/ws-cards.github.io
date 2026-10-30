@@ -13,14 +13,22 @@
     red: "#dc2626",
     blue: "#2563eb"
   };
+  /** Level 長條圖色（對齊分析頁／附圖風格：青→紫） */
+  var LEVEL_CHART = {
+    0: "#2ec4b6",
+    1: "#5ecfc4",
+    2: "#7eb6e8",
+    3: "#9aa8eb"
+  };
+  var LEVEL_KEYS = [0, 1, 2, 3];
+  /** 舊水平條／CX 標示仍用 */
   var LEVEL_BAR = {
-    0: "#5dade2",
-    1: "#58d68d",
-    2: "#f4d03f",
-    3: "#e74c3c",
+    0: "#2ec4b6",
+    1: "#5ecfc4",
+    2: "#7eb6e8",
+    3: "#9aa8eb",
     cx: "#9b59b6"
   };
-  var LEVEL_ORDER = [0, 1, 2, 3, "cx"];
 
   function normalizeCardNo(cardNo) {
     return String(cardNo || "").trim().replace(/\\/g, "/");
@@ -204,17 +212,18 @@
 
   function sortCardsForGrid(cards) {
     return cards.slice().sort(function (a, b) {
-      var cxA = isCxKind(a.kindClass, a.kindLabel) ? 0 : 1;
-      var cxB = isCxKind(b.kindClass, b.kindLabel) ? 0 : 1;
+      // CX 放到牌組尾端
+      var cxA = isCxKind(a.kindClass, a.kindLabel) ? 1 : 0;
+      var cxB = isCxKind(b.kindClass, b.kindLabel) ? 1 : 0;
       if (cxA !== cxB) return cxA - cxB;
-      if (cxA === 0) {
+      if (cxA === 1) {
         return String(a.cardNo).localeCompare(String(b.cardNo));
       }
       var lvA = parseLevel(a.level);
       var lvB = parseLevel(b.level);
       if (lvA == null) lvA = -1;
       if (lvB == null) lvB = -1;
-      // 高 Level 在前（終盤卡較顯眼），再比卡號
+      // 非 CX：高 Level 在前，再比卡號
       if (lvA !== lvB) return lvB - lvA;
       return String(a.cardNo).localeCompare(String(b.cardNo));
     });
@@ -237,126 +246,332 @@
     return node;
   }
 
-  function buildStatsPanel(stats) {
-    var panel = el("div", {
-      border: "1px solid #d8dde6",
-      borderRadius: "16px",
-      padding: "18px 20px 14px",
+  function niceAxisMax(value) {
+    var n = Math.max(4, Number(value) || 0);
+    var step = n <= 12 ? 2 : n <= 24 ? 4 : n <= 40 ? 5 : 8;
+    return Math.ceil(n / step) * step;
+  }
+
+  function buildLevelBarChart(stats) {
+    var card = el("div", {
+      flex: "1 1 420px",
+      minWidth: "0",
       background: "#fff",
+      border: "1px solid #e5e7eb",
+      borderRadius: "18px",
+      padding: "18px 20px 16px",
+      boxSizing: "border-box",
+      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)"
+    });
+    card.appendChild(el("div", {
+      fontSize: "18px",
+      fontWeight: "800",
+      color: "#111827",
+      marginBottom: "12px"
+    }, { text: "Level 曲線" }));
+
+    var maxLv = 0;
+    LEVEL_KEYS.forEach(function (k) {
+      maxLv = Math.max(maxLv, stats.levelCount[k] || 0);
+    });
+    var axisMax = niceAxisMax(maxLv);
+    var ticks = [];
+    var step = axisMax <= 12 ? 2 : axisMax <= 24 ? 4 : axisMax <= 40 ? 5 : 8;
+    for (var t = axisMax; t >= 0; t -= step) ticks.push(t);
+
+    var chartRow = el("div", {
+      display: "flex",
+      gap: "10px",
+      alignItems: "stretch",
+      height: "210px"
+    });
+
+    var yAxis = el("div", {
+      width: "28px",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      paddingBottom: "28px",
+      fontSize: "12px",
+      fontWeight: "600",
+      color: "#9ca3af",
+      boxSizing: "border-box"
+    });
+    ticks.forEach(function (v) {
+      yAxis.appendChild(el("span", { lineHeight: "1" }, { text: String(v) }));
+    });
+    chartRow.appendChild(yAxis);
+
+    var plot = el("div", {
+      flex: "1",
+      position: "relative",
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "space-around",
+      gap: "18px",
+      padding: "0 8px 0 4px",
+      borderLeft: "1px solid #eef2f7",
       boxSizing: "border-box"
     });
 
-    var top = el("div", {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      gap: "14px",
-      flexWrap: "wrap"
+    // 水平格線
+    ticks.forEach(function (v) {
+      if (v === 0) return;
+      // 格線只對齊長條區（底部留給 Lv 標籤約 36px）
+      var usable = 1 - 36 / 210;
+      var topPct = (1 - v / axisMax) * usable * 100;
+      plot.appendChild(el("div", {
+        position: "absolute",
+        left: "0",
+        right: "0",
+        top: topPct + "%",
+        borderTop: "1px solid #eef2f7",
+        pointerEvents: "none"
+      }));
     });
 
-    var total = el("div", {
-      fontSize: "36px",
+    LEVEL_KEYS.forEach(function (key) {
+      var n = stats.levelCount[key] || 0;
+      var col = el("div", {
+        flex: "1",
+        maxWidth: "88px",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+        zIndex: "1"
+      });
+      var barArea = el("div", {
+        flex: "1 1 auto",
+        width: "100%",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        minHeight: "0"
+      });
+      var barH = axisMax ? (n / axisMax) * 100 : 0;
+      var bar = el("div", {
+        width: "72%",
+        height: Math.max(0, barH) + "%",
+        background: LEVEL_CHART[key],
+        borderRadius: "14px 14px 6px 6px",
+        minHeight: n > 0 ? "6px" : "0"
+      });
+      barArea.appendChild(bar);
+      col.appendChild(barArea);
+      col.appendChild(el("div", {
+        marginTop: "8px",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#4b5563",
+        flex: "0 0 auto"
+      }, { text: "Lv" + key }));
+      col.appendChild(el("div", {
+        fontSize: "12px",
+        fontWeight: "600",
+        color: "#9ca3af",
+        marginTop: "2px",
+        flex: "0 0 auto"
+      }, { text: String(n) }));
+      plot.appendChild(col);
+    });
+    chartRow.appendChild(plot);
+    card.appendChild(chartRow);
+
+    var cxN = stats.levelCount.cx || 0;
+    card.appendChild(el("div", {
+      marginTop: "10px",
+      fontSize: "13px",
+      fontWeight: "600",
+      color: "#6b7280"
+    }, { text: "CX " + cxN + "/8" }));
+
+    return card;
+  }
+
+  function buildColorDonutChart(stats) {
+    var card = el("div", {
+      flex: "1 1 360px",
+      minWidth: "0",
+      background: "#fff",
+      border: "1px solid #e5e7eb",
+      borderRadius: "18px",
+      padding: "18px 20px 16px",
+      boxSizing: "border-box",
+      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "stretch"
+    });
+    card.appendChild(el("div", {
+      fontSize: "18px",
+      fontWeight: "800",
+      color: "#111827",
+      marginBottom: "8px"
+    }, { text: "顏色分布" }));
+
+    var segments = [];
+    var colorTotal = 0;
+    COLOR_ORDER.forEach(function (key) {
+      var n = stats.colorCount[key] || 0;
+      if (!n) return;
+      colorTotal += n;
+      segments.push({ key: key, value: n, color: COLOR_HEX[key], label: COLOR_LABEL[key] });
+    });
+
+    var chartWrap = el("div", {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: "8px 0 4px",
+      flex: "1"
+    });
+
+    var size = 200;
+    var svgNS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.style.display = "block";
+
+    var cx = size / 2;
+    var cy = size / 2;
+    var radius = 68;
+    var stroke = 36;
+    var circumference = 2 * Math.PI * radius;
+
+    // 底環
+    var track = document.createElementNS(svgNS, "circle");
+    track.setAttribute("cx", String(cx));
+    track.setAttribute("cy", String(cy));
+    track.setAttribute("r", String(radius));
+    track.setAttribute("fill", "none");
+    track.setAttribute("stroke", "#f3f4f6");
+    track.setAttribute("stroke-width", String(stroke));
+    svg.appendChild(track);
+
+    if (colorTotal > 0 && segments.length) {
+      var offset = 0;
+      segments.forEach(function (seg) {
+        var len = (seg.value / colorTotal) * circumference;
+        var circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", String(cx));
+        circle.setAttribute("cy", String(cy));
+        circle.setAttribute("r", String(radius));
+        circle.setAttribute("fill", "none");
+        circle.setAttribute("stroke", seg.color);
+        circle.setAttribute("stroke-width", String(stroke));
+        circle.setAttribute("stroke-linecap", "butt");
+        circle.setAttribute(
+          "stroke-dasharray",
+          len.toFixed(3) + " " + Math.max(0, circumference - len).toFixed(3)
+        );
+        circle.setAttribute("stroke-dashoffset", String((-offset).toFixed(3)));
+        circle.setAttribute("transform", "rotate(-90 " + cx + " " + cy + ")");
+        svg.appendChild(circle);
+        offset += len;
+      });
+    }
+
+    // 中心白圓（甜甜圈）
+    var hole = document.createElementNS(svgNS, "circle");
+    hole.setAttribute("cx", String(cx));
+    hole.setAttribute("cy", String(cy));
+    hole.setAttribute("r", String(radius - stroke / 2 - 2));
+    hole.setAttribute("fill", "#ffffff");
+    svg.appendChild(hole);
+
+    chartWrap.appendChild(svg);
+    card.appendChild(chartWrap);
+
+    var legend = el("div", {
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      gap: "8px",
+      marginTop: "8px"
+    });
+    segments.forEach(function (seg) {
+      var pill = el("span", {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "6px 12px",
+        borderRadius: "999px",
+        border: "1px solid #e5e7eb",
+        background: "#fafafa",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#374151"
+      });
+      pill.appendChild(el("span", {
+        width: "10px",
+        height: "10px",
+        borderRadius: "50%",
+        background: seg.color,
+        display: "inline-block"
+      }));
+      pill.appendChild(document.createTextNode(seg.label + " " + seg.value));
+      legend.appendChild(pill);
+    });
+    if (!segments.length) {
+      legend.appendChild(el("span", {
+        fontSize: "13px",
+        color: "#9ca3af"
+      }, { text: "無顏色資料" }));
+    }
+    card.appendChild(legend);
+    return card;
+  }
+
+  function buildStatsPanel(stats) {
+    var panel = el("div", {
+      display: "flex",
+      flexDirection: "column",
+      gap: "14px"
+    });
+
+    var header = el("div", {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      gap: "12px",
+      flexWrap: "wrap"
+    });
+    header.appendChild(el("div", {
+      fontSize: "34px",
       fontWeight: "800",
       letterSpacing: "0.02em",
       color: "#111827",
       lineHeight: "1.1"
-    }, { text: stats.total + " 枚" });
-    top.appendChild(total);
-
-    var colors = el("div", {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "12px 16px",
-      alignItems: "center",
-      fontSize: "16px",
-      fontWeight: "600",
-      color: "#374151"
-    });
-    COLOR_ORDER.forEach(function (key) {
-      var n = stats.colorCount[key] || 0;
-      if (!n) return;
-      var item = el("span", { display: "inline-flex", alignItems: "center", gap: "5px" });
-      item.appendChild(el("span", {
-        width: "12px",
-        height: "12px",
-        borderRadius: "50%",
-        background: COLOR_HEX[key],
-        display: "inline-block"
-      }));
-      item.appendChild(document.createTextNode(COLOR_LABEL[key] + " " + n));
-      colors.appendChild(item);
-    });
-    top.appendChild(colors);
-    panel.appendChild(top);
-
-    var triggerLine = el("div", {
-      marginTop: "10px",
+    }, { text: stats.total + " 枚" }));
+    header.appendChild(el("div", {
       fontSize: "16px",
       fontWeight: "600",
       color: "#4b5563"
     }, {
       text: "トリガー率 " + stats.triggerRate + "%（" + stats.triggerHits + "/" + stats.total + "）"
-    });
-    panel.appendChild(triggerLine);
+    }));
+    panel.appendChild(header);
 
-    var bar = el("div", {
-      marginTop: "12px",
-      height: "14px",
-      borderRadius: "999px",
-      overflow: "hidden",
-      display: "flex",
-      background: "#eef2f7"
-    });
-    LEVEL_ORDER.forEach(function (key) {
-      var n = stats.levelCount[key] || 0;
-      if (!n || !stats.total) return;
-      var seg = el("div", {
-        width: ((n / stats.total) * 100).toFixed(3) + "%",
-        background: LEVEL_BAR[key],
-        height: "100%"
-      });
-      bar.appendChild(seg);
-    });
-    panel.appendChild(bar);
-
-    var legend = el("div", {
-      marginTop: "10px",
+    var charts = el("div", {
       display: "flex",
       flexWrap: "wrap",
-      gap: "10px 16px",
-      fontSize: "14px",
-      fontWeight: "600",
-      color: "#4b5563"
+      gap: "14px",
+      alignItems: "stretch"
     });
-    var legendItems = [
-      { key: 0, label: "Lv 0" },
-      { key: 1, label: "Lv 1" },
-      { key: 2, label: "Lv 2" },
-      { key: 3, label: "Lv 3" },
-      { key: "cx", label: "CX" }
-    ];
-    legendItems.forEach(function (item) {
-      var n = stats.levelCount[item.key] || 0;
-      var row = el("span", { display: "inline-flex", alignItems: "center", gap: "6px" });
-      row.appendChild(el("span", {
-        width: "12px",
-        height: "12px",
-        borderRadius: "3px",
-        background: LEVEL_BAR[item.key],
-        display: "inline-block"
-      }));
-      var suffix = item.key === "cx" ? (" " + n + "/8") : (" " + n);
-      row.appendChild(document.createTextNode(item.label + suffix));
-      legend.appendChild(row);
-    });
-    panel.appendChild(legend);
+    charts.appendChild(buildLevelBarChart(stats));
+    charts.appendChild(buildColorDonutChart(stats));
+    panel.appendChild(charts);
 
     if (stats.cxGroups && stats.cxGroups.length) {
       var cxRow = el("div", {
-        marginTop: "12px",
         display: "flex",
         flexWrap: "wrap",
-        gap: "10px 16px",
+        gap: "8px 14px",
         alignItems: "center"
       });
       stats.cxGroups.forEach(function (g) {
@@ -364,14 +579,14 @@
           display: "inline-flex",
           alignItems: "center",
           gap: "7px",
-          fontSize: "14px",
+          fontSize: "13px",
           fontWeight: "600",
           color: "#374151",
           maxWidth: "100%"
         });
         chip.appendChild(el("span", {
-          width: "14px",
-          height: "14px",
+          width: "12px",
+          height: "12px",
           borderRadius: "3px",
           background: COLOR_HEX[g.colorKey] || LEVEL_BAR.cx,
           display: "inline-block",
@@ -397,13 +612,13 @@
     var isCx = isCxKind(card.kindClass, card.kindLabel);
     var colorKey = normalizeColorKey(card.color);
     var border = COLOR_HEX[colorKey] || "#cbd5e1";
-    // 版面卡面加大；實際輸出再乘 html2canvas scale
+    // 緊密網格：卡面略縮、細框；輸出再乘 html2canvas scale
     var tile = el("div", {
-      width: isCx ? "140px" : "110px",
-      height: isCx ? "100px" : "154px",
-      borderRadius: "8px",
+      width: isCx ? "118px" : "92px",
+      height: isCx ? "84px" : "128px",
+      borderRadius: "5px",
       overflow: "hidden",
-      border: "3px solid " + border,
+      border: "2px solid " + border,
       background: "#f8fafc",
       boxSizing: "border-box",
       flex: "0 0 auto",
@@ -463,10 +678,10 @@
     wrap.appendChild(buildStatsPanel(stats));
 
     var grid = el("div", {
-      marginTop: "20px",
+      marginTop: "16px",
       display: "flex",
       flexWrap: "wrap",
-      gap: "8px",
+      gap: "2px",
       alignContent: "flex-start"
     });
 
