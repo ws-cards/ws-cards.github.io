@@ -240,8 +240,8 @@
   function buildStatsPanel(stats) {
     var panel = el("div", {
       border: "1px solid #d8dde6",
-      borderRadius: "14px",
-      padding: "14px 16px 12px",
+      borderRadius: "16px",
+      padding: "18px 20px 14px",
       background: "#fff",
       boxSizing: "border-box"
     });
@@ -250,12 +250,12 @@
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      gap: "12px",
+      gap: "14px",
       flexWrap: "wrap"
     });
 
     var total = el("div", {
-      fontSize: "28px",
+      fontSize: "36px",
       fontWeight: "800",
       letterSpacing: "0.02em",
       color: "#111827",
@@ -266,9 +266,9 @@
     var colors = el("div", {
       display: "flex",
       flexWrap: "wrap",
-      gap: "10px 14px",
+      gap: "12px 16px",
       alignItems: "center",
-      fontSize: "13px",
+      fontSize: "16px",
       fontWeight: "600",
       color: "#374151"
     });
@@ -277,8 +277,8 @@
       if (!n) return;
       var item = el("span", { display: "inline-flex", alignItems: "center", gap: "5px" });
       item.appendChild(el("span", {
-        width: "10px",
-        height: "10px",
+        width: "12px",
+        height: "12px",
         borderRadius: "50%",
         background: COLOR_HEX[key],
         display: "inline-block"
@@ -290,8 +290,8 @@
     panel.appendChild(top);
 
     var triggerLine = el("div", {
-      marginTop: "8px",
-      fontSize: "13px",
+      marginTop: "10px",
+      fontSize: "16px",
       fontWeight: "600",
       color: "#4b5563"
     }, {
@@ -300,8 +300,8 @@
     panel.appendChild(triggerLine);
 
     var bar = el("div", {
-      marginTop: "10px",
-      height: "12px",
+      marginTop: "12px",
+      height: "14px",
       borderRadius: "999px",
       overflow: "hidden",
       display: "flex",
@@ -320,11 +320,11 @@
     panel.appendChild(bar);
 
     var legend = el("div", {
-      marginTop: "8px",
+      marginTop: "10px",
       display: "flex",
       flexWrap: "wrap",
-      gap: "8px 14px",
-      fontSize: "12px",
+      gap: "10px 16px",
+      fontSize: "14px",
       fontWeight: "600",
       color: "#4b5563"
     });
@@ -337,10 +337,10 @@
     ];
     legendItems.forEach(function (item) {
       var n = stats.levelCount[item.key] || 0;
-      var row = el("span", { display: "inline-flex", alignItems: "center", gap: "5px" });
+      var row = el("span", { display: "inline-flex", alignItems: "center", gap: "6px" });
       row.appendChild(el("span", {
-        width: "10px",
-        height: "10px",
+        width: "12px",
+        height: "12px",
         borderRadius: "3px",
         background: LEVEL_BAR[item.key],
         display: "inline-block"
@@ -353,25 +353,25 @@
 
     if (stats.cxGroups && stats.cxGroups.length) {
       var cxRow = el("div", {
-        marginTop: "10px",
+        marginTop: "12px",
         display: "flex",
         flexWrap: "wrap",
-        gap: "8px 14px",
+        gap: "10px 16px",
         alignItems: "center"
       });
       stats.cxGroups.forEach(function (g) {
         var chip = el("span", {
           display: "inline-flex",
           alignItems: "center",
-          gap: "6px",
-          fontSize: "12px",
+          gap: "7px",
+          fontSize: "14px",
           fontWeight: "600",
           color: "#374151",
           maxWidth: "100%"
         });
         chip.appendChild(el("span", {
-          width: "12px",
-          height: "12px",
+          width: "14px",
+          height: "14px",
           borderRadius: "3px",
           background: COLOR_HEX[g.colorKey] || LEVEL_BAR.cx,
           display: "inline-block",
@@ -383,7 +383,7 @@
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          maxWidth: "280px"
+          maxWidth: "360px"
         }, { text: label }));
         cxRow.appendChild(chip);
       });
@@ -397,12 +397,13 @@
     var isCx = isCxKind(card.kindClass, card.kindLabel);
     var colorKey = normalizeColorKey(card.color);
     var border = COLOR_HEX[colorKey] || "#cbd5e1";
+    // 版面卡面加大；實際輸出再乘 html2canvas scale
     var tile = el("div", {
-      width: isCx ? "92px" : "72px",
-      height: isCx ? "66px" : "100px",
-      borderRadius: "6px",
+      width: isCx ? "140px" : "110px",
+      height: isCx ? "100px" : "154px",
+      borderRadius: "8px",
       overflow: "hidden",
-      border: "2px solid " + border,
+      border: "3px solid " + border,
       background: "#f8fafc",
       boxSizing: "border-box",
       flex: "0 0 auto",
@@ -439,8 +440,8 @@
   function buildExportDom(deck, cards, stats) {
     var wrap = el("div", {
       background: "#ffffff",
-      padding: "22px 22px 18px",
-      width: "980px",
+      padding: "28px 28px 22px",
+      width: "1480px",
       boxSizing: "border-box",
       fontFamily: '"Zen Kaku Gothic New","Noto Sans TC",system-ui,sans-serif',
       color: "#111827",
@@ -451,10 +452,10 @@
     });
 
     wrap.appendChild(el("div", {
-      fontSize: "30px",
+      fontSize: "40px",
       fontWeight: "800",
       letterSpacing: "0.04em",
-      marginBottom: "12px",
+      marginBottom: "16px",
       lineHeight: "1.25",
       wordBreak: "break-word"
     }, { text: (deck && deck.name) || "未命名牌組" }));
@@ -462,10 +463,10 @@
     wrap.appendChild(buildStatsPanel(stats));
 
     var grid = el("div", {
-      marginTop: "16px",
+      marginTop: "20px",
       display: "flex",
       flexWrap: "wrap",
-      gap: "6px",
+      gap: "8px",
       alignContent: "flex-start"
     });
 
@@ -478,8 +479,8 @@
     wrap.appendChild(grid);
 
     wrap.appendChild(el("div", {
-      marginTop: "14px",
-      fontSize: "11px",
+      marginTop: "18px",
+      fontSize: "13px",
       color: "#9ca3af",
       textAlign: "right",
       letterSpacing: "0.08em"
@@ -570,7 +571,8 @@
           backgroundColor: "#ffffff",
           useCORS: true,
           allowTaint: false,
-          scale: opts.scale || 2,
+          // 預設 3x：版面約 1480px → 輸出寬約 4440px
+          scale: opts.scale || 3,
           logging: false,
           imageTimeout: 15000
         }).then(function (canvas) {
