@@ -3091,6 +3091,32 @@
       overflow: hidden;
       background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
     }
+    /* CX／橫向卡：維持 88:63，不硬裁成直向 */
+    .col-deck-entry.is-cx .col-deck-entry-art,
+    .col-deck-entry-art.is-landscape {
+      aspect-ratio: 88 / 63;
+    }
+    .col-deck-cover-art.is-landscape {
+      aspect-ratio: 88 / 63;
+    }
+    .col-deck-cover-art.is-landscape img {
+      object-position: center;
+    }
+    /* 卡冊 binder：適配格維持直槽，橫圖改 contain 顯示全卡 */
+    .col-tile-art.is-landscape img {
+      object-fit: contain;
+      object-position: center;
+    }
+    .col-binder-page .col-tile.is-cx .col-tile-art,
+    .col-binder-groups .col-tile.is-cx .col-tile-art,
+    .col-binder-page .col-tile-art.is-landscape,
+    .col-binder-groups .col-tile-art.is-landscape {
+      aspect-ratio: 88 / 63;
+    }
+    .col-binder-stage.is-fit .col-binder-page .col-tile-art.is-landscape,
+    .col-binder-stage.is-fit .col-binder-page .col-tile.is-cx .col-tile-art {
+      aspect-ratio: auto;
+    }
     [data-theme="dark"] .col-deck-entry-art {
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     }
@@ -4279,7 +4305,7 @@
     var deckColorFilter = '';
     var filterTarget = 'album'; /* album | deck */
     var filterDraft = { level: '', rare: '', color: '' };
-    var albumMetaCache = {}; /* cardNumber → { level, color, rarity } */
+    var albumMetaCache = {}; /* cardNumber → { level, color, rarity, kindClass } */
     var albumMetaEnriching = false;
     var albumMetaPendingRender = false;
     var sortMode = 'newest';
@@ -4796,6 +4822,32 @@
       return null;
     }
 
+    function resolveCardKindClass(row) {
+      if (!row) return '';
+      if (row.kindClass) return String(row.kindClass);
+      if (window.WsDecklog && typeof window.WsDecklog.classifyKind === 'function') {
+        return window.WsDecklog.classifyKind(row) || '';
+      }
+      var label = String(row.kindLabel || row.cardType || '');
+      if (/cx|名場|climax|クライ/i.test(label)) return 'CX';
+      return '';
+    }
+
+    function isCxCardNumber(cardNumber) {
+      var meta = getAlbumMeta(cardNumber);
+      return !!(meta && meta.kindClass === 'CX');
+    }
+
+    function applyLandscapeFromImage(img) {
+      if (!img || !(img.naturalWidth > 0) || !(img.naturalHeight > 0)) return;
+      if (img.naturalWidth <= img.naturalHeight) return;
+      var art = img.closest('.col-deck-entry-art, .col-deck-cover-art, .col-tile-art');
+      if (!art) return;
+      art.classList.add('is-landscape');
+      var entry = art.closest('.col-deck-entry, .col-tile');
+      if (entry) entry.classList.add('is-cx');
+    }
+
     function countActiveAttrFilters() {
       var n = 0;
       if (levelFilter !== '') n += 1;
@@ -4994,25 +5046,29 @@
       albumMetaEnriching = true;
       window.WsDecklog.enrichCards(need)
         .then(function (enriched) {
+          var sawCx = false;
           (enriched || []).forEach(function (row) {
             var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
             if (!key) return;
             var lv = parseCardLevel(row.level != null ? row.level : row.cardlevel);
+            var kindClass = resolveCardKindClass(row);
             albumMetaCache[key] = {
               level: lv,
               color: normalizeText(row.color || row.cardcolor || ''),
-              rarity: normalizeText(row.rarity || row.cardrare || row.cardRare || '')
+              rarity: normalizeText(row.rarity || row.cardrare || row.cardRare || ''),
+              kindClass: kindClass
             };
+            if (kindClass === 'CX') sawCx = true;
             if (lv != null) deckLevelCache[key] = lv;
           });
           need.forEach(function (row) {
             var key = normalizeText(row.cardNo).replace(/\\/g, '/');
             if (key && !Object.prototype.hasOwnProperty.call(albumMetaCache, key)) {
-              albumMetaCache[key] = { level: null, color: '', rarity: '' };
+              albumMetaCache[key] = { level: null, color: '', rarity: '', kindClass: '' };
             }
           });
           albumMetaEnriching = false;
-          var shouldRender = albumMetaPendingRender ||
+          var shouldRender = albumMetaPendingRender || sawCx ||
             levelFilter !== '' || !!colorFilter ||
             deckLevelFilter !== '' || !!deckColorFilter;
           albumMetaPendingRender = false;
@@ -5022,7 +5078,7 @@
           console.error(err);
           need.forEach(function (row) {
             var key = normalizeText(row.cardNo).replace(/\\/g, '/');
-            if (key) albumMetaCache[key] = { level: null, color: '', rarity: '' };
+            if (key) albumMetaCache[key] = { level: null, color: '', rarity: '', kindClass: '' };
           });
           albumMetaEnriching = false;
           albumMetaPendingRender = false;
@@ -5485,14 +5541,17 @@
           }).join('')
         : '<span class="col-meta">尚無標籤</span>';
       var qty = item.quantity || 1;
+      var isCx = isCxCardNumber(cardNumber);
 
       var html = '';
-      html += '<li class="col-tile' + (checked ? ' is-checked' : '') + '" data-card-number="' + escapeHtml(cardNumber) + '">';
+      html += '<li class="col-tile' + (checked ? ' is-checked' : '') + (isCx ? ' is-cx' : '') +
+        '" data-card-number="' + escapeHtml(cardNumber) + '">';
       html += '  <label class="col-check">';
       html += '    <input type="checkbox" data-check="' + escapeHtml(cardNumber) + '"' + (checked ? ' checked' : '') + ' aria-label="勾選 ' + escapeHtml(cardNumber) + '">';
       html += '  </label>';
       html += '  <div class="col-tile-body">';
-      html += '    <div class="col-tile-art" data-toggle-check="' + escapeHtml(cardNumber) + '">';
+      html += '    <div class="col-tile-art' + (isCx ? ' is-landscape' : '') +
+        '" data-toggle-check="' + escapeHtml(cardNumber) + '">';
       html += '      <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
       if (urls.primary) {
         html += '      <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(cardNumber) + '" loading="lazy" decoding="async">';
@@ -7284,6 +7343,9 @@
       syncDeckCardViewControls();
       syncDeckFilterBtnUi();
       revealLoadedDeckImages(deckDetailEl);
+      ensureCardMetaForEntries(deck.cards || [], function (shouldRender) {
+        if (shouldRender) renderDeckDetail();
+      });
     }
 
     function renderDeckList() {
@@ -7674,11 +7736,13 @@
       var owned = entryOwnedQty(entry);
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
+      var isCx = isCxCardNumber(entry.cardNumber);
       var urls = buildCardImageUrls(entry.cardNumber);
       var html = '';
-      html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '"' +
+      html += '<li class="col-deck-entry' + (isShort ? ' is-short' : '') + (isCx ? ' is-cx' : '') +
+        '" data-deck-entry="' + escapeHtml(entry.cardNumber) + '"' +
         (isShort ? ' title="缺卡 ' + escapeHtml(String(shortQty)) + ' 張"' : '') + '>';
-      html += '  <div class="col-deck-entry-art">';
+      html += '  <div class="col-deck-entry-art' + (isCx ? ' is-landscape' : '') + '">';
       html += '    <div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
       if (urls.primary) {
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
@@ -7766,6 +7830,9 @@
         return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
       }).join('');
       revealLoadedDeckImages(deckEntryList);
+      ensureCardMetaForEntries(deckDraft.cards || [], function (shouldRender) {
+        if (shouldRender) renderDeckEditor();
+      });
     }
 
     function openDeckEditorUi(deckId, mode) {
@@ -8299,6 +8366,7 @@
       img.classList.add('is-loaded');
       var art = img.closest('.col-tile-art, .col-deck-entry-art, .col-deck-cover-art');
       if (art) art.classList.add('has-image');
+      applyLandscapeFromImage(img);
     }
 
     /** 快取命中時 load 可能已結束，補套 is-loaded */
