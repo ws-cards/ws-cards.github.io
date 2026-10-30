@@ -29,7 +29,6 @@
     3: "#9aa8eb",
     cx: "#9b59b6"
   };
-  var LEVEL_ORDER = [0, 1, 2, 3, "cx"];
 
   function normalizeCardNo(cardNo) {
     return String(cardNo || "").trim().replace(/\\/g, "/");
