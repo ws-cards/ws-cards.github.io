@@ -4434,6 +4434,8 @@
   <script src="assets/js/ws-firebase.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
   <script src="assets/js/ws-trigger-map.js?v=20261027c"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="assets/js/ws-deck-image-export.js?v=20261030a"></script>
   <script src="dist/js/include-navbar.js"></script>
 
   <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -6866,6 +6868,8 @@
       }
       html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' +
         escapeHtml(deckId) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
+        escapeHtml(deckId) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' +
         escapeHtml(deckId) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       menu.innerHTML = html;
@@ -8159,6 +8163,68 @@
       setStatus('已匯出牌組「' + deck.name + '」', 'is-ok');
     }
 
+    var deckImageExportBusy = false;
+
+    function exportDeckImage(deckId) {
+      var deck = null;
+      if (deckDraft && deckDraft.id === deckId) deck = deckDraft;
+      else deck = allDecks.find(function (d) { return d.id === deckId; });
+      if (!deck) return;
+      if (!(deck.cards || []).length) {
+        setStatus('牌組尚無卡片，無法輸出圖片', 'is-error');
+        return;
+      }
+      if (deckImageExportBusy) {
+        setStatus('正在輸出圖片，請稍候…', 'is-ok');
+        return;
+      }
+      if (!(window.WsDeckImageExport && typeof window.WsDeckImageExport.exportDeckImage === 'function')) {
+        setStatus('牌組圖模組尚未載入', 'is-error');
+        return;
+      }
+      if (typeof window.html2canvas !== 'function') {
+        setStatus('html2canvas 尚未載入', 'is-error');
+        return;
+      }
+      deckImageExportBusy = true;
+      setStatus('正在產生牌組圖片…', 'is-ok');
+      var buttons = document.querySelectorAll('[data-deck-export-image="' + deckId + '"]');
+      buttons.forEach(function (btn) {
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+      });
+      var ready = (window.WsTriggerMap && typeof window.WsTriggerMap.ready === 'function')
+        ? window.WsTriggerMap.ready()
+        : Promise.resolve();
+      ready
+        .catch(function () { /* fallback map 仍可用 */ })
+        .then(function () {
+          return window.WsDeckImageExport.exportDeckImage(serializeDeck(deck), {
+            triggerMap: window.WsTriggerMap || null,
+            onProgress: function (msg) {
+              if (msg) setStatus(msg, 'is-ok');
+            }
+          });
+        })
+        .then(function (result) {
+          setStatus(
+            '已輸出牌組圖片「' + ((result && result.filename) || (deck.name + '.png')) + '」',
+            'is-ok'
+          );
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '輸出圖片失敗', 'is-error');
+        })
+        .then(function () {
+          deckImageExportBusy = false;
+          buttons.forEach(function (btn) {
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+          });
+        });
+    }
+
     function shareDeckSummary(deckId) {
       var deck = allDecks.find(function (d) { return d.id === deckId; });
       if (!deck) return;
@@ -8260,6 +8326,8 @@
       html += '  </div>';
       html += '  <div class="col-deck-detail-actions">';
       html += '    <button type="button" class="btn btn-primary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
+      html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' + escapeHtml(deck.id) +
+        '" title="輸出類似編成一覽的牌組圖片"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '    <details class="col-deck-overflow">';
       html += '      <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
       html += '      <div class="col-deck-overflow-menu">';
@@ -8278,6 +8346,7 @@
           '<i class="fas fa-copy mr-1" aria-hidden="true"></i>另存新牌組</button>';
       }
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' + escapeHtml(deck.id) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
+      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' + escapeHtml(deck.id) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' + escapeHtml(deck.id) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       html += '        <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
       html += '      </div>';
@@ -9968,6 +10037,11 @@
       var exportBtn = e.target.closest('[data-deck-export]');
       if (exportBtn) {
         exportDeckJson(exportBtn.getAttribute('data-deck-export'));
+        return;
+      }
+      var exportImageBtn = e.target.closest('[data-deck-export-image]');
+      if (exportImageBtn) {
+        exportDeckImage(exportImageBtn.getAttribute('data-deck-export-image'));
         return;
       }
       var shareBtn = e.target.closest('[data-deck-share]');
