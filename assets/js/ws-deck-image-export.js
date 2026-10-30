@@ -57,6 +57,20 @@
     return /cx|名場|climax|クライ/.test(k);
   }
 
+  function isEventKind(kindClass, kindLabel) {
+    if (isCxKind(kindClass, kindLabel)) return false;
+    var k = String(kindClass || kindLabel || "").toLowerCase();
+    return /事件|event|イベント/.test(k);
+  }
+
+  /** 0 角色／其他 → 1 事件 → 2 CX（事件在 CX 前） */
+  function kindSortRank(card) {
+    if (!card) return 0;
+    if (isCxKind(card.kindClass, card.kindLabel)) return 2;
+    if (isEventKind(card.kindClass, card.kindLabel)) return 1;
+    return 0;
+  }
+
   function hasMeaningfulTrigger(trigger, triggerMap) {
     var raw = String(trigger == null ? "" : trigger).trim();
     if (!raw) return false;
@@ -212,18 +226,18 @@
 
   function sortCardsForGrid(cards) {
     return cards.slice().sort(function (a, b) {
-      // CX 放到牌組尾端
-      var cxA = isCxKind(a.kindClass, a.kindLabel) ? 1 : 0;
-      var cxB = isCxKind(b.kindClass, b.kindLabel) ? 1 : 0;
-      if (cxA !== cxB) return cxA - cxB;
-      if (cxA === 1) {
+      // 角色 → 事件 → CX
+      var rankA = kindSortRank(a);
+      var rankB = kindSortRank(b);
+      if (rankA !== rankB) return rankA - rankB;
+      if (rankA === 2) {
         return String(a.cardNo).localeCompare(String(b.cardNo));
       }
       var lvA = parseLevel(a.level);
       var lvB = parseLevel(b.level);
       if (lvA == null) lvA = -1;
       if (lvB == null) lvB = -1;
-      // 非 CX：高 Level 在前，再比卡號
+      // 角色／事件：高 Level 在前，再比卡號
       if (lvA !== lvB) return lvB - lvA;
       return String(a.cardNo).localeCompare(String(b.cardNo));
     });
@@ -253,21 +267,21 @@
   }
 
   function buildLevelBarChart(stats) {
+    var chartH = 132;
     var card = el("div", {
-      flex: "1 1 420px",
+      flex: "1 1 280px",
       minWidth: "0",
-      background: "#fff",
-      border: "1px solid #e5e7eb",
-      borderRadius: "18px",
-      padding: "18px 20px 16px",
-      boxSizing: "border-box",
-      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)"
+      background: "#fafbfc",
+      border: "1px solid #e8ecf1",
+      borderRadius: "10px",
+      padding: "10px 12px 8px",
+      boxSizing: "border-box"
     });
     card.appendChild(el("div", {
-      fontSize: "18px",
+      fontSize: "13px",
       fontWeight: "800",
       color: "#111827",
-      marginBottom: "12px"
+      marginBottom: "6px"
     }, { text: "Level 曲線" }));
 
     var maxLv = 0;
@@ -281,19 +295,19 @@
 
     var chartRow = el("div", {
       display: "flex",
-      gap: "10px",
+      gap: "6px",
       alignItems: "stretch",
-      height: "210px"
+      height: chartH + "px"
     });
 
     var yAxis = el("div", {
-      width: "28px",
+      width: "22px",
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
       alignItems: "flex-end",
-      paddingBottom: "28px",
-      fontSize: "12px",
+      paddingBottom: "22px",
+      fontSize: "10px",
       fontWeight: "600",
       color: "#9ca3af",
       boxSizing: "border-box"
@@ -309,17 +323,15 @@
       display: "flex",
       alignItems: "flex-end",
       justifyContent: "space-around",
-      gap: "18px",
-      padding: "0 8px 0 4px",
+      gap: "10px",
+      padding: "0 4px 0 2px",
       borderLeft: "1px solid #eef2f7",
       boxSizing: "border-box"
     });
 
-    // 水平格線
     ticks.forEach(function (v) {
       if (v === 0) return;
-      // 格線只對齊長條區（底部留給 Lv 標籤約 36px）
-      var usable = 1 - 36 / 210;
+      var usable = 1 - 28 / chartH;
       var topPct = (1 - v / axisMax) * usable * 100;
       plot.appendChild(el("div", {
         position: "absolute",
@@ -335,7 +347,7 @@
       var n = stats.levelCount[key] || 0;
       var col = el("div", {
         flex: "1",
-        maxWidth: "88px",
+        maxWidth: "64px",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -353,26 +365,26 @@
       });
       var barH = axisMax ? (n / axisMax) * 100 : 0;
       var bar = el("div", {
-        width: "72%",
+        width: "70%",
         height: Math.max(0, barH) + "%",
         background: LEVEL_CHART[key],
-        borderRadius: "14px 14px 6px 6px",
-        minHeight: n > 0 ? "6px" : "0"
+        borderRadius: "8px 8px 4px 4px",
+        minHeight: n > 0 ? "4px" : "0"
       });
       barArea.appendChild(bar);
       col.appendChild(barArea);
       col.appendChild(el("div", {
-        marginTop: "8px",
-        fontSize: "13px",
+        marginTop: "4px",
+        fontSize: "11px",
         fontWeight: "700",
         color: "#4b5563",
         flex: "0 0 auto"
       }, { text: "Lv" + key }));
       col.appendChild(el("div", {
-        fontSize: "12px",
+        fontSize: "10px",
         fontWeight: "600",
         color: "#9ca3af",
-        marginTop: "2px",
+        marginTop: "1px",
         flex: "0 0 auto"
       }, { text: String(n) }));
       plot.appendChild(col);
@@ -382,8 +394,8 @@
 
     var cxN = stats.levelCount.cx || 0;
     card.appendChild(el("div", {
-      marginTop: "10px",
-      fontSize: "13px",
+      marginTop: "4px",
+      fontSize: "11px",
       fontWeight: "600",
       color: "#6b7280"
     }, { text: "CX " + cxN + "/8" }));
@@ -393,23 +405,22 @@
 
   function buildColorDonutChart(stats) {
     var card = el("div", {
-      flex: "1 1 360px",
+      flex: "1 1 240px",
       minWidth: "0",
-      background: "#fff",
-      border: "1px solid #e5e7eb",
-      borderRadius: "18px",
-      padding: "18px 20px 16px",
+      background: "#fafbfc",
+      border: "1px solid #e8ecf1",
+      borderRadius: "10px",
+      padding: "10px 12px 8px",
       boxSizing: "border-box",
-      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
       display: "flex",
       flexDirection: "column",
       alignItems: "stretch"
     });
     card.appendChild(el("div", {
-      fontSize: "18px",
+      fontSize: "13px",
       fontWeight: "800",
       color: "#111827",
-      marginBottom: "8px"
+      marginBottom: "4px"
     }, { text: "顏色分布" }));
 
     var segments = [];
@@ -425,11 +436,11 @@
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      padding: "8px 0 4px",
+      padding: "2px 0",
       flex: "1"
     });
 
-    var size = 200;
+    var size = 128;
     var svgNS = "http://www.w3.org/2000/svg";
     var svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", String(size));
@@ -439,11 +450,10 @@
 
     var cx = size / 2;
     var cy = size / 2;
-    var radius = 68;
-    var stroke = 36;
+    var radius = 42;
+    var stroke = 22;
     var circumference = 2 * Math.PI * radius;
 
-    // 底環
     var track = document.createElementNS(svgNS, "circle");
     track.setAttribute("cx", String(cx));
     track.setAttribute("cy", String(cy));
@@ -476,12 +486,11 @@
       });
     }
 
-    // 中心白圓（甜甜圈）
     var hole = document.createElementNS(svgNS, "circle");
     hole.setAttribute("cx", String(cx));
     hole.setAttribute("cy", String(cy));
-    hole.setAttribute("r", String(radius - stroke / 2 - 2));
-    hole.setAttribute("fill", "#ffffff");
+    hole.setAttribute("r", String(radius - stroke / 2 - 1));
+    hole.setAttribute("fill", "#fafbfc");
     svg.appendChild(hole);
 
     chartWrap.appendChild(svg);
@@ -491,25 +500,25 @@
       display: "flex",
       flexWrap: "wrap",
       justifyContent: "center",
-      gap: "8px",
-      marginTop: "8px"
+      gap: "4px",
+      marginTop: "4px"
     });
     segments.forEach(function (seg) {
       var pill = el("span", {
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "6px 12px",
+        gap: "4px",
+        padding: "3px 8px",
         borderRadius: "999px",
         border: "1px solid #e5e7eb",
-        background: "#fafafa",
-        fontSize: "13px",
+        background: "#fff",
+        fontSize: "11px",
         fontWeight: "700",
         color: "#374151"
       });
       pill.appendChild(el("span", {
-        width: "10px",
-        height: "10px",
+        width: "8px",
+        height: "8px",
         borderRadius: "50%",
         background: seg.color,
         display: "inline-block"
@@ -519,7 +528,7 @@
     });
     if (!segments.length) {
       legend.appendChild(el("span", {
-        fontSize: "13px",
+        fontSize: "11px",
         color: "#9ca3af"
       }, { text: "無顏色資料" }));
     }
@@ -527,29 +536,49 @@
     return card;
   }
 
+  function buildSectionBox(title, bodyNode) {
+    var box = el("div", {
+      border: "2px solid #d1d5db",
+      borderRadius: "12px",
+      background: "#ffffff",
+      padding: "10px 12px 12px",
+      boxSizing: "border-box"
+    });
+    box.appendChild(el("div", {
+      fontSize: "12px",
+      fontWeight: "800",
+      letterSpacing: "0.08em",
+      color: "#6b7280",
+      marginBottom: "8px",
+      textTransform: "none"
+    }, { text: title }));
+    box.appendChild(bodyNode);
+    return box;
+  }
+
   function buildStatsPanel(stats) {
     var panel = el("div", {
       display: "flex",
       flexDirection: "column",
-      gap: "14px"
+      gap: "8px"
     });
 
     var header = el("div", {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "baseline",
-      gap: "12px",
+      gap: "10px",
       flexWrap: "wrap"
     });
     header.appendChild(el("div", {
-      fontSize: "34px",
+      fontSize: "24px",
       fontWeight: "800",
       letterSpacing: "0.02em",
       color: "#111827",
       lineHeight: "1.1"
     }, { text: stats.total + " 枚" }));
     header.appendChild(el("div", {
-      fontSize: "16px",
+      fontSize: "13px",
       fontWeight: "600",
       color: "#4b5563"
     }, {
@@ -560,7 +589,7 @@
     var charts = el("div", {
       display: "flex",
       flexWrap: "wrap",
-      gap: "14px",
+      gap: "8px",
       alignItems: "stretch"
     });
     charts.appendChild(buildLevelBarChart(stats));
@@ -571,23 +600,23 @@
       var cxRow = el("div", {
         display: "flex",
         flexWrap: "wrap",
-        gap: "8px 14px",
+        gap: "6px 10px",
         alignItems: "center"
       });
       stats.cxGroups.forEach(function (g) {
         var chip = el("span", {
           display: "inline-flex",
           alignItems: "center",
-          gap: "7px",
-          fontSize: "13px",
+          gap: "5px",
+          fontSize: "11px",
           fontWeight: "600",
           color: "#374151",
           maxWidth: "100%"
         });
         chip.appendChild(el("span", {
-          width: "12px",
-          height: "12px",
-          borderRadius: "3px",
+          width: "10px",
+          height: "10px",
+          borderRadius: "2px",
           background: COLOR_HEX[g.colorKey] || LEVEL_BAR.cx,
           display: "inline-block",
           flex: "0 0 auto"
@@ -598,7 +627,7 @@
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          maxWidth: "360px"
+          maxWidth: "280px"
         }, { text: label }));
         cxRow.appendChild(chip);
       });
@@ -655,7 +684,7 @@
   function buildExportDom(deck, cards, stats) {
     var wrap = el("div", {
       background: "#ffffff",
-      padding: "28px 28px 22px",
+      padding: "22px 22px 16px",
       width: "1480px",
       boxSizing: "border-box",
       fontFamily: '"Zen Kaku Gothic New","Noto Sans TC",system-ui,sans-serif',
@@ -667,18 +696,17 @@
     });
 
     wrap.appendChild(el("div", {
-      fontSize: "40px",
+      fontSize: "32px",
       fontWeight: "800",
       letterSpacing: "0.04em",
-      marginBottom: "16px",
+      marginBottom: "12px",
       lineHeight: "1.25",
       wordBreak: "break-word"
     }, { text: (deck && deck.name) || "未命名牌組" }));
 
-    wrap.appendChild(buildStatsPanel(stats));
+    wrap.appendChild(buildSectionBox("牌組資訊", buildStatsPanel(stats)));
 
     var grid = el("div", {
-      marginTop: "16px",
       display: "flex",
       flexWrap: "wrap",
       gap: "2px",
@@ -691,11 +719,13 @@
         grid.appendChild(buildCardTile(card));
       }
     });
-    wrap.appendChild(grid);
+    var listBox = buildSectionBox("牌組清單", grid);
+    listBox.style.marginTop = "12px";
+    wrap.appendChild(listBox);
 
     wrap.appendChild(el("div", {
-      marginTop: "18px",
-      fontSize: "13px",
+      marginTop: "12px",
+      fontSize: "12px",
       color: "#9ca3af",
       textAlign: "right",
       letterSpacing: "0.08em"
