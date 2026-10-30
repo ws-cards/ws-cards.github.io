@@ -15,22 +15,36 @@
   </script>
   <style>
     /* 頁面就緒前藏內文（進度 overlay 除外），避免字體 swap 閃爍與半載入畫面 */
-    html { background: #ffffff; }
-    html[data-theme="dark"] { background: #141414; }
+    html { background: #f7f2ea; }
+    html[data-theme="dark"] { background: #141210; }
     html:not(.page-ready) body > *:not(#wsPageLoader) { visibility: hidden; }
     html.page-ready body > *:not(#wsPageLoader) { visibility: visible; }
-    /* 關鍵 CSS：外部 stylesheet 尚未到位時也能先畫出進度條 */
+    /* 關鍵 CSS：外部 stylesheet 尚未到位時也能先畫出紙感進度條 */
     #wsPageLoader.ws-page-loader {
       position: fixed; inset: 0; z-index: 20000;
       display: flex; align-items: center; justify-content: center;
       padding: 1.5rem; visibility: visible !important;
-      background: #ffffff; color: #2d3748;
+      background: #f7f2ea; color: #2c2924;
     }
     html[data-theme="dark"] #wsPageLoader.ws-page-loader {
-      background: #141414; color: #e9e7e1;
+      background: #141210; color: #e9e7e1;
     }
     #wsPageLoader .ws-page-loader-panel {
+      position: relative; isolation: isolate; overflow: hidden;
       width: min(20.5rem, 100%); text-align: center;
+      padding: 1.55rem 1.45rem 1.35rem; border-radius: 12px;
+      border: 1px solid rgba(90, 70, 40, 0.18);
+      background:
+        linear-gradient(118deg, rgba(255,252,245,0.7) 0%, transparent 42%, rgba(120,90,50,0.06) 55%, transparent 100%),
+        linear-gradient(165deg, #f4ebe0 0%, #ebe1d2 100%);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 16px 40px rgba(70,52,28,0.12);
+    }
+    html[data-theme="dark"] #wsPageLoader .ws-page-loader-panel {
+      border-color: rgba(255, 236, 200, 0.12);
+      background:
+        linear-gradient(118deg, rgba(255,236,200,0.06) 0%, transparent 50%),
+        linear-gradient(165deg, #1d1b17 0%, #15140f 100%);
+      box-shadow: 0 1px 0 rgba(255,236,200,0.05) inset, 0 18px 44px rgba(0,0,0,0.5);
     }
     #wsPageLoader .ws-page-loader-brand {
       display: inline-flex; align-items: center; gap: 0.65rem; margin-bottom: 0.85rem;
@@ -48,7 +62,7 @@
     }
     #wsPageLoader .ws-page-loader-track {
       height: 5px; border-radius: 999px; overflow: hidden;
-      background: rgba(45, 55, 72, 0.12);
+      background: rgba(70, 58, 40, 0.14);
     }
     html[data-theme="dark"] #wsPageLoader .ws-page-loader-track {
       background: rgba(233, 231, 225, 0.14);

@@ -6306,16 +6306,23 @@ body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handof
 
 /* =========================================================
  * 全頁載入進度 overlay（WsPageLoader / #wsPageLoader）
+ * 細緻紙感：纖維紋／淡噪點／微折光，避免重皺摺與位移濾鏡
  * ========================================================= */
 .ws-page-loader {
-    --ws-loader-ink: #2d3748;
-    --ws-loader-muted: #718096;
-    --ws-loader-track: rgba(45, 55, 72, 0.12);
+    --ws-loader-ink: #2c2924;
+    --ws-loader-muted: #7a7368;
+    --ws-loader-track: rgba(70, 58, 40, 0.14);
     --ws-loader-fill: #b07c28;
     --ws-loader-fill-shine: rgba(255, 255, 255, 0.42);
-    --ws-loader-panel: rgba(255, 253, 248, 0.92);
-    --ws-loader-border: rgba(38, 50, 71, 0.12);
-    --ws-loader-bg: #ffffff;
+    --ws-loader-panel: #f4ebe0;
+    --ws-loader-panel-deep: #ebe1d2;
+    --ws-loader-border: rgba(90, 70, 40, 0.18);
+    --ws-loader-bg: #f7f2ea;
+    --ws-loader-shadow: rgba(70, 52, 28, 0.14);
+    --ws-loader-fiber: rgba(110, 85, 50, 0.07);
+    --ws-loader-fiber-cross: rgba(90, 70, 40, 0.045);
+    --ws-loader-grain-opacity: 0.55;
+    --ws-loader-grain-blend: multiply;
     position: fixed;
     inset: 0;
     z-index: 20000;
@@ -6324,8 +6331,15 @@ body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handof
     justify-content: center;
     padding: 1.5rem;
     background:
-        radial-gradient(120% 80% at 50% -10%, rgba(176, 124, 40, 0.10), transparent 55%),
-        radial-gradient(90% 60% at 100% 100%, rgba(30, 45, 90, 0.05), transparent 50%),
+        radial-gradient(120% 80% at 50% -10%, rgba(176, 124, 40, 0.09), transparent 55%),
+        radial-gradient(90% 60% at 100% 100%, rgba(120, 90, 50, 0.06), transparent 50%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 23px,
+            var(--ws-loader-fiber-cross) 23px,
+            var(--ws-loader-fiber-cross) 24px
+        ),
         var(--ws-loader-bg);
     color: var(--ws-loader-ink);
     visibility: visible !important;
@@ -6340,12 +6354,25 @@ body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handof
     --ws-loader-track: rgba(233, 231, 225, 0.14);
     --ws-loader-fill: #cbb083;
     --ws-loader-fill-shine: rgba(255, 255, 255, 0.28);
-    --ws-loader-panel: rgba(26, 25, 23, 0.88);
-    --ws-loader-border: rgba(255, 255, 255, 0.10);
-    --ws-loader-bg: #141414;
+    --ws-loader-panel: #1d1b17;
+    --ws-loader-panel-deep: #15140f;
+    --ws-loader-border: rgba(255, 236, 200, 0.12);
+    --ws-loader-bg: #141210;
+    --ws-loader-shadow: rgba(0, 0, 0, 0.55);
+    --ws-loader-fiber: rgba(203, 176, 131, 0.08);
+    --ws-loader-fiber-cross: rgba(203, 176, 131, 0.05);
+    --ws-loader-grain-opacity: 0.4;
+    --ws-loader-grain-blend: soft-light;
     background:
-        radial-gradient(120% 80% at 50% -10%, rgba(203, 176, 131, 0.14), transparent 55%),
-        radial-gradient(90% 60% at 0% 100%, rgba(203, 176, 131, 0.06), transparent 50%),
+        radial-gradient(120% 80% at 50% -10%, rgba(203, 176, 131, 0.12), transparent 55%),
+        radial-gradient(90% 60% at 0% 100%, rgba(203, 176, 131, 0.05), transparent 50%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 23px,
+            var(--ws-loader-fiber-cross) 23px,
+            var(--ws-loader-fiber-cross) 24px
+        ),
         var(--ws-loader-bg);
 }
 
@@ -6359,25 +6386,169 @@ body.market-desk-page .preview-card.is-preview-open:has(#cardImageWrap.is-handof
     display: none !important;
 }
 
-.ws-page-loader-panel {
+/* 用 #wsPageLoader 提高優先級，蓋過各頁 inline 關鍵 CSS 的簡化紙面 */
+#wsPageLoader.ws-page-loader {
+    background:
+        radial-gradient(120% 80% at 50% -10%, rgba(176, 124, 40, 0.09), transparent 55%),
+        radial-gradient(90% 60% at 100% 100%, rgba(120, 90, 50, 0.06), transparent 50%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 23px,
+            var(--ws-loader-fiber-cross) 23px,
+            var(--ws-loader-fiber-cross) 24px
+        ),
+        var(--ws-loader-bg);
+    color: var(--ws-loader-ink);
+}
+
+html[data-theme="dark"] #wsPageLoader.ws-page-loader {
+    background:
+        radial-gradient(120% 80% at 50% -10%, rgba(203, 176, 131, 0.12), transparent 55%),
+        radial-gradient(90% 60% at 0% 100%, rgba(203, 176, 131, 0.05), transparent 50%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 23px,
+            var(--ws-loader-fiber-cross) 23px,
+            var(--ws-loader-fiber-cross) 24px
+        ),
+        var(--ws-loader-bg);
+}
+
+.ws-page-loader-panel,
+#wsPageLoader .ws-page-loader-panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     width: min(20.5rem, 100%);
     padding: 1.55rem 1.45rem 1.35rem;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid var(--ws-loader-border);
-    background: var(--ws-loader-panel);
+    background-color: var(--ws-loader-panel);
+    background-image:
+        /* 微折光：淡淡起伏，不是明顯皺摺 */
+        linear-gradient(
+            118deg,
+            rgba(255, 252, 245, 0.85) 0%,
+            rgba(255, 252, 245, 0.12) 34%,
+            rgba(120, 90, 50, 0.11) 50%,
+            rgba(255, 250, 240, 0.42) 68%,
+            transparent 100%
+        ),
+        linear-gradient(
+            205deg,
+            transparent 36%,
+            rgba(90, 70, 40, 0.07) 55%,
+            transparent 74%
+        ),
+        /* 長纖維 */
+        repeating-linear-gradient(
+            87deg,
+            transparent 0,
+            transparent 9px,
+            var(--ws-loader-fiber) 9px,
+            var(--ws-loader-fiber) 10px
+        ),
+        /* 短纖維交叉 */
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 11px,
+            var(--ws-loader-fiber-cross) 11px,
+            var(--ws-loader-fiber-cross) 12px
+        ),
+        linear-gradient(165deg, var(--ws-loader-panel) 0%, var(--ws-loader-panel-deep) 100%);
     box-shadow:
-        0 18px 48px rgba(30, 45, 90, 0.12),
-        0 4px 14px rgba(30, 45, 90, 0.06);
+        0 1px 0 rgba(255, 255, 255, 0.6) inset,
+        0 0 0 1px rgba(255, 248, 235, 0.4) inset,
+        0 16px 40px var(--ws-loader-shadow),
+        0 3px 10px rgba(70, 52, 28, 0.06);
     text-align: center;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     animation: ws-loader-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-[data-theme="dark"] .ws-page-loader-panel {
+/* 紙張噪點／纖維顆粒（SVG turbulence，極淡） */
+.ws-page-loader-panel::before,
+#wsPageLoader .ws-page-loader-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--ws-loader-grain-opacity);
+    mix-blend-mode: var(--ws-loader-grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
+
+/* 邊緣微磨損光暈，讓紙邊不那麼數位銳利 */
+.ws-page-loader-panel::after,
+#wsPageLoader .ws-page-loader-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
     box-shadow:
-        0 20px 52px rgba(0, 0, 0, 0.48),
-        0 5px 18px rgba(0, 0, 0, 0.28);
+        inset 0 0 0 1px rgba(255, 250, 240, 0.28),
+        inset 0 18px 28px -18px rgba(255, 252, 245, 0.55),
+        inset 0 -22px 30px -20px rgba(90, 70, 40, 0.08);
+}
+
+.ws-page-loader-panel > *,
+#wsPageLoader .ws-page-loader-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .ws-page-loader-panel,
+html[data-theme="dark"] #wsPageLoader .ws-page-loader-panel {
+    border-color: var(--ws-loader-border);
+    background-color: var(--ws-loader-panel);
+    background-image:
+        linear-gradient(
+            118deg,
+            rgba(255, 236, 200, 0.08) 0%,
+            transparent 42%,
+            rgba(0, 0, 0, 0.18) 58%,
+            transparent 100%
+        ),
+        linear-gradient(
+            205deg,
+            transparent 40%,
+            rgba(0, 0, 0, 0.2) 58%,
+            transparent 76%
+        ),
+        repeating-linear-gradient(
+            87deg,
+            transparent 0,
+            transparent 10px,
+            var(--ws-loader-fiber) 10px,
+            var(--ws-loader-fiber) 11px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 12px,
+            var(--ws-loader-fiber-cross) 12px,
+            var(--ws-loader-fiber-cross) 13px
+        ),
+        linear-gradient(165deg, var(--ws-loader-panel) 0%, var(--ws-loader-panel-deep) 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 236, 200, 0.06) inset,
+        0 18px 44px var(--ws-loader-shadow),
+        0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="dark"] .ws-page-loader-panel::after,
+html[data-theme="dark"] #wsPageLoader .ws-page-loader-panel::after {
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 236, 200, 0.06),
+        inset 0 18px 28px -18px rgba(255, 236, 200, 0.05),
+        inset 0 -22px 30px -20px rgba(0, 0, 0, 0.35);
 }
 
 .ws-page-loader-brand {
