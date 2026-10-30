@@ -682,7 +682,7 @@
       marginTop: "16px",
       display: "flex",
       flexWrap: "wrap",
-      gap: "3px",
+      gap: "2px",
       alignContent: "flex-start"
     });
 
