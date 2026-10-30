@@ -4741,9 +4741,9 @@
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
             <span>排序</span>
             <select id="colDeckCardSortSelect" aria-label="牌組內排序">
-              <option value="cardNumber" selected>按卡號排序</option>
+              <option value="levelDesc" selected>按等級排序 (降序)</option>
               <option value="levelAsc">按等級排序 (升序)</option>
-              <option value="levelDesc">按等級排序 (降序)</option>
+              <option value="cardNumber">按卡號排序</option>
             </select>
           </label>
           <label class="col-deck-card-short-only">
@@ -4908,7 +4908,7 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
-    var deckCardSortMode = 'cardNumber';
+    var deckCardSortMode = 'levelDesc';
     var deckCardShortOnly = false;
     var deckLevelCache = {};
     var deckLevelEnriching = false;
@@ -7758,15 +7758,21 @@
       });
       list.sort(function (a, b) {
         if (isDeckLevelSortMode(sortMode)) {
-          var la = entryLevel(a);
-          var lb = entryLevel(b);
-          var hasA = la != null;
-          var hasB = lb != null;
-          if (hasA && hasB && la !== lb) {
-            return sortMode === 'levelDesc' ? (lb - la) : (la - lb);
+          // 等級排序：CX 一律置後；卡號排序不受此規則影響
+          var cxA = isCxCardNumber(a && a.cardNumber);
+          var cxB = isCxCardNumber(b && b.cardNumber);
+          if (cxA !== cxB) return cxA ? 1 : -1;
+          if (!cxA && !cxB) {
+            var la = entryLevel(a);
+            var lb = entryLevel(b);
+            var hasA = la != null;
+            var hasB = lb != null;
+            if (hasA && hasB && la !== lb) {
+              return sortMode === 'levelDesc' ? (lb - la) : (la - lb);
+            }
+            // 無等級資料排在有等級之後、CX 之前
+            if (hasA !== hasB) return hasA ? -1 : 1;
           }
-          // 無等級資料排最後
-          if (hasA !== hasB) return hasA ? -1 : 1;
         }
         return String(a.cardNumber || '').localeCompare(String(b.cardNumber || ''));
       });
@@ -8316,9 +8322,9 @@
       html += '        <label class="col-deck-card-sort" for="colDeckDetailCardSortSelect">';
       html += '          <span>排序</span>';
       html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
-      html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
-      html += '            <option value="levelAsc"' + (deckCardSortMode === 'levelAsc' ? ' selected' : '') + '>按等級排序 (升序)</option>';
       html += '            <option value="levelDesc"' + (deckCardSortMode === 'levelDesc' ? ' selected' : '') + '>按等級排序 (降序)</option>';
+      html += '            <option value="levelAsc"' + (deckCardSortMode === 'levelAsc' ? ' selected' : '') + '>按等級排序 (升序)</option>';
+      html += '            <option value="cardNumber"' + (deckCardSortMode === 'cardNumber' ? ' selected' : '') + '>按卡號排序</option>';
       html += '          </select>';
       html += '        </label>';
       html += '        <label class="col-deck-card-short-only">';
