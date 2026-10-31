@@ -856,6 +856,7 @@
   "use strict";
 
   var CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
+  var CARD_TITLE_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json";
   var IMG_BASE = "https://imgs.devilfox.net/ws/";
   var WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
   var STORAGE_KEY = "wsDeckPhotoDraft_v1";
@@ -1077,7 +1078,10 @@
 
   /* ——— Series catalog ——— */
   async function loadSeriesTitles() {
-    var res = await fetch("./cardTitle.json");
+    var res = await fetch(CARD_TITLE_URL);
+    if (!res.ok) {
+      res = await fetch("./cardTitle.json");
+    }
     if (!res.ok) throw new Error("無法載入系列清單");
     seriesMap = await res.json();
     seriesList = Object.keys(seriesMap).map(function (code) {
