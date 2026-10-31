@@ -695,6 +695,7 @@
             <li><a href="deckPrice" class="menu-link"><i class="fas fa-search-dollar main-icon"></i><span>牌組總額查詢計算機</span></a></li>
             <li><a href="deckAnalysis.html" class="menu-link"><i class="fas fa-project-diagram main-icon"></i><span>牌組分析</span></a></li>
             <li><a href="deckPhotoAnalysis.html" class="menu-link active"><i class="fas fa-camera main-icon"></i><span>牌組拍照辨識</span></a></li>
+            <li><a href="deckPhotoAnalysisMulti.html" class="menu-link"><i class="fas fa-th main-icon"></i><span>整桌牌組辨識</span></a></li>
             <li><a href="deckAnalysis-screen.html" class="menu-link"><i class="fas fa-tv main-icon"></i><span>牌組可視化大屏</span></a></li>
             <li><a href="attackGameLog.html" class="menu-link"><i class="fas fa-fist-raised main-icon"></i><span>攻擊記錄</span></a></li>
           </ul>
@@ -1083,11 +1084,17 @@
 
   /* ——— Series catalog ——— */
   async function loadSeriesTitles() {
-    var res = await fetch(CARD_TITLE_URL);
-    if (!res.ok) {
+    var res = null;
+    try {
+      res = await fetch(CARD_TITLE_URL);
+      if (!res.ok) res = null;
+    } catch (e) {
+      res = null;
+    }
+    if (!res) {
       res = await fetch("./cardTitle.json");
     }
-    if (!res.ok) throw new Error("無法載入系列清單");
+    if (!res || !res.ok) throw new Error("無法載入系列清單");
     seriesMap = await res.json();
     seriesList = Object.keys(seriesMap).map(function (code) {
       return { code: code, label: seriesMap[code] || code, titleCode: code.replace("/", "_") };
