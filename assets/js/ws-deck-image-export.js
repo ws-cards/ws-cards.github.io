@@ -180,11 +180,34 @@
     });
   }
 
+  function countSoulIconsOnCard(trigger, triggerMap) {
+    var raw = String(trigger == null ? "" : trigger).trim();
+    if (!raw) return 0;
+    if (triggerMap && typeof triggerMap.fromCode === "function") {
+      var t = triggerMap.fromCode(raw);
+      if (t && Array.isArray(t.icons) && t.icons.length) {
+        var n = 0;
+        t.icons.forEach(function (icon) {
+          if (/soul/i.test(String(icon || ""))) n += 1;
+        });
+        return n;
+      }
+      if (t && t.id === "soul2") return 2;
+      if (t && t.id === "soul") return 1;
+    }
+    var upper = raw.toUpperCase();
+    if (upper === "2" || upper === "SOUL2") return 2;
+    if (upper === "1" || upper === "A" || upper === "SOUL") return 1;
+    return 0;
+  }
+
   function computeStats(cards, triggerMap) {
     var total = 0;
     var colorCount = { yellow: 0, green: 0, red: 0, blue: 0 };
     var levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
+    var kindCount = { character: 0, event: 0, cx: 0 };
     var triggerHits = 0;
+    var soulIconCount = 0;
     var cxGroups = [];
 
     cards.forEach(function (c) {
@@ -196,8 +219,10 @@
         colorCount[colorKey] += qty;
       }
       var isCx = isCxKind(c.kindClass, c.kindLabel);
+      var isEvent = isEventKind(c.kindClass, c.kindLabel);
       if (isCx) {
         levelCount.cx += qty;
+        kindCount.cx += qty;
         var axis = triggerAxisLabel(c.trigger, triggerMap) || "CX";
         cxGroups.push({
           name: c.name || c.cardNo,
@@ -206,20 +231,30 @@
           qty: qty,
           trigger: c.trigger || ""
         });
+      } else if (isEvent) {
+        kindCount.event += qty;
+        var lvE = parseLevel(c.level);
+        if (lvE == null) lvE = 0;
+        levelCount[lvE] = (levelCount[lvE] || 0) + qty;
       } else {
+        kindCount.character += qty;
         var lv = parseLevel(c.level);
         if (lv == null) lv = 0;
         levelCount[lv] = (levelCount[lv] || 0) + qty;
       }
       if (hasMeaningfulTrigger(c.trigger, triggerMap)) triggerHits += qty;
+      soulIconCount += countSoulIconsOnCard(c.trigger, triggerMap) * qty;
     });
 
     return {
       total: total,
+      deckSize: 50,
       colorCount: colorCount,
       levelCount: levelCount,
+      kindCount: kindCount,
       triggerHits: triggerHits,
       triggerRate: total ? Math.round((triggerHits / total) * 100) : 0,
+      soulIconCount: soulIconCount,
       cxGroups: cxGroups
     };
   }
@@ -267,140 +302,159 @@
   }
 
   function buildLevelBarChart(stats) {
-    var chartH = 132;
+    // 附圖風格：數值膠囊在柱頂、標籤在柱底；用固定 px 高度避免比例錯位
+    var barMaxH = 88;
     var card = el("div", {
       flex: "1 1 280px",
       minWidth: "0",
-      background: "#fafbfc",
-      border: "1px solid #e8ecf1",
+      background: "#f3f4f6",
+      border: "1px solid #e5e7eb",
       borderRadius: "10px",
-      padding: "10px 12px 8px",
+      padding: "10px 14px 10px",
       boxSizing: "border-box"
     });
     card.appendChild(el("div", {
       fontSize: "13px",
       fontWeight: "800",
       color: "#111827",
-      marginBottom: "6px"
-    }, { text: "Level 曲線" }));
+      textAlign: "center",
+      marginBottom: "8px"
+    }, { text: "Level" }));
 
     var maxLv = 0;
     LEVEL_KEYS.forEach(function (k) {
       maxLv = Math.max(maxLv, stats.levelCount[k] || 0);
     });
-    var axisMax = niceAxisMax(maxLv);
-    var ticks = [];
-    var step = axisMax <= 12 ? 2 : axisMax <= 24 ? 4 : axisMax <= 40 ? 5 : 8;
-    for (var t = axisMax; t >= 0; t -= step) ticks.push(t);
-
-    var chartRow = el("div", {
-      display: "flex",
-      gap: "6px",
-      alignItems: "stretch",
-      height: chartH + "px"
-    });
-
-    var yAxis = el("div", {
-      width: "22px",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-      alignItems: "flex-end",
-      paddingBottom: "22px",
-      fontSize: "10px",
-      fontWeight: "600",
-      color: "#9ca3af",
-      boxSizing: "border-box"
-    });
-    ticks.forEach(function (v) {
-      yAxis.appendChild(el("span", { lineHeight: "1" }, { text: String(v) }));
-    });
-    chartRow.appendChild(yAxis);
+    var axisMax = Math.max(1, niceAxisMax(maxLv));
 
     var plot = el("div", {
-      flex: "1",
-      position: "relative",
       display: "flex",
       alignItems: "flex-end",
       justifyContent: "space-around",
-      gap: "10px",
-      padding: "0 4px 0 2px",
-      borderLeft: "1px solid #eef2f7",
-      boxSizing: "border-box"
-    });
-
-    ticks.forEach(function (v) {
-      if (v === 0) return;
-      var usable = 1 - 28 / chartH;
-      var topPct = (1 - v / axisMax) * usable * 100;
-      plot.appendChild(el("div", {
-        position: "absolute",
-        left: "0",
-        right: "0",
-        top: topPct + "%",
-        borderTop: "1px solid #eef2f7",
-        pointerEvents: "none"
-      }));
+      gap: "8px",
+      minHeight: (barMaxH + 44) + "px"
     });
 
     LEVEL_KEYS.forEach(function (key) {
       var n = stats.levelCount[key] || 0;
+      var h = Math.round((n / axisMax) * barMaxH);
+      if (n > 0 && h < 6) h = 6;
+
       var col = el("div", {
         flex: "1",
-        maxWidth: "64px",
-        height: "100%",
+        maxWidth: "72px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        position: "relative",
-        zIndex: "1"
+        justifyContent: "flex-end"
       });
-      var barArea = el("div", {
-        flex: "1 1 auto",
-        width: "100%",
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        minHeight: "0"
-      });
-      var barH = axisMax ? (n / axisMax) * 100 : 0;
-      var bar = el("div", {
-        width: "70%",
-        height: Math.max(0, barH) + "%",
-        background: LEVEL_CHART[key],
-        borderRadius: "8px 8px 4px 4px",
-        minHeight: n > 0 ? "4px" : "0"
-      });
-      barArea.appendChild(bar);
-      col.appendChild(barArea);
-      col.appendChild(el("div", {
-        marginTop: "4px",
+
+      var badge = el("div", {
+        minWidth: "28px",
+        padding: "2px 8px",
+        borderRadius: "999px",
+        background: "#4b5563",
+        color: "#fff",
         fontSize: "11px",
-        fontWeight: "700",
-        color: "#4b5563",
-        flex: "0 0 auto"
-      }, { text: "Lv" + key }));
+        fontWeight: "800",
+        textAlign: "center",
+        lineHeight: "1.35",
+        marginBottom: "4px",
+        boxSizing: "border-box"
+      }, { text: String(n) });
+      col.appendChild(badge);
+
+      var bar = el("div", {
+        width: "58%",
+        height: h + "px",
+        background: LEVEL_CHART[key],
+        borderRadius: "6px 6px 3px 3px"
+      });
+      col.appendChild(bar);
+
       col.appendChild(el("div", {
-        fontSize: "10px",
-        fontWeight: "600",
-        color: "#9ca3af",
-        marginTop: "1px",
-        flex: "0 0 auto"
-      }, { text: String(n) }));
+        marginTop: "6px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#374151"
+      }, { text: "Lv" + key }));
+
       plot.appendChild(col);
     });
-    chartRow.appendChild(plot);
-    card.appendChild(chartRow);
-
-    var cxN = stats.levelCount.cx || 0;
-    card.appendChild(el("div", {
-      marginTop: "4px",
-      fontSize: "11px",
-      fontWeight: "600",
-      color: "#6b7280"
-    }, { text: "CX " + cxN + "/8" }));
-
+    card.appendChild(plot);
     return card;
+  }
+
+  function buildCompositionBlock(stats) {
+    var row = el("div", {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: "16px",
+      flexWrap: "wrap",
+      padding: "4px 2px 0"
+    });
+
+    var list = el("div", {
+      display: "flex",
+      flexDirection: "column",
+      gap: "5px",
+      minWidth: "0",
+      flex: "1 1 auto"
+    });
+
+    var kinds = stats.kindCount || {};
+    var items = [
+      { label: "角色", value: kinds.character || 0 },
+      { label: "事件", value: kinds.event || 0 },
+      { label: "CX", value: kinds.cx || 0 },
+      { label: "Trigger 魂數", value: stats.soulIconCount || 0 }
+    ];
+    items.forEach(function (item) {
+      var line = el("div", {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#1f2937"
+      });
+      line.appendChild(el("span", {
+        width: "3px",
+        height: "14px",
+        borderRadius: "2px",
+        background: "#f59e0b",
+        flex: "0 0 auto",
+        display: "inline-block"
+      }));
+      line.appendChild(document.createTextNode(item.label + "：" + item.value));
+      list.appendChild(line);
+    });
+    row.appendChild(list);
+
+    var totalBox = el("div", {
+      textAlign: "right",
+      flex: "0 0 auto",
+      paddingRight: "4px"
+    });
+    var deckSize = stats.deckSize || 50;
+    totalBox.appendChild(el("div", {
+      fontSize: "28px",
+      fontWeight: "900",
+      color: "#111827",
+      lineHeight: "1.05",
+      letterSpacing: "0.02em",
+      fontVariantNumeric: "tabular-nums"
+    }, { text: stats.total + " / " + deckSize }));
+    totalBox.appendChild(el("div", {
+      fontSize: "14px",
+      fontWeight: "700",
+      color: "#6b7280",
+      marginTop: "2px"
+    }, { text: "枚" }));
+    row.appendChild(totalBox);
+
+    return row;
   }
 
   function buildColorDonutChart(stats) {
@@ -571,13 +625,6 @@
       flexWrap: "wrap"
     });
     header.appendChild(el("div", {
-      fontSize: "24px",
-      fontWeight: "800",
-      letterSpacing: "0.02em",
-      color: "#111827",
-      lineHeight: "1.1"
-    }, { text: stats.total + " 枚" }));
-    header.appendChild(el("div", {
       fontSize: "13px",
       fontWeight: "600",
       color: "#4b5563"
@@ -595,6 +642,8 @@
     charts.appendChild(buildLevelBarChart(stats));
     charts.appendChild(buildColorDonutChart(stats));
     panel.appendChild(charts);
+
+    panel.appendChild(buildCompositionBlock(stats));
 
     if (stats.cxGroups && stats.cxGroups.length) {
       var cxRow = el("div", {
