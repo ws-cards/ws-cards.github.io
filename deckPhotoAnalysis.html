@@ -723,14 +723,14 @@
             <div class="dpa-series-row">
               <div class="dpa-field" style="min-width:0;">
                 <label for="dpaSeriesInput">作品系列（例：BD/W54、BanG Dream）</label>
-                <input id="dpaSeriesInput" type="search" placeholder="輸入系列代碼或作品名" autocomplete="off" spellcheck="false">
+                <input id="dpaSeriesInput" type="search" placeholder="輸入系列代碼或作品名；選取後自動載入索引" autocomplete="off" spellcheck="false">
                 <div id="dpaSeriesSuggest" class="dpa-suggest" role="listbox" aria-label="系列建議"></div>
               </div>
               <button type="button" class="dpa-btn primary" id="dpaLoadSeriesBtn" style="color:#1a140c;height:2.7rem;align-self:end;">
-                <i class="fas fa-database" aria-hidden="true"></i>建索引
+                <i class="fas fa-folder-open" aria-hidden="true"></i>載入系列
               </button>
             </div>
-            <div class="dpa-series-meta" id="dpaSeriesMeta">尚未載入系列。先選系列才能做卡面比對。</div>
+            <div class="dpa-series-meta" id="dpaSeriesMeta">選系列後會優先載入預建指紋；若尚無靜態檔再即時建索引。</div>
             <div class="dpa-progress" id="dpaIndexProgress" aria-hidden="true"><span id="dpaIndexBar"></span></div>
           </section>
 
@@ -857,6 +857,8 @@
 
   var CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
   var CARD_TITLE_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json";
+  var FACE_INDEX_BASE = "./json/face-index/";
+  var FACE_ALGO = "rgb-grid-v1";
   var IMG_BASE = "https://imgs.devilfox.net/ws/";
   var WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
   var STORAGE_KEY = "wsDeckPhotoDraft_v1";
@@ -872,9 +874,12 @@
 
   var seriesMap = {};
   var seriesList = [];
+  var faceIndexMeta = null;
+  var faceIndexMetaByCode = {};
   var indexCards = [];
   var currentSeriesCode = "";
   var currentSeriesLabel = "";
+  var indexSource = ""; // static | live | none
   var faceReady = false;
   var faceCorsBlocked = false;
   var stream = null;
@@ -1091,13 +1096,42 @@
     });
   }
 
+  async function loadFaceIndexMeta() {
+    faceIndexMeta = null;
+    faceIndexMetaByCode = {};
+    try {
+      var res = await fetch(FACE_INDEX_BASE + "meta.json", { cache: "no-cache" });
+      if (!res.ok) return;
+      faceIndexMeta = await res.json();
+      (faceIndexMeta.series || []).forEach(function (row) {
+        if (row && row.code) faceIndexMetaByCode[String(row.code)] = row;
+      });
+    } catch (e) {
+      faceIndexMeta = null;
+    }
+  }
+
+  function hasStaticIndex(code) {
+    return !!faceIndexMetaByCode[String(code || "")];
+  }
+
   function filterSeries(q) {
     var query = String(q || "").trim().toLowerCase();
-    if (!query) return seriesList.slice(0, 12);
-    return seriesList.filter(function (s) {
-      return s.code.toLowerCase().indexOf(query) >= 0 ||
-        String(s.label).toLowerCase().indexOf(query) >= 0;
-    }).slice(0, 20);
+    var rows = seriesList;
+    if (query) {
+      rows = seriesList.filter(function (s) {
+        return s.code.toLowerCase().indexOf(query) >= 0 ||
+          String(s.label).toLowerCase().indexOf(query) >= 0;
+      });
+    }
+    // 有預建指紋的系列往前排，方便選取
+    rows = rows.slice().sort(function (a, b) {
+      var ha = hasStaticIndex(a.code) ? 0 : 1;
+      var hb = hasStaticIndex(b.code) ? 0 : 1;
+      if (ha !== hb) return ha - hb;
+      return a.code.localeCompare(b.code);
+    });
+    return rows.slice(0, 20);
   }
 
   function renderSuggest(q) {
@@ -1109,12 +1143,67 @@
       return;
     }
     box.innerHTML = rows.map(function (s) {
+      var ready = hasStaticIndex(s.code);
       return '<button type="button" role="option" data-code="' + escapeHtml(s.code) + '">' +
         '<span class="code">' + escapeHtml(s.code) + "</span>" +
         escapeHtml(String(s.label).replace(/^\u300c|\u300d$/g, "")) +
+        (ready ? ' <span class="code" title="已有預建指紋">●預建</span>' : "") +
         "</button>";
     }).join("");
     box.classList.add("is-open");
+  }
+
+  function reNormalizeFp(arr) {
+    var vec = Array.prototype.slice.call(arr || []);
+    var sum = 0;
+    for (var i = 0; i < vec.length; i++) sum += vec[i] * vec[i];
+    var n = Math.sqrt(sum) || 1;
+    var out = new Float32Array(vec.length);
+    for (var j = 0; j < vec.length; j++) out[j] = vec[j] / n;
+    return out;
+  }
+
+  function applyStaticIndexPayload(data) {
+    if (!data || typeof data !== "object") throw new Error("靜態索引格式錯誤");
+    if (data.algo && data.algo !== FACE_ALGO) {
+      throw new Error("靜態索引算法不符（" + data.algo + "）");
+    }
+    var rows = Array.isArray(data.cards) ? data.cards : [];
+    indexCards = [];
+    rows.forEach(function (c) {
+      if (!c || !c.cardNo || !c.fp || !c.fp.length) return;
+      var no = normalizeCardNo(c.cardNo);
+      indexCards.push({
+        cardNo: no,
+        name: c.name || no,
+        kindLabel: c.kindLabel || "",
+        kind: c.kind,
+        level: c.level != null ? Number(c.level) : null,
+        color: c.color || "",
+        imageUrl: c.imageUrl || buildCardImageUrls(no).primary,
+        fp: reNormalizeFp(c.fp)
+      });
+    });
+    faceReady = indexCards.length > 0;
+    faceCorsBlocked = false;
+    indexSource = "static";
+    if (!faceReady) throw new Error("靜態索引沒有可用卡面");
+  }
+
+  async function tryLoadStaticIndex(seriesCode, titleCode) {
+    var metaRow = faceIndexMetaByCode[seriesCode];
+    var fileName = (metaRow && metaRow.file) || (titleCode + ".json");
+    var url = FACE_INDEX_BASE + fileName;
+    var res = await fetch(url, { cache: "no-cache" });
+    if (!res.ok) return false;
+    var data = await res.json();
+    applyStaticIndexPayload(data);
+    el("dpaSeriesMeta").innerHTML =
+      "系列 <strong>" + escapeHtml(seriesCode) + "</strong> · 預建指紋 <strong>" +
+      indexCards.length + "</strong> 張 · 來源 <strong>static</strong>" +
+      (data.builtAt ? " · " + escapeHtml(String(data.builtAt)) : "") +
+      (el("dpaOcrFallback").checked ? " · OCR 備援開啟" : "");
+    return true;
   }
 
   function indexSetPayload(data) {
@@ -1215,19 +1304,22 @@
     faceReady = indexCards.length > 0;
     if (!faceReady) {
       faceCorsBlocked = true;
+      indexSource = "none";
       el("dpaSeriesMeta").innerHTML =
         "卡面索引失敗（多半是目前網域無法讀取卡圖像素）。已改以 <strong>OCR 備援</strong>；正式站 <strong>ws-cards.cloud</strong> 可完整使用卡面比對。" +
-        " 卡表仍有 <strong>" + cards.length + "</strong> 張可供手動／OCR。";
+        " 卡表仍有 <strong>" + cards.length + "</strong> 張可供手動／OCR。也可先跑 <code>scripts/build_face_index.py</code> 預建指紋。";
       indexCards = cards.map(function (c) {
         var urls = buildCardImageUrls(c.cardNo);
         return Object.assign({}, c, { imageUrl: urls.primary || urls.fallback, fp: null });
       });
     } else {
+      indexSource = "live";
       el("dpaSeriesMeta").innerHTML =
-        "系列 <strong>" + escapeHtml(currentSeriesCode) + "</strong> · 卡面索引 <strong>" +
+        "系列 <strong>" + escapeHtml(currentSeriesCode) + "</strong> · 即時卡面索引 <strong>" +
         indexCards.length + "</strong> 張" +
         (fail ? "（略過 " + fail + "）" : "") +
-        " · 比對以卡面為主" + (el("dpaOcrFallback").checked ? "，OCR 備援開啟" : "");
+        " · 來源 <strong>live</strong>" +
+        (el("dpaOcrFallback").checked ? " · OCR 備援開啟" : "");
     }
     setTimeout(function () {
       wrap.classList.remove("is-on");
@@ -1242,23 +1334,61 @@
       toast("請先選擇系列");
       return;
     }
+    // 容忍使用者貼 BD_W54
+    if (normalized.indexOf("/") < 0 && normalized.indexOf("_") >= 0) {
+      normalized = normalized.replace("_", "/");
+    }
     var titleCode = normalized.replace("/", "_");
-    var label = seriesMap[normalized] || normalized;
+    var label = seriesMap[normalized] || seriesMap[Object.keys(seriesMap).find(function (k) {
+      return k.toLowerCase() === normalized.toLowerCase();
+    }) || ""] || normalized;
+    // 對齊 cardTitle 真實 key 大小寫
+    Object.keys(seriesMap).some(function (k) {
+      if (k.toLowerCase() === normalized.toLowerCase()) {
+        normalized = k;
+        titleCode = k.replace("/", "_");
+        label = seriesMap[k];
+        return true;
+      }
+      return false;
+    });
+
     el("dpaLoadSeriesBtn").disabled = true;
-    setHud("載入系列卡表中…", "索引");
+    el("dpaSeriesSuggest").classList.remove("is-open");
+    el("dpaSeriesInput").value = normalized + "　" + String(label).slice(0, 40);
+    currentSeriesCode = normalized;
+    currentSeriesLabel = label;
+    indexCards = [];
+    faceReady = false;
+    indexSource = "none";
+    setHud("載入系列索引中…", "索引");
     try {
-      var byId = await fetchSetJson(titleCode);
-      var cards = pickIndexCards(byId);
-      if (!cards.length) throw new Error("此系列沒有可用卡號");
-      currentSeriesCode = normalized;
-      currentSeriesLabel = label;
-      el("dpaSeriesInput").value = normalized + "　" + String(label).slice(0, 40);
-      el("dpaSeriesSuggest").classList.remove("is-open");
-      await buildFaceIndex(cards);
-      setHud(faceReady ? "索引完成，可以開鏡頭" : "卡圖像素無法讀取，請改用 OCR／手動", faceReady ? "卡面" : "OCR");
-      toast("已載入 " + (faceReady ? indexCards.length + " 張卡面" : cards.length + " 張卡表"));
-      el("dpaLiveBtn").disabled = !(stream || el("dpaUploadPreview").src);
-      el("dpaShutterBtn").disabled = !(stream || el("dpaUploadPreview").src);
+      var loadedStatic = false;
+      try {
+        loadedStatic = await tryLoadStaticIndex(normalized, titleCode);
+      } catch (staticErr) {
+        console.warn(staticErr);
+        loadedStatic = false;
+      }
+
+      if (loadedStatic) {
+        setHud("預建索引已載入，可以開鏡頭", "卡面");
+        toast("已載入預建指紋 " + indexCards.length + " 張");
+      } else {
+        setHud("尚無預建索引，改為即時建立…", "索引");
+        var byId = await fetchSetJson(titleCode);
+        var cards = pickIndexCards(byId);
+        if (!cards.length) throw new Error("此系列沒有可用卡號");
+        await buildFaceIndex(cards);
+        setHud(
+          faceReady ? "即時索引完成，可以開鏡頭" : "卡圖像素無法讀取，請改用 OCR／手動",
+          faceReady ? "卡面" : "OCR"
+        );
+        toast("已載入 " + (faceReady ? indexCards.length + " 張卡面（即時）" : cards.length + " 張卡表"));
+      }
+
+      el("dpaLiveBtn").disabled = !(stream || el("dpaUploadPreview").getAttribute("src")) || !indexCards.length;
+      el("dpaShutterBtn").disabled = !(stream || el("dpaUploadPreview").getAttribute("src"));
     } catch (err) {
       console.error(err);
       setHud((err && err.message) || "載入失敗", "錯誤");
@@ -1897,8 +2027,16 @@
     bindEvents();
     restoreDeck();
     try {
-      await loadSeriesTitles();
-      setHud("先選系列並建立卡面索引", "準備");
+      await Promise.all([loadSeriesTitles(), loadFaceIndexMeta()]);
+      var readyN = Object.keys(faceIndexMetaByCode).length;
+      setHud(
+        readyN ? ("選系列即可載入；已有 " + readyN + " 套預建指紋") : "選系列後載入；尚無預建指紋時會即時建立",
+        "準備"
+      );
+      if (readyN) {
+        el("dpaSeriesMeta").innerHTML =
+          "可選系列已載入。預建指紋 <strong>" + readyN + "</strong> 套；選取後自動載入，無需手動建全庫。";
+      }
     } catch (err) {
       setHud("系列清單載入失敗", "錯誤");
     }
