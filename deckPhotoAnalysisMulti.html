@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('ws-theme');
+        document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style>
+    html { background: #f3efe6; }
+    html[data-theme="dark"] { background: #12110f; }
+    html:not(.fonts-ready) body { visibility: hidden; }
+    html.fonts-ready body { visibility: visible; }
+  </style>
+  <meta name="description" content="上傳整桌牌組照片，自動偵測卡疊、辨識上卡並彙整成牌組資料（v2）。">
+  <meta property="og:title" content="整桌牌組辨識｜WS-Cards 卡片雲">
+  <meta property="og:description" content="一次上傳整桌攤牌照片：自動找疊、認卡、數張，彙整成牌組。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/deckPhotoAnalysisMulti.html">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="WS-Cards">
+  <link rel="apple-touch-icon" href="https://ws-cards.cloud/favicon.ico">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <title>整桌牌組辨識｜WS-Cards 卡片雲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <script>
+    (function () {
+      var root = document.documentElement, done = false;
+      function markReady(){ if(done)return; done=true; root.classList.add('fonts-ready'); }
+      if (!document.fonts || !document.fonts.load) { markReady(); return; }
+      Promise.all([
+        document.fonts.load('400 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('700 16px "Zen Kaku Gothic New"'),
+        document.fonts.load('400 20px "UoqMunThenKhung"'),
+        document.fonts.load('700 16px "IBM Plex Mono"')
+      ]).then(function(){return document.fonts.ready;}).then(markReady).catch(markReady);
+      setTimeout(markReady, 1500);
+    })();
+  </script>
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="dist/css/wscards.newline_v102.css">
+  <style>
+    body, body button, body input, body select, body textarea, body p, body h3, body h5 {
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+    }
+    :root {
+      --m-ink:#2a241c; --m-muted:#7a6f60; --m-accent:#b07c28; --m-accent-soft:rgba(176,124,40,.14);
+      --m-good:#3f7a58; --m-bad:#a85a4e; --m-panel:#fffdf8; --m-border:rgba(42,36,28,.12);
+      --m-soft:rgba(42,36,28,.04); --m-mono:'IBM Plex Mono',ui-monospace,monospace;
+      --m-display:'UoqMunThenKhung','Noto Serif TC',serif;
+    }
+    [data-theme="dark"] {
+      --m-ink:#efe6d4; --m-muted:#b8b0a0; --m-accent:#cbb083; --m-accent-soft:rgba(203,176,131,.16);
+      --m-good:#5dba86; --m-bad:#e08a7c; --m-panel:rgba(255,255,255,.04); --m-border:rgba(255,255,255,.12);
+      --m-soft:rgba(255,255,255,.04);
+    }
+    .content-wrapper { background: transparent; }
+    .m-shell { max-width: 920px; margin: 0 auto; padding: .75rem .85rem 5rem; }
+    .m-hero { margin: .35rem 0 1rem; animation: mRise .7s cubic-bezier(.16,1,.3,1) both; }
+    .m-kicker { display:inline-flex; align-items:center; gap:.45rem; color:var(--m-accent); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; margin-bottom:.35rem; }
+    .m-kicker::before { content:""; width:1.1rem; height:1px; background:currentColor; opacity:.7; }
+    .m-title { font-family:var(--m-display); font-size:clamp(1.55rem,4.6vw,2.05rem); letter-spacing:.12em; color:var(--m-ink); margin:0 0 .35rem; }
+    .m-lead { margin:0; color:var(--m-muted); font-size:.92rem; line-height:1.65; max-width:40rem; }
+    .m-panel { background:var(--m-panel); border:1px solid var(--m-border); border-radius:1rem; padding:.9rem; margin-bottom:.85rem; box-shadow:0 10px 28px rgba(26,20,12,.04); }
+    .m-panel h2 { font-size:.95rem; font-weight:700; color:var(--m-ink); margin:0 0 .65rem; display:flex; align-items:center; gap:.45rem; }
+    .m-panel h2 .step { display:inline-flex; width:1.35rem; height:1.35rem; border-radius:999px; align-items:center; justify-content:center; background:var(--m-accent-soft); color:var(--m-accent); font-family:var(--m-mono); font-size:.75rem; font-weight:700; }
+    .m-row { display:grid; grid-template-columns:1fr auto; gap:.5rem; align-items:end; }
+    .m-field label { display:block; font-size:.78rem; color:var(--m-muted); margin-bottom:.3rem; font-weight:600; }
+    .m-field input { width:100%; border:1px solid var(--m-border); background:rgba(255,255,255,.55); color:var(--m-ink); border-radius:.65rem; padding:.65rem .75rem; font-size:.95rem; }
+    [data-theme="dark"] .m-field input { background:rgba(0,0,0,.25); }
+    .m-suggest { margin-top:.45rem; max-height:10.5rem; overflow:auto; border:1px solid var(--m-border); border-radius:.75rem; display:none; background:rgba(255,255,255,.45); }
+    [data-theme="dark"] .m-suggest { background:rgba(0,0,0,.28); }
+    .m-suggest.is-open { display:block; }
+    .m-suggest button { display:block; width:100%; text-align:left; border:0; background:transparent; padding:.55rem .75rem; color:var(--m-ink); border-bottom:1px solid var(--m-border); font-size:.88rem; }
+    .m-suggest button .code { font-family:var(--m-mono); color:var(--m-accent); margin-right:.4rem; font-weight:600; }
+    .m-meta { margin-top:.65rem; font-size:.82rem; color:var(--m-muted); }
+    .m-meta strong { color:var(--m-ink); font-family:var(--m-mono); }
+    .m-btn { appearance:none; border:1px solid var(--m-border); background:var(--m-soft); color:var(--m-ink); border-radius:999px; padding:.55rem .9rem; font-size:.86rem; font-weight:700; display:inline-flex; align-items:center; gap:.4rem; cursor:pointer; }
+    .m-btn.primary { background:linear-gradient(135deg,#d4a85a,#b07c28); border-color:transparent; color:#1a140c; }
+    .m-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .m-actions { display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.65rem; }
+
+    .m-stage {
+      position:relative; border-radius:1rem; overflow:hidden; background:#16130f;
+      border:1px solid rgba(255,255,255,.08); min-height:220px;
+    }
+    .m-stage img, .m-stage canvas { display:block; width:100%; height:auto; vertical-align:top; }
+    .m-stage-empty { color:rgba(246,236,216,.7); text-align:center; padding:3rem 1rem; font-size:.9rem; }
+    .m-overlay {
+      position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+    }
+    .m-drop {
+      border:1.5px dashed var(--m-border); border-radius:.85rem; padding:1.1rem; text-align:center;
+      color:var(--m-muted); cursor:pointer; background:var(--m-soft);
+    }
+    .m-drop.is-drag { border-color:var(--m-accent); background:var(--m-accent-soft); color:var(--m-ink); }
+
+    .m-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:.45rem; margin-bottom:.75rem; }
+    .m-stat { background:var(--m-soft); border-radius:.75rem; padding:.55rem .4rem; text-align:center; }
+    .m-stat .n { font-family:var(--m-mono); font-weight:700; font-size:1.1rem; color:var(--m-ink); }
+    .m-stat .n.ok { color:var(--m-good); } .m-stat .n.bad { color:var(--m-bad); }
+    .m-stat .l { font-size:.7rem; color:var(--m-muted); margin-top:.1rem; }
+
+    .m-stacks { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:.55rem; }
+    .m-stack {
+      border:1px solid var(--m-border); border-radius:.85rem; padding:.45rem; background:rgba(255,255,255,.3);
+      animation:mRise .45s cubic-bezier(.16,1,.3,1) both;
+    }
+    [data-theme="dark"] .m-stack { background:rgba(0,0,0,.2); }
+    .m-stack.is-weak { border-color:rgba(176,124,40,.55); }
+    .m-stack.is-miss { border-color:rgba(168,90,78,.55); }
+    .m-stack img.crop { width:100%; aspect-ratio:63/88; object-fit:cover; border-radius:.4rem; background:#111; }
+    .m-stack .no { font-family:var(--m-mono); font-size:.78rem; font-weight:700; color:var(--m-accent); margin-top:.35rem; }
+    .m-stack .name { font-size:.75rem; color:var(--m-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .m-stack .score { font-family:var(--m-mono); font-size:.68rem; color:var(--m-muted); }
+    .m-qty { display:inline-flex; align-items:center; gap:.2rem; margin-top:.35rem; }
+    .m-qty button { width:1.6rem; height:1.6rem; border-radius:999px; border:1px solid var(--m-border); background:transparent; color:var(--m-ink); cursor:pointer; font-weight:700; }
+    .m-qty span { min-width:1.3rem; text-align:center; font-family:var(--m-mono); font-weight:700; }
+    .m-stack .tools { display:flex; gap:.3rem; margin-top:.4rem; }
+    .m-stack .tools button { flex:1; font-size:.72rem; padding:.3rem; border-radius:.45rem; border:1px solid var(--m-border); background:transparent; color:var(--m-ink); cursor:pointer; }
+
+    .m-deck-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.4rem; max-height:26rem; overflow:auto; }
+    .m-deck-item { display:grid; grid-template-columns:44px 1fr auto; gap:.55rem; align-items:center; padding:.45rem; border-radius:.75rem; border:1px solid var(--m-border); }
+    .m-deck-item img { width:44px; height:61px; object-fit:cover; border-radius:.3rem; background:#111; }
+    .m-toast { position:fixed; left:50%; bottom:1.25rem; transform:translateX(-50%) translateY(120%); z-index:5000; background:rgba(26,20,12,.92); color:#f6ecd8; padding:.7rem 1rem; border-radius:999px; font-size:.86rem; transition:transform .35s cubic-bezier(.16,1,.3,1); max-width:calc(100vw - 2rem); }
+    .m-toast.is-on { transform:translateX(-50%) translateY(0); }
+    @keyframes mRise { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+    @media (max-width:480px){ .m-stats{grid-template-columns:repeat(2,1fr);} .m-row{grid-template-columns:1fr;} }
+    [data-theme="dark"] .site-footer, [data-theme="dark"] .site-footer-inner, [data-theme="dark"] .site-footer-inner a, [data-theme="dark"] .site-footer-copyright { color:var(--m-muted); }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<div class="wrapper">
+  <div data-navbar data-page-title="整桌牌組辨識"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
+  <script src="dist/js/include-navbar.js"></script>
+
+  <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
+  <aside class="custom-drawer" id="customDrawer">
+    <div class="custom-drawer-header">
+      <a href="./" class="brand-link">
+        <span class="navbar-title-mark" aria-hidden="true"></span>
+        <span class="brand-text" aria-label="卡片雲"><span class="navbar-title-char">卡</span><span class="navbar-title-char">片</span><span class="navbar-title-char">雲</span></span>
+        <span class="navbar-title-mark" aria-hidden="true"></span>
+      </a>
+      <button type="button" class="custom-drawer-close" onclick="toggleCustomDrawer()" aria-label="關閉選單"><i class="fas fa-times"></i></button>
+    </div>
+    <nav class="custom-drawer-nav">
+      <ul>
+        <li class="menu-item open">
+          <a href="#" class="menu-link toggle" onclick="toggleSubmenu(this, event)">
+            <i class="fas fa-tachometer-alt main-icon"></i><span>遊遊亭價格查詢</span><i class="fas fa-angle-left right-icon"></i>
+          </a>
+          <ul class="submenu">
+            <li><a href="line" class="menu-link"><i class="fas fa-chart-line main-icon"></i><span>各卡號漲幅趨勢(WS)</span></a></li>
+            <li><a href="lineWSR" class="menu-link"><i class="fas fa-chart-line main-icon"></i><span>各卡號漲幅趨勢(WSR)</span></a></li>
+            <li><a href="deckPrice" class="menu-link"><i class="fas fa-search-dollar main-icon"></i><span>牌組總額查詢計算機</span></a></li>
+            <li><a href="deckAnalysis.html" class="menu-link"><i class="fas fa-project-diagram main-icon"></i><span>牌組分析</span></a></li>
+            <li><a href="deckPhotoAnalysis.html" class="menu-link"><i class="fas fa-camera main-icon"></i><span>牌組拍照辨識</span></a></li>
+            <li><a href="deckPhotoAnalysisMulti.html" class="menu-link active"><i class="fas fa-th main-icon"></i><span>整桌牌組辨識</span></a></li>
+            <li><a href="attackGameLog.html" class="menu-link"><i class="fas fa-fist-raised main-icon"></i><span>攻擊記錄</span></a></li>
+          </ul>
+        </li>
+        <li class="menu-item"><a href="championList" class="menu-link"><i class="fas fa-trophy main-icon"></i><span>優勝牌組查詢 (Beta)</span></a></li>
+        <li class="menu-item"><a href="productTimeline.html" class="menu-link"><i class="fas fa-calendar-alt main-icon"></i><span>商品發售時間軸</span></a></li>
+        <li class="menu-item"><a href="favorites.html" class="menu-link"><i class="fas fa-star main-icon"></i><span>願望清單</span></a></li>
+        <li class="menu-item"><a href="account.html" class="menu-link"><i class="fas fa-user main-icon"></i><span>個人資料</span></a></li>
+      </ul>
+    </nav>
+    <div class="custom-drawer-footer">WS-Cards<span>β</span></div>
+  </aside>
+
+  <div class="content-wrapper">
+    <div class="content">
+      <div class="container-fluid">
+        <div class="m-shell">
+          <header class="m-hero">
+            <div class="m-kicker">Deck Photo Multi · v2</div>
+            <h1 class="m-title">整桌牌組辨識</h1>
+            <p class="m-lead">上傳整桌攤牌照片：自動偵測卡疊、用預建指紋辨識最上卡，並估計張數。結果可微調後彙整成牌組資料。</p>
+          </header>
+
+          <section class="m-panel">
+            <h2><span class="step">1</span>選擇系列（預建指紋）</h2>
+            <div class="m-row">
+              <div class="m-field" style="min-width:0;">
+                <label for="mSeriesInput">作品系列</label>
+                <input id="mSeriesInput" type="search" placeholder="例：HOL/W104、hololive" autocomplete="off">
+                <div id="mSeriesSuggest" class="m-suggest" role="listbox"></div>
+              </div>
+              <button type="button" class="m-btn primary" id="mLoadSeriesBtn" style="height:2.7rem;"><i class="fas fa-folder-open"></i>載入</button>
+            </div>
+            <div class="m-meta" id="mSeriesMeta">選有「●預建」的系列；索引來自 json/face-index。</div>
+          </section>
+
+          <section class="m-panel">
+            <h2><span class="step">2</span>上傳整桌照片並偵測</h2>
+            <div class="m-drop" id="mDrop" role="button" tabindex="0">
+              <div><i class="fas fa-cloud-upload-alt" style="font-size:1.4rem;color:var(--m-accent);"></i></div>
+              <div style="margin-top:.45rem;font-weight:700;color:var(--m-ink);">點擊或拖放牌組照片</div>
+              <div style="font-size:.8rem;margin-top:.25rem;">建議俯拍、同卡扇開疊放、單一系列</div>
+              <input id="mFile" type="file" accept="image/*" hidden>
+            </div>
+            <div class="m-actions">
+              <button type="button" class="m-btn primary" id="mDetectBtn" disabled><i class="fas fa-search-plus"></i>偵測並辨識</button>
+              <button type="button" class="m-btn" id="mClearImgBtn" disabled>清除照片</button>
+              <span class="m-meta" id="mCvStatus" style="margin:0;align-self:center;">OpenCV 載入中…</span>
+            </div>
+            <div class="m-stage" id="mStage" style="margin-top:.75rem;">
+              <div class="m-stage-empty" id="mStageEmpty">尚未載入照片</div>
+              <img id="mPhoto" alt="上傳的牌組照片" hidden>
+              <canvas id="mOverlay" class="m-overlay" hidden></canvas>
+            </div>
+          </section>
+
+          <section class="m-panel">
+            <h2><span class="step">3</span>偵測結果（可改張數／刪除）</h2>
+            <div class="m-meta" id="mDetectMeta" style="margin-top:0;margin-bottom:.65rem;">尚未偵測。</div>
+            <div class="m-stacks" id="mStacks"></div>
+          </section>
+
+          <section class="m-panel">
+            <h2><span class="step">4</span>彙整牌組</h2>
+            <div class="m-stats">
+              <div class="m-stat"><div class="n" id="mStatTotal">0</div><div class="l">總張數</div></div>
+              <div class="m-stat"><div class="n" id="mStatKinds">0</div><div class="l">卡種</div></div>
+              <div class="m-stat"><div class="n" id="mStatCx">0</div><div class="l">CX</div></div>
+              <div class="m-stat"><div class="n" id="mStatRule">—</div><div class="l">50／8</div></div>
+            </div>
+            <div class="m-actions" style="margin-top:0;margin-bottom:.7rem;">
+              <button type="button" class="m-btn" id="mCopyBtn"><i class="fas fa-copy"></i>複製卡表</button>
+              <button type="button" class="m-btn" id="mDownloadBtn"><i class="fas fa-download"></i>下載 JSON</button>
+              <button type="button" class="m-btn primary" id="mOpenAnalysisBtn"><i class="fas fa-chart-pie"></i>去牌組分析</button>
+              <button type="button" class="m-btn" id="mClearDeckBtn">清空</button>
+              <a class="m-btn" href="deckPhotoAnalysis.html"><i class="fas fa-camera"></i>單卡模式</a>
+            </div>
+            <ul class="m-deck-list" id="mDeckList"></ul>
+            <div class="m-meta" id="mDeckEmpty">辨識後會彙總到這裡。</div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="main-footer site-footer">
+    <div class="site-footer-inner">
+      <a href="https://docs.google.com/forms/d/1N7_PNmqUfiwGp6w8SJrz0bcbKnojn6hK64L_SOwb1jc" target="_blank" rel="noopener noreferrer">意見回饋</a>
+      <span class="site-footer-sep">·</span>
+      <span class="site-footer-copyright">&copy; 2020&ndash;2026 WS-Cards. All rights reserved.</span>
+    </div>
+  </footer>
+</div>
+
+<div class="m-toast" id="mToast" role="status"></div>
+<canvas id="mWork" width="320" height="448" style="position:absolute;left:-9999px;top:0;opacity:0;" aria-hidden="true"></canvas>
+
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="dist/js/adminlte.min.js"></script>
+<script src="assets/js/ws-deck-face.js"></script>
+<script src="assets/js/ws-deck-stack-detect.js"></script>
+<script>
+  // OpenCV async; detection falls back to canvas if not ready
+  var __cvReady = false;
+  function onOpenCvReady() {
+    __cvReady = true;
+    var s = document.getElementById('mCvStatus');
+    if (s) s.textContent = 'OpenCV 就緒';
+  }
+</script>
+<script async src="https://cdn.jsdelivr.net/gh/wallat/compiled-opencvjs/v4.2.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+<script>
+(function () {
+  'use strict';
+  var Face = window.WsDeckFace;
+  var Detect = window.WsDeckStackDetect;
+  var FACE_ACCEPT = 0.88;
+  var FACE_WEAK = 0.82;
+
+  var seriesMap = {}, seriesList = [], faceMetaByCode = {};
+  var indexCards = [];
+  var currentSeries = '';
+  var sourceCanvas = null;
+  var stacks = []; // {id,x,y,w,h,qty,card,score,cropUrl,status}
+  var toastTimer = null;
+
+  var el = function (id) { return document.getElementById(id); };
+  function toast(msg) {
+    var n = el('mToast');
+    n.textContent = msg;
+    n.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { n.classList.remove('is-on'); }, 2200);
+  }
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function isCx(card) {
+    return card && (String(card.kindLabel || '') === 'CX' || Number(card.kind) === 2);
+  }
+
+  function hasStatic(code) { return !!faceMetaByCode[code]; }
+
+  function filterSeries(q) {
+    var query = String(q || '').trim().toLowerCase();
+    var rows = seriesList;
+    if (query) {
+      rows = seriesList.filter(function (s) {
+        return s.code.toLowerCase().indexOf(query) >= 0 || String(s.label).toLowerCase().indexOf(query) >= 0;
+      });
+    }
+    return rows.slice().sort(function (a, b) {
+      var ha = hasStatic(a.code) ? 0 : 1;
+      var hb = hasStatic(b.code) ? 0 : 1;
+      if (ha !== hb) return ha - hb;
+      return a.code.localeCompare(b.code);
+    }).slice(0, 20);
+  }
+
+  function renderSuggest(q) {
+    var box = el('mSeriesSuggest');
+    var rows = filterSeries(q);
+    if (!rows.length) { box.classList.remove('is-open'); box.innerHTML = ''; return; }
+    box.innerHTML = rows.map(function (s) {
+      return '<button type="button" data-code="' + escapeHtml(s.code) + '"><span class="code">' +
+        escapeHtml(s.code) + '</span>' + escapeHtml(String(s.label).replace(/^\u300c|\u300d$/g, '')) +
+        (hasStatic(s.code) ? ' <span class="code">●預建</span>' : '') + '</button>';
+    }).join('');
+    box.classList.add('is-open');
+  }
+
+  async function loadSeries(code) {
+    var normalized = String(code || '').trim().replace('_', '/');
+    if (!normalized) { toast('請選擇系列'); return; }
+    Object.keys(seriesMap).some(function (k) {
+      if (k.toLowerCase() === normalized.toLowerCase()) { normalized = k; return true; }
+      return false;
+    });
+    var titleCode = normalized.replace('/', '_');
+    var label = seriesMap[normalized] || normalized;
+    el('mSeriesInput').value = normalized + '　' + String(label).slice(0, 40);
+    el('mSeriesSuggest').classList.remove('is-open');
+    el('mLoadSeriesBtn').disabled = true;
+    try {
+      if (!hasStatic(normalized)) throw new Error('此系列尚無預建指紋，請先跑 build_face_index.py');
+      var got = await Face.loadStaticIndex(normalized, titleCode, faceMetaByCode);
+      indexCards = got.indexCards;
+      currentSeries = normalized;
+      el('mSeriesMeta').innerHTML = '系列 <strong>' + escapeHtml(normalized) + '</strong> · 預建指紋 <strong>' +
+        indexCards.length + '</strong> 張 · 可開始上傳整桌照片';
+      toast('已載入 ' + indexCards.length + ' 張指紋');
+      el('mDetectBtn').disabled = !sourceCanvas;
+    } catch (err) {
+      indexCards = [];
+      currentSeries = '';
+      el('mSeriesMeta').textContent = (err && err.message) || '載入失敗';
+      toast(el('mSeriesMeta').textContent);
+    } finally {
+      el('mLoadSeriesBtn').disabled = false;
+    }
+  }
+
+  function setPhotoFromFile(file) {
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+      toast('請上傳圖片檔');
+      return;
+    }
+    var url = URL.createObjectURL(file);
+    var img = el('mPhoto');
+    img.onload = function () {
+      el('mStageEmpty').hidden = true;
+      img.hidden = false;
+      sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = img.naturalWidth;
+      sourceCanvas.height = img.naturalHeight;
+      var ctx = sourceCanvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      el('mClearImgBtn').disabled = false;
+      el('mDetectBtn').disabled = !indexCards.length;
+      stacks = [];
+      renderStacks();
+      drawOverlay([]);
+      el('mOverlay').hidden = false;
+      syncOverlaySize();
+      toast('照片已載入');
+    };
+    img.src = url;
+  }
+
+  function syncOverlaySize() {
+    var img = el('mPhoto');
+    var ov = el('mOverlay');
+    if (img.hidden) return;
+    ov.width = img.clientWidth * (window.devicePixelRatio || 1);
+    ov.height = img.clientHeight * (window.devicePixelRatio || 1);
+    ov.style.width = img.clientWidth + 'px';
+    ov.style.height = img.clientHeight + 'px';
+    drawOverlay(stacks);
+  }
+
+  function drawOverlay(list) {
+    var img = el('mPhoto');
+    var ov = el('mOverlay');
+    if (img.hidden || !sourceCanvas) return;
+    var ctx = ov.getContext('2d');
+    ctx.clearRect(0, 0, ov.width, ov.height);
+    var sx = ov.width / sourceCanvas.width;
+    var sy = ov.height / sourceCanvas.height;
+    ctx.lineWidth = Math.max(2, ov.width * 0.0025);
+    (list || []).forEach(function (s, i) {
+      var color = s.status === 'miss' ? '#e08a7c' : (s.status === 'weak' ? '#e0b35a' : '#7dcea0');
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.strokeRect(s.x * sx, s.y * sy, s.w * sx, s.h * sy);
+      ctx.font = 'bold ' + Math.round(12 * (window.devicePixelRatio || 1)) + 'px sans-serif';
+      ctx.fillText(String(i + 1), s.x * sx + 4, s.y * sy + 14 * (window.devicePixelRatio || 1));
+    });
+  }
+
+  function cropToDataUrl(boxCrop) {
+    var work = el('mWork');
+    work.width = 180;
+    work.height = 250;
+    var ctx = work.getContext('2d');
+    ctx.drawImage(sourceCanvas, boxCrop.sx, boxCrop.sy, boxCrop.sw, boxCrop.sh, 0, 0, work.width, work.height);
+    return work.toDataURL('image/jpeg', 0.85);
+  }
+
+  function recognizeBox(box) {
+    var crops = Detect.topCardCropCandidates(box);
+    var best = null;
+    for (var i = 0; i < crops.length; i++) {
+      var c = crops[i];
+      // draw crop to work canvas at native-ish size for fingerprint
+      var work = el('mWork');
+      work.width = 320;
+      work.height = 448;
+      var ctx = work.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(sourceCanvas, c.sx, c.sy, c.sw, c.sh, 0, 0, work.width, work.height);
+      var fp = Face.fingerprintFromImageSource(work);
+      var hits = Face.matchFace(fp, indexCards, 3);
+      if (!hits.length) continue;
+      var top = hits[0];
+      if (!best || top.score > best.score) {
+        best = {
+          score: top.score,
+          card: top.card,
+          candidates: hits,
+          crop: c,
+          cropUrl: cropToDataUrl(c)
+        };
+      }
+    }
+    return best;
+  }
+
+  async function runDetect() {
+    if (!sourceCanvas) { toast('請先上傳照片'); return; }
+    if (!indexCards.length) { toast('請先載入系列指紋'); return; }
+    el('mDetectBtn').disabled = true;
+    el('mDetectMeta').textContent = '偵測卡疊中…';
+    try {
+      await new Promise(function (r) { setTimeout(r, 30); });
+      var boxes = Detect.detectStacks(sourceCanvas, { maxSide: 1280 });
+      el('mDetectMeta').textContent = '找到 ' + boxes.length + ' 個區域，辨識中…';
+      var out = [];
+      for (var i = 0; i < boxes.length; i++) {
+        var b = boxes[i];
+        var rec = recognizeBox(b);
+        var row = {
+          id: b.id || ('s' + (i + 1)),
+          x: b.x, y: b.y, w: b.w, h: b.h,
+          qty: b.qtyHint || 1,
+          card: rec && rec.card,
+          score: rec ? rec.score : 0,
+          cropUrl: rec ? rec.cropUrl : '',
+          status: 'miss'
+        };
+        if (rec && rec.score >= FACE_ACCEPT) row.status = 'ok';
+        else if (rec && rec.score >= FACE_WEAK) row.status = 'weak';
+        out.push(row);
+        if (i % 2 === 1) await new Promise(function (r) { setTimeout(r, 0); });
+      }
+      stacks = out;
+      renderStacks();
+      drawOverlay(stacks);
+      var ok = stacks.filter(function (s) { return s.status === 'ok'; }).length;
+      el('mDetectMeta').innerHTML = '偵測 <strong>' + stacks.length + '</strong> 疊 · 高信心 <strong>' + ok +
+        '</strong> · 請檢查張數與誤判後看下方彙整';
+      toast('完成：' + stacks.length + ' 疊');
+      rebuildDeck();
+    } catch (err) {
+      console.error(err);
+      toast((err && err.message) || '偵測失敗');
+      el('mDetectMeta').textContent = (err && err.message) || '偵測失敗';
+    } finally {
+      el('mDetectBtn').disabled = false;
+    }
+  }
+
+  function renderStacks() {
+    var root = el('mStacks');
+    if (!stacks.length) {
+      root.innerHTML = '';
+      return;
+    }
+    root.innerHTML = stacks.map(function (s, idx) {
+      var cls = 'm-stack' + (s.status === 'weak' ? ' is-weak' : '') + (s.status === 'miss' ? ' is-miss' : '');
+      var no = s.card ? s.card.cardNo : '未辨識';
+      var name = s.card ? (s.card.name || '') : '請刪除或改選系列';
+      var score = s.card ? ('相似度 ' + Math.round(s.score * 1000) / 10 + '%') : '—';
+      return '<article class="' + cls + '" data-id="' + escapeHtml(s.id) + '">' +
+        '<img class="crop" alt="" src="' + escapeHtml(s.cropUrl || '') + '">' +
+        '<div class="no">#' + (idx + 1) + ' · ' + escapeHtml(no) + '</div>' +
+        '<div class="name">' + escapeHtml(name) + '</div>' +
+        '<div class="score">' + escapeHtml(score) + '</div>' +
+        '<div class="m-qty">' +
+        '<button type="button" data-act="dec">−</button><span>' + s.qty + '</span>' +
+        '<button type="button" data-act="inc">+</button></div>' +
+        '<div class="tools"><button type="button" data-act="del">刪除</button></div></article>';
+    }).join('');
+  }
+
+  function rebuildDeck() {
+    var map = new Map();
+    stacks.forEach(function (s) {
+      if (!s.card || !s.card.cardNo) return;
+      var no = Face.normalizeCardNo(s.card.cardNo);
+      var row = map.get(no);
+      if (!row) {
+        row = {
+          cardNo: no,
+          name: s.card.name || no,
+          qty: 0,
+          kindLabel: s.card.kindLabel || '',
+          kind: s.card.kind,
+          imageUrl: s.card.imageUrl || Face.buildCardImageUrls(no).primary
+        };
+        map.set(no, row);
+      }
+      row.qty += Math.max(1, s.qty | 0);
+    });
+    // clamp display qty note: WS max 4 each; still show sum if over for user fix
+    var rows = Array.from(map.values()).sort(function (a, b) {
+      return a.cardNo.localeCompare(b.cardNo);
+    });
+    var total = 0, cx = 0;
+    rows.forEach(function (r) {
+      total += r.qty;
+      if (isCx(r)) cx += r.qty;
+    });
+    el('mStatTotal').textContent = String(total);
+    el('mStatKinds').textContent = String(rows.length);
+    el('mStatCx').textContent = String(cx);
+    var rule = el('mStatRule');
+    rule.textContent = total + '／' + cx;
+    rule.classList.toggle('ok', total === 50 && cx === 8);
+    rule.classList.toggle('bad', total > 50 || cx > 8);
+
+    var list = el('mDeckList');
+    var empty = el('mDeckEmpty');
+    if (!rows.length) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = rows.map(function (r) {
+      return '<li class="m-deck-item"><img src="' + escapeHtml(r.imageUrl || '') + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.opacity=.2">' +
+        '<div><div class="no" style="font-family:var(--m-mono);font-weight:700;color:var(--m-accent);font-size:.82rem;">' +
+        escapeHtml(r.cardNo) + '</div><div style="font-size:.8rem;">' + escapeHtml(r.name) + '</div></div>' +
+        '<div style="font-family:var(--m-mono);font-weight:700;">×' + r.qty + '</div></li>';
+    }).join('');
+    window.__mDeckRows = rows;
+  }
+
+  function deckText() {
+    return (window.__mDeckRows || []).map(function (c) {
+      return c.qty + '|' + c.cardNo + '|' + (c.name || c.cardNo);
+    }).join('\n');
+  }
+
+  async function copyDeck() {
+    var t = deckText();
+    if (!t) { toast('尚無牌組'); return; }
+    try { await navigator.clipboard.writeText(t); }
+    catch (e) {
+      var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    toast('已複製卡表');
+  }
+
+  function downloadDeck() {
+    var rows = window.__mDeckRows || [];
+    if (!rows.length) { toast('尚無牌組'); return; }
+    var data = {
+      name: (currentSeries ? currentSeries + ' ' : '') + '整桌辨識牌組',
+      tags: currentSeries ? [currentSeries, '整桌辨識'] : ['整桌辨識'],
+      source: 'manual',
+      cards: rows.map(function (c) {
+        var row = { cardNumber: c.cardNo, qty: c.qty };
+        if (c.name) row.cardName = c.name;
+        return row;
+      }),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'deck-photo-multi-' + (currentSeries || 'ws').replace('/', '_') + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function bind() {
+    el('mSeriesInput').addEventListener('input', function () { renderSuggest(el('mSeriesInput').value); });
+    el('mSeriesInput').addEventListener('focus', function () { renderSuggest(el('mSeriesInput').value); });
+    el('mSeriesSuggest').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-code]');
+      if (btn) loadSeries(btn.getAttribute('data-code'));
+    });
+    el('mLoadSeriesBtn').addEventListener('click', function () {
+      var raw = el('mSeriesInput').value.trim().split(/[\s　]/)[0];
+      loadSeries(raw);
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('#mSeriesSuggest') && !e.target.closest('#mSeriesInput')) {
+        el('mSeriesSuggest').classList.remove('is-open');
+      }
+    });
+
+    var drop = el('mDrop');
+    drop.addEventListener('click', function () { el('mFile').click(); });
+    drop.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el('mFile').click(); }
+    });
+    el('mFile').addEventListener('change', function (e) {
+      if (e.target.files && e.target.files[0]) setPhotoFromFile(e.target.files[0]);
+    });
+    ;['dragenter','dragover'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-drag'); });
+    });
+    ;['dragleave','drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) {
+        e.preventDefault(); drop.classList.remove('is-drag');
+        if (ev === 'drop' && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          setPhotoFromFile(e.dataTransfer.files[0]);
+        }
+      });
+    });
+
+    el('mDetectBtn').addEventListener('click', runDetect);
+    el('mClearImgBtn').addEventListener('click', function () {
+      sourceCanvas = null; stacks = [];
+      el('mPhoto').hidden = true; el('mPhoto').removeAttribute('src');
+      el('mOverlay').hidden = true; el('mStageEmpty').hidden = false;
+      el('mClearImgBtn').disabled = true; el('mDetectBtn').disabled = true;
+      el('mDetectMeta').textContent = '尚未偵測。';
+      renderStacks(); rebuildDeck();
+    });
+
+    el('mStacks').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      var card = btn.closest('[data-id]');
+      if (!card) return;
+      var id = card.getAttribute('data-id');
+      var row = stacks.find(function (s) { return s.id === id; });
+      if (!row) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'inc') row.qty = Math.min(4, row.qty + 1);
+      if (act === 'dec') row.qty = Math.max(1, row.qty - 1);
+      if (act === 'del') stacks = stacks.filter(function (s) { return s.id !== id; });
+      renderStacks();
+      drawOverlay(stacks);
+      rebuildDeck();
+    });
+
+    el('mCopyBtn').addEventListener('click', copyDeck);
+    el('mDownloadBtn').addEventListener('click', downloadDeck);
+    el('mOpenAnalysisBtn').addEventListener('click', async function () {
+      var t = deckText();
+      if (!t) { toast('尚無牌組'); return; }
+      try { await navigator.clipboard.writeText(t); } catch (e) {}
+      toast('卡表已複製');
+      window.open('deckAnalysis.html', '_blank');
+    });
+    el('mClearDeckBtn').addEventListener('click', function () {
+      stacks = []; renderStacks(); drawOverlay([]); rebuildDeck();
+    });
+    window.addEventListener('resize', syncOverlaySize);
+  }
+
+  async function boot() {
+    bind();
+    try {
+      var meta = await Face.loadFaceIndexMeta();
+      faceMetaByCode = meta.byCode || {};
+    } catch (e) {
+      faceMetaByCode = {};
+    }
+    try {
+      var titles = await Face.loadSeriesTitles();
+      seriesMap = titles.seriesMap;
+      seriesList = titles.seriesList;
+      var n = Object.keys(faceMetaByCode).length;
+      el('mSeriesMeta').innerHTML = '系列清單就緒 · 預建指紋 <strong>' + n + '</strong> 套。選系列後上傳整桌照。';
+    } catch (err) {
+      // 本機若卡在 CORS，至少用 meta 裡的系列代碼可選
+      var codes = Object.keys(faceMetaByCode);
+      seriesMap = {};
+      seriesList = codes.map(function (code) {
+        seriesMap[code] = code;
+        return { code: code, label: code, titleCode: code.replace('/', '_') };
+      });
+      el('mSeriesMeta').innerHTML = '系列清單改以預建 meta 為準（' + codes.length + ' 套）。';
+    }
+    if (!__cvReady) el('mCvStatus').textContent = 'OpenCV 載入中（可先用備援偵測）';
+    else el('mCvStatus').textContent = 'OpenCV 就緒';
+    var params = new URLSearchParams(location.search);
+    var preset = params.get('series') || params.get('set');
+    if (preset) loadSeries(preset);
+  }
+
+  boot();
+
+  window.toggleCustomDrawer = function (e) {
+    if (e) e.preventDefault();
+    var drawer = document.getElementById('customDrawer');
+    var overlay = document.getElementById('customDrawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+  };
+  window.toggleSubmenu = function (element, e) {
+    if (e) e.preventDefault();
+    var parent = element.parentElement;
+    if (parent) {
+      parent.classList.toggle('open');
+      var submenu = parent.querySelector('.submenu');
+      if (submenu) submenu.style.display = parent.classList.contains('open') ? 'block' : 'none';
+    }
+  };
+})();
+</script>
+</body>
+</html>
