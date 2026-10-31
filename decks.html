@@ -7151,6 +7151,43 @@
       return out;
     }
 
+    /**
+     * 內容指紋：僅編成／名稱／標籤／描述／封面／DeckLog 來源等實質欄位。
+     * 不含 updatedAt、id、卡面 meta（cardName／level），避免補齊資料誤觸更新時間。
+     */
+    function deckContentSignature(deck) {
+      if (!deck || typeof deck !== 'object') return '';
+      var name = (normalizeText(deck.name) || '未命名牌組').slice(0, 40);
+      var tags = normalizeTags(deck.tags).slice(0, 20);
+      var cardsKey = normalizeDeckCards(deck.cards).map(function (c) {
+        var shortQty = c.shortQty > 0 ? c.shortQty : 0;
+        return c.cardNumber + ':' + c.qty + ':' + shortQty;
+      }).join('|');
+      var desc = normalizeDeckDescription(deck.deckDescription) || '';
+      var cover = normalizeCoverCardNumber(deck.coverCardNumber).slice(0, 80);
+      var code = normalizeText(deck.decklogCode);
+      var source = normalizeText(deck.source);
+      if (source !== 'decklog' && source !== 'manual') {
+        source = code ? 'decklog' : 'manual';
+      }
+      if (code) source = 'decklog';
+      var detached = code && deck.decklogDetached === true ? '1' : '0';
+      var importFp = code
+        ? (normalizeText(deck.decklogImportFingerprint) || '').slice(0, 4000)
+        : '';
+      return [
+        name,
+        tags.join('\u0001'),
+        cardsKey,
+        desc,
+        cover,
+        source,
+        code,
+        detached,
+        importFp
+      ].join('\n');
+    }
+
     var fb = window.WsFirebase || null;
     var deckCloudUser = null;
     var deckSyncing = false;
@@ -9136,7 +9173,6 @@
         return;
       }
       deckDraft.cards = normalizeDeckCards(deckDraft.cards);
-      deckDraft.updatedAt = Date.now();
       var name = deckDraft.name;
       var deckId = deckDraft.id;
       var idx = allDecks.findIndex(function (d) { return d.id === deckId; });
@@ -9144,7 +9180,19 @@
         setStatus('牌組數量已達上限（' + MAX_DECKS + '）', 'is-error');
         return;
       }
+      var existing = idx >= 0 ? allDecks[idx] : null;
+      // 先沿用舊時間再序列化；僅在編成／名稱等內容變更時才推進 updatedAt
+      if (existing && typeof existing.updatedAt === 'number') {
+        deckDraft.updatedAt = existing.updatedAt;
+      } else if (typeof deckDraft.updatedAt !== 'number') {
+        deckDraft.updatedAt = Date.now();
+      }
       var packed = serializeDeck(deckDraft);
+      if (!existing || deckContentSignature(existing) !== deckContentSignature(packed)) {
+        packed.updatedAt = Date.now();
+      } else {
+        packed.updatedAt = existing.updatedAt;
+      }
       var becameDetached = !!(packed.decklogDetached && !deckDraft.decklogDetached);
       requireDeckAuth()
         .then(function () {

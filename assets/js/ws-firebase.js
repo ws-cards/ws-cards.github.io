@@ -497,7 +497,50 @@
         var fp = String(data.decklogImportFingerprint || "").trim();
         if (fp) out.decklogImportFingerprint = fp.slice(0, 4000);
       }
+      var cover = String(data.coverCardNumber || "").trim().replace(/\\/g, "/");
+      if (cover) out.coverCardNumber = cover.slice(0, 80);
       return out;
+    }
+
+    /**
+     * 內容指紋：僅含會影響「牌組實質內容」的欄位。
+     * 不含 updatedAt／shareId 等同步或分享用中繼資料。
+     * 卡面 meta（cardName／level）不計入，避免補齊資料誤觸更新時間。
+     */
+    function deckContentSignature(deck) {
+      if (!deck || typeof deck !== "object") return "";
+      var name = String(deck.name || "").trim() || "未命名牌組";
+      name = name.slice(0, 40);
+      var tags = Array.isArray(deck.tags)
+        ? deck.tags.map(function (t) { return String(t || "").trim(); }).filter(Boolean).slice(0, 20)
+        : [];
+      var cardsKey = normalizeDeckCards(deck.cards).map(function (c) {
+        var shortQty = c.shortQty > 0 ? c.shortQty : 0;
+        return c.cardNumber + ":" + c.qty + ":" + shortQty;
+      }).join("|");
+      var desc = String(deck.deckDescription || "").trim().slice(0, 200);
+      var cover = String(deck.coverCardNumber || "").trim().replace(/\\/g, "/").slice(0, 80);
+      var code = String(deck.decklogCode || "").trim();
+      var source = String(deck.source || "").trim();
+      if (source !== "decklog" && source !== "manual") {
+        source = code ? "decklog" : "manual";
+      }
+      if (code) source = "decklog";
+      var detached = code && deck.decklogDetached === true ? "1" : "0";
+      var importFp = code
+        ? String(deck.decklogImportFingerprint || "").trim().slice(0, 4000)
+        : "";
+      return [
+        name,
+        tags.join("\u0001"),
+        cardsKey,
+        desc,
+        cover,
+        source,
+        code,
+        detached,
+        importFp
+      ].join("\n");
     }
 
     function serializeDeckForCloud(deck) {
@@ -520,12 +563,15 @@
         name: name.slice(0, 40),
         tags: tags.slice(0, 20),
         cards: cards,
-        source: deck.source === "decklog" ? "decklog" : "manual",
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        source: deck.source === "decklog" ? "decklog" : "manual"
+        // updatedAt 由 saveUserDeck 依內容是否變更決定
       };
       var desc = String(deck.deckDescription || "").trim().slice(0, 200);
       if (desc) payload.deckDescription = desc;
       else payload.deckDescription = firebase.firestore.FieldValue.delete();
+      var cover = String(deck.coverCardNumber || "").trim().replace(/\\/g, "/").slice(0, 80);
+      if (cover) payload.coverCardNumber = cover;
+      else payload.coverCardNumber = firebase.firestore.FieldValue.delete();
       var code = String(deck.decklogCode || "").trim();
       if (code) {
         payload.decklogCode = code;
@@ -575,8 +621,20 @@
       var ref = decksCol(db, user.uid).doc(packed.id);
       return ref.get().then(function (snap) {
         var payload = packed.payload;
-        if (!snap.exists && payload.createdAt == null) {
+        var isNew = !snap.exists;
+        if (isNew && payload.createdAt == null) {
           payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        // 新建一定寫 updatedAt；既有文件僅在編成／名稱等內容變更時更新
+        if (isNew) {
+          payload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        } else {
+          var prev = deckFromDoc(snap);
+          var prevSig = deckContentSignature(prev);
+          var nextSig = deckContentSignature(deck);
+          if (prevSig !== nextSig) {
+            payload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+          }
         }
         return ref.set(payload, { merge: true }).then(function () { return true; });
       });
