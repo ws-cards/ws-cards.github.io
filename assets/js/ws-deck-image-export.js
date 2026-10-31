@@ -386,19 +386,20 @@
   }
 
   function buildCompositionBlock(stats) {
-    var row = el("div", {
+    // 左欄直向：清單在上、總張數在下
+    var col = el("div", {
       display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      gap: "16px",
-      flexWrap: "wrap",
-      padding: "4px 2px 0"
+      flexDirection: "column",
+      gap: "12px",
+      padding: "2px 0 0",
+      height: "100%",
+      boxSizing: "border-box"
     });
 
     var list = el("div", {
       display: "flex",
       flexDirection: "column",
-      gap: "5px",
+      gap: "8px",
       minWidth: "0",
       flex: "1 1 auto"
     });
@@ -415,13 +416,13 @@
         display: "flex",
         alignItems: "center",
         gap: "8px",
-        fontSize: "13px",
+        fontSize: "14px",
         fontWeight: "700",
         color: "#1f2937"
       });
       line.appendChild(el("span", {
         width: "3px",
-        height: "14px",
+        height: "15px",
         borderRadius: "2px",
         background: "#f59e0b",
         flex: "0 0 auto",
@@ -430,16 +431,17 @@
       line.appendChild(document.createTextNode(item.label + "：" + item.value));
       list.appendChild(line);
     });
-    row.appendChild(list);
+    col.appendChild(list);
 
     var totalBox = el("div", {
-      textAlign: "right",
+      textAlign: "left",
       flex: "0 0 auto",
-      paddingRight: "4px"
+      marginTop: "auto",
+      paddingTop: "4px"
     });
     var deckSize = stats.deckSize || 50;
     totalBox.appendChild(el("div", {
-      fontSize: "28px",
+      fontSize: "30px",
       fontWeight: "900",
       color: "#111827",
       lineHeight: "1.05",
@@ -452,9 +454,9 @@
       color: "#6b7280",
       marginTop: "2px"
     }, { text: "枚" }));
-    row.appendChild(totalBox);
+    col.appendChild(totalBox);
 
-    return row;
+    return col;
   }
 
   function buildColorDonutChart(stats) {
@@ -611,46 +613,39 @@
   }
 
   function buildStatsPanel(stats) {
+    // 左：牌組資訊；右：Level 長條 + 顏色圓環
     var panel = el("div", {
       display: "flex",
-      flexDirection: "column",
-      gap: "8px"
-    });
-
-    var header = el("div", {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "baseline",
-      gap: "10px",
+      gap: "12px",
+      alignItems: "stretch",
       flexWrap: "wrap"
     });
-    header.appendChild(el("div", {
-      fontSize: "13px",
+
+    var left = el("div", {
+      flex: "0 1 280px",
+      minWidth: "200px",
+      maxWidth: "340px",
+      display: "flex",
+      flexDirection: "column",
+      gap: "8px",
+      boxSizing: "border-box"
+    });
+    left.appendChild(el("div", {
+      fontSize: "12px",
       fontWeight: "600",
-      color: "#4b5563"
+      color: "#6b7280"
     }, {
       text: "トリガー率 " + stats.triggerRate + "%（" + stats.triggerHits + "/" + stats.total + "）"
     }));
-    panel.appendChild(header);
-
-    var charts = el("div", {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "8px",
-      alignItems: "stretch"
-    });
-    charts.appendChild(buildLevelBarChart(stats));
-    charts.appendChild(buildColorDonutChart(stats));
-    panel.appendChild(charts);
-
-    panel.appendChild(buildCompositionBlock(stats));
+    left.appendChild(buildCompositionBlock(stats));
 
     if (stats.cxGroups && stats.cxGroups.length) {
       var cxRow = el("div", {
         display: "flex",
         flexWrap: "wrap",
-        gap: "6px 10px",
-        alignItems: "center"
+        gap: "6px 8px",
+        alignItems: "center",
+        marginTop: "4px"
       });
       stats.cxGroups.forEach(function (g) {
         var chip = el("span", {
@@ -676,12 +671,25 @@
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          maxWidth: "280px"
+          maxWidth: "220px"
         }, { text: label }));
         cxRow.appendChild(chip);
       });
-      panel.appendChild(cxRow);
+      left.appendChild(cxRow);
     }
+    panel.appendChild(left);
+
+    var right = el("div", {
+      flex: "1 1 520px",
+      minWidth: "0",
+      display: "flex",
+      gap: "8px",
+      alignItems: "stretch",
+      flexWrap: "wrap"
+    });
+    right.appendChild(buildLevelBarChart(stats));
+    right.appendChild(buildColorDonutChart(stats));
+    panel.appendChild(right);
 
     return panel;
   }
