@@ -308,43 +308,66 @@
     .dpa-stage-wrap.is-upload #dpaVideo { display: none; }
     .dpa-stage-wrap.is-upload #dpaUploadPreview { display: block; }
 
-    .dpa-frame {
+    /* 外框＝對齊實體卡緣；內框＝實際裁切／辨識區（略縮進卡面內，準度較高） */
+    .dpa-guide {
       position: absolute;
       left: 50%;
       top: 46%;
-      width: min(58vw, 240px);
+      width: min(68vw, 282px);
       aspect-ratio: 63 / 88;
       transform: translate(-50%, -50%);
-      border: 1.5px solid var(--dpa-stage-line);
-      border-radius: 0.55rem;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .dpa-frame-outer {
+      position: absolute;
+      inset: 0;
+      border: 1.5px solid rgba(240, 217, 160, 0.92);
+      border-radius: 0.65rem;
       box-shadow:
         0 0 0 999px rgba(8, 6, 4, 0.48),
         inset 0 0 0 1px rgba(255,255,255,0.08);
-      z-index: 2;
-      pointer-events: none;
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
-    .dpa-frame.is-lock {
+    .dpa-frame {
+      position: absolute;
+      /* 相對外框四邊內縮 7.5%，對齊外框時內框自然落在卡面內且維持 63:88 */
+      inset: 7.5%;
+      border: 1px dashed rgba(240, 217, 160, 0.42);
+      border-radius: 0.4rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .dpa-guide.is-lock .dpa-frame-outer {
       border-color: #7dcea0;
       box-shadow:
         0 0 0 999px rgba(8, 6, 4, 0.42),
         0 0 24px rgba(125, 206, 160, 0.35),
         inset 0 0 0 1px rgba(255,255,255,0.1);
     }
-    .dpa-frame.is-busy {
+    .dpa-guide.is-lock .dpa-frame {
+      border-color: rgba(125, 206, 160, 0.7);
+      border-style: solid;
+    }
+    .dpa-guide.is-busy .dpa-frame-outer {
       border-color: #e0b35a;
       animation: dpaPulse 1.2s ease-in-out infinite;
     }
+    .dpa-guide.is-busy .dpa-frame {
+      border-color: rgba(224, 179, 90, 0.75);
+    }
     .dpa-corner {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #f0d9a0;
+      width: 16px;
+      height: 16px;
+      border: 2.5px solid #f0d9a0;
     }
     .dpa-corner.tl { left: -1px; top: -1px; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
     .dpa-corner.tr { right: -1px; top: -1px; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
     .dpa-corner.bl { left: -1px; bottom: -1px; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
     .dpa-corner.br { right: -1px; bottom: -1px; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
+    .dpa-guide.is-lock .dpa-corner { border-color: #7dcea0; }
+    .dpa-guide.is-busy .dpa-corner { border-color: #e0b35a; }
 
     .dpa-stage-hud {
       position: absolute;
@@ -716,7 +739,7 @@
           <header class="dpa-hero">
             <div class="dpa-kicker">Deck Photo</div>
             <h1 class="dpa-title">牌組拍照辨識</h1>
-            <p class="dpa-lead">對準卡面即時比對官方卡圖，把實體牌組掃成卡表。辨識以<strong>卡面特徵</strong>為主；看不清時才用 OCR 讀卡號備援。</p>
+            <p class="dpa-lead">把卡片外緣對齊外框，即可即時比對官方卡圖，把實體牌組掃成卡表。辨識以<strong>卡面特徵</strong>為主；看不清時才用 OCR 讀卡號備援。</p>
           </header>
 
           <section class="dpa-panel" aria-labelledby="dpaSeriesHeading">
@@ -740,15 +763,18 @@
             <div class="dpa-stage-wrap" id="dpaStage">
               <video id="dpaVideo" playsinline muted autoplay></video>
               <img id="dpaUploadPreview" alt="上傳預覽">
-              <div class="dpa-frame" id="dpaFrame" aria-hidden="true">
-                <span class="dpa-corner tl"></span>
-                <span class="dpa-corner tr"></span>
-                <span class="dpa-corner bl"></span>
-                <span class="dpa-corner br"></span>
+              <div class="dpa-guide" id="dpaGuide" aria-hidden="true">
+                <div class="dpa-frame-outer" id="dpaFrameOuter">
+                  <span class="dpa-corner tl"></span>
+                  <span class="dpa-corner tr"></span>
+                  <span class="dpa-corner bl"></span>
+                  <span class="dpa-corner br"></span>
+                </div>
+                <div class="dpa-frame" id="dpaFrame" title="辨識裁切區"></div>
               </div>
               <div class="dpa-stage-hud">
                 <div class="dpa-hud-status" id="dpaHudStatus" role="status">
-                  <span class="tag">卡面</span>請開啟後鏡頭，把整張卡對齊框內
+                  <span class="tag">卡面</span>請開啟後鏡頭，把卡片外緣對齊外框
                 </div>
                 <div class="dpa-controls">
                   <button type="button" class="dpa-btn primary" id="dpaStartCamBtn"><i class="fas fa-video" aria-hidden="true"></i>開鏡頭</button>
@@ -1429,7 +1455,7 @@
       el("dpaSwitchCamBtn").disabled = false;
       el("dpaLiveBtn").disabled = !indexCards.length;
       el("dpaShutterBtn").disabled = false;
-      setHud("對準卡面；建議開啟「即時比對」連續掃描", faceReady ? "卡面" : "OCR");
+      setHud("將卡片外緣對齊外框；建議開啟「即時比對」連續掃描", faceReady ? "卡面" : "OCR");
     } catch (err) {
       console.error(err);
       toast("無法開啟相機，請檢查權限或改用相簿");
@@ -1637,7 +1663,7 @@
       cand.classList.remove("is-on");
       cand.innerHTML = "";
     }
-    el("dpaFrame").classList.toggle("is-lock", result.via !== "ocr" && result.score >= FACE_ACCEPT);
+    el("dpaGuide").classList.toggle("is-lock", result.via !== "ocr" && result.score >= FACE_ACCEPT);
   }
 
   async function analyzeOnce(autoAdd) {
@@ -1652,7 +1678,8 @@
       return;
     }
     busy = true;
-    el("dpaFrame").classList.add("is-busy");
+    el("dpaGuide").classList.add("is-busy");
+    el("dpaGuide").classList.remove("is-lock");
     try {
       var work = cropGuideToWorkCanvas(source);
       var faceHits = faceReady ? matchFace(work) : null;
@@ -1699,7 +1726,7 @@
       setHud((err && err.message) || "辨識失敗", "錯誤");
     } finally {
       busy = false;
-      el("dpaFrame").classList.remove("is-busy");
+      el("dpaGuide").classList.remove("is-busy");
     }
   }
 
@@ -1974,7 +2001,7 @@
         el("dpaStage").classList.add("is-upload");
         el("dpaLiveBtn").disabled = !indexCards.length;
         el("dpaShutterBtn").disabled = false;
-        setHud("已載入照片，按「拍一張」辨識框內卡面", faceReady ? "卡面" : "OCR");
+        setHud("已載入照片，按「拍一張」辨識卡面", faceReady ? "卡面" : "OCR");
       };
       img.src = url;
     });
