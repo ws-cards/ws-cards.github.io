@@ -6,11 +6,44 @@
   'use strict';
 
   var FACE_ALGO = 'rgb-grid-v1';
-  var FACE_INDEX_BASE = './json/face-index/';
+  var FACE_INDEX_GCS_BASE =
+    'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/face-index/';
+  var FACE_INDEX_LOCAL_BASE = './json/face-index/';
+  /** @deprecated use FACE_INDEX_GCS_BASE / FACE_INDEX_LOCAL_BASE; kept as primary (GCS) for callers */
+  var FACE_INDEX_BASE = FACE_INDEX_GCS_BASE;
   var CONTENT_WS_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/';
   var CARD_TITLE_URL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
   var IMG_BASE = 'https://imgs.devilfox.net/ws/';
   var WS_CARD_IMAGE_BASE = 'https://ws-tcg.com/wordpress/wp-content/images/cardlist';
+
+  function faceIndexBases() {
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.get('faceIndex') === 'local') return [FACE_INDEX_LOCAL_BASE];
+      if (q.get('faceIndex') === 'gcs') return [FACE_INDEX_GCS_BASE];
+    } catch (e) { /* ignore */ }
+    // 預設：GCP 優先，失敗再回退站內
+    return [FACE_INDEX_GCS_BASE, FACE_INDEX_LOCAL_BASE];
+  }
+
+  async function fetchFaceIndexJson(relativePath, bases) {
+    var list = bases || faceIndexBases();
+    var lastErr = null;
+    for (var i = 0; i < list.length; i++) {
+      var base = list[i];
+      try {
+        var res = await fetch(base + relativePath, { cache: 'no-cache' });
+        if (!res.ok) {
+          lastErr = new Error('HTTP ' + res.status + ' @ ' + base + relativePath);
+          continue;
+        }
+        return { data: await res.json(), base: base, url: base + relativePath };
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error('無法載入 ' + relativePath);
+  }
 
   var FP_W = 48;
   var FP_H = 66;
@@ -153,28 +186,73 @@
 
   async function loadFaceIndexMeta() {
     var byCode = {};
-    try {
-      var res = await fetch(FACE_INDEX_BASE + 'meta.json', { cache: 'no-cache' });
-      if (!res.ok) return { meta: null, byCode: byCode };
-      var meta = await res.json();
-      (meta.series || []).forEach(function (row) {
-        if (row && row.code) byCode[String(row.code)] = row;
-      });
-      return { meta: meta, byCode: byCode };
-    } catch (e) {
-      return { meta: null, byCode: byCode };
+    var sources = [];
+    var bases = faceIndexBases();
+    for (var i = 0; i < bases.length; i++) {
+      var base = bases[i];
+      try {
+        var res = await fetch(base + 'meta.json', { cache: 'no-cache' });
+        if (!res.ok) continue;
+        var meta = await res.json();
+        sources.push({ base: base, meta: meta });
+        (meta.series || []).forEach(function (row) {
+          if (!row || !row.code) return;
+          // 略過與前端算法不符者（例如 GCP 上殘留的 mean-gray-grid）
+          if (row.algo && row.algo !== FACE_ALGO) return;
+          var code = String(row.code);
+          var next = Object.assign({}, row, { _base: base });
+          // 同系列兩來源：先讀到的優先（預設 GCS → local）
+          if (!byCode[code]) byCode[code] = next;
+        });
+      } catch (e) {
+        /* try next base */
+      }
     }
+    if (!sources.length) return { meta: null, byCode: byCode, sources: sources };
+    return {
+      meta: {
+        version: 1,
+        algo: FACE_ALGO,
+        sources: sources.map(function (s) { return s.base; }),
+        series: Object.keys(byCode).sort().map(function (k) { return byCode[k]; })
+      },
+      byCode: byCode,
+      sources: sources
+    };
   }
 
   async function loadStaticIndex(seriesCode, titleCode, metaByCode) {
     var metaRow = metaByCode && metaByCode[seriesCode];
     var fileName = (metaRow && metaRow.file) || (titleCode + '.json');
-    var res = await fetch(FACE_INDEX_BASE + fileName, { cache: 'no-cache' });
-    if (!res.ok) throw new Error('找不到預建索引 ' + fileName);
-    var data = await res.json();
-    if (data.algo && data.algo !== FACE_ALGO) {
-      throw new Error('靜態索引算法不符（' + data.algo + '）');
+    var preferred = metaRow && metaRow._base;
+    var bases = faceIndexBases().slice();
+    if (preferred) {
+      bases = [preferred].concat(bases.filter(function (b) { return b !== preferred; }));
     }
+    var got = null;
+    var lastErr = null;
+    for (var i = 0; i < bases.length; i++) {
+      try {
+        var res = await fetch(bases[i] + fileName, { cache: 'no-cache' });
+        if (!res.ok) {
+          lastErr = new Error('HTTP ' + res.status);
+          continue;
+        }
+        var data = await res.json();
+        if (data.algo && data.algo !== FACE_ALGO) {
+          lastErr = new Error('靜態索引算法不符（' + data.algo + '，需要 ' + FACE_ALGO + '）');
+          continue;
+        }
+        got = { data: data, base: bases[i] };
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (!got) {
+      throw lastErr || new Error('找不到預建索引 ' + fileName);
+    }
+    var data = got.data;
     var indexCards = [];
     (data.cards || []).forEach(function (c) {
       if (!c || !c.cardNo || !c.fp || !c.fp.length) return;
@@ -191,12 +269,14 @@
       });
     });
     if (!indexCards.length) throw new Error('靜態索引沒有可用卡面');
-    return { indexCards: indexCards, payload: data };
+    return { indexCards: indexCards, payload: data, base: got.base };
   }
 
   global.WsDeckFace = {
     FACE_ALGO: FACE_ALGO,
     FACE_INDEX_BASE: FACE_INDEX_BASE,
+    FACE_INDEX_GCS_BASE: FACE_INDEX_GCS_BASE,
+    FACE_INDEX_LOCAL_BASE: FACE_INDEX_LOCAL_BASE,
     CONTENT_WS_BASE: CONTENT_WS_BASE,
     CARD_TITLE_URL: CARD_TITLE_URL,
     FP_W: FP_W,
@@ -209,6 +289,7 @@
     matchFace: matchFace,
     loadSeriesTitles: loadSeriesTitles,
     loadFaceIndexMeta: loadFaceIndexMeta,
-    loadStaticIndex: loadStaticIndex
+    loadStaticIndex: loadStaticIndex,
+    fetchFaceIndexJson: fetchFaceIndexJson
   };
 })(window);

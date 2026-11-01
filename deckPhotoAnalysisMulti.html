@@ -209,7 +209,7 @@
               </div>
               <button type="button" class="m-btn primary" id="mLoadSeriesBtn" style="height:2.7rem;"><i class="fas fa-folder-open"></i>載入</button>
             </div>
-            <div class="m-meta" id="mSeriesMeta">選有「●預建」的系列；索引來自 json/face-index。</div>
+            <div class="m-meta" id="mSeriesMeta">選有「●預建」的系列；索引優先 GCP face-index，失敗回退站內。</div>
           </section>
 
           <section class="m-panel">
@@ -365,9 +365,10 @@
       var got = await Face.loadStaticIndex(normalized, titleCode, faceMetaByCode);
       indexCards = got.indexCards;
       currentSeries = normalized;
+      var src = (got.base && String(got.base).indexOf('storage.googleapis.com') >= 0) ? 'gcs' : 'local';
       el('mSeriesMeta').innerHTML = '系列 <strong>' + escapeHtml(normalized) + '</strong> · 預建指紋 <strong>' +
-        indexCards.length + '</strong> 張 · 可開始上傳整桌照片';
-      toast('已載入 ' + indexCards.length + ' 張指紋');
+        indexCards.length + '</strong> 張 · 來源 <strong>' + src + '</strong> · 可開始上傳整桌照片';
+      toast('已載入 ' + indexCards.length + ' 張指紋（' + src + '）');
       el('mDetectBtn').disabled = !sourceCanvas;
     } catch (err) {
       indexCards = [];
@@ -725,7 +726,12 @@
       seriesMap = titles.seriesMap;
       seriesList = titles.seriesList;
       var n = Object.keys(faceMetaByCode).length;
-      el('mSeriesMeta').innerHTML = '系列清單就緒 · 預建指紋 <strong>' + n + '</strong> 套。選系列後上傳整桌照。';
+      var srcs = (meta && meta.meta && meta.meta.sources) ? meta.meta.sources : [];
+      var srcLabel = srcs.map(function (b) {
+        return String(b).indexOf('storage.googleapis.com') >= 0 ? 'gcs' : 'local';
+      }).join('+');
+      el('mSeriesMeta').innerHTML = '系列清單就緒 · 預建指紋 <strong>' + n + '</strong> 套' +
+        (srcLabel ? '（' + srcLabel + '）' : '') + '。選系列後上傳整桌照。';
     } catch (err) {
       // 本機若卡在 CORS，至少用 meta 裡的系列代碼可選
       var codes = Object.keys(faceMetaByCode);
