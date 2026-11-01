@@ -754,7 +754,7 @@
                 <i class="fas fa-folder-open" aria-hidden="true"></i>載入系列
               </button>
             </div>
-            <div class="dpa-series-meta" id="dpaSeriesMeta">選系列後會優先載入預建指紋；若尚無靜態檔再即時建索引。</div>
+            <div class="dpa-series-meta" id="dpaSeriesMeta">選系列後優先從 GCP 載入預建指紋；失敗再回退站內檔，仍無則即時建索引。</div>
             <div class="dpa-progress" id="dpaIndexProgress" aria-hidden="true"><span id="dpaIndexBar"></span></div>
           </section>
 
@@ -884,7 +884,9 @@
 
   var CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
   var CARD_TITLE_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json";
-  var FACE_INDEX_BASE = "./json/face-index/";
+  var FACE_INDEX_GCS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/face-index/";
+  var FACE_INDEX_LOCAL_BASE = "./json/face-index/";
+  var FACE_INDEX_BASE = FACE_INDEX_GCS_BASE;
   var FACE_ALGO = "rgb-grid-v1";
   var IMG_BASE = "https://imgs.devilfox.net/ws/";
   var WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
@@ -903,12 +905,28 @@
   var seriesList = [];
   var faceIndexMeta = null;
   var faceIndexMetaByCode = {};
+  var faceIndexSourceLabel = "";
   var indexCards = [];
   var currentSeriesCode = "";
   var currentSeriesLabel = "";
   var indexSource = ""; // static | live | none
   var faceReady = false;
   var faceCorsBlocked = false;
+
+  function faceIndexBases() {
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.get("faceIndex") === "local") return [FACE_INDEX_LOCAL_BASE];
+      if (q.get("faceIndex") === "gcs") return [FACE_INDEX_GCS_BASE];
+    } catch (e) { /* ignore */ }
+    return [FACE_INDEX_GCS_BASE, FACE_INDEX_LOCAL_BASE];
+  }
+
+  function describeFaceBase(base) {
+    if (!base) return "";
+    if (String(base).indexOf("storage.googleapis.com") >= 0) return "gcs";
+    return "local";
+  }
   var stream = null;
   var facingMode = "environment";
   var liveOn = false;
@@ -1132,15 +1150,37 @@
   async function loadFaceIndexMeta() {
     faceIndexMeta = null;
     faceIndexMetaByCode = {};
-    try {
-      var res = await fetch(FACE_INDEX_BASE + "meta.json", { cache: "no-cache" });
-      if (!res.ok) return;
-      faceIndexMeta = await res.json();
-      (faceIndexMeta.series || []).forEach(function (row) {
-        if (row && row.code) faceIndexMetaByCode[String(row.code)] = row;
-      });
-    } catch (e) {
-      faceIndexMeta = null;
+    faceIndexSourceLabel = "";
+    var bases = faceIndexBases();
+    var sourceTags = [];
+    for (var i = 0; i < bases.length; i++) {
+      var base = bases[i];
+      try {
+        var res = await fetch(base + "meta.json", { cache: "no-cache" });
+        if (!res.ok) continue;
+        var meta = await res.json();
+        sourceTags.push(describeFaceBase(base));
+        (meta.series || []).forEach(function (row) {
+          if (!row || !row.code) return;
+          // 略過與前端算法不符者（例如 GCP 上殘留的 mean-gray-grid）
+          if (row.algo && row.algo !== FACE_ALGO) return;
+          var code = String(row.code);
+          var next = Object.assign({}, row, { _base: base });
+          // 同系列兩來源：先讀到的優先（預設 GCS → local）
+          if (!faceIndexMetaByCode[code]) faceIndexMetaByCode[code] = next;
+        });
+      } catch (e) {
+        /* try next */
+      }
+    }
+    faceIndexSourceLabel = sourceTags.join("+") || "";
+    var codes = Object.keys(faceIndexMetaByCode);
+    if (codes.length) {
+      faceIndexMeta = {
+        version: 1,
+        algo: FACE_ALGO,
+        series: codes.sort().map(function (k) { return faceIndexMetaByCode[k]; })
+      };
     }
   }
 
@@ -1226,14 +1266,41 @@
   async function tryLoadStaticIndex(seriesCode, titleCode) {
     var metaRow = faceIndexMetaByCode[seriesCode];
     var fileName = (metaRow && metaRow.file) || (titleCode + ".json");
-    var url = FACE_INDEX_BASE + fileName;
-    var res = await fetch(url, { cache: "no-cache" });
-    if (!res.ok) return false;
-    var data = await res.json();
+    var preferred = metaRow && metaRow._base;
+    var bases = faceIndexBases().slice();
+    if (preferred) {
+      bases = [preferred].concat(bases.filter(function (b) { return b !== preferred; }));
+    }
+    var data = null;
+    var usedBase = "";
+    var lastErr = null;
+    for (var i = 0; i < bases.length; i++) {
+      try {
+        var res = await fetch(bases[i] + fileName, { cache: "no-cache" });
+        if (!res.ok) {
+          lastErr = new Error("HTTP " + res.status);
+          continue;
+        }
+        var json = await res.json();
+        if (json.algo && json.algo !== FACE_ALGO) {
+          lastErr = new Error("算法不符（" + json.algo + "）");
+          continue;
+        }
+        data = json;
+        usedBase = bases[i];
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (!data) {
+      if (lastErr) console.warn(lastErr);
+      return false;
+    }
     applyStaticIndexPayload(data);
     el("dpaSeriesMeta").innerHTML =
       "系列 <strong>" + escapeHtml(seriesCode) + "</strong> · 預建指紋 <strong>" +
-      indexCards.length + "</strong> 張 · 來源 <strong>static</strong>" +
+      indexCards.length + "</strong> 張 · 來源 <strong>" + escapeHtml(describeFaceBase(usedBase)) + "</strong>" +
       (data.builtAt ? " · " + escapeHtml(String(data.builtAt)) : "") +
       (el("dpaOcrFallback").checked ? " · OCR 備援開啟" : "");
     return true;
@@ -2069,7 +2136,9 @@
       );
       if (readyN) {
         el("dpaSeriesMeta").innerHTML =
-          "可選系列已載入。預建指紋 <strong>" + readyN + "</strong> 套；選取後自動載入，無需手動建全庫。";
+          "可選系列已載入。預建指紋 <strong>" + readyN + "</strong> 套" +
+          (faceIndexSourceLabel ? "（來源 <strong>" + escapeHtml(faceIndexSourceLabel) + "</strong>）" : "") +
+          "；優先 GCP，失敗回退站內。";
       }
     } catch (err) {
       setHud("系列清單載入失敗", "錯誤");
