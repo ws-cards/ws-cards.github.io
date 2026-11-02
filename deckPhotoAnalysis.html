@@ -375,15 +375,15 @@
       right: 0;
       bottom: 0;
       z-index: 3;
-      padding: 0.85rem;
-      background: linear-gradient(180deg, transparent, rgba(8,6,4,0.88) 40%);
+      padding: 0.55rem 0.7rem 0.65rem;
+      background: linear-gradient(180deg, transparent, rgba(8,6,4,0.82) 55%);
       color: #f4ead7;
     }
     .dpa-hud-status {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       opacity: 0.9;
-      margin-bottom: 0.55rem;
-      min-height: 1.2em;
+      margin-bottom: 0.4rem;
+      min-height: 1.1em;
     }
     .dpa-hud-status .tag {
       display: inline-block;
@@ -406,12 +406,12 @@
       background: rgba(255,255,255,0.08);
       color: #f6ecd8;
       border-radius: 999px;
-      padding: 0.55rem 0.9rem;
-      font-size: 0.86rem;
+      padding: 0.42rem 0.75rem;
+      font-size: 0.8rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
       cursor: pointer;
       transition: transform 0.15s ease, background 0.15s ease;
     }
@@ -441,60 +441,80 @@
     }
     .dpa-toggle input { accent-color: var(--dpa-accent); }
 
+    /* 比對結果放鏡頭下方，避免蓋住取景／對齊框 */
+    .dpa-result-strip {
+      margin-top: 0.55rem;
+      display: grid;
+      gap: 0.4rem;
+    }
     .dpa-match-card {
       display: none;
-      margin-top: 0.75rem;
-      padding: 0.7rem;
-      border-radius: 0.85rem;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(240, 217, 160, 0.2);
-      gap: 0.7rem;
+      padding: 0.45rem 0.5rem;
+      border-radius: 0.75rem;
+      background: var(--dpa-soft);
+      border: 1px solid var(--dpa-border);
+      gap: 0.55rem;
       align-items: center;
+      color: var(--dpa-ink);
     }
     .dpa-match-card.is-on { display: flex; }
     .dpa-match-card img {
-      width: 52px;
-      height: 72px;
+      width: 36px;
+      height: 50px;
       object-fit: cover;
-      border-radius: 0.35rem;
-      background: #000;
+      border-radius: 0.28rem;
+      background: #1a140c;
       flex-shrink: 0;
     }
     .dpa-match-card .meta { min-width: 0; flex: 1; }
     .dpa-match-card .no {
       font-family: var(--dpa-mono);
       font-weight: 700;
-      font-size: 0.92rem;
-      color: #f0d9a0;
+      font-size: 0.86rem;
+      color: var(--dpa-accent);
     }
     .dpa-match-card .name {
-      font-size: 0.84rem;
+      font-size: 0.78rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      opacity: 0.9;
+      opacity: 0.88;
     }
     .dpa-match-card .score {
       font-family: var(--dpa-mono);
-      font-size: 0.72rem;
-      opacity: 0.7;
+      font-size: 0.68rem;
+      opacity: 0.65;
+    }
+    .dpa-match-card .dpa-btn {
+      padding: 0.38rem 0.7rem;
+      font-size: 0.78rem;
+      flex-shrink: 0;
     }
     .dpa-candidates {
       display: none;
-      margin-top: 0.55rem;
-      gap: 0.4rem;
-      flex-wrap: wrap;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      padding-bottom: 0.1rem;
     }
     .dpa-candidates.is-on { display: flex; }
     .dpa-candidates button {
-      border: 1px solid rgba(240, 217, 160, 0.25);
-      background: rgba(0,0,0,0.25);
-      color: #f6ecd8;
-      border-radius: 0.55rem;
-      padding: 0.35rem 0.55rem;
-      font-size: 0.75rem;
+      border: 1px solid var(--dpa-border);
+      background: var(--dpa-panel);
+      color: var(--dpa-ink);
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+      font-size: 0.7rem;
       font-family: var(--dpa-mono);
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .dpa-candidates button:hover {
+      border-color: var(--dpa-accent);
+      background: var(--dpa-accent-soft);
     }
 
     .dpa-stats {
@@ -788,17 +808,19 @@
                     OCR 備援
                   </label>
                 </div>
-                <div class="dpa-match-card" id="dpaMatchCard">
-                  <img id="dpaMatchImg" alt="">
-                  <div class="meta">
-                    <div class="no" id="dpaMatchNo">—</div>
-                    <div class="name" id="dpaMatchName">—</div>
-                    <div class="score" id="dpaMatchScore">—</div>
-                  </div>
-                  <button type="button" class="dpa-btn primary" id="dpaAddMatchBtn" style="color:#1a140c;"><i class="fas fa-plus" aria-hidden="true"></i>加入</button>
-                </div>
-                <div class="dpa-candidates" id="dpaCandidates" aria-label="候選卡"></div>
               </div>
+            </div>
+            <div class="dpa-result-strip" id="dpaResultStrip" aria-live="polite">
+              <div class="dpa-match-card" id="dpaMatchCard">
+                <img id="dpaMatchImg" alt="">
+                <div class="meta">
+                  <div class="no" id="dpaMatchNo">—</div>
+                  <div class="name" id="dpaMatchName">—</div>
+                  <div class="score" id="dpaMatchScore">—</div>
+                </div>
+                <button type="button" class="dpa-btn primary" id="dpaAddMatchBtn" style="color:#1a140c;"><i class="fas fa-plus" aria-hidden="true"></i>加入</button>
+              </div>
+              <div class="dpa-candidates" id="dpaCandidates" aria-label="候選卡"></div>
             </div>
           </section>
 
