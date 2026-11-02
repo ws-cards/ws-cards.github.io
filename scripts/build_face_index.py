@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build a single-series card-face fingerprint JSON for deckPhotoAnalysis.html.
 
-Algorithm must stay in sync with deckPhotoAnalysis.html (algo=rgb-grid-v1):
+Algorithm must stay in sync with assets/js/ws-deck-face.js (algo=norm-grad-v1):
   - resize to 48x66
-  - 6x8 cell mean RGB (+ center-art mean RGB)
+  - global luminance z-score (exposure invariant)
+  - 6x8 cell means of: Yz, |gx|, |gy|, rg chromaticity (+ center-art)
   - L2-normalize
 
 Examples:
@@ -37,10 +38,11 @@ CONTENT_WS_BASE = (
 )
 IMG_BASE = "https://imgs.devilfox.net/ws/"
 WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist"
-ALGO = "rgb-grid-v1"
+ALGO = "norm-grad-v1"
 VERSION = 1
 FP_W, FP_H, FP_COLS, FP_ROWS = 48, 66, 6, 8
-FP_DIMS = FP_COLS * FP_ROWS * 3 + 3  # 147
+FP_CELL_FEATS = 5  # Yz, |gx|, |gy|, Cr, Cg
+FP_DIMS = FP_COLS * FP_ROWS * FP_CELL_FEATS + FP_CELL_FEATS  # 245
 
 CARD_NO_RE = re.compile(r"^[A-Za-z0-9]+/[A-Za-z0-9]+-[A-Za-z0-9]+$")
 BASE_NO_RE = re.compile(r"^([A-Za-z0-9]+/[A-Za-z0-9]+-\d+)", re.I)
@@ -181,12 +183,62 @@ def pick_index_cards(by_id: dict[str, Any]) -> list[dict[str, Any]]:
 
 def fingerprint_image(img: Image.Image) -> list[float]:
     rgb = img.convert("RGB").resize((FP_W, FP_H), Image.Resampling.BILINEAR)
-    # Flattened RGB bytes → (r,g,b) tuples without deprecated getdata()
     raw = rgb.tobytes()
-    pixels = [
-        (raw[i], raw[i + 1], raw[i + 2])
-        for i in range(0, len(raw), 3)
-    ]
+    n_pix = FP_W * FP_H
+    y_chan = [0.0] * n_pix
+    cr_chan = [0.0] * n_pix
+    cg_chan = [0.0] * n_pix
+    mean_y = 0.0
+    for i in range(n_pix):
+        r = raw[i * 3] / 255.0
+        g = raw[i * 3 + 1] / 255.0
+        b = raw[i * 3 + 2] / 255.0
+        y_chan[i] = 0.299 * r + 0.587 * g + 0.114 * b
+        s = r + g + b + 1e-6
+        cr_chan[i] = r / s
+        cg_chan[i] = g / s
+        mean_y += y_chan[i]
+    mean_y /= n_pix
+    var_y = sum((y - mean_y) ** 2 for y in y_chan) / n_pix
+    std_y = math.sqrt(var_y) + 1e-6
+
+    yz = [0.0] * n_pix
+    for i, y in enumerate(y_chan):
+        z = (y - mean_y) / std_y
+        if z > 3.0:
+            z = 3.0
+        elif z < -3.0:
+            z = -3.0
+        yz[i] = z / 3.0
+
+    gx = [0.0] * n_pix
+    gy = [0.0] * n_pix
+    for y in range(FP_H):
+        for x in range(FP_W):
+            i = y * FP_W + x
+            xm = x - 1 if x > 0 else x
+            xp = x + 1 if x < FP_W - 1 else x
+            ym = y - 1 if y > 0 else y
+            yp = y + 1 if y < FP_H - 1 else y
+            gx[i] = abs(yz[y * FP_W + xp] - yz[y * FP_W + xm])
+            gy[i] = abs(yz[yp * FP_W + x] - yz[ym * FP_W + x])
+
+    def region_feats(x0: int, x1: int, y0: int, y1: int) -> list[float]:
+        my = mgx = mgy = mcr = mcg = 0.0
+        n = 0
+        for yy in range(y0, y1):
+            row = yy * FP_W
+            for xx in range(x0, x1):
+                i = row + xx
+                my += yz[i]
+                mgx += gx[i]
+                mgy += gy[i]
+                mcr += cr_chan[i]
+                mcg += cg_chan[i]
+                n += 1
+        inv = 1.0 / max(n, 1)
+        return [my * inv, mgx * inv, mgy * inv, mcr * inv, mcg * inv]
+
     vec: list[float] = []
     cell_w = FP_W / FP_COLS
     cell_h = FP_H / FP_ROWS
@@ -196,29 +248,15 @@ def fingerprint_image(img: Image.Image) -> list[float]:
             x1 = int((cx + 1) * cell_w)
             y0 = int(ry * cell_h)
             y1 = int((ry + 1) * cell_h)
-            r = g = b = n = 0
-            for y in range(y0, y1):
-                row = y * FP_W
-                for x in range(x0, x1):
-                    pr, pg, pb = pixels[row + x]
-                    r += pr
-                    g += pg
-                    b += pb
-                    n += 1
-            vec.extend([r / n / 255.0, g / n / 255.0, b / n / 255.0])
-
-    mx0, mx1 = int(FP_W * 0.12), int(FP_W * 0.88)
-    my0, my1 = int(FP_H * 0.1), int(FP_H * 0.72)
-    cr = cg = cb = cn = 0
-    for y in range(my0, my1):
-        row = y * FP_W
-        for x in range(mx0, mx1):
-            pr, pg, pb = pixels[row + x]
-            cr += pr
-            cg += pg
-            cb += pb
-            cn += 1
-    vec.extend([cr / cn / 255.0, cg / cn / 255.0, cb / cn / 255.0])
+            vec.extend(region_feats(x0, x1, y0, y1))
+    vec.extend(
+        region_feats(
+            int(FP_W * 0.12),
+            int(FP_W * 0.88),
+            int(FP_H * 0.1),
+            int(FP_H * 0.72),
+        )
+    )
 
     norm = math.sqrt(sum(v * v for v in vec)) or 1.0
     return [round(v / norm, 6) for v in vec]
