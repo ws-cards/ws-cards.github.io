@@ -146,39 +146,35 @@ def index_set_payload(data: Any) -> dict[str, Any]:
 
 
 def pick_index_cards(by_id: dict[str, Any]) -> list[dict[str, Any]]:
-    best: dict[str, dict[str, Any]] = {}
+    """Keep every unique cardNo (incl. SSP/SP/SPA…); high-rarity arts must be indexed
+    separately or photos of those versions match poorly against the regular art.
+    """
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
     for cid, raw in by_id.items():
         card_no = normalize_card_no(cid)
-        if not looks_like_ws(card_no):
+        if not looks_like_ws(card_no) or card_no in seen:
             continue
-        base = base_card_no(card_no)
-        score = 1000 - len(card_no)
-        if re.search(r"-(?:SSP|SEC|SP|SR|HR|SIR|OFR)$", card_no, re.I):
-            score -= 40
-        if re.search(r"-P\d+", card_no, re.I) or re.search(r"/.*-T\d+", card_no, re.I):
-            score -= 10
-        prev = best.get(base)
-        if prev and prev["score"] >= score:
-            continue
+        seen.add(card_no)
         level = raw.get("level", raw.get("cardlevel")) if isinstance(raw, dict) else None
         try:
             level_n = float(level) if level is not None and str(level) != "" else None
         except (TypeError, ValueError):
             level_n = None
-        best[base] = {
-            "score": score,
-            "cardNo": card_no,
-            "name": (raw.get("name") or raw.get("cardname") or card_no)
-            if isinstance(raw, dict)
-            else card_no,
-            "kindLabel": kind_label_of(raw if isinstance(raw, dict) else None),
-            "kind": raw.get("kind") if isinstance(raw, dict) else None,
-            "level": level_n,
-            "color": (raw.get("color") or raw.get("cardcolor") or "")
-            if isinstance(raw, dict)
-            else "",
-        }
-    rows = list(best.values())
+        rows.append(
+            {
+                "cardNo": card_no,
+                "name": (raw.get("name") or raw.get("cardname") or card_no)
+                if isinstance(raw, dict)
+                else card_no,
+                "kindLabel": kind_label_of(raw if isinstance(raw, dict) else None),
+                "kind": raw.get("kind") if isinstance(raw, dict) else None,
+                "level": level_n,
+                "color": (raw.get("color") or raw.get("cardcolor") or "")
+                if isinstance(raw, dict)
+                else "",
+            }
+        )
     rows.sort(key=lambda r: r["cardNo"])
     return rows
 
