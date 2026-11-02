@@ -1,11 +1,18 @@
 /*!
  * Shared Weiss Schwarz card-face fingerprint helpers for deck photo tools.
- * algo: rgb-grid-v1 (keep in sync with scripts/build_face_index.py)
+ * algo: norm-grad-v1 (keep in sync with scripts/build_face_index.py)
+ *
+ * Why not rgb-grid-v1:
+ *   Absolute RGB cell means collapse under phone WB / exposure / glare.
+ * norm-grad-v1 uses:
+ *   - global luminance z-score (exposure invariant structure)
+ *   - per-cell |gx|,|gy| (edge layout)
+ *   - rg chromaticity (color without brightness)
  */
 (function (global) {
   'use strict';
 
-  var FACE_ALGO = 'rgb-grid-v1';
+  var FACE_ALGO = 'norm-grad-v1';
   var FACE_INDEX_GCS_BASE =
     'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/face-index/';
   var FACE_INDEX_LOCAL_BASE = './json/face-index/';
@@ -16,13 +23,21 @@
   var IMG_BASE = 'https://imgs.devilfox.net/ws/';
   var WS_CARD_IMAGE_BASE = 'https://ws-tcg.com/wordpress/wp-content/images/cardlist';
 
+  var FP_W = 48;
+  var FP_H = 66;
+  var FP_COLS = 6;
+  var FP_ROWS = 8;
+  var FP_CELL_FEATS = 5; // Yz, |gx|, |gy|, Cr, Cg
+  var FP_DIMS = FP_COLS * FP_ROWS * FP_CELL_FEATS + FP_CELL_FEATS; // 245
+
+  var fpCanvas = null;
+
   function faceIndexBases() {
     try {
       var q = new URLSearchParams(location.search);
       if (q.get('faceIndex') === 'local') return [FACE_INDEX_LOCAL_BASE];
       if (q.get('faceIndex') === 'gcs') return [FACE_INDEX_GCS_BASE];
     } catch (e) { /* ignore */ }
-    // 預設：GCP 優先，失敗再回退站內
     return [FACE_INDEX_GCS_BASE, FACE_INDEX_LOCAL_BASE];
   }
 
@@ -44,13 +59,6 @@
     }
     throw lastErr || new Error('無法載入 ' + relativePath);
   }
-
-  var FP_W = 48;
-  var FP_H = 66;
-  var FP_COLS = 6;
-  var FP_ROWS = 8;
-
-  var fpCanvas = null;
 
   function ensureFpCanvas() {
     if (fpCanvas) return fpCanvas;
@@ -103,6 +111,24 @@
     return s;
   }
 
+  function regionFeats(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1) {
+    var my = 0, mgx = 0, mgy = 0, mcr = 0, mcg = 0, n = 0;
+    for (var y = y0; y < y1; y++) {
+      var row = y * FP_W;
+      for (var x = x0; x < x1; x++) {
+        var i = row + x;
+        my += Yz[i];
+        mgx += Gx[i];
+        mgy += Gy[i];
+        mcr += Cr[i];
+        mcg += Cg[i];
+        n++;
+      }
+    }
+    var inv = 1 / Math.max(n, 1);
+    return [my * inv, mgx * inv, mgy * inv, mcr * inv, mcg * inv];
+  }
+
   function fingerprintFromImageSource(source, sx, sy, sw, sh) {
     var fp = ensureFpCanvas();
     var ctx = fp.getContext('2d', { willReadFrequently: true });
@@ -110,43 +136,69 @@
     if (sx == null) ctx.drawImage(source, 0, 0, FP_W, FP_H);
     else ctx.drawImage(source, sx, sy, sw, sh, 0, 0, FP_W, FP_H);
     var data = ctx.getImageData(0, 0, FP_W, FP_H).data;
+    var nPix = FP_W * FP_H;
+    var Y = new Float32Array(nPix);
+    var Cr = new Float32Array(nPix);
+    var Cg = new Float32Array(nPix);
+    var i, p, r, g, b, s, meanY, varY, stdY;
+    meanY = 0;
+    for (i = 0; i < nPix; i++) {
+      p = i * 4;
+      r = data[p] / 255;
+      g = data[p + 1] / 255;
+      b = data[p + 2] / 255;
+      Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+      s = r + g + b + 1e-6;
+      Cr[i] = r / s;
+      Cg[i] = g / s;
+      meanY += Y[i];
+    }
+    meanY /= nPix;
+    varY = 0;
+    for (i = 0; i < nPix; i++) {
+      var d = Y[i] - meanY;
+      varY += d * d;
+    }
+    stdY = Math.sqrt(varY / nPix) + 1e-6;
+
+    var Yz = new Float32Array(nPix);
+    var Gx = new Float32Array(nPix);
+    var Gy = new Float32Array(nPix);
+    for (i = 0; i < nPix; i++) {
+      var z = (Y[i] - meanY) / stdY;
+      if (z > 3) z = 3;
+      else if (z < -3) z = -3;
+      Yz[i] = z / 3;
+    }
+    for (var y = 0; y < FP_H; y++) {
+      for (var x = 0; x < FP_W; x++) {
+        i = y * FP_W + x;
+        var xm = x > 0 ? x - 1 : x;
+        var xp = x < FP_W - 1 ? x + 1 : x;
+        var ym = y > 0 ? y - 1 : y;
+        var yp = y < FP_H - 1 ? y + 1 : y;
+        Gx[i] = Math.abs(Yz[y * FP_W + xp] - Yz[y * FP_W + xm]);
+        Gy[i] = Math.abs(Yz[yp * FP_W + x] - Yz[ym * FP_W + x]);
+      }
+    }
+
     var vec = [];
     var cellW = FP_W / FP_COLS;
     var cellH = FP_H / FP_ROWS;
     for (var ry = 0; ry < FP_ROWS; ry++) {
       for (var cx = 0; cx < FP_COLS; cx++) {
-        var r = 0, g = 0, b = 0, n = 0;
         var x0 = Math.floor(cx * cellW);
         var x1 = Math.floor((cx + 1) * cellW);
         var y0 = Math.floor(ry * cellH);
         var y1 = Math.floor((ry + 1) * cellH);
-        for (var y = y0; y < y1; y++) {
-          for (var x = x0; x < x1; x++) {
-            var i = (y * FP_W + x) * 4;
-            r += data[i];
-            g += data[i + 1];
-            b += data[i + 2];
-            n++;
-          }
-        }
-        vec.push(r / n / 255, g / n / 255, b / n / 255);
+        vec.push.apply(vec, regionFeats(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1));
       }
     }
-    var mx0 = Math.floor(FP_W * 0.12);
-    var mx1 = Math.floor(FP_W * 0.88);
-    var my0 = Math.floor(FP_H * 0.1);
-    var my1 = Math.floor(FP_H * 0.72);
-    var cr = 0, cg = 0, cb = 0, cn = 0;
-    for (var yy = my0; yy < my1; yy++) {
-      for (var xx = mx0; xx < mx1; xx++) {
-        var ii = (yy * FP_W + xx) * 4;
-        cr += data[ii];
-        cg += data[ii + 1];
-        cb += data[ii + 2];
-        cn++;
-      }
-    }
-    vec.push(cr / cn / 255, cg / cn / 255, cb / cn / 255);
+    vec.push.apply(vec, regionFeats(
+      Yz, Gx, Gy, Cr, Cg,
+      Math.floor(FP_W * 0.12), Math.floor(FP_W * 0.88),
+      Math.floor(FP_H * 0.1), Math.floor(FP_H * 0.72)
+    ));
     return normalizeVec(vec);
   }
 
@@ -197,11 +249,9 @@
         sources.push({ base: base, meta: meta });
         (meta.series || []).forEach(function (row) {
           if (!row || !row.code) return;
-          // 略過與前端算法不符者（例如 GCP 上殘留的 mean-gray-grid）
           if (row.algo && row.algo !== FACE_ALGO) return;
           var code = String(row.code);
           var next = Object.assign({}, row, { _base: base });
-          // 同系列兩來源：先讀到的優先（預設 GCS → local）
           if (!byCode[code]) byCode[code] = next;
         });
       } catch (e) {
@@ -281,6 +331,9 @@
     CARD_TITLE_URL: CARD_TITLE_URL,
     FP_W: FP_W,
     FP_H: FP_H,
+    FP_COLS: FP_COLS,
+    FP_ROWS: FP_ROWS,
+    FP_DIMS: FP_DIMS,
     normalizeCardNo: normalizeCardNo,
     looksLikeWSCardNo: looksLikeWSCardNo,
     baseCardNo: baseCardNo,
