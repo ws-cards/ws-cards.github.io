@@ -1336,28 +1336,24 @@
   }
 
   function pickIndexCards(byId) {
-    var best = new Map();
+    // 保留每個完整卡號（含 SSP/SP/SPA…）。若依底號去重並壓低高罕度，
+    // 高版本卡面不在指紋庫，實拍會明顯比低版本不準。
+    var rows = [];
+    var seen = Object.create(null);
     byId.forEach(function (raw, id) {
       var cardNo = normalizeCardNo(id);
-      if (!looksLikeWSCardNo(cardNo)) return;
-      var base = baseCardNo(cardNo);
-      var score = 1000 - cardNo.length;
-      if (/-(?:SSP|SEC|SP|SR|HR|SIR|OFR)$/i.test(cardNo)) score -= 40;
-      if (/-P\d+/i.test(cardNo) || /\/.*-T\d+/i.test(cardNo)) score -= 10;
-      var prev = best.get(base);
-      if (!prev || score > prev.score) {
-        best.set(base, {
-          score: score,
-          cardNo: cardNo,
-          name: (raw && (raw.name || raw.cardname)) || cardNo,
-          kindLabel: kindLabelOf(raw),
-          kind: raw && raw.kind,
-          level: raw && (raw.level != null ? Number(raw.level) : null),
-          color: raw && (raw.color || raw.cardcolor) || ""
-        });
-      }
+      if (!looksLikeWSCardNo(cardNo) || seen[cardNo]) return;
+      seen[cardNo] = true;
+      rows.push({
+        cardNo: cardNo,
+        name: (raw && (raw.name || raw.cardname)) || cardNo,
+        kindLabel: kindLabelOf(raw),
+        kind: raw && raw.kind,
+        level: raw && (raw.level != null ? Number(raw.level) : null),
+        color: raw && (raw.color || raw.cardcolor) || ""
+      });
     });
-    return Array.from(best.values()).sort(function (a, b) {
+    return rows.sort(function (a, b) {
       return a.cardNo.localeCompare(b.cardNo);
     });
   }
