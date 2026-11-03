@@ -759,7 +759,7 @@
           <header class="dpa-hero">
             <div class="dpa-kicker">Deck Photo</div>
             <h1 class="dpa-title">牌組拍照辨識</h1>
-            <p class="dpa-lead">把卡片外緣對齊外框，即可即時比對官方卡圖，把實體牌組掃成卡表。辨識以<strong>卡面結構／色度指紋</strong>（抗曝光與白平衡）為主；看不清時才用 OCR 讀卡號備援。</p>
+            <p class="dpa-lead">把卡片外緣對齊外框，即可即時比對官方卡圖，把實體牌組掃成卡表。辨識以<strong>MobileNet 卡面向量</strong>為主；看不清時才用 OCR 讀卡號備援。</p>
           </header>
 
           <section class="dpa-panel" aria-labelledby="dpaSeriesHeading">
@@ -894,35 +894,36 @@
 </div>
 
 <canvas id="dpaWorkCanvas" width="320" height="448" aria-hidden="true"></canvas>
-<canvas id="dpaFpCanvas" width="48" height="66" aria-hidden="true"></canvas>
+<canvas id="dpaFpCanvas" width="224" height="224" aria-hidden="true"></canvas>
 <div class="dpa-toast" id="dpaToast" role="status" aria-live="polite"></div>
 
 <script src="plugins/jquery/jquery.min.js"></script>
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="dist/js/adminlte.min.js"></script>
+<script src="assets/js/ws-deck-face.js"></script>
 <script>
 (function () {
   "use strict";
 
+  var Face = window.WsDeckFace;
   var CONTENT_WS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/cardDataInfo/content/ws/";
   var CARD_TITLE_URL = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json";
   var FACE_INDEX_GCS_BASE = "https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/face-index/";
   var FACE_INDEX_LOCAL_BASE = "./json/face-index/";
   var FACE_INDEX_BASE = FACE_INDEX_GCS_BASE;
-  var FACE_ALGO = "norm-grad-v1";
+  var FACE_ALGO = Face && Face.FACE_ALGO ? Face.FACE_ALGO : "mobilenetv2-gap-v1";
   var IMG_BASE = "https://imgs.devilfox.net/ws/";
   var WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist";
   var STORAGE_KEY = "wsDeckPhotoDraft_v1";
-  var LIVE_INTERVAL_MS = 900;
+  var LIVE_INTERVAL_MS = 1100;
   var ADD_COOLDOWN_MS = 2200;
-  /* norm-grad-v1：實體卡光照差異大，門檻略低於舊 rgb-grid */
-  var FACE_ACCEPT = 0.88;
+  /* mobilenetv2-gap-v1：cosine 門檻（官方圖擾動校準；實拍可再調） */
+  var FACE_ACCEPT = 0.80;
   var FACE_MARGIN = 0.015;
-  var FACE_CANDIDATE = 0.78;
-  var FP_W = 48;
-  var FP_H = 66;
-  var FP_COLS = 6;
-  var FP_ROWS = 8;
+  var FACE_CANDIDATE = 0.70;
+  var FP_W = 224;
+  var FP_H = 224;
+  var faceModelReady = false;
 
   var seriesMap = {};
   var seriesList = [];
@@ -1051,7 +1052,7 @@
     return String(card.kindLabel || "") === "CX" || Number(card.kind) === 2;
   }
 
-  /* ——— Fingerprint (card-face) ——— */
+  /* ——— Fingerprint (MobileNet via WsDeckFace) ——— */
   function normalizeVec(vec) {
     var sum = 0;
     for (var i = 0; i < vec.length; i++) sum += vec[i] * vec[i];
@@ -1062,102 +1063,22 @@
   }
 
   function cosine(a, b) {
+    if (Face && Face.cosine) return Face.cosine(a, b);
     var n = Math.min(a.length, b.length);
     var s = 0;
     for (var i = 0; i < n; i++) s += a[i] * b[i];
     return s;
   }
 
-  function regionFeatsFp(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1) {
-    var my = 0, mgx = 0, mgy = 0, mcr = 0, mcg = 0, n = 0;
-    for (var y = y0; y < y1; y++) {
-      var row = y * FP_W;
-      for (var x = x0; x < x1; x++) {
-        var i = row + x;
-        my += Yz[i];
-        mgx += Gx[i];
-        mgy += Gy[i];
-        mcr += Cr[i];
-        mcg += Cg[i];
-        n++;
-      }
-    }
-    var inv = 1 / Math.max(n, 1);
-    return [my * inv, mgx * inv, mgy * inv, mcr * inv, mcg * inv];
+  async function ensureFaceModel() {
+    if (!Face) throw new Error("WsDeckFace 未載入");
+    await Face.ensureMobilenet();
+    faceModelReady = true;
   }
 
-  /* norm-grad-v1：亮度 z-score + 梯度 + 色度（抗實體卡曝光／白平衡） */
-  function fingerprintFromImageSource(source, sx, sy, sw, sh) {
-    var fp = el("dpaFpCanvas");
-    var ctx = fp.getContext("2d", { willReadFrequently: true });
-    ctx.clearRect(0, 0, FP_W, FP_H);
-    if (sx == null) {
-      ctx.drawImage(source, 0, 0, FP_W, FP_H);
-    } else {
-      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, FP_W, FP_H);
-    }
-    var data = ctx.getImageData(0, 0, FP_W, FP_H).data;
-    var nPix = FP_W * FP_H;
-    var Y = new Float32Array(nPix);
-    var Cr = new Float32Array(nPix);
-    var Cg = new Float32Array(nPix);
-    var meanY = 0;
-    for (var i = 0; i < nPix; i++) {
-      var p = i * 4;
-      var r = data[p] / 255;
-      var g = data[p + 1] / 255;
-      var b = data[p + 2] / 255;
-      Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-      var s = r + g + b + 1e-6;
-      Cr[i] = r / s;
-      Cg[i] = g / s;
-      meanY += Y[i];
-    }
-    meanY /= nPix;
-    var varY = 0;
-    for (i = 0; i < nPix; i++) {
-      var d = Y[i] - meanY;
-      varY += d * d;
-    }
-    var stdY = Math.sqrt(varY / nPix) + 1e-6;
-    var Yz = new Float32Array(nPix);
-    var Gx = new Float32Array(nPix);
-    var Gy = new Float32Array(nPix);
-    for (i = 0; i < nPix; i++) {
-      var z = (Y[i] - meanY) / stdY;
-      if (z > 3) z = 3;
-      else if (z < -3) z = -3;
-      Yz[i] = z / 3;
-    }
-    for (var y = 0; y < FP_H; y++) {
-      for (var x = 0; x < FP_W; x++) {
-        i = y * FP_W + x;
-        var xm = x > 0 ? x - 1 : x;
-        var xp = x < FP_W - 1 ? x + 1 : x;
-        var ym = y > 0 ? y - 1 : y;
-        var yp = y < FP_H - 1 ? y + 1 : y;
-        Gx[i] = Math.abs(Yz[y * FP_W + xp] - Yz[y * FP_W + xm]);
-        Gy[i] = Math.abs(Yz[yp * FP_W + x] - Yz[ym * FP_W + x]);
-      }
-    }
-    var vec = [];
-    var cellW = FP_W / FP_COLS;
-    var cellH = FP_H / FP_ROWS;
-    for (var ry = 0; ry < FP_ROWS; ry++) {
-      for (var cx = 0; cx < FP_COLS; cx++) {
-        var x0 = Math.floor(cx * cellW);
-        var x1 = Math.floor((cx + 1) * cellW);
-        var y0 = Math.floor(ry * cellH);
-        var y1 = Math.floor((ry + 1) * cellH);
-        vec.push.apply(vec, regionFeatsFp(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1));
-      }
-    }
-    vec.push.apply(vec, regionFeatsFp(
-      Yz, Gx, Gy, Cr, Cg,
-      Math.floor(FP_W * 0.12), Math.floor(FP_W * 0.88),
-      Math.floor(FP_H * 0.1), Math.floor(FP_H * 0.72)
-    ));
-    return normalizeVec(vec);
+  async function fingerprintFromImageSource(source, sx, sy, sw, sh) {
+    await ensureFaceModel();
+    return Face.fingerprintFromImageSource(source, sx, sy, sw, sh);
   }
 
   function loadImageCors(url) {
@@ -1177,7 +1098,7 @@
     for (var i = 0; i < tried.length; i++) {
       try {
         var img = await loadImageCors(tried[i]);
-        var fp = fingerprintFromImageSource(img);
+        var fp = await fingerprintFromImageSource(img);
         return { fp: fp, imageUrl: tried[i] };
       } catch (err) {
         lastErr = err;
@@ -1226,7 +1147,7 @@
         sourceTags.push(describeFaceBase(base));
         (meta.series || []).forEach(function (row) {
           if (!row || !row.code) return;
-          // 略過與前端算法不符者（例如 GCP 上殘留的 rgb-grid-v1）
+          // 略過與前端算法不符者（例如 GCP 上殘留的 norm-grad-v1 / rgb-grid-v1）
           if (row.algo && row.algo !== FACE_ALGO) return;
           var code = String(row.code);
           var next = Object.assign({}, row, { _base: base });
@@ -1532,10 +1453,13 @@
       }
 
       if (loadedStatic) {
+        setHud("預熱 MobileNet 模型…", "卡面");
+        try { await ensureFaceModel(); } catch (modelErr) { console.warn(modelErr); }
         setHud("預建索引已載入，可以開鏡頭", "卡面");
         toast("已載入預建指紋 " + indexCards.length + " 張");
       } else {
         setHud("尚無預建索引，改為即時建立…", "索引");
+        try { await ensureFaceModel(); } catch (modelErr) { console.warn(modelErr); }
         var byId = await fetchSetJson(titleCode);
         var cards = pickIndexCards(byId);
         if (!cards.length) throw new Error("此系列沒有可用卡號");
@@ -1676,9 +1600,10 @@
     return work;
   }
 
-  function matchFace(workCanvas) {
+  async function matchFace(workCanvas) {
     if (!faceReady) return null;
-    var query = fingerprintFromImageSource(workCanvas);
+    var query = await fingerprintFromImageSource(workCanvas);
+    if (Face && Face.matchFace) return Face.matchFace(query, indexCards, 5);
     var scored = [];
     for (var i = 0; i < indexCards.length; i++) {
       var c = indexCards[i];
@@ -1809,7 +1734,7 @@
     el("dpaGuide").classList.remove("is-lock");
     try {
       var work = cropGuideToWorkCanvas(source);
-      var faceHits = faceReady ? matchFace(work) : null;
+      var faceHits = faceReady ? await matchFace(work) : null;
       var result = null;
       if (faceHits && faceHits.length) {
         var top = faceHits[0];

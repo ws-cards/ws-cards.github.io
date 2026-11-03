@@ -1,18 +1,15 @@
 /*!
  * Shared Weiss Schwarz card-face fingerprint helpers for deck photo tools.
- * algo: norm-grad-v1 (keep in sync with scripts/build_face_index.py)
- *
- * Why not rgb-grid-v1:
- *   Absolute RGB cell means collapse under phone WB / exposure / glare.
- * norm-grad-v1 uses:
- *   - global luminance z-score (exposure invariant structure)
- *   - per-cell |gx|,|gy| (edge layout)
- *   - rg chromaticity (color without brightness)
+ * algo: mobilenetv2-gap-v1
+ *   - @tensorflow-models/mobilenet v2 alpha=1.0
+ *   - 224x224, preprocess x/127.5-1 (handled by the package)
+ *   - 1280-D GAP embedding → L2-normalize → cosine
+ * Must stay in sync with scripts/mobilenet-face/build_face_index.mjs
  */
 (function (global) {
   'use strict';
 
-  var FACE_ALGO = 'norm-grad-v1';
+  var FACE_ALGO = 'mobilenetv2-gap-v1';
   var FACE_INDEX_GCS_BASE =
     'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/face-index/';
   var FACE_INDEX_LOCAL_BASE = './json/face-index/';
@@ -23,13 +20,13 @@
   var IMG_BASE = 'https://imgs.devilfox.net/ws/';
   var WS_CARD_IMAGE_BASE = 'https://ws-tcg.com/wordpress/wp-content/images/cardlist';
 
-  var FP_W = 48;
-  var FP_H = 66;
-  var FP_COLS = 6;
-  var FP_ROWS = 8;
-  var FP_CELL_FEATS = 5; // Yz, |gx|, |gy|, Cr, Cg
-  var FP_DIMS = FP_COLS * FP_ROWS * FP_CELL_FEATS + FP_CELL_FEATS; // 245
+  var TFJS_URL = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+  var MOBILENET_URL = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js';
+  var FP_INPUT = 224;
+  var FP_DIMS = 1280;
 
+  var mobilenetModel = null;
+  var modelLoading = null;
   var fpCanvas = null;
 
   function faceIndexBases() {
@@ -60,11 +57,33 @@
     throw lastErr || new Error('無法載入 ' + relativePath);
   }
 
+  function loadScriptOnce(src) {
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-ws-face-src="' + src + '"]');
+      if (existing) {
+        if (existing.getAttribute('data-ws-face-loaded') === '1') resolve();
+        else existing.addEventListener('load', function () { resolve(); });
+        existing.addEventListener('error', function () { reject(new Error('script ' + src)); });
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.setAttribute('data-ws-face-src', src);
+      s.onload = function () {
+        s.setAttribute('data-ws-face-loaded', '1');
+        resolve();
+      };
+      s.onerror = function () { reject(new Error('無法載入 ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
   function ensureFpCanvas() {
     if (fpCanvas) return fpCanvas;
     fpCanvas = document.createElement('canvas');
-    fpCanvas.width = FP_W;
-    fpCanvas.height = FP_H;
+    fpCanvas.width = FP_INPUT;
+    fpCanvas.height = FP_INPUT;
     return fpCanvas;
   }
 
@@ -111,95 +130,44 @@
     return s;
   }
 
-  function regionFeats(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1) {
-    var my = 0, mgx = 0, mgy = 0, mcr = 0, mcg = 0, n = 0;
-    for (var y = y0; y < y1; y++) {
-      var row = y * FP_W;
-      for (var x = x0; x < x1; x++) {
-        var i = row + x;
-        my += Yz[i];
-        mgx += Gx[i];
-        mgy += Gy[i];
-        mcr += Cr[i];
-        mcg += Cg[i];
-        n++;
-      }
+  async function ensureMobilenet() {
+    if (mobilenetModel) return mobilenetModel;
+    if (modelLoading) return modelLoading;
+    modelLoading = (async function () {
+      if (!global.tf) await loadScriptOnce(TFJS_URL);
+      if (!global.mobilenet) await loadScriptOnce(MOBILENET_URL);
+      await global.tf.ready();
+      mobilenetModel = await global.mobilenet.load({ version: 2, alpha: 1.0 });
+      return mobilenetModel;
+    })();
+    try {
+      return await modelLoading;
+    } finally {
+      modelLoading = null;
     }
-    var inv = 1 / Math.max(n, 1);
-    return [my * inv, mgx * inv, mgy * inv, mcr * inv, mcg * inv];
   }
 
-  function fingerprintFromImageSource(source, sx, sy, sw, sh) {
-    var fp = ensureFpCanvas();
-    var ctx = fp.getContext('2d', { willReadFrequently: true });
-    ctx.clearRect(0, 0, FP_W, FP_H);
-    if (sx == null) ctx.drawImage(source, 0, 0, FP_W, FP_H);
-    else ctx.drawImage(source, sx, sy, sw, sh, 0, 0, FP_W, FP_H);
-    var data = ctx.getImageData(0, 0, FP_W, FP_H).data;
-    var nPix = FP_W * FP_H;
-    var Y = new Float32Array(nPix);
-    var Cr = new Float32Array(nPix);
-    var Cg = new Float32Array(nPix);
-    var i, p, r, g, b, s, meanY, varY, stdY;
-    meanY = 0;
-    for (i = 0; i < nPix; i++) {
-      p = i * 4;
-      r = data[p] / 255;
-      g = data[p + 1] / 255;
-      b = data[p + 2] / 255;
-      Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-      s = r + g + b + 1e-6;
-      Cr[i] = r / s;
-      Cg[i] = g / s;
-      meanY += Y[i];
+  /**
+   * Async MobileNet embedding. Optional sx,sy,sw,sh crop from source.
+   * @returns {Promise<Float32Array>}
+   */
+  async function fingerprintFromImageSource(source, sx, sy, sw, sh) {
+    var model = await ensureMobilenet();
+    var canvas = ensureFpCanvas();
+    var ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, FP_INPUT, FP_INPUT);
+    if (sx == null) {
+      ctx.drawImage(source, 0, 0, FP_INPUT, FP_INPUT);
+    } else {
+      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, FP_INPUT, FP_INPUT);
     }
-    meanY /= nPix;
-    varY = 0;
-    for (i = 0; i < nPix; i++) {
-      var d = Y[i] - meanY;
-      varY += d * d;
+    var emb = model.infer(canvas, true);
+    var data = await emb.data();
+    emb.dispose();
+    if (data.length !== FP_DIMS) {
+      throw new Error('MobileNet 維度異常：' + data.length);
     }
-    stdY = Math.sqrt(varY / nPix) + 1e-6;
-
-    var Yz = new Float32Array(nPix);
-    var Gx = new Float32Array(nPix);
-    var Gy = new Float32Array(nPix);
-    for (i = 0; i < nPix; i++) {
-      var z = (Y[i] - meanY) / stdY;
-      if (z > 3) z = 3;
-      else if (z < -3) z = -3;
-      Yz[i] = z / 3;
-    }
-    for (var y = 0; y < FP_H; y++) {
-      for (var x = 0; x < FP_W; x++) {
-        i = y * FP_W + x;
-        var xm = x > 0 ? x - 1 : x;
-        var xp = x < FP_W - 1 ? x + 1 : x;
-        var ym = y > 0 ? y - 1 : y;
-        var yp = y < FP_H - 1 ? y + 1 : y;
-        Gx[i] = Math.abs(Yz[y * FP_W + xp] - Yz[y * FP_W + xm]);
-        Gy[i] = Math.abs(Yz[yp * FP_W + x] - Yz[ym * FP_W + x]);
-      }
-    }
-
-    var vec = [];
-    var cellW = FP_W / FP_COLS;
-    var cellH = FP_H / FP_ROWS;
-    for (var ry = 0; ry < FP_ROWS; ry++) {
-      for (var cx = 0; cx < FP_COLS; cx++) {
-        var x0 = Math.floor(cx * cellW);
-        var x1 = Math.floor((cx + 1) * cellW);
-        var y0 = Math.floor(ry * cellH);
-        var y1 = Math.floor((ry + 1) * cellH);
-        vec.push.apply(vec, regionFeats(Yz, Gx, Gy, Cr, Cg, x0, x1, y0, y1));
-      }
-    }
-    vec.push.apply(vec, regionFeats(
-      Yz, Gx, Gy, Cr, Cg,
-      Math.floor(FP_W * 0.12), Math.floor(FP_W * 0.88),
-      Math.floor(FP_H * 0.1), Math.floor(FP_H * 0.72)
-    ));
-    return normalizeVec(vec);
+    return normalizeVec(Array.prototype.slice.call(data));
   }
 
   function reNormalizeFp(arr) {
@@ -329,17 +297,18 @@
     FACE_INDEX_LOCAL_BASE: FACE_INDEX_LOCAL_BASE,
     CONTENT_WS_BASE: CONTENT_WS_BASE,
     CARD_TITLE_URL: CARD_TITLE_URL,
-    FP_W: FP_W,
-    FP_H: FP_H,
-    FP_COLS: FP_COLS,
-    FP_ROWS: FP_ROWS,
+    FP_INPUT: FP_INPUT,
     FP_DIMS: FP_DIMS,
+    FP_W: FP_INPUT,
+    FP_H: FP_INPUT,
     normalizeCardNo: normalizeCardNo,
     looksLikeWSCardNo: looksLikeWSCardNo,
     baseCardNo: baseCardNo,
     buildCardImageUrls: buildCardImageUrls,
+    ensureMobilenet: ensureMobilenet,
     fingerprintFromImageSource: fingerprintFromImageSource,
     matchFace: matchFace,
+    cosine: cosine,
     loadSeriesTitles: loadSeriesTitles,
     loadFaceIndexMeta: loadFaceIndexMeta,
     loadStaticIndex: loadStaticIndex,
