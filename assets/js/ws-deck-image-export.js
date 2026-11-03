@@ -194,7 +194,6 @@
     var colorCount = { yellow: 0, green: 0, red: 0, blue: 0 };
     var levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
     var kindCount = { character: 0, event: 0, cx: 0 };
-    var triggerHits = 0;
     var soulIconCount = 0;
     var soulHits = 0;
     var cxGroups = [];
@@ -231,7 +230,6 @@
         if (lv == null) lv = 0;
         levelCount[lv] = (levelCount[lv] || 0) + qty;
       }
-      if (hasMeaningfulTrigger(c.trigger, triggerMap)) triggerHits += qty;
       var soulOnCard = countSoulIconsOnCard(c.trigger, triggerMap);
       soulIconCount += soulOnCard * qty;
       if (soulOnCard > 0) soulHits += qty;
@@ -243,8 +241,6 @@
       colorCount: colorCount,
       levelCount: levelCount,
       kindCount: kindCount,
-      triggerHits: triggerHits,
-      triggerRate: total ? Math.round((triggerHits / total) * 100) : 0,
       soulIconCount: soulIconCount,
       soulHits: soulHits,
       soulRate: total ? Math.round((soulHits / total) * 100) : 0,

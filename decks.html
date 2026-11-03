@@ -2624,11 +2624,17 @@
       white-space: nowrap;
       font-family: 'IBM Plex Mono', 'Zen Kaku Gothic New', ui-monospace, monospace;
     }
+    .col-deck-detail-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      margin-top: 0.4rem;
+    }
     .col-deck-origin-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-      margin-top: 0.35rem;
       max-width: 100%;
       padding: 0.18rem 0.5rem;
       border-radius: 0.35rem;
@@ -2653,6 +2659,24 @@
       color: #ffd89a;
       background: rgba(140, 90, 20, 0.32);
       border-color: rgba(220, 160, 60, 0.35);
+    }
+    .col-deck-source-badge {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 0.18rem 0.5rem;
+      border-radius: 0.35rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #4b5563;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+    }
+    [data-theme="dark"] .col-deck-source-badge {
+      color: #d1d5db;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.14);
     }
     .col-deck-origin-note {
       margin: 0.35rem 0 0;
@@ -2764,12 +2788,6 @@
       gap: 0.15rem;
     }
     @media (max-width: 991.98px) {
-      .col-deck-detail-actions {
-        width: 100%;
-      }
-      .col-deck-overflow {
-        margin-left: auto;
-      }
       .col-deck-overflow-menu {
         right: 0;
         left: auto;
@@ -2815,9 +2833,9 @@
         display: none;
       }
       .col-deck-detail-head {
-        display: grid;
-        gap: 0.85rem;
-        padding: 0.15rem 0 0.85rem;
+        position: relative;
+        display: block;
+        padding: 0.15rem 2.75rem 0.85rem 0;
         border-bottom: 1px solid var(--col-line);
       }
       .col-deck-detail-title-row {
@@ -2854,11 +2872,23 @@
         gap: 0.3rem;
         margin-top: 0.45rem;
       }
+      /* 手機：編輯／輸出圖片收入「更多操作」，右上角只留 ⋯ */
       .col-deck-detail-actions {
+        position: absolute;
+        top: 0.1rem;
+        right: 0;
+        width: auto;
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0;
+        align-items: flex-start;
+        margin: 0;
+      }
+      .col-deck-detail-actions .col-deck-action-desktop {
+        display: none;
+      }
+      .col-deck-detail-actions .col-deck-overflow {
+        margin: 0;
       }
       .col-deck-detail-body {
         display: grid;
@@ -4426,7 +4456,7 @@
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
   <script src="assets/js/ws-trigger-map.js?v=20261027c"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="assets/js/ws-deck-image-export.js?v=20261103b"></script>
+  <script src="assets/js/ws-deck-image-export.js?v=20261103c"></script>
   <script src="dist/js/include-navbar.js"></script>
 
   <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -7137,7 +7167,7 @@
       deckPriceLoadPromise.then(function () { done(true); }, function () { done(true); });
     }
 
-    /** 牌組詳情標題列：顯示牌組參考總價（取代原 DeckLog 來源標籤內容） */
+    /** 牌組詳情標題列：顯示牌組參考總價 */
     function deckPriceBadgeHtml(deck) {
       if (deckPriceStatus === 'idle' || deckPriceStatus === 'loading') {
         return '<span class="col-deck-origin-badge is-detached" title="正在載入遊遊亭行情">參考價載入中…</span>';
@@ -7159,6 +7189,13 @@
       return '<span class="col-deck-origin-badge" title="' +
         escapeHtml(titleBits.join(' · ') || '遊遊亭參考加總') +
         '">' + escapeHtml(text) + '</span>';
+    }
+
+    /** 精簡來源標籤（手機詳情列與參考價並排） */
+    function deckSourceBadgeHtml(deck) {
+      if (!isDecklogOriginDeck(deck)) return '';
+      var tip = decklogOriginBadgeText(deck) || '來源 DeckLog';
+      return '<span class="col-deck-source-badge" title="' + escapeHtml(tip) + '">DeckLog</span>';
     }
 
     function syncDeckOriginNote() {
@@ -8545,10 +8582,10 @@
       html += '<div class="col-deck-detail-head">';
       html += '  <div class="col-deck-detail-title-row">';
       html += '    <div class="col-deck-detail-cover">' + deckCoverArtHtml(deck) + '</div>';
-      html += '    <div>';
+      html += '    <div class="col-deck-detail-title-main">';
       html += '      <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
       html += '      <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
-      html += deckPriceBadgeHtml(deck);
+      html += '      <div class="col-deck-detail-badges">' + deckPriceBadgeHtml(deck) + deckSourceBadgeHtml(deck) + '</div>';
       if (short.shortKinds) {
         html += '<div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' +
           short.shortKinds + ' 種（共 ' + short.shortCopies + ' 張）</div>';
@@ -8562,12 +8599,19 @@
       html += '    </div>';
       html += '  </div>';
       html += '  <div class="col-deck-detail-actions">';
-      html += '    <button type="button" class="btn btn-primary btn-sm" data-deck-edit="' + escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
-      html += '    <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' + escapeHtml(deck.id) +
+      html += '    <button type="button" class="btn btn-primary btn-sm col-deck-action-desktop" data-deck-edit="' +
+        escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
+      html += '    <button type="button" class="btn btn-outline-secondary btn-sm col-deck-action-desktop" data-deck-export-image="' +
+        escapeHtml(deck.id) +
         '" title="輸出類似編成一覽的牌組圖片"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '    <details class="col-deck-overflow">';
       html += '      <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
       html += '      <div class="col-deck-overflow-menu">';
+      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' +
+        escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
+      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
+        escapeHtml(deck.id) + '" title="輸出類似編成一覽的牌組圖片">' +
+        '<i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-desktop" data-deck-rarity-toggle="' +
         escapeHtml(deck.id) + '" title="' +
@@ -8583,7 +8627,6 @@
           '<i class="fas fa-copy mr-1" aria-hidden="true"></i>另存新牌組</button>';
       }
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export="' + escapeHtml(deck.id) + '"><i class="fas fa-download mr-1" aria-hidden="true"></i>匯出牌組</button>';
-      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' + escapeHtml(deck.id) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-share="' + escapeHtml(deck.id) + '"><i class="fas fa-share-alt mr-1" aria-hidden="true"></i>分享摘要</button>';
       html += '        <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
       html += '      </div>';
