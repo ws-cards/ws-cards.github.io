@@ -4902,6 +4902,19 @@
     var deckCardShortOnly = false;
     var deckLevelCache = {};
     var deckLevelEnriching = false;
+    /** 遊遊亭 latestByCard 行情（牌組參考總價） */
+    var LATEST_BY_CARD_BASE = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/report/latestByCard_';
+    var LATEST_PRICE_META_KEYS = {
+      generatedAt: 1,
+      generated_at: 1,
+      date: 1,
+      asOf: 1,
+      schemaVersion: 1
+    };
+    var deckPriceMap = null;
+    var deckPriceMeta = '';
+    var deckPriceStatus = 'idle';
+    var deckPriceLoadPromise = null;
     /** CX 軸心對照：來源 json/cxTriggerMap.json（WsTriggerMap）；此處只列 CX，不檢查連動 */
     var CX_TRIGGER_AXIS = (window.WsTriggerMap && window.WsTriggerMap.codeToAxisLabelMap()) || {};
     var CX_AXIS_ORDER = (window.WsTriggerMap && window.WsTriggerMap.axisOrderLabels()) || [];
@@ -7016,11 +7029,132 @@
       return '個人副本（來源 DeckLog「' + code + '」）· 不會同步回 DeckLog';
     }
 
-    function decklogOriginBadgeHtml(deck) {
-      var text = decklogOriginBadgeText(deck);
-      if (!text) return '';
-      return '<span class="col-deck-origin-badge' +
-        (isDecklogDetachedOrDiverged(deck) ? ' is-detached' : '') +
+    function formatDeckPriceYmd(d) {
+      var dt = d instanceof Date ? d : new Date();
+      var y = dt.getFullYear();
+      var m = String(dt.getMonth() + 1).padStart(2, '0');
+      var day = String(dt.getDate()).padStart(2, '0');
+      return y + m + day;
+    }
+
+    function extractDeckPriceMap(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+      if (payload.cards && typeof payload.cards === 'object') return payload.cards;
+      var out = {};
+      Object.keys(payload).forEach(function (k) {
+        if (LATEST_PRICE_META_KEYS[k]) return;
+        var v = payload[k];
+        if (!v || typeof v !== 'object') return;
+        var cn = normalizeText(v.cardNo != null ? v.cardNo : k).replace(/\\/g, '/');
+        if (!cn) return;
+        out[cn] = v;
+      });
+      return Object.keys(out).length ? out : null;
+    }
+
+    function pickDeckPriceDateLabel(map) {
+      if (!map || typeof map !== 'object') return '';
+      var keys = Object.keys(map);
+      for (var i = 0; i < keys.length; i++) {
+        var d = map[keys[i]] && map[keys[i]].latestDate;
+        if (d) return String(d);
+      }
+      return '';
+    }
+
+    function sumDeckAgainstPriceMap(deck) {
+      var map = deckPriceMap;
+      var total = 0;
+      var missingQty = 0;
+      var noCardNo = 0;
+      ((deck && deck.cards) || []).forEach(function (entry) {
+        if (!entry) return;
+        var qty = parseInt(entry.qty, 10);
+        if (isNaN(qty) || qty < 1) qty = 0;
+        var cn = normalizeText(entry.cardNumber).replace(/\\/g, '/');
+        if (!cn) {
+          noCardNo += qty || 1;
+          return;
+        }
+        var row = map && map[cn];
+        var price = row && typeof row.latestPrice === 'number' ? row.latestPrice : null;
+        if (price == null) missingQty += qty;
+        else total += price * qty;
+      });
+      return { total: total, missingQty: missingQty, noCardNo: noCardNo };
+    }
+
+    function ensureDeckPriceMap(onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      if (deckPriceStatus === 'ready' || deckPriceStatus === 'error') {
+        done(false);
+        return;
+      }
+      if (deckPriceLoadPromise) {
+        deckPriceLoadPromise.then(function () { done(true); }, function () { done(true); });
+        return;
+      }
+      deckPriceStatus = 'loading';
+      deckPriceLoadPromise = new Promise(function (resolve) {
+        var today = new Date();
+        var tryDay = 0;
+
+        function attempt() {
+          if (tryDay >= 5) {
+            deckPriceStatus = 'error';
+            deckPriceMap = null;
+            deckPriceMeta = '無法載入行情';
+            resolve(false);
+            return;
+          }
+          var d = new Date(today.getTime() - tryDay * 86400000);
+          var url = LATEST_BY_CARD_BASE + formatDeckPriceYmd(d) + '.json';
+          tryDay += 1;
+          fetch(url)
+            .then(function (r) {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function (j) {
+              var map = extractDeckPriceMap(j);
+              if (!map) throw new Error('empty');
+              deckPriceMap = map;
+              deckPriceStatus = 'ready';
+              var dateLabel = pickDeckPriceDateLabel(map) || formatDeckPriceYmd(d);
+              deckPriceMeta = '行情日 ' + dateLabel + ' · 遊遊亭參考加總';
+              resolve(true);
+            })
+            .catch(function () {
+              attempt();
+            });
+        }
+
+        attempt();
+      });
+      deckPriceLoadPromise.then(function () { done(true); }, function () { done(true); });
+    }
+
+    /** 牌組詳情標題列：顯示牌組參考總價（取代原 DeckLog 來源標籤內容） */
+    function deckPriceBadgeHtml(deck) {
+      if (deckPriceStatus === 'idle' || deckPriceStatus === 'loading') {
+        return '<span class="col-deck-origin-badge is-detached" title="正在載入遊遊亭行情">參考價載入中…</span>';
+      }
+      if (deckPriceStatus === 'error' || !deckPriceMap) {
+        return '<span class="col-deck-origin-badge is-detached" title="' +
+          escapeHtml(deckPriceMeta || '無法載入行情') +
+          '">無法取得行情</span>';
+      }
+      var s = sumDeckAgainstPriceMap(deck);
+      var text = '參考價 ¥' + Number(s.total || 0).toLocaleString('zh-TW');
+      var titleBits = [];
+      if (deckPriceMeta) titleBits.push(deckPriceMeta);
+      if (s.missingQty) {
+        text += '（缺報價 ' + s.missingQty + ' 張）';
+        titleBits.push('缺報價 ' + s.missingQty + ' 張');
+      }
+      if (s.noCardNo) titleBits.push('無卡號 ' + s.noCardNo + ' 張');
+      return '<span class="col-deck-origin-badge" title="' +
+        escapeHtml(titleBits.join(' · ') || '遊遊亭參考加總') +
         '">' + escapeHtml(text) + '</span>';
     }
 
@@ -8335,7 +8469,7 @@
       html += '    <div>';
       html += '      <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
       html += '      <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張 · ' + escapeHtml(whenLabel) + '</div>';
-      html += decklogOriginBadgeHtml(deck);
+      html += deckPriceBadgeHtml(deck);
       if (short.shortKinds) {
         html += '<div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' +
           short.shortKinds + ' 種（共 ' + short.shortCopies + ' 張）</div>';
@@ -8436,6 +8570,9 @@
       revealLoadedDeckImages(deckDetailEl);
       ensureCardMetaForEntries(deck.cards || [], function (shouldRender) {
         if (shouldRender) renderDeckDetail();
+      });
+      ensureDeckPriceMap(function (shouldRender) {
+        if (shouldRender && selectedDeckId) renderDeckDetail();
       });
     }
 
@@ -10374,6 +10511,9 @@
     } else {
       // 牌組頁仍讀取卡冊持有量（缺卡／從卡冊加入）
       ensureAlbumCardMeta(function () { /* meta ready for deck filters */ });
+      ensureDeckPriceMap(function (shouldRender) {
+        if (shouldRender && selectedDeckId) renderDeckDetail();
+      });
       renderDeckList();
       if (window.WsPageLoader) {
         WsPageLoader.mark('album', allItems.length ? ('持有 ' + allItems.length + ' 種可編成') : '牌組就緒');
