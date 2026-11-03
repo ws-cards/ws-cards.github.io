@@ -71,18 +71,6 @@
     return 0;
   }
 
-  function hasMeaningfulTrigger(trigger, triggerMap) {
-    var raw = String(trigger == null ? "" : trigger).trim();
-    if (!raw) return false;
-    var upper = raw.toUpperCase();
-    if (upper === "0" || upper === "NONE" || upper === "-" || upper === "?") return false;
-    if (triggerMap && typeof triggerMap.fromCode === "function") {
-      var t = triggerMap.fromCode(raw);
-      if (t && t.id === "none") return false;
-    }
-    return true;
-  }
-
   function triggerAxisLabel(trigger, triggerMap) {
     if (!triggerMap) return "";
     if (typeof triggerMap.axisLabelForCode === "function") {
@@ -649,13 +637,6 @@
       gap: "8px",
       boxSizing: "border-box"
     });
-    left.appendChild(el("div", {
-      fontSize: "12px",
-      fontWeight: "600",
-      color: "#6b7280"
-    }, {
-      text: "トリガー率 " + stats.triggerRate + "%（" + stats.triggerHits + "/" + stats.total + "）"
-    }));
     left.appendChild(buildCompositionBlock(stats));
 
     if (stats.cxGroups && stats.cxGroups.length) {
