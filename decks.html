@@ -2566,6 +2566,9 @@
     .col-deck-empty[data-empty-mode="guest"] .col-cta-primary {
       min-width: 11rem;
     }
+    .col-deck-empty[data-empty-mode="loading"] .col-deck-empty-actions {
+      display: none;
+    }
     .col-deck-cover-count,
     .col-deck-cover-short {
       position: absolute;
@@ -4404,7 +4407,7 @@
       { id: 'album', weight: 30, label: '載入牌組…' },
       { id: 'decks', weight: 30, label: '同步牌組…' }
     ]);
-    WsPageLoader.armSafety(12000);
+    WsPageLoader.armSafety(20000);
     if (document.documentElement.classList.contains('fonts-ready')) {
       WsPageLoader.mark('fonts', '字體就緒');
     }
@@ -4423,7 +4426,7 @@
   <script src="assets/js/ws-decklog.js?v=20261017h"></script>
   <script src="assets/js/ws-trigger-map.js?v=20261027c"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="assets/js/ws-deck-image-export.js?v=20261031d"></script>
+  <script src="assets/js/ws-deck-image-export.js?v=20261103a"></script>
   <script src="dist/js/include-navbar.js"></script>
 
   <div id="customDrawerOverlay" class="custom-drawer-overlay" onclick="toggleCustomDrawer()"></div>
@@ -7430,28 +7433,104 @@
     }
 
     var pageLoaderDecksMarked = false;
+    /** false：auth／牌組尚未就緒，勿顯示 guest 空狀態或關閉全頁 loader */
+    var deckAuthResolved = false;
+    var deckBootstrapDone = false;
+
     function markPageLoaderDecks(label) {
       if (pageLoaderDecksMarked) return;
       pageLoaderDecksMarked = true;
       if (window.WsPageLoader) WsPageLoader.mark('decks', label || '牌組就緒');
     }
 
+    function finishDeckBootstrap(label) {
+      deckAuthResolved = true;
+      deckBootstrapDone = true;
+      markPageLoaderDecks(label);
+    }
+
+    function waitFirebaseAuthReady() {
+      if (fb && fb.auth && typeof fb.auth.authStateReady === 'function') {
+        return fb.auth.authStateReady();
+      }
+      return new Promise(function (resolve) {
+        if (!(fb && typeof fb.onAuth === 'function')) {
+          resolve();
+          return;
+        }
+        var settled = false;
+        var unsub = fb.onAuth(function () {
+          if (settled) return;
+          settled = true;
+          if (typeof unsub === 'function') {
+            try { unsub(); } catch (e) { /* ignore */ }
+          }
+          resolve();
+        });
+      });
+    }
+
+    function showDeckLoadingEmpty() {
+      if (deckEmptyEl) {
+        renderDeckEmptyState('loading');
+      }
+      if (deckListEl) deckListEl.innerHTML = '';
+      if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
+      if (deckDetailEl) deckDetailEl.innerHTML = '';
+      if (deckTotalValueEl) deckTotalValueEl.textContent = '0';
+      if (deckCountLabelEl) deckCountLabelEl.textContent = '0';
+      if (deckSidebarCountEl) deckSidebarCountEl.textContent = '0';
+    }
+
     function bindDeckAuth() {
       if (!(fb && typeof fb.onAuth === 'function')) {
+        deckAuthResolved = true;
         clearDecksUiKeepLocalCache();
         setStatus((fb && fb.reason) || 'Firebase 未載入，牌組需登入後才能使用', 'is-error');
-        markPageLoaderDecks('略過雲端牌組');
+        finishDeckBootstrap('略過雲端牌組');
         return;
       }
+
+      waitFirebaseAuthReady().then(function () {
+        var user = fb.currentUser && fb.currentUser();
+        deckCloudUser = user || null;
+        if (!user) {
+          // 先標記已就緒，再 render，才會正確顯示 guest 而非 loading
+          deckAuthResolved = true;
+          clearDecksUiKeepLocalCache();
+          finishDeckBootstrap('未登入');
+          return;
+        }
+        showDeckLoadingEmpty();
+        return refreshDecksFromCloud().then(function (list) {
+          deckAuthResolved = true;
+          // refresh 期間若牌組為空會先畫成 loading；就緒後改成 ready／guest
+          if (!(list && list.length)) renderDeckList();
+          finishDeckBootstrap('牌組已同步');
+          if (!(list && list.length)) return;
+          setStatus('已同步雲端牌組 ' + list.length + ' 副', 'is-ok');
+        }).catch(function (err) {
+          console.error(err);
+          deckAuthResolved = true;
+          renderDeckList();
+          finishDeckBootstrap('牌組同步失敗');
+        });
+      }).catch(function (err) {
+        console.error(err);
+        deckCloudUser = null;
+        deckAuthResolved = true;
+        clearDecksUiKeepLocalCache();
+        finishDeckBootstrap('驗證就緒失敗');
+      });
+
       fb.onAuth(function (user) {
+        if (!deckBootstrapDone) return;
         deckCloudUser = user || null;
         if (!user) {
           clearDecksUiKeepLocalCache();
-          markPageLoaderDecks('未登入');
           return;
         }
         refreshDecksFromCloud().then(function (list) {
-          markPageLoaderDecks('牌組已同步');
           if (!(list && list.length)) return;
           setStatus('已同步雲端牌組 ' + list.length + ' 副', 'is-ok');
         });
@@ -8594,7 +8673,15 @@
       var showSecondary = true;
       var iconClass = 'fa-archive';
 
-      if (mode === 'guest') {
+      if (mode === 'loading') {
+        title = '同步牌組中…';
+        text = '正在確認登入狀態並載入雲端牌組，請稍候。';
+        showSecondary = false;
+        iconClass = 'fa-sync-alt';
+        primaryLabel = '載入中';
+        primaryIcon = 'fa-spinner';
+        primaryAction = '';
+      } else if (mode === 'guest') {
         title = '登入後管理牌組';
         text = '牌組需登入才能雲端同步與儲存。登入後可新建空白牌組，或從 DeckLog 匯入。';
         primaryLabel = '登入後同步牌組';
@@ -8636,12 +8723,19 @@
       if (deckEmptyPrimaryLabel) deckEmptyPrimaryLabel.textContent = primaryLabel;
       if (deckEmptyPrimaryBtn) {
         var primaryIconEl = deckEmptyPrimaryBtn.querySelector('i');
-        if (primaryIconEl) primaryIconEl.className = 'fas ' + primaryIcon;
-        deckEmptyPrimaryBtn.setAttribute('data-empty-action', primaryAction);
+        if (primaryIconEl) {
+          primaryIconEl.className = 'fas ' + primaryIcon + (mode === 'loading' ? ' fa-spin' : '');
+        }
+        if (primaryAction) {
+          deckEmptyPrimaryBtn.setAttribute('data-empty-action', primaryAction);
+        } else {
+          deckEmptyPrimaryBtn.removeAttribute('data-empty-action');
+        }
+        deckEmptyPrimaryBtn.hidden = mode === 'loading';
       }
       if (deckEmptySecondaryBtn) {
-        deckEmptySecondaryBtn.hidden = !showSecondary;
-        if (showSecondary) {
+        deckEmptySecondaryBtn.hidden = !showSecondary || mode === 'loading';
+        if (showSecondary && mode !== 'loading') {
           if (deckEmptySecondaryLabel) deckEmptySecondaryLabel.textContent = secondaryLabel;
           var secondaryIconEl = deckEmptySecondaryBtn.querySelector('i');
           if (secondaryIconEl) secondaryIconEl.className = 'fas ' + secondaryIcon;
@@ -8660,7 +8754,9 @@
       if (deckSidebarCountEl) deckSidebarCountEl.textContent = String(visible.length);
 
       if (!allDecks.length) {
-        renderDeckEmptyState(deckCloudUser ? 'ready' : 'guest');
+        renderDeckEmptyState(
+          !deckAuthResolved ? 'loading' : (deckCloudUser ? 'ready' : 'guest')
+        );
         if (deckListEl) deckListEl.innerHTML = '';
         if (deckWorkspaceEl) deckWorkspaceEl.hidden = true;
         selectedDeckId = null;
@@ -10514,17 +10610,13 @@
       ensureDeckPriceMap(function (shouldRender) {
         if (shouldRender && selectedDeckId) renderDeckDetail();
       });
-      renderDeckList();
+      // 等 auth＋雲端牌組就緒後才關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
+      showDeckLoadingEmpty();
       if (window.WsPageLoader) {
         WsPageLoader.mark('album', allItems.length ? ('持有 ' + allItems.length + ' 種可編成') : '牌組就緒');
       }
       bindDeckAuth();
-      setStatus(
-        allItems.length
-          ? ('牌組頁已就緒（卡冊持有 ' + allItems.length + ' 種）')
-          : '牌組需登入；卡冊尚無卡片時可先到「我的卡冊」轉入',
-        allItems.length ? 'is-ok' : ''
-      );
+      setStatus('正在同步牌組…', '');
     }
   })();
 </script>
