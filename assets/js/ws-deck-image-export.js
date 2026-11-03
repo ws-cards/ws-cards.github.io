@@ -208,6 +208,7 @@
     var kindCount = { character: 0, event: 0, cx: 0 };
     var triggerHits = 0;
     var soulIconCount = 0;
+    var soulHits = 0;
     var cxGroups = [];
 
     cards.forEach(function (c) {
@@ -243,7 +244,9 @@
         levelCount[lv] = (levelCount[lv] || 0) + qty;
       }
       if (hasMeaningfulTrigger(c.trigger, triggerMap)) triggerHits += qty;
-      soulIconCount += countSoulIconsOnCard(c.trigger, triggerMap) * qty;
+      var soulOnCard = countSoulIconsOnCard(c.trigger, triggerMap);
+      soulIconCount += soulOnCard * qty;
+      if (soulOnCard > 0) soulHits += qty;
     });
 
     return {
@@ -255,6 +258,8 @@
       triggerHits: triggerHits,
       triggerRate: total ? Math.round((triggerHits / total) * 100) : 0,
       soulIconCount: soulIconCount,
+      soulHits: soulHits,
+      soulRate: total ? Math.round((soulHits / total) * 100) : 0,
       cxGroups: cxGroups
     };
   }
@@ -303,10 +308,14 @@
 
   function buildLevelBarChart(stats) {
     // 附圖風格：數值膠囊在柱頂、標籤在柱底；用固定 px 高度避免比例錯位
+    // card 採 column + plot flex:1，與右側圓環等高拉伸時柱體仍貼底，避免底部空洞像跑版
     var barMaxH = 88;
     var card = el("div", {
       flex: "1 1 280px",
       minWidth: "0",
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
       background: "#f3f4f6",
       border: "1px solid #e5e7eb",
       borderRadius: "10px",
@@ -318,7 +327,8 @@
       fontWeight: "800",
       color: "#111827",
       textAlign: "center",
-      marginBottom: "8px"
+      marginBottom: "8px",
+      flex: "0 0 auto"
     }, { text: "Level" }));
 
     var maxLv = 0;
@@ -332,6 +342,7 @@
       alignItems: "flex-end",
       justifyContent: "space-around",
       gap: "8px",
+      flex: "1 1 auto",
       minHeight: (barMaxH + 44) + "px"
     });
 
@@ -343,6 +354,7 @@
       var col = el("div", {
         flex: "1",
         maxWidth: "72px",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -405,11 +417,16 @@
     });
 
     var kinds = stats.kindCount || {};
+    var soulRate = typeof stats.soulRate === "number" ? stats.soulRate : 0;
     var items = [
       { label: "角色", value: kinds.character || 0 },
       { label: "事件", value: kinds.event || 0 },
       { label: "CX", value: kinds.cx || 0 },
-      { label: "Trigger 魂數", value: stats.soulIconCount || 0 }
+      {
+        label: "觸發魂數",
+        value: stats.soulIconCount || 0,
+        suffix: "（" + soulRate + "%）"
+      }
     ];
     items.forEach(function (item) {
       var line = el("div", {
@@ -428,7 +445,9 @@
         flex: "0 0 auto",
         display: "inline-block"
       }));
-      line.appendChild(document.createTextNode(item.label + "：" + item.value));
+      line.appendChild(document.createTextNode(
+        item.label + "：" + item.value + (item.suffix || "")
+      ));
       list.appendChild(line);
     });
     col.appendChild(list);
