@@ -8784,12 +8784,42 @@
       }
     }
 
+    /** 手機點進檢視時，從列表捲動位置跳回畫面頂端 */
+    function scrollDeckDetailToTop() {
+      if (isDeckDesktopLayout()) return;
+      try {
+        if (typeof window.scrollTo === 'function') {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        } else {
+          window.scrollTo(0, 0);
+        }
+      } catch (e) {
+        try { window.scrollTo(0, 0); } catch (e2) { /* ignore */ }
+      }
+      try {
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      } catch (e3) { /* ignore */ }
+      if (deckDetailEl) deckDetailEl.scrollTop = 0;
+      if (deckWorkspaceEl) deckWorkspaceEl.scrollTop = 0;
+      if (deckSection) deckSection.scrollTop = 0;
+    }
+
     function showDeckListPane(opts) {
       setDeckMobilePane('list', opts || {});
     }
 
     function showDeckDetailPane(opts) {
       setDeckMobilePane('detail', opts || {});
+      scrollDeckDetailToTop();
+      // 等詳情 DOM 寫入後再補一次，避免列表捲動殘留
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(function () {
+          scrollDeckDetailToTop();
+        });
+      } else {
+        setTimeout(scrollDeckDetailToTop, 0);
+      }
     }
 
     function selectDeck(deckId, opts) {
