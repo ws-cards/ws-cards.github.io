@@ -293,8 +293,9 @@
   'use strict';
   var Face = window.WsDeckFace;
   var Detect = window.WsDeckStackDetect;
-  var FACE_ACCEPT = 0.88;
-  var FACE_WEAK = 0.82;
+  /* mobilenetv2-gap-v1 thresholds（與 deckPhotoAnalysis.html 對齊） */
+  var FACE_ACCEPT = 0.80;
+  var FACE_WEAK = 0.70;
 
   var seriesMap = {}, seriesList = [], faceMetaByCode = {};
   var indexCards = [];
@@ -365,9 +366,11 @@
       var got = await Face.loadStaticIndex(normalized, titleCode, faceMetaByCode);
       indexCards = got.indexCards;
       currentSeries = normalized;
+      el('mSeriesMeta').textContent = '預熱 MobileNet…';
+      await Face.ensureMobilenet();
       var src = (got.base && String(got.base).indexOf('storage.googleapis.com') >= 0) ? 'gcs' : 'local';
       el('mSeriesMeta').innerHTML = '系列 <strong>' + escapeHtml(normalized) + '</strong> · 預建指紋 <strong>' +
-        indexCards.length + '</strong> 張 · 來源 <strong>' + src + '</strong> · 可開始上傳整桌照片';
+        indexCards.length + '</strong> 張 · 來源 <strong>' + src + '</strong> · MobileNet · 可開始上傳整桌照片';
       toast('已載入 ' + indexCards.length + ' 張指紋（' + src + '）');
       el('mDetectBtn').disabled = !sourceCanvas;
     } catch (err) {
@@ -446,7 +449,7 @@
     return work.toDataURL('image/jpeg', 0.85);
   }
 
-  function recognizeBox(box) {
+  async function recognizeBox(box) {
     var crops = Detect.topCardCropCandidates(box);
     var best = null;
     for (var i = 0; i < crops.length; i++) {
@@ -457,7 +460,7 @@
       work.height = 448;
       var ctx = work.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(sourceCanvas, c.sx, c.sy, c.sw, c.sh, 0, 0, work.width, work.height);
-      var fp = Face.fingerprintFromImageSource(work);
+      var fp = await Face.fingerprintFromImageSource(work);
       var hits = Face.matchFace(fp, indexCards, 3);
       if (!hits.length) continue;
       var top = hits[0];
@@ -486,7 +489,7 @@
       var out = [];
       for (var i = 0; i < boxes.length; i++) {
         var b = boxes[i];
-        var rec = recognizeBox(b);
+        var rec = await recognizeBox(b);
         var row = {
           id: b.id || ('s' + (i + 1)),
           x: b.x, y: b.y, w: b.w, h: b.h,

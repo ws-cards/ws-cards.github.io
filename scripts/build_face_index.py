@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """Build a single-series card-face fingerprint JSON for deckPhotoAnalysis.html.
 
-Algorithm must stay in sync with assets/js/ws-deck-face.js (algo=norm-grad-v1):
-  - resize to 48x66
-  - global luminance z-score (exposure invariant)
-  - 6x8 cell means of: Yz, |gx|, |gy|, rg chromaticity (+ center-art)
-  - L2-normalize
+Algorithms:
+  - mobilenetv2-gap-v1 (default): delegates to scripts/mobilenet-face/build_face_index.mjs
+    (same @tensorflow-models/mobilenet v2 used in the browser)
+  - norm-grad-v1: local luminance z-score + gradient + chromaticity grid
 
 Examples:
   python3 scripts/build_face_index.py --series BD/W54
-  python3 scripts/build_face_index.py --series BD_W54 --concurrency 8
-  python3 scripts/build_face_index.py --series BD/W54 --out-dir json/face-index
+  python3 scripts/build_face_index.py --series BD/W54 --algo mobilenetv2-gap-v1
+  python3 scripts/build_face_index.py --series BD_W54 --algo norm-grad-v1 --concurrency 8
 """
 
 from __future__ import annotations
@@ -18,7 +17,9 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -38,11 +39,15 @@ CONTENT_WS_BASE = (
 )
 IMG_BASE = "https://imgs.devilfox.net/ws/"
 WS_CARD_IMAGE_BASE = "https://ws-tcg.com/wordpress/wp-content/images/cardlist"
-ALGO = "norm-grad-v1"
+ALGO_MOBILENET = "mobilenetv2-gap-v1"
+ALGO_NORM_GRAD = "norm-grad-v1"
+ALGO = ALGO_MOBILENET
 VERSION = 1
 FP_W, FP_H, FP_COLS, FP_ROWS = 48, 66, 6, 8
 FP_CELL_FEATS = 5  # Yz, |gx|, |gy|, Cr, Cg
 FP_DIMS = FP_COLS * FP_ROWS * FP_CELL_FEATS + FP_CELL_FEATS  # 245
+MOBILENET_DIR = ROOT / "scripts" / "mobilenet-face"
+MOBILENET_BUILD = MOBILENET_DIR / "build_face_index.mjs"
 
 CARD_NO_RE = re.compile(r"^[A-Za-z0-9]+/[A-Za-z0-9]+-[A-Za-z0-9]+$")
 BASE_NO_RE = re.compile(r"^([A-Za-z0-9]+/[A-Za-z0-9]+-\d+)", re.I)
@@ -326,9 +331,39 @@ def update_meta(meta_path: Path, entry: dict[str, Any], fp_meta: dict[str, Any])
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def run_mobilenet_node(series: str, out_dir: str, concurrency: int, limit: int) -> None:
+    if not MOBILENET_BUILD.is_file():
+        raise SystemExit(f"找不到 {MOBILENET_BUILD}")
+    node_modules = MOBILENET_DIR / "node_modules"
+    if not node_modules.is_dir():
+        print("安裝 scripts/mobilenet-face 依賴…", flush=True)
+        subprocess.check_call(["npm", "install"], cwd=str(MOBILENET_DIR))
+    cmd = [
+        "node",
+        str(MOBILENET_BUILD),
+        "--series",
+        series,
+        "--out-dir",
+        out_dir,
+        "--concurrency",
+        str(max(1, concurrency)),
+    ]
+    if limit and limit > 0:
+        cmd.extend(["--limit", str(limit)])
+    env = os.environ.copy()
+    print("delegate:", " ".join(cmd), flush=True)
+    subprocess.check_call(cmd, cwd=str(ROOT), env=env)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build one series face-index JSON")
     parser.add_argument("--series", required=True, help="Series code, e.g. BD/W54 or BD_W54")
+    parser.add_argument(
+        "--algo",
+        default=ALGO_MOBILENET,
+        choices=(ALGO_MOBILENET, ALGO_NORM_GRAD),
+        help="Fingerprint algorithm (default: mobilenetv2-gap-v1)",
+    )
     parser.add_argument(
         "--out-dir",
         default=str(ROOT / "json" / "face-index"),
@@ -342,6 +377,13 @@ def main() -> None:
         help="Optional max cards (debug). 0 = all",
     )
     args = parser.parse_args()
+
+    if args.algo == ALGO_MOBILENET:
+        run_mobilenet_node(args.series, args.out_dir, args.concurrency, args.limit)
+        return
+
+    global ALGO
+    ALGO = ALGO_NORM_GRAD
 
     series_code, title_code = normalize_series(args.series)
     out_dir = Path(args.out_dir)
