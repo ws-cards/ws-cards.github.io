@@ -3080,6 +3080,8 @@
         width: 55%;
         min-height: 0;
         border-radius: 0.28rem 0.28rem 0.12rem 0.12rem;
+        transform-origin: center bottom;
+        will-change: transform;
       }
       .col-deck-info-level-label {
         margin-top: 0.22rem;
@@ -3572,6 +3574,8 @@
         width: 52%;
         min-height: 0;
         border-radius: 0.32rem 0.32rem 0.14rem 0.14rem;
+        transform-origin: center bottom;
+        will-change: transform;
       }
       .col-deck-info-level-col {
         appearance: none;
@@ -8046,6 +8050,79 @@
       }
     }
 
+    function playDeckDetailLevelBarsIntro(root) {
+      root = root || deckDetailEl;
+      if (!root) return;
+      var plot = root.querySelector('.col-deck-info-level-plot');
+      if (!plot) return;
+      var cols = plot.querySelectorAll('.col-deck-info-level-col');
+      var bars = plot.querySelectorAll('.col-deck-info-level-bar');
+      var badges = plot.querySelectorAll('.col-deck-info-level-badge');
+      var labels = plot.querySelectorAll('.col-deck-info-level-label');
+      if (!bars.length) return;
+
+      function applyFinal() {
+        Array.prototype.forEach.call(bars, function (bar) {
+          bar.style.transform = 'none';
+          bar.style.opacity = '1';
+        });
+        Array.prototype.forEach.call(badges, function (el) {
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        });
+        Array.prototype.forEach.call(labels, function (el) {
+          el.style.opacity = '1';
+        });
+        Array.prototype.forEach.call(cols, function (el) {
+          el.style.opacity = '1';
+        });
+      }
+
+      if (prefersReducedMotion() || !window.gsap) {
+        applyFinal();
+        return;
+      }
+
+      try {
+        gsap.killTweensOf(bars);
+        gsap.killTweensOf(badges);
+        gsap.killTweensOf(labels);
+        gsap.killTweensOf(cols);
+      } catch (eKill) { /* ignore */ }
+
+      gsap.set(cols, { opacity: 1 });
+      gsap.set(bars, { scaleY: 0, opacity: 1, transformOrigin: 'center bottom' });
+      gsap.set(badges, { opacity: 0, y: 8 });
+      gsap.set(labels, { opacity: 0 });
+
+      var tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      tl.to(bars, {
+        scaleY: 1,
+        duration: 0.28,
+        stagger: 0.05,
+        ease: 'power2.out'
+      }, 0.04);
+      tl.to(badges, {
+        opacity: 1,
+        y: 0,
+        duration: 0.2,
+        stagger: 0.05,
+        ease: 'power2.out'
+      }, 0.1);
+      tl.to(labels, {
+        opacity: 1,
+        duration: 0.18,
+        stagger: 0.05,
+        ease: 'power2.out'
+      }, 0.12);
+    }
+
+    function playDeckDetailChartsIntro(root) {
+      root = root || deckDetailEl;
+      playDeckDetailDonutIntro(root);
+      playDeckDetailLevelBarsIntro(root);
+    }
+
     function deckDetailLevelBarsHtml(stats, selectedLevel) {
       var maxLv = 0;
       DECK_DETAIL_LEVEL_KEYS.forEach(function (k) {
@@ -8105,7 +8182,7 @@
       var deck = allDecks.find(function (d) { return d.id === selectedDeckId; });
       if (!deck) return false;
       charts.outerHTML = deckDetailChartsHtml(deck);
-      playDeckDetailDonutIntro(deckDetailEl);
+      playDeckDetailChartsIntro(deckDetailEl);
       return true;
     }
 
