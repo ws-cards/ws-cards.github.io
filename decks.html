@@ -4506,6 +4506,10 @@
       animation: colFxEnter 0.55s cubic-bezier(0.22, 0.8, 0.28, 1) both;
       animation-delay: calc(var(--fx-i, 0) * 0.045s);
     }
+    /* 牌組列表進場時不可點，避免動畫位移造成點到隔壁牌組 */
+    .col-deck-list > .col-deck-card.col-fx-enter {
+      pointer-events: none;
+    }
     @keyframes colFxEnter {
       from {
         opacity: 0;
@@ -6855,8 +6859,18 @@
       }
       void root.offsetWidth;
       for (var j = 0; j < nodes.length; j++) {
-        nodes[j].style.setProperty('--fx-i', String(Math.min(j, 14)));
-        nodes[j].classList.add('col-fx-enter');
+        (function (node, idx) {
+          node.style.setProperty('--fx-i', String(Math.min(idx, 14)));
+          node.classList.add('col-fx-enter');
+          // 進場位移期間關閉點擊，避免手指點到視覺上重疊的上一張卡
+          function onFxEnd(ev) {
+            if (ev && ev.animationName && ev.animationName !== 'colFxEnter') return;
+            node.classList.remove('col-fx-enter');
+            node.style.removeProperty('--fx-i');
+            node.removeEventListener('animationend', onFxEnd);
+          }
+          node.addEventListener('animationend', onFxEnd);
+        })(nodes[j], j);
       }
     }
 
@@ -9384,8 +9398,13 @@
       if (!opts.skipHistory && !isDeckDesktopLayout() && next === 'detail' && selectedDeckId) {
         try {
           var cur = history.state;
-          if (!(cur && cur.wsDeckPane === 'detail' && cur.deckId === selectedDeckId)) {
-            history.pushState({ wsDeckPane: 'detail', deckId: selectedDeckId }, '');
+          var nextState = { wsDeckPane: 'detail', deckId: selectedDeckId };
+          // 已在詳情層時用 replace，避免堆出 A→B→C 多層詳情；
+          // 否則返回時 popstate 會再開「上一副」而非回到列表
+          if (cur && cur.wsDeckPane === 'detail') {
+            history.replaceState(nextState, '');
+          } else {
+            history.pushState(nextState, '');
           }
         } catch (e) { /* ignore */ }
       }
@@ -11413,7 +11432,13 @@
       }
       var openBtn = e.target.closest('[data-deck-open]');
       if (openBtn) {
-        selectDeck(openBtn.getAttribute('data-deck-open'));
+        var openId = openBtn.getAttribute('data-deck-open');
+        // 以卡片 data-deck-id 為準，避免事件落到重疊節點時開錯牌組
+        var openCard = openBtn.closest('[data-deck-id]');
+        if (openCard && openCard.getAttribute('data-deck-id')) {
+          openId = openCard.getAttribute('data-deck-id');
+        }
+        selectDeck(openId);
         return;
       }
       var selectBtn = e.target.closest('[data-deck-select]');
@@ -11472,6 +11497,7 @@
     bindEl(window, 'popstate', function (e) {
       if (isDeckDesktopLayout()) return;
       var st = e && e.state;
+      // 僅在「前進到詳情」時恢復；返回到非 detail 一律回列表，避免舊的多層詳情 state 誤開別組
       if (st && st.wsDeckPane === 'detail' && st.deckId) {
         selectDeck(st.deckId, { skipHistory: true, openDetail: true });
         return;
