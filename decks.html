@@ -7828,14 +7828,23 @@
       0: '#2ec4b6',
       1: '#5ecfc4',
       2: '#7eb6e8',
-      3: '#9aa8eb'
+      3: '#9aa8eb',
+      cx: '#f472b6'
     };
-    var DECK_DETAIL_LEVEL_KEYS = [0, 1, 2, 3];
+    var DECK_DETAIL_LEVEL_KEYS = [0, 1, 2, 3, 'cx'];
+
+    function isDeckChartLevelFilter(value) {
+      return value === 0 || value === 1 || value === 2 || value === 3 || value === 'cx';
+    }
+
+    function deckChartLevelLabel(value) {
+      return value === 'cx' ? 'CX' : ('Lv' + value);
+    }
 
     function computeDeckDetailChartStats(deck, opts) {
       opts = opts || {};
       var levelFilter = opts.levelFilter;
-      var hasLevelFilter = levelFilter === 0 || levelFilter === 1 || levelFilter === 2 || levelFilter === 3;
+      var hasLevelFilter = isDeckChartLevelFilter(levelFilter);
       var colorCount = { yellow: 0, green: 0, red: 0, blue: 0 };
       var levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
       ((deck && deck.cards) || []).forEach(function (entry) {
@@ -7852,7 +7861,8 @@
           lv = Math.floor(lv);
           if (lv > 3) lv = 3;
         }
-        var includeColor = !hasLevelFilter || (!isCx && lv === levelFilter);
+        var includeColor = !hasLevelFilter ||
+          (levelFilter === 'cx' ? isCx : (!isCx && lv === levelFilter));
         var colorKey = normalizeColorKey(meta.color || entry.color || '');
         if (includeColor && colorKey && Object.prototype.hasOwnProperty.call(colorCount, colorKey)) {
           colorCount[colorKey] += qty;
@@ -8029,7 +8039,7 @@
       });
       var axisMax = Math.max(1, niceDeckChartAxisMax(maxLv));
       var barMaxH = 72;
-      var hasSelection = selectedLevel === 0 || selectedLevel === 1 || selectedLevel === 2 || selectedLevel === 3;
+      var hasSelection = isDeckChartLevelFilter(selectedLevel);
       var html = '<div class="col-deck-info-level-plot' + (hasSelection ? ' has-selection' : '') +
         '" role="group" aria-label="等級分佈直條圖，點選可篩選顏色分布">';
       DECK_DETAIL_LEVEL_KEYS.forEach(function (key) {
@@ -8037,27 +8047,24 @@
         var h = Math.round((n / axisMax) * barMaxH);
         if (n > 0 && h < 5) h = 5;
         var selected = hasSelection && selectedLevel === key;
+        var label = deckChartLevelLabel(key);
         html += '<button type="button" class="col-deck-info-level-col' + (selected ? ' is-selected' : '') +
           '" data-deck-chart-level="' + key + '" aria-pressed="' + (selected ? 'true' : 'false') +
-          '" title="' + (selected ? '取消篩選顏色分布' : '依 Lv' + key + ' 篩選顏色分布') +
-          '" aria-label="Lv' + key + '，' + n + ' 張' + (selected ? '，已選取' : '') + '">';
+          '" title="' + (selected ? '取消篩選顏色分布' : '依 ' + label + ' 篩選顏色分布') +
+          '" aria-label="' + label + '，' + n + ' 張' + (selected ? '，已選取' : '') + '">';
         html += '<div class="col-deck-info-level-badge">' + n + '</div>';
         html += '<div class="col-deck-info-level-bar" style="height:' + h + 'px;background:' +
           DECK_DETAIL_LEVEL_HEX[key] + '"></div>';
-        html += '<div class="col-deck-info-level-label">Lv' + key + '</div>';
+        html += '<div class="col-deck-info-level-label">' + label + '</div>';
         html += '</button>';
       });
       html += '</div>';
-      var cx = (stats.levelCount && stats.levelCount.cx) || 0;
-      if (cx > 0) {
-        html += '<p class="col-deck-info-cx-note">CX ' + cx + ' 張（不計入上方等級柱）</p>';
-      }
       return html;
     }
 
     function deckDetailChartsHtml(deck) {
       var selectedLevel = deckDetailChartLevelFilter;
-      var hasSelection = selectedLevel === 0 || selectedLevel === 1 || selectedLevel === 2 || selectedLevel === 3;
+      var hasSelection = isDeckChartLevelFilter(selectedLevel);
       var levelStats = computeDeckDetailChartStats(deck);
       var colorStats = hasSelection
         ? computeDeckDetailChartStats(deck, { levelFilter: selectedLevel })
@@ -8066,7 +8073,7 @@
       html += '<div class="col-deck-info-chart col-deck-info-chart--color">';
       html += '<div class="col-deck-info-chart-title">顏色分布</div>';
       html += deckDetailColorDonutHtml(colorStats, {
-        caption: hasSelection ? ('Lv' + selectedLevel) : '顏色'
+        caption: hasSelection ? deckChartLevelLabel(selectedLevel) : '顏色'
       });
       html += '</div>';
       html += '<div class="col-deck-info-chart col-deck-info-chart--level">';
@@ -11289,8 +11296,9 @@
       var chartLevelBtn = e.target.closest('[data-deck-chart-level]');
       if (chartLevelBtn) {
         e.preventDefault();
-        var nextLv = Number(chartLevelBtn.getAttribute('data-deck-chart-level'));
-        if (nextLv !== 0 && nextLv !== 1 && nextLv !== 2 && nextLv !== 3) return;
+        var rawLv = chartLevelBtn.getAttribute('data-deck-chart-level');
+        var nextLv = rawLv === 'cx' ? 'cx' : Number(rawLv);
+        if (!isDeckChartLevelFilter(nextLv)) return;
         deckDetailChartLevelFilter = deckDetailChartLevelFilter === nextLv ? null : nextLv;
         if (!refreshDeckDetailCharts()) renderDeckDetail();
         return;
