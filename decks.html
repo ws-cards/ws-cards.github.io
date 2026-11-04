@@ -2679,29 +2679,21 @@
       border-color: rgba(255, 255, 255, 0.14);
     }
     .col-deck-origin-note {
-      margin: 0.35rem 0 0;
-      padding: 0.55rem 0.7rem;
-      border-radius: 0.45rem;
-      font-size: 0.82rem;
-      line-height: 1.45;
-      color: #27500a;
-      background: #eaf6df;
-      border: 1px solid #c5e3ad;
-    }
-    .col-deck-origin-note.is-detached {
-      color: #7a4b00;
-      background: #fff4df;
-      border-color: #f0d19a;
+      margin: 0.2rem 0 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--col-ink, #1a202c);
+      background: transparent;
+      word-break: break-word;
     }
     [data-theme="dark"] .col-deck-origin-note {
-      color: #c6f0a4;
-      background: rgba(72, 120, 40, 0.28);
-      border-color: rgba(140, 190, 90, 0.35);
-    }
-    [data-theme="dark"] .col-deck-origin-note.is-detached {
-      color: #ffd89a;
-      background: rgba(140, 90, 20, 0.32);
-      border-color: rgba(220, 160, 60, 0.35);
+      color: #eef3ee;
+      background: transparent;
+      border-color: transparent;
     }
     .col-deck-warn {
       display: inline-flex;
@@ -3597,6 +3589,13 @@
     [data-theme="dark"] .col-deck-editor-head {
       background: rgba(255, 255, 255, 0.04);
     }
+    #colDeckMetaModal .col-deck-editor-head {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
     .col-deck-editor-head label {
       display: grid;
       gap: 0.25rem;
@@ -3793,6 +3792,10 @@
       line-height: 1;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
       pointer-events: none;
+    }
+    .col-deck-cover-pick-badge i {
+      font-size: 0.95rem;
+      line-height: 1;
     }
     .col-deck-cover-pick-actions {
       justify-content: center;
@@ -5078,21 +5081,6 @@
       </div>
       <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
 
-      <div class="col-deck-editor-head" id="colDeckEditorMeta">
-        <label for="colDeckNameInput">
-          牌組名稱
-          <input id="colDeckNameInput" type="text" class="form-control" maxlength="40" placeholder="例如：SAO 八橋" autocomplete="off">
-        </label>
-        <label for="colDeckTagsInput">
-          牌組標籤（逗號分隔，選填）
-          <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
-        </label>
-        <label for="colDeckDescInput">
-          牌組描述（選填）
-          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="2" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
-        </label>
-      </div>
-
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
@@ -5130,17 +5118,30 @@
   </div>
 </div>
 
-<!-- 保留空殼供舊 closeModalByName('deckMeta') 安全關閉；欄位已併入編輯單頁 -->
+<!-- 編輯牌組名稱／標籤／描述（由更多操作開啟） -->
 <div id="colDeckMetaModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckMetaTitle" style="width:min(440px,100%);">
     <div class="col-modal-body">
-      <h3 id="colDeckMetaTitle">牌組名稱／標籤／描述</h3>
-      <p class="col-modal-hint" id="colDeckMetaHint">此設定已改在編輯頁頂部直接填寫。</p>
+      <h3 id="colDeckMetaTitle">編輯牌組名稱</h3>
+      <div class="col-deck-editor-head" id="colDeckEditorMeta">
+        <label for="colDeckNameInput">
+          牌組名稱
+          <input id="colDeckNameInput" type="text" class="form-control" maxlength="40" placeholder="例如：SAO 八橋" autocomplete="off">
+        </label>
+        <label for="colDeckTagsInput">
+          牌組標籤（逗號分隔，選填）
+          <input id="colDeckTagsInput" type="text" class="form-control" maxlength="80" placeholder="常用, 大賽" autocomplete="off">
+        </label>
+        <label for="colDeckDescInput">
+          牌組描述（選填）
+          <textarea id="colDeckDescInput" class="form-control col-deck-desc-input" maxlength="200" rows="2" placeholder="例如：八橋軸、注意替換卡…" autocomplete="off"></textarea>
+        </label>
+      </div>
     </div>
     <div class="col-modal-actions">
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckMeta" id="colDeckMetaCancelBtn">關閉</button>
-      <button type="button" class="btn btn-primary btn-sm" id="colDeckMetaConfirmBtn" hidden>完成</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckMeta" id="colDeckMetaCancelBtn">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckMetaConfirmBtn">完成</button>
     </div>
   </div>
 </div>
@@ -7238,6 +7239,7 @@
       else delete deckDraft.deckDescription;
       syncDeckMetaInputsFromDraft();
       syncDeckModalDesc();
+      syncDeckOriginNote();
       return true;
     }
 
@@ -7357,6 +7359,13 @@
       }
     }
 
+    function closeDeckOverflowMenus(except) {
+      document.querySelectorAll('details.col-deck-overflow[open]').forEach(function (d) {
+        if (except && d === except) return;
+        d.open = false;
+      });
+    }
+
     function setDeckMetaFieldsEditable(editable) {
       var canEdit = !!editable;
       [deckNameInput, deckTagsInput, deckDescInput].forEach(function (el) {
@@ -7377,6 +7386,9 @@
       var highKinds = countDeckHighRarityKinds(deckDraft.cards);
       var html = '';
       if (!isView) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-open-meta' +
+          ' title="編輯牌組名稱、標籤與描述">' +
+          '<i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯牌組名稱</button>';
         html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-open-cover-picker' +
           ((deckDraft.cards || []).length ? '' : ' disabled') +
           ' title="從牌組卡片中選擇封面／主要卡牌">' +
@@ -7391,14 +7403,20 @@
           escapeHtml(deckId) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
           '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
       }
-      html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
-        escapeHtml(deckId) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
+      if (isView) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
+          escapeHtml(deckId) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
+      }
       menu.innerHTML = html;
       overflow.hidden = !html;
     }
 
     function openDeckMetaModal() {
-      /* 名稱／標籤／描述已併入編輯單頁 */
+      if (!deckDraft || deckEditorMode === 'view') return;
+      closeDeckOverflowMenus();
+      syncDeckMetaInputsFromDraft();
+      setDeckMetaFieldsEditable(true);
+      openModal(deckMetaModal);
       focusDeckMetaFields();
     }
 
@@ -7837,16 +7855,20 @@
 
     function syncDeckOriginNote() {
       if (!deckOriginNote) return;
-      if (!deckDraft || !isDecklogOriginDeck(deckDraft)) {
+      deckOriginNote.classList.remove('is-detached');
+      if (!deckDraft) {
         deckOriginNote.hidden = true;
         deckOriginNote.textContent = '';
-        deckOriginNote.classList.remove('is-detached');
         return;
       }
-      var detached = isDecklogDetachedOrDiverged(deckDraft);
+      var name = normalizeText(deckDraft.name);
+      if (!name) {
+        deckOriginNote.hidden = true;
+        deckOriginNote.textContent = '';
+        return;
+      }
       deckOriginNote.hidden = false;
-      deckOriginNote.classList.toggle('is-detached', detached);
-      deckOriginNote.textContent = decklogOriginBadgeText(deckDraft);
+      deckOriginNote.textContent = name;
     }
 
     function normalizeCoverCardNumber(value) {
@@ -10004,7 +10026,7 @@
         }
       }
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
-        focusDeckMetaFields();
+        openDeckMetaModal();
       }
     }
 
@@ -10040,7 +10062,7 @@
         setStatus('已取消自選封面（改回自動）', 'is-ok');
       } else {
         deckDraft.coverCardNumber = key;
-        setStatus('已設「' + key + '」為牌組封面（記得儲存）', 'is-ok');
+        setStatus('已設「' + key + '」為牌組封面', 'is-ok');
       }
       renderDeckEditor();
       if (deckCoverModal && deckCoverModal.classList.contains('is-open')) {
@@ -10074,7 +10096,7 @@
             escapeHtml(urls.fallback) + '" alt="' + escapeHtml(key) + '" loading="lazy" decoding="async">';
         }
         if (selected) {
-          html += '    <span class="col-deck-cover-pick-badge" aria-hidden="true">1</span>';
+          html += '    <span class="col-deck-cover-pick-badge" aria-hidden="true"><i class="fas fa-check"></i></span>';
         }
         html += '  </button>';
         html += '</li>';
@@ -10157,13 +10179,15 @@
 
     function saveDeckDraft() {
       if (!deckDraft || deckEditorMode === 'view') return;
-      if (!applyDeckMetaFromInputs()) {
-        focusDeckMetaFields();
-        return;
+      if (deckMetaModal && deckMetaModal.classList.contains('is-open')) {
+        if (!applyDeckMetaFromInputs()) return;
+        closeModal(deckMetaModal);
+      } else {
+        applyDeckMetaFromInputsSoft();
       }
       if (!normalizeText(deckDraft.name)) {
         setStatus('請輸入牌組名稱', 'is-error');
-        focusDeckMetaFields();
+        openDeckMetaModal();
         return;
       }
       deckDraft.cards = normalizeDeckCards(deckDraft.cards);
@@ -11014,6 +11038,9 @@
       });
     }
     function handleDeckActionClick(e) {
+      if (e.target.closest('.col-deck-overflow-menu')) {
+        closeDeckOverflowMenus();
+      }
       var artHit = e.target.closest('.col-deck-entry-art');
       if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
         var artImg = artHit.querySelector('img.is-loaded, img');
@@ -11200,19 +11227,39 @@
     }
     if (deckModal) {
       bindEl(deckModal, 'click', function (e) {
+        if (e.target.closest('[data-deck-open-meta]')) {
+          e.preventDefault();
+          closeDeckOverflowMenus();
+          openDeckMetaModal();
+          return;
+        }
         if (e.target.closest('[data-deck-open-cover-picker]')) {
           e.preventDefault();
+          closeDeckOverflowMenus();
           openDeckCoverPicker();
           return;
         }
         if (e.target.closest('[data-deck-editor-rarity]')) {
+          closeDeckOverflowMenus();
           toggleDeckDraftRarityMode();
           syncDeckEditorOverflow();
           return;
         }
+        if (e.target.closest('[data-deck-restore-decklog], [data-deck-export-image]')) {
+          closeDeckOverflowMenus();
+        }
         handleDeckActionClick(e);
       });
     }
+
+    /* 點選單外收起「更多操作」，避免遮住畫面 */
+    bindEl(document, 'click', function (e) {
+      var openMenus = document.querySelectorAll('details.col-deck-overflow[open]');
+      if (!openMenus.length) return;
+      Array.prototype.forEach.call(openMenus, function (d) {
+        if (!d.contains(e.target)) d.open = false;
+      });
+    });
     var deckPickBtn = document.getElementById('colDeckPickBtn');
     if (deckPickBtn) bindEl(deckPickBtn, 'click', openDeckPickModal);
     var deckPickConfirmBtn = document.getElementById('colDeckPickConfirmBtn');
