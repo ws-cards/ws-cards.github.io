@@ -3728,6 +3728,103 @@
       text-align: center;
       line-height: 1.2;
     }
+
+    .col-deck-cover-dialog {
+      width: min(28rem, 100%);
+      max-height: min(88vh, 40rem);
+    }
+    .col-deck-cover-dialog .col-modal-body {
+      padding-bottom: 0.35rem;
+    }
+    .col-deck-cover-dialog #colDeckCoverTitle {
+      text-align: center;
+      margin-bottom: 0.85rem;
+    }
+    .col-deck-cover-pick-grid {
+      list-style: none;
+      margin: 0;
+      padding: 0 0.15rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem 0.5rem;
+      max-height: min(62vh, 28rem);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .col-deck-cover-pick-btn {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 63 / 88;
+      padding: 0;
+      border: 0;
+      border-radius: 0.45rem;
+      overflow: hidden;
+      background: #edf2f7;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+    }
+    .col-deck-cover-pick-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .col-deck-cover-pick.is-selected .col-deck-cover-pick-btn {
+      box-shadow:
+        0 0 0 2px #fff,
+        0 0 0 3px var(--col-accent, #2f6b4f),
+        0 8px 18px rgba(15, 23, 42, 0.18);
+    }
+    .col-deck-cover-pick-badge {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 41, 55, 0.78);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+    }
+    .col-deck-cover-pick-actions {
+      justify-content: center;
+      border-top: 0;
+      padding-top: 0.35rem;
+      padding-bottom: 0.85rem;
+    }
+    .col-deck-cover-pick-close {
+      width: 2.55rem;
+      height: 2.55rem;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.08);
+      color: #4b5563;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .col-deck-cover-pick-close:hover,
+    .col-deck-cover-pick-close:focus-visible {
+      background: rgba(15, 23, 42, 0.14);
+      outline: none;
+    }
+    [data-theme="dark"] .col-deck-cover-pick-btn {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] .col-deck-cover-pick-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+    }
     .col-deck-owned-badge {
       position: absolute;
       right: 0.35rem;
@@ -5068,6 +5165,24 @@
   </div>
 </div>
 
+
+<!-- 編輯中設定牌組封面／主要卡牌 -->
+<div id="colDeckCoverModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckCover"></div>
+  <div class="col-modal-dialog col-deck-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckCoverTitle">
+    <div class="col-modal-body">
+      <h3 id="colDeckCoverTitle">設定主要卡牌</h3>
+      <ul class="col-deck-cover-pick-grid" id="colDeckCoverPickList" aria-label="選擇封面卡"></ul>
+      <p class="col-modal-hint" id="colDeckCoverEmpty" hidden>此牌組尚無卡片，請先加入編成。</p>
+    </div>
+    <div class="col-modal-actions col-deck-cover-pick-actions">
+      <button type="button" class="col-deck-cover-pick-close" data-modal-close="deckCover" aria-label="關閉">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- 從 DeckLog 匯入牌組（讀取規則同 attackGameLog / ws-decklog.js） -->
 <div id="colDecklogModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="decklog"></div>
@@ -5349,6 +5464,9 @@
     var deckPickModal = document.getElementById('colDeckPickModal');
     var deckPickList = document.getElementById('colDeckPickList');
     var deckPickSearch = document.getElementById('colDeckPickSearch');
+    var deckCoverModal = document.getElementById('colDeckCoverModal');
+    var deckCoverPickList = document.getElementById('colDeckCoverPickList');
+    var deckCoverEmpty = document.getElementById('colDeckCoverEmpty');
     var decklogModal = document.getElementById('colDecklogModal');
     var decklogCodeInput = document.getElementById('colDecklogCodeInput');
     var decklogNameInput = document.getElementById('colDecklogNameInput');
@@ -7049,6 +7167,7 @@
         stopDeckEditorAutosave();
         // 取消／關閉編輯：清掉本地自動備份（正式儲存也走此路徑）
         clearEditorLocalDraft(closingDraftId);
+        closeModal(deckCoverModal);
         closeModal(deckMetaModal);
         closeModal(deckModal);
         deckDraft = null;
@@ -7059,6 +7178,10 @@
       if (name === 'deckPick') {
         closeModal(deckPickModal);
         deckPickSet = {};
+        return;
+      }
+      if (name === 'deckCover') {
+        closeModal(deckCoverModal);
         return;
       }
       if (name === 'decklog') {
@@ -7254,6 +7377,10 @@
       var highKinds = countDeckHighRarityKinds(deckDraft.cards);
       var html = '';
       if (!isView) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-open-cover-picker' +
+          ((deckDraft.cards || []).length ? '' : ' disabled') +
+          ' title="從牌組卡片中選擇封面／主要卡牌">' +
+          '<i class="fas fa-portrait mr-1" aria-hidden="true"></i>設定主要卡牌</button>';
         html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-editor-rarity' +
           (highKinds > 0 ? '' : ' disabled') + ' title="' +
           (highKinds > 0 ? '將高版本卡號改回普通版（僅草稿，需儲存）' : '此牌組沒有可改回的高版本卡號') + '">' +
@@ -9661,6 +9788,7 @@
         parts += '<span>未標記缺卡</span>';
       }
       deckEditorSummary.innerHTML = parts;
+      syncDeckEditorOverflow();
     }
 
     function findDeckEntryTile(cardNumber) {
@@ -9688,7 +9816,6 @@
       if (!tile) return false;
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
-      var owned = entryOwnedQty(entry);
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
@@ -9704,8 +9831,6 @@
           shortBadge.hidden = true;
         }
       }
-      var ownedBadge = tile.querySelector('.col-deck-owned-badge');
-      if (ownedBadge) ownedBadge.textContent = '持有 ' + owned;
       var qtyValue = tile.querySelector('.col-qty-value[data-deck-qty-value]');
       if (qtyValue) qtyValue.textContent = String(entry.qty);
       var shortToggle = tile.querySelector('[data-deck-short-toggle]');
@@ -9721,7 +9846,6 @@
       var viewMode = mode === 'view' ? 'view' : (mode === 'tile' ? 'tile' : 'edit');
       var isEdit = viewMode === 'edit';
       var meta = inventoryMeta(entry.cardNumber, entry.cardName);
-      var owned = entryOwnedQty(entry);
       var shortQty = entryShortQty(entry);
       var isShort = shortQty > 0;
       var isCover = currentDeckCoverCardNumber() === entry.cardNumber;
@@ -9741,16 +9865,8 @@
       if (isCover) {
         html += '    <span class="col-deck-cover-mark">封面</span>';
       }
-      if (viewMode !== 'tile') {
-        html += '    <span class="col-deck-owned-badge">持有 ' + owned + '</span>';
-      }
       if (isEdit) {
         html += '    <button type="button" class="col-deck-remove-btn" data-deck-entry-remove="' + escapeHtml(entry.cardNumber) + '" title="移出牌組" aria-label="移出牌組 ' + escapeHtml(entry.cardNumber) + '"><i class="fas fa-times" aria-hidden="true"></i></button>';
-        html += '    <button type="button" class="col-deck-cover-btn' + (isCover ? ' is-active' : '') + '" data-deck-set-cover="' +
-          escapeHtml(entry.cardNumber) + '" title="' + (isCover ? '取消自選封面（改回自動）' : '設為牌組封面') +
-          '" aria-label="' + (isCover ? '取消自選封面 ' : '設為牌組封面 ') + escapeHtml(entry.cardNumber) +
-          '" aria-pressed="' + (isCover ? 'true' : 'false') +
-          '"><i class="fas ' + (isCover ? 'fa-check' : 'fa-image') + '" aria-hidden="true"></i></button>';
       }
       html += '  </div>';
       html += '  <div class="col-deck-entry-caption">';
@@ -9927,6 +10043,54 @@
         setStatus('已設「' + key + '」為牌組封面（記得儲存）', 'is-ok');
       }
       renderDeckEditor();
+      if (deckCoverModal && deckCoverModal.classList.contains('is-open')) {
+        renderDeckCoverPickList();
+      }
+    }
+
+    function renderDeckCoverPickList() {
+      if (!deckCoverPickList || !deckDraft) return;
+      var cards = deckDraft.cards || [];
+      var coverKey = currentDeckCoverCardNumber();
+      if (deckCoverEmpty) deckCoverEmpty.hidden = !!cards.length;
+      if (!cards.length) {
+        deckCoverPickList.innerHTML = '';
+        return;
+      }
+      var html = '';
+      cards.forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var key = entry.cardNumber;
+        var selected = coverKey === key;
+        var urls = buildCardImageUrls(key);
+        var meta = inventoryMeta(key, entry.cardName);
+        html += '<li class="col-deck-cover-pick' + (selected ? ' is-selected' : '') + '">';
+        html += '  <button type="button" class="col-deck-cover-pick-btn" data-deck-cover-pick="' +
+          escapeHtml(key) + '" aria-pressed="' + (selected ? 'true' : 'false') + '" title="' +
+          escapeHtml(key + (meta.cardName ? (' ' + meta.cardName) : '')) +
+          '" aria-label="' + (selected ? '取消自選封面 ' : '設為主要卡牌 ') + escapeHtml(key) + '">';
+        if (urls.primary) {
+          html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' +
+            escapeHtml(urls.fallback) + '" alt="' + escapeHtml(key) + '" loading="lazy" decoding="async">';
+        }
+        if (selected) {
+          html += '    <span class="col-deck-cover-pick-badge" aria-hidden="true">1</span>';
+        }
+        html += '  </button>';
+        html += '</li>';
+      });
+      deckCoverPickList.innerHTML = html;
+      revealLoadedDeckImages(deckCoverPickList);
+    }
+
+    function openDeckCoverPicker() {
+      if (!deckDraft || deckEditorMode === 'view') return;
+      if (!(deckDraft.cards || []).length) {
+        setStatus('請先加入卡片再設定主要卡牌', 'is-error');
+        return;
+      }
+      renderDeckCoverPickList();
+      openModal(deckCoverModal);
     }
 
     function changeDeckDraftQty(cardNumber, delta) {
@@ -10851,7 +11015,7 @@
     }
     function handleDeckActionClick(e) {
       var artHit = e.target.closest('.col-deck-entry-art');
-      if (artHit && !e.target.closest('.col-deck-remove-btn, .col-deck-cover-btn, .col-qty-btn, button, input, label, a')) {
+      if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
         var artImg = artHit.querySelector('img.is-loaded, img');
         if (artImg && !artImg.classList.contains('is-broken')) {
           e.preventDefault();
@@ -11036,6 +11200,11 @@
     }
     if (deckModal) {
       bindEl(deckModal, 'click', function (e) {
+        if (e.target.closest('[data-deck-open-cover-picker]')) {
+          e.preventDefault();
+          openDeckCoverPicker();
+          return;
+        }
         if (e.target.closest('[data-deck-editor-rarity]')) {
           toggleDeckDraftRarityMode();
           syncDeckEditorOverflow();
@@ -11080,23 +11249,30 @@
         renderDeckPickList();
       });
     }
+    if (deckCoverPickList) {
+      bindEl(deckCoverPickList, 'click', function (e) {
+        var pickBtn = e.target.closest('[data-deck-cover-pick]');
+        if (!pickBtn) return;
+        e.preventDefault();
+        setDeckDraftCover(pickBtn.getAttribute('data-deck-cover-pick'));
+      });
+      bindEl(deckCoverPickList, 'load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      bindEl(deckCoverPickList, 'error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
+    }
     if (deckEntryList) {
       bindEl(deckEntryList, 'click', function (e) {
         var artHit = e.target.closest('.col-deck-entry-art');
-        if (artHit && !e.target.closest('.col-deck-remove-btn, .col-deck-cover-btn, .col-qty-btn, button, input, label, a')) {
+        if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
           var artImg = artHit.querySelector('img.is-loaded, img');
           if (artImg && !artImg.classList.contains('is-broken')) {
             e.preventDefault();
             toggleCardLightbox(artHit);
             return;
           }
-        }
-        var coverBtn = e.target.closest('[data-deck-set-cover]');
-        if (coverBtn) {
-          e.preventDefault();
-          e.stopPropagation();
-          setDeckDraftCover(coverBtn.getAttribute('data-deck-set-cover'));
-          return;
         }
         var dec = e.target.closest('[data-deck-qty-dec]');
         if (dec) {
@@ -11154,6 +11330,10 @@
       }
       if (deckPickModal && deckPickModal.classList.contains('is-open')) {
         closeModalByName('deckPick');
+        return;
+      }
+      if (deckCoverModal && deckCoverModal.classList.contains('is-open')) {
+        closeModalByName('deckCover');
         return;
       }
       if (decklogModal && decklogModal.classList.contains('is-open')) {
