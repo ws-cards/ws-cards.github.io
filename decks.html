@@ -3035,6 +3035,32 @@
         font-weight: 700;
         color: var(--col-muted);
       }
+      .col-deck-info-level-col {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        border-radius: 0.45rem;
+      }
+      .col-deck-info-level-col.is-selected .col-deck-info-level-badge {
+        background: var(--col-accent, #2f6b4f);
+      }
+      .col-deck-info-level-col.is-selected .col-deck-info-level-label {
+        color: var(--col-accent, #2f6b4f);
+        font-weight: 800;
+      }
+      .col-deck-info-level-col:focus-visible {
+        outline: 2px solid var(--col-accent, #2f6b4f);
+        outline-offset: 2px;
+      }
+      .col-deck-info-level-plot.has-selection .col-deck-info-level-col:not(.is-selected) {
+        opacity: 0.55;
+      }
       .col-deck-info-cx-note {
         margin: 0.4rem 0 0;
         font-size: 0.68rem;
@@ -3456,6 +3482,32 @@
         width: 52%;
         min-height: 0;
         border-radius: 0.32rem 0.32rem 0.14rem 0.14rem;
+      }
+      .col-deck-info-level-col {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        border-radius: 0.5rem;
+      }
+      .col-deck-info-level-col.is-selected .col-deck-info-level-badge {
+        background: var(--col-accent, #2f6b4f);
+      }
+      .col-deck-info-level-col.is-selected .col-deck-info-level-label {
+        color: var(--col-accent, #2f6b4f);
+        font-weight: 800;
+      }
+      .col-deck-info-level-col:focus-visible {
+        outline: 2px solid var(--col-accent, #2f6b4f);
+        outline-offset: 2px;
+      }
+      .col-deck-info-level-plot.has-selection .col-deck-info-level-col:not(.is-selected) {
+        opacity: 0.55;
       }
       .col-deck-info-level-label {
         margin-top: 0.28rem;
@@ -5285,6 +5337,8 @@
     var deckPickFilter = '';
     var selectedDeckId = null;
     var deckDetailCardFilter = '';
+    /** 詳情圖表：點 Level 柱時過濾左側顏色分布（null = 全部） */
+    var deckDetailChartLevelFilter = null;
     var deckCardSortMode = 'levelDesc';
     var deckCardShortOnly = false;
     var deckLevelCache = {};
@@ -7702,7 +7756,10 @@
     };
     var DECK_DETAIL_LEVEL_KEYS = [0, 1, 2, 3];
 
-    function computeDeckDetailChartStats(deck) {
+    function computeDeckDetailChartStats(deck, opts) {
+      opts = opts || {};
+      var levelFilter = opts.levelFilter;
+      var hasLevelFilter = levelFilter === 0 || levelFilter === 1 || levelFilter === 2 || levelFilter === 3;
       var colorCount = { yellow: 0, green: 0, red: 0, blue: 0 };
       var levelCount = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0 };
       ((deck && deck.cards) || []).forEach(function (entry) {
@@ -7710,19 +7767,24 @@
         var qty = parseInt(entry.qty, 10);
         if (isNaN(qty) || qty < 1) return;
         var meta = getAlbumMeta(entry.cardNumber) || {};
+        var isCx = meta.kindClass === 'CX' || isCxCardNumber(entry.cardNumber);
+        var lv = null;
+        if (!isCx) {
+          lv = entryLevel(entry);
+          if (lv == null && meta.level != null) lv = Number(meta.level);
+          if (lv == null || !isFinite(lv) || lv < 0) lv = 0;
+          lv = Math.floor(lv);
+          if (lv > 3) lv = 3;
+        }
+        var includeColor = !hasLevelFilter || (!isCx && lv === levelFilter);
         var colorKey = normalizeColorKey(meta.color || entry.color || '');
-        if (colorKey && Object.prototype.hasOwnProperty.call(colorCount, colorKey)) {
+        if (includeColor && colorKey && Object.prototype.hasOwnProperty.call(colorCount, colorKey)) {
           colorCount[colorKey] += qty;
         }
-        if (meta.kindClass === 'CX' || isCxCardNumber(entry.cardNumber)) {
+        if (isCx) {
           levelCount.cx += qty;
           return;
         }
-        var lv = entryLevel(entry);
-        if (lv == null && meta.level != null) lv = Number(meta.level);
-        if (lv == null || !isFinite(lv) || lv < 0) lv = 0;
-        lv = Math.floor(lv);
-        if (lv > 3) lv = 3;
         levelCount[lv] = (levelCount[lv] || 0) + qty;
       });
       return { colorCount: colorCount, levelCount: levelCount };
@@ -7786,24 +7848,30 @@
       return '<div class="col-deck-info-donut-wrap">' + svg + '</div>' + legend;
     }
 
-    function deckDetailLevelBarsHtml(stats) {
+    function deckDetailLevelBarsHtml(stats, selectedLevel) {
       var maxLv = 0;
       DECK_DETAIL_LEVEL_KEYS.forEach(function (k) {
         maxLv = Math.max(maxLv, (stats.levelCount && stats.levelCount[k]) || 0);
       });
       var axisMax = Math.max(1, niceDeckChartAxisMax(maxLv));
       var barMaxH = 72;
-      var html = '<div class="col-deck-info-level-plot" role="img" aria-label="等級分佈直條圖">';
+      var hasSelection = selectedLevel === 0 || selectedLevel === 1 || selectedLevel === 2 || selectedLevel === 3;
+      var html = '<div class="col-deck-info-level-plot' + (hasSelection ? ' has-selection' : '') +
+        '" role="group" aria-label="等級分佈直條圖，點選可篩選顏色分布">';
       DECK_DETAIL_LEVEL_KEYS.forEach(function (key) {
         var n = (stats.levelCount && stats.levelCount[key]) || 0;
         var h = Math.round((n / axisMax) * barMaxH);
         if (n > 0 && h < 5) h = 5;
-        html += '<div class="col-deck-info-level-col">';
+        var selected = hasSelection && selectedLevel === key;
+        html += '<button type="button" class="col-deck-info-level-col' + (selected ? ' is-selected' : '') +
+          '" data-deck-chart-level="' + key + '" aria-pressed="' + (selected ? 'true' : 'false') +
+          '" title="' + (selected ? '取消篩選顏色分布' : '依 Lv' + key + ' 篩選顏色分布') +
+          '" aria-label="Lv' + key + '，' + n + ' 張' + (selected ? '，已選取' : '') + '">';
         html += '<div class="col-deck-info-level-badge">' + n + '</div>';
         html += '<div class="col-deck-info-level-bar" style="height:' + h + 'px;background:' +
           DECK_DETAIL_LEVEL_HEX[key] + '"></div>';
         html += '<div class="col-deck-info-level-label">Lv' + key + '</div>';
-        html += '</div>';
+        html += '</button>';
       });
       html += '</div>';
       var cx = (stats.levelCount && stats.levelCount.cx) || 0;
@@ -7814,18 +7882,34 @@
     }
 
     function deckDetailChartsHtml(deck) {
-      var stats = computeDeckDetailChartStats(deck);
+      var selectedLevel = deckDetailChartLevelFilter;
+      var hasSelection = selectedLevel === 0 || selectedLevel === 1 || selectedLevel === 2 || selectedLevel === 3;
+      var levelStats = computeDeckDetailChartStats(deck);
+      var colorStats = hasSelection
+        ? computeDeckDetailChartStats(deck, { levelFilter: selectedLevel })
+        : levelStats;
       var html = '<div class="col-deck-info-charts">';
       html += '<div class="col-deck-info-chart col-deck-info-chart--color">';
-      html += '<div class="col-deck-info-chart-title">顏色分布</div>';
-      html += deckDetailColorDonutHtml(stats);
+      html += '<div class="col-deck-info-chart-title">顏色分布' +
+        (hasSelection ? (' · Lv' + selectedLevel) : '') + '</div>';
+      html += deckDetailColorDonutHtml(colorStats);
       html += '</div>';
       html += '<div class="col-deck-info-chart col-deck-info-chart--level">';
       html += '<div class="col-deck-info-chart-title">Level</div>';
-      html += deckDetailLevelBarsHtml(stats);
+      html += deckDetailLevelBarsHtml(levelStats, hasSelection ? selectedLevel : null);
       html += '</div>';
       html += '</div>';
       return html;
+    }
+
+    function refreshDeckDetailCharts() {
+      if (!deckDetailEl || !selectedDeckId) return false;
+      var charts = deckDetailEl.querySelector('.col-deck-info-charts');
+      if (!charts) return false;
+      var deck = allDecks.find(function (d) { return d.id === selectedDeckId; });
+      if (!deck) return false;
+      charts.outerHTML = deckDetailChartsHtml(deck);
+      return true;
     }
 
     function deckNeedsChartMeta(deck) {
@@ -9078,6 +9162,7 @@
       if (!same) {
         selectedDeckId = deckId;
         deckDetailCardFilter = '';
+        deckDetailChartLevelFilter = null;
       }
       if (deckListEl) {
         deckListEl.querySelectorAll('.col-deck-card').forEach(function (node) {
@@ -11023,6 +11108,15 @@
     function handleDeckActionClick(e) {
       if (e.target.closest('.col-deck-overflow-menu')) {
         closeDeckOverflowMenus();
+      }
+      var chartLevelBtn = e.target.closest('[data-deck-chart-level]');
+      if (chartLevelBtn) {
+        e.preventDefault();
+        var nextLv = Number(chartLevelBtn.getAttribute('data-deck-chart-level'));
+        if (nextLv !== 0 && nextLv !== 1 && nextLv !== 2 && nextLv !== 3) return;
+        deckDetailChartLevelFilter = deckDetailChartLevelFilter === nextLv ? null : nextLv;
+        if (!refreshDeckDetailCharts()) renderDeckDetail();
+        return;
       }
       var artHit = e.target.closest('.col-deck-entry-art');
       if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
