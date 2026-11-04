@@ -2831,9 +2831,19 @@
       }
       .col-deck-detail-head {
         position: relative;
-        display: block;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
         padding: 0.15rem 2.75rem 0.85rem 0;
         border-bottom: 1px solid var(--col-line);
+      }
+      .col-deck-detail-head-top {
+        position: relative;
+        display: block;
+      }
+      .col-deck-detail-head-info {
+        display: grid;
+        gap: 0.85rem;
       }
       .col-deck-detail-title-row {
         display: grid;
@@ -2891,10 +2901,6 @@
         display: grid;
         gap: 1rem;
         padding: 0.85rem 0 0.25rem;
-      }
-      .col-deck-detail-aside {
-        display: grid;
-        gap: 0.85rem;
       }
       .col-deck-info-card {
         border: 0;
@@ -3274,12 +3280,29 @@
       }
       .col-deck-detail-head {
         display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.9rem 1rem;
+        padding: 1rem 1.15rem 1rem;
+        border-bottom: 1px solid var(--col-line);
+      }
+      .col-deck-detail-head-top {
+        display: flex;
         flex-wrap: wrap;
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.85rem 1rem;
-        padding: 1rem 1.15rem 0.85rem;
-        border-bottom: 1px solid var(--col-line);
+      }
+      .col-deck-detail-head-info {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.9rem 1.25rem;
+        align-items: start;
+      }
+      @media (min-width: 1200px) {
+        .col-deck-detail-head-info {
+          grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.7fr);
+        }
       }
       .col-deck-detail-title-row {
         display: flex;
@@ -3383,20 +3406,17 @@
       }
       .col-deck-detail-body {
         display: grid;
-        grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
         gap: 1.15rem;
         padding: 1rem 1.15rem 1.15rem;
         align-items: start;
-      }
-      .col-deck-detail-aside {
-        display: grid;
-        gap: 1rem;
       }
       .col-deck-info-card {
         border: 0;
         border-radius: 0;
         padding: 0;
         background: transparent;
+        min-width: 0;
       }
       [data-theme="dark"] .col-deck-info-card {
         background: transparent;
@@ -3422,11 +3442,12 @@
         opacity: 0.88;
         white-space: nowrap;
       }
-      /* 桌面側欄較窄：圖表直向堆疊，方便掃顏色／等級 */
+      /* 資訊已上移 head：圖表改橫向並排，主區可吃滿寬 */
       .col-deck-info-charts {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
         gap: 0.65rem;
+        align-items: stretch;
       }
       .col-deck-info-chart {
         min-width: 0;
@@ -3624,6 +3645,7 @@
       }
       .col-deck-detail-main {
         min-width: 0;
+        width: 100%;
         border: 0;
         border-radius: 0;
         padding: 0;
@@ -3643,7 +3665,7 @@
       .col-deck-detail-card-search {
         position: relative;
         flex: 1 1 180px;
-        max-width: 16rem;
+        max-width: 18rem;
       }
       .col-deck-detail-card-search .form-control {
         height: 2.2rem;
@@ -3658,8 +3680,13 @@
         color: var(--col-ink);
       }
       .col-deck-detail-main .col-deck-entry-list {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.75rem 0.55rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.85rem 0.65rem;
+      }
+      @media (min-width: 1400px) {
+        .col-deck-detail-main .col-deck-entry-list {
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
       }
       .col-deck-detail-warn {
         margin-top: 0.55rem;
@@ -4337,7 +4364,7 @@
       background: rgba(255, 255, 255, 0.04);
       color: #cbd5e0;
     }
-    /* 桌面改在詳情側欄顯示描述；手機編輯／檢視 modal 才顯示此區塊 */
+    /* 桌面改在詳情 head 資訊卡顯示描述；手機編輯／檢視 modal 才顯示此區塊 */
     @media (min-width: 768px) {
       .col-deck-modal-desc {
         display: none !important;
@@ -9719,58 +9746,58 @@
       html += '<button type="button" class="col-deck-detail-back" data-deck-back>' +
         '<i class="fas fa-arrow-left" aria-hidden="true"></i>牌組列表</button>';
       html += '<div class="col-deck-detail-head">';
-      html += '  <div class="col-deck-detail-title-row">';
-      html += '    <div class="col-deck-detail-cover">' + deckCoverArtHtml(deck) + '</div>';
-      html += '    <div class="col-deck-detail-title-main">';
-      html += '      <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
-      html += '      <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張</div>';
-      html += '      <div class="col-deck-detail-badges">' + deckPriceBadgeHtml(deck) + deckSourceBadgeHtml(deck) + '</div>';
+      html += '  <div class="col-deck-detail-head-top">';
+      html += '    <div class="col-deck-detail-title-row">';
+      html += '      <div class="col-deck-detail-cover">' + deckCoverArtHtml(deck) + '</div>';
+      html += '      <div class="col-deck-detail-title-main">';
+      html += '        <h3 class="col-deck-detail-title">' + escapeHtml(deck.name) + '</h3>';
+      html += '        <div class="col-deck-detail-meta">' + kinds + ' 種卡 · ' + total + ' 張</div>';
+      html += '        <div class="col-deck-detail-badges">' + deckPriceBadgeHtml(deck) + deckSourceBadgeHtml(deck) + '</div>';
       if (short.shortKinds) {
         html += '<div class="col-deck-warn"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>缺卡 ' +
           short.shortKinds + ' 種（共 ' + short.shortCopies + ' 張）</div>';
       }
       if ((deck.tags || []).length) {
-        html += '      <div class="col-deck-detail-tags">' +
+        html += '        <div class="col-deck-detail-tags col-deck-detail-tags--title">' +
           (deck.tags || []).map(function (t) {
             return '<span class="col-tag-chip">' + escapeHtml(t) + '</span>';
           }).join('') + '</div>';
       }
+      html += '      </div>';
       html += '    </div>';
-      html += '  </div>';
-      html += '  <div class="col-deck-detail-actions">';
-      html += '    <button type="button" class="btn btn-primary btn-sm col-deck-action-desktop" data-deck-edit="' +
+      html += '    <div class="col-deck-detail-actions">';
+      html += '      <button type="button" class="btn btn-primary btn-sm col-deck-action-desktop" data-deck-edit="' +
         escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
-      html += '    <button type="button" class="btn btn-outline-secondary btn-sm col-deck-action-desktop" data-deck-export-image="' +
+      html += '      <button type="button" class="btn btn-outline-secondary btn-sm col-deck-action-desktop" data-deck-export-image="' +
         escapeHtml(deck.id) +
         '" title="輸出類似編成一覽的牌組圖片"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
-      html += '    <details class="col-deck-overflow">';
-      html += '      <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
-      html += '      <div class="col-deck-overflow-menu">';
-      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' +
+      html += '      <details class="col-deck-overflow">';
+      html += '        <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
+      html += '        <div class="col-deck-overflow-menu">';
+      html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-edit="' +
         escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
-      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
+      html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
         escapeHtml(deck.id) + '" title="輸出類似編成一覽的牌組圖片">' +
         '<i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
-      html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
-      html += '        <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-desktop" data-deck-rarity-toggle="' +
+      html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
+      html += '          <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-desktop" data-deck-rarity-toggle="' +
         escapeHtml(deck.id) + '" title="' +
         (detailHighKinds > 0 ? '將高版本卡號改回普通版（僅草稿，需儲存）' : '此牌組沒有可改回的高版本卡號') + '"' +
         (detailHighKinds > 0 ? '' : ' disabled') + '>' +
         '<i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i><span data-deck-rarity-toggle-label>改為普通版</span></button>';
       if (isDecklogOriginDeck(deck)) {
-        html += '        <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-restore-decklog="' +
+        html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-restore-decklog="' +
           escapeHtml(deck.id) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
           '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
       }
-      html += '        <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
-      html += '      </div>';
-      html += '    </details>';
+      html += '          <button type="button" class="btn btn-outline-danger btn-sm" data-deck-del="' + escapeHtml(deck.id) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除</button>';
+      html += '        </div>';
+      html += '      </details>';
+      html += '    </div>';
       html += '  </div>';
-      html += '</div>';
-
-      html += '<div class="col-deck-detail-body">';
-      html += '  <aside class="col-deck-detail-aside">';
-      html += '    <div class="col-deck-info-card">';
+      /* 桌面：資訊卡併入 head，讓下方卡牌主區吃滿寬度；手機仍堆在標題下方 */
+      html += '  <div class="col-deck-detail-head-info">';
+      html += '    <div class="col-deck-info-card col-deck-info-card--charts">';
       html += '      <div class="col-deck-info-head">';
       html += '        <h6>牌組資訊</h6>';
       html += '        <span class="col-deck-info-updated" title="' + escapeHtml(whenLabel) + '">' +
@@ -9778,7 +9805,7 @@
       html += '      </div>';
       html += deckDetailChartsHtml(deck);
       html += '    </div>';
-      html += '    <div class="col-deck-info-card">';
+      html += '    <div class="col-deck-info-card col-deck-info-card--meta">';
       html += '      <h6>標籤／描述</h6>';
       html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
       if (detailDesc) {
@@ -9787,7 +9814,10 @@
         html += '      <p class="col-deck-detail-desc is-empty">尚未填寫描述</p>';
       }
       html += '    </div>';
-      html += '  </aside>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="col-deck-detail-body">';
       html += '  <div class="col-deck-detail-main">';
       html += '    <div class="col-deck-detail-main-head">';
       html += '      <div class="col-deck-detail-card-search">';
