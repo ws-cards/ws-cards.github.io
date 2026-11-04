@@ -8018,8 +8018,8 @@
 
       var tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
       if (center) {
-        gsap.set(center, { opacity: 0, scale: 0.86 });
-        tl.to(center, { opacity: 1, scale: 1, duration: 0.34 }, 0);
+        gsap.set(center, { opacity: 0, scale: 0.9 });
+        tl.to(center, { opacity: 1, scale: 1, duration: 0.2 }, 0);
       }
       Array.prototype.forEach.call(segs, function (seg, i) {
         var start = Number(seg.getAttribute('data-draw-start')) || 0;
@@ -8027,22 +8027,23 @@
         var proxy = { t: start };
         tl.to(proxy, {
           t: end,
-          duration: 0.48,
+          duration: 0.22,
           ease: 'power2.out',
           onUpdate: function () {
             applyDonutSegDraw(seg, start, proxy.t);
           }
-        }, i === 0 ? 0.06 : '>');
+        }, i === 0 ? 0.02 : '>');
       });
       if (legendItems.length) {
-        gsap.set(legendItems, { opacity: 0, x: 20 });
-        tl.to(legendItems, {
-          opacity: 1,
-          x: 0,
-          duration: 0.36,
-          stagger: 0.07,
-          ease: 'power2.out'
-        }, segs.length ? '>-0.18' : 0.08);
+        var mobileLegend = false;
+        try {
+          mobileLegend = !!(window.matchMedia && window.matchMedia('(max-width: 991.98px)').matches);
+        } catch (eMq) { /* ignore */ }
+        gsap.set(legendItems, mobileLegend ? { opacity: 0, y: 8 } : { opacity: 0, x: 14 });
+        tl.to(legendItems, mobileLegend
+          ? { opacity: 1, y: 0, duration: 0.22, stagger: 0.04, ease: 'power2.out' }
+          : { opacity: 1, x: 0, duration: 0.22, stagger: 0.04, ease: 'power2.out' },
+        segs.length ? '>-0.1' : 0.04);
       }
     }
 
