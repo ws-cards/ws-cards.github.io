@@ -5175,6 +5175,11 @@
     var deckSortMode = 'updated';
     var deckDraft = null;
     var deckEditorMode = 'edit';
+    /** 編輯中本地自動備份（防重整遺失）；正式儲存仍以記憶體 deckDraft 為準 */
+    var DECK_EDITOR_DRAFT_KEY = 'wsCardsDeckEditorDraft';
+    var deckEditorAutosaveTimer = null;
+    var deckEditorAutosaveInterval = null;
+    var editorDraftResumeAttempted = false;
     var deckPickSet = {};
     var deckPickFilter = '';
     var selectedDeckId = null;
@@ -7040,6 +7045,10 @@
         return;
       }
       if (name === 'deck') {
+        var closingDraftId = deckDraft && deckDraft.id;
+        stopDeckEditorAutosave();
+        // 取消／關閉編輯：清掉本地自動備份（正式儲存也走此路徑）
+        clearEditorLocalDraft(closingDraftId);
         closeModal(deckMetaModal);
         closeModal(deckModal);
         deckDraft = null;
@@ -7107,6 +7116,116 @@
       syncDeckMetaInputsFromDraft();
       syncDeckModalDesc();
       return true;
+    }
+
+    /** 自動備份用：不強制名稱，避免空名草稿寫不進本地 */
+    function applyDeckMetaFromInputsSoft() {
+      if (!deckDraft) return;
+      var name = normalizeText(deckNameInput && deckNameInput.value);
+      if (name) deckDraft.name = name.slice(0, 40);
+      var tagRaw = (deckTagsInput && deckTagsInput.value) || '';
+      deckDraft.tags = normalizeTags(tagRaw.split(/[,，]/));
+      var desc = normalizeDeckDescription(deckDescInput && deckDescInput.value);
+      if (desc) deckDraft.deckDescription = desc;
+      else delete deckDraft.deckDescription;
+    }
+
+    function readEditorLocalDraft() {
+      try {
+        var raw = localStorage.getItem(DECK_EDITOR_DRAFT_KEY);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (!parsed || parsed.v !== 1 || !parsed.deckId || !parsed.deck) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function writeEditorLocalDraft() {
+      if (!deckDraft || deckEditorMode !== 'edit') return false;
+      applyDeckMetaFromInputsSoft();
+      try {
+        localStorage.setItem(DECK_EDITOR_DRAFT_KEY, JSON.stringify({
+          v: 1,
+          deckId: deckDraft.id,
+          savedAt: Date.now(),
+          deck: serializeDeck(deckDraft)
+        }));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function clearEditorLocalDraft(deckId) {
+      try {
+        if (deckId) {
+          var cur = readEditorLocalDraft();
+          if (cur && cur.deckId && cur.deckId !== deckId) return;
+        }
+        localStorage.removeItem(DECK_EDITOR_DRAFT_KEY);
+      } catch (e) { /* ignore */ }
+    }
+
+    function stopDeckEditorAutosave() {
+      if (deckEditorAutosaveTimer) {
+        clearTimeout(deckEditorAutosaveTimer);
+        deckEditorAutosaveTimer = null;
+      }
+      if (deckEditorAutosaveInterval) {
+        clearInterval(deckEditorAutosaveInterval);
+        deckEditorAutosaveInterval = null;
+      }
+    }
+
+    /** 對齊本地時鐘整分後每 1 分鐘寫一次；開啟編輯時先立即備份一次 */
+    function startDeckEditorAutosave() {
+      stopDeckEditorAutosave();
+      if (!deckDraft || deckEditorMode !== 'edit') return;
+      writeEditorLocalDraft();
+      var now = new Date();
+      var ms = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+      if (ms < 250) ms += 60000;
+      deckEditorAutosaveTimer = setTimeout(function () {
+        deckEditorAutosaveTimer = null;
+        writeEditorLocalDraft();
+        deckEditorAutosaveInterval = setInterval(writeEditorLocalDraft, 60000);
+      }, ms);
+    }
+
+    function maybeRestoreEditorLocalDraft(expectedDeckId) {
+      var local = readEditorLocalDraft();
+      if (!local || !local.deck || !local.deckId) return false;
+      if (expectedDeckId && local.deckId !== expectedDeckId) return false;
+      var restored = cloneDeckDraft(local.deck);
+      if (!restored || !restored.id) return false;
+      if (expectedDeckId && restored.id !== expectedDeckId) return false;
+      deckDraft = restored;
+      return true;
+    }
+
+    function tryResumeEditorLocalDraftAfterDecksReady() {
+      if (editorDraftResumeAttempted) return;
+      var local = readEditorLocalDraft();
+      if (!local || !local.deck || !local.deckId) {
+        editorDraftResumeAttempted = true;
+        return;
+      }
+      if (local.savedAt && (Date.now() - Number(local.savedAt)) > 24 * 60 * 60 * 1000) {
+        clearEditorLocalDraft();
+        editorDraftResumeAttempted = true;
+        return;
+      }
+      if (deckDraft) {
+        editorDraftResumeAttempted = true;
+        return;
+      }
+      // 尚未登入時先不標記 attempted，等登入同步完成後再還原
+      if (!deckCloudUser) return;
+      editorDraftResumeAttempted = true;
+      var exists = allDecks.some(function (d) { return d.id === local.deckId; });
+      openDeckEditorUi(exists ? local.deckId : null, 'edit');
     }
 
     function focusDeckMetaFields() {
@@ -7875,6 +7994,7 @@
       deckAuthResolved = true;
       deckBootstrapDone = true;
       markPageLoaderDecks(label);
+      tryResumeEditorLocalDraftAfterDecksReady();
     }
 
     function waitFirebaseAuthReady() {
@@ -9720,24 +9840,39 @@
         setStatus('找不到該牌組', 'is-error');
         return;
       }
+      stopDeckEditorAutosave();
       deckEditorMode = mode === 'view' ? 'view' : 'edit';
+      var restoredDraft = false;
       if (existing) {
         deckDraft = cloneDeckDraft(existing);
         document.getElementById('colDeckTitle').textContent =
           deckEditorMode === 'view' ? '檢視牌組' : '編輯牌組';
+        if (deckEditorMode === 'edit') {
+          restoredDraft = maybeRestoreEditorLocalDraft(existing.id);
+        }
       } else {
         deckEditorMode = 'edit';
-        var now = Date.now();
-        deckDraft = {
-          id: newDeckId(),
-          name: '',
-          tags: [],
-          cards: [],
-          source: 'manual',
-          createdAt: now,
-          updatedAt: now
-        };
-        document.getElementById('colDeckTitle').textContent = '新建牌組';
+        var local = readEditorLocalDraft();
+        var orphan = local && local.deck && local.deckId &&
+          !allDecks.some(function (d) { return d.id === local.deckId; });
+        if (orphan) {
+          deckDraft = cloneDeckDraft(local.deck);
+          restoredDraft = true;
+          document.getElementById('colDeckTitle').textContent =
+            normalizeText(deckDraft.name) ? '編輯牌組' : '新建牌組';
+        } else {
+          var now = Date.now();
+          deckDraft = {
+            id: newDeckId(),
+            name: '',
+            tags: [],
+            cards: [],
+            source: 'manual',
+            createdAt: now,
+            updatedAt: now
+          };
+          document.getElementById('colDeckTitle').textContent = '新建牌組';
+        }
       }
       deckRaritySetMaps = {};
       deckEditorRarityMode = countDeckHighRarityKinds(deckDraft.cards) > 0 ? 'high' : 'normal';
@@ -9746,6 +9881,12 @@
       renderDeckEditor();
       openModal(deckModal);
       prefetchDeckRaritySetMaps();
+      if (deckEditorMode === 'edit') {
+        startDeckEditorAutosave();
+        if (restoredDraft) {
+          setStatus('已還原未儲存的編輯草稿（記得按儲存才會寫入雲端）', 'is-ok');
+        }
+      }
       if (deckEditorMode === 'edit' && !normalizeText(deckDraft.name)) {
         focusDeckMetaFields();
       }
@@ -11082,6 +11223,15 @@
       }
       bindDeckAuth();
       setStatus('正在同步牌組…', '');
+      // 重整／關閉分頁前再寫一次本地草稿（正式儲存仍以記憶體為準）
+      bindEl(window, 'pagehide', function () {
+        if (deckDraft && deckEditorMode === 'edit') writeEditorLocalDraft();
+      });
+      bindEl(document, 'visibilitychange', function () {
+        if (document.visibilityState === 'hidden' && deckDraft && deckEditorMode === 'edit') {
+          writeEditorLocalDraft();
+        }
+      });
     }
   })();
 </script>
