@@ -3779,6 +3779,33 @@
       margin: 0;
       padding: 0.75rem 0.25rem;
     }
+    /* 檢視模式：依等級區隔卡牌網格 */
+    .col-deck-entry-level-head {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin: 0.55rem 0 0.05rem;
+      padding: 0.15rem 0 0.35rem;
+      border-bottom: 1px solid var(--col-line, rgba(15, 23, 42, 0.1));
+      list-style: none;
+    }
+    .col-deck-entry-level-head:first-child {
+      margin-top: 0;
+    }
+    .col-deck-entry-level-head-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--col-ink, #1f2937);
+    }
+    .col-deck-entry-level-head-meta {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--col-muted, #6b7280);
+      white-space: nowrap;
+    }
     .col-deck-entry {
       position: relative;
       margin: 0;
@@ -9022,6 +9049,67 @@
       return 'cardNumber';
     }
 
+    /** 檢視區隔用：CX／0–3／未定 */
+    function deckEntryLevelGroupKey(entry) {
+      if (!entry) return 'unknown';
+      if (isCxCardNumber(entry.cardNumber)) return 'cx';
+      var lv = entryLevel(entry);
+      if (lv == null) {
+        var meta = getAlbumMeta(entry.cardNumber);
+        if (meta && meta.level != null) lv = Number(meta.level);
+      }
+      if (lv == null || !isFinite(lv)) return 'unknown';
+      lv = Math.floor(lv);
+      if (lv < 0) lv = 0;
+      if (lv > 3) lv = 3;
+      return lv;
+    }
+
+    function deckEntryLevelGroupLabel(key) {
+      if (key === 'cx') return 'CX';
+      if (key === 'unknown') return '未定等級';
+      return deckChartLevelLabel(key);
+    }
+
+    function buildDeckLevelHeadHtml(key, kinds, qty) {
+      var label = deckEntryLevelGroupLabel(key);
+      var metaParts = [];
+      if (kinds > 0) metaParts.push(kinds + ' 種');
+      if (qty > 0) metaParts.push(qty + ' 張');
+      return '<li class="col-deck-entry-level-head" role="presentation">' +
+        '<span class="col-deck-entry-level-head-label">' + escapeHtml(label) + '</span>' +
+        (metaParts.length
+          ? '<span class="col-deck-entry-level-head-meta">' + escapeHtml(metaParts.join(' · ')) + '</span>'
+          : '') +
+        '</li>';
+    }
+
+    /** 檢視模式：在已依等級排序的列表中插入等級分隔列 */
+    function buildDeckEntriesHtmlWithLevelHeads(cards, mode) {
+      var list = cards || [];
+      if (!list.length) return '';
+      var counts = {};
+      list.forEach(function (entry) {
+        var key = deckEntryLevelGroupKey(entry);
+        if (!counts[key]) counts[key] = { kinds: 0, qty: 0 };
+        counts[key].kinds += 1;
+        var q = parseInt(entry && entry.qty, 10);
+        counts[key].qty += isNaN(q) || q < 0 ? 0 : q;
+      });
+      var html = '';
+      var lastKey = null;
+      list.forEach(function (entry) {
+        var key = deckEntryLevelGroupKey(entry);
+        if (key !== lastKey) {
+          lastKey = key;
+          var c = counts[key] || { kinds: 0, qty: 0 };
+          html += buildDeckLevelHeadHtml(key, c.kinds, c.qty);
+        }
+        html += buildDeckEntryHtml(entry, mode);
+      });
+      return html;
+    }
+
     function filterAndSortDeckCards(cards, opts) {
       opts = opts || {};
       var q = String(opts.query || '').trim().toLowerCase();
@@ -9622,7 +9710,9 @@
         : '<span class="col-modal-hint" style="margin:0;">尚未設定標籤</span>';
 
       var cardsHtml = cards.length
-        ? cards.map(function (entry) { return buildDeckEntryHtml(entry, 'tile'); }).join('')
+        ? (isDeckLevelSortMode(deckCardSortMode)
+            ? buildDeckEntriesHtmlWithLevelHeads(cards, 'tile')
+            : cards.map(function (entry) { return buildDeckEntryHtml(entry, 'tile'); }).join(''))
         : '<li class="col-modal-hint col-deck-entry-empty">' +
           escapeHtml(deckCardEmptyMessage({
             shortOnly: deckCardShortOnly,
@@ -10334,9 +10424,13 @@
           '</li>';
         return;
       }
-      deckEntryList.innerHTML = visibleCards.map(function (entry) {
-        return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
-      }).join('');
+      if (isView && isDeckLevelSortMode(deckCardSortMode)) {
+        deckEntryList.innerHTML = buildDeckEntriesHtmlWithLevelHeads(visibleCards, 'view');
+      } else {
+        deckEntryList.innerHTML = visibleCards.map(function (entry) {
+          return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
+        }).join('');
+      }
       revealLoadedDeckImages(deckEntryList);
       ensureCardMetaForEntries(deckDraft.cards || [], function (shouldRender) {
         if (shouldRender) renderDeckEditor();
