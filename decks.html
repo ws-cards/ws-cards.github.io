@@ -7207,20 +7207,25 @@
 
     function tryResumeEditorLocalDraftAfterDecksReady() {
       if (editorDraftResumeAttempted) return;
-      editorDraftResumeAttempted = true;
       var local = readEditorLocalDraft();
-      if (!local || !local.deck || !local.deckId) return;
-      if (local.savedAt && (Date.now() - Number(local.savedAt)) > 24 * 60 * 60 * 1000) {
-        clearEditorLocalDraft();
+      if (!local || !local.deck || !local.deckId) {
+        editorDraftResumeAttempted = true;
         return;
       }
-      if (deckDraft) return;
+      if (local.savedAt && (Date.now() - Number(local.savedAt)) > 24 * 60 * 60 * 1000) {
+        clearEditorLocalDraft();
+        editorDraftResumeAttempted = true;
+        return;
+      }
+      if (deckDraft) {
+        editorDraftResumeAttempted = true;
+        return;
+      }
+      // 尚未登入時先不標記 attempted，等登入同步完成後再還原
+      if (!deckCloudUser) return;
+      editorDraftResumeAttempted = true;
       var exists = allDecks.some(function (d) { return d.id === local.deckId; });
-      requireDeckAuth()
-        .then(function () {
-          openDeckEditorUi(exists ? local.deckId : null, 'edit');
-        })
-        .catch(function () { /* 未登入則保留草稿，待登入後再開 */ });
+      openDeckEditorUi(exists ? local.deckId : null, 'edit');
     }
 
     function focusDeckMetaFields() {
