@@ -9390,6 +9390,10 @@
       return !!(window.matchMedia && window.matchMedia('(min-width: 992px)').matches);
     }
 
+    /* UI 返回先顯示列表再 history.back()；進行中若又點開牌組，等 popstate 後再 push，避免寫到正在退出的 detail 條目 */
+    var deckBackNavPending = false;
+    var deckQueuedDetailId = null;
+
     function setDeckMobilePane(pane, opts) {
       opts = opts || {};
       var next = pane === 'detail' ? 'detail' : 'list';
@@ -9397,6 +9401,11 @@
       if (deckSection) deckSection.classList.toggle('is-deck-detail', next === 'detail' && !isDeckDesktopLayout());
       if (!opts.skipHistory && !isDeckDesktopLayout() && next === 'detail' && selectedDeckId) {
         try {
+          // 返回動畫／popstate 尚未完成：只更新畫面，把 history 寫入延到 popstate
+          if (deckBackNavPending) {
+            deckQueuedDetailId = selectedDeckId;
+            return;
+          }
           var cur = history.state;
           var nextState = { wsDeckPane: 'detail', deckId: selectedDeckId };
           // 已在詳情層時用 replace，避免堆出 A→B→C 多層詳情；
@@ -11426,7 +11435,10 @@
       if (backBtn) {
         showDeckListPane({ skipHistory: true, fromBack: true });
         if (!isDeckDesktopLayout() && history.state && history.state.wsDeckPane === 'detail') {
-          try { history.back(); } catch (errBack) { /* ignore */ }
+          deckBackNavPending = true;
+          try { history.back(); } catch (errBack) {
+            deckBackNavPending = false;
+          }
         }
         return;
       }
@@ -11497,6 +11509,26 @@
     bindEl(window, 'popstate', function (e) {
       if (isDeckDesktopLayout()) return;
       var st = e && e.state;
+      if (deckBackNavPending) {
+        deckBackNavPending = false;
+        var queued = deckQueuedDetailId;
+        deckQueuedDetailId = null;
+        // 返回完成（現在應在 list）；若返回期間已點了下一副，在乾淨的 list 之上 push 詳情
+        if (queued) {
+          try {
+            history.pushState({ wsDeckPane: 'detail', deckId: queued }, '');
+          } catch (errQ) { /* ignore */ }
+          return;
+        }
+        if (deckWorkspaceEl && deckWorkspaceEl.getAttribute('data-deck-pane') === 'detail' && selectedDeckId) {
+          try {
+            history.pushState({ wsDeckPane: 'detail', deckId: selectedDeckId }, '');
+          } catch (errS) { /* ignore */ }
+          return;
+        }
+        showDeckListPane({ skipHistory: true, fromBack: true });
+        return;
+      }
       // 僅在「前進到詳情」時恢復；返回到非 detail 一律回列表，避免舊的多層詳情 state 誤開別組
       if (st && st.wsDeckPane === 'detail' && st.deckId) {
         selectDeck(st.deckId, { skipHistory: true, openDetail: true });
