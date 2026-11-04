@@ -1710,12 +1710,6 @@
       margin-bottom: 0;
       pointer-events: none;
     }
-    .col-deckbox-lid-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.55rem 0.75rem;
-    }
     /* 淺色紙感蓋：深字＋實底，避免淺字融進背景 */
     .col-deckbox .col-focus-btn {
       border-color: rgba(26, 46, 36, 0.18);
@@ -4903,12 +4897,6 @@
                       <p class="col-deckbox-kicker">Decks</p>
                       <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
                     </div>
-                    <div class="col-deckbox-lid-actions">
-                      <div class="col-deckbox-badge" aria-live="polite">
-                        <i class="fas fa-archive" aria-hidden="true"></i>
-                        <span><strong id="colDeckTotalValue">0</strong> 副牌組</span>
-                      </div>
-                    </div>
                   </header>
                   <div class="col-deckbox-body">
                     <div class="col-shell">
@@ -4941,7 +4929,7 @@
                             <div class="col-deck-stats" id="colDeckTotalBar" aria-live="polite">
                               <div class="col-deck-stat">
                                 <i class="fas fa-eye" aria-hidden="true"></i>
-                                <span>可見 <strong id="colDeckCountLabel">0</strong> 副</span>
+                                <span>牌組列表 <strong id="colDeckCountLabel">0</strong></span>
                               </div>
                             </div>
                           </div>
@@ -5083,9 +5071,6 @@
 
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckPickBtn">
-          <i class="fas fa-book-open mr-1" aria-hidden="true"></i>從卡冊加入
-        </button>
         <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-mobile" id="colDeckRarityToggleBtn" hidden title="將高版本卡號改回普通版（僅草稿，需儲存）">
           <i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i><span id="colDeckRarityToggleBtnLabel">改為普通版</span>
         </button>
@@ -7373,8 +7358,6 @@
         el.readOnly = !canEdit;
         el.disabled = !canEdit;
       });
-      var pickBtn = document.getElementById('colDeckPickBtn');
-      if (pickBtn) pickBtn.hidden = !canEdit;
     }
 
     function syncDeckEditorOverflow() {
@@ -11260,8 +11243,6 @@
         if (!d.contains(e.target)) d.open = false;
       });
     });
-    var deckPickBtn = document.getElementById('colDeckPickBtn');
-    if (deckPickBtn) bindEl(deckPickBtn, 'click', openDeckPickModal);
     var deckPickConfirmBtn = document.getElementById('colDeckPickConfirmBtn');
     if (deckPickConfirmBtn) deckPickConfirmBtn.addEventListener('click', confirmDeckPick);
     var deckPickSelectAllBtn = document.getElementById('colDeckPickSelectAllBtn');
