@@ -2358,6 +2358,16 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 1.05rem 0.8rem;
     }
+    /* #colDeckList：捲軸永遠隱藏，避免顯示／隱藏造成列表寬度跳動 */
+    #colDeckList {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #colDeckList::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none;
+    }
     @media (min-width: 576px) {
       .col-deck-list {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3240,30 +3250,6 @@
         /* 預留懸浮抬起／選取描邊空間，避免封面被裁切 */
         padding: 0.55rem 0.55rem 0.85rem 0.35rem;
         margin: 0 -0.25rem;
-        scrollbar-width: none;
-        scrollbar-color: transparent transparent;
-      }
-      .col-deck-list::-webkit-scrollbar {
-        width: 0;
-        height: 0;
-      }
-      .col-deck-list.is-scrolling {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(47, 107, 79, 0.45) transparent;
-      }
-      .col-deck-list.is-scrolling::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      .col-deck-list.is-scrolling::-webkit-scrollbar-thumb {
-        background: rgba(47, 107, 79, 0.45);
-        border-radius: 999px;
-      }
-      [data-theme="dark"] .col-deck-list.is-scrolling {
-        scrollbar-color: rgba(63, 143, 107, 0.5) transparent;
-      }
-      [data-theme="dark"] .col-deck-list.is-scrolling::-webkit-scrollbar-thumb {
-        background: rgba(63, 143, 107, 0.5);
       }
       .col-deck-actions { display: none; }
       .col-deck-name { font-size: 0.8rem; }
@@ -8145,19 +8131,6 @@
       });
     }
 
-    function bindDeckListScrollbarAutohide() {
-      if (!deckListEl) return;
-      var hideTimer = null;
-      function markScrolling() {
-        deckListEl.classList.add('is-scrolling');
-        if (hideTimer) clearTimeout(hideTimer);
-        hideTimer = setTimeout(function () {
-          deckListEl.classList.remove('is-scrolling');
-        }, 900);
-      }
-      bindEl(deckListEl, 'scroll', markScrolling, { passive: true });
-    }
-
     var spotActiveTile = null;
     function clearSpotTile(tile) {
       if (!tile) return;
@@ -12300,7 +12273,6 @@
     bindCollectionRipples();
     bindDeckCardLightbox();
     bindDeckCardExpandDetail();
-    bindDeckListScrollbarAutohide();
 
     bindEl(document.getElementById('colSelectVisibleBtn'), 'click', function () {
       getVisibleItems().forEach(function (item) {
