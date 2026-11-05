@@ -4026,7 +4026,26 @@
       background: #1a1a1a;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
     }
-    .col-lb-entry-ph,
+    /* 清單佔位：隱形 clone，保留與原 entry 相同的 grid 佔位，避免開關光箱擠動版面 */
+    .col-deck-entry.col-lb-entry-ph {
+      visibility: hidden !important;
+      pointer-events: none !important;
+      position: relative !important;
+      inset: auto !important;
+      transform: none !important;
+      z-index: auto !important;
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      display: flex !important;
+      grid-template-columns: none !important;
+    }
     .col-lb-art-slot {
       visibility: hidden;
       pointer-events: none;
@@ -7560,14 +7579,40 @@
     function insertDeckExpandListPlaceholder(entryEl) {
       removeDeckExpandListPlaceholder();
       if (!entryEl || !entryEl.parentNode) return;
-      var rect = entryEl.getBoundingClientRect();
-      var ph = document.createElement('div');
-      ph.className = 'col-lb-entry-ph';
+      /* 用隱形 clone 佔住原格，避免固定像素 div 與 grid 卡格尺寸不一致 */
+      var ph = entryEl.cloneNode(true);
+      ph.classList.add('col-lb-entry-ph');
+      ph.classList.remove('is-expanded', 'is-lb-detail', 'is-lb-flying');
+      ph.removeAttribute('id');
       ph.setAttribute('aria-hidden', 'true');
-      ph.style.width = Math.max(1, rect.width) + 'px';
-      ph.style.height = Math.max(1, rect.height) + 'px';
+      ph.setAttribute('data-lb-ph', '1');
+      Array.prototype.forEach.call(ph.querySelectorAll('[id]'), function (n) {
+        n.removeAttribute('id');
+      });
+      Array.prototype.forEach.call(ph.querySelectorAll('button, a, input, label, details'), function (n) {
+        n.setAttribute('tabindex', '-1');
+        if ('disabled' in n) n.disabled = true;
+        if (n.tagName === 'DETAILS') n.open = false;
+      });
+      var phArt = ph.querySelector('.col-deck-entry-art');
+      if (phArt) {
+        phArt.classList.remove('is-lightbox', 'is-lb-flying');
+        phArt.style.cssText = '';
+      }
+      var phExpand = ph.querySelector('.col-deck-entry-expand');
+      if (phExpand) {
+        phExpand.setAttribute('aria-hidden', 'true');
+        phExpand.style.cssText = '';
+      }
       entryEl.parentNode.insertBefore(ph, entryEl);
       deckExpandListPlaceholder = ph;
+    }
+
+    function getDeckExpandReturnArtRect() {
+      if (!deckExpandListPlaceholder) return null;
+      var thumb = deckExpandListPlaceholder.querySelector('.col-deck-entry-art');
+      if (thumb) return thumb.getBoundingClientRect();
+      return deckExpandListPlaceholder.getBoundingClientRect();
     }
 
     /**
@@ -7750,22 +7795,31 @@
       killDeckLbAnimTl();
 
       function finishCollapse() {
+        /* 同一幀：清飛行樣式 → 回清單流 → 移除佔位，避免 placeholder 與 entry 並存擠版 */
         clearLbDetailArtFlyProps(art);
         clearLbDetailArtSizeLock(art);
         removeDeckExpandArtSlot();
-        entryEl.classList.remove('is-expanded', 'is-lb-detail');
-        entryEl.setAttribute('aria-expanded', 'false');
         var panel = entryEl.querySelector('.col-deck-entry-expand');
         if (panel) {
           panel.setAttribute('aria-hidden', 'true');
           panel.style.removeProperty('height');
           panel.style.removeProperty('max-height');
           if (window.gsap) {
-            try { gsap.set(panel, { clearProps: 'opacity' }); } catch (eOp) { panel.style.removeProperty('opacity'); }
+            try { gsap.killTweensOf(panel); gsap.set(panel, { clearProps: 'opacity' }); }
+            catch (eOp) { panel.style.removeProperty('opacity'); }
           } else {
             panel.style.removeProperty('opacity');
           }
         }
+        var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
+        if (lines.length && window.gsap) {
+          try { gsap.killTweensOf(lines); gsap.set(lines, { clearProps: 'opacity,transform,y' }); }
+          catch (eLn) { /* ignore */ }
+        }
+        entryEl.classList.remove('is-expanded', 'is-lb-detail');
+        entryEl.setAttribute('aria-expanded', 'false');
+        entryEl.style.removeProperty('pointer-events');
+        entryEl.style.removeProperty('visibility');
         if (list) {
           list.classList.remove('has-expanded');
           list.style.removeProperty('min-height');
@@ -7779,6 +7833,7 @@
             try { gsap.set(bd, { clearProps: 'opacity' }); } catch (eBd) { /* ignore */ }
           }
         }
+        deckLbAnimTl = null;
         deckCardExpandEntry = null;
         deckCardExpandBusy = false;
       }
@@ -7792,10 +7847,8 @@
       }
 
       var startRect = art.getBoundingClientRect();
-      var thumbTarget = deckExpandListPlaceholder;
-      var endRect = thumbTarget
-        ? thumbTarget.getBoundingClientRect()
-        : startRect;
+      /* 飛回佔位 clone 內的縮圖格，不是整張 entry 外框 */
+      var endRect = getDeckExpandReturnArtRect() || startRect;
       var panel = entryEl.querySelector('.col-deck-entry-expand');
       var bd = setLightboxBackdropTweening(true);
 
@@ -7818,9 +7871,12 @@
         force3D: true
       });
 
-      entryEl.classList.remove('is-expanded', 'is-lb-detail');
-      entryEl.setAttribute('aria-expanded', 'false');
+      /*
+       * 縮回過程保持 is-lb-detail（entry 仍脫離清單流），
+       * 清單只由隱形 clone 佔位，避免 entry 提前回來與 placeholder 雙佔格。
+       */
       if (panel) panel.setAttribute('aria-hidden', 'true');
+      entryEl.style.pointerEvents = 'none';
       removeDeckExpandArtSlot();
 
       var sx = Math.max(0.01, endRect.width / Math.max(1, startRect.width));
