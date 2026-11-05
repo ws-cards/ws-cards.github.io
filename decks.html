@@ -3973,7 +3973,8 @@
       gap: 0;
       /* 左欄依光箱圖實際寬度，避免把圖拉伸／縮小 */
       grid-template-columns: auto minmax(12rem, 1fr);
-      align-items: stretch;
+      /* 與光箱同高：避免右欄內容把列撑高、左移時圖被抬高 */
+      align-items: center;
       pointer-events: auto;
       overflow: visible;
       border-radius: 14px;
@@ -4012,9 +4013,11 @@
       display: flex;
       overflow: auto;
       min-width: min(16rem, 36vw);
-      max-height: min(92vh, 40rem);
+      /* 高度由 JS 鎖成與光箱圖相同，避免右欄把整列撑高 */
+      max-height: none;
       padding: 0.85rem 1.05rem;
       box-sizing: border-box;
+      align-self: center;
       background: var(--col-shell-bg, #fff);
       border-radius: 0 14px 14px 0;
       box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
@@ -7755,6 +7758,8 @@
         var panel = entryEl.querySelector('.col-deck-entry-expand');
         if (panel) {
           panel.setAttribute('aria-hidden', 'true');
+          panel.style.removeProperty('height');
+          panel.style.removeProperty('max-height');
           if (window.gsap) {
             try { gsap.set(panel, { clearProps: 'opacity' }); } catch (eOp) { panel.style.removeProperty('opacity'); }
           } else {
@@ -7905,7 +7910,12 @@
       entryEl.classList.add('is-expanded', 'is-lb-detail');
       entryEl.setAttribute('aria-expanded', 'true');
       var expandPanel = entryEl.querySelector('.col-deck-entry-expand');
-      if (expandPanel) expandPanel.setAttribute('aria-hidden', 'false');
+      if (expandPanel) {
+        expandPanel.setAttribute('aria-hidden', 'false');
+        /* 右欄鎖成與光箱圖同高，面板垂直中心＝光箱垂直中心，左移才不會抬高 */
+        expandPanel.style.height = lb.height + 'px';
+        expandPanel.style.maxHeight = lb.height + 'px';
+      }
 
       removeDeckExpandArtSlot();
       var slot = document.createElement('div');
@@ -7916,8 +7926,11 @@
       entryEl.insertBefore(slot, artEl);
       deckExpandArtSlot = slot;
 
-      /* 強制一次 layout，讀左欄終點 */
+      /* 強制一次 layout，讀左欄終點（應與光箱同 top） */
       var endRect = slot.getBoundingClientRect();
+      /* 左移只改 X；Y 固定在光箱高度，避免 endRect 誤差造成抬高 */
+      var slideY = lb.top - startRect.top;
+      var slideEndX = endRect.left - startRect.left;
 
       lockLbDetailArtSize(artEl, { width: thumbW, height: thumbH });
       artEl.classList.add('is-lb-flying');
@@ -7949,7 +7962,12 @@
         removeDeckExpandArtSlot();
         clearLbDetailArtFlyProps(artEl);
         lockLbDetailArtSize(artEl, { width: lb.width, height: lb.height });
-        if (expandPanel) gsap.set(expandPanel, { clearProps: 'opacity' });
+        if (expandPanel) {
+          gsap.set(expandPanel, { clearProps: 'opacity' });
+          /* 維持與圖同高，文字區內部捲動 */
+          expandPanel.style.height = lb.height + 'px';
+          expandPanel.style.maxHeight = lb.height + 'px';
+        }
         bd.classList.remove('is-tweening');
         gsap.set(bd, { clearProps: 'opacity' });
         bd.classList.add('is-on');
@@ -7964,7 +7982,7 @@
         if (expandPanel) gsap.set(expandPanel, { opacity: 1 });
         gsap.set(artEl, {
           left: endRect.left,
-          top: endRect.top,
+          top: lb.top,
           width: lb.width,
           height: lb.height,
           x: 0,
@@ -7985,16 +8003,16 @@
       deckLbAnimTl.to(bd, { opacity: 1, duration: 0.34, ease: 'power2.out' }, 0);
       deckLbAnimTl.to(artEl, {
         x: lb.left - startRect.left,
-        y: lb.top - startRect.top,
+        y: slideY,
         scaleX: scaleToLbX,
         scaleY: scaleToLbY,
         duration: 0.36
       }, 0);
 
-      /* 2) 中央 → 左欄（尺寸不變，只平移）＋右側底色淡入；無 hold */
+      /* 2) 中央 → 左欄：只改 X，Y 維持光箱高度（真正水平平移） */
       deckLbAnimTl.to(artEl, {
-        x: endRect.left - startRect.left,
-        y: endRect.top - startRect.top,
+        x: slideEndX,
+        y: slideY,
         duration: 0.48
       }, '>-0.02');
       if (expandPanel) {
