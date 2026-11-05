@@ -11890,7 +11890,17 @@
       syncDeckCardViewControls();
       syncDeckFilterBtnUi();
       if (!deckEntryList) return;
+      /* meta 補齊觸發重繪時，保留手機／桌面光箱展開的卡號以便還原 */
+      var resumeExpandCard = '';
+      var resumeExpandMobile = false;
+      if (deckCardExpandEntry && deckCardExpandEntry.isConnected) {
+        resumeExpandCard = deckCardExpandEntry.getAttribute('data-deck-entry') || '';
+        resumeExpandMobile = deckCardExpandEntry.classList.contains('is-lb-mobile');
+      }
       if (!(deckDraft.cards || []).length) {
+        clearDeckCardExpand(deckEntryList);
+        deckCardExpandEntry = null;
+        deckCardExpandBusy = false;
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
           (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片。') +
           '</li>';
@@ -11910,9 +11920,7 @@
         sortMode: deckCardSortMode
       });
       if (!visibleCards.length) {
-        clearPendingDeckExpand();
-        removeDeckExpandListPlaceholder();
-        hideLightboxBackdrop();
+        clearDeckCardExpand(deckEntryList);
         deckCardExpandEntry = null;
         deckCardExpandBusy = false;
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
@@ -11924,9 +11932,11 @@
           '</li>';
         return;
       }
+      killDeckLbAnimTl();
       clearPendingDeckExpand();
       removeDeckExpandListPlaceholder();
       hideLightboxBackdrop();
+      document.documentElement.classList.remove('col-lb-mobile-open');
       deckCardExpandEntry = null;
       deckCardExpandBusy = false;
       if (isView && isDeckLevelSortMode(deckCardSortMode)) {
@@ -11940,6 +11950,24 @@
       ensureCardMetaForEntries(deckDraft.cards || [], function (shouldRender) {
         if (shouldRender) renderDeckEditor();
       });
+      if (resumeExpandCard) {
+        var resumeEl = null;
+        deckEntryList.querySelectorAll('.col-deck-entry[data-deck-entry]').forEach(function (el) {
+          if (!resumeEl && el.getAttribute('data-deck-entry') === resumeExpandCard) resumeEl = el;
+        });
+        if (resumeEl) {
+          var resumeArt = resumeEl.querySelector('.col-deck-entry-art');
+          var resumeImg = resumeArt && resumeArt.querySelector('img');
+          if (resumeArt && resumeImg && !resumeImg.classList.contains('is-broken')) {
+            if (!resumeImg.classList.contains('is-loaded')) resumeImg.classList.add('is-loaded');
+            if (resumeExpandMobile && !isDeckDesktopLayout()) {
+              playMobileDeckCardReveal(resumeEl, resumeArt);
+            } else if (!resumeExpandMobile && isDeckDesktopLayout()) {
+              playDesktopDeckCardReveal(resumeEl, resumeArt);
+            }
+          }
+        }
+      }
     }
 
     function openDeckEditorUi(deckId, mode) {
