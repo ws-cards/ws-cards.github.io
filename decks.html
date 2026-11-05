@@ -5054,20 +5054,26 @@
       position: fixed;
       inset: 0;
       z-index: 1290;
-      background: rgba(15, 23, 22, 0.62);
+      /* 不加 backdrop-filter：全螢幕 blur 會讓光箱／左移動畫掉幀 */
+      background: rgba(15, 23, 22, 0.72);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
-      -webkit-backdrop-filter: blur(2px);
-      backdrop-filter: blur(2px);
+    }
+    .col-lb-backdrop.is-tweening {
+      transition: none;
     }
     [data-theme="dark"] .col-lb-backdrop {
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.78);
     }
     .col-lb-backdrop.is-on {
       opacity: 1;
       pointer-events: auto;
       cursor: zoom-out;
+    }
+    .col-deck-entry-art.is-lb-flying {
+      will-change: transform;
+      pointer-events: none;
     }
     .col-lb-spacer {
       flex: 0 0 auto;
@@ -7322,13 +7328,15 @@
     var lightboxSpacer = null;
     var lightboxBusy = false;
     var lightboxBackdrop = null;
-    /** 清單卡：光箱開完後要接著 Flip 展開的 entry（可取消） */
+    /** 清單卡：光箱開完後要接著展開的 entry（可取消） */
     var pendingDeckExpandEntry = null;
     var pendingDeckExpandTimer = null;
     /** 桌面光箱展開時，列表內佔位（entry 改 fixed） */
     var deckExpandListPlaceholder = null;
     /** 左移動畫中暫代卡圖格子的佔位 */
     var deckExpandArtSlot = null;
+    /** 桌面連續動畫 timeline（開光箱→左移→關閉） */
+    var deckLbAnimTl = null;
 
     function clearPendingDeckExpand() {
       pendingDeckExpandEntry = null;
@@ -7336,6 +7344,44 @@
         clearTimeout(pendingDeckExpandTimer);
         pendingDeckExpandTimer = null;
       }
+    }
+
+    function killDeckLbAnimTl() {
+      if (deckLbAnimTl) {
+        try { deckLbAnimTl.kill(); } catch (eKillTl) { /* ignore */ }
+        deckLbAnimTl = null;
+      }
+    }
+
+    function setLightboxBackdropTweening(on) {
+      var bd = ensureLightboxBackdrop();
+      bd.classList.toggle('is-tweening', !!on);
+      return bd;
+    }
+
+    /** 光箱目標矩形（與 .is-lightbox CSS 對齊） */
+    function computeDeckLightboxRect(art) {
+      var landscape = !!(art && (art.classList.contains('is-landscape') ||
+        (art.closest && art.closest('.col-deck-entry.is-cx'))));
+      var maxW = landscape
+        ? Math.min(window.innerWidth * 0.88, 34 * 16)
+        : Math.min(window.innerWidth * 0.78, 22 * 16);
+      var maxH = landscape
+        ? Math.min(window.innerHeight * 0.72, 22 * 16)
+        : Math.min(window.innerHeight * 0.82, 32 * 16);
+      var aspect = landscape ? (88 / 63) : (63 / 88);
+      var w = maxW;
+      var h = w / aspect;
+      if (h > maxH) {
+        h = maxH;
+        w = h * aspect;
+      }
+      return {
+        width: Math.round(w),
+        height: Math.round(h),
+        left: Math.round((window.innerWidth - w) / 2),
+        top: Math.round((window.innerHeight - h) / 2)
+      };
     }
 
     function hideLightboxBackdrop() {
@@ -7350,8 +7396,8 @@
       lightboxBackdrop.setAttribute('aria-hidden', 'true');
       bindEl(lightboxBackdrop, 'click', function () {
         clearPendingDeckExpand();
-        if (deckCardExpandEntry) {
-          collapseDeckCardExpand();
+        if (deckCardExpandEntry || deckLbAnimTl) {
+          collapseDeckCardExpand(!!deckLbAnimTl);
           return;
         }
         closeCardLightbox();
@@ -7480,10 +7526,11 @@
 
     function clearLbDetailArtFlyProps(artEl) {
       if (!artEl) return;
+      artEl.classList.remove('is-lb-flying');
       if (window.gsap) {
         try {
           gsap.set(artEl, {
-            clearProps: 'position,left,top,right,bottom,x,y,zIndex,margin,transform'
+            clearProps: 'position,left,top,right,bottom,x,y,scale,scaleX,scaleY,zIndex,margin,transform,transformOrigin'
           });
         } catch (eClear) {
           artEl.style.removeProperty('position');
@@ -7494,6 +7541,7 @@
           artEl.style.removeProperty('z-index');
           artEl.style.removeProperty('margin');
           artEl.style.removeProperty('transform');
+          artEl.style.removeProperty('transform-origin');
         }
       } else {
         artEl.style.removeProperty('position');
@@ -7502,6 +7550,7 @@
         artEl.style.removeProperty('z-index');
         artEl.style.removeProperty('margin');
         artEl.style.removeProperty('transform');
+        artEl.style.removeProperty('transform-origin');
       }
     }
 
@@ -7682,15 +7731,20 @@
       var entryEl = deckCardExpandEntry;
       if (!entryEl || !entryEl.isConnected) {
         deckCardExpandEntry = null;
+        killDeckLbAnimTl();
         removeDeckExpandArtSlot();
         removeDeckExpandListPlaceholder();
         hideLightboxBackdrop();
+        var bdDead = lightboxBackdrop;
+        if (bdDead) bdDead.classList.remove('is-tweening');
         return;
       }
-      if (deckCardExpandBusy && !force) return;
+      /* 開啟動畫進行中允許中斷；已展開待機時略過重複 collapse */
+      if (deckCardExpandBusy && !force && !deckLbAnimTl) return;
       var list = entryEl.closest('.col-deck-entry-list');
       var art = entryEl.querySelector('.col-deck-entry-art');
       deckCardExpandBusy = true;
+      killDeckLbAnimTl();
 
       function finishCollapse() {
         clearLbDetailArtFlyProps(art);
@@ -7713,6 +7767,13 @@
         }
         removeDeckExpandListPlaceholder();
         hideLightboxBackdrop();
+        var bd = lightboxBackdrop;
+        if (bd) {
+          bd.classList.remove('is-tweening');
+          if (window.gsap) {
+            try { gsap.set(bd, { clearProps: 'opacity' }); } catch (eBd) { /* ignore */ }
+          }
+        }
         deckCardExpandEntry = null;
         deckCardExpandBusy = false;
       }
@@ -7730,8 +7791,12 @@
       var endRect = thumbTarget
         ? thumbTarget.getBoundingClientRect()
         : startRect;
+      var panel = entryEl.querySelector('.col-deck-entry-expand');
+      var bd = setLightboxBackdropTweening(true);
 
       gsap.killTweensOf(art);
+      if (panel) gsap.killTweensOf(panel);
+      art.classList.add('is-lb-flying');
       gsap.set(art, {
         position: 'fixed',
         left: startRect.left,
@@ -7740,32 +7805,36 @@
         height: startRect.height,
         x: 0,
         y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        transformOrigin: 'top left',
         zIndex: 1310,
-        margin: 0
+        margin: 0,
+        force3D: true
       });
 
       entryEl.classList.remove('is-expanded', 'is-lb-detail');
       entryEl.setAttribute('aria-expanded', 'false');
-      var panel = entryEl.querySelector('.col-deck-entry-expand');
       if (panel) panel.setAttribute('aria-hidden', 'true');
       removeDeckExpandArtSlot();
-      hideLightboxBackdrop();
 
-      gsap.to(art, {
-        left: endRect.left,
-        top: endRect.top,
-        width: Math.max(1, endRect.width),
-        height: Math.max(1, endRect.height),
-        duration: 0.55,
-        ease: 'power2.inOut',
-        onComplete: function () {
-          clearLbDetailArtFlyProps(art);
-          clearLbDetailArtSizeLock(art);
-          removeDeckExpandListPlaceholder();
-          deckCardExpandEntry = null;
-          deckCardExpandBusy = false;
-        }
+      var sx = Math.max(0.01, endRect.width / Math.max(1, startRect.width));
+      var sy = Math.max(0.01, endRect.height / Math.max(1, startRect.height));
+      deckLbAnimTl = gsap.timeline({
+        onComplete: finishCollapse
       });
+      if (panel) {
+        deckLbAnimTl.to(panel, { opacity: 0, duration: 0.18, ease: 'power2.in' }, 0);
+      }
+      deckLbAnimTl.to(bd, { opacity: 0, duration: 0.42, ease: 'power2.inOut' }, 0);
+      deckLbAnimTl.to(art, {
+        x: endRect.left - startRect.left,
+        y: endRect.top - startRect.top,
+        scaleX: sx,
+        scaleY: sy,
+        duration: 0.45,
+        ease: 'power2.inOut'
+      }, 0.04);
     }
 
     function clearLbDetailArtSizeLock(artEl) {
@@ -7795,10 +7864,10 @@
     }
 
     /**
-     * 桌面：光箱中央圖以 fixed 左移到詳情面板左欄（backdrop 不關；尺寸不變）
-     * 不用 Flip 跨 containing block，避免被白底 overflow／transform 裁切
+     * 桌面：縮圖 → 中央光箱 → 左移＋右側底色，單一 timeline（transform／無 hold）
+     * 避免 Flip 收尾再開第二段動畫造成卡頓
      */
-    function expandDeckCardEntryFromLightbox(entryEl, artEl) {
+    function playDesktopDeckCardReveal(entryEl, artEl) {
       if (!entryEl || !artEl) return;
       if (!entryEl.closest('.col-deck-entry-list')) return;
       if (deckCardExpandBusy) return;
@@ -7806,87 +7875,139 @@
         collapseDeckCardExpand(true);
       }
 
+      killDeckLbAnimTl();
+      clearPendingDeckExpand();
+      pendingDeckExpandEntry = entryEl;
       deckCardExpandBusy = true;
       deckCardExpandEntry = entryEl;
+
+      /* 先填快取文案；網路補 meta 延後，避免動畫中改 DOM */
       syncDeckEntryExpandContent(entryEl);
-      ensureDeckEntryEffectMeta(entryEl.getAttribute('data-deck-entry'), function () {
-        syncDeckEntryExpandContent(entryEl);
+      var cardNo = entryEl.getAttribute('data-deck-entry');
+      var metaPending = true;
+      ensureDeckEntryEffectMeta(cardNo, function () {
+        metaPending = false;
+        if (deckCardExpandEntry === entryEl) syncDeckEntryExpandContent(entryEl);
       });
 
       var startRect = artEl.getBoundingClientRect();
-      var w = Math.max(1, Math.round(startRect.width));
-      var h = Math.max(1, Math.round(startRect.height));
+      var lb = computeDeckLightboxRect(artEl);
+      var thumbW = Math.max(1, Math.round(startRect.width));
+      var thumbH = Math.max(1, Math.round(startRect.height));
 
-      function applyLbDetailDom() {
-        lockLbDetailArtSize(artEl, startRect);
-        insertDeckExpandListPlaceholder(entryEl);
-        teardownLightboxArtKeepBackdrop();
-        ensureLightboxBackdrop().classList.add('is-on');
-        entryEl.classList.add('is-expanded', 'is-lb-detail');
-        entryEl.setAttribute('aria-expanded', 'true');
-        var panel = entryEl.querySelector('.col-deck-entry-expand');
-        if (panel) panel.setAttribute('aria-hidden', 'false');
-        return panel;
-      }
+      insertDeckExpandListPlaceholder(entryEl);
+      if (lightboxArt) teardownLightboxArtKeepBackdrop();
 
-      if (prefersReducedMotion() || !window.gsap) {
-        applyLbDetailDom();
-        playDeckEntryExpandLines(entryEl);
-        deckCardExpandBusy = false;
-        return;
-      }
+      var bd = setLightboxBackdropTweening(true);
+      bd.classList.add('is-on');
+      gsap.set(bd, { opacity: 0 });
 
-      var expandPanel = applyLbDetailDom();
+      entryEl.classList.add('is-expanded', 'is-lb-detail');
+      entryEl.setAttribute('aria-expanded', 'true');
+      var expandPanel = entryEl.querySelector('.col-deck-entry-expand');
+      if (expandPanel) expandPanel.setAttribute('aria-hidden', 'false');
 
       removeDeckExpandArtSlot();
       var slot = document.createElement('div');
       slot.className = 'col-lb-art-slot';
       slot.setAttribute('aria-hidden', 'true');
-      slot.style.width = w + 'px';
-      slot.style.height = h + 'px';
+      slot.style.width = lb.width + 'px';
+      slot.style.height = lb.height + 'px';
       entryEl.insertBefore(slot, artEl);
       deckExpandArtSlot = slot;
 
-      var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
-      if (lines.length) gsap.set(lines, { opacity: 0, y: 10 });
-      /* 右側詳情底色隨左移慢慢顯現 */
-      if (expandPanel) gsap.set(expandPanel, { opacity: 0 });
+      /* 強制一次 layout，讀左欄終點 */
+      var endRect = slot.getBoundingClientRect();
 
-      /* 整段左移維持 fixed＋viewport 座標，不受面板 overflow 裁切 */
+      lockLbDetailArtSize(artEl, { width: thumbW, height: thumbH });
+      artEl.classList.add('is-lb-flying');
       gsap.set(artEl, {
         position: 'fixed',
         left: startRect.left,
         top: startRect.top,
-        width: w,
-        height: h,
+        width: thumbW,
+        height: thumbH,
         x: 0,
         y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        transformOrigin: 'top left',
         zIndex: 1310,
-        margin: 0
+        margin: 0,
+        force3D: true
       });
 
-      var endRect = slot.getBoundingClientRect();
-      if (expandPanel) {
-        gsap.to(expandPanel, {
-          opacity: 1,
-          duration: 0.6,
-          ease: 'power2.out'
-        });
+      var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
+      if (lines.length) gsap.set(lines, { opacity: 0, y: 8 });
+      if (expandPanel) gsap.set(expandPanel, { opacity: 0 });
+
+      var scaleToLbX = lb.width / thumbW;
+      var scaleToLbY = lb.height / thumbH;
+
+      function dockArtAtEnd() {
+        clearPendingDeckExpand();
+        removeDeckExpandArtSlot();
+        clearLbDetailArtFlyProps(artEl);
+        lockLbDetailArtSize(artEl, { width: lb.width, height: lb.height });
+        if (expandPanel) gsap.set(expandPanel, { clearProps: 'opacity' });
+        bd.classList.remove('is-tweening');
+        gsap.set(bd, { clearProps: 'opacity' });
+        bd.classList.add('is-on');
+        if (!metaPending) syncDeckEntryExpandContent(entryEl);
+        playDeckEntryExpandLines(entryEl);
+        deckLbAnimTl = null;
+        deckCardExpandBusy = false;
       }
-      gsap.to(artEl, {
-        left: endRect.left,
-        top: endRect.top,
-        duration: 0.6,
-        ease: 'power2.inOut',
-        onComplete: function () {
-          clearLbDetailArtFlyProps(artEl);
-          lockLbDetailArtSize(artEl, { width: w, height: h });
-          removeDeckExpandArtSlot();
-          if (expandPanel) gsap.set(expandPanel, { clearProps: 'opacity' });
-          playDeckEntryExpandLines(entryEl);
-          deckCardExpandBusy = false;
-        }
+
+      if (prefersReducedMotion()) {
+        gsap.set(bd, { opacity: 1 });
+        if (expandPanel) gsap.set(expandPanel, { opacity: 1 });
+        gsap.set(artEl, {
+          left: endRect.left,
+          top: endRect.top,
+          width: lb.width,
+          height: lb.height,
+          x: 0,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1
+        });
+        dockArtAtEnd();
+        return;
+      }
+
+      deckLbAnimTl = gsap.timeline({
+        defaults: { ease: 'power2.inOut' },
+        onComplete: dockArtAtEnd
       });
+
+      /* 1) 縮圖 → 中央光箱（scale，走合成層） */
+      deckLbAnimTl.to(bd, { opacity: 1, duration: 0.34, ease: 'power2.out' }, 0);
+      deckLbAnimTl.to(artEl, {
+        x: lb.left - startRect.left,
+        y: lb.top - startRect.top,
+        scaleX: scaleToLbX,
+        scaleY: scaleToLbY,
+        duration: 0.36
+      }, 0);
+
+      /* 2) 中央 → 左欄（尺寸不變，只平移）＋右側底色淡入；無 hold */
+      deckLbAnimTl.to(artEl, {
+        x: endRect.left - startRect.left,
+        y: endRect.top - startRect.top,
+        duration: 0.48
+      }, '>-0.02');
+      if (expandPanel) {
+        deckLbAnimTl.to(expandPanel, {
+          opacity: 1,
+          duration: 0.48,
+          ease: 'power2.out'
+        }, '<');
+      }
+    }
+
+    function expandDeckCardEntryFromLightbox(entryEl, artEl) {
+      playDesktopDeckCardReveal(entryEl, artEl);
     }
 
     function toggleDeckCardExpand(entryEl) {
@@ -7898,7 +8019,7 @@
     /**
      * 點清單卡：
      * - 手機：只開光箱
-     * - 桌面：先 Flip 開光箱，開完後圖左移並 Flip 展開詳情（仍在光箱／backdrop 內）
+     * - 桌面：連續動畫（開光箱→左移→右側資訊）
      */
     function openDeckEntryLightboxThenExpand(entryEl) {
       if (!entryEl || deckCardExpandBusy) return;
@@ -7920,25 +8041,13 @@
         return;
       }
 
-      clearPendingDeckExpand();
-      pendingDeckExpandEntry = entryEl;
-      openCardLightbox(art, function () {
-        if (pendingDeckExpandEntry !== entryEl) return;
-        if (lightboxArt !== art) {
-          clearPendingDeckExpand();
-          return;
-        }
-        var holdMs = prefersReducedMotion() ? 0 : 80;
-        pendingDeckExpandTimer = setTimeout(function () {
-          pendingDeckExpandTimer = null;
-          if (pendingDeckExpandEntry !== entryEl) return;
-          if (lightboxArt !== art) {
-            clearPendingDeckExpand();
-            return;
-          }
-          promoteLightboxToDeckExpand();
-        }, holdMs);
-      });
+      if (!window.gsap) {
+        clearPendingDeckExpand();
+        openCardLightbox(art);
+        return;
+      }
+
+      playDesktopDeckCardReveal(entryEl, art);
     }
 
     function bindDeckCardExpandDetail() {
@@ -7947,14 +8056,16 @@
       } catch (eReg) { /* ignore */ }
       bindEl(document, 'keydown', function (e) {
         if (e.key !== 'Escape' && e.keyCode !== 27) return;
-        if (deckCardExpandEntry) {
+        if (deckCardExpandEntry || deckLbAnimTl) {
           e.preventDefault();
-          collapseDeckCardExpand();
+          clearPendingDeckExpand();
+          collapseDeckCardExpand(!!deckLbAnimTl);
           return;
         }
         if (lightboxArt || pendingDeckExpandEntry) {
           e.preventDefault();
           clearPendingDeckExpand();
+          killDeckLbAnimTl();
           closeCardLightbox();
         }
       });
