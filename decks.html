@@ -4143,7 +4143,7 @@
       background: #1a1a1a;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
     }
-    /* 手機：全螢幕光箱（上卡圖、下詳情；無增減鈕） */
+    /* 手機：全螢幕光箱（上卡圖、下詳情；無增減鈕；跟隨深淺主題） */
     html.col-lb-mobile-open,
     html.col-lb-mobile-open body {
       overflow: hidden !important;
@@ -4175,9 +4175,10 @@
       -webkit-overflow-scrolling: touch;
       border-radius: 0;
       border: 0;
-      background: #0f1114;
+      background: var(--deckbox-well, var(--col-shell-bg, #f7faf8));
       box-shadow: none;
       cursor: default;
+      color: var(--col-ink);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-art {
       position: relative;
@@ -4192,9 +4193,12 @@
       align-self: center;
       flex: 0 0 auto;
       border-radius: 12px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
       cursor: default;
       overflow: hidden;
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-art {
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile.is-cx .col-deck-entry-art,
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-art.is-landscape {
@@ -4218,11 +4222,13 @@
       margin: 0;
       padding: 1.15rem 1.15rem calc(1.6rem + env(safe-area-inset-bottom, 0px));
       border-radius: 0;
-      background: #16181d;
+      border-top: 1px solid var(--col-line);
+      background: var(--deckbox-paper, var(--col-shell-bg, #fff));
       box-shadow: none;
       overflow: visible;
       gap: 0.85rem;
       flex: 0 0 auto;
+      color: var(--col-ink);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-close {
       position: fixed;
@@ -4231,72 +4237,77 @@
       z-index: 1410;
       width: 2rem;
       height: 2rem;
-      background: rgba(255, 255, 255, 0.18);
-      color: #fff;
-      box-shadow: none;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: var(--col-accent-soft);
+      color: var(--col-ink);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+      border: 1px solid var(--col-line);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-close:hover,
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-close:focus-visible {
-      background: rgba(255, 255, 255, 0.28);
+      background: var(--col-accent);
+      color: #fff;
+      border-color: var(--col-accent);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-head {
       padding-right: 0.25rem;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-name {
-      color: #f5f7fa;
+      color: var(--col-ink);
       font-size: clamp(1.15rem, 5vw, 1.4rem);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-no {
-      color: #9aa3b2;
+      color: var(--col-muted);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-stats {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.65rem 0.4rem;
+      gap: 0.65rem 0.45rem;
       padding: 0.85rem 0;
-      border-bottom-color: rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--col-line);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-stat {
-      align-items: center;
-      text-align: center;
+      align-items: flex-start;
+      text-align: left;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-stat-label {
-      background: transparent;
-      color: #8b93a1;
-      padding: 0;
-      font-size: 0.7rem;
-      font-weight: 600;
+      background: var(--col-accent-soft);
+      color: var(--col-muted);
+      padding: 0.12rem 0.4rem;
+      font-size: 0.68rem;
+      font-weight: 700;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-stat-value {
-      padding: 0;
-      color: #f5f7fa;
-      font-size: 1.05rem;
+      padding-left: 0.15rem;
+      color: var(--col-ink);
+      font-size: 0.95rem;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-sec-label {
-      background: transparent;
-      color: #aeb6c2;
-      padding: 0;
-      font-size: 0.82rem;
+      background: var(--col-accent-soft);
+      color: var(--col-muted);
+      padding: 0.12rem 0.45rem;
+      font-size: 0.7rem;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-effect {
-      color: #e8ecf2;
+      color: var(--col-ink);
       font-size: 0.88rem;
-      line-height: 1.6;
+      line-height: 1.65;
       overflow: visible;
       max-height: none;
     }
+    .col-deck-entry-expand-effect-line {
+      display: block;
+      will-change: transform, opacity, filter;
+    }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-effect.is-empty,
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-traits-empty {
-      color: #8b93a1;
+      color: var(--col-muted);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-trait {
-      border-color: rgba(255, 255, 255, 0.22);
-      color: #e8ecf2;
-      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--col-line);
+      color: var(--col-ink);
+      background: transparent;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-trait::before {
-      background: #8b93a1;
+      background: var(--col-muted);
     }
     /* 清單佔位：隱形 clone，保留與原 entry 相同的 grid 佔位，避免開關光箱擠動版面 */
     .col-deck-entry.col-lb-entry-ph {
@@ -7962,31 +7973,55 @@
       return raw;
     }
 
-    function buildExpandStatsHtml(meta, opts) {
+    function buildExpandStatsHtml(meta) {
       meta = meta || {};
-      opts = opts || {};
-      var cells = opts.mobile
-        ? [
-          { label: '等級', value: formatExpandStatValue(meta.level) },
-          { label: 'Cost', value: formatExpandStatValue(meta.cost) },
-          { label: 'Power', value: formatExpandStatValue(meta.power) },
-          { label: '魂', value: formatExpandStatValue(meta.soul) }
-        ]
-        : [
-          { label: '稀有度', value: formatExpandStatValue(meta.rarity) },
-          { label: '種類', value: formatExpandStatValue(meta.kindClass || meta.kindLabel) },
-          { label: '等級', value: formatExpandStatValue(meta.level) },
-          { label: 'Cost', value: formatExpandStatValue(meta.cost) },
-          { label: 'Power', value: formatExpandStatValue(meta.power) },
-          { label: '觸發', value: formatExpandTriggerLabel(meta.trigger) },
-          { label: '魂', value: formatExpandStatValue(meta.soul) }
-        ];
+      /* 手機光箱與桌面詳情同一資訊量 */
+      var cells = [
+        { label: '稀有度', value: formatExpandStatValue(meta.rarity) },
+        { label: '種類', value: formatExpandStatValue(meta.kindClass || meta.kindLabel) },
+        { label: '等級', value: formatExpandStatValue(meta.level) },
+        { label: 'Cost', value: formatExpandStatValue(meta.cost) },
+        { label: 'Power', value: formatExpandStatValue(meta.power) },
+        { label: '觸發', value: formatExpandTriggerLabel(meta.trigger) },
+        { label: '魂', value: formatExpandStatValue(meta.soul) }
+      ];
       return cells.map(function (cell) {
         return '<div class="col-deck-entry-expand-stat">' +
           '<div class="col-deck-entry-expand-stat-label">' + escapeHtml(cell.label) + '</div>' +
           '<div class="col-deck-entry-expand-stat-value">' + escapeHtml(cell.value) + '</div>' +
           '</div>';
       }).join('');
+    }
+
+    /** Soft Line Fade：依換行／能力標記切成逐行元素 */
+    function splitEffectSoftLines(text) {
+      var raw = String(text || '');
+      if (!raw) return [''];
+      if (/\n/.test(raw)) {
+        return raw.split(/\n/);
+      }
+      var byAbility = raw.split(/(?=【(?:自|永|起|カウンター|Ｃ|自動|永続|起動))/);
+      if (byAbility.length > 1) {
+        return byAbility.map(function (s) { return s.trim(); }).filter(Boolean);
+      }
+      return [raw];
+    }
+
+    function fillExpandEffectEl(effectEl, effect, asSoftLines) {
+      if (!effectEl) return;
+      var text = effect || '尚無效果資料';
+      effectEl.classList.toggle('is-empty', !effect);
+      if (!asSoftLines) {
+        effectEl.textContent = text;
+        return;
+      }
+      effectEl.textContent = '';
+      splitEffectSoftLines(text).forEach(function (line) {
+        var row = document.createElement('span');
+        row.className = 'col-deck-entry-expand-effect-line';
+        row.textContent = line.length ? line : '\u00a0';
+        effectEl.appendChild(row);
+      });
     }
 
     function buildExpandTraitsHtml(features) {
@@ -8029,21 +8064,14 @@
       var effectEl = entryEl.querySelector('.col-deck-entry-expand-effect');
       var statsEl = entryEl.querySelector('[data-expand-stats]');
       var traitsEl = entryEl.querySelector('[data-expand-traits]');
+      var isMobileLb = entryEl.classList.contains('is-lb-mobile');
       var name = albumMeta.cardName || inv.cardName ||
         ((entryEl.querySelector('.col-deck-entry-name') || {}).textContent) ||
         '（卡冊尚無卡名）';
       if (nameEl) nameEl.textContent = name;
       if (noEl) noEl.textContent = cardNumber;
-      if (statsEl) {
-        statsEl.innerHTML = buildExpandStatsHtml(albumMeta, {
-          mobile: entryEl.classList.contains('is-lb-mobile') || !isDeckDesktopLayout()
-        });
-      }
-      if (effectEl) {
-        var effect = albumMeta.effect || '';
-        effectEl.textContent = effect || '尚無效果資料';
-        effectEl.classList.toggle('is-empty', !effect);
-      }
+      if (statsEl) statsEl.innerHTML = buildExpandStatsHtml(albumMeta);
+      if (effectEl) fillExpandEffectEl(effectEl, albumMeta.effect || '', isMobileLb);
       if (traitsEl) traitsEl.innerHTML = buildExpandTraitsHtml(albumMeta.features);
     }
 
@@ -8094,6 +8122,64 @@
         stagger: 0.07,
         ease: 'power2.out',
         delay: 0.02
+      });
+    }
+
+    /**
+     * Soft Line Fade（手機光箱文案）：
+     * y:10 / opacity:0 / blur(4px) → 清晰；stagger 0.28；duration 1.1；power2.out
+     */
+    function collectMobileSoftFadeTargets(entryEl, effectOnly) {
+      var targets = [];
+      if (!entryEl) return targets;
+      if (!effectOnly) {
+        var nameEl = entryEl.querySelector('.col-deck-entry-expand-name');
+        var noEl = entryEl.querySelector('.col-deck-entry-expand-no');
+        var secLabels = entryEl.querySelectorAll('.col-deck-entry-expand-sec-label');
+        if (nameEl) targets.push(nameEl);
+        if (noEl) targets.push(noEl);
+        Array.prototype.forEach.call(secLabels, function (el) { targets.push(el); });
+      }
+      var effectLines = entryEl.querySelectorAll('.col-deck-entry-expand-effect-line');
+      Array.prototype.forEach.call(effectLines, function (el) { targets.push(el); });
+      return targets;
+    }
+
+    function clearMobileSoftFadeProps(entryEl) {
+      if (!entryEl || !window.gsap) return;
+      var targets = collectMobileSoftFadeTargets(entryEl, false);
+      if (!targets.length) return;
+      try {
+        gsap.killTweensOf(targets);
+        gsap.set(targets, { clearProps: 'opacity,transform,y,filter' });
+      } catch (eClear) { /* ignore */ }
+    }
+
+    function playMobileSoftLineFade(entryEl, opts) {
+      opts = opts || {};
+      var targets = collectMobileSoftFadeTargets(entryEl, !!opts.effectOnly);
+      if (!targets.length) return;
+      if (prefersReducedMotion() || !window.gsap) {
+        targets.forEach(function (el) {
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+          el.style.filter = 'none';
+        });
+        return;
+      }
+      gsap.killTweensOf(targets);
+      gsap.fromTo(targets, {
+        opacity: 0,
+        y: 10,
+        filter: 'blur(4px)'
+      }, {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        duration: 1.1,
+        stagger: 0.28,
+        ease: 'power2.out',
+        overwrite: 'auto'
       });
     }
 
@@ -8178,6 +8264,7 @@
           try { gsap.killTweensOf(lines); gsap.set(lines, { clearProps: 'opacity,transform,y' }); }
           catch (eLn) { /* ignore */ }
         }
+        clearMobileSoftFadeProps(entryEl);
         entryEl.classList.remove('is-expanded', 'is-lb-detail', 'is-lb-mobile');
         entryEl.setAttribute('aria-expanded', 'false');
         entryEl.style.removeProperty('pointer-events');
@@ -8498,8 +8585,22 @@
       }
 
       syncDeckEntryExpandContent(entryEl);
+      /* Soft Line Fade 進場前先隱藏文案行，避免殼層淡入時文字搶先可見 */
+      (function prepareSoftFade() {
+        var softTargets = collectMobileSoftFadeTargets(entryEl, false);
+        if (!softTargets.length) return;
+        if (prefersReducedMotion() || !window.gsap) return;
+        gsap.set(softTargets, { opacity: 0, y: 10, filter: 'blur(4px)' });
+      })();
       ensureDeckEntryEffectMeta(entryEl.getAttribute('data-deck-entry'), function () {
-        if (deckCardExpandEntry === entryEl) syncDeckEntryExpandContent(entryEl);
+        if (deckCardExpandEntry !== entryEl) return;
+        syncDeckEntryExpandContent(entryEl);
+        if (entryEl.classList.contains('is-lb-mobile') && !deckCardExpandBusy) {
+          playMobileSoftLineFade(entryEl, { effectOnly: true });
+        } else if (entryEl.classList.contains('is-lb-mobile') && window.gsap && !prefersReducedMotion()) {
+          var lateLines = entryEl.querySelectorAll('.col-deck-entry-expand-effect-line');
+          if (lateLines.length) gsap.set(lateLines, { opacity: 0, y: 10, filter: 'blur(4px)' });
+        }
       });
 
       function finishOpen() {
@@ -8513,6 +8614,7 @@
         deckLbAnimTl = null;
         deckCardExpandBusy = false;
         try { entryEl.scrollTop = 0; } catch (eScroll) { /* ignore */ }
+        playMobileSoftLineFade(entryEl);
       }
 
       if (prefersReducedMotion() || !window.gsap) {
