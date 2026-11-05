@@ -7341,17 +7341,34 @@
       else openCardLightbox(art);
     }
 
+    /** 光箱已開啟時再點大圖 → 收起光箱並展開詳情面板 */
+    function promoteLightboxToDeckExpand() {
+      var art = lightboxArt;
+      if (!art) return;
+      var entry = art.closest('.col-deck-entry');
+      if (!entry || !entry.closest('.col-deck-entry-list')) {
+        closeCardLightbox();
+        return;
+      }
+      closeCardLightbox(true);
+      expandDeckCardEntry(entry);
+    }
+
     function bindDeckCardLightbox() {
       try {
         if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
       } catch (eReg) { /* ignore */ }
-      /* 點大圖本身也可關閉（capture，避免被其他 handler 吃掉） */
+      /* 點光箱大圖：編成清單改為進入 Expand；其餘情境仍關閉光箱 */
       document.addEventListener('click', function (e) {
         if (!lightboxArt) return;
         if (e.target.closest('.col-deck-entry-art.is-lightbox')) {
           e.preventDefault();
           e.stopPropagation();
-          closeCardLightbox();
+          if (lightboxArt.closest('.col-deck-entry-list')) {
+            promoteLightboxToDeckExpand();
+          } else {
+            closeCardLightbox();
+          }
         }
       }, true);
     }
@@ -7596,15 +7613,30 @@
       else expandDeckCardEntry(entryEl);
     }
 
+    function openDeckEntryLightbox(entryEl) {
+      if (!entryEl) return;
+      var art = entryEl.querySelector('.col-deck-entry-art');
+      if (!art) return;
+      var artImg = art.querySelector('img.is-loaded, img');
+      if (!artImg || artImg.classList.contains('is-broken')) return;
+      openCardLightbox(art);
+    }
+
     function bindDeckCardExpandDetail() {
       try {
         if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
       } catch (eReg) { /* ignore */ }
       bindEl(document, 'keydown', function (e) {
         if (e.key !== 'Escape' && e.keyCode !== 27) return;
-        if (!deckCardExpandEntry) return;
-        e.preventDefault();
-        collapseDeckCardExpand();
+        if (deckCardExpandEntry) {
+          e.preventDefault();
+          collapseDeckCardExpand();
+          return;
+        }
+        if (lightboxArt) {
+          e.preventDefault();
+          closeCardLightbox();
+        }
       });
     }
 
@@ -11933,7 +11965,12 @@
       if (expandHit && expandHit.closest('.col-deck-entry-list') &&
         !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
         e.preventDefault();
-        toggleDeckCardExpand(expandHit);
+        // 已展開 → 縮回；否則先開光箱，再點光箱才展開詳情
+        if (deckCardExpandEntry === expandHit || expandHit.classList.contains('is-expanded')) {
+          collapseDeckCardExpand();
+        } else {
+          openDeckEntryLightbox(expandHit);
+        }
         return;
       }
       var backBtn = e.target.closest('[data-deck-back]');
@@ -12230,7 +12267,11 @@
         if (expandHit &&
           !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
           e.preventDefault();
-          toggleDeckCardExpand(expandHit);
+          if (deckCardExpandEntry === expandHit || expandHit.classList.contains('is-expanded')) {
+            collapseDeckCardExpand();
+          } else {
+            openDeckEntryLightbox(expandHit);
+          }
           return;
         }
         var dec = e.target.closest('[data-deck-qty-dec]');
