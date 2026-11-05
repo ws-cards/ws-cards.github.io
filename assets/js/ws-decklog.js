@@ -174,6 +174,13 @@
     var features = Array.isArray(raw.features)
       ? raw.features
       : String(raw.cardfeatures || "").split(/[・･]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    var textRaw = raw.text != null ? raw.text
+      : (raw.cardtext != null ? raw.cardtext
+        : (raw.effect != null ? raw.effect
+          : (raw.ability != null ? raw.ability : "")));
+    var text = Array.isArray(textRaw)
+      ? textRaw.map(function (line) { return String(line == null ? "" : line).trim(); }).filter(Boolean).join("\n")
+      : String(textRaw || "").trim();
     return {
       cardNo: raw.id || raw.cardno || cardNo,
       name: raw.name || raw.cardname || cardNo,
@@ -185,7 +192,8 @@
       features: features,
       rarity: raw.rarity || raw.cardrare || "",
       soul: raw.soul !== undefined ? Number(raw.soul) : null,
-      power: raw.power !== undefined ? Number(raw.power) : null
+      power: raw.power !== undefined ? Number(raw.power) : null,
+      effect: text
     };
   }
 
@@ -272,7 +280,8 @@
           imageUrl: c.imageUrl || wsImageUrlFromCardNo(c.cardNo),
           rarity: meta.rarity || "",
           soul: meta.soul,
-          power: meta.power
+          power: meta.power,
+          effect: meta.effect || c.effect || ""
         };
       });
     });

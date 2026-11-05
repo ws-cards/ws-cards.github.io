@@ -3800,12 +3800,21 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.7rem 0.5rem;
+      position: relative;
     }
     @media (min-width: 768px) {
       .col-deck-entry-list {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.85rem 0.65rem;
       }
+    }
+    /* Card Expand Detail：展開時列表作定位容器 */
+    .col-deck-entry-list.has-expanded {
+      min-height: min(32rem, 72vh);
+    }
+    .col-deck-entry-list.has-expanded > .col-deck-entry:not(.is-expanded),
+    .col-deck-entry-list.has-expanded > .col-deck-entry-level-head {
+      pointer-events: none;
     }
     .col-deck-entry-empty {
       grid-column: 1 / -1;
@@ -3846,6 +3855,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
+      cursor: pointer;
     }
     .col-deck-entry-art {
       position: relative;
@@ -3853,6 +3863,107 @@
       border-radius: 8px;
       overflow: hidden;
       background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+    }
+    .col-deck-entry-expand {
+      display: none;
+      min-width: 0;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 0.55rem;
+      padding: 0.15rem 0.1rem;
+    }
+    .col-deck-entry-expand-name {
+      margin: 0;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--col-ink);
+      word-break: break-word;
+    }
+    .col-deck-entry-expand-no {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--col-muted);
+    }
+    .col-deck-entry-expand-effect {
+      margin: 0.15rem 0 0;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--col-ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: min(18rem, 42vh);
+      overflow: auto;
+    }
+    .col-deck-entry-expand-effect.is-empty {
+      color: var(--col-muted);
+      font-style: italic;
+      opacity: 0.85;
+    }
+    .col-deck-entry.is-expanded {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+      gap: 0.85rem 1.1rem;
+      align-items: stretch;
+      padding: 0.85rem 0.95rem;
+      margin: 0;
+      border-radius: 14px;
+      border: 1px solid var(--col-line);
+      background: var(--col-shell-bg, #fff);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      overflow: auto;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded {
+      background: #1a1a1a;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .col-deck-entry.is-expanded .col-deck-entry-art {
+      aspect-ratio: auto;
+      height: 100%;
+      min-height: 12rem;
+      max-height: min(28rem, 62vh);
+      border-radius: 12px;
+      align-self: stretch;
+    }
+    .col-deck-entry.is-expanded.is-cx .col-deck-entry-art,
+    .col-deck-entry.is-expanded .col-deck-entry-art.is-landscape {
+      aspect-ratio: 88 / 63;
+      height: auto;
+      max-height: min(22rem, 48vh);
+      align-self: center;
+    }
+    .col-deck-entry.is-expanded .col-deck-entry-art img {
+      object-fit: contain;
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .col-deck-entry.is-expanded .col-deck-entry-caption,
+    .col-deck-entry.is-expanded .col-deck-qty-badge,
+    .col-deck-entry.is-expanded .col-deck-short-badge,
+    .col-deck-entry.is-expanded .col-deck-cover-mark,
+    .col-deck-entry.is-expanded .col-deck-remove-btn {
+      display: none;
+    }
+    .col-deck-entry.is-expanded .col-deck-entry-expand {
+      display: flex;
+    }
+    @media (max-width: 767.98px) {
+      .col-deck-entry.is-expanded {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        padding: 0.75rem;
+        gap: 0.75rem;
+      }
+      .col-deck-entry.is-expanded .col-deck-entry-art {
+        max-height: min(16rem, 38vh);
+        min-height: 10rem;
+      }
     }
     /* CX／橫向卡：維持 88:63，不硬裁成直向 */
     .col-deck-entry.is-cx .col-deck-entry-art,
@@ -6242,7 +6353,9 @@
               level: lv,
               color: normalizeText(row.color || row.cardcolor || ''),
               rarity: normalizeText(row.rarity || row.cardrare || row.cardRare || ''),
-              kindClass: kindClass
+              kindClass: kindClass,
+              cardName: normalizeText(row.name || row.cardName || ''),
+              effect: normalizeText(row.effect || '')
             };
             if (kindClass === 'CX') sawCx = true;
             if (lv != null) deckLevelCache[key] = lv;
@@ -7241,6 +7354,258 @@
           closeCardLightbox();
         }
       }, true);
+    }
+
+    /* Card Expand Detail：清單內卡片翻轉放大成詳情面板 */
+    var deckCardExpandBusy = false;
+    var deckCardExpandEntry = null;
+
+    function collectDeckExpandFlipTargets(list) {
+      if (!list) return [];
+      return Array.prototype.slice.call(
+        list.querySelectorAll('.col-deck-entry, .col-deck-entry-level-head')
+      );
+    }
+
+    function syncDeckEntryExpandContent(entryEl) {
+      if (!entryEl) return;
+      var cardNumber = entryEl.getAttribute('data-deck-entry') || '';
+      var albumMeta = getAlbumMeta(cardNumber) || {};
+      var inv = inventoryMeta(cardNumber);
+      var nameEl = entryEl.querySelector('.col-deck-entry-expand-name');
+      var noEl = entryEl.querySelector('.col-deck-entry-expand-no');
+      var effectEl = entryEl.querySelector('.col-deck-entry-expand-effect');
+      var name = albumMeta.cardName || inv.cardName ||
+        ((entryEl.querySelector('.col-deck-entry-name') || {}).textContent) ||
+        '（卡冊尚無卡名）';
+      if (nameEl) nameEl.textContent = name;
+      if (noEl) noEl.textContent = cardNumber;
+      if (effectEl) {
+        var effect = albumMeta.effect || '';
+        effectEl.textContent = effect || '尚無效果資料';
+        effectEl.classList.toggle('is-empty', !effect);
+      }
+    }
+
+    function ensureDeckEntryEffectMeta(cardNumber, onDone) {
+      var done = typeof onDone === 'function' ? onDone : function () {};
+      var key = normalizeText(cardNumber).replace(/\\/g, '/');
+      var cached = key ? getAlbumMeta(key) : null;
+      if (cached && Object.prototype.hasOwnProperty.call(cached, 'effect') && cached.effect) {
+        done(true);
+        return;
+      }
+      if (!key || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+        done(false);
+        return;
+      }
+      window.WsDecklog.enrichCards([{ cardNo: key, name: key }])
+        .then(function (enriched) {
+          var row = (enriched && enriched[0]) || null;
+          if (!row) {
+            done(false);
+            return;
+          }
+          var prev = getAlbumMeta(key) || {};
+          albumMetaCache[key] = {
+            level: prev.level != null ? prev.level : parseCardLevel(row.level),
+            color: prev.color || normalizeText(row.color || ''),
+            rarity: prev.rarity || normalizeText(row.rarity || ''),
+            kindClass: prev.kindClass || resolveCardKindClass(row) || '',
+            cardName: normalizeText(row.name || prev.cardName || ''),
+            effect: normalizeText(row.effect || '')
+          };
+          done(!!albumMetaCache[key].effect);
+        })
+        .catch(function () { done(false); });
+    }
+
+    function playDeckEntryExpandLines(entryEl) {
+      if (!entryEl) return;
+      var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
+      if (!lines.length) return;
+      if (prefersReducedMotion() || !window.gsap) {
+        Array.prototype.forEach.call(lines, function (el) {
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        });
+        return;
+      }
+      gsap.killTweensOf(lines);
+      gsap.set(lines, { opacity: 0, y: 10 });
+      gsap.to(lines, {
+        opacity: 1,
+        y: 0,
+        duration: 0.28,
+        stagger: 0.07,
+        ease: 'power2.out',
+        delay: 0.02
+      });
+    }
+
+    function clearDeckCardExpand(list) {
+      if (!list) return;
+      list.classList.remove('has-expanded');
+      list.style.removeProperty('min-height');
+      list.querySelectorAll('.col-deck-entry.is-expanded').forEach(function (el) {
+        el.classList.remove('is-expanded');
+        el.setAttribute('aria-expanded', 'false');
+        var panel = el.querySelector('.col-deck-entry-expand');
+        if (panel) panel.setAttribute('aria-hidden', 'true');
+      });
+      list.querySelectorAll('.col-deck-entry, .col-deck-entry-level-head').forEach(function (el) {
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('pointer-events');
+      });
+      if (deckCardExpandEntry && (!deckCardExpandEntry.isConnected ||
+        deckCardExpandEntry.closest('.col-deck-entry-list') !== list)) {
+        deckCardExpandEntry = null;
+      }
+    }
+
+    function collapseDeckCardExpand(force) {
+      var entryEl = deckCardExpandEntry;
+      if (!entryEl || !entryEl.isConnected) {
+        deckCardExpandEntry = null;
+        return;
+      }
+      if (deckCardExpandBusy && !force) return;
+      var list = entryEl.closest('.col-deck-entry-list');
+      if (!list) {
+        entryEl.classList.remove('is-expanded');
+        deckCardExpandEntry = null;
+        return;
+      }
+      deckCardExpandBusy = true;
+      var targets = collectDeckExpandFlipTargets(list);
+      var others = targets.filter(function (el) { return el !== entryEl; });
+
+      function finishCollapse() {
+        clearDeckCardExpand(list);
+        deckCardExpandEntry = null;
+        deckCardExpandBusy = false;
+      }
+
+      if (force || prefersReducedMotion() || !gsapFlipReady()) {
+        if (window.gsap) {
+          try { gsap.killTweensOf(targets); } catch (eKill) { /* ignore */ }
+        }
+        finishCollapse();
+        return;
+      }
+
+      var state = Flip.getState(targets, { props: 'borderRadius' });
+      entryEl.classList.remove('is-expanded');
+      entryEl.setAttribute('aria-expanded', 'false');
+      var panel = entryEl.querySelector('.col-deck-entry-expand');
+      if (panel) panel.setAttribute('aria-hidden', 'true');
+      list.classList.remove('has-expanded');
+      list.style.removeProperty('min-height');
+
+      gsap.to(others, {
+        opacity: 1,
+        duration: 0.35,
+        ease: 'power2.out',
+        overwrite: true
+      });
+
+      Flip.from(state, {
+        duration: 0.6,
+        ease: 'power2.inOut',
+        nested: true,
+        absolute: true,
+        onComplete: function () {
+          others.forEach(function (el) {
+            el.style.removeProperty('opacity');
+            el.style.removeProperty('pointer-events');
+          });
+          deckCardExpandEntry = null;
+          deckCardExpandBusy = false;
+        }
+      });
+    }
+
+    function expandDeckCardEntry(entryEl) {
+      if (!entryEl) return;
+      var list = entryEl.closest('.col-deck-entry-list');
+      if (!list) return;
+      if (deckCardExpandBusy) return;
+      if (deckCardExpandEntry && deckCardExpandEntry !== entryEl) {
+        collapseDeckCardExpand(true);
+      }
+      if (lightboxArt) closeCardLightbox(true);
+
+      deckCardExpandBusy = true;
+      deckCardExpandEntry = entryEl;
+      syncDeckEntryExpandContent(entryEl);
+      ensureDeckEntryEffectMeta(entryEl.getAttribute('data-deck-entry'), function () {
+        syncDeckEntryExpandContent(entryEl);
+      });
+
+      var targets = collectDeckExpandFlipTargets(list);
+      var others = targets.filter(function (el) { return el !== entryEl; });
+      var minH = Math.max(list.offsetHeight, Math.min(window.innerHeight * 0.62, 520));
+
+      function applyExpandedDom() {
+        list.style.minHeight = Math.round(minH) + 'px';
+        list.classList.add('has-expanded');
+        entryEl.classList.add('is-expanded');
+        entryEl.setAttribute('aria-expanded', 'true');
+        var panel = entryEl.querySelector('.col-deck-entry-expand');
+        if (panel) panel.setAttribute('aria-hidden', 'false');
+      }
+
+      if (prefersReducedMotion() || !gsapFlipReady()) {
+        applyExpandedDom();
+        others.forEach(function (el) {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+        });
+        playDeckEntryExpandLines(entryEl);
+        deckCardExpandBusy = false;
+        return;
+      }
+
+      var state = Flip.getState(targets, { props: 'borderRadius' });
+      applyExpandedDom();
+      gsap.set(others, { opacity: 1 });
+      gsap.to(others, {
+        opacity: 0,
+        duration: 0.35,
+        ease: 'power2.out',
+        overwrite: true
+      });
+      var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
+      if (lines.length) gsap.set(lines, { opacity: 0, y: 10 });
+
+      Flip.from(state, {
+        duration: 0.6,
+        ease: 'power2.inOut',
+        nested: true,
+        absolute: true,
+        onComplete: function () {
+          playDeckEntryExpandLines(entryEl);
+          deckCardExpandBusy = false;
+        }
+      });
+    }
+
+    function toggleDeckCardExpand(entryEl) {
+      if (!entryEl) return;
+      if (deckCardExpandEntry === entryEl) collapseDeckCardExpand();
+      else expandDeckCardEntry(entryEl);
+    }
+
+    function bindDeckCardExpandDetail() {
+      try {
+        if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
+      } catch (eReg) { /* ignore */ }
+      bindEl(document, 'keydown', function (e) {
+        if (e.key !== 'Escape' && e.keyCode !== 27) return;
+        if (!deckCardExpandEntry) return;
+        e.preventDefault();
+        collapseDeckCardExpand();
+      });
     }
 
     function bindDeckListScrollbarAutohide() {
@@ -9865,6 +10230,8 @@
       html += '</div>';
 
       if (!deckDetailEl) return;
+      deckCardExpandEntry = null;
+      deckCardExpandBusy = false;
       deckDetailEl.innerHTML = html;
       syncDeckCardViewControls();
       syncDeckFilterBtnUi();
@@ -10412,6 +10779,16 @@
         html += '    <div class="col-deck-ctrl-label" style="margin-top:0.25rem;color:#c53030;">缺' + escapeHtml(String(shortQty)) + ' 張</div>';
       }
       html += '  </div>';
+      var expandName = meta.cardName || entry.cardName || '（卡冊尚無卡名）';
+      var expandMeta = getAlbumMeta(entry.cardNumber) || {};
+      if (expandMeta.cardName) expandName = expandMeta.cardName;
+      var expandEffect = expandMeta.effect || '';
+      html += '  <div class="col-deck-entry-expand" aria-hidden="true">';
+      html += '    <h4 class="col-deck-entry-expand-name col-deck-entry-expand-line">' + escapeHtml(expandName) + '</h4>';
+      html += '    <div class="col-deck-entry-expand-no col-deck-entry-expand-line">' + escapeHtml(entry.cardNumber) + '</div>';
+      html += '    <p class="col-deck-entry-expand-effect col-deck-entry-expand-line' + (expandEffect ? '' : ' is-empty') + '">' +
+        escapeHtml(expandEffect || '尚無效果資料') + '</p>';
+      html += '  </div>';
       html += '</li>';
       return html;
     }
@@ -10444,6 +10821,8 @@
         sortMode: deckCardSortMode
       });
       if (!visibleCards.length) {
+        deckCardExpandEntry = null;
+        deckCardExpandBusy = false;
         deckEntryList.innerHTML = '<li class="col-modal-hint col-deck-entry-empty">' +
           escapeHtml(deckCardEmptyMessage({
             shortOnly: deckCardShortOnly,
@@ -10453,6 +10832,8 @@
           '</li>';
         return;
       }
+      deckCardExpandEntry = null;
+      deckCardExpandBusy = false;
       if (isView && isDeckLevelSortMode(deckCardSortMode)) {
         deckEntryList.innerHTML = buildDeckEntriesHtmlWithLevelHeads(visibleCards, 'view');
       } else {
@@ -11372,6 +11753,7 @@
     }
     bindCollectionRipples();
     bindDeckCardLightbox();
+    bindDeckCardExpandDetail();
     bindDeckListScrollbarAutohide();
 
     bindEl(document.getElementById('colSelectVisibleBtn'), 'click', function () {
@@ -11547,14 +11929,12 @@
         if (!refreshDeckDetailCharts()) renderDeckDetail();
         return;
       }
-      var artHit = e.target.closest('.col-deck-entry-art');
-      if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
-        var artImg = artHit.querySelector('img.is-loaded, img');
-        if (artImg && !artImg.classList.contains('is-broken')) {
-          e.preventDefault();
-          toggleCardLightbox(artHit);
-          return;
-        }
+      var expandHit = e.target.closest('.col-deck-entry');
+      if (expandHit && expandHit.closest('.col-deck-entry-list') &&
+        !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
+        e.preventDefault();
+        toggleDeckCardExpand(expandHit);
+        return;
       }
       var backBtn = e.target.closest('[data-deck-back]');
       if (backBtn) {
@@ -11846,14 +12226,12 @@
     }
     if (deckEntryList) {
       bindEl(deckEntryList, 'click', function (e) {
-        var artHit = e.target.closest('.col-deck-entry-art');
-        if (artHit && !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a')) {
-          var artImg = artHit.querySelector('img.is-loaded, img');
-          if (artImg && !artImg.classList.contains('is-broken')) {
-            e.preventDefault();
-            toggleCardLightbox(artHit);
-            return;
-          }
+        var expandHit = e.target.closest('.col-deck-entry');
+        if (expandHit &&
+          !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
+          e.preventDefault();
+          toggleDeckCardExpand(expandHit);
+          return;
         }
         var dec = e.target.closest('[data-deck-qty-dec]');
         if (dec) {
