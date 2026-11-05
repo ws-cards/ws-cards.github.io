@@ -3953,21 +3953,30 @@
     .col-deck-entry.is-expanded .col-deck-entry-expand {
       display: flex;
     }
-    /* 桌面：光箱內展開（固定層、backdrop 之上，圖在左） */
+    /* 桌面：光箱內展開（固定層、backdrop 之上，圖在左）
+       不用 transform 置中，避免 Flip／fixed 子元素座標系錯亂導致裁切 */
     .col-deck-entry.is-expanded.is-lb-detail {
       position: fixed;
-      inset: auto;
-      left: 50%;
-      top: 50%;
+      inset: 0;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
       z-index: 1306;
-      width: min(94vw, 56rem);
-      max-height: min(86vh, 36rem);
-      margin: 0;
-      transform: translate(-50%, -50%);
+      width: max-content;
+      max-width: min(94vw, 56rem);
+      height: max-content;
+      max-height: min(92vh, 40rem);
+      margin: auto;
+      transform: none;
+      padding: 0;
+      gap: 0;
       /* 左欄依光箱圖實際寬度，避免把圖拉伸／縮小 */
-      grid-template-columns: auto minmax(0, 1fr);
-      align-items: center;
+      grid-template-columns: auto minmax(12rem, 1fr);
+      align-items: stretch;
       pointer-events: auto;
+      overflow: visible;
+      border-radius: 14px;
     }
     /* 左移時維持與光箱相同尺寸，不隨展開欄重算大小 */
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-art {
@@ -3978,8 +3987,10 @@
       aspect-ratio: 63 / 88;
       min-height: 0;
       max-height: min(82vh, 32rem);
-      align-self: center;
+      align-self: stretch;
       flex: 0 0 auto;
+      border-radius: 14px 0 0 14px;
+      box-shadow: none;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-cx .col-deck-entry-art,
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-art.is-landscape {
@@ -3988,11 +3999,21 @@
       height: auto;
       max-height: min(72vh, 22rem);
       align-self: center;
+      border-radius: 14px 0 0 14px;
     }
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-art img {
       object-fit: cover;
     }
-    .col-lb-entry-ph {
+    .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand {
+      display: flex;
+      overflow: auto;
+      min-width: min(16rem, 36vw);
+      max-height: min(92vh, 40rem);
+      padding: 0.85rem 1.05rem;
+      box-sizing: border-box;
+    }
+    .col-lb-entry-ph,
+    .col-lb-art-slot {
       visibility: hidden;
       pointer-events: none;
       border-radius: 8px;
@@ -7295,6 +7316,8 @@
     var pendingDeckExpandTimer = null;
     /** 桌面光箱展開時，列表內佔位（entry 改 fixed） */
     var deckExpandListPlaceholder = null;
+    /** 左移動畫中暫代卡圖格子的佔位 */
+    var deckExpandArtSlot = null;
 
     function clearPendingDeckExpand() {
       pendingDeckExpandEntry = null;
@@ -7437,6 +7460,40 @@
       deckExpandListPlaceholder = null;
     }
 
+    function removeDeckExpandArtSlot() {
+      if (deckExpandArtSlot && deckExpandArtSlot.parentNode) {
+        deckExpandArtSlot.parentNode.removeChild(deckExpandArtSlot);
+      }
+      deckExpandArtSlot = null;
+    }
+
+    function clearLbDetailArtFlyProps(artEl) {
+      if (!artEl) return;
+      if (window.gsap) {
+        try {
+          gsap.set(artEl, {
+            clearProps: 'position,left,top,right,bottom,x,y,zIndex,margin,transform'
+          });
+        } catch (eClear) {
+          artEl.style.removeProperty('position');
+          artEl.style.removeProperty('left');
+          artEl.style.removeProperty('top');
+          artEl.style.removeProperty('right');
+          artEl.style.removeProperty('bottom');
+          artEl.style.removeProperty('z-index');
+          artEl.style.removeProperty('margin');
+          artEl.style.removeProperty('transform');
+        }
+      } else {
+        artEl.style.removeProperty('position');
+        artEl.style.removeProperty('left');
+        artEl.style.removeProperty('top');
+        artEl.style.removeProperty('z-index');
+        artEl.style.removeProperty('margin');
+        artEl.style.removeProperty('transform');
+      }
+    }
+
     function insertDeckExpandListPlaceholder(entryEl) {
       removeDeckExpandListPlaceholder();
       if (!entryEl || !entryEl.parentNode) return;
@@ -7574,10 +7631,14 @@
     }
 
     function clearDeckCardExpand(list) {
+      removeDeckExpandArtSlot();
       removeDeckExpandListPlaceholder();
       hideLightboxBackdrop();
       if (!list) {
         document.querySelectorAll('.col-deck-entry.is-expanded').forEach(function (el) {
+          var art = el.querySelector('.col-deck-entry-art');
+          clearLbDetailArtFlyProps(art);
+          clearLbDetailArtSizeLock(art);
           el.classList.remove('is-expanded', 'is-lb-detail');
           el.setAttribute('aria-expanded', 'false');
           var panel = el.querySelector('.col-deck-entry-expand');
@@ -7588,6 +7649,9 @@
       list.classList.remove('has-expanded');
       list.style.removeProperty('min-height');
       list.querySelectorAll('.col-deck-entry.is-expanded').forEach(function (el) {
+        var art = el.querySelector('.col-deck-entry-art');
+        clearLbDetailArtFlyProps(art);
+        clearLbDetailArtSizeLock(art);
         el.classList.remove('is-expanded', 'is-lb-detail');
         el.setAttribute('aria-expanded', 'false');
         var panel = el.querySelector('.col-deck-entry-expand');
@@ -7607,6 +7671,7 @@
       var entryEl = deckCardExpandEntry;
       if (!entryEl || !entryEl.isConnected) {
         deckCardExpandEntry = null;
+        removeDeckExpandArtSlot();
         removeDeckExpandListPlaceholder();
         hideLightboxBackdrop();
         return;
@@ -7617,7 +7682,9 @@
       deckCardExpandBusy = true;
 
       function finishCollapse() {
+        clearLbDetailArtFlyProps(art);
         clearLbDetailArtSizeLock(art);
+        removeDeckExpandArtSlot();
         entryEl.classList.remove('is-expanded', 'is-lb-detail');
         entryEl.setAttribute('aria-expanded', 'false');
         var panel = entryEl.querySelector('.col-deck-entry-expand');
@@ -7632,7 +7699,7 @@
         deckCardExpandBusy = false;
       }
 
-      if (force || prefersReducedMotion() || !gsapFlipReady() || !art) {
+      if (force || prefersReducedMotion() || !window.gsap || !art) {
         if (window.gsap && art) {
           try { gsap.killTweensOf(art); } catch (eKill) { /* ignore */ }
         }
@@ -7640,20 +7707,43 @@
         return;
       }
 
-      var state = Flip.getState(art, { props: 'borderRadius' });
-      clearLbDetailArtSizeLock(art);
+      var startRect = art.getBoundingClientRect();
+      var thumbTarget = deckExpandListPlaceholder;
+      var endRect = thumbTarget
+        ? thumbTarget.getBoundingClientRect()
+        : startRect;
+
+      gsap.killTweensOf(art);
+      gsap.set(art, {
+        position: 'fixed',
+        left: startRect.left,
+        top: startRect.top,
+        width: startRect.width,
+        height: startRect.height,
+        x: 0,
+        y: 0,
+        zIndex: 1310,
+        margin: 0
+      });
+
       entryEl.classList.remove('is-expanded', 'is-lb-detail');
       entryEl.setAttribute('aria-expanded', 'false');
       var panel = entryEl.querySelector('.col-deck-entry-expand');
       if (panel) panel.setAttribute('aria-hidden', 'true');
-      removeDeckExpandListPlaceholder();
+      removeDeckExpandArtSlot();
       hideLightboxBackdrop();
 
-      Flip.from(state, {
+      gsap.to(art, {
+        left: endRect.left,
+        top: endRect.top,
+        width: Math.max(1, endRect.width),
+        height: Math.max(1, endRect.height),
         duration: 0.55,
         ease: 'power2.inOut',
-        absolute: true,
         onComplete: function () {
+          clearLbDetailArtFlyProps(art);
+          clearLbDetailArtSizeLock(art);
+          removeDeckExpandListPlaceholder();
           deckCardExpandEntry = null;
           deckCardExpandBusy = false;
         }
@@ -7672,11 +7762,11 @@
     }
 
     /** 鎖住光箱當下像素尺寸，左移展開時不改圖大小 */
-    function lockLbDetailArtSize(artEl) {
+    function lockLbDetailArtSize(artEl, rect) {
       if (!artEl) return;
-      var rect = artEl.getBoundingClientRect();
-      var w = Math.max(1, Math.round(rect.width));
-      var h = Math.max(1, Math.round(rect.height));
+      var r = rect || artEl.getBoundingClientRect();
+      var w = Math.max(1, Math.round(r.width));
+      var h = Math.max(1, Math.round(r.height));
       artEl.style.width = w + 'px';
       artEl.style.height = h + 'px';
       artEl.style.maxWidth = w + 'px';
@@ -7686,7 +7776,10 @@
       artEl.style.flex = '0 0 auto';
     }
 
-    /** 桌面：自光箱中央圖 Flip 到左欄並展開詳情（backdrop 不關；圖尺寸不變） */
+    /**
+     * 桌面：光箱中央圖以 fixed 左移到詳情面板左欄（backdrop 不關；尺寸不變）
+     * 不用 Flip 跨 containing block，避免被白底 overflow／transform 裁切
+     */
     function expandDeckCardEntryFromLightbox(entryEl, artEl) {
       if (!entryEl || !artEl) return;
       if (!entryEl.closest('.col-deck-entry-list')) return;
@@ -7702,9 +7795,12 @@
         syncDeckEntryExpandContent(entryEl);
       });
 
+      var startRect = artEl.getBoundingClientRect();
+      var w = Math.max(1, Math.round(startRect.width));
+      var h = Math.max(1, Math.round(startRect.height));
+
       function applyLbDetailDom() {
-        /* 先鎖尺寸再拆光箱定位，Flip 只平移 */
-        lockLbDetailArtSize(artEl);
+        lockLbDetailArtSize(artEl, startRect);
         insertDeckExpandListPlaceholder(entryEl);
         teardownLightboxArtKeepBackdrop();
         ensureLightboxBackdrop().classList.add('is-on');
@@ -7714,25 +7810,50 @@
         if (panel) panel.setAttribute('aria-hidden', 'false');
       }
 
-      if (prefersReducedMotion() || !gsapFlipReady()) {
+      if (prefersReducedMotion() || !window.gsap) {
         applyLbDetailDom();
         playDeckEntryExpandLines(entryEl);
         deckCardExpandBusy = false;
         return;
       }
 
-      var state = Flip.getState(artEl, { props: 'borderRadius' });
       applyLbDetailDom();
+
+      removeDeckExpandArtSlot();
+      var slot = document.createElement('div');
+      slot.className = 'col-lb-art-slot';
+      slot.setAttribute('aria-hidden', 'true');
+      slot.style.width = w + 'px';
+      slot.style.height = h + 'px';
+      entryEl.insertBefore(slot, artEl);
+      deckExpandArtSlot = slot;
+
       var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
       if (lines.length) gsap.set(lines, { opacity: 0, y: 10 });
 
-      Flip.from(state, {
+      /* 整段左移維持 fixed＋viewport 座標，不受面板 overflow 裁切 */
+      gsap.set(artEl, {
+        position: 'fixed',
+        left: startRect.left,
+        top: startRect.top,
+        width: w,
+        height: h,
+        x: 0,
+        y: 0,
+        zIndex: 1310,
+        margin: 0
+      });
+
+      var endRect = slot.getBoundingClientRect();
+      gsap.to(artEl, {
+        left: endRect.left,
+        top: endRect.top,
         duration: 0.6,
         ease: 'power2.inOut',
-        absolute: true,
-        /* 僅移動位置，避免寬高被插值縮放 */
-        scale: false,
         onComplete: function () {
+          clearLbDetailArtFlyProps(artEl);
+          lockLbDetailArtSize(artEl, { width: w, height: h });
+          removeDeckExpandArtSlot();
           playDeckEntryExpandLines(entryEl);
           deckCardExpandBusy = false;
         }
