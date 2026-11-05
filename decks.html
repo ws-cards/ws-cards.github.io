@@ -7245,6 +7245,17 @@
     var lightboxSpacer = null;
     var lightboxBusy = false;
     var lightboxBackdrop = null;
+    /** 清單卡：光箱開完後要接著 Flip 展開的 entry（可取消） */
+    var pendingDeckExpandEntry = null;
+    var pendingDeckExpandTimer = null;
+
+    function clearPendingDeckExpand() {
+      pendingDeckExpandEntry = null;
+      if (pendingDeckExpandTimer) {
+        clearTimeout(pendingDeckExpandTimer);
+        pendingDeckExpandTimer = null;
+      }
+    }
 
     function ensureLightboxBackdrop() {
       if (lightboxBackdrop) return lightboxBackdrop;
@@ -7252,6 +7263,7 @@
       lightboxBackdrop.className = 'col-lb-backdrop';
       lightboxBackdrop.setAttribute('aria-hidden', 'true');
       bindEl(lightboxBackdrop, 'click', function () {
+        clearPendingDeckExpand();
         closeCardLightbox();
       });
       document.body.appendChild(lightboxBackdrop);
@@ -7296,9 +7308,10 @@
       });
     }
 
-    function openCardLightbox(art) {
+    function openCardLightbox(art, onOpened) {
       if (!art) return;
       if (lightboxArt === art) {
+        clearPendingDeckExpand();
         closeCardLightbox();
         return;
       }
@@ -7316,10 +7329,15 @@
       lightboxSpacer = spacer;
       lightboxBusy = true;
 
+      function finishOpen() {
+        lightboxBusy = false;
+        if (typeof onOpened === 'function') onOpened();
+      }
+
       if (prefersReducedMotion() || !gsapFlipReady()) {
         art.classList.add('is-lightbox');
         bd.classList.add('is-on');
-        lightboxBusy = false;
+        finishOpen();
         return;
       }
       var state = Flip.getState(art);
@@ -7329,27 +7347,29 @@
         duration: 0.28,
         ease: 'power2.inOut',
         absolute: true,
-        onComplete: function () {
-          lightboxBusy = false;
-        }
+        onComplete: finishOpen
       });
     }
 
     function toggleCardLightbox(art) {
       if (!art) return;
-      if (lightboxArt === art) closeCardLightbox();
-      else openCardLightbox(art);
+      if (lightboxArt === art) {
+        clearPendingDeckExpand();
+        closeCardLightbox();
+      } else openCardLightbox(art);
     }
 
-    /** 光箱已開啟時再點大圖 → 收起光箱並展開詳情面板 */
+    /** 光箱已開 → 收起光箱並 Flip 展開詳情面板 */
     function promoteLightboxToDeckExpand() {
       var art = lightboxArt;
       if (!art) return;
       var entry = art.closest('.col-deck-entry');
       if (!entry || !entry.closest('.col-deck-entry-list')) {
+        clearPendingDeckExpand();
         closeCardLightbox();
         return;
       }
+      clearPendingDeckExpand();
       closeCardLightbox(true);
       expandDeckCardEntry(entry);
     }
@@ -7358,17 +7378,14 @@
       try {
         if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
       } catch (eReg) { /* ignore */ }
-      /* 點光箱大圖：編成清單改為進入 Expand；其餘情境仍關閉光箱 */
+      /* 點大圖本身也可關閉（capture，避免被其他 handler 吃掉） */
       document.addEventListener('click', function (e) {
         if (!lightboxArt) return;
         if (e.target.closest('.col-deck-entry-art.is-lightbox')) {
           e.preventDefault();
           e.stopPropagation();
-          if (lightboxArt.closest('.col-deck-entry-list')) {
-            promoteLightboxToDeckExpand();
-          } else {
-            closeCardLightbox();
-          }
+          clearPendingDeckExpand();
+          closeCardLightbox();
         }
       }, true);
     }
@@ -7613,13 +7630,37 @@
       else expandDeckCardEntry(entryEl);
     }
 
-    function openDeckEntryLightbox(entryEl) {
-      if (!entryEl) return;
+    /** 點清單卡：先 Flip 開光箱，開完後再 Flip 展開詳情 */
+    function openDeckEntryLightboxThenExpand(entryEl) {
+      if (!entryEl || deckCardExpandBusy) return;
+      if (deckCardExpandEntry === entryEl || entryEl.classList.contains('is-expanded')) {
+        collapseDeckCardExpand();
+        return;
+      }
       var art = entryEl.querySelector('.col-deck-entry-art');
       if (!art) return;
       var artImg = art.querySelector('img.is-loaded, img');
       if (!artImg || artImg.classList.contains('is-broken')) return;
-      openCardLightbox(art);
+
+      clearPendingDeckExpand();
+      pendingDeckExpandEntry = entryEl;
+      openCardLightbox(art, function () {
+        if (pendingDeckExpandEntry !== entryEl) return;
+        if (lightboxArt !== art) {
+          clearPendingDeckExpand();
+          return;
+        }
+        var holdMs = prefersReducedMotion() ? 0 : 120;
+        pendingDeckExpandTimer = setTimeout(function () {
+          pendingDeckExpandTimer = null;
+          if (pendingDeckExpandEntry !== entryEl) return;
+          if (lightboxArt !== art) {
+            clearPendingDeckExpand();
+            return;
+          }
+          promoteLightboxToDeckExpand();
+        }, holdMs);
+      });
     }
 
     function bindDeckCardExpandDetail() {
@@ -7633,8 +7674,9 @@
           collapseDeckCardExpand();
           return;
         }
-        if (lightboxArt) {
+        if (lightboxArt || pendingDeckExpandEntry) {
           e.preventDefault();
+          clearPendingDeckExpand();
           closeCardLightbox();
         }
       });
@@ -11965,12 +12007,8 @@
       if (expandHit && expandHit.closest('.col-deck-entry-list') &&
         !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
         e.preventDefault();
-        // 已展開 → 縮回；否則先開光箱，再點光箱才展開詳情
-        if (deckCardExpandEntry === expandHit || expandHit.classList.contains('is-expanded')) {
-          collapseDeckCardExpand();
-        } else {
-          openDeckEntryLightbox(expandHit);
-        }
+        // 已展開 → 縮回；否則開光箱後自動 Flip 展開詳情
+        openDeckEntryLightboxThenExpand(expandHit);
         return;
       }
       var backBtn = e.target.closest('[data-deck-back]');
@@ -12267,11 +12305,7 @@
         if (expandHit &&
           !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls')) {
           e.preventDefault();
-          if (deckCardExpandEntry === expandHit || expandHit.classList.contains('is-expanded')) {
-            collapseDeckCardExpand();
-          } else {
-            openDeckEntryLightbox(expandHit);
-          }
+          openDeckEntryLightboxThenExpand(expandHit);
           return;
         }
         var dec = e.target.closest('[data-deck-qty-dec]');
@@ -12316,7 +12350,8 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
-      if (lightboxArt) {
+      if (lightboxArt || pendingDeckExpandEntry) {
+        clearPendingDeckExpand();
         closeCardLightbox(true);
         return;
       }
