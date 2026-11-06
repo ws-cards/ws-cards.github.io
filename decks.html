@@ -4948,51 +4948,239 @@
       white-space: nowrap;
     }
     .col-deck-tools-hint {
-      margin: 0.15rem 0 0.55rem;
-      font-size: 0.82rem;
-      color: var(--col-muted);
-      line-height: 1.45;
-    }
-    #colDeckToolsModal .col-modal-dialog {
-      width: min(720px, 100%);
-    }
-    .col-deck-sim-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .col-deck-sim-phase {
-      display: inline-flex;
-      align-items: center;
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 0.2rem 0.55rem;
-      border-radius: 999px;
-      border: 1px solid var(--col-line);
-      background: var(--col-accent-soft);
-      color: var(--col-muted);
-    }
-    .col-deck-sim-phase.is-ready { color: var(--col-accent); }
-    .col-deck-sim-phase.is-mull { color: #b07c28; border-color: rgba(176, 124, 40, 0.4); }
-    .col-deck-sim-phase.is-done { color: #568a6d; border-color: rgba(86, 138, 109, 0.45); }
-    .col-deck-sim-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem 1rem;
-      margin-bottom: 0.75rem;
+      margin: 0.15rem 0 0;
       font-size: 0.84rem;
       color: var(--col-muted);
+      line-height: 1.5;
     }
-    .col-deck-sim-stats strong {
-      color: var(--col-ink);
+    /* ——— 模擬抽牌：牌桌語彙（綠絨＋暖金選取） ——— */
+    #colDeckToolsModal .col-modal-dialog {
+      width: min(760px, 100%);
+      overflow: hidden;
+    }
+    #colDeckToolsModal .col-modal-body.col-deck-sim-body {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-height: min(82vh, 44rem);
+      overflow: auto;
+    }
+    .col-deck-sim-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.85rem;
+      padding: 1.15rem 1.2rem 1rem;
+      background:
+        radial-gradient(120% 90% at 0% 0%, rgba(47, 107, 79, 0.16), transparent 55%),
+        radial-gradient(90% 80% at 100% 0%, rgba(176, 124, 40, 0.12), transparent 50%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent);
+      border-bottom: 1px solid var(--col-line);
+    }
+    [data-theme="dark"] .col-deck-sim-hero {
+      background:
+        radial-gradient(120% 90% at 0% 0%, rgba(63, 143, 107, 0.22), transparent 55%),
+        radial-gradient(90% 80% at 100% 0%, rgba(203, 160, 80, 0.12), transparent 50%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+    }
+    .col-deck-sim-hero-main { min-width: 0; flex: 1 1 auto; }
+    .col-deck-sim-kicker {
+      margin: 0 0 0.2rem;
+      font-size: 0.72rem;
       font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--col-accent);
+    }
+    #colDeckToolsModal #colDeckToolsTitle {
+      margin: 0;
+      font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--col-ink);
+      line-height: 1.25;
+    }
+    .col-deck-sim-phase {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.15rem;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.28rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--col-line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--col-muted);
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .col-deck-sim-phase {
+      background: rgba(0, 0, 0, 0.28);
+    }
+    .col-deck-sim-phase::before {
+      content: '';
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+    .col-deck-sim-phase.is-ready { color: var(--col-accent); border-color: rgba(47, 107, 79, 0.35); }
+    .col-deck-sim-phase.is-mull { color: #b07c28; border-color: rgba(176, 124, 40, 0.45); }
+    .col-deck-sim-phase.is-done { color: #3f8f6b; border-color: rgba(63, 143, 107, 0.45); }
+    .col-deck-sim-panel {
+      padding: 0.9rem 1.15rem 0.35rem;
+    }
+    .col-deck-sim-steps {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.4rem;
+      margin: 0 0 0.9rem;
+      padding: 0;
+    }
+    .col-deck-sim-step {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.55rem 0.6rem 0.55rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid var(--col-line);
+      background: rgba(15, 23, 42, 0.02);
+      color: var(--col-muted);
+      font-size: 0.72rem;
+      line-height: 1.3;
+      transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+    }
+    [data-theme="dark"] .col-deck-sim-step {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .col-deck-sim-step strong {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--col-ink);
+    }
+    .col-deck-sim-step.is-active {
+      border-color: rgba(47, 107, 79, 0.45);
+      background: rgba(47, 107, 79, 0.1);
+      color: var(--col-accent);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(47, 107, 79, 0.1);
+    }
+    .col-deck-sim-step.is-active strong { color: var(--col-accent); }
+    .col-deck-sim-step.is-done {
+      border-color: rgba(63, 143, 107, 0.35);
+      background: rgba(63, 143, 107, 0.08);
+    }
+    .col-deck-sim-step-num {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      opacity: 0.7;
+    }
+    .col-deck-sim-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.45rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 520px) {
+      .col-deck-sim-steps { grid-template-columns: 1fr; }
+      .col-deck-sim-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .col-deck-sim-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 12px;
+      border: 1px solid var(--col-line);
+      background: rgba(255, 255, 255, 0.65);
+      min-width: 0;
+    }
+    [data-theme="dark"] .col-deck-sim-stat {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-deck-sim-stat-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--col-muted);
+    }
+    .col-deck-sim-stat strong {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--col-ink);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    .col-deck-sim-stat.is-accent strong { color: #b07c28; }
+    .col-deck-sim-table {
+      position: relative;
+      margin: 0 0 0.75rem;
+      padding: 0.85rem 0.75rem 0.95rem;
+      border-radius: 16px;
+      border: 1px solid rgba(26, 46, 36, 0.18);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.08), transparent 40%),
+        radial-gradient(circle at 80% 90%, rgba(0, 0, 0, 0.18), transparent 45%),
+        linear-gradient(145deg, #2a5a42 0%, #1e4332 48%, #183628 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -18px 36px rgba(0, 0, 0, 0.22),
+        0 14px 28px rgba(20, 40, 30, 0.18);
+      overflow: hidden;
+    }
+    .col-deck-sim-table::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          -18deg,
+          transparent 0,
+          transparent 11px,
+          rgba(255, 255, 255, 0.015) 11px,
+          rgba(255, 255, 255, 0.015) 12px
+        );
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .col-deck-sim-table-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+      padding: 0 0.2rem;
+    }
+    .col-deck-sim-table-head h4 {
+      margin: 0;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(255, 248, 235, 0.92);
+    }
+    .col-deck-sim-table-note {
+      font-size: 0.72rem;
+      color: rgba(255, 248, 235, 0.62);
     }
     .col-deck-sim-hand {
+      position: relative;
+      z-index: 1;
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.55rem;
+      min-height: 8.5rem;
     }
     @media (max-width: 767.98px) {
       .col-deck-sim-hand { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -5000,51 +5188,84 @@
     @media (max-width: 420px) {
       .col-deck-sim-hand { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+    .col-deck-sim-empty {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      min-height: 9.5rem;
+      padding: 1rem;
+      text-align: center;
+      color: rgba(255, 248, 235, 0.78);
+    }
+    .col-deck-sim-empty i {
+      font-size: 1.45rem;
+      opacity: 0.7;
+      margin-bottom: 0.15rem;
+    }
+    .col-deck-sim-empty strong {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: rgba(255, 248, 235, 0.95);
+    }
+    .col-deck-sim-empty span {
+      font-size: 0.78rem;
+      opacity: 0.8;
+      max-width: 18rem;
+      line-height: 1.45;
+    }
     .col-deck-sim-card {
       appearance: none;
       position: relative;
       width: 100%;
       margin: 0;
-      padding: 0.35rem;
-      border: 2px solid var(--col-line);
-      border-radius: 10px;
-      background: rgba(15, 23, 42, 0.03);
+      padding: 0.3rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.96);
       color: inherit;
       text-align: left;
       cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
     }
     [data-theme="dark"] .col-deck-sim-card {
-      background: rgba(255, 255, 255, 0.04);
+      background: #1a1f1c;
+      border-color: rgba(255, 255, 255, 0.14);
     }
     .col-deck-sim-card:hover {
-      border-color: var(--col-accent);
-      transform: translateY(-2px);
+      transform: translateY(-4px);
+      box-shadow: 0 14px 24px rgba(0, 0, 0, 0.28);
+      border-color: rgba(255, 220, 160, 0.55);
+    }
+    .col-deck-sim-card:focus-visible {
+      outline: 2px solid #cbb083;
+      outline-offset: 2px;
     }
     .col-deck-sim-card.is-selected {
-      border-color: var(--col-accent);
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(176, 124, 40, 0.22);
+      border-color: #cbb083;
+      box-shadow:
+        0 0 0 3px rgba(176, 124, 40, 0.35),
+        0 14px 24px rgba(0, 0, 0, 0.28);
       animation: col-deck-sim-select-pop 0.28s ease both;
-    }
-    [data-theme="dark"] .col-deck-sim-card.is-selected {
-      background: rgba(255, 255, 255, 0.1);
     }
     .col-deck-sim-card.is-disabled {
       cursor: default;
-      opacity: 0.94;
     }
     .col-deck-sim-card.is-disabled:hover {
       transform: none;
-      border-color: var(--col-line);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
+      border-color: rgba(255, 255, 255, 0.18);
     }
     .col-deck-sim-card .art-wrap {
       position: relative;
       display: block;
       overflow: hidden;
-      border-radius: 6px;
-      border: 1px solid var(--col-line);
-      background: rgba(0, 0, 0, 0.06);
+      border-radius: 7px;
+      background: rgba(0, 0, 0, 0.08);
     }
     .col-deck-sim-card .art {
       display: block;
@@ -5056,23 +5277,25 @@
       transition: filter 0.15s ease;
     }
     .col-deck-sim-card.is-selected .art {
-      filter: grayscale(0.35) brightness(1.35);
+      filter: grayscale(0.28) brightness(1.28);
     }
     .col-deck-sim-card.is-selected .art-wrap::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 248, 230, 0.68);
       pointer-events: none;
       z-index: 1;
     }
     [data-theme="dark"] .col-deck-sim-card.is-selected .art-wrap::after {
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.42);
     }
     .col-deck-sim-card .cap {
       margin-top: 0.35rem;
-      font-size: 0.7rem;
+      padding: 0 0.1rem;
+      font-size: 0.68rem;
       line-height: 1.35;
+      color: var(--col-ink);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -5080,36 +5303,42 @@
     }
     .col-deck-sim-card.is-selected .cap {
       font-weight: 700;
-      color: var(--col-accent);
+      color: #8a5a18;
+    }
+    .col-deck-sim-card .cap .mono {
+      opacity: 0.68;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.62rem;
     }
     .col-deck-sim-card .badge-kind {
       position: absolute;
-      top: 0.5rem;
-      left: 0.5rem;
+      top: 0.45rem;
+      left: 0.45rem;
       z-index: 3;
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 700;
-      padding: 0.08rem 0.32rem;
+      padding: 0.1rem 0.34rem;
       border-radius: 4px;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(15, 25, 20, 0.72);
       color: #fff;
+      letter-spacing: 0.02em;
     }
     .col-deck-sim-card .check {
       position: absolute;
       left: 50%;
       top: 50%;
-      transform: translate(-50%, -50%) scale(0.9);
-      width: 2.3rem;
-      height: 2.3rem;
+      transform: translate(-50%, -50%) scale(0.86);
+      width: 2.25rem;
+      height: 2.25rem;
       border-radius: 50%;
-      background: var(--col-accent);
+      background: linear-gradient(145deg, #d4a24a, #b07c28);
       color: #fff;
       border: 2px solid #fff;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
       display: none;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 800;
       line-height: 1;
       z-index: 2;
@@ -5120,42 +5349,103 @@
       transform: translate(-50%, -50%) scale(1);
     }
     .col-deck-sim-log {
-      margin-top: 0.7rem;
-      font-size: 0.84rem;
+      margin: 0 0 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px dashed var(--col-line);
+      background: rgba(47, 107, 79, 0.05);
+      font-size: 0.82rem;
       color: var(--col-muted);
-      min-height: 1.3em;
+      min-height: 2.4em;
+      line-height: 1.45;
     }
+    .col-deck-sim-log:empty { display: none; }
     .col-deck-sim-waiting {
-      margin-top: 0.85rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--col-line);
+      margin: 0 0 0.35rem;
+      padding: 0.75rem 0.8rem;
+      border-radius: 12px;
+      border: 1px solid var(--col-line);
+      background: rgba(15, 23, 42, 0.025);
+    }
+    [data-theme="dark"] .col-deck-sim-waiting {
+      background: rgba(255, 255, 255, 0.03);
     }
     .col-deck-sim-waiting h4 {
       margin: 0;
-      font-size: 0.86rem;
-      font-weight: 700;
+      font-size: 0.82rem;
+      font-weight: 800;
       color: var(--col-ink);
     }
     .col-deck-sim-waiting-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 0.35rem;
-      margin-top: 0.4rem;
+      margin-top: 0.45rem;
     }
     .col-deck-sim-waiting-chip {
       font-size: 0.72rem;
-      padding: 0.2rem 0.5rem;
+      padding: 0.22rem 0.55rem;
       border-radius: 999px;
-      border: 1px solid var(--col-line);
-      background: rgba(15, 23, 42, 0.03);
+      border: 1px solid rgba(176, 124, 40, 0.28);
+      background: rgba(176, 124, 40, 0.08);
       color: var(--col-muted);
       max-width: 14rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    [data-theme="dark"] .col-deck-sim-waiting-chip {
-      background: rgba(255, 255, 255, 0.05);
+    .col-deck-sim-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.85rem 1.15rem 1.05rem;
+      margin-top: auto;
+      border-top: 1px solid var(--col-line);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.94));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    [data-theme="dark"] .col-deck-sim-actions {
+      background: linear-gradient(180deg, rgba(20, 24, 22, 0.72), rgba(20, 24, 22, 0.94));
+    }
+    .col-deck-sim-actions .btn {
+      min-height: 2.35rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    .col-deck-sim-actions .btn-primary {
+      background: #2f6b4f;
+      border-color: #2f6b4f;
+    }
+    .col-deck-sim-actions .btn-primary:hover,
+    .col-deck-sim-actions .btn-primary:focus {
+      background: #275a42;
+      border-color: #275a42;
+    }
+    .col-deck-sim-actions .btn-warning {
+      color: #5c3d0d;
+      background: linear-gradient(145deg, #e6c07a, #c9943a);
+      border-color: #c9943a;
+    }
+    .col-deck-sim-actions .btn-warning:hover,
+    .col-deck-sim-actions .btn-warning:focus {
+      background: linear-gradient(145deg, #dcb366, #b07c28);
+      border-color: #b07c28;
+    }
+    .col-deck-sim-actions .btn-warning:disabled {
+      opacity: 0.45;
+      filter: grayscale(0.2);
+    }
+    .col-deck-sim-actions-spacer { flex: 1 1 auto; }
+    #colDeckToolsModal .col-modal-actions {
+      display: none;
     }
     .col-deck-sim-card.is-dealing {
       opacity: 0;
@@ -5190,7 +5480,8 @@
       .col-deck-sim-card.is-dealing,
       .col-deck-sim-card.is-dumping,
       .col-deck-sim-card.is-selected,
-      .col-deck-sim-waiting-chip.is-arrive {
+      .col-deck-sim-waiting-chip.is-arrive,
+      .col-deck-sim-step.is-active {
         animation: none !important;
         opacity: 1 !important;
         transform: none !important;
@@ -6130,33 +6421,79 @@
 <div id="colDeckToolsModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckTools"></div>
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckToolsTitle">
-    <div class="col-modal-body">
-      <h3 id="colDeckToolsTitle">模擬抽牌</h3>
-      <p class="col-deck-tools-hint" id="colDeckToolsHint">開局抽 5 張 → 點選要換的牌 → 確認調度（丟幾張補幾張，僅一次）。</p>
-      <div class="col-deck-sim-toolbar">
+    <div class="col-modal-body col-deck-sim-body">
+      <header class="col-deck-sim-hero">
+        <div class="col-deck-sim-hero-main">
+          <p class="col-deck-sim-kicker">牌組工具</p>
+          <h3 id="colDeckToolsTitle">模擬抽牌</h3>
+          <p class="col-deck-tools-hint" id="colDeckToolsHint">開局抽 5 張，點選要換掉的牌後確認調度。</p>
+        </div>
+        <span class="col-deck-sim-phase" id="colDeckSimPhase">尚未開始</span>
+      </header>
+
+      <div class="col-deck-sim-panel">
+        <ol class="col-deck-sim-steps" id="colDeckSimSteps" aria-label="模擬步驟">
+          <li class="col-deck-sim-step is-active" data-sim-step="deal">
+            <span class="col-deck-sim-step-num">01</span>
+            <strong>洗牌起手</strong>
+            <span>抽出開局 5 張</span>
+          </li>
+          <li class="col-deck-sim-step" data-sim-step="pick">
+            <span class="col-deck-sim-step-num">02</span>
+            <strong>點選換牌</strong>
+            <span>點亮要丟的牌</span>
+          </li>
+          <li class="col-deck-sim-step" data-sim-step="mull">
+            <span class="col-deck-sim-step-num">03</span>
+            <strong>確認調度</strong>
+            <span>丟幾張補幾張</span>
+          </li>
+        </ol>
+
+        <div class="col-deck-sim-stats" id="colDeckSimStats" aria-live="polite">
+          <div class="col-deck-sim-stat">
+            <span class="col-deck-sim-stat-label">牌庫</span>
+            <strong id="colDeckSimDeckCount">—</strong>
+          </div>
+          <div class="col-deck-sim-stat">
+            <span class="col-deck-sim-stat-label">手牌</span>
+            <strong id="colDeckSimHandCount">—</strong>
+          </div>
+          <div class="col-deck-sim-stat">
+            <span class="col-deck-sim-stat-label">等待室</span>
+            <strong id="colDeckSimWaitingCount">—</strong>
+          </div>
+          <div class="col-deck-sim-stat is-accent">
+            <span class="col-deck-sim-stat-label">已選重抽</span>
+            <strong id="colDeckSimSelectedCount">0</strong>
+          </div>
+        </div>
+
+        <div class="col-deck-sim-table">
+          <div class="col-deck-sim-table-head">
+            <h4>手牌區</h4>
+            <span class="col-deck-sim-table-note" id="colDeckSimTableNote">尚未開始</span>
+          </div>
+          <div class="col-deck-sim-hand" id="colDeckSimHandGrid" aria-label="起手手牌"></div>
+        </div>
+
+        <div class="col-deck-sim-log" id="colDeckSimLog" role="status"></div>
+        <div class="col-deck-sim-waiting" id="colDeckSimWaitingWrap" hidden>
+          <h4>調度丟棄 · 等待室</h4>
+          <div class="col-deck-sim-waiting-chips" id="colDeckSimWaitingChips"></div>
+        </div>
+      </div>
+
+      <div class="col-deck-sim-actions">
         <button type="button" class="btn btn-primary btn-sm" id="colDeckSimDealBtn">
           <i class="fas fa-random mr-1" aria-hidden="true"></i>洗牌並起手
         </button>
         <button type="button" class="btn btn-warning btn-sm" id="colDeckSimMulliganBtn" hidden disabled>
           <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度
         </button>
-        <span class="col-deck-sim-phase" id="colDeckSimPhase">尚未開始</span>
+        <span class="col-deck-sim-actions-spacer" aria-hidden="true"></span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckTools">關閉</button>
       </div>
-      <div class="col-deck-sim-stats" id="colDeckSimStats" aria-live="polite">
-        <span>牌庫 <strong id="colDeckSimDeckCount">—</strong></span>
-        <span>手牌 <strong id="colDeckSimHandCount">—</strong></span>
-        <span>等待室 <strong id="colDeckSimWaitingCount">—</strong></span>
-        <span>已選重抽 <strong id="colDeckSimSelectedCount">0</strong></span>
-      </div>
-      <div class="col-deck-sim-hand" id="colDeckSimHandGrid" aria-label="起手手牌"></div>
-      <div class="col-deck-sim-log" id="colDeckSimLog" role="status"></div>
-      <div class="col-deck-sim-waiting" id="colDeckSimWaitingWrap" hidden>
-        <h4>調度丟棄（等待室）</h4>
-        <div class="col-deck-sim-waiting-chips" id="colDeckSimWaitingChips"></div>
-      </div>
-    </div>
-    <div class="col-modal-actions">
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckTools">關閉</button>
     </div>
   </div>
 </div>
@@ -6406,6 +6743,8 @@
     var deckSimLogEl = document.getElementById('colDeckSimLog');
     var deckSimWaitingWrap = document.getElementById('colDeckSimWaitingWrap');
     var deckSimWaitingChips = document.getElementById('colDeckSimWaitingChips');
+    var deckSimStepsEl = document.getElementById('colDeckSimSteps');
+    var deckSimTableNote = document.getElementById('colDeckSimTableNote');
     var DECK_SIM_OPENING_HAND = 5;
     var deckSimUid = 0;
     var deckSimAnimating = false;
@@ -9933,15 +10272,51 @@
       return out;
     }
 
+    function syncDeckSimSteps(phase) {
+      if (!deckSimStepsEl) return;
+      var deal = deckSimStepsEl.querySelector('[data-sim-step="deal"]');
+      var pick = deckSimStepsEl.querySelector('[data-sim-step="pick"]');
+      var mull = deckSimStepsEl.querySelector('[data-sim-step="mull"]');
+      var selectedN = deckSimSelectedCount();
+      [deal, pick, mull].forEach(function (node) {
+        if (!node) return;
+        node.classList.remove('is-active', 'is-done');
+      });
+      if (phase === 'idle') {
+        if (deal) deal.classList.add('is-active');
+      } else if (phase === 'opening') {
+        if (deal) deal.classList.add('is-done');
+        if (selectedN > 0) {
+          if (pick) pick.classList.add('is-done');
+          if (mull) mull.classList.add('is-active');
+        } else if (pick) {
+          pick.classList.add('is-active');
+        }
+      } else if (phase === 'done') {
+        if (deal) deal.classList.add('is-done');
+        if (pick) pick.classList.add('is-done');
+        if (mull) mull.classList.add('is-done', 'is-active');
+      }
+      if (deckSimTableNote) {
+        deckSimTableNote.textContent =
+          phase === 'opening'
+            ? (selectedN > 0 ? ('已選 ' + selectedN + ' 張待重抽') : '點選手牌以標記重抽')
+            : phase === 'done' ? '本局調度完成'
+            : deckSimEntries.length ? '準備洗牌' : '尚無牌組卡片';
+      }
+    }
+
     function setDeckSimPhase(phase, label) {
       deckSimState.phase = phase;
-      if (!deckSimPhaseEl) return;
-      deckSimPhaseEl.textContent = label;
-      deckSimPhaseEl.className = 'col-deck-sim-phase' + (
-        phase === 'opening' ? ' is-mull' :
-        phase === 'done' ? ' is-done' :
-        phase === 'idle' && label !== '尚未開始' ? ' is-ready' : ''
-      );
+      if (deckSimPhaseEl) {
+        deckSimPhaseEl.textContent = label;
+        deckSimPhaseEl.className = 'col-deck-sim-phase' + (
+          phase === 'opening' ? ' is-mull' :
+          phase === 'done' ? ' is-done' :
+          phase === 'idle' && label !== '尚未開始' ? ' is-ready' : ''
+        );
+      }
+      syncDeckSimSteps(phase);
     }
 
     function updateDeckSimButtons() {
@@ -10006,8 +10381,7 @@
         '<span class="art-wrap">' + img +
         '<span class="check" aria-hidden="true">✓</span></span>' +
         '<div class="cap">' + escapeHtml(c.name) +
-        (c.cardNo ? ('<br><span style="opacity:0.72;font-family:IBM Plex Mono,ui-monospace,monospace">' +
-          escapeHtml(c.cardNo) + '</span>') : '') +
+        (c.cardNo ? ('<br><span class="mono">' + escapeHtml(c.cardNo) + '</span>') : '') +
         '</div></button>';
     }
 
@@ -10016,7 +10390,11 @@
       if (!deckSimHandGrid) return;
       if (!deckSimState.hand.length) {
         deckSimHandGrid.innerHTML =
-          '<p class="col-deck-tools-hint" style="grid-column:1/-1;margin:0">尚未抽起手。</p>';
+          '<div class="col-deck-sim-empty" role="status">' +
+          '<i class="fas fa-layer-group" aria-hidden="true"></i>' +
+          '<strong>牌桌待命中</strong>' +
+          '<span>按下下方「洗牌並起手」，抽出開局 5 張。</span>' +
+          '</div>';
         return;
       }
       var selectable = deckSimState.phase === 'opening';
@@ -10096,7 +10474,7 @@
       setDeckSimPhase('idle', deckSimEntries.length ? '可開始模擬' : '尚未開始');
       if (deckToolsHint) {
         deckToolsHint.textContent = deckSimEntries.length
-          ? ('「' + (deck.name || '未命名牌組') + '」· 點「洗牌並起手」抽 5 張，再點選要換掉的牌確認調度。')
+          ? ('正在模擬「' + (deck.name || '未命名牌組') + '」· 共 ' + deckSimEntries.length + ' 張。')
           : '此牌組尚無卡片，無法模擬抽牌。';
       }
       deckSimState.log = '';
@@ -10139,6 +10517,7 @@
       }
       renderDeckSimStats();
       updateDeckSimButtons();
+      syncDeckSimSteps(deckSimState.phase);
     }
 
     function finishDeckSimMulligan(dump, drawn) {
