@@ -4913,6 +4913,72 @@
       opacity: 0.72;
       font-style: italic;
     }
+    /* 標籤／描述卡：手機標題右側放「工具」；桌面放到描述下方 */
+    .col-deck-info-card--meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "title tools"
+        "tags tags"
+        "desc desc";
+      gap: 0.45rem 0.65rem;
+      align-items: start;
+    }
+    .col-deck-info-card--meta > h6,
+    .col-deck-info-meta-title {
+      grid-area: title;
+      margin: 0;
+      align-self: center;
+    }
+    .col-deck-info-card--meta .col-deck-detail-tags {
+      grid-area: tags;
+      margin-top: 0;
+    }
+    .col-deck-info-card--meta .col-deck-detail-desc {
+      grid-area: desc;
+      margin-top: 0.1rem;
+    }
+    .col-deck-tools-btn {
+      grid-area: tools;
+      justify-self: end;
+      align-self: center;
+      min-height: 2rem;
+      padding: 0.28rem 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .col-deck-tools-menu {
+      display: grid;
+      gap: 0.45rem;
+      margin: 0.15rem 0 0;
+    }
+    .col-deck-tools-menu .btn {
+      width: 100%;
+      justify-content: flex-start;
+      min-height: 2.35rem;
+      font-weight: 700;
+      text-align: left;
+    }
+    .col-deck-tools-hint {
+      margin: 0.15rem 0 0.55rem;
+      font-size: 0.82rem;
+      color: var(--col-muted);
+      line-height: 1.45;
+    }
+    @media (min-width: 768px) {
+      .col-deck-info-card--meta {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+          "title"
+          "tags"
+          "desc"
+          "tools";
+      }
+      .col-deck-tools-btn {
+        justify-self: start;
+        margin-top: 0.25rem;
+      }
+    }
 
     /* =========================================================
        Motion Library 適配（kittenjam-motion-library）
@@ -5829,6 +5895,21 @@
   </div>
 </div>
 
+<!-- 牌組工具（詳情頁「工具」按鈕開啟） -->
+<div id="colDeckToolsModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckTools"></div>
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckToolsTitle" style="width:min(420px,100%);">
+    <div class="col-modal-body">
+      <h3 id="colDeckToolsTitle">牌組工具</h3>
+      <p class="col-deck-tools-hint" id="colDeckToolsHint">輸出、複製、版本轉換等操作。</p>
+      <div class="col-deck-tools-menu" id="colDeckToolsMenu" role="menu" aria-label="牌組工具清單"></div>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckTools">關閉</button>
+    </div>
+  </div>
+</div>
+
 <!-- 編輯牌組名稱／標籤／描述（由更多操作開啟） -->
 <div id="colDeckMetaModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckMeta"></div>
@@ -6060,6 +6141,10 @@
     var deckMetaConfirmBtn = document.getElementById('colDeckMetaConfirmBtn');
     var deckMetaCancelBtn = document.getElementById('colDeckMetaCancelBtn');
     var deckMetaHint = document.getElementById('colDeckMetaHint');
+    var deckToolsModal = document.getElementById('colDeckToolsModal');
+    var deckToolsMenu = document.getElementById('colDeckToolsMenu');
+    var deckToolsHint = document.getElementById('colDeckToolsHint');
+    var deckToolsTargetId = null;
     var deckEditorRarityMode = 'normal';
     var deckRarityToggleBusy = false;
     /** 編輯中牌組的系列卡表快取（titleCode → Map|null）；null=載入失敗 */
@@ -9216,6 +9301,8 @@
         clearEditorLocalDraft(closingDraftId);
         closeModal(deckCoverModal);
         closeModal(deckMetaModal);
+        closeModal(deckToolsModal);
+        deckToolsTargetId = null;
         closeModal(deckModal);
         deckDraft = null;
         deckEditorMode = 'edit';
@@ -9243,6 +9330,12 @@
       if (name === 'deckMeta') {
         closeModal(deckMetaModal);
         syncDeckMetaInputsFromDraft();
+        return;
+      }
+      if (name === 'deckTools') {
+        closeModal(deckToolsModal);
+        deckToolsTargetId = null;
+        if (deckToolsMenu) deckToolsMenu.innerHTML = '';
         return;
       }
       if (name === 'filter') {
@@ -9467,6 +9560,50 @@
     function confirmDeckMetaModal() {
       if (!applyDeckMetaFromInputs()) return;
       closeModalByName('deckMeta');
+    }
+
+    function buildDeckToolsMenuHtml(deck) {
+      if (!deck || !deck.id) return '';
+      var deckId = deck.id;
+      var highKinds = countDeckHighRarityKinds(deck.cards);
+      var html = '';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-export-image="' +
+        escapeHtml(deckId) + '" title="輸出類似編成一覽的牌組圖片">' +
+        '<i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-export="' +
+        escapeHtml(deckId) + '" title="下載牌組 JSON">' +
+        '<i class="fas fa-file-download mr-1" aria-hidden="true"></i>匯出 JSON</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-dup="' +
+        escapeHtml(deckId) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製牌組</button>';
+      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-rarity-toggle="' +
+        escapeHtml(deckId) + '" title="' +
+        (highKinds > 0 ? '將高版本卡號改回普通版' : '此牌組沒有可改回的高版本卡號') + '"' +
+        (highKinds > 0 ? '' : ' disabled') + '>' +
+        '<i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i>改為普通版</button>';
+      if (isDecklogOriginDeck(deck)) {
+        html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-restore-decklog="' +
+          escapeHtml(deckId) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
+          '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
+      }
+      html += '<button type="button" class="btn btn-outline-danger btn-sm" role="menuitem" data-deck-del="' +
+        escapeHtml(deckId) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除牌組</button>';
+      return html;
+    }
+
+    function openDeckToolsModal(deckId) {
+      var id = normalizeText(deckId);
+      var deck = id ? allDecks.find(function (d) { return d.id === id; }) : null;
+      if (!deck) {
+        setStatus('找不到此牌組', 'is-error');
+        return;
+      }
+      closeDeckOverflowMenus();
+      deckToolsTargetId = deck.id;
+      if (deckToolsHint) {
+        deckToolsHint.textContent = '「' + (deck.name || '未命名牌組') + '」可用的工具。';
+      }
+      if (deckToolsMenu) deckToolsMenu.innerHTML = buildDeckToolsMenuHtml(deck);
+      openModal(deckToolsModal);
     }
 
     function ownedQty(cardNumber) {
@@ -11714,7 +11851,10 @@
       html += deckDetailChartsHtml(deck);
       html += '    </div>';
       html += '    <div class="col-deck-info-card col-deck-info-card--meta">';
-      html += '      <h6>標籤／描述</h6>';
+      html += '      <h6 class="col-deck-info-meta-title">標籤／描述</h6>';
+      html += '      <button type="button" class="btn btn-outline-secondary btn-sm col-deck-tools-btn" data-deck-open-tools="' +
+        escapeHtml(deck.id) + '" title="開啟牌組工具" aria-haspopup="dialog" aria-controls="colDeckToolsModal">' +
+        '<i class="fas fa-wrench mr-1" aria-hidden="true"></i>工具</button>';
       html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
       if (detailDesc) {
         html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
@@ -13502,6 +13642,17 @@
       if (e.target.closest('.col-deck-overflow-menu')) {
         closeDeckOverflowMenus();
       }
+      var openToolsBtn = e.target.closest('[data-deck-open-tools]');
+      if (openToolsBtn) {
+        e.preventDefault();
+        openDeckToolsModal(openToolsBtn.getAttribute('data-deck-open-tools'));
+        return;
+      }
+      var fromToolsMenu = !!(deckToolsModal && deckToolsModal.contains(e.target) &&
+        e.target.closest('.col-deck-tools-menu'));
+      function closeToolsMenuIfNeeded() {
+        if (fromToolsMenu) closeModalByName('deckTools');
+      }
       var chartLevelBtn = e.target.closest('[data-deck-chart-level]');
       if (chartLevelBtn) {
         e.preventDefault();
@@ -13564,32 +13715,44 @@
       }
       var rarityBtn = e.target.closest('[data-deck-rarity-toggle]');
       if (rarityBtn) {
-        startDeckRarityToggleForDeck(rarityBtn.getAttribute('data-deck-rarity-toggle'));
+        var rarityId = rarityBtn.getAttribute('data-deck-rarity-toggle');
+        closeToolsMenuIfNeeded();
+        startDeckRarityToggleForDeck(rarityId);
         return;
       }
       var dupBtn = e.target.closest('[data-deck-dup]');
       if (dupBtn) {
-        duplicateDeck(dupBtn.getAttribute('data-deck-dup'));
+        var dupId = dupBtn.getAttribute('data-deck-dup');
+        closeToolsMenuIfNeeded();
+        duplicateDeck(dupId);
         return;
       }
       var restoreBtn = e.target.closest('[data-deck-restore-decklog]');
       if (restoreBtn) {
-        restoreDeckFromDecklog(restoreBtn.getAttribute('data-deck-restore-decklog'));
+        var restoreId = restoreBtn.getAttribute('data-deck-restore-decklog');
+        closeToolsMenuIfNeeded();
+        restoreDeckFromDecklog(restoreId);
         return;
       }
       var delBtn = e.target.closest('[data-deck-del]');
       if (delBtn) {
-        deleteDeck(delBtn.getAttribute('data-deck-del'));
+        var delId = delBtn.getAttribute('data-deck-del');
+        closeToolsMenuIfNeeded();
+        deleteDeck(delId);
         return;
       }
       var exportBtn = e.target.closest('[data-deck-export]');
       if (exportBtn) {
-        exportDeckJson(exportBtn.getAttribute('data-deck-export'));
+        var exportId = exportBtn.getAttribute('data-deck-export');
+        closeToolsMenuIfNeeded();
+        exportDeckJson(exportId);
         return;
       }
       var exportImageBtn = e.target.closest('[data-deck-export-image]');
       if (exportImageBtn) {
-        exportDeckImage(exportImageBtn.getAttribute('data-deck-export-image'));
+        var exportImageId = exportImageBtn.getAttribute('data-deck-export-image');
+        closeToolsMenuIfNeeded();
+        exportDeckImage(exportImageId);
         return;
       }
       var shareBtn = e.target.closest('[data-deck-share]');
@@ -13599,6 +13762,9 @@
     }
     if (deckListEl) {
       bindEl(deckListEl, 'click', handleDeckActionClick);
+    }
+    if (deckToolsModal) {
+      bindEl(deckToolsModal, 'click', handleDeckActionClick);
     }
     bindEl(window, 'popstate', function (e) {
       if (isDeckDesktopLayout()) return;
@@ -13876,6 +14042,10 @@
       }
       if (confirmModal && confirmModal.classList.contains('is-open')) {
         closeModalByName('confirm');
+        return;
+      }
+      if (deckToolsModal && deckToolsModal.classList.contains('is-open')) {
+        closeModalByName('deckTools');
         return;
       }
       if (deckMetaModal && deckMetaModal.classList.contains('is-open')) {
