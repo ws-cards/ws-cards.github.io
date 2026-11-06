@@ -4173,7 +4173,8 @@
       overflow-x: hidden;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-y;
+      /* 觸控交給子層：卡圖可橫滑切卡，詳情區可直向捲動 */
+      touch-action: manipulation;
       border-radius: 0;
       border: 0;
       background: var(--deckbox-well, var(--col-shell-bg, #f7faf8));
@@ -4197,6 +4198,10 @@
       box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
       cursor: default;
       overflow: hidden;
+      /* 真實手機：卡圖區交給 JS 辨識左右滑，避免被直向捲動吃掉 */
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-art {
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
@@ -4211,6 +4216,10 @@
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-art img {
       object-fit: cover;
+      -webkit-user-drag: none;
+      user-drag: none;
+      -webkit-touch-callout: none;
+      pointer-events: none;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand {
       display: flex;
@@ -4230,6 +4239,7 @@
       gap: 0.85rem;
       flex: 0 0 auto;
       color: var(--col-ink);
+      touch-action: pan-y;
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-close {
       position: fixed;
@@ -8735,6 +8745,7 @@
       y0: 0,
       active: false,
       axis: '',
+      fromArt: false,
       suppressClickUntil: 0
     };
 
@@ -8742,26 +8753,110 @@
       mobileLbSwipe.pointerId = null;
       mobileLbSwipe.active = false;
       mobileLbSwipe.axis = '';
+      mobileLbSwipe.fromArt = false;
+    }
+
+    function isMobileLbSwipeTarget(target) {
+      if (!deckCardExpandEntry || !deckCardExpandEntry.classList.contains('is-lb-mobile')) return false;
+      if (deckCardExpandBusy) return false;
+      if (!target || !target.closest) return false;
+      if (target.closest('[data-deck-expand-close], .col-deck-entry-expand-close, button, a, input, label, select, textarea')) {
+        return false;
+      }
+      return !!(deckCardExpandEntry.contains(target) || target.closest('.col-lb-backdrop'));
+    }
+
+    function resolveMobileLbSwipeAxis(dx, dy, fromArt) {
+      var absX = Math.abs(dx);
+      var absY = Math.abs(dy);
+      if (fromArt) {
+        /* 卡圖區：偏橫滑；只有明顯直滑才交給頁面捲動 */
+        if (absY > absX * 1.75 && absY > 22) return 'v';
+        if (absX > 8) return 'h';
+        return '';
+      }
+      /* 詳情文字：需更明確的橫滑才切卡，其餘保留直向捲動 */
+      if (absX > absY * 1.25 && absX > 12) return 'h';
+      if (absY > 10) return 'v';
+      return '';
+    }
+
+    function finishMobileLbSwipe(dx, axis, fromArt) {
+      resetMobileLbSwipe();
+      if (axis !== 'h') return;
+      var threshold = fromArt ? 36 : 48;
+      if (Math.abs(dx) < threshold) return;
+      /* 避免滑動後的合成 click 把光箱當「再點一次」關掉 */
+      mobileLbSwipe.suppressClickUntil = Date.now() + 550;
+      /* 左滑 → 下一張；右滑 → 上一張 */
+      navigateMobileLightbox(dx < 0 ? 1 : -1);
     }
 
     function bindMobileLightboxSwipeNav() {
       if (document.documentElement.getAttribute('data-lb-swipe-bound') === '1') return;
       document.documentElement.setAttribute('data-lb-swipe-bound', '1');
 
+      /* 真實手機以 touch* 為主（Safari 在 overflow 容器上 pointer 橫滑常被吃掉） */
+      document.addEventListener('touchstart', function (e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        if (!isMobileLbSwipeTarget(e.target)) return;
+        var t = e.touches[0];
+        mobileLbSwipe.pointerId = 'touch';
+        mobileLbSwipe.x0 = t.clientX;
+        mobileLbSwipe.y0 = t.clientY;
+        mobileLbSwipe.active = true;
+        mobileLbSwipe.axis = '';
+        mobileLbSwipe.fromArt = !!(e.target.closest && e.target.closest('.col-deck-entry-art'));
+      }, { passive: true, capture: true });
+
+      document.addEventListener('touchmove', function (e) {
+        if (!mobileLbSwipe.active || mobileLbSwipe.pointerId !== 'touch') return;
+        if (!deckCardExpandEntry || !deckCardExpandEntry.classList.contains('is-lb-mobile')) {
+          resetMobileLbSwipe();
+          return;
+        }
+        if (!e.touches || !e.touches.length) return;
+        var t = e.touches[0];
+        var dx = t.clientX - mobileLbSwipe.x0;
+        var dy = t.clientY - mobileLbSwipe.y0;
+        if (!mobileLbSwipe.axis) {
+          mobileLbSwipe.axis = resolveMobileLbSwipeAxis(dx, dy, mobileLbSwipe.fromArt);
+          if (!mobileLbSwipe.axis) return;
+        }
+        if (mobileLbSwipe.axis === 'h' && e.cancelable) {
+          try { e.preventDefault(); } catch (ePrevTouch) { /* ignore */ }
+        }
+      }, { passive: false, capture: true });
+
+      function onTouchEnd(e) {
+        if (!mobileLbSwipe.active || mobileLbSwipe.pointerId !== 'touch') return;
+        var dx = 0;
+        if (e.changedTouches && e.changedTouches[0]) {
+          dx = e.changedTouches[0].clientX - mobileLbSwipe.x0;
+        }
+        finishMobileLbSwipe(dx, mobileLbSwipe.axis, mobileLbSwipe.fromArt);
+      }
+
+      document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
+      document.addEventListener('touchcancel', function () {
+        if (mobileLbSwipe.pointerId === 'touch') resetMobileLbSwipe();
+      }, { passive: true, capture: true });
+
+      /* 桌面／模擬器用 pointer；略過 touch 產生的相容 pointer，避免雙重觸發 */
       document.addEventListener('pointerdown', function (e) {
-        if (!deckCardExpandEntry || !deckCardExpandEntry.classList.contains('is-lb-mobile')) return;
-        if (deckCardExpandBusy) return;
+        if (e.pointerType === 'touch') return;
+        if (!isMobileLbSwipeTarget(e.target)) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        if (e.target.closest('[data-deck-expand-close], .col-deck-entry-expand-close, button, a, input, label, select, textarea')) return;
-        if (!(deckCardExpandEntry.contains(e.target) || e.target.closest('.col-lb-backdrop'))) return;
         mobileLbSwipe.pointerId = e.pointerId;
         mobileLbSwipe.x0 = e.clientX;
         mobileLbSwipe.y0 = e.clientY;
         mobileLbSwipe.active = true;
         mobileLbSwipe.axis = '';
-      }, { passive: true });
+        mobileLbSwipe.fromArt = !!(e.target.closest && e.target.closest('.col-deck-entry-art'));
+      }, { passive: true, capture: true });
 
       document.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch') return;
         if (!mobileLbSwipe.active || e.pointerId !== mobileLbSwipe.pointerId) return;
         if (!deckCardExpandEntry || !deckCardExpandEntry.classList.contains('is-lb-mobile')) {
           resetMobileLbSwipe();
@@ -8770,31 +8865,25 @@
         var dx = e.clientX - mobileLbSwipe.x0;
         var dy = e.clientY - mobileLbSwipe.y0;
         if (!mobileLbSwipe.axis) {
-          if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
-          mobileLbSwipe.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'h' : 'v';
+          mobileLbSwipe.axis = resolveMobileLbSwipeAxis(dx, dy, mobileLbSwipe.fromArt);
+          if (!mobileLbSwipe.axis) return;
         }
         if (mobileLbSwipe.axis === 'h' && e.cancelable) {
-          try { e.preventDefault(); } catch (ePrev) { /* ignore */ }
+          try { e.preventDefault(); } catch (ePrevPtr) { /* ignore */ }
         }
-      }, { passive: false });
+      }, { passive: false, capture: true });
 
-      function onSwipeEnd(e) {
+      function onPointerEnd(e) {
+        if (e.pointerType === 'touch') return;
         if (!mobileLbSwipe.active || e.pointerId !== mobileLbSwipe.pointerId) return;
-        var dx = e.clientX - mobileLbSwipe.x0;
-        var axis = mobileLbSwipe.axis;
-        resetMobileLbSwipe();
-        if (axis !== 'h') return;
-        if (Math.abs(dx) < 56) return;
-        /* 避免滑動後的合成 click 把光箱當「再點一次」關掉 */
-        mobileLbSwipe.suppressClickUntil = Date.now() + 450;
-        /* 左滑 → 下一張；右滑 → 上一張 */
-        navigateMobileLightbox(dx < 0 ? 1 : -1);
+        finishMobileLbSwipe(e.clientX - mobileLbSwipe.x0, mobileLbSwipe.axis, mobileLbSwipe.fromArt);
       }
 
-      document.addEventListener('pointerup', onSwipeEnd, { passive: true });
+      document.addEventListener('pointerup', onPointerEnd, { passive: true, capture: true });
       document.addEventListener('pointercancel', function (e) {
+        if (e.pointerType === 'touch') return;
         if (e.pointerId === mobileLbSwipe.pointerId) resetMobileLbSwipe();
-      }, { passive: true });
+      }, { passive: true, capture: true });
 
       document.addEventListener('click', function (e) {
         if (Date.now() >= mobileLbSwipe.suppressClickUntil) return;
