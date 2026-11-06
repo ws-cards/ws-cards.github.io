@@ -4947,23 +4947,254 @@
       font-weight: 700;
       white-space: nowrap;
     }
-    .col-deck-tools-menu {
-      display: grid;
-      gap: 0.45rem;
-      margin: 0.15rem 0 0;
-    }
-    .col-deck-tools-menu .btn {
-      width: 100%;
-      justify-content: flex-start;
-      min-height: 2.35rem;
-      font-weight: 700;
-      text-align: left;
-    }
     .col-deck-tools-hint {
       margin: 0.15rem 0 0.55rem;
       font-size: 0.82rem;
       color: var(--col-muted);
       line-height: 1.45;
+    }
+    #colDeckToolsModal .col-modal-dialog {
+      width: min(720px, 100%);
+    }
+    .col-deck-sim-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .col-deck-sim-phase {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--col-line);
+      background: var(--col-accent-soft);
+      color: var(--col-muted);
+    }
+    .col-deck-sim-phase.is-ready { color: var(--col-accent); }
+    .col-deck-sim-phase.is-mull { color: #b07c28; border-color: rgba(176, 124, 40, 0.4); }
+    .col-deck-sim-phase.is-done { color: #568a6d; border-color: rgba(86, 138, 109, 0.45); }
+    .col-deck-sim-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.84rem;
+      color: var(--col-muted);
+    }
+    .col-deck-sim-stats strong {
+      color: var(--col-ink);
+      font-weight: 700;
+    }
+    .col-deck-sim-hand {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    @media (max-width: 767.98px) {
+      .col-deck-sim-hand { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 420px) {
+      .col-deck-sim-hand { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .col-deck-sim-card {
+      appearance: none;
+      position: relative;
+      width: 100%;
+      margin: 0;
+      padding: 0.35rem;
+      border: 2px solid var(--col-line);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.03);
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    [data-theme="dark"] .col-deck-sim-card {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-deck-sim-card:hover {
+      border-color: var(--col-accent);
+      transform: translateY(-2px);
+    }
+    .col-deck-sim-card.is-selected {
+      border-color: var(--col-accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(176, 124, 40, 0.22);
+      animation: col-deck-sim-select-pop 0.28s ease both;
+    }
+    [data-theme="dark"] .col-deck-sim-card.is-selected {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .col-deck-sim-card.is-disabled {
+      cursor: default;
+      opacity: 0.94;
+    }
+    .col-deck-sim-card.is-disabled:hover {
+      transform: none;
+      border-color: var(--col-line);
+    }
+    .col-deck-sim-card .art-wrap {
+      position: relative;
+      display: block;
+      overflow: hidden;
+      border-radius: 6px;
+      border: 1px solid var(--col-line);
+      background: rgba(0, 0, 0, 0.06);
+    }
+    .col-deck-sim-card .art {
+      display: block;
+      width: 100%;
+      aspect-ratio: 63 / 88;
+      object-fit: cover;
+      background: transparent;
+      border: 0;
+      transition: filter 0.15s ease;
+    }
+    .col-deck-sim-card.is-selected .art {
+      filter: grayscale(0.35) brightness(1.35);
+    }
+    .col-deck-sim-card.is-selected .art-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.72);
+      pointer-events: none;
+      z-index: 1;
+    }
+    [data-theme="dark"] .col-deck-sim-card.is-selected .art-wrap::after {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .col-deck-sim-card .cap {
+      margin-top: 0.35rem;
+      font-size: 0.7rem;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .col-deck-sim-card.is-selected .cap {
+      font-weight: 700;
+      color: var(--col-accent);
+    }
+    .col-deck-sim-card .badge-kind {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      z-index: 3;
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 0.08rem 0.32rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+    }
+    .col-deck-sim-card .check {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 2.3rem;
+      height: 2.3rem;
+      border-radius: 50%;
+      background: var(--col-accent);
+      color: #fff;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .col-deck-sim-card.is-selected .check {
+      display: inline-flex;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .col-deck-sim-log {
+      margin-top: 0.7rem;
+      font-size: 0.84rem;
+      color: var(--col-muted);
+      min-height: 1.3em;
+    }
+    .col-deck-sim-waiting {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--col-line);
+    }
+    .col-deck-sim-waiting h4 {
+      margin: 0;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--col-ink);
+    }
+    .col-deck-sim-waiting-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+    .col-deck-sim-waiting-chip {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--col-line);
+      background: rgba(15, 23, 42, 0.03);
+      color: var(--col-muted);
+      max-width: 14rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .col-deck-sim-waiting-chip {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .col-deck-sim-card.is-dealing {
+      opacity: 0;
+      animation: col-deck-sim-deal-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .col-deck-sim-card.is-dumping {
+      pointer-events: none;
+      animation: col-deck-sim-dump-out 0.38s ease forwards;
+      z-index: 2;
+    }
+    .col-deck-sim-waiting-chip.is-arrive {
+      animation: col-deck-sim-chip-in 0.35s ease both;
+    }
+    .col-deck-sim-hand.is-busy .col-deck-sim-card { pointer-events: none; }
+    @keyframes col-deck-sim-deal-in {
+      from { opacity: 0; transform: translateY(-28px) scale(0.92); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes col-deck-sim-dump-out {
+      to { opacity: 0; transform: translateY(36px) scale(0.88); }
+    }
+    @keyframes col-deck-sim-select-pop {
+      0% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(-6px) scale(1.03); }
+      100% { transform: translateY(-4px) scale(1.02); }
+    }
+    @keyframes col-deck-sim-chip-in {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .col-deck-sim-card.is-dealing,
+      .col-deck-sim-card.is-dumping,
+      .col-deck-sim-card.is-selected,
+      .col-deck-sim-waiting-chip.is-arrive {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
     }
     @media (min-width: 768px) {
       .col-deck-info-card--meta {
@@ -5895,14 +6126,34 @@
   </div>
 </div>
 
-<!-- 牌組工具（詳情頁「工具」按鈕開啟） -->
+<!-- 牌組工具：模擬抽牌（詳情頁「工具」按鈕開啟；流程對齊 deckAnalysis） -->
 <div id="colDeckToolsModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deckTools"></div>
-  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckToolsTitle" style="width:min(420px,100%);">
+  <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckToolsTitle">
     <div class="col-modal-body">
-      <h3 id="colDeckToolsTitle">牌組工具</h3>
-      <p class="col-deck-tools-hint" id="colDeckToolsHint">輸出、複製、版本轉換等操作。</p>
-      <div class="col-deck-tools-menu" id="colDeckToolsMenu" role="menu" aria-label="牌組工具清單"></div>
+      <h3 id="colDeckToolsTitle">模擬抽牌</h3>
+      <p class="col-deck-tools-hint" id="colDeckToolsHint">開局抽 5 張 → 點選要換的牌 → 確認調度（丟幾張補幾張，僅一次）。</p>
+      <div class="col-deck-sim-toolbar">
+        <button type="button" class="btn btn-primary btn-sm" id="colDeckSimDealBtn">
+          <i class="fas fa-random mr-1" aria-hidden="true"></i>洗牌並起手
+        </button>
+        <button type="button" class="btn btn-warning btn-sm" id="colDeckSimMulliganBtn" hidden disabled>
+          <i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度
+        </button>
+        <span class="col-deck-sim-phase" id="colDeckSimPhase">尚未開始</span>
+      </div>
+      <div class="col-deck-sim-stats" id="colDeckSimStats" aria-live="polite">
+        <span>牌庫 <strong id="colDeckSimDeckCount">—</strong></span>
+        <span>手牌 <strong id="colDeckSimHandCount">—</strong></span>
+        <span>等待室 <strong id="colDeckSimWaitingCount">—</strong></span>
+        <span>已選重抽 <strong id="colDeckSimSelectedCount">0</strong></span>
+      </div>
+      <div class="col-deck-sim-hand" id="colDeckSimHandGrid" aria-label="起手手牌"></div>
+      <div class="col-deck-sim-log" id="colDeckSimLog" role="status"></div>
+      <div class="col-deck-sim-waiting" id="colDeckSimWaitingWrap" hidden>
+        <h4>調度丟棄（等待室）</h4>
+        <div class="col-deck-sim-waiting-chips" id="colDeckSimWaitingChips"></div>
+      </div>
     </div>
     <div class="col-modal-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckTools">關閉</button>
@@ -6142,9 +6393,31 @@
     var deckMetaCancelBtn = document.getElementById('colDeckMetaCancelBtn');
     var deckMetaHint = document.getElementById('colDeckMetaHint');
     var deckToolsModal = document.getElementById('colDeckToolsModal');
-    var deckToolsMenu = document.getElementById('colDeckToolsMenu');
     var deckToolsHint = document.getElementById('colDeckToolsHint');
     var deckToolsTargetId = null;
+    var deckSimDealBtn = document.getElementById('colDeckSimDealBtn');
+    var deckSimMulliganBtn = document.getElementById('colDeckSimMulliganBtn');
+    var deckSimPhaseEl = document.getElementById('colDeckSimPhase');
+    var deckSimDeckCountEl = document.getElementById('colDeckSimDeckCount');
+    var deckSimHandCountEl = document.getElementById('colDeckSimHandCount');
+    var deckSimWaitingCountEl = document.getElementById('colDeckSimWaitingCount');
+    var deckSimSelectedCountEl = document.getElementById('colDeckSimSelectedCount');
+    var deckSimHandGrid = document.getElementById('colDeckSimHandGrid');
+    var deckSimLogEl = document.getElementById('colDeckSimLog');
+    var deckSimWaitingWrap = document.getElementById('colDeckSimWaitingWrap');
+    var deckSimWaitingChips = document.getElementById('colDeckSimWaitingChips');
+    var DECK_SIM_OPENING_HAND = 5;
+    var deckSimUid = 0;
+    var deckSimAnimating = false;
+    var deckSimEntries = [];
+    var deckSimState = {
+      deck: [],
+      hand: [],
+      waiting: [],
+      selected: {},
+      phase: 'idle',
+      log: ''
+    };
     var deckEditorRarityMode = 'normal';
     var deckRarityToggleBusy = false;
     /** 編輯中牌組的系列卡表快取（titleCode → Map|null）；null=載入失敗 */
@@ -9303,6 +9576,7 @@
         closeModal(deckMetaModal);
         closeModal(deckToolsModal);
         deckToolsTargetId = null;
+        resetDeckSimUi();
         closeModal(deckModal);
         deckDraft = null;
         deckEditorMode = 'edit';
@@ -9335,7 +9609,7 @@
       if (name === 'deckTools') {
         closeModal(deckToolsModal);
         deckToolsTargetId = null;
-        if (deckToolsMenu) deckToolsMenu.innerHTML = '';
+        resetDeckSimUi();
         return;
       }
       if (name === 'filter') {
@@ -9562,32 +9836,359 @@
       closeModalByName('deckMeta');
     }
 
-    function buildDeckToolsMenuHtml(deck) {
-      if (!deck || !deck.id) return '';
-      var deckId = deck.id;
-      var highKinds = countDeckHighRarityKinds(deck.cards);
-      var html = '';
-      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-export-image="' +
-        escapeHtml(deckId) + '" title="輸出類似編成一覽的牌組圖片">' +
-        '<i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
-      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-export="' +
-        escapeHtml(deckId) + '" title="下載牌組 JSON">' +
-        '<i class="fas fa-file-download mr-1" aria-hidden="true"></i>匯出 JSON</button>';
-      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-dup="' +
-        escapeHtml(deckId) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製牌組</button>';
-      html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-rarity-toggle="' +
-        escapeHtml(deckId) + '" title="' +
-        (highKinds > 0 ? '將高版本卡號改回普通版' : '此牌組沒有可改回的高版本卡號') + '"' +
-        (highKinds > 0 ? '' : ' disabled') + '>' +
-        '<i class="fas fa-level-down-alt mr-1" aria-hidden="true"></i>改為普通版</button>';
-      if (isDecklogOriginDeck(deck)) {
-        html += '<button type="button" class="btn btn-outline-secondary btn-sm" role="menuitem" data-deck-restore-decklog="' +
-          escapeHtml(deckId) + '" title="以原 DeckLog 編成覆蓋此個人副本的卡牌（不會改 DeckLog）">' +
-          '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
+    function deckSimSelectedCount() {
+      return Object.keys(deckSimState.selected).length;
+    }
+
+    function deckSimHasSelected(simId) {
+      return !!deckSimState.selected[simId];
+    }
+
+    function deckSimClearSelected() {
+      deckSimState.selected = {};
+    }
+
+    function deckSimImageUrl(cardNumber) {
+      if (window.WsDecklog && typeof window.WsDecklog.wsImageUrlFromCardNo === 'function') {
+        var remote = window.WsDecklog.wsImageUrlFromCardNo(cardNumber);
+        if (remote) return remote;
       }
-      html += '<button type="button" class="btn btn-outline-danger btn-sm" role="menuitem" data-deck-del="' +
-        escapeHtml(deckId) + '"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>刪除牌組</button>';
-      return html;
+      var urls = buildCardImageUrls(cardNumber);
+      return (urls && urls.primary) || '';
+    }
+
+    function deckSimKindForCard(cardNumber, meta) {
+      meta = meta || getAlbumMeta(cardNumber) || {};
+      if (meta.kindClass) return meta.kindClass;
+      if (isCxCardNumber(cardNumber)) return 'CX';
+      if (meta.kindLabel) {
+        if (window.WsDecklog && typeof window.WsDecklog.classifyKind === 'function') {
+          return window.WsDecklog.classifyKind({ kindLabel: meta.kindLabel }) || meta.kindLabel;
+        }
+        return meta.kindLabel;
+      }
+      return '未知';
+    }
+
+    function expandDeckSimEntries(deck) {
+      var out = [];
+      ((deck && deck.cards) || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var qty = parseInt(entry.qty, 10);
+        if (isNaN(qty) || qty < 1) qty = 0;
+        var key = normalizeText(entry.cardNumber).replace(/\\/g, '/');
+        var meta = getAlbumMeta(key) || {};
+        var inv = inventoryMeta(key, entry.cardName);
+        var kind = deckSimKindForCard(key, meta);
+        var name = meta.cardName || inv.cardName || entry.cardName || key;
+        var imageUrl = deckSimImageUrl(key);
+        var level = meta.level != null ? meta.level : null;
+        for (var i = 0; i < qty; i++) {
+          out.push({
+            cardNo: key,
+            name: name,
+            kindLabel: meta.kindLabel || kind,
+            kind: kind,
+            level: level,
+            imageUrl: imageUrl
+          });
+        }
+      });
+      return out;
+    }
+
+    function cloneDeckSimCard(c) {
+      deckSimUid += 1;
+      return {
+        simId: 'ds' + deckSimUid,
+        cardNo: c.cardNo || '',
+        name: c.name || c.cardNo || '未命名',
+        kindLabel: c.kindLabel || '',
+        kind: c.kind || '',
+        level: c.level,
+        imageUrl: c.imageUrl || ''
+      };
+    }
+
+    function fisherYatesDeckSim(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
+
+    function buildShuffledDeckSim(cards) {
+      return fisherYatesDeckSim((cards || []).map(cloneDeckSimCard));
+    }
+
+    function drawFromDeckSim(n) {
+      var out = [];
+      for (var i = 0; i < n; i++) {
+        if (!deckSimState.deck.length) break;
+        out.push(deckSimState.deck.pop());
+      }
+      return out;
+    }
+
+    function setDeckSimPhase(phase, label) {
+      deckSimState.phase = phase;
+      if (!deckSimPhaseEl) return;
+      deckSimPhaseEl.textContent = label;
+      deckSimPhaseEl.className = 'col-deck-sim-phase' + (
+        phase === 'opening' ? ' is-mull' :
+        phase === 'done' ? ' is-done' :
+        phase === 'idle' && label !== '尚未開始' ? ' is-ready' : ''
+      );
+    }
+
+    function updateDeckSimButtons() {
+      var hasDeck = deckSimEntries.length > 0;
+      var opening = deckSimState.phase === 'opening';
+      var done = deckSimState.phase === 'done';
+      var busy = deckSimAnimating;
+      var selectedN = deckSimSelectedCount();
+      if (deckSimDealBtn) {
+        deckSimDealBtn.disabled = !hasDeck || busy;
+        deckSimDealBtn.innerHTML = (opening || done)
+          ? '<i class="fas fa-random mr-1" aria-hidden="true"></i>重新洗牌起手'
+          : '<i class="fas fa-random mr-1" aria-hidden="true"></i>洗牌並起手';
+      }
+      if (deckSimMulliganBtn) {
+        deckSimMulliganBtn.hidden = !opening;
+        deckSimMulliganBtn.disabled = !opening || selectedN === 0 || busy;
+        deckSimMulliganBtn.innerHTML = selectedN
+          ? ('<i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度（' + selectedN + ' 張）')
+          : '<i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度';
+      }
+    }
+
+    function renderDeckSimStats() {
+      if (deckSimDeckCountEl) {
+        deckSimDeckCountEl.textContent = String(
+          deckSimState.deck.length || (deckSimState.phase === 'idle' ? '—' : 0)
+        );
+      }
+      if (deckSimHandCountEl) {
+        deckSimHandCountEl.textContent = String(
+          deckSimState.hand.length || (deckSimState.phase === 'idle' ? '—' : 0)
+        );
+      }
+      if (deckSimWaitingCountEl) {
+        deckSimWaitingCountEl.textContent = String(
+          deckSimState.waiting.length || (deckSimState.phase === 'idle' ? '—' : 0)
+        );
+      }
+      if (deckSimSelectedCountEl) {
+        deckSimSelectedCountEl.textContent = String(deckSimSelectedCount());
+      }
+    }
+
+    function deckSimHandCardHtml(c, selectable, extraClass) {
+      var kind = c.kind || '未知';
+      var img = c.imageUrl
+        ? '<img class="art" src="' + escapeHtml(c.imageUrl) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+        : '<div class="art" aria-hidden="true"></div>';
+      var lv = (kind !== 'CX' && c.level != null && !isNaN(c.level)) ? (' · Lv' + c.level) : '';
+      var selected = deckSimHasSelected(c.simId);
+      var cls = 'col-deck-sim-card' +
+        (selected ? ' is-selected' : '') +
+        (selectable ? '' : ' is-disabled') +
+        (extraClass ? (' ' + extraClass) : '');
+      return '<button type="button" class="' + cls +
+        '" data-deck-sim-id="' + escapeHtml(c.simId) + '"' +
+        (selectable ? '' : ' disabled') +
+        ' aria-pressed="' + (selected ? 'true' : 'false') + '"' +
+        ' title="' + escapeHtml(c.name) + (c.cardNo ? (' / ' + c.cardNo) : '') + '">' +
+        '<span class="badge-kind">' + escapeHtml(kind) + lv + '</span>' +
+        '<span class="art-wrap">' + img +
+        '<span class="check" aria-hidden="true">✓</span></span>' +
+        '<div class="cap">' + escapeHtml(c.name) +
+        (c.cardNo ? ('<br><span style="opacity:0.72;font-family:IBM Plex Mono,ui-monospace,monospace">' +
+          escapeHtml(c.cardNo) + '</span>') : '') +
+        '</div></button>';
+    }
+
+    function renderDeckSimHand(opts) {
+      opts = opts || {};
+      if (!deckSimHandGrid) return;
+      if (!deckSimState.hand.length) {
+        deckSimHandGrid.innerHTML =
+          '<p class="col-deck-tools-hint" style="grid-column:1/-1;margin:0">尚未抽起手。</p>';
+        return;
+      }
+      var selectable = deckSimState.phase === 'opening';
+      var deal = !!opts.dealAnimate;
+      var dealIds = opts.dealIds || null;
+      deckSimHandGrid.innerHTML = deckSimState.hand.map(function (c) {
+        var extra = (deal && (!dealIds || dealIds[c.simId])) ? 'is-dealing' : '';
+        return deckSimHandCardHtml(c, selectable, extra);
+      }).join('');
+      if (deal) {
+        var step = prefersReducedMotion() ? 0 : 70;
+        Array.prototype.forEach.call(
+          deckSimHandGrid.querySelectorAll('.col-deck-sim-card.is-dealing'),
+          function (node, i) {
+            node.style.animationDelay = (i * step) + 'ms';
+          }
+        );
+      }
+      Array.prototype.forEach.call(deckSimHandGrid.querySelectorAll('img.art'), function (img) {
+        bindEl(img, 'error', function () {
+          img.style.visibility = 'hidden';
+        });
+      });
+    }
+
+    function renderDeckSimWaiting(opts) {
+      opts = opts || {};
+      if (!deckSimWaitingWrap || !deckSimWaitingChips) return;
+      if (!deckSimState.waiting.length) {
+        deckSimWaitingWrap.hidden = true;
+        deckSimWaitingChips.innerHTML = '';
+        return;
+      }
+      deckSimWaitingWrap.hidden = false;
+      var arriveFrom = opts.arriveCount || 0;
+      var start = Math.max(0, deckSimState.waiting.length - arriveFrom);
+      deckSimWaitingChips.innerHTML = deckSimState.waiting.map(function (c, i) {
+        var arrive = i >= start ? ' is-arrive' : '';
+        var delay = prefersReducedMotion() ? 0 : Math.max(0, i - start) * 60;
+        return '<span class="col-deck-sim-waiting-chip' + arrive + '" style="animation-delay:' +
+          delay + 'ms" title="' + escapeHtml(c.cardNo || '') + '">' +
+          escapeHtml(c.name) + '</span>';
+      }).join('');
+    }
+
+    function renderDeckSimAll(opts) {
+      renderDeckSimStats();
+      renderDeckSimHand(opts);
+      renderDeckSimWaiting(opts);
+      updateDeckSimButtons();
+      if (deckSimLogEl) deckSimLogEl.textContent = deckSimState.log || '';
+    }
+
+    function resetDeckSimUi() {
+      deckSimAnimating = false;
+      deckSimEntries = [];
+      deckSimState.deck = [];
+      deckSimState.hand = [];
+      deckSimState.waiting = [];
+      deckSimClearSelected();
+      deckSimState.phase = 'idle';
+      deckSimState.log = '';
+      setDeckSimPhase('idle', '尚未開始');
+      if (deckSimHandGrid) {
+        deckSimHandGrid.classList.remove('is-busy');
+        deckSimHandGrid.innerHTML = '';
+      }
+      if (deckSimWaitingWrap) deckSimWaitingWrap.hidden = true;
+      if (deckSimWaitingChips) deckSimWaitingChips.innerHTML = '';
+      if (deckSimLogEl) deckSimLogEl.textContent = '';
+      updateDeckSimButtons();
+      renderDeckSimStats();
+    }
+
+    function prepareDeckSimEntries(deck) {
+      deckSimEntries = expandDeckSimEntries(deck);
+      setDeckSimPhase('idle', deckSimEntries.length ? '可開始模擬' : '尚未開始');
+      if (deckToolsHint) {
+        deckToolsHint.textContent = deckSimEntries.length
+          ? ('「' + (deck.name || '未命名牌組') + '」· 點「洗牌並起手」抽 5 張，再點選要換掉的牌確認調度。')
+          : '此牌組尚無卡片，無法模擬抽牌。';
+      }
+      deckSimState.log = '';
+      renderDeckSimAll();
+    }
+
+    function deckSimDealOpening() {
+      if (!deckSimEntries.length) {
+        setStatus('此牌組尚無卡片，無法模擬抽牌', 'is-error');
+        return;
+      }
+      if (deckSimAnimating) return;
+      deckSimState.deck = buildShuffledDeckSim(deckSimEntries);
+      deckSimState.hand = drawFromDeckSim(DECK_SIM_OPENING_HAND);
+      deckSimState.waiting = [];
+      deckSimClearSelected();
+      deckSimState.phase = 'opening';
+      deckSimState.log = '已洗牌並抽出起手 ' + deckSimState.hand.length +
+        ' 張。點選要換掉的牌，再按「確認調度」。';
+      setDeckSimPhase('opening', '可調度');
+      renderDeckSimAll({ dealAnimate: true });
+    }
+
+    function toggleDeckSimSelect(simId) {
+      if (deckSimState.phase !== 'opening' || deckSimAnimating || !simId) return;
+      var card = deckSimHandGrid &&
+        deckSimHandGrid.querySelector('[data-deck-sim-id="' + simId + '"]');
+      if (deckSimHasSelected(simId)) {
+        delete deckSimState.selected[simId];
+        if (card) {
+          card.classList.remove('is-selected');
+          card.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        deckSimState.selected[simId] = true;
+        if (card) {
+          card.classList.add('is-selected');
+          card.setAttribute('aria-pressed', 'true');
+        }
+      }
+      renderDeckSimStats();
+      updateDeckSimButtons();
+    }
+
+    function finishDeckSimMulligan(dump, drawn) {
+      var dealIds = {};
+      drawn.forEach(function (c) { dealIds[c.simId] = true; });
+      deckSimState.waiting = deckSimState.waiting.concat(dump);
+      deckSimState.hand = deckSimState.hand.filter(function (c) {
+        return !deckSimHasSelected(c.simId);
+      }).concat(drawn);
+      var dumpN = dump.length;
+      deckSimClearSelected();
+      deckSimState.phase = 'done';
+      deckSimState.log = '調度完成：丟棄 ' + dumpN + ' 張至等待室，補抽 ' + drawn.length +
+        ' 張。可按「重新洗牌起手」再試一局。';
+      setDeckSimPhase('done', '調度完成');
+      renderDeckSimAll({ dealAnimate: true, dealIds: dealIds, arriveCount: dumpN });
+      deckSimAnimating = false;
+      if (deckSimHandGrid) deckSimHandGrid.classList.remove('is-busy');
+      updateDeckSimButtons();
+    }
+
+    function applyDeckSimMulligan() {
+      if (deckSimState.phase !== 'opening' || deckSimAnimating) return;
+      var ids = Object.keys(deckSimState.selected);
+      if (!ids.length) return;
+      if (deckSimState.deck.length < ids.length) {
+        deckSimState.log = '牌庫剩餘不足，無法重抽 ' + ids.length +
+          ' 張（剩 ' + deckSimState.deck.length + '）。';
+        renderDeckSimAll();
+        return;
+      }
+      var dump = [];
+      deckSimState.hand.forEach(function (c) {
+        if (deckSimHasSelected(c.simId)) dump.push(c);
+      });
+      var drawn = drawFromDeckSim(dump.length);
+      if (prefersReducedMotion() || !deckSimHandGrid) {
+        finishDeckSimMulligan(dump, drawn);
+        return;
+      }
+      deckSimAnimating = true;
+      deckSimHandGrid.classList.add('is-busy');
+      updateDeckSimButtons();
+      ids.forEach(function (id) {
+        var node = deckSimHandGrid.querySelector('[data-deck-sim-id="' + id + '"]');
+        if (node) node.classList.add('is-dumping');
+      });
+      window.setTimeout(function () {
+        finishDeckSimMulligan(dump, drawn);
+      }, 400);
     }
 
     function openDeckToolsModal(deckId) {
@@ -9599,11 +10200,13 @@
       }
       closeDeckOverflowMenus();
       deckToolsTargetId = deck.id;
-      if (deckToolsHint) {
-        deckToolsHint.textContent = '「' + (deck.name || '未命名牌組') + '」可用的工具。';
-      }
-      if (deckToolsMenu) deckToolsMenu.innerHTML = buildDeckToolsMenuHtml(deck);
+      resetDeckSimUi();
       openModal(deckToolsModal);
+      ensureCardMetaForEntries(deck.cards || [], function () {
+        if (deckToolsTargetId !== deck.id) return;
+        prepareDeckSimEntries(deck);
+      });
+      prepareDeckSimEntries(deck);
     }
 
     function ownedQty(cardNumber) {
@@ -11853,8 +12456,8 @@
       html += '    <div class="col-deck-info-card col-deck-info-card--meta">';
       html += '      <h6 class="col-deck-info-meta-title">標籤／描述</h6>';
       html += '      <button type="button" class="btn btn-outline-secondary btn-sm col-deck-tools-btn" data-deck-open-tools="' +
-        escapeHtml(deck.id) + '" title="開啟牌組工具" aria-haspopup="dialog" aria-controls="colDeckToolsModal">' +
-        '<i class="fas fa-wrench mr-1" aria-hidden="true"></i>工具</button>';
+        escapeHtml(deck.id) + '" title="模擬抽牌（洗牌／起手／調度）" aria-haspopup="dialog" aria-controls="colDeckToolsModal">' +
+        '<i class="fas fa-random mr-1" aria-hidden="true"></i>工具</button>';
       html += '      <div class="col-deck-detail-tags">' + tagsHtml + '</div>';
       if (detailDesc) {
         html += '      <p class="col-deck-detail-desc">' + escapeHtml(detailDesc) + '</p>';
@@ -13648,11 +14251,6 @@
         openDeckToolsModal(openToolsBtn.getAttribute('data-deck-open-tools'));
         return;
       }
-      var fromToolsMenu = !!(deckToolsModal && deckToolsModal.contains(e.target) &&
-        e.target.closest('.col-deck-tools-menu'));
-      function closeToolsMenuIfNeeded() {
-        if (fromToolsMenu) closeModalByName('deckTools');
-      }
       var chartLevelBtn = e.target.closest('[data-deck-chart-level]');
       if (chartLevelBtn) {
         e.preventDefault();
@@ -13715,44 +14313,32 @@
       }
       var rarityBtn = e.target.closest('[data-deck-rarity-toggle]');
       if (rarityBtn) {
-        var rarityId = rarityBtn.getAttribute('data-deck-rarity-toggle');
-        closeToolsMenuIfNeeded();
-        startDeckRarityToggleForDeck(rarityId);
+        startDeckRarityToggleForDeck(rarityBtn.getAttribute('data-deck-rarity-toggle'));
         return;
       }
       var dupBtn = e.target.closest('[data-deck-dup]');
       if (dupBtn) {
-        var dupId = dupBtn.getAttribute('data-deck-dup');
-        closeToolsMenuIfNeeded();
-        duplicateDeck(dupId);
+        duplicateDeck(dupBtn.getAttribute('data-deck-dup'));
         return;
       }
       var restoreBtn = e.target.closest('[data-deck-restore-decklog]');
       if (restoreBtn) {
-        var restoreId = restoreBtn.getAttribute('data-deck-restore-decklog');
-        closeToolsMenuIfNeeded();
-        restoreDeckFromDecklog(restoreId);
+        restoreDeckFromDecklog(restoreBtn.getAttribute('data-deck-restore-decklog'));
         return;
       }
       var delBtn = e.target.closest('[data-deck-del]');
       if (delBtn) {
-        var delId = delBtn.getAttribute('data-deck-del');
-        closeToolsMenuIfNeeded();
-        deleteDeck(delId);
+        deleteDeck(delBtn.getAttribute('data-deck-del'));
         return;
       }
       var exportBtn = e.target.closest('[data-deck-export]');
       if (exportBtn) {
-        var exportId = exportBtn.getAttribute('data-deck-export');
-        closeToolsMenuIfNeeded();
-        exportDeckJson(exportId);
+        exportDeckJson(exportBtn.getAttribute('data-deck-export'));
         return;
       }
       var exportImageBtn = e.target.closest('[data-deck-export-image]');
       if (exportImageBtn) {
-        var exportImageId = exportImageBtn.getAttribute('data-deck-export-image');
-        closeToolsMenuIfNeeded();
-        exportDeckImage(exportImageId);
+        exportDeckImage(exportImageBtn.getAttribute('data-deck-export-image'));
         return;
       }
       var shareBtn = e.target.closest('[data-deck-share]');
@@ -13763,8 +14349,22 @@
     if (deckListEl) {
       bindEl(deckListEl, 'click', handleDeckActionClick);
     }
-    if (deckToolsModal) {
-      bindEl(deckToolsModal, 'click', handleDeckActionClick);
+    if (deckSimDealBtn) {
+      bindEl(deckSimDealBtn, 'click', function () {
+        deckSimDealOpening();
+      });
+    }
+    if (deckSimMulliganBtn) {
+      bindEl(deckSimMulliganBtn, 'click', function () {
+        applyDeckSimMulligan();
+      });
+    }
+    if (deckSimHandGrid) {
+      bindEl(deckSimHandGrid, 'click', function (e) {
+        var cardBtn = e.target.closest('[data-deck-sim-id]');
+        if (!cardBtn || cardBtn.disabled) return;
+        toggleDeckSimSelect(cardBtn.getAttribute('data-deck-sim-id'));
+      });
     }
     bindEl(window, 'popstate', function (e) {
       if (isDeckDesktopLayout()) return;
