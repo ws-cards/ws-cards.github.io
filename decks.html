@@ -1483,23 +1483,6 @@
       border-color: #14233a;
       color: #f8fafc;
     }
-    .col-filter-btn-badge {
-      position: absolute;
-      top: -0.15rem;
-      right: -0.15rem;
-      min-width: 1rem;
-      height: 1rem;
-      padding: 0 0.28rem;
-      border-radius: 999px;
-      background: #b07c28;
-      color: #fff;
-      font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-size: 0.58rem;
-      font-weight: 700;
-      line-height: 1rem;
-      text-align: center;
-      pointer-events: none;
-    }
     [data-theme="dark"] .col-filter-btn {
       background: rgba(255, 255, 255, 0.06);
       border-color: rgba(255, 255, 255, 0.14);
@@ -1515,7 +1498,6 @@
       border-color: #6ea0ff;
       color: #0b1220;
     }
-    [data-theme="dark"] .col-filter-btn-badge { background: #cbb083; color: #141414; }
     .col-filter-section {
       margin: 0 0 1rem;
     }
@@ -6491,7 +6473,6 @@
         <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">
           <button type="button" class="col-filter-btn is-inline" id="colDeckModalFilterBtn" aria-haspopup="dialog" aria-controls="colFilterModal" title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片" hidden>
             <i class="fas fa-filter" aria-hidden="true"></i>
-            <span class="col-filter-btn-badge" id="colDeckModalFilterBadge" hidden>0</span>
           </button>
           <label class="col-deck-card-sort" for="colDeckCardSortSelect">
             <select id="colDeckCardSortSelect" aria-label="牌組內排序">
@@ -6926,11 +6907,8 @@
     var binderFocusBtn = document.getElementById('colBinderFocusBtn');
     var binderFocusBtnLabel = document.getElementById('colBinderFocusBtnLabel');
     var binderFilterBtn = document.getElementById('colBinderFilterBtn');
-    var binderFilterBadge = document.getElementById('colBinderFilterBadge');
     var deckFilterBtn = null; /* 列表層漏斗已移除；牌組內篩選改走 modal／詳情工具列 */
-    var deckFilterBadge = null;
     var deckModalFilterBtn = document.getElementById('colDeckModalFilterBtn');
-    var deckModalFilterBadge = document.getElementById('colDeckModalFilterBadge');
     var filterModal = document.getElementById('colFilterModal');
     var filterTitleEl = document.getElementById('colFilterTitle');
     var filterHintEl = document.getElementById('colFilterHint');
@@ -7414,41 +7392,23 @@
       return n;
     }
 
-    function syncFilterBtnBadge(btn, badge, count, idleLabel) {
-      if (btn) {
-        btn.classList.toggle('is-active', count > 0);
-        btn.setAttribute('aria-label', count > 0 ? (idleLabel + '（已套用 ' + count + ' 項）') : idleLabel);
-      }
-      if (badge) {
-        if (count > 0) {
-          badge.hidden = false;
-          badge.textContent = String(count);
-        } else {
-          badge.hidden = true;
-          badge.textContent = '0';
-        }
-      }
+    /** 有篩選時只改按鈕顏色（is-active），不顯示數字角標 */
+    function syncFilterBtnActive(btn, count, idleLabel) {
+      if (!btn) return;
+      btn.classList.toggle('is-active', count > 0);
+      btn.setAttribute('aria-label', count > 0 ? (idleLabel + '（已套用 ' + count + ' 項）') : idleLabel);
     }
 
     function syncBinderFilterBtnUi() {
-      syncFilterBtnBadge(binderFilterBtn, binderFilterBadge, countActiveAttrFilters(), '篩選卡片');
+      syncFilterBtnActive(binderFilterBtn, countActiveAttrFilters(), '篩選卡片');
     }
 
     function syncDeckFilterBtnUi() {
       var n = countActiveDeckAttrFilters();
-      syncFilterBtnBadge(deckFilterBtn, deckFilterBadge, n, '篩選牌組內卡片');
-      syncFilterBtnBadge(deckModalFilterBtn, deckModalFilterBadge, n, '篩選牌組內卡片');
-      document.querySelectorAll('[data-deck-inline-filter-badge]').forEach(function (el) {
-        if (n > 0) {
-          el.hidden = false;
-          el.textContent = String(n);
-        } else {
-          el.hidden = true;
-          el.textContent = '0';
-        }
-      });
+      syncFilterBtnActive(deckFilterBtn, n, '篩選牌組內卡片');
+      syncFilterBtnActive(deckModalFilterBtn, n, '篩選牌組內卡片');
       document.querySelectorAll('[data-deck-inline-filter]').forEach(function (btn) {
-        btn.classList.toggle('is-active', n > 0);
+        syncFilterBtnActive(btn, n, '篩選牌組內卡片');
       });
     }
 
@@ -13167,10 +13127,13 @@
         escapeHtml(deckDetailCardFilter) + '" autocomplete="off" aria-label="搜尋牌組內卡片">';
       html += '      </div>';
       html += '      <div class="col-deck-card-view-tools" aria-label="牌組內排序與篩選">';
-      html += '        <button type="button" class="col-filter-btn is-inline' + (attrFiltered ? ' is-active' : '') + '" data-deck-inline-filter title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="篩選牌組內卡片" aria-haspopup="dialog" aria-controls="colFilterModal">';
+      html += '        <button type="button" class="col-filter-btn is-inline' + (attrFiltered ? ' is-active' : '') +
+        '" data-deck-inline-filter title="篩選牌組內卡片（等級／稀有度／顏色）" aria-label="' +
+        (attrFiltered
+          ? ('篩選牌組內卡片（已套用 ' + countActiveDeckAttrFilters() + ' 項）')
+          : '篩選牌組內卡片') +
+        '" aria-haspopup="dialog" aria-controls="colFilterModal">';
       html += '          <i class="fas fa-filter" aria-hidden="true"></i>';
-      html += '          <span class="col-filter-btn-badge" data-deck-inline-filter-badge' + (attrFiltered ? '' : ' hidden') + '>' +
-        escapeHtml(String(countActiveDeckAttrFilters() || 0)) + '</span>';
       html += '        </button>';
       html += '        <label class="col-deck-card-sort" for="colDeckDetailCardSortSelect">';
       html += '          <select id="colDeckDetailCardSortSelect" aria-label="牌組內排序">';
