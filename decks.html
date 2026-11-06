@@ -4072,6 +4072,7 @@
       top: 0;
       bottom: 0;
       z-index: 1306;
+      display: grid;
       width: max-content;
       max-width: min(96vw, 64rem);
       height: max-content;
@@ -4082,6 +4083,7 @@
       gap: 0;
       /* 左欄依光箱圖實際寬度，避免把圖拉伸／縮小 */
       grid-template-columns: auto minmax(12rem, 1fr);
+      grid-template-rows: auto;
       /* 與光箱同高：避免右欄內容把列撑高、左移時圖被抬高 */
       align-items: center;
       pointer-events: auto;
@@ -4092,6 +4094,10 @@
       background: transparent;
       border-color: transparent;
       box-shadow: none;
+    }
+    /* 桌面展開只留圖＋詳情兩欄；避免 caption 等仍佔 grid 格造成左欄量測偏移 */
+    .col-deck-entry.is-expanded.is-lb-detail > .col-deck-entry-caption {
+      display: none !important;
     }
     /* 左移時維持與光箱相同尺寸，不隨展開欄重算大小 */
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-art {
@@ -7855,30 +7861,24 @@
       if (!artEl) return;
       artEl.classList.remove('is-lb-flying');
       if (window.gsap) {
+        try { gsap.killTweensOf(artEl); } catch (eKill) { /* ignore */ }
         try {
           gsap.set(artEl, {
             clearProps: 'position,left,top,right,bottom,x,y,scale,scaleX,scaleY,zIndex,margin,transform,transformOrigin'
           });
-        } catch (eClear) {
-          artEl.style.removeProperty('position');
-          artEl.style.removeProperty('left');
-          artEl.style.removeProperty('top');
-          artEl.style.removeProperty('right');
-          artEl.style.removeProperty('bottom');
-          artEl.style.removeProperty('z-index');
-          artEl.style.removeProperty('margin');
-          artEl.style.removeProperty('transform');
-          artEl.style.removeProperty('transform-origin');
-        }
-      } else {
-        artEl.style.removeProperty('position');
-        artEl.style.removeProperty('left');
-        artEl.style.removeProperty('top');
-        artEl.style.removeProperty('z-index');
-        artEl.style.removeProperty('margin');
-        artEl.style.removeProperty('transform');
-        artEl.style.removeProperty('transform-origin');
+        } catch (eClear) { /* fall through to inline clear */ }
       }
+      /* GSAP clearProps 後仍強制清掉，避免殘留 fixed 讓圖與白底脫節 */
+      artEl.style.removeProperty('position');
+      artEl.style.removeProperty('left');
+      artEl.style.removeProperty('top');
+      artEl.style.removeProperty('right');
+      artEl.style.removeProperty('bottom');
+      artEl.style.removeProperty('z-index');
+      artEl.style.removeProperty('margin');
+      artEl.style.removeProperty('transform');
+      artEl.style.removeProperty('transform-origin');
+      artEl.style.removeProperty('will-change');
     }
 
     function insertDeckExpandListPlaceholder(entryEl) {
@@ -8462,21 +8462,11 @@
         expandPanel.style.maxHeight = lb.height + 'px';
       }
 
-      removeDeckExpandArtSlot();
-      var slot = document.createElement('div');
-      slot.className = 'col-lb-art-slot';
-      slot.setAttribute('aria-hidden', 'true');
-      slot.style.width = lb.width + 'px';
-      slot.style.height = lb.height + 'px';
-      entryEl.insertBefore(slot, artEl);
-      deckExpandArtSlot = slot;
-
-      /* 強制一次 layout，讀左欄終點（應與光箱同 top） */
-      var endRect = slot.getBoundingClientRect();
-      /* 左移只改 X；Y 固定在光箱高度，避免 endRect 誤差造成抬高 */
-      var slideY = lb.top - startRect.top;
-      var slideEndX = endRect.left - startRect.left;
-
+      /*
+       * 先把圖拔出文件流再量 slot：
+       * 若量測時圖仍在 grid 內，會變成 [slot][art][expand] 三格，
+       * endRect 偏左，動畫結束後圖與白底資訊區錯位（如使用者截圖）。
+       */
       lockLbDetailArtSize(artEl, { width: thumbW, height: thumbH });
       artEl.classList.add('is-lb-flying');
       gsap.set(artEl, {
@@ -8495,6 +8485,22 @@
         force3D: true
       });
 
+      removeDeckExpandArtSlot();
+      var slot = document.createElement('div');
+      slot.className = 'col-lb-art-slot';
+      slot.setAttribute('aria-hidden', 'true');
+      slot.style.width = lb.width + 'px';
+      slot.style.height = lb.height + 'px';
+      entryEl.insertBefore(slot, artEl);
+      deckExpandArtSlot = slot;
+
+      /* 強制一次 layout，讀左欄終點（此時 grid 僅 slot＋expand） */
+      void entryEl.offsetWidth;
+      var endRect = slot.getBoundingClientRect();
+      /* 左移只改 X；Y 固定在光箱高度，避免 endRect 誤差造成抬高 */
+      var slideY = lb.top - startRect.top;
+      var slideEndX = endRect.left - startRect.left;
+
       var lines = entryEl.querySelectorAll('.col-deck-entry-expand-line');
       if (lines.length) gsap.set(lines, { opacity: 0, y: 8 });
       if (expandPanel) gsap.set(expandPanel, { opacity: 0 });
@@ -8504,9 +8510,10 @@
 
       function dockArtAtEnd() {
         clearPendingDeckExpand();
-        removeDeckExpandArtSlot();
+        /* 先讓圖回到 flow 佔住左欄，再拆 slot，避免白底單獨置中、圖留在左側 */
         clearLbDetailArtFlyProps(artEl);
         lockLbDetailArtSize(artEl, { width: lb.width, height: lb.height });
+        removeDeckExpandArtSlot();
         if (expandPanel) {
           gsap.set(expandPanel, { clearProps: 'opacity' });
           /* 維持與圖同高，文字區內部捲動 */
@@ -11575,10 +11582,12 @@
 
     function renderDeckDetail() {
       if (!deckDetailEl) return;
-      /* 手機光箱開啟／切換中：延後整頁詳情重繪，避免拆掉左右滑 */
-      if (deckCardExpandEntry && deckCardExpandEntry.classList.contains('is-lb-mobile')) {
+      /* 光箱展開中（手機／桌面）延後整頁詳情重繪，避免拆掉定位中的卡圖 */
+      if (deckCardExpandEntry || deckLbAnimTl) {
         deckDetailRenderQueued = true;
-        try { syncDeckEntryExpandContent(deckCardExpandEntry); } catch (eSyncDetail) { /* ignore */ }
+        try {
+          if (deckCardExpandEntry) syncDeckEntryExpandContent(deckCardExpandEntry);
+        } catch (eSyncDetail) { /* ignore */ }
         return;
       }
       deckDetailRenderQueued = false;
@@ -12327,10 +12336,12 @@
 
     function renderDeckEditor() {
       if (!deckDraft) return;
-      /* 手機光箱開啟／切換中：只同步詳情，延後整表重繪以免拆掉左右滑 */
-      if (deckCardExpandEntry && deckCardExpandEntry.classList.contains('is-lb-mobile')) {
+      /* 光箱展開／動畫中：只同步詳情，延後整表重繪以免拆掉桌面定位或手機左右滑 */
+      if (deckCardExpandEntry || deckLbAnimTl) {
         deckEditorRenderQueued = true;
-        try { syncDeckEntryExpandContent(deckCardExpandEntry); } catch (eSync) { /* ignore */ }
+        try {
+          if (deckCardExpandEntry) syncDeckEntryExpandContent(deckCardExpandEntry);
+        } catch (eSync) { /* ignore */ }
         return;
       }
       var isView = deckEditorMode === 'view';
