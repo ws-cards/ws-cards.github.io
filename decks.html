@@ -4670,6 +4670,27 @@
       text-overflow: ellipsis;
     }
     [data-theme="dark"] .col-deck-entry-name { color: #a0aec0; }
+    .col-deck-entry-price {
+      display: block;
+      margin-top: 0.08rem;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.66rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+      color: #2f6b4f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-deck-entry-price { color: #7dcea0; }
+    .col-deck-entry-price.is-pending,
+    .col-deck-entry-price.is-missing {
+      font-weight: 600;
+      color: #a0aec0;
+    }
+    [data-theme="dark"] .col-deck-entry-price.is-pending,
+    [data-theme="dark"] .col-deck-entry-price.is-missing { color: #718096; }
     .col-deck-entry .col-qty {
       margin-top: 0.15rem;
       justify-content: center;
@@ -6800,6 +6821,14 @@
     var deckPriceMeta = '';
     var deckPriceStatus = 'idle';
     var deckPriceLoadPromise = null;
+    /** 檢視畫面是否隱藏單卡／參考總價金額（更多操作可切換） */
+    var DECK_HIDE_PRICES_KEY = 'wsCardsDeckHidePrices';
+    var deckHideEntryPrices = false;
+    try {
+      deckHideEntryPrices = localStorage.getItem(DECK_HIDE_PRICES_KEY) === '1';
+    } catch (eHidePricePref) {
+      deckHideEntryPrices = false;
+    }
     /** CX 軸心對照：來源 json/cxTriggerMap.json（WsTriggerMap）；此處只列 CX，不檢查連動 */
     var CX_TRIGGER_AXIS = (window.WsTriggerMap && window.WsTriggerMap.codeToAxisLabelMap()) || {};
     var CX_AXIS_ORDER = (window.WsTriggerMap && window.WsTriggerMap.axisOrderLabels()) || [];
@@ -10273,6 +10302,7 @@
           '<i class="fas fa-undo mr-1" aria-hidden="true"></i>用原 DeckLog 覆蓋</button>';
       }
       if (isView) {
+        html += deckHidePricesToggleBtnHtml();
         html += '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
           escapeHtml(deckId) + '"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       }
@@ -11079,8 +11109,56 @@
       deckPriceLoadPromise.then(function () { done(true); }, function () { done(true); });
     }
 
+    function lookupDeckEntryUnitPrice(cardNumber) {
+      if (!deckPriceMap) return null;
+      var cn = normalizeText(cardNumber).replace(/\\/g, '/');
+      if (!cn) return null;
+      var price = deckPriceMap[cn];
+      return typeof price === 'number' && isFinite(price) ? price : null;
+    }
+
+    /** 檢視／列表卡名下方：單卡參考價（編輯模式不顯示） */
+    function deckEntryPriceHtml(cardNumber) {
+      if (deckHideEntryPrices) return '';
+      if (deckPriceStatus === 'idle' || deckPriceStatus === 'loading') {
+        return '<span class="col-deck-entry-price is-pending" aria-hidden="true">…</span>';
+      }
+      if (deckPriceStatus === 'error' || !deckPriceMap) return '';
+      var price = lookupDeckEntryUnitPrice(cardNumber);
+      if (price == null) {
+        return '<span class="col-deck-entry-price is-missing" title="無行情">—</span>';
+      }
+      return '<span class="col-deck-entry-price" title="遊遊亭參考單價">¥' +
+        Number(price).toLocaleString('zh-TW') + '</span>';
+    }
+
+    function deckHidePricesToggleBtnHtml() {
+      var hidden = deckHideEntryPrices;
+      return '<button type="button" class="btn btn-outline-secondary btn-sm" data-deck-toggle-prices' +
+        ' title="' + (hidden ? '顯示卡牌與牌組參考金額' : '隱藏卡牌與牌組參考金額') + '">' +
+        (hidden
+          ? '<i class="fas fa-yen-sign mr-1" aria-hidden="true"></i>顯示金額'
+          : '<i class="fas fa-eye-slash mr-1" aria-hidden="true"></i>隱藏金額') +
+        '</button>';
+    }
+
+    function toggleDeckHidePrices() {
+      deckHideEntryPrices = !deckHideEntryPrices;
+      try {
+        localStorage.setItem(DECK_HIDE_PRICES_KEY, deckHideEntryPrices ? '1' : '0');
+      } catch (eSetHidePrice) { /* ignore */ }
+      closeDeckOverflowMenus();
+      if (selectedDeckId) renderDeckDetail();
+      if (deckDraft) {
+        syncDeckEditorOverflow();
+        renderDeckEditor();
+      }
+      setStatus(deckHideEntryPrices ? '已隱藏金額' : '已顯示金額', 'is-ok');
+    }
+
     /** 牌組詳情標題列：顯示牌組參考總價 */
     function deckPriceBadgeHtml(deck) {
+      if (deckHideEntryPrices) return '';
       if (deckPriceStatus === 'idle' || deckPriceStatus === 'loading') {
         return '<span class="col-deck-origin-badge is-detached" title="正在載入遊遊亭行情">參考價載入中…</span>';
       }
@@ -13039,6 +13117,7 @@
       html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-export-image="' +
         escapeHtml(deck.id) + '" title="輸出類似編成一覽的牌組圖片">' +
         '<i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
+      html += '          ' + deckHidePricesToggleBtnHtml();
       html += '          <button type="button" class="btn btn-outline-secondary btn-sm" data-deck-dup="' + escapeHtml(deck.id) + '"><i class="fas fa-copy mr-1" aria-hidden="true"></i>複製</button>';
       html += '          <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-desktop" data-deck-rarity-toggle="' +
         escapeHtml(deck.id) + '" title="' +
@@ -13133,7 +13212,9 @@
         if (needsChartMeta && !albumMetaEnriching) renderDeckDetail();
       });
       ensureDeckPriceMap(function (shouldRender) {
-        if (shouldRender && selectedDeckId) renderDeckDetail();
+        if (!shouldRender) return;
+        if (selectedDeckId) renderDeckDetail();
+        if (deckDraft) renderDeckEditor();
       });
     }
 
@@ -13637,6 +13718,7 @@
       html += '  <div class="col-deck-entry-caption">';
       html += '    <span class="col-deck-entry-cardno">' + escapeHtml(entry.cardNumber) + '</span>';
       html += '    <span class="col-deck-entry-name">' + escapeHtml(meta.cardName || '（卡冊尚無卡名）') + '</span>';
+      if (!isEdit) html += deckEntryPriceHtml(entry.cardNumber);
       if (isEdit) {
         html += '    <div class="col-deck-entry-controls">';
         html += '      <div class="col-deck-ctrl-row">';
@@ -14854,6 +14936,12 @@
       });
     }
     function handleDeckActionClick(e) {
+      var togglePricesBtn = e.target.closest('[data-deck-toggle-prices]');
+      if (togglePricesBtn) {
+        e.preventDefault();
+        toggleDeckHidePrices();
+        return;
+      }
       if (e.target.closest('.col-deck-overflow-menu')) {
         closeDeckOverflowMenus();
       }
@@ -15329,7 +15417,9 @@
     } else {
       // 牌組頁：持有量用 allItems 即可；屬性改在開啟牌組／篩選時按需 enrich
       ensureDeckPriceMap(function (shouldRender) {
-        if (shouldRender && selectedDeckId) renderDeckDetail();
+        if (!shouldRender) return;
+        if (selectedDeckId) renderDeckDetail();
+        if (deckDraft) renderDeckEditor();
       });
       // 等 auth＋雲端牌組就緒後才關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
       showDeckLoadingEmpty();
