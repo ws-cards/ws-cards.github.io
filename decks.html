@@ -5394,6 +5394,83 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .col-deck-sim-odds {
+      margin: 0.75rem 0 0.35rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid rgba(47, 107, 79, 0.28);
+      background:
+        linear-gradient(145deg, rgba(47, 107, 79, 0.08), rgba(176, 124, 40, 0.06));
+      animation: col-deck-sim-odds-in 0.38s ease both;
+    }
+    [data-theme="dark"] .col-deck-sim-odds {
+      border-color: rgba(63, 143, 107, 0.35);
+      background:
+        linear-gradient(145deg, rgba(63, 143, 107, 0.12), rgba(176, 124, 40, 0.08));
+    }
+    .col-deck-sim-odds h4 {
+      margin: 0 0 0.55rem;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: var(--col-ink);
+      letter-spacing: 0.02em;
+    }
+    .col-deck-sim-odds-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    @media (max-width: 560px) {
+      .col-deck-sim-odds-grid { grid-template-columns: 1fr; }
+    }
+    .col-deck-sim-odds-item {
+      min-width: 0;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid rgba(47, 107, 79, 0.14);
+      background: rgba(255, 255, 255, 0.55);
+    }
+    [data-theme="dark"] .col-deck-sim-odds-item {
+      background: rgba(0, 0, 0, 0.18);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .col-deck-sim-odds-item .col-deck-sim-odds-label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--col-muted);
+      margin-bottom: 0.2rem;
+    }
+    .col-deck-sim-odds-item strong {
+      display: block;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #2f6b4f;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    [data-theme="dark"] .col-deck-sim-odds-item strong { color: #7dcea0; }
+    .col-deck-sim-odds-item.is-sim strong { color: #b07c28; }
+    [data-theme="dark"] .col-deck-sim-odds-item.is-sim strong { color: #e6c07a; }
+    .col-deck-sim-odds-item .col-deck-sim-odds-sub {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.72rem;
+      color: var(--col-muted);
+      line-height: 1.35;
+    }
+    .col-deck-sim-odds-note {
+      margin: 0.55rem 0 0;
+      font-size: 0.76rem;
+      color: var(--col-muted);
+      line-height: 1.45;
+    }
+    @keyframes col-deck-sim-odds-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .col-deck-sim-actions {
       position: sticky;
       bottom: 0;
@@ -5481,6 +5558,7 @@
       .col-deck-sim-card.is-dumping,
       .col-deck-sim-card.is-selected,
       .col-deck-sim-waiting-chip.is-arrive,
+      .col-deck-sim-odds,
       .col-deck-sim-step.is-active {
         animation: none !important;
         opacity: 1 !important;
@@ -6482,6 +6560,27 @@
           <h4>調度丟棄 · 等待室</h4>
           <div class="col-deck-sim-waiting-chips" id="colDeckSimWaitingChips"></div>
         </div>
+        <div class="col-deck-sim-odds" id="colDeckSimOdds" hidden aria-live="polite">
+          <h4>0 等抽到機率</h4>
+          <div class="col-deck-sim-odds-grid">
+            <div class="col-deck-sim-odds-item">
+              <span class="col-deck-sim-odds-label">理論起手</span>
+              <strong id="colDeckSimOddsTheory">—</strong>
+              <span class="col-deck-sim-odds-sub" id="colDeckSimOddsTheorySub">起手 ≥1 張 Lv0</span>
+            </div>
+            <div class="col-deck-sim-odds-item is-sim">
+              <span class="col-deck-sim-odds-label">模擬起手</span>
+              <strong id="colDeckSimOddsOpenEmp">—</strong>
+              <span class="col-deck-sim-odds-sub" id="colDeckSimOddsOpenSub">本階段累計</span>
+            </div>
+            <div class="col-deck-sim-odds-item is-sim">
+              <span class="col-deck-sim-odds-label">模擬調度後</span>
+              <strong id="colDeckSimOddsFinalEmp">—</strong>
+              <span class="col-deck-sim-odds-sub" id="colDeckSimOddsFinalSub">本階段累計</span>
+            </div>
+          </div>
+          <p class="col-deck-sim-odds-note" id="colDeckSimOddsNote"></p>
+        </div>
       </div>
 
       <div class="col-deck-sim-actions">
@@ -6743,12 +6842,32 @@
     var deckSimLogEl = document.getElementById('colDeckSimLog');
     var deckSimWaitingWrap = document.getElementById('colDeckSimWaitingWrap');
     var deckSimWaitingChips = document.getElementById('colDeckSimWaitingChips');
+    var deckSimOddsEl = document.getElementById('colDeckSimOdds');
+    var deckSimOddsTheoryEl = document.getElementById('colDeckSimOddsTheory');
+    var deckSimOddsTheorySubEl = document.getElementById('colDeckSimOddsTheorySub');
+    var deckSimOddsOpenEmpEl = document.getElementById('colDeckSimOddsOpenEmp');
+    var deckSimOddsOpenSubEl = document.getElementById('colDeckSimOddsOpenSub');
+    var deckSimOddsFinalEmpEl = document.getElementById('colDeckSimOddsFinalEmp');
+    var deckSimOddsFinalSubEl = document.getElementById('colDeckSimOddsFinalSub');
+    var deckSimOddsNoteEl = document.getElementById('colDeckSimOddsNote');
     var deckSimStepsEl = document.getElementById('colDeckSimSteps');
     var deckSimTableNote = document.getElementById('colDeckSimTableNote');
     var DECK_SIM_OPENING_HAND = 5;
     var deckSimUid = 0;
     var deckSimAnimating = false;
     var deckSimEntries = [];
+    var deckSimOdds = {
+      lv0InDeck: 0,
+      deckSize: 0,
+      theory: 0,
+      openingHits: 0,
+      finalHits: 0,
+      trials: 0,
+      pendingOpeningCount: 0,
+      lastOpeningCount: 0,
+      lastFinalCount: 0,
+      revealed: false
+    };
     var deckSimState = {
       deck: [],
       hand: [],
@@ -10272,6 +10391,103 @@
       return out;
     }
 
+    function isDeckSimLv0Card(c) {
+      if (!c) return false;
+      if (c.kind === 'CX') return false;
+      return Number(c.level) === 0;
+    }
+
+    function countDeckSimLv0(cards) {
+      var n = 0;
+      (cards || []).forEach(function (c) {
+        if (isDeckSimLv0Card(c)) n += 1;
+      });
+      return n;
+    }
+
+    /** P(X >= 1)：超幾何，對齊 deckAnalysis「任意 Level 0」 */
+    function hyperAtLeastOneDeckSim(K, N, n) {
+      if (n <= 0 || N <= 0) return 0;
+      if (K <= 0) return 0;
+      if (K >= N) return 1;
+      if (N - K < n) return 1;
+      var pNone = 1;
+      for (var i = 0; i < n; i++) {
+        pNone *= (N - K - i) / (N - i);
+      }
+      return Math.max(0, Math.min(1, 1 - pNone));
+    }
+
+    function formatDeckSimPct(p) {
+      return (Math.round(p * 1000) / 10).toFixed(1) + '%';
+    }
+
+    function resetDeckSimOddsSession() {
+      deckSimOdds.lv0InDeck = 0;
+      deckSimOdds.deckSize = 0;
+      deckSimOdds.theory = 0;
+      deckSimOdds.openingHits = 0;
+      deckSimOdds.finalHits = 0;
+      deckSimOdds.trials = 0;
+      deckSimOdds.pendingOpeningCount = 0;
+      deckSimOdds.lastOpeningCount = 0;
+      deckSimOdds.lastFinalCount = 0;
+      deckSimOdds.revealed = false;
+    }
+
+    function refreshDeckSimOddsMeta() {
+      var N = deckSimEntries.length;
+      var K = countDeckSimLv0(deckSimEntries);
+      deckSimOdds.deckSize = N;
+      deckSimOdds.lv0InDeck = K;
+      deckSimOdds.theory = hyperAtLeastOneDeckSim(K, N, DECK_SIM_OPENING_HAND);
+    }
+
+    function recordDeckSimOddsAfterMulligan() {
+      var openingCount = deckSimOdds.pendingOpeningCount;
+      var finalCount = countDeckSimLv0(deckSimState.hand);
+      deckSimOdds.lastOpeningCount = openingCount;
+      deckSimOdds.lastFinalCount = finalCount;
+      deckSimOdds.trials += 1;
+      if (openingCount > 0) deckSimOdds.openingHits += 1;
+      if (finalCount > 0) deckSimOdds.finalHits += 1;
+      deckSimOdds.revealed = true;
+    }
+
+    function renderDeckSimOdds() {
+      if (!deckSimOddsEl) return;
+      if (!deckSimOdds.revealed) {
+        deckSimOddsEl.hidden = true;
+        return;
+      }
+      deckSimOddsEl.hidden = false;
+      var trials = deckSimOdds.trials;
+      var theoryPct = formatDeckSimPct(deckSimOdds.theory);
+      var openEmp = trials ? (deckSimOdds.openingHits / trials) : 0;
+      var finalEmp = trials ? (deckSimOdds.finalHits / trials) : 0;
+      if (deckSimOddsTheoryEl) deckSimOddsTheoryEl.textContent = theoryPct;
+      if (deckSimOddsTheorySubEl) {
+        deckSimOddsTheorySubEl.textContent =
+          '起手 ≥1 張 Lv0 · 牌組 ' + deckSimOdds.lv0InDeck + '／' + deckSimOdds.deckSize;
+      }
+      if (deckSimOddsOpenEmpEl) deckSimOddsOpenEmpEl.textContent = formatDeckSimPct(openEmp);
+      if (deckSimOddsOpenSubEl) {
+        deckSimOddsOpenSubEl.textContent =
+          deckSimOdds.openingHits + '／' + trials + ' 局有 Lv0 · 本局 ' +
+          deckSimOdds.lastOpeningCount + ' 張';
+      }
+      if (deckSimOddsFinalEmpEl) deckSimOddsFinalEmpEl.textContent = formatDeckSimPct(finalEmp);
+      if (deckSimOddsFinalSubEl) {
+        deckSimOddsFinalSubEl.textContent =
+          deckSimOdds.finalHits + '／' + trials + ' 局有 Lv0 · 本局 ' +
+          deckSimOdds.lastFinalCount + ' 張';
+      }
+      if (deckSimOddsNoteEl) {
+        deckSimOddsNoteEl.textContent =
+          '理論為超幾何「起手 5 張至少 1 張非 CX 的 Level 0」。模擬機率為本視窗內完成調度的累計命中率；重新開啟工具會重置累計。';
+      }
+    }
+
     function syncDeckSimSteps(phase) {
       if (!deckSimStepsEl) return;
       var deal = deckSimStepsEl.querySelector('[data-sim-step="deal"]');
@@ -10333,10 +10549,10 @@
       }
       if (deckSimMulliganBtn) {
         deckSimMulliganBtn.hidden = !opening;
-        deckSimMulliganBtn.disabled = !opening || selectedN === 0 || busy;
+        deckSimMulliganBtn.disabled = !opening || busy;
         deckSimMulliganBtn.innerHTML = selectedN
           ? ('<i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度（' + selectedN + ' 張）')
-          : '<i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度';
+          : '<i class="fas fa-sync-alt mr-1" aria-hidden="true"></i>確認調度（不換牌）';
       }
     }
 
@@ -10444,6 +10660,7 @@
       renderDeckSimStats();
       renderDeckSimHand(opts);
       renderDeckSimWaiting(opts);
+      renderDeckSimOdds();
       updateDeckSimButtons();
       if (deckSimLogEl) deckSimLogEl.textContent = deckSimState.log || '';
     }
@@ -10457,6 +10674,7 @@
       deckSimClearSelected();
       deckSimState.phase = 'idle';
       deckSimState.log = '';
+      resetDeckSimOddsSession();
       setDeckSimPhase('idle', '尚未開始');
       if (deckSimHandGrid) {
         deckSimHandGrid.classList.remove('is-busy');
@@ -10464,6 +10682,7 @@
       }
       if (deckSimWaitingWrap) deckSimWaitingWrap.hidden = true;
       if (deckSimWaitingChips) deckSimWaitingChips.innerHTML = '';
+      if (deckSimOddsEl) deckSimOddsEl.hidden = true;
       if (deckSimLogEl) deckSimLogEl.textContent = '';
       updateDeckSimButtons();
       renderDeckSimStats();
@@ -10471,10 +10690,13 @@
 
     function prepareDeckSimEntries(deck) {
       deckSimEntries = expandDeckSimEntries(deck);
+      resetDeckSimOddsSession();
+      refreshDeckSimOddsMeta();
       setDeckSimPhase('idle', deckSimEntries.length ? '可開始模擬' : '尚未開始');
       if (deckToolsHint) {
         deckToolsHint.textContent = deckSimEntries.length
-          ? ('正在模擬「' + (deck.name || '未命名牌組') + '」· 共 ' + deckSimEntries.length + ' 張。')
+          ? ('正在模擬「' + (deck.name || '未命名牌組') + '」· 共 ' + deckSimEntries.length +
+            ' 張（Lv0 ' + deckSimOdds.lv0InDeck + '）。')
           : '此牌組尚無卡片，無法模擬抽牌。';
       }
       deckSimState.log = '';
@@ -10491,9 +10713,11 @@
       deckSimState.hand = drawFromDeckSim(DECK_SIM_OPENING_HAND);
       deckSimState.waiting = [];
       deckSimClearSelected();
+      deckSimOdds.pendingOpeningCount = countDeckSimLv0(deckSimState.hand);
       deckSimState.phase = 'opening';
       deckSimState.log = '已洗牌並抽出起手 ' + deckSimState.hand.length +
-        ' 張。點選要換掉的牌，再按「確認調度」。';
+        ' 張（含 Lv0 ' + deckSimOdds.pendingOpeningCount +
+        ' 張）。點選要換掉的牌，再按「確認調度」。';
       setDeckSimPhase('opening', '可調度');
       renderDeckSimAll({ dealAnimate: true });
     }
@@ -10529,9 +10753,15 @@
       }).concat(drawn);
       var dumpN = dump.length;
       deckSimClearSelected();
+      recordDeckSimOddsAfterMulligan();
       deckSimState.phase = 'done';
-      deckSimState.log = '調度完成：丟棄 ' + dumpN + ' 張至等待室，補抽 ' + drawn.length +
-        ' 張。可按「重新洗牌起手」再試一局。';
+      deckSimState.log = dumpN
+        ? ('調度完成：丟棄 ' + dumpN + ' 張至等待室，補抽 ' + drawn.length +
+          ' 張。起手 Lv0 ' + deckSimOdds.lastOpeningCount +
+          ' → 調度後 ' + deckSimOdds.lastFinalCount +
+          '。可按「重新洗牌起手」再試一局。')
+        : ('調度完成：未換牌。起手／調度後皆為 Lv0 ' +
+          deckSimOdds.lastFinalCount + ' 張。可按「重新洗牌起手」再試一局。');
       setDeckSimPhase('done', '調度完成');
       renderDeckSimAll({ dealAnimate: true, dealIds: dealIds, arriveCount: dumpN });
       deckSimAnimating = false;
@@ -10542,7 +10772,10 @@
     function applyDeckSimMulligan() {
       if (deckSimState.phase !== 'opening' || deckSimAnimating) return;
       var ids = Object.keys(deckSimState.selected);
-      if (!ids.length) return;
+      if (!ids.length) {
+        finishDeckSimMulligan([], []);
+        return;
+      }
       if (deckSimState.deck.length < ids.length) {
         deckSimState.log = '牌庫剩餘不足，無法重抽 ' + ids.length +
           ' 張（剩 ' + deckSimState.deck.length + '）。';
