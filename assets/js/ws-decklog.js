@@ -13,6 +13,20 @@
   var KIND_DECKLOG = { "2": "角色", "3": "事件", "4": "CX" };
 
   var setCache = new Map();
+  /** 限制常駐 set JSON 數量，避免牌組頁跨多作品 enrich 後 heap 無限成長 */
+  var SET_CACHE_MAX = 12;
+  var setCacheOrder = [];
+
+  function touchSetCache(titleCode) {
+    if (!titleCode) return;
+    var idx = setCacheOrder.indexOf(titleCode);
+    if (idx >= 0) setCacheOrder.splice(idx, 1);
+    setCacheOrder.push(titleCode);
+    while (setCacheOrder.length > SET_CACHE_MAX) {
+      var drop = setCacheOrder.shift();
+      if (drop && drop !== titleCode) setCache.delete(drop);
+    }
+  }
 
   function normalizeCardNo(cardNo) {
     return String(cardNo || "").trim().replace(/\\/g, "/");
@@ -225,13 +239,17 @@
 
   function loadSetJson(titleCode) {
     if (!titleCode) return Promise.resolve(null);
-    if (setCache.has(titleCode)) return setCache.get(titleCode);
+    if (setCache.has(titleCode)) {
+      touchSetCache(titleCode);
+      return setCache.get(titleCode);
+    }
     var remote = CONTENT_WS_BASE + encodeURIComponent(titleCode) + ".json";
     var local = "./json/" + encodeURIComponent(titleCode) + ".json";
     var p = fetchSetByIdMap(remote)
       .catch(function () { return fetchSetByIdMap(local); })
       .catch(function () { return null; });
     setCache.set(titleCode, p);
+    touchSetCache(titleCode);
     return p;
   }
 
