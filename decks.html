@@ -3842,6 +3842,9 @@
       flex-direction: column;
       gap: 0.35rem;
       cursor: pointer;
+      /* 長清單時略過畫面外項目的排版／繪製，降低記憶體與捲動成本 */
+      content-visibility: auto;
+      contain-intrinsic-size: auto 220px;
     }
     .col-deck-entry-art {
       position: relative;
@@ -5515,9 +5518,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="assets/js/firebase-config.js"></script>
   <script src="assets/js/ws-firebase.js"></script>
-  <script src="assets/js/ws-decklog.js?v=20261017h"></script>
+  <script src="assets/js/ws-decklog.js?v=20261106m"></script>
   <script src="assets/js/ws-trigger-map.js?v=20261027c"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- html2canvas 延遲載入：僅輸出牌組圖時才拉，避免首屏佔用 JS heap -->
   <script src="assets/js/ws-deck-image-export.js?v=20261103c"></script>
   <script src="dist/js/include-navbar.js"></script>
 
@@ -6019,7 +6022,9 @@
       asOf: 1,
       schemaVersion: 1
     };
+    /** cardNumber → latestPrice（number）；不保留原始 JSON 物件以節省 heap */
     var deckPriceMap = null;
+    var deckPriceDateLabel = '';
     var deckPriceMeta = '';
     var deckPriceStatus = 'idle';
     var deckPriceLoadPromise = null;
@@ -6345,7 +6350,7 @@
           if (shouldRender) renderAlbum();
         });
       } else {
-        ensureAlbumCardMeta(function () { /* deck page uses owned qty */ });
+        // 牌組頁不預先 enrich 整本卡冊（會拉一整批 set JSON 進 setCache）
         renderDeckList();
       }
     }
@@ -6748,21 +6753,22 @@
             if (!key) return;
             var lv = parseCardLevel(row.level != null ? row.level : row.cardlevel);
             var kindClass = resolveCardKindClass(row);
-            albumMetaCache[key] = mergeAlbumMetaFromEnrichRow(getAlbumMeta(key) || {}, {
-              level: lv,
-              color: row.color || row.cardcolor || '',
-              rarity: row.rarity || row.cardrare || row.cardRare || '',
-              kindClass: kindClass,
-              kindLabel: row.kindLabel || '',
-              name: row.name || row.cardName || '',
-              effect: row.effect || '',
-              cost: row.cost,
-              power: row.power,
-              soul: row.soul,
-              trigger: row.trigger || '',
-              features: row.features || []
-            });
-            albumMetaCache[key].kindClass = kindClass || albumMetaCache[key].kindClass;
+            // 批次 enrich 只留篩選／列表所需輕量欄位；效果／特徵等改由光箱按需載入
+            var prevMeta = getAlbumMeta(key) || {};
+            albumMetaCache[key] = {
+              level: lv != null ? lv : prevMeta.level,
+              color: normalizeText(row.color || row.cardcolor || prevMeta.color || ''),
+              rarity: normalizeText(row.rarity || row.cardrare || row.cardRare || prevMeta.rarity || ''),
+              kindClass: kindClass || prevMeta.kindClass || '',
+              kindLabel: normalizeText(row.kindLabel || prevMeta.kindLabel || ''),
+              cardName: normalizeText(row.name || row.cardName || prevMeta.cardName || '')
+            };
+            if (prevMeta.effect) albumMetaCache[key].effect = prevMeta.effect;
+            if (prevMeta.features && prevMeta.features.length) albumMetaCache[key].features = prevMeta.features;
+            if (prevMeta.cost != null) albumMetaCache[key].cost = prevMeta.cost;
+            if (prevMeta.power != null) albumMetaCache[key].power = prevMeta.power;
+            if (prevMeta.soul != null) albumMetaCache[key].soul = prevMeta.soul;
+            if (prevMeta.trigger) albumMetaCache[key].trigger = prevMeta.trigger;
             if (kindClass === 'CX') sawCx = true;
             if (lv != null) deckLevelCache[key] = lv;
           });
@@ -9608,29 +9614,38 @@
       return y + m + day;
     }
 
+    /**
+     * 將 latestByCard JSON 壓成 cardNo → number。
+     * 原始檔約 7–8MB、7 萬筆物件；只留數字可大幅降低常駐 heap。
+     */
     function extractDeckPriceMap(payload) {
       if (!payload || typeof payload !== 'object') return null;
-      if (payload.cards && typeof payload.cards === 'object') return payload.cards;
-      var out = {};
-      Object.keys(payload).forEach(function (k) {
-        if (LATEST_PRICE_META_KEYS[k]) return;
-        var v = payload[k];
-        if (!v || typeof v !== 'object') return;
-        var cn = normalizeText(v.cardNo != null ? v.cardNo : k).replace(/\\/g, '/');
-        if (!cn) return;
-        out[cn] = v;
-      });
-      return Object.keys(out).length ? out : null;
-    }
-
-    function pickDeckPriceDateLabel(map) {
-      if (!map || typeof map !== 'object') return '';
-      var keys = Object.keys(map);
+      var src = (payload.cards && typeof payload.cards === 'object') ? payload.cards : payload;
+      var out = Object.create(null);
+      var dateLabel = '';
+      var keys = Object.keys(src);
       for (var i = 0; i < keys.length; i++) {
-        var d = map[keys[i]] && map[keys[i]].latestDate;
-        if (d) return String(d);
+        var k = keys[i];
+        if (LATEST_PRICE_META_KEYS[k]) continue;
+        var v = src[k];
+        var cn = '';
+        var price = null;
+        var date = '';
+        if (typeof v === 'number' && isFinite(v)) {
+          cn = normalizeText(k).replace(/\\/g, '/');
+          price = v;
+        } else if (v && typeof v === 'object') {
+          cn = normalizeText(v.cardNo != null ? v.cardNo : k).replace(/\\/g, '/');
+          if (typeof v.latestPrice === 'number' && isFinite(v.latestPrice)) price = v.latestPrice;
+          if (v.latestDate) date = String(v.latestDate);
+        } else {
+          continue;
+        }
+        if (!cn || price == null) continue;
+        out[cn] = price;
+        if (!dateLabel && date) dateLabel = date;
       }
-      return '';
+      return Object.keys(out).length ? { prices: out, dateLabel: dateLabel } : null;
     }
 
     function sumDeckAgainstPriceMap(deck) {
@@ -9647,8 +9662,7 @@
           noCardNo += qty || 1;
           return;
         }
-        var row = map && map[cn];
-        var price = row && typeof row.latestPrice === 'number' ? row.latestPrice : null;
+        var price = map && typeof map[cn] === 'number' ? map[cn] : null;
         if (price == null) missingQty += qty;
         else total += price * qty;
       });
@@ -9674,6 +9688,7 @@
           if (tryDay >= 5) {
             deckPriceStatus = 'error';
             deckPriceMap = null;
+            deckPriceDateLabel = '';
             deckPriceMeta = '無法載入行情';
             resolve(false);
             return;
@@ -9687,12 +9702,14 @@
               return r.json();
             })
             .then(function (j) {
-              var map = extractDeckPriceMap(j);
-              if (!map) throw new Error('empty');
-              deckPriceMap = map;
+              var extracted = extractDeckPriceMap(j);
+              // 放開完整 JSON 參照，讓 GC 回收解析樹
+              j = null;
+              if (!extracted) throw new Error('empty');
+              deckPriceMap = extracted.prices;
+              deckPriceDateLabel = extracted.dateLabel || formatDeckPriceYmd(d);
               deckPriceStatus = 'ready';
-              var dateLabel = pickDeckPriceDateLabel(map) || formatDeckPriceYmd(d);
-              deckPriceMeta = '行情日 ' + dateLabel + ' · 遊遊亭參考加總';
+              deckPriceMeta = '行情日 ' + deckPriceDateLabel + ' · 遊遊亭參考加總';
               resolve(true);
             })
             .catch(function () {
@@ -11449,6 +11466,40 @@
     }
 
     var deckImageExportBusy = false;
+    var html2canvasLoadPromise = null;
+    var HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+
+    function ensureHtml2Canvas() {
+      if (typeof window.html2canvas === 'function') return Promise.resolve(window.html2canvas);
+      if (html2canvasLoadPromise) return html2canvasLoadPromise;
+      html2canvasLoadPromise = new Promise(function (resolve, reject) {
+        var existing = document.querySelector('script[data-ws-html2canvas]');
+        if (existing) {
+          existing.addEventListener('load', function () {
+            if (typeof window.html2canvas === 'function') resolve(window.html2canvas);
+            else reject(new Error('html2canvas 載入失敗'));
+          });
+          existing.addEventListener('error', function () {
+            reject(new Error('html2canvas 載入失敗'));
+          });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = HTML2CANVAS_SRC;
+        s.async = true;
+        s.setAttribute('data-ws-html2canvas', '1');
+        s.onload = function () {
+          if (typeof window.html2canvas === 'function') resolve(window.html2canvas);
+          else reject(new Error('html2canvas 載入失敗'));
+        };
+        s.onerror = function () {
+          html2canvasLoadPromise = null;
+          reject(new Error('html2canvas 載入失敗'));
+        };
+        document.head.appendChild(s);
+      });
+      return html2canvasLoadPromise;
+    }
 
     function exportDeckImage(deckId) {
       var deck = null;
@@ -11467,10 +11518,6 @@
         setStatus('牌組圖模組尚未載入', 'is-error');
         return;
       }
-      if (typeof window.html2canvas !== 'function') {
-        setStatus('html2canvas 尚未載入', 'is-error');
-        return;
-      }
       deckImageExportBusy = true;
       setStatus('正在產生牌組圖片…', 'is-ok');
       var buttons = document.querySelectorAll('[data-deck-export-image="' + deckId + '"]');
@@ -11483,6 +11530,7 @@
         : Promise.resolve();
       ready
         .catch(function () { /* fallback map 仍可用 */ })
+        .then(function () { return ensureHtml2Canvas(); })
         .then(function () {
           return window.WsDeckImageExport.exportDeckImage(serializeDeck(deck), {
             triggerMap: window.WsTriggerMap || null,
@@ -13888,8 +13936,7 @@
         allItems.length ? 'is-ok' : ''
       );
     } else {
-      // 牌組頁仍讀取卡冊持有量（缺卡／從卡冊加入）
-      ensureAlbumCardMeta(function () { /* meta ready for deck filters */ });
+      // 牌組頁：持有量用 allItems 即可；屬性改在開啟牌組／篩選時按需 enrich
       ensureDeckPriceMap(function (shouldRender) {
         if (shouldRender && selectedDeckId) renderDeckDetail();
       });
