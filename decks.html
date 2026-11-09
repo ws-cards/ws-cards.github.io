@@ -4898,6 +4898,7 @@
       color: #fff;
     }
     .col-deck-editor-stage {
+      position: relative;
       min-width: 0;
     }
     .col-deck-editor-list-pane {
@@ -4927,13 +4928,19 @@
       #colDeckModal.is-series-pick .col-deck-editor-stage {
         flex: 1 1 auto;
         min-height: 0;
-        display: grid;
-        grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+        display: flex;
         gap: 0.75rem;
         align-items: stretch;
       }
+      #colDeckModal.is-series-pick .col-deck-series-pick {
+        flex: 6 1 0;
+      }
+      #colDeckModal.is-series-pick .col-deck-editor-list-pane {
+        flex: 4 1 0;
+      }
       #colDeckModal.is-series-pick .col-deck-series-pick,
       #colDeckModal.is-series-pick .col-deck-editor-list-pane {
+        min-width: 0;
         min-height: 0;
         display: flex;
         flex-direction: column;
@@ -4969,6 +4976,23 @@
         padding: 0.7rem 0.65rem 0.85rem;
         grid-template-columns: repeat(auto-fill, minmax(9.2rem, 1fr));
       }
+    }
+    .col-deck-series-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      border-radius: inherit;
+      background: rgba(15, 23, 22, 0.72);
+      opacity: 0;
+      pointer-events: none;
+    }
+    [data-theme="dark"] .col-deck-series-scrim {
+      background: rgba(0, 0, 0, 0.78);
+    }
+    #colDeckModal.is-series-pick .col-deck-series-pick,
+    #colDeckModal.is-series-pick .col-deck-editor-list-pane {
+      position: relative;
+      z-index: 4;
     }
     .col-deck-series-pick-head {
       flex: 0 0 auto;
@@ -14014,6 +14038,9 @@
     var deckSeriesPickNormalOnly = false;
     var deckSeriesPickObserver = null;
     var deckSeriesSearchTimer = null;
+    var deckSeriesPickAnim = false;
+    var deckSeriesPickTl = null;
+    var deckSeriesPickAnimToken = 0;
     var SERIES_PICK_PAGE = 72;
 
     function ensureDeckCardTitleMap() {
@@ -14702,16 +14729,83 @@
       syncSeriesPickBadges();
     }
 
-    function setDeckSeriesPickOpen(next) {
-      var want = !!next && deckEditorMode === 'edit' && isDeckDesktopLayout() && !!deckDraft;
-      deckSeriesPickOpen = want;
-      if (deckModal) deckModal.classList.toggle('is-series-pick', want);
+    function seriesPickDialog() {
+      return deckModal ? deckModal.querySelector('.col-deck-editor-dialog') : null;
+    }
+
+    function ensureSeriesPickScrim(dialog) {
+      if (!dialog) return null;
+      var scrim = dialog.querySelector(':scope > .col-deck-series-scrim');
+      if (scrim) return scrim;
+      scrim = document.createElement('div');
+      scrim.className = 'col-deck-series-scrim';
+      scrim.setAttribute('aria-hidden', 'true');
+      dialog.appendChild(scrim);
+      return scrim;
+    }
+
+    function clearSeriesPickMotionProps() {
+      if (!window.gsap) return;
+      var dialog = seriesPickDialog();
+      var listPane = document.getElementById('colDeckEditorListPane');
       var panel = document.getElementById('colDeckSeriesPick');
-      if (panel) panel.hidden = !want;
-      syncSeriesPickButton();
-      syncSeriesPickListLabel();
-      if (!want) return;
-      try { collapseDeckCardExpand(true); } catch (e) { /* ignore */ }
+      var stage = document.getElementById('colDeckEditorStage');
+      var scrim = dialog && dialog.querySelector(':scope > .col-deck-series-scrim');
+      if (dialog) gsap.set(dialog, { clearProps: 'width,height,maxHeight' });
+      if (stage) gsap.set(stage, { clearProps: 'gap' });
+      if (listPane) gsap.set(listPane, { clearProps: 'transform' });
+      if (panel) gsap.set(panel, { clearProps: 'opacity,transform,flexGrow,flexBasis,minWidth' });
+      if (scrim) gsap.set(scrim, { opacity: 0 });
+    }
+
+    function killSeriesPickAnim() {
+      deckSeriesPickAnimToken += 1;
+      if (deckSeriesPickTl) {
+        try { deckSeriesPickTl.kill(); } catch (eKill) { /* ignore */ }
+        deckSeriesPickTl = null;
+      }
+      deckSeriesPickAnim = false;
+      if (window.gsap) {
+        var dialog = seriesPickDialog();
+        var stage = document.getElementById('colDeckEditorStage');
+        [dialog, stage, document.getElementById('colDeckEditorListPane'), document.getElementById('colDeckSeriesPick'),
+          dialog && dialog.querySelector(':scope > .col-deck-series-scrim')].forEach(function (node) {
+          if (node) gsap.killTweensOf(node);
+        });
+      }
+      clearSeriesPickMotionProps();
+    }
+
+    function applySeriesPickLayout(open) {
+      if (deckModal) {
+        deckModal.classList.toggle('is-series-pick', !!open);
+      }
+      var panel = document.getElementById('colDeckSeriesPick');
+      if (panel) panel.hidden = !open;
+      clearSeriesPickMotionProps();
+    }
+
+    function readDialogRectWithoutInline(dialog) {
+      var width = dialog.style.width;
+      var height = dialog.style.height;
+      var maxHeight = dialog.style.maxHeight;
+      dialog.style.width = '';
+      dialog.style.height = '';
+      dialog.style.maxHeight = '';
+      var rect = dialog.getBoundingClientRect();
+      dialog.style.width = width;
+      dialog.style.height = height;
+      dialog.style.maxHeight = maxHeight;
+      return rect;
+    }
+
+    function lockDialogSize(dialog, rect) {
+      dialog.style.width = rect.width + 'px';
+      dialog.style.height = rect.height + 'px';
+      dialog.style.maxHeight = rect.height + 'px';
+    }
+
+    function resetSeriesPickFilters() {
       deckSeriesPickQuery = '';
       deckSeriesPickLevel = '';
       deckSeriesPickProduct = '';
@@ -14720,7 +14814,139 @@
       if (search) search.value = '';
       var normal = document.getElementById('colDeckSeriesPickNormal');
       if (normal) normal.checked = false;
+    }
+
+    function beginSeriesPickAnim() {
+      killSeriesPickAnim();
+      deckSeriesPickAnim = true;
+      deckSeriesPickAnimToken += 1;
+      return deckSeriesPickAnimToken;
+    }
+
+    function seriesPickAnimAlive(token) {
+      return deckSeriesPickAnim && token === deckSeriesPickAnimToken;
+    }
+
+    function finishSeriesPickAnim(token, open) {
+      if (!seriesPickAnimAlive(token)) return;
+      deckSeriesPickTl = null;
+      deckSeriesPickAnim = false;
+      applySeriesPickLayout(open);
+    }
+
+    /** 視窗先像光箱放大並壓暗，選牌區再從左側推開，牌組清單留在右側 */
+    function playSeriesPickOpenAnim() {
+      var dialog = seriesPickDialog();
+      var stage = document.getElementById('colDeckEditorStage');
+      var panel = document.getElementById('colDeckSeriesPick');
+      if (!dialog || !stage || !panel || !window.gsap || !deckModal) {
+        applySeriesPickLayout(true);
+        return;
+      }
+      var token = beginSeriesPickAnim();
+      var from = dialog.getBoundingClientRect();
+      lockDialogSize(dialog, from);
+      deckModal.classList.add('is-series-pick');
+      panel.hidden = false;
+      var to = readDialogRectWithoutInline(dialog);
+      var scrim = ensureSeriesPickScrim(dialog);
+      gsap.set(scrim, { opacity: 0 });
+      gsap.set(stage, { gap: 0 });
+      gsap.set(panel, { flexGrow: 0, flexBasis: '0px', minWidth: 0, opacity: 0, y: 14, scale: 0.96, transformOrigin: '0% 46%' });
+      var tl = gsap.timeline({
+        onComplete: function () { finishSeriesPickAnim(token, true); }
+      });
+      deckSeriesPickTl = tl;
+      tl.to(scrim, { opacity: 1, duration: 0.34, ease: 'power2.out' }, 0);
+      tl.to(dialog, {
+        width: to.width,
+        height: to.height,
+        maxHeight: to.height,
+        duration: 0.42,
+        ease: 'power2.inOut'
+      }, 0);
+      tl.to(panel, {
+        flexGrow: 6,
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, 0.28);
+      tl.to(stage, { gap: '0.75rem', duration: 0.5, ease: 'power2.inOut' }, 0.28);
+      tl.to(scrim, { opacity: 0, duration: 0.4, ease: 'power2.out' }, 0.46);
+    }
+
+    function playSeriesPickCloseAnim() {
+      var dialog = seriesPickDialog();
+      var stage = document.getElementById('colDeckEditorStage');
+      var panel = document.getElementById('colDeckSeriesPick');
+      if (!dialog || !stage || !panel || !window.gsap || !deckModal ||
+        !deckModal.classList.contains('is-series-pick')) {
+        applySeriesPickLayout(false);
+        return;
+      }
+      var token = beginSeriesPickAnim();
+      var scrim = ensureSeriesPickScrim(dialog);
+      gsap.set(panel, { flexGrow: 6, flexBasis: '0px', minWidth: 0 });
+      gsap.set(stage, { gap: '0.75rem' });
+      var tl = gsap.timeline();
+      deckSeriesPickTl = tl;
+      tl.to(scrim, { opacity: 1, duration: 0.2, ease: 'power2.out' }, 0);
+      tl.to(panel, {
+        flexGrow: 0,
+        opacity: 0,
+        y: 10,
+        scale: 0.98,
+        duration: 0.36,
+        ease: 'power2.inOut'
+      }, 0);
+      tl.to(stage, { gap: 0, duration: 0.36, ease: 'power2.inOut' }, 0);
+      tl.add(function () {
+        if (!seriesPickAnimAlive(token) || !deckModal) return;
+        var large = dialog.getBoundingClientRect();
+        lockDialogSize(dialog, large);
+        deckModal.classList.remove('is-series-pick');
+        panel.hidden = true;
+        var small = readDialogRectWithoutInline(dialog);
+        var shrink = gsap.timeline({
+          onComplete: function () { finishSeriesPickAnim(token, false); }
+        });
+        deckSeriesPickTl = shrink;
+        shrink.to(dialog, {
+          width: small.width,
+          height: small.height,
+          maxHeight: small.height,
+          duration: 0.38,
+          ease: 'power2.inOut'
+        }, 0);
+        shrink.to(scrim, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      });
+    }
+
+    function setDeckSeriesPickOpen(next, opts) {
+      opts = opts || {};
+      var want = !!next && deckEditorMode === 'edit' && isDeckDesktopLayout() && !!deckDraft;
+      var animate = !!opts.animate && !prefersReducedMotion() && !!(window.gsap);
+      if (deckSeriesPickAnim) killSeriesPickAnim();
+      if (want === deckSeriesPickOpen) {
+        applySeriesPickLayout(want);
+        syncSeriesPickButton();
+        return;
+      }
+      deckSeriesPickOpen = want;
+      syncSeriesPickButton();
+      if (!want) {
+        if (animate) playSeriesPickCloseAnim();
+        else applySeriesPickLayout(false);
+        return;
+      }
+      try { collapseDeckCardExpand(true); } catch (e) { /* ignore */ }
+      resetSeriesPickFilters();
+      syncSeriesPickListLabel();
       loadDeckSeriesPicker();
+      if (animate) playSeriesPickOpenAnim();
+      else applySeriesPickLayout(true);
     }
 
     function applyDeckEditorMode() {
@@ -16409,7 +16635,7 @@
     if (deckSeriesPickBtn) {
       bindEl(deckSeriesPickBtn, 'click', function () {
         if (deckEditorMode !== 'edit' || !isDeckDesktopLayout()) return;
-        setDeckSeriesPickOpen(!deckSeriesPickOpen);
+        setDeckSeriesPickOpen(!deckSeriesPickOpen, { animate: true });
       });
     }
     var deckSeriesPickSearch = document.getElementById('colDeckSeriesPickSearch');
