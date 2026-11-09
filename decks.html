@@ -4914,10 +4914,36 @@
       .col-deck-editor-tools .col-deck-series-pick-toggle:not([hidden]) {
         display: inline-flex;
       }
+      #colDeckModal.is-series-pick {
+        align-items: center;
+        justify-content: center;
+        gap: 0.85rem;
+      }
+      #colDeckModal.is-series-pick .col-deck-series-pick,
       #colDeckModal.is-series-pick .col-deck-editor-dialog {
-        width: min(1480px, calc(100vw - 1.25rem));
-        height: min(94dvh, 980px);
-        max-height: min(94dvh, 980px);
+        height: min(92dvh, 980px);
+        max-height: min(92dvh, 980px);
+        min-width: 0;
+      }
+      #colDeckModal.is-series-pick .col-deck-series-pick {
+        display: flex;
+        flex: 6 1 0;
+        flex-direction: column;
+        width: auto;
+        overflow: hidden;
+        border-radius: 14px;
+        background: #fff;
+        color: #1a202c;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        z-index: 1;
+      }
+      [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-series-pick {
+        background: #1f1f1f;
+        color: #f7fafc;
+      }
+      #colDeckModal.is-series-pick .col-deck-editor-dialog {
+        flex: 4 1 0;
+        width: auto;
       }
       #colDeckModal.is-series-pick .col-deck-editor-body {
         display: flex;
@@ -4928,75 +4954,10 @@
       #colDeckModal.is-series-pick .col-deck-editor-stage {
         flex: 1 1 auto;
         min-height: 0;
-        display: flex;
-        gap: 0.75rem;
-        align-items: stretch;
-      }
-      #colDeckModal.is-series-pick .col-deck-editor-stage {
-        background:
-          radial-gradient(rgba(47, 111, 237, 0.28) 1.05px, transparent 1.15px) 0 0 / 13px 13px,
-          #f4f7fb;
-        border-radius: 12px;
-        padding: 0.35rem;
-      }
-      [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-editor-stage {
-        background:
-          radial-gradient(rgba(125, 168, 255, 0.22) 1.05px, transparent 1.15px) 0 0 / 13px 13px,
-          #171b22;
-      }
-      #colDeckModal.is-series-pick .col-deck-series-pick {
-        flex: 7 1 0;
-        border: 0;
-        background: transparent;
-        border-radius: 0;
-      }
-      #colDeckModal.is-series-pick .col-deck-editor-list-pane {
-        flex: 3 1 0;
-        container-type: inline-size;
-        container-name: deckside;
-        border: 1px solid rgba(15, 23, 42, 0.06);
-        border-radius: 16px;
-        background: #fff;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-      }
-      [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-editor-list-pane {
-        background: #1c212b;
-        border-color: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-      }
-      #colDeckModal.is-series-pick .col-deck-series-pick,
-      #colDeckModal.is-series-pick .col-deck-editor-list-pane {
-        min-width: 0;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      #colDeckModal.is-series-pick .col-deck-editor-list-label {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.35rem;
-        flex: 0 0 auto;
-        margin: 0;
-        padding: 0.72rem 0.8rem 0.45rem;
-        border-bottom: 0;
-        background: transparent;
-        font-size: 0.92rem;
-        font-weight: 800;
-        letter-spacing: 0;
-        color: #1a202c;
-      }
-      [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-editor-list-label {
-        color: #f7fafc;
-      }
-      #colDeckModal.is-series-pick .col-deck-editor-list-pane .col-deck-entry-list {
-        flex: 1 1 auto;
-        min-height: 0;
         overflow: auto;
-        align-content: start;
-        padding: 0.15rem 0.65rem 0.85rem;
-        grid-template-columns: repeat(auto-fill, minmax(9.2rem, 1fr));
+      }
+      #colDeckModal.is-series-pick .col-deck-entry-list {
+        grid-template-columns: repeat(auto-fill, minmax(8.6rem, 1fr));
       }
     }
     .col-deck-series-scrim {
@@ -5265,7 +5226,6 @@
     [data-theme="dark"] .col-series-no { color: #a0aec0; }
     [data-theme="dark"] .col-series-name { color: #e2e8f0; }
     [data-theme="dark"] .col-series-price { color: #f7fafc; }
-    #colDeckModal.is-series-pick .col-deck-card-sort { display: none; }
     #colDeckModal.is-series-pick .col-deck-series-pick-head {
       gap: 0.3rem;
       padding: 0.35rem 0.45rem 0.25rem;
@@ -7063,6 +7023,29 @@
 <!-- 牌組編輯：編成＋缺卡單頁 -->
 <div id="colDeckModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="deck"></div>
+  <section class="col-deck-series-pick" id="colDeckSeriesPick" hidden aria-label="系列選牌">
+    <div class="col-deck-series-pick-head">
+      <div class="col-deck-series-pick-title-row">
+        <h4 id="colDeckSeriesPickTitle">系列選牌</h4>
+        <span class="col-deck-series-pick-count" id="colDeckSeriesPickCount"></span>
+      </div>
+      <div class="col-deck-series-pick-tools">
+        <input id="colDeckSeriesPickSearch" class="col-deck-series-pick-search" type="search" placeholder="搜尋卡號、卡名" autocomplete="off" aria-label="搜尋系列卡片">
+        <select id="colDeckSeriesPickProduct" class="form-control col-deck-series-pick-product" aria-label="卡包" hidden></select>
+        <label class="col-deck-series-normal" id="colDeckSeriesPickNormalWrap" hidden>
+          <input type="checkbox" id="colDeckSeriesPickNormal">
+          <span>僅普通版</span>
+        </label>
+        <button type="button" class="col-deck-series-switch" id="colDeckSeriesPickSwitchBtn" hidden>換系列</button>
+      </div>
+      <div class="col-deck-series-level" id="colDeckSeriesPickLevels" role="group" aria-label="依等級篩選" hidden></div>
+      <p class="col-modal-hint col-deck-series-status" id="colDeckSeriesPickStatus" hidden></p>
+    </div>
+    <div class="col-deck-series-pick-scroll" id="colDeckSeriesPickScroll">
+      <div class="col-deck-series-grid" id="colDeckSeriesPickGrid"></div>
+      <button type="button" class="btn btn-outline-secondary btn-sm col-deck-series-more" id="colDeckSeriesPickMore" hidden>載入更多</button>
+    </div>
+  </section>
   <div class="col-modal-dialog col-modal-wide col-deck-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body col-deck-editor-body">
       <div class="col-deck-editor-top">
@@ -7079,7 +7062,7 @@
 
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
-        <button type="button" class="col-deck-series-pick-toggle" id="colDeckSeriesPickBtn" hidden aria-pressed="false" title="從系列卡表選牌，牌組清單移到右側">
+        <button type="button" class="col-deck-series-pick-toggle" id="colDeckSeriesPickBtn" hidden aria-pressed="false" title="左邊長出選牌視窗，牌組視窗擠到右邊">
           <i class="fas fa-th-large" aria-hidden="true"></i><span>選牌</span>
         </button>
         <button type="button" class="btn btn-outline-secondary btn-sm col-deck-rarity-toggle-mobile" id="colDeckRarityToggleBtn" hidden title="將高版本卡號改回普通版（僅草稿，需儲存）">
@@ -7103,29 +7086,6 @@
         </div>
       </div>
       <div class="col-deck-editor-stage" id="colDeckEditorStage">
-        <section class="col-deck-series-pick" id="colDeckSeriesPick" hidden aria-label="系列選牌">
-          <div class="col-deck-series-pick-head">
-            <div class="col-deck-series-pick-title-row">
-              <h4 id="colDeckSeriesPickTitle">系列選牌</h4>
-              <span class="col-deck-series-pick-count" id="colDeckSeriesPickCount"></span>
-            </div>
-            <div class="col-deck-series-pick-tools">
-              <input id="colDeckSeriesPickSearch" class="col-deck-series-pick-search" type="search" placeholder="搜尋卡號、卡名" autocomplete="off" aria-label="搜尋系列卡片">
-              <select id="colDeckSeriesPickProduct" class="form-control col-deck-series-pick-product" aria-label="卡包" hidden></select>
-              <label class="col-deck-series-normal" id="colDeckSeriesPickNormalWrap" hidden>
-                <input type="checkbox" id="colDeckSeriesPickNormal">
-                <span>僅普通版</span>
-              </label>
-              <button type="button" class="col-deck-series-switch" id="colDeckSeriesPickSwitchBtn" hidden>換系列</button>
-            </div>
-            <div class="col-deck-series-level" id="colDeckSeriesPickLevels" role="group" aria-label="依等級篩選" hidden></div>
-            <p class="col-modal-hint col-deck-series-status" id="colDeckSeriesPickStatus" hidden></p>
-          </div>
-          <div class="col-deck-series-pick-scroll" id="colDeckSeriesPickScroll">
-            <div class="col-deck-series-grid" id="colDeckSeriesPickGrid"></div>
-            <button type="button" class="btn btn-outline-secondary btn-sm col-deck-series-more" id="colDeckSeriesPickMore" hidden>載入更多</button>
-          </div>
-        </section>
         <div class="col-deck-editor-list-pane" id="colDeckEditorListPane">
           <div class="col-deck-editor-list-label" id="colDeckEditorListLabel">
             <div class="col-deck-side-top">
@@ -15075,10 +15035,10 @@
       var panel = document.getElementById('colDeckSeriesPick');
       var stage = document.getElementById('colDeckEditorStage');
       var scrim = dialog && dialog.querySelector(':scope > .col-deck-series-scrim');
-      if (dialog) gsap.set(dialog, { clearProps: 'width,height,maxHeight' });
+      if (dialog) gsap.set(dialog, { clearProps: 'position,left,top,width,height,maxHeight,margin,flex,overflow,transform' });
       if (stage) gsap.set(stage, { clearProps: 'gap' });
       if (listPane) gsap.set(listPane, { clearProps: 'transform' });
-      if (panel) gsap.set(panel, { clearProps: 'opacity,transform,flexGrow,flexBasis,minWidth' });
+      if (panel) gsap.set(panel, { clearProps: 'position,left,top,width,height,opacity,transform,flex,margin,overflow,maxHeight' });
       if (scrim) gsap.set(scrim, { opacity: 0 });
     }
 
@@ -15160,94 +15120,113 @@
       else syncSeriesPickListLabel();
     }
 
-    /** 視窗先像光箱放大並壓暗，選牌區再從左側推開，牌組清單留在右側 */
+    function seriesPickBox(el, modalRect) {
+      var rect = el.getBoundingClientRect();
+      return {
+        left: rect.left - modalRect.left,
+        top: rect.top - modalRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    function pinSeriesPickCard(el, box) {
+      el.style.position = 'absolute';
+      el.style.left = box.left + 'px';
+      el.style.top = box.top + 'px';
+      el.style.width = box.width + 'px';
+      el.style.height = box.height + 'px';
+      el.style.margin = '0';
+      el.style.flex = 'none';
+      el.style.maxHeight = 'none';
+    }
+
+    /** 左邊長出選牌卡片，原本的編輯視窗擠到右邊 */
     function playSeriesPickOpenAnim() {
       var dialog = seriesPickDialog();
-      var stage = document.getElementById('colDeckEditorStage');
       var panel = document.getElementById('colDeckSeriesPick');
-      if (!dialog || !stage || !panel || !window.gsap || !deckModal) {
+      if (!dialog || !panel || !window.gsap || !deckModal) {
         applySeriesPickLayout(true);
         return;
       }
       var token = beginSeriesPickAnim();
-      var from = dialog.getBoundingClientRect();
-      lockDialogSize(dialog, from);
+      var modalRect = deckModal.getBoundingClientRect();
+      var from = seriesPickBox(dialog, modalRect);
       deckModal.classList.add('is-series-pick');
       panel.hidden = false;
-      var to = readDialogRectWithoutInline(dialog);
-      var scrim = ensureSeriesPickScrim(dialog);
-      gsap.set(scrim, { opacity: 0 });
-      gsap.set(stage, { gap: 0 });
-      gsap.set(panel, { flexGrow: 0, flexBasis: '0px', minWidth: 0, opacity: 0, y: 14, scale: 0.96, transformOrigin: '0% 46%' });
+      var toDialog = seriesPickBox(dialog, modalRect);
+      var toPanel = seriesPickBox(panel, modalRect);
+      pinSeriesPickCard(dialog, from);
+      pinSeriesPickCard(panel, {
+        left: from.left,
+        top: from.top,
+        width: 0,
+        height: from.height
+      });
+      panel.style.overflow = 'hidden';
+      gsap.set(panel, { opacity: 0 });
       var tl = gsap.timeline({
         onComplete: function () { finishSeriesPickAnim(token, true); }
       });
       deckSeriesPickTl = tl;
-      tl.to(scrim, { opacity: 1, duration: 0.34, ease: 'power2.out' }, 0);
       tl.to(dialog, {
-        width: to.width,
-        height: to.height,
-        maxHeight: to.height,
-        duration: 0.42,
+        left: toDialog.left,
+        top: toDialog.top,
+        width: toDialog.width,
+        height: toDialog.height,
+        duration: 0.48,
         ease: 'power2.inOut'
       }, 0);
       tl.to(panel, {
-        flexGrow: 7,
+        left: toPanel.left,
+        top: toPanel.top,
+        width: toPanel.width,
+        height: toPanel.height,
         opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.5,
+        duration: 0.48,
         ease: 'power2.inOut'
-      }, 0.28);
-      tl.to(stage, { gap: '0.75rem', duration: 0.5, ease: 'power2.inOut' }, 0.28);
-      tl.to(scrim, { opacity: 0, duration: 0.4, ease: 'power2.out' }, 0.46);
+      }, 0);
     }
 
     function playSeriesPickCloseAnim() {
       var dialog = seriesPickDialog();
-      var stage = document.getElementById('colDeckEditorStage');
       var panel = document.getElementById('colDeckSeriesPick');
-      if (!dialog || !stage || !panel || !window.gsap || !deckModal ||
+      if (!dialog || !panel || !window.gsap || !deckModal ||
         !deckModal.classList.contains('is-series-pick')) {
         applySeriesPickLayout(false);
         return;
       }
       var token = beginSeriesPickAnim();
-      var scrim = ensureSeriesPickScrim(dialog);
-      gsap.set(panel, { flexGrow: 7, flexBasis: '0px', minWidth: 0 });
-      gsap.set(stage, { gap: '0.75rem' });
-      var tl = gsap.timeline();
+      var modalRect = deckModal.getBoundingClientRect();
+      var fromDialog = seriesPickBox(dialog, modalRect);
+      var fromPanel = seriesPickBox(panel, modalRect);
+      deckModal.classList.remove('is-series-pick');
+      panel.hidden = true;
+      var to = seriesPickBox(dialog, modalRect);
+      deckModal.classList.add('is-series-pick');
+      panel.hidden = false;
+      pinSeriesPickCard(dialog, fromDialog);
+      pinSeriesPickCard(panel, fromPanel);
+      panel.style.overflow = 'hidden';
+      var tl = gsap.timeline({
+        onComplete: function () { finishSeriesPickAnim(token, false); }
+      });
       deckSeriesPickTl = tl;
-      tl.to(scrim, { opacity: 1, duration: 0.2, ease: 'power2.out' }, 0);
       tl.to(panel, {
-        flexGrow: 0,
+        left: fromDialog.left,
+        width: 0,
         opacity: 0,
-        y: 10,
-        scale: 0.98,
-        duration: 0.36,
+        duration: 0.42,
         ease: 'power2.inOut'
       }, 0);
-      tl.to(stage, { gap: 0, duration: 0.36, ease: 'power2.inOut' }, 0);
-      tl.add(function () {
-        if (!seriesPickAnimAlive(token) || !deckModal) return;
-        var large = dialog.getBoundingClientRect();
-        lockDialogSize(dialog, large);
-        deckModal.classList.remove('is-series-pick');
-        panel.hidden = true;
-        var small = readDialogRectWithoutInline(dialog);
-        var shrink = gsap.timeline({
-          onComplete: function () { finishSeriesPickAnim(token, false); }
-        });
-        deckSeriesPickTl = shrink;
-        shrink.to(dialog, {
-          width: small.width,
-          height: small.height,
-          maxHeight: small.height,
-          duration: 0.38,
-          ease: 'power2.inOut'
-        }, 0);
-        shrink.to(scrim, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
-      });
+      tl.to(dialog, {
+        left: to.left,
+        top: to.top,
+        width: to.width,
+        height: to.height,
+        duration: 0.42,
+        ease: 'power2.inOut'
+      }, 0);
     }
 
     function setDeckSeriesPickOpen(next, opts) {
@@ -15347,7 +15326,7 @@
       tile.classList.toggle('is-short', isShort);
       var qtyBadge = tile.querySelector('.col-deck-qty-badge');
       if (qtyBadge) {
-        qtyBadge.textContent = (deckSeriesPickOpen ? '' : '×') + entry.qty;
+        qtyBadge.textContent = '×' + entry.qty;
         qtyBadge.setAttribute('aria-label', '編成 ' + entry.qty + ' 張');
       }
       var shortBadge = tile.querySelector('.col-deck-short-badge');
@@ -15389,7 +15368,7 @@
         html += '    <img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) + '" alt="' + escapeHtml(entry.cardNumber) + '" loading="lazy" decoding="async">';
       }
       html += '    <span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(entry.qty)) + ' 張">' +
-        (deckSeriesPickOpen ? '' : '×') + escapeHtml(String(entry.qty)) + '</span>';
+        '×' + escapeHtml(String(entry.qty)) + '</span>';
       html += '    <span class="col-deck-short-badge"' + (isShort ? '' : ' hidden') + '>缺' + escapeHtml(String(shortQty || 1)) + '</span>';
       if (isCover) {
         html += '    <span class="col-deck-cover-mark">封面</span>';
@@ -15524,12 +15503,7 @@
       document.documentElement.classList.remove('col-lb-mobile-open');
       deckCardExpandEntry = null;
       deckCardExpandBusy = false;
-      if (!isView && deckSeriesPickOpen) {
-        ensureDeckCardLevels(deckDraft.cards || [], function (updated) {
-          if (updated) renderDeckEditor();
-        });
-        deckEntryList.innerHTML = buildSeriesSideDeckHtml(visibleCards);
-      } else if (isView && isDeckLevelSortMode(deckCardSortMode)) {
+      if (isView && isDeckLevelSortMode(deckCardSortMode)) {
         deckEntryList.innerHTML = buildDeckEntriesHtmlWithLevelHeads(visibleCards, 'view');
       } else {
         deckEntryList.innerHTML = visibleCards.map(function (entry) {
@@ -15609,7 +15583,6 @@
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
-      if (deckEditorMode === 'edit' && isDeckDesktopLayout()) setDeckSeriesPickOpen(true);
       prefetchDeckRaritySetMaps();
       if (deckEditorMode === 'edit') {
         startDeckEditorAutosave();
