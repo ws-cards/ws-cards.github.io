@@ -164,6 +164,44 @@
       z-index: 2;
     }
 
+    /* 桌面：hover 某一欄時，其餘變暗淡以突出焦點 */
+    .tcg-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: rgba(6, 8, 12, 0);
+      transition: background 0.55s var(--panel-ease);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .tcg-panels:hover .tcg-panel:not(:hover)::after,
+      .tcg-panels:has(:focus-visible) .tcg-panel:not(:focus-visible)::after {
+        background: rgba(6, 8, 12, 0.48);
+      }
+
+      .tcg-panels:hover .tcg-panel:not(:hover) .tcg-panel__body,
+      .tcg-panels:has(:focus-visible) .tcg-panel:not(:focus-visible) .tcg-panel__body {
+        opacity: 0.52;
+      }
+
+      .tcg-panels:hover .tcg-panel:not(:hover) .tcg-panel__media,
+      .tcg-panels:has(:focus-visible) .tcg-panel:not(:focus-visible) .tcg-panel__media {
+        filter: brightness(0.72) saturate(0.7);
+      }
+
+      .tcg-panel:hover::after,
+      .tcg-panel:focus-visible::after {
+        background: rgba(6, 8, 12, 0);
+      }
+
+      .tcg-panel:hover .tcg-panel__body,
+      .tcg-panel:focus-visible .tcg-panel__body {
+        opacity: 1;
+      }
+    }
+
     .tcg-panel__media {
       position: absolute;
       top: 0;
@@ -177,6 +215,7 @@
       /* 固定視窗寬背景 + 不 scale：hover 只露更多，避免圖片跟著放大晃動 */
       transform: translateX(-50%);
       filter: saturate(0.92) contrast(1.05);
+      transition: filter 0.55s var(--panel-ease);
     }
 
     .tcg-panel[data-tcg="ws"] .tcg-panel__media {
@@ -235,7 +274,9 @@
       align-items: flex-start;
       text-align: left;
       transform: translateY(0.4rem);
-      transition: transform 0.55s var(--panel-ease);
+      transition:
+        transform 0.55s var(--panel-ease),
+        opacity 0.55s var(--panel-ease);
     }
 
     .tcg-panel:hover .tcg-panel__body,
