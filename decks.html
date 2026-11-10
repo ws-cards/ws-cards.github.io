@@ -31,6 +31,10 @@
       display: none !important;
       visibility: hidden !important;
     }
+    /* handoff 時讓牌組頁在覆層底下先畫，不必等完整 page-ready 才揭開 */
+    html.deck-handoff body > *:not(#wsPageLoader) {
+      visibility: visible !important;
+    }
     html.deck-handoff:not(.page-ready) body > #deckHandoffCover {
       visibility: visible !important;
     }
@@ -54,25 +58,25 @@
         url('assets/deck-select/ws-card.png');
       background-size: cover, cover, cover;
       background-position: center, center, center 18%;
-      transform: scale(1.02);
+      transform: scale(1.01);
       filter: saturate(0.95) contrast(1.05) brightness(0.92);
       transition:
-        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.85s ease,
-        opacity 0.85s ease;
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.42s ease,
+        opacity 0.42s ease;
     }
     #deckHandoffCover .deck-handoff-veil {
       position: absolute;
       inset: 0;
       background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, transparent 34%, rgba(0, 0, 0, 0.55) 100%);
-      transition: opacity 0.7s ease;
+      transition: opacity 0.36s ease;
     }
     html.deck-handoff.is-handoff-exit #deckHandoffCover {
       pointer-events: none;
     }
     html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-media {
-      transform: scale(1.08);
-      filter: saturate(1.05) contrast(1.02) brightness(1.05);
+      transform: scale(1.04);
+      filter: saturate(1.02) contrast(1.02) brightness(1.02);
       opacity: 0;
     }
     html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-veil {
@@ -81,7 +85,7 @@
     @media (prefers-reduced-motion: reduce) {
       #deckHandoffCover .deck-handoff-media,
       #deckHandoffCover .deck-handoff-veil {
-        transition: opacity 0.2s ease !important;
+        transition: opacity 0.15s ease !important;
       }
       html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-media {
         transform: none;
@@ -6807,6 +6811,10 @@
     cover.setAttribute('aria-hidden', 'false');
 
     var done = false;
+    var startedAt = Date.now();
+    var minHoldMs = 160;
+    var softCapMs = 420;
+
     function finishHandoff() {
       if (done) return;
       done = true;
@@ -6816,25 +6824,39 @@
         cover.setAttribute('aria-hidden', 'true');
         root.classList.remove('deck-handoff');
         root.classList.remove('is-handoff-exit');
-      }, 900);
+      }, 420);
     }
 
-    if (root.classList.contains('page-ready')) {
-      window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(finishHandoff);
-      });
-      return;
+    function tryFinish() {
+      if (done) return;
+      var waited = Date.now() - startedAt;
+      if (waited < minHoldMs) {
+        window.setTimeout(tryFinish, minHoldMs - waited);
+        return;
+      }
+      finishHandoff();
     }
 
-    var obs = new MutationObserver(function () {
-      if (!root.classList.contains('page-ready')) return;
-      obs.disconnect();
+    function onReadyClass() {
+      if (root.classList.contains('fonts-ready') || root.classList.contains('page-ready')) {
+        tryFinish();
+      }
+    }
+
+    if (root.classList.contains('fonts-ready') || root.classList.contains('page-ready')) {
       window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(finishHandoff);
+        window.requestAnimationFrame(tryFinish);
       });
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    window.setTimeout(finishHandoff, 12000);
+    } else {
+      var obs = new MutationObserver(function () {
+        onReadyClass();
+        if (done) obs.disconnect();
+      });
+      obs.observe(root, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    /* 不等牌組同步完成；覆層底下先露出頁面殼層 */
+    window.setTimeout(tryFinish, softCapMs);
   })();
 </script>
 <!-- 全頁載入進度 overlay（百分比）；內容就緒後由 WsPageLoader.complete 關閉 -->
