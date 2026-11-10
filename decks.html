@@ -5520,6 +5520,311 @@
     #colConfirmModal.col-modal {
       z-index: 2200;
     }
+
+    /* ——— 牌組差異比較 ——— */
+    .col-deck-editor-top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.4rem;
+      flex: 0 0 auto;
+    }
+    #colDeckModal.is-diff-compare .col-deck-editor-summary,
+    #colDeckModal.is-diff-compare .col-deck-editor-tools,
+    #colDeckModal.is-diff-compare .col-deck-editor-stage,
+    #colDeckModal.is-diff-compare .col-deck-series-pick {
+      display: none !important;
+    }
+    #colDeckModal.is-diff-compare .col-deck-editor-dialog {
+      width: min(1180px, 100%);
+      max-width: 100%;
+    }
+    .col-deck-diff {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .col-deck-diff-bar {
+      display: grid;
+      gap: 0.65rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(47, 107, 79, 0.06), rgba(176, 124, 40, 0.05));
+    }
+    [data-theme="dark"] .col-deck-diff-bar {
+      background: linear-gradient(145deg, rgba(63, 143, 107, 0.12), rgba(176, 124, 40, 0.08));
+    }
+    .col-deck-diff-meta {
+      display: grid;
+      gap: 0.35rem;
+    }
+    .col-deck-diff-pct-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.55rem 0.85rem;
+    }
+    .col-deck-diff-pct {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #2f6b4f;
+      font-variant-numeric: tabular-nums;
+    }
+    [data-theme="dark"] .col-deck-diff-pct { color: #7dcea0; }
+    .col-deck-diff-pct.is-high { color: #b45309; }
+    [data-theme="dark"] .col-deck-diff-pct.is-high { color: #fbbf24; }
+    .col-deck-diff-suggest {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #b45309;
+    }
+    [data-theme="dark"] .col-deck-diff-suggest { color: #fbbf24; }
+    .col-deck-diff-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .col-deck-diff-labels .is-left { color: #334155; }
+    .col-deck-diff-labels .is-right { color: #2f6b4f; }
+    [data-theme="dark"] .col-deck-diff-labels .is-left { color: #e2e8f0; }
+    [data-theme="dark"] .col-deck-diff-labels .is-right { color: #7dcea0; }
+    .col-deck-diff-hint {
+      margin: 0;
+      font-size: 0.76rem;
+      color: var(--col-muted, #718096);
+      line-height: 1.45;
+    }
+    .col-deck-diff-opts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 1rem;
+    }
+    .col-deck-diff-opts label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a5568;
+      cursor: pointer;
+      user-select: none;
+    }
+    [data-theme="dark"] .col-deck-diff-opts label { color: #cbd5e0; }
+    .col-deck-diff-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .col-deck-diff-actions .btn { border-radius: 999px; font-weight: 700; }
+    .col-deck-diff-panes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .col-deck-diff-pane {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.55);
+      overflow: hidden;
+    }
+    [data-theme="dark"] .col-deck-diff-pane {
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .col-deck-diff-pane-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+      background: rgba(47, 107, 79, 0.05);
+    }
+    .col-deck-diff-pane.is-left .col-deck-diff-pane-head {
+      background: rgba(51, 65, 85, 0.06);
+    }
+    .col-deck-diff-pane-head strong {
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+    .col-deck-diff-pane-head span {
+      font-size: 0.72rem;
+      color: var(--col-muted, #718096);
+      font-variant-numeric: tabular-nums;
+    }
+    .col-deck-diff-list {
+      list-style: none;
+      margin: 0;
+      padding: 0.55rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 0.45rem;
+      overflow: auto;
+      max-height: min(58vh, 640px);
+      align-content: start;
+    }
+    .col-deck-diff-list .col-deck-entry-level-head {
+      grid-column: 1 / -1;
+      margin: 0.15rem 0 0;
+      padding: 0.35rem 0.2rem 0.15rem;
+      border: 0;
+      background: transparent;
+    }
+    .col-deck-diff-card {
+      position: relative;
+      min-width: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+      overflow: hidden;
+      scroll-margin: 4.5rem;
+    }
+    [data-theme="dark"] .col-deck-diff-card {
+      background: rgba(20, 24, 22, 0.75);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .col-deck-diff-card.is-removed {
+      background: rgba(220, 38, 38, 0.14);
+      border-color: rgba(220, 38, 38, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.18);
+    }
+    .col-deck-diff-card.is-added {
+      background: rgba(22, 163, 74, 0.14);
+      border-color: rgba(22, 163, 74, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.18);
+    }
+    .col-deck-diff-card.is-qty {
+      background: rgba(217, 119, 6, 0.14);
+      border-color: rgba(217, 119, 6, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.18);
+    }
+    .col-deck-diff-card.is-focus {
+      outline: 2px solid #2f6b4f;
+      outline-offset: 1px;
+    }
+    .col-deck-diff-card .col-deck-entry-art {
+      aspect-ratio: 63 / 88;
+    }
+    .col-deck-diff-card .cap {
+      padding: 0.28rem 0.35rem 0.4rem;
+      font-size: 0.62rem;
+      line-height: 1.25;
+      color: #4a5568;
+    }
+    [data-theme="dark"] .col-deck-diff-card .cap { color: #a0aec0; }
+    .col-deck-diff-card .cap .mono {
+      display: block;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: #2d3748;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [data-theme="dark"] .col-deck-diff-card .cap .mono { color: #e2e8f0; }
+    .col-deck-diff-card .cap .name {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .col-deck-diff-card .diff-tag {
+      position: absolute;
+      left: 0.25rem;
+      bottom: 2.55rem;
+      z-index: 2;
+      font-size: 0.58rem;
+      font-weight: 800;
+      padding: 0.1rem 0.35rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.78);
+      color: #fff;
+      pointer-events: none;
+    }
+    .col-deck-diff-card.is-removed .diff-tag { background: #b91c1c; }
+    .col-deck-diff-card.is-added .diff-tag { background: #15803d; }
+    .col-deck-diff-card.is-qty .diff-tag { background: #b45309; }
+    .col-deck-diff-lock {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(100, 116, 139, 0.55);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      border-radius: 12px;
+    }
+    .col-deck-diff-lock-card {
+      max-width: 26rem;
+      padding: 1.1rem 1.2rem;
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.96);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+    }
+    [data-theme="dark"] .col-deck-diff-lock-card {
+      background: rgba(20, 24, 22, 0.96);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .col-deck-diff-lock-card h4 {
+      margin: 0 0 0.45rem;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+    .col-deck-diff-lock-card p {
+      margin: 0 0 0.85rem;
+      font-size: 0.82rem;
+      color: var(--col-muted, #718096);
+      line-height: 1.5;
+    }
+    .col-deck-diff-mobile-hint {
+      display: none;
+      margin: 0;
+      font-size: 0.72rem;
+      color: var(--col-muted, #718096);
+      text-align: center;
+    }
+    @media (max-width: 767px) {
+      .col-deck-diff-panes {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 0;
+        border-radius: 12px;
+        border: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+        -webkit-overflow-scrolling: touch;
+      }
+      .col-deck-diff-pane {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        border: 0;
+        border-radius: 0;
+      }
+      .col-deck-diff-pane + .col-deck-diff-pane {
+        border-left: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+      }
+      .col-deck-diff-list { max-height: min(52vh, 520px); }
+      .col-deck-diff-mobile-hint { display: block; }
+      .col-deck-diff-labels { font-size: 0.72rem; }
+    }
     .col-deck-desc-input {
       min-height: 4.5rem;
       resize: vertical;
@@ -7189,12 +7494,84 @@
           <h3 id="colDeckTitle">編輯牌組</h3>
           <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
         </div>
-        <details class="col-deck-overflow" id="colDeckEditorOverflow" hidden>
-          <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>
-          <div class="col-deck-overflow-menu" id="colDeckEditorOverflowMenu"></div>
-        </details>
+        <div class="col-deck-editor-top-actions">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffBtn" hidden
+            title="匯入 DeckLog 並與目前牌組做差異比較">
+            <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>差異比較
+          </button>
+          <details class="col-deck-overflow" id="colDeckEditorOverflow" hidden>
+            <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>
+            <div class="col-deck-overflow-menu" id="colDeckEditorOverflowMenu"></div>
+          </details>
+        </div>
       </div>
       <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
+
+      <div class="col-deck-diff" id="colDeckDiff" hidden>
+        <div class="col-deck-diff-bar">
+          <div class="col-deck-diff-meta">
+            <div class="col-deck-diff-pct-row">
+              <div class="col-deck-diff-pct" id="colDeckDiffPct">差異 —</div>
+              <span class="col-deck-diff-suggest" id="colDeckDiffSuggest" hidden>差異偏大，建議直接套用新版本</span>
+            </div>
+            <div class="col-deck-diff-labels" aria-hidden="true">
+              <span class="is-left">← 左側・原版</span>
+              <span class="is-right">右側・新匯入 →</span>
+            </div>
+            <p class="col-deck-diff-hint" id="colDeckDiffHint"></p>
+            <p class="col-deck-diff-mobile-hint">手機可左右滑動切換原版／新匯入</p>
+          </div>
+          <div class="col-deck-diff-opts">
+            <label>
+              <input type="checkbox" id="colDeckDiffIgnoreVersion">
+              <span>忽略版本差異</span>
+            </label>
+            <label>
+              <input type="checkbox" id="colDeckDiffIgnoreSameName">
+              <span>忽略不同卡號但同名差異</span>
+            </label>
+          </div>
+          <div class="col-deck-diff-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffApplyBtn">
+              <i class="fas fa-check mr-1" aria-hidden="true"></i>套用新版本
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffNextBtn">
+              <i class="fas fa-arrow-down mr-1" aria-hidden="true"></i>下一個差異
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffCreateBtn" hidden>
+              <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffCloseBtn">
+              結束比較
+            </button>
+          </div>
+        </div>
+        <div class="col-deck-diff-panes" id="colDeckDiffPanes">
+          <section class="col-deck-diff-pane is-left" aria-label="原版牌組">
+            <div class="col-deck-diff-pane-head">
+              <strong>原版</strong>
+              <span id="colDeckDiffLeftMeta">—</span>
+            </div>
+            <ul class="col-deck-diff-list" id="colDeckDiffLeftList" aria-label="原版編成"></ul>
+          </section>
+          <section class="col-deck-diff-pane is-right" aria-label="新匯入牌組">
+            <div class="col-deck-diff-pane-head">
+              <strong>新匯入</strong>
+              <span id="colDeckDiffRightMeta">—</span>
+            </div>
+            <ul class="col-deck-diff-list" id="colDeckDiffRightList" aria-label="新匯入編成"></ul>
+          </section>
+        </div>
+        <div class="col-deck-diff-lock" id="colDeckDiffLock" hidden>
+          <div class="col-deck-diff-lock-card">
+            <h4>系列不同，已鎖定比較</h4>
+            <p id="colDeckDiffLockText">左右牌組主系列不一致，為避免誤覆蓋，請改以「建立為新牌組」匯入。</p>
+            <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffLockCreateBtn">
+              <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="col-deck-editor-summary" id="colDeckEditorSummary" aria-live="polite"></div>
       <div class="col-deck-editor-tools">
@@ -7430,7 +7807,7 @@
   <div class="col-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="colDecklogTitle">
     <div class="col-modal-body">
       <h3 id="colDecklogTitle">從 DeckLog 匯入</h3>
-      <p class="col-modal-hint">輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入。匯入後是<strong>本站個人副本</strong>，編輯／缺卡只寫在你的牌組，<strong>不會同步回 DeckLog</strong>；與卡冊也分開。</p>
+      <p class="col-modal-hint" id="colDecklogHint">輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入。匯入後是<strong>本站個人副本</strong>，編輯／缺卡只寫在你的牌組，<strong>不會同步回 DeckLog</strong>；與卡冊也分開。</p>
       <div class="col-deck-editor-head">
         <label for="colDecklogCodeInput">
           DeckLog 代碼
@@ -7770,6 +8147,38 @@
     var decklogNameInput = document.getElementById('colDecklogNameInput');
     var decklogStatusEl = document.getElementById('colDecklogStatus');
     var decklogConfirmBtn = document.getElementById('colDecklogConfirmBtn');
+    var decklogTitleEl = document.getElementById('colDecklogTitle');
+    var decklogHintEl = document.getElementById('colDecklogHint');
+    /** 'create' = 新建匯入；'diff' = 編輯中差異比較 */
+    var decklogImportPurpose = 'create';
+    var deckDiffBtn = document.getElementById('colDeckDiffBtn');
+    var deckDiffRoot = document.getElementById('colDeckDiff');
+    var deckDiffPctEl = document.getElementById('colDeckDiffPct');
+    var deckDiffSuggestEl = document.getElementById('colDeckDiffSuggest');
+    var deckDiffHintEl = document.getElementById('colDeckDiffHint');
+    var deckDiffIgnoreVersionEl = document.getElementById('colDeckDiffIgnoreVersion');
+    var deckDiffIgnoreSameNameEl = document.getElementById('colDeckDiffIgnoreSameName');
+    var deckDiffApplyBtn = document.getElementById('colDeckDiffApplyBtn');
+    var deckDiffNextBtn = document.getElementById('colDeckDiffNextBtn');
+    var deckDiffCreateBtn = document.getElementById('colDeckDiffCreateBtn');
+    var deckDiffCloseBtn = document.getElementById('colDeckDiffCloseBtn');
+    var deckDiffLockEl = document.getElementById('colDeckDiffLock');
+    var deckDiffLockTextEl = document.getElementById('colDeckDiffLockText');
+    var deckDiffLockCreateBtn = document.getElementById('colDeckDiffLockCreateBtn');
+    var deckDiffLeftList = document.getElementById('colDeckDiffLeftList');
+    var deckDiffRightList = document.getElementById('colDeckDiffRightList');
+    var deckDiffLeftMeta = document.getElementById('colDeckDiffLeftMeta');
+    var deckDiffRightMeta = document.getElementById('colDeckDiffRightMeta');
+    var deckDiffPanes = document.getElementById('colDeckDiffPanes');
+    var deckDiffState = {
+      active: false,
+      incoming: null,
+      ignoreVersion: false,
+      ignoreSameName: false,
+      seriesLocked: false,
+      result: null,
+      focusIndex: -1
+    };
 
     function setStatus(msg, kind) {
       if (!toastEl || !toastTextEl) return;
@@ -10784,6 +11193,7 @@
         deckToolsTargetId = null;
         resetDeckSimUi();
         setDeckSeriesPickOpen(false);
+        exitDeckDiffCompare();
         closeModal(deckModal);
         deckDraft = null;
         deckEditorMode = 'edit';
@@ -10801,6 +11211,8 @@
       }
       if (name === 'decklog') {
         closeModal(decklogModal);
+        decklogImportPurpose = 'create';
+        syncDecklogModalCopy();
         if (decklogStatusEl) decklogStatusEl.textContent = '';
         if (decklogConfirmBtn) {
           decklogConfirmBtn.disabled = false;
@@ -14238,16 +14650,37 @@
       decklogStatusEl.style.color = isError ? '#c53030' : '';
     }
 
-    function openDecklogModal() {
+    function syncDecklogModalCopy() {
+      var isDiff = decklogImportPurpose === 'diff';
+      if (decklogTitleEl) {
+        decklogTitleEl.textContent = isDiff ? '匯入 DeckLog 做差異比較' : '從 DeckLog 匯入';
+      }
+      if (decklogHintEl) {
+        decklogHintEl.innerHTML = isDiff
+          ? '輸入要比對的 DeckLog 代碼（需先登入）。只用於與<strong>目前編輯中的牌組</strong>比較，不會立刻覆蓋；確認後可選擇套用或建立新牌組。'
+          : '輸入 DeckLog 代碼（需先登入）。會先查雲端快取，沒有才向 DeckLog 查詢並寫入 Firestore。同一代碼不可重複匯入。匯入後是<strong>本站個人副本</strong>，編輯／缺卡只寫在你的牌組，<strong>不會同步回 DeckLog</strong>；與卡冊也分開。';
+      }
+      if (decklogNameInput) {
+        var nameLabel = decklogNameInput.closest('label');
+        if (nameLabel) nameLabel.hidden = !!isDiff;
+      }
+      if (decklogConfirmBtn) {
+        decklogConfirmBtn.textContent = isDiff ? '取得並比較' : '取得並匯入';
+      }
+    }
+
+    function openDecklogModal(purpose) {
       if (!(window.WsDecklog && typeof window.WsDecklog.fetchDecklogByCode === 'function')) {
         setStatus('DeckLog 讀取模組未載入', 'is-error');
         return;
       }
+      decklogImportPurpose = purpose === 'diff' ? 'diff' : 'create';
       requireDeckAuth()
         .then(function () {
           if (decklogCodeInput) decklogCodeInput.value = '';
           if (decklogNameInput) decklogNameInput.value = '';
           setDecklogStatus('');
+          syncDecklogModalCopy();
           if (decklogConfirmBtn) {
             decklogConfirmBtn.disabled = false;
             decklogConfirmBtn.removeAttribute('aria-busy');
@@ -14258,6 +14691,450 @@
         .catch(function (err) {
           setStatus((err && err.message) || '請先登入後再匯入 DeckLog', 'is-error');
         });
+    }
+
+    function resolveDeckDiffCardName(entry) {
+      if (!entry) return '';
+      var fromEntry = normalizeText(entry.cardName);
+      if (fromEntry) return fromEntry;
+      var meta = inventoryMeta(entry.cardNumber, entry.cardName) || {};
+      if (meta.cardName) return normalizeText(meta.cardName);
+      var album = getAlbumMeta(entry.cardNumber) || {};
+      return normalizeText(album.cardName);
+    }
+
+    function dominantDeckTitleCode(cards) {
+      var counts = {};
+      (cards || []).forEach(function (card) {
+        if (!card || !card.cardNumber) return;
+        var tc = deckTitleCodeFromCardNo(card.cardNumber);
+        if (!tc) return;
+        counts[tc] = (counts[tc] || 0) + (parseInt(card.qty, 10) || 1);
+      });
+      var best = '';
+      var bestN = 0;
+      Object.keys(counts).forEach(function (tc) {
+        if (counts[tc] > bestN) {
+          best = tc;
+          bestN = counts[tc];
+        }
+      });
+      return best;
+    }
+
+    function buildDeckDiffBuckets(cards, opts) {
+      var map = Object.create(null);
+      (cards || []).forEach(function (entry) {
+        if (!entry || !entry.cardNumber) return;
+        var cn = normalizeText(entry.cardNumber).replace(/\\/g, '/');
+        if (!cn) return;
+        var key = opts.ignoreVersion
+          ? ('b:' + deckCardBaseNumber(cn))
+          : ('c:' + cn);
+        var qty = parseInt(entry.qty, 10);
+        if (isNaN(qty) || qty < 0) qty = 0;
+        if (!map[key]) {
+          map[key] = {
+            key: key,
+            qty: 0,
+            cardNumber: opts.ignoreVersion ? deckCardBaseNumber(cn) : cn,
+            cardName: resolveDeckDiffCardName(entry),
+            level: entry.level,
+            sample: entry
+          };
+        }
+        map[key].qty += qty;
+        if (!map[key].cardName) map[key].cardName = resolveDeckDiffCardName(entry);
+        if (map[key].level == null && entry.level != null) map[key].level = entry.level;
+        // 顯示優先用有後綴的實際卡號（較能看出版本）
+        if (!opts.ignoreVersion) map[key].cardNumber = cn;
+        else if (cn.length > String(map[key].cardNumber || '').length) {
+          map[key].displayCardNumber = cn;
+        }
+      });
+      Object.keys(map).forEach(function (k) {
+        if (!map[k].displayCardNumber) map[k].displayCardNumber = map[k].cardNumber;
+      });
+      return map;
+    }
+
+    function computeDeckDiff(leftCards, rightCards, opts) {
+      opts = opts || {};
+      var left = buildDeckDiffBuckets(leftCards, opts);
+      var right = buildDeckDiffBuckets(rightCards, opts);
+      var usedRight = Object.create(null);
+      var pairs = [];
+
+      Object.keys(left).forEach(function (lk) {
+        var matchedRk = null;
+        if (right[lk] && !usedRight[lk]) {
+          matchedRk = lk;
+        } else if (opts.ignoreSameName) {
+          var name = normalizeText(left[lk].cardName).toLowerCase();
+          if (name) {
+            Object.keys(right).some(function (rk) {
+              if (usedRight[rk]) return false;
+              if (normalizeText(right[rk].cardName).toLowerCase() !== name) return false;
+              matchedRk = rk;
+              return true;
+            });
+          }
+        }
+        if (matchedRk) {
+          usedRight[matchedRk] = true;
+          var lq = left[lk].qty;
+          var rq = right[matchedRk].qty;
+          pairs.push({
+            status: lq === rq ? 'same' : 'qty',
+            left: left[lk],
+            right: right[matchedRk],
+            leftQty: lq,
+            rightQty: rq
+          });
+        } else {
+          pairs.push({
+            status: 'removed',
+            left: left[lk],
+            right: null,
+            leftQty: left[lk].qty,
+            rightQty: 0
+          });
+        }
+      });
+
+      Object.keys(right).forEach(function (rk) {
+        if (usedRight[rk]) return;
+        pairs.push({
+          status: 'added',
+          left: null,
+          right: right[rk],
+          leftQty: 0,
+          rightQty: right[rk].qty
+        });
+      });
+
+      var leftTotal = 0;
+      var rightTotal = 0;
+      var shared = 0;
+      var changedPairs = 0;
+      pairs.forEach(function (p) {
+        leftTotal += p.leftQty;
+        rightTotal += p.rightQty;
+        shared += Math.min(p.leftQty, p.rightQty);
+        if (p.status !== 'same') changedPairs += 1;
+      });
+      var denom = leftTotal + rightTotal;
+      var diffRatio = denom > 0 ? (1 - (2 * shared) / denom) : 0;
+      if (diffRatio < 0) diffRatio = 0;
+      if (diffRatio > 1) diffRatio = 1;
+
+      return {
+        pairs: pairs,
+        leftTotal: leftTotal,
+        rightTotal: rightTotal,
+        shared: shared,
+        changedPairs: changedPairs,
+        diffRatio: diffRatio,
+        diffPct: Math.round(diffRatio * 1000) / 10
+      };
+    }
+
+    function deckDiffLevelSortEntries(buckets) {
+      var list = (buckets || []).slice();
+      list.sort(function (a, b) {
+        var entryA = { cardNumber: a.displayCardNumber || a.cardNumber, level: a.level, cardName: a.cardName };
+        var entryB = { cardNumber: b.displayCardNumber || b.cardNumber, level: b.level, cardName: b.cardName };
+        var cxA = isCxCardNumber(entryA.cardNumber);
+        var cxB = isCxCardNumber(entryB.cardNumber);
+        if (cxA !== cxB) return cxA ? 1 : -1;
+        if (!cxA && !cxB) {
+          var la = entryLevel(entryA);
+          var lb = entryLevel(entryB);
+          var hasA = la != null;
+          var hasB = lb != null;
+          if (hasA && hasB && la !== lb) return lb - la;
+          if (hasA !== hasB) return hasA ? -1 : 1;
+        }
+        return String(entryA.cardNumber || '').localeCompare(String(entryB.cardNumber || ''), 'en');
+      });
+      return list;
+    }
+
+    function buildDeckDiffCardHtml(bucket, status, side, qty) {
+      var cn = bucket.displayCardNumber || bucket.cardNumber || '';
+      var name = bucket.cardName || '（尚無卡名）';
+      var urls = buildCardImageUrls(cn);
+      var tag = '';
+      var cls = 'col-deck-diff-card';
+      if (status === 'removed') {
+        cls += ' is-removed';
+        tag = '少';
+      } else if (status === 'added') {
+        cls += ' is-added';
+        tag = '多';
+      } else if (status === 'qty') {
+        cls += ' is-qty';
+        tag = '張數';
+      }
+      var html = '<li class="' + cls + '" data-deck-diff-card="' + escapeHtml(cn) + '"' +
+        ' data-deck-diff-status="' + escapeHtml(status) + '"' +
+        (status !== 'same' ? ' data-deck-diff-changed="1"' : '') + '>';
+      html += '<div class="col-deck-entry-art' + (isCxCardNumber(cn) ? ' is-landscape' : '') + '">';
+      html += '<div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
+      if (urls.primary) {
+        html += '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) +
+          '" alt="' + escapeHtml(cn) + '" loading="lazy" decoding="async">';
+      }
+      html += '<span class="col-deck-qty-badge">×' + escapeHtml(String(qty)) + '</span>';
+      if (tag) html += '<span class="diff-tag">' + escapeHtml(tag) + '</span>';
+      html += '</div>';
+      html += '<div class="cap"><span class="mono">' + escapeHtml(cn) + '</span>' +
+        '<span class="name">' + escapeHtml(name) + '</span></div>';
+      html += '</li>';
+      return html;
+    }
+
+    function buildDeckDiffSideHtml(side, result) {
+      var items = [];
+      (result.pairs || []).forEach(function (pair) {
+        var bucket = side === 'left' ? pair.left : pair.right;
+        if (!bucket) return;
+        var qty = side === 'left' ? pair.leftQty : pair.rightQty;
+        var status = pair.status;
+        if (status === 'removed' && side === 'right') return;
+        if (status === 'added' && side === 'left') return;
+        var copy = {
+          key: bucket.key,
+          qty: qty,
+          cardNumber: bucket.cardNumber,
+          displayCardNumber: bucket.displayCardNumber || bucket.cardNumber,
+          cardName: bucket.cardName,
+          level: bucket.level,
+          status: status,
+          _peerQty: side === 'left' ? pair.rightQty : pair.leftQty
+        };
+        items.push(copy);
+      });
+      items = deckDiffLevelSortEntries(items);
+      if (!items.length) {
+        return '<li class="col-modal-hint col-deck-entry-empty" style="grid-column:1/-1;">此側沒有卡片</li>';
+      }
+      var counts = {};
+      items.forEach(function (item) {
+        var gKey = deckEntryLevelGroupKey({
+          cardNumber: item.displayCardNumber || item.cardNumber,
+          level: item.level
+        });
+        if (!counts[gKey]) counts[gKey] = { kinds: 0, qty: 0 };
+        counts[gKey].kinds += 1;
+        counts[gKey].qty += item.qty || 0;
+      });
+      var html = '';
+      var lastKey = null;
+      items.forEach(function (item) {
+        var gKey = deckEntryLevelGroupKey({
+          cardNumber: item.displayCardNumber || item.cardNumber,
+          level: item.level
+        });
+        if (gKey !== lastKey) {
+          lastKey = gKey;
+          var c = counts[gKey] || { kinds: 0, qty: 0 };
+          html += buildDeckLevelHeadHtml(gKey, c.kinds, c.qty);
+        }
+        html += buildDeckDiffCardHtml(item, item.status, side, item.qty);
+      });
+      return html;
+    }
+
+    function syncDeckDiffButton() {
+      if (!deckDiffBtn) return;
+      var show = deckEditorMode === 'edit' && !!deckDraft && !deckDiffState.active;
+      deckDiffBtn.hidden = !show;
+    }
+
+    function exitDeckDiffCompare() {
+      deckDiffState.active = false;
+      deckDiffState.incoming = null;
+      deckDiffState.result = null;
+      deckDiffState.focusIndex = -1;
+      deckDiffState.seriesLocked = false;
+      if (deckModal) deckModal.classList.remove('is-diff-compare');
+      if (deckDiffRoot) deckDiffRoot.hidden = true;
+      if (deckDiffLockEl) deckDiffLockEl.hidden = true;
+      syncDeckDiffButton();
+    }
+
+    function renderDeckDiffCompare() {
+      if (!deckDiffState.active || !deckDraft || !deckDiffState.incoming) return;
+      var opts = {
+        ignoreVersion: !!(deckDiffIgnoreVersionEl && deckDiffIgnoreVersionEl.checked),
+        ignoreSameName: !!(deckDiffIgnoreSameNameEl && deckDiffIgnoreSameNameEl.checked)
+      };
+      deckDiffState.ignoreVersion = opts.ignoreVersion;
+      deckDiffState.ignoreSameName = opts.ignoreSameName;
+      var leftCards = deckDraft.cards || [];
+      var rightCards = deckDiffState.incoming.cards || [];
+      var result = computeDeckDiff(leftCards, rightCards, opts);
+      deckDiffState.result = result;
+
+      var leftSeries = dominantDeckTitleCode(leftCards);
+      var rightSeries = dominantDeckTitleCode(rightCards);
+      var seriesLocked = !!(leftSeries && rightSeries && leftSeries !== rightSeries);
+      deckDiffState.seriesLocked = seriesLocked;
+
+      if (deckDiffPctEl) {
+        deckDiffPctEl.textContent = '差異 ' + result.diffPct.toFixed(1) + '%';
+        deckDiffPctEl.classList.toggle('is-high', result.diffPct >= 60);
+      }
+      if (deckDiffSuggestEl) {
+        deckDiffSuggestEl.hidden = !(result.diffPct >= 60 && !seriesLocked);
+      }
+      if (deckDiffHintEl) {
+        deckDiffHintEl.textContent =
+          '共 ' + result.changedPairs + ' 處差異 · 重合 ' + result.shared +
+          ' 張／原版 ' + result.leftTotal + ' · 新匯入 ' + result.rightTotal +
+          (opts.ignoreVersion ? ' · 已忽略版本' : '') +
+          (opts.ignoreSameName ? ' · 已忽略同名異號' : '');
+      }
+      if (deckDiffLeftMeta) {
+        deckDiffLeftMeta.textContent = result.leftTotal + ' 張 · ' + (leftSeries || '未知系列');
+      }
+      if (deckDiffRightMeta) {
+        deckDiffRightMeta.textContent = result.rightTotal + ' 張 · ' + (rightSeries || '未知系列');
+      }
+      if (deckDiffLeftList) {
+        deckDiffLeftList.innerHTML = buildDeckDiffSideHtml('left', result);
+        revealLoadedDeckImages(deckDiffLeftList);
+      }
+      if (deckDiffRightList) {
+        deckDiffRightList.innerHTML = buildDeckDiffSideHtml('right', result);
+        revealLoadedDeckImages(deckDiffRightList);
+      }
+      if (deckDiffLockEl) deckDiffLockEl.hidden = !seriesLocked;
+      if (deckDiffLockTextEl && seriesLocked) {
+        deckDiffLockTextEl.textContent =
+          '原版主系列為「' + leftSeries.replace(/_/g, '/') +
+          '」，新匯入為「' + rightSeries.replace(/_/g, '/') +
+          '」。為避免誤覆蓋，請改以建立新牌組。';
+      }
+      if (deckDiffApplyBtn) {
+        deckDiffApplyBtn.disabled = !!seriesLocked;
+        deckDiffApplyBtn.title = seriesLocked ? '系列不同，無法直接覆蓋' : '以新匯入編成覆蓋目前草稿（需再按儲存）';
+      }
+      if (deckDiffCreateBtn) deckDiffCreateBtn.hidden = !seriesLocked;
+      deckDiffState.focusIndex = -1;
+    }
+
+    function enterDeckDiffCompare(payload) {
+      if (!deckDraft) return;
+      if (deckSeriesPickOpen) setDeckSeriesPickOpen(false);
+      deckDiffState.active = true;
+      deckDiffState.incoming = {
+        code: normalizeText(payload && payload.code) || '',
+        cards: normalizeDeckCards((payload && payload.cards) || [])
+      };
+      deckDiffState.focusIndex = -1;
+      if (deckDiffIgnoreVersionEl) deckDiffIgnoreVersionEl.checked = !!deckDiffState.ignoreVersion;
+      if (deckDiffIgnoreSameNameEl) deckDiffIgnoreSameNameEl.checked = !!deckDiffState.ignoreSameName;
+      if (deckModal) deckModal.classList.add('is-diff-compare');
+      if (deckDiffRoot) deckDiffRoot.hidden = false;
+      applyDeckEditorMode();
+      syncDeckDiffButton();
+      ensureDeckCardLevels(
+        (deckDraft.cards || []).concat(deckDiffState.incoming.cards || []),
+        function () {
+          ensureCardMetaForEntries(
+            (deckDraft.cards || []).concat(deckDiffState.incoming.cards || []),
+            function () {
+              renderDeckDiffCompare();
+            }
+          );
+          renderDeckDiffCompare();
+        }
+      );
+      renderDeckDiffCompare();
+      setStatus('已載入 DeckLog，可檢視左右差異', 'is-ok');
+    }
+
+    function applyDeckDiffIncoming() {
+      if (!deckDraft || !deckDiffState.incoming || deckDiffState.seriesLocked) return;
+      var cards = normalizeDeckCards(deckDiffState.incoming.cards || []);
+      cards.forEach(function (entry) { entry.shortQty = 0; });
+      deckDraft.cards = cards;
+      sanitizeDeckCoverCardNumber(deckDraft);
+      if (deckDiffState.incoming.code) {
+        deckDraft.decklogCode = deckDiffState.incoming.code;
+        deckDraft.source = 'decklog';
+        deckDraft.decklogDetached = true;
+        deckDraft.decklogImportFingerprint = deckCardsFingerprint(cards);
+      }
+      exitDeckDiffCompare();
+      renderDeckEditor();
+      setStatus('已套用新版本編成（尚未儲存，請按儲存寫入）', 'is-ok');
+    }
+
+    function createDeckFromDiffIncoming() {
+      if (!deckDiffState.incoming) return;
+      var payload = {
+        code: deckDiffState.incoming.code || 'DeckLog',
+        cards: deckDiffState.incoming.cards || []
+      };
+      requireDeckAuth()
+        .then(function () {
+          var code = normalizeText(payload.code);
+          if (!code) return createDeckFromDecklogPayload(payload, '');
+          return fb.findUserDeckByDecklogCode(code).then(function (existing) {
+            if (existing) {
+              return promptDuplicateDecklog(existing).then(function (openExisting) {
+                if (!openExisting) return null;
+                exitDeckDiffCompare();
+                closeModalByName('deck');
+                selectedDeckId = existing.id;
+                if (!allDecks.some(function (d) { return d.id === existing.id; })) {
+                  allDecks.unshift(normalizeDeck(existing));
+                  writeDecks(allDecks);
+                }
+                renderDeckList();
+                focusDeckSection();
+                openDeckEditor(existing.id, 'edit');
+                setStatus('此 DeckLog 已匯入過，已開啟既有牌組', 'is-ok');
+                return null;
+              });
+            }
+            return createDeckFromDecklogPayload(payload, '');
+          });
+        })
+        .then(function (deck) {
+          if (!deck) return;
+          exitDeckDiffCompare();
+          closeModalByName('deck');
+          openDeckAfterImport(deck);
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '建立新牌組失敗', 'is-error');
+        });
+    }
+
+    function jumpDeckDiffNext() {
+      if (!deckDiffRoot) return;
+      var nodes = deckDiffRoot.querySelectorAll('[data-deck-diff-changed="1"]');
+      if (!nodes.length) {
+        setStatus('目前沒有可跳轉的差異', 'is-ok');
+        return;
+      }
+      deckDiffState.focusIndex = (deckDiffState.focusIndex + 1) % nodes.length;
+      Array.prototype.forEach.call(nodes, function (el) {
+        el.classList.remove('is-focus');
+      });
+      var target = nodes[deckDiffState.focusIndex];
+      target.classList.add('is-focus');
+      // 手機：先滑到該側 pane
+      var pane = target.closest('.col-deck-diff-pane');
+      if (pane && deckDiffPanes && window.matchMedia('(max-width: 767px)').matches) {
+        pane.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      }
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function openDeckAfterImport(deck) {
@@ -14362,41 +15239,51 @@
         return;
       }
       var preferredName = normalizeText(decklogNameInput && decklogNameInput.value);
+      var purpose = decklogImportPurpose === 'diff' ? 'diff' : 'create';
       if (decklogConfirmBtn) {
         decklogConfirmBtn.disabled = true;
         decklogConfirmBtn.setAttribute('aria-busy', 'true');
       }
       requireDeckAuth()
         .then(function () {
-          setDecklogStatus('正在檢查是否已匯入…');
-          return fb.findUserDeckByDecklogCode(code);
-        })
-        .then(function (existing) {
-          if (existing) {
-            // 先關匯入窗並清掉「檢查中」，避免確認框被擋在下層造成誤會
-            setDecklogStatus('');
-            closeModalByName('decklog');
-            return promptDuplicateDecklog(existing).then(function (openExisting) {
-              if (openExisting) {
-                selectedDeckId = existing.id;
-                if (!allDecks.some(function (d) { return d.id === existing.id; })) {
-                  allDecks.unshift(normalizeDeck(existing));
-                  writeDecks(allDecks);
-                }
-                renderDeckList();
-                focusDeckSection();
-                openDeckEditor(existing.id, 'edit');
-                setStatus('此 DeckLog 已匯入過，已開啟既有牌組', 'is-ok');
-              }
-              return null;
+          if (purpose === 'diff') {
+            if (!deckDraft || deckEditorMode !== 'edit') {
+              throw new Error('請先開啟編輯中的牌組再比較');
+            }
+            setDecklogStatus('正在取得 DeckLog 編成…');
+            return resolveDecklogCards(code).then(function (payload) {
+              closeModalByName('decklog');
+              enterDeckDiffCompare(payload);
             });
           }
-          return resolveDecklogCards(code).then(function (payload) {
-            setDecklogStatus('正在儲存到個人牌組…');
-            return createDeckFromDecklogPayload(payload, preferredName);
-          }).then(function (deck) {
-            closeModalByName('decklog');
-            openDeckAfterImport(deck);
+          setDecklogStatus('正在檢查是否已匯入…');
+          return fb.findUserDeckByDecklogCode(code).then(function (existing) {
+            if (existing) {
+              // 先關匯入窗並清掉「檢查中」，避免確認框被擋在下層造成誤會
+              setDecklogStatus('');
+              closeModalByName('decklog');
+              return promptDuplicateDecklog(existing).then(function (openExisting) {
+                if (openExisting) {
+                  selectedDeckId = existing.id;
+                  if (!allDecks.some(function (d) { return d.id === existing.id; })) {
+                    allDecks.unshift(normalizeDeck(existing));
+                    writeDecks(allDecks);
+                  }
+                  renderDeckList();
+                  focusDeckSection();
+                  openDeckEditor(existing.id, 'edit');
+                  setStatus('此 DeckLog 已匯入過，已開啟既有牌組', 'is-ok');
+                }
+                return null;
+              });
+            }
+            return resolveDecklogCards(code).then(function (payload) {
+              setDecklogStatus('正在儲存到個人牌組…');
+              return createDeckFromDecklogPayload(payload, preferredName);
+            }).then(function (deck) {
+              closeModalByName('decklog');
+              openDeckAfterImport(deck);
+            });
           });
         })
         .catch(function (err) {
@@ -15401,19 +16288,20 @@
 
     function applyDeckEditorMode() {
       var isView = deckEditorMode === 'view';
-      if (deckSaveBtn) deckSaveBtn.hidden = isView;
-      if (deckViewEditBtn) deckViewEditBtn.hidden = !isView;
+      if (deckSaveBtn) deckSaveBtn.hidden = isView || deckDiffState.active;
+      if (deckViewEditBtn) deckViewEditBtn.hidden = !isView || deckDiffState.active;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       setDeckMetaFieldsEditable(!isView);
-      if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView;
+      if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView || deckDiffState.active;
       if (deckRarityToggleBtn) deckRarityToggleBtn.hidden = true; /* 改走 overflow */
-      if (isView && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
+      if ((isView || deckDiffState.active) && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
       else syncSeriesPickButton();
       syncDeckModalDesc();
       syncDeckOriginNote();
       syncDeckRarityToggleUi();
       syncDeckFilterBtnUi();
       syncDeckEditorOverflow();
+      syncDeckDiffButton();
     }
 
     function updateDeckEditorSummary() {
@@ -15571,6 +16459,12 @@
 
     function renderDeckEditor() {
       if (!deckDraft) return;
+      if (deckDiffState.active) {
+        updateDeckEditorSummary();
+        syncDeckDiffButton();
+        renderDeckDiffCompare();
+        return;
+      }
       if (deckSeriesPickOpen) {
         syncSeriesPickBadges();
         syncSeriesSideHeads();
@@ -15716,6 +16610,7 @@
       deckEditorRarityMode = countDeckHighRarityKinds(deckDraft.cards) > 0 ? 'high' : 'normal';
       syncDeckMetaInputsFromDraft();
       setDeckSeriesPickOpen(false);
+      exitDeckDiffCompare();
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
@@ -16687,7 +17582,9 @@
     bindEl(document.getElementById('colDeckCreateBtn'), 'click', function () {
       openDeckEditor(null);
     });
-    bindEl(document.getElementById('colDecklogImportBtn'), 'click', openDecklogModal);
+    bindEl(document.getElementById('colDecklogImportBtn'), 'click', function () {
+      openDecklogModal('create');
+    });
     function handleDeckEmptyPrimaryClick() {
       var action = deckEmptyPrimaryBtn && deckEmptyPrimaryBtn.getAttribute('data-empty-action');
       if (action === 'login') {
@@ -16715,13 +17612,56 @@
         window.location.href = 'collection.html';
         return;
       }
-      openDecklogModal();
+      openDecklogModal('create');
     }
     if (deckEmptyPrimaryBtn) bindEl(deckEmptyPrimaryBtn, 'click', handleDeckEmptyPrimaryClick);
     if (deckEmptySecondaryBtn) bindEl(deckEmptySecondaryBtn, 'click', handleDeckEmptySecondaryClick);
     if (decklogConfirmBtn) {
       bindEl(decklogConfirmBtn, 'click', importFromDecklog);
     }
+    if (deckDiffBtn) {
+      bindEl(deckDiffBtn, 'click', function () {
+        if (!deckDraft || deckEditorMode !== 'edit') return;
+        openDecklogModal('diff');
+      });
+    }
+    if (deckDiffIgnoreVersionEl) {
+      bindEl(deckDiffIgnoreVersionEl, 'change', function () {
+        if (deckDiffState.active) renderDeckDiffCompare();
+      });
+    }
+    if (deckDiffIgnoreSameNameEl) {
+      bindEl(deckDiffIgnoreSameNameEl, 'change', function () {
+        if (deckDiffState.active) renderDeckDiffCompare();
+      });
+    }
+    if (deckDiffApplyBtn) {
+      bindEl(deckDiffApplyBtn, 'click', function () {
+        if (deckDiffState.seriesLocked) return;
+        if (deckDiffState.result && deckDiffState.result.diffPct >= 60) {
+          askConfirm({
+            title: '套用新版本？',
+            okLabel: '套用並覆蓋',
+            html: '目前差異約 <strong>' +
+              escapeHtml(String(deckDiffState.result.diffPct.toFixed(1))) +
+              '%</strong>，套用後會以新匯入編成覆蓋目前草稿（仍需按儲存才寫入雲端）。',
+            onOk: function () { applyDeckDiffIncoming(); }
+          });
+          return;
+        }
+        applyDeckDiffIncoming();
+      });
+    }
+    if (deckDiffNextBtn) bindEl(deckDiffNextBtn, 'click', jumpDeckDiffNext);
+    if (deckDiffCloseBtn) {
+      bindEl(deckDiffCloseBtn, 'click', function () {
+        exitDeckDiffCompare();
+        applyDeckEditorMode();
+        renderDeckEditor();
+      });
+    }
+    if (deckDiffCreateBtn) bindEl(deckDiffCreateBtn, 'click', createDeckFromDiffIncoming);
+    if (deckDiffLockCreateBtn) bindEl(deckDiffLockCreateBtn, 'click', createDeckFromDiffIncoming);
     if (decklogCodeInput) {
       bindEl(decklogCodeInput, 'keydown', function (e) {
         if (e.key === 'Enter') {
