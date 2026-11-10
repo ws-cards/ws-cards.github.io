@@ -11,14 +11,109 @@
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'light');
       }
+      /* 從 deck-select 進來：用同色覆層接場，略過白屏 loader */
+      try {
+        if (sessionStorage.getItem('wsDeckSelectHandoff') === '1') {
+          sessionStorage.removeItem('wsDeckSelectHandoff');
+          document.documentElement.classList.add('deck-handoff');
+        }
+      } catch (err) { /* ignore */ }
     })();
   </script>
   <style>
     /* 頁面就緒前藏內文（進度 overlay 除外），避免字體 swap 閃爍與半載入畫面 */
     html { background: #ffffff; }
     html[data-theme="dark"] { background: #141414; }
-    html:not(.page-ready) body > *:not(#wsPageLoader) { visibility: hidden; }
+    html:not(.page-ready) body > *:not(#wsPageLoader):not(#deckHandoffCover) { visibility: hidden; }
     html.page-ready body > *:not(#wsPageLoader) { visibility: visible; }
+    html.deck-handoff { background: #0b0d12 !important; }
+    html.deck-handoff #wsPageLoader {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    html.deck-handoff:not(.page-ready) body > #deckHandoffCover {
+      visibility: visible !important;
+    }
+    #deckHandoffCover {
+      position: fixed;
+      inset: 0;
+      z-index: 30000;
+      display: none;
+      overflow: hidden;
+      background: #0b0d12;
+      color: #f4f1ea;
+      pointer-events: auto;
+    }
+    html.deck-handoff #deckHandoffCover { display: block; }
+    #deckHandoffCover .deck-handoff-media {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(10, 14, 24, 0.12) 0%, rgba(10, 14, 24, 0.05) 38%, rgba(10, 14, 24, 0.78) 100%),
+        linear-gradient(90deg, rgba(12, 20, 36, 0.25), rgba(12, 20, 36, 0.05) 40%, rgba(12, 20, 36, 0.2)),
+        url('assets/deck-select/ws-card.png');
+      background-size: cover, cover, cover;
+      background-position: center, center, center 18%;
+      transform: scale(1.02);
+      filter: saturate(0.95) contrast(1.05) brightness(0.92);
+      transition:
+        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.85s ease,
+        opacity 0.85s ease;
+    }
+    #deckHandoffCover .deck-handoff-veil {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, transparent 34%, rgba(0, 0, 0, 0.55) 100%);
+      transition: opacity 0.7s ease;
+    }
+    #deckHandoffCover .deck-handoff-mark {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Noto Serif TC', 'UoqMunThenKhung', serif;
+      font-weight: 900;
+      font-size: clamp(2.8rem, 8vw, 4.5rem);
+      letter-spacing: 0.08em;
+      text-shadow: 0 2px 28px rgba(0, 0, 0, 0.45);
+      opacity: 0.88;
+      transition:
+        opacity 0.55s ease,
+        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.7s ease;
+    }
+    html.deck-handoff.is-handoff-exit #deckHandoffCover {
+      pointer-events: none;
+    }
+    html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-media {
+      transform: scale(1.08);
+      filter: saturate(1.05) contrast(1.02) brightness(1.05);
+      opacity: 0;
+    }
+    html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-veil {
+      opacity: 0;
+    }
+    html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-mark {
+      opacity: 0;
+      transform: translate(-50%, -42%) scale(1.06);
+      filter: blur(6px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #deckHandoffCover .deck-handoff-media,
+      #deckHandoffCover .deck-handoff-veil,
+      #deckHandoffCover .deck-handoff-mark {
+        transition: opacity 0.2s ease !important;
+      }
+      html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-media {
+        transform: none;
+        filter: none;
+      }
+      html.deck-handoff.is-handoff-exit #deckHandoffCover .deck-handoff-mark {
+        transform: translate(-50%, -50%);
+        filter: none;
+      }
+    }
     /* 關鍵 CSS：外部 stylesheet 尚未到位時也能先畫出進度條 */
     #wsPageLoader.ws-page-loader {
       position: fixed; inset: 0; z-index: 20000;
@@ -6723,6 +6818,52 @@
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed collection-page">
+<!-- 從 deck-select 進來的同頁感接場覆層；page-ready 後淡出 -->
+<div id="deckHandoffCover" hidden aria-hidden="true">
+  <div class="deck-handoff-media" aria-hidden="true"></div>
+  <div class="deck-handoff-veil" aria-hidden="true"></div>
+  <div class="deck-handoff-mark" aria-hidden="true">WS</div>
+</div>
+<script>
+  (function () {
+    var root = document.documentElement;
+    if (!root.classList.contains('deck-handoff')) return;
+    var cover = document.getElementById('deckHandoffCover');
+    if (!cover) return;
+    cover.hidden = false;
+    cover.setAttribute('aria-hidden', 'false');
+
+    var done = false;
+    function finishHandoff() {
+      if (done) return;
+      done = true;
+      root.classList.add('is-handoff-exit');
+      window.setTimeout(function () {
+        cover.hidden = true;
+        cover.setAttribute('aria-hidden', 'true');
+        root.classList.remove('deck-handoff');
+        root.classList.remove('is-handoff-exit');
+      }, 900);
+    }
+
+    if (root.classList.contains('page-ready')) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(finishHandoff);
+      });
+      return;
+    }
+
+    var obs = new MutationObserver(function () {
+      if (!root.classList.contains('page-ready')) return;
+      obs.disconnect();
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(finishHandoff);
+      });
+    });
+    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
+    window.setTimeout(finishHandoff, 12000);
+  })();
+</script>
 <!-- 全頁載入進度 overlay（百分比）；內容就緒後由 WsPageLoader.complete 關閉 -->
 <div id="wsPageLoader" class="ws-page-loader" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-busy="true" aria-label="頁面載入中">
   <div class="ws-page-loader-panel">

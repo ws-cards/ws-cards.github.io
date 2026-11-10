@@ -650,6 +650,75 @@
         transform: none;
       }
     }
+
+    /* 離開選擇頁 → decks：WS 擴滿，其餘收起，像同一頁推進 */
+    html.is-leaving-to-decks {
+      pointer-events: none;
+    }
+
+    html.is-leaving-to-decks .tcg-chrome,
+    html.is-leaving-to-decks .tcg-dots,
+    html.is-leaving-to-decks .tcg-swipe-hint {
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    html.is-leaving-to-decks .tcg-panels {
+      scroll-snap-type: none;
+    }
+
+    html.is-leaving-to-decks .tcg-panel[data-tcg="ws"] {
+      flex-grow: 8 !important;
+      flex-basis: 0 !important;
+      min-width: 0 !important;
+      z-index: 4;
+      transition:
+        flex-grow 0.62s var(--panel-ease),
+        opacity 0.45s ease;
+    }
+
+    html.is-leaving-to-decks .tcg-panel:not([data-tcg="ws"]) {
+      flex-grow: 0.001 !important;
+      flex-basis: 0 !important;
+      min-width: 0 !important;
+      opacity: 0;
+      transition:
+        flex-grow 0.62s var(--panel-ease),
+        opacity 0.32s ease;
+    }
+
+    html.is-leaving-to-decks .tcg-panel[data-tcg="ws"] .tcg-panel__body {
+      opacity: 0;
+      transform: translateY(0.8rem);
+      transition: opacity 0.35s ease, transform 0.45s var(--panel-ease);
+    }
+
+    html.is-leaving-to-decks .tcg-panel[data-tcg="ws"] .tcg-panel__media {
+      filter: saturate(1) contrast(1.05) brightness(0.92);
+      transition: filter 0.55s ease;
+    }
+
+    html.is-leaving-to-decks .tcg-panel[data-tcg="ws"]::after {
+      background: rgba(6, 8, 12, 0.18);
+      transition: background 0.55s ease;
+    }
+
+    @media (max-width: 900px) {
+      html.is-leaving-to-decks .tcg-panel[data-tcg="ws"] {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+      }
+
+      html.is-leaving-to-decks .tcg-panel:not([data-tcg="ws"]) {
+        display: none;
+      }
+
+      html.is-leaving-to-decks .tcg-panel[data-tcg="ws"] .tcg-panel__media {
+        transform: scale(1.04);
+        transition: transform 0.62s var(--panel-ease), filter 0.55s ease;
+      }
+    }
   </style>
 </head>
 <body>
@@ -835,6 +904,47 @@
       else if (mq.addListener) mq.addListener(onModeChange);
 
       syncMotion();
+
+      var wsPanel = panels.querySelector('[data-tcg="ws"]');
+      var leaving = false;
+
+      function goDecks(href) {
+        try {
+          sessionStorage.setItem('wsDeckSelectHandoff', '1');
+        } catch (e) { /* ignore */ }
+        window.location.href = href || 'decks.html';
+      }
+
+      function leaveToDecks(e) {
+        if (!wsPanel) return;
+        if (e) {
+          if (e.defaultPrevented) return;
+          if (e.button != null && e.button !== 0) return;
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+        }
+        if (leaving) return;
+        leaving = true;
+
+        var href = (wsPanel.getAttribute('href') || 'decks.html');
+        if (reduce.matches) {
+          goDecks(href);
+          return;
+        }
+
+        document.documentElement.classList.add('is-leaving-to-decks');
+        if (mq.matches) {
+          try { panels.scrollLeft = 0; } catch (err) { /* ignore */ }
+        }
+
+        window.setTimeout(function () {
+          goDecks(href);
+        }, 560);
+      }
+
+      if (wsPanel) {
+        wsPanel.addEventListener('click', leaveToDecks);
+      }
     })();
   </script>
 </body>
