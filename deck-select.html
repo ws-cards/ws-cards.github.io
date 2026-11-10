@@ -13,17 +13,6 @@
   <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
   <meta property="og:url" content="https://ws-cards.cloud/deck-select.html">
   <link rel="icon" href="favicon.ico" sizes="any">
-  <script>
-    /* 手機版略過選擇畫面，直接進目前牌組頁 */
-    (function () {
-      try {
-        if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
-          var q = window.location.search || '';
-          window.location.replace('decks.html' + q + (window.location.hash || ''));
-        }
-      } catch (e) { /* ignore */ }
-    })();
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
@@ -366,6 +355,247 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .tcg-dots,
+    .tcg-swipe-hint {
+      display: none;
+    }
+
+    /* 手機：橫向全幅、一次一欄、左右滑切 */
+    @media (max-width: 900px) {
+      html, body {
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      .tcg-chrome {
+        padding: 1.05rem 1.15rem;
+      }
+
+      .tcg-brand {
+        font-size: 1.15rem;
+        letter-spacing: 0.14em;
+      }
+
+      .tcg-brand span { display: none; }
+
+      .tcg-menu {
+        font-size: 0.7rem;
+        gap: 0.5rem;
+      }
+
+      .tcg-menu-btn {
+        width: 2.15rem;
+        height: 2.15rem;
+      }
+
+      .tcg-panels {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+
+      .tcg-panels::-webkit-scrollbar { display: none; }
+
+      .tcg-panel {
+        --slide: 0;
+        --focus: 1;
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        transition: none;
+        animation: panelIn 0.75s var(--panel-ease) both;
+      }
+
+      .tcg-panels:hover .tcg-panel:not(:hover),
+      .tcg-panel:hover,
+      .tcg-panel:focus-visible {
+        flex-grow: 0;
+        flex: 0 0 100%;
+      }
+
+      .tcg-panel + .tcg-panel::before { display: none; }
+
+      .tcg-panel__media {
+        transform:
+          translate3d(calc(var(--slide) * -14%), 0, 0)
+          scale(calc(1.1 - (var(--focus) * 0.1)));
+        transition: none;
+        will-change: transform;
+        filter: saturate(calc(0.78 + var(--focus) * 0.28)) contrast(calc(0.96 + var(--focus) * 0.08));
+      }
+
+      .tcg-panel:hover .tcg-panel__media,
+      .tcg-panel:focus-visible .tcg-panel__media {
+        transform:
+          translate3d(calc(var(--slide) * -14%), 0, 0)
+          scale(calc(1.1 - (var(--focus) * 0.1)));
+      }
+
+      .tcg-panel__veil {
+        opacity: calc(0.55 + (1 - var(--focus)) * 0.35);
+        transition: none;
+      }
+
+      .tcg-panel__body {
+        padding: 0 1.35rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
+        max-width: 100%;
+        opacity: calc(0.18 + var(--focus) * 0.82);
+        transform:
+          translate3d(calc(var(--slide) * 22%), calc((1 - var(--focus)) * 1.4rem), 0)
+          scale(calc(0.96 + var(--focus) * 0.04));
+        transition: none;
+        will-change: transform, opacity;
+      }
+
+      .tcg-panel:hover .tcg-panel__body,
+      .tcg-panel:focus-visible .tcg-panel__body {
+        transform:
+          translate3d(calc(var(--slide) * 22%), calc((1 - var(--focus)) * 1.4rem), 0)
+          scale(calc(0.96 + var(--focus) * 0.04));
+      }
+
+      .tcg-panel__rule {
+        width: calc(1.35rem + var(--focus) * 1.2rem);
+        transform: none;
+        margin-bottom: 0.85rem;
+        opacity: calc(0.35 + var(--focus) * 0.65);
+      }
+
+      .tcg-panel:hover .tcg-panel__rule,
+      .tcg-panel:focus-visible .tcg-panel__rule {
+        width: calc(1.35rem + var(--focus) * 1.2rem);
+        transform: none;
+      }
+
+      .tcg-panel__meta {
+        font-size: 0.62rem;
+        letter-spacing: 0.16em;
+      }
+
+      .tcg-panel__title {
+        font-size: clamp(2.8rem, 14vw, 3.6rem);
+        margin-bottom: 0.7rem;
+      }
+
+      .tcg-panel__desc {
+        max-width: 22rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: var(--ink-soft);
+      }
+
+      .tcg-panel__note {
+        opacity: calc(0.15 + var(--focus) * 0.85);
+        transform: translate3d(0, calc((1 - var(--focus)) * 0.55rem), 0);
+        margin-top: 1.15rem;
+        font-size: 0.68rem;
+        transition: none;
+      }
+
+      .tcg-panel:hover .tcg-panel__note,
+      .tcg-panel:focus-visible .tcg-panel__note {
+        opacity: calc(0.15 + var(--focus) * 0.85);
+        transform: translate3d(0, calc((1 - var(--focus)) * 0.55rem), 0);
+      }
+
+      .tcg-panel.is-disabled {
+        pointer-events: none;
+      }
+
+      .tcg-dots {
+        display: flex;
+        position: absolute;
+        z-index: 6;
+        left: 50%;
+        bottom: calc(1.55rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        gap: 0.45rem;
+        padding: 0.35rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(8, 10, 14, 0.28);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        pointer-events: auto;
+      }
+
+      .tcg-dots button {
+        appearance: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 999px;
+        background: rgba(244, 241, 234, 0.35);
+        transition:
+          width 0.45s var(--panel-ease),
+          background 0.35s ease,
+          transform 0.35s var(--panel-ease);
+        cursor: pointer;
+      }
+
+      .tcg-dots button.is-on {
+        width: 1.15rem;
+        background: var(--accent);
+        transform: scale(1.05);
+      }
+
+      .tcg-swipe-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        position: absolute;
+        z-index: 6;
+        right: 1.15rem;
+        bottom: calc(1.55rem + env(safe-area-inset-bottom, 0px));
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(244, 241, 234, 0.55);
+        pointer-events: none;
+        transition: opacity 0.45s ease, transform 0.45s var(--panel-ease);
+        animation: hintPulse 2.4s ease-in-out infinite;
+      }
+
+      .tcg-swipe-hint::after {
+        content: '';
+        width: 0.85rem;
+        height: 1px;
+        background: currentColor;
+        box-shadow: 0.28rem -0.22rem 0 -0.08rem currentColor, 0.28rem 0.22rem 0 -0.08rem currentColor;
+        animation: hintArrow 1.4s var(--panel-ease) infinite;
+      }
+
+      .tcg-shell.is-hint-hidden .tcg-swipe-hint {
+        opacity: 0;
+        transform: translateX(0.4rem);
+        animation: none;
+      }
+
+      .tcg-shell.is-animating .tcg-panels {
+        scroll-snap-type: none;
+      }
+    }
+
+    @keyframes hintPulse {
+      0%, 100% { opacity: 0.35; transform: translateX(0); }
+      50% { opacity: 0.85; transform: translateX(0.18rem); }
+    }
+
+    @keyframes hintArrow {
+      0%, 100% { transform: translateX(0); opacity: 0.45; }
+      50% { transform: translateX(0.28rem); opacity: 1; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation: none !important;
@@ -395,8 +625,8 @@
       </a>
     </header>
 
-    <main class="tcg-panels" aria-label="選擇卡牌遊戲">
-      <a class="tcg-panel" data-tcg="ws" href="decks.html" aria-label="Weiss Schwarz，進入我的牌組">
+    <main class="tcg-panels" id="tcgPanels" aria-label="選擇卡牌遊戲">
+      <a class="tcg-panel is-active" data-tcg="ws" href="decks.html" aria-label="Weiss Schwarz，進入我的牌組">
         <div class="tcg-panel__media" aria-hidden="true"></div>
         <div class="tcg-panel__veil" aria-hidden="true"></div>
         <div class="tcg-panel__body">
@@ -404,7 +634,7 @@
           <p class="tcg-panel__meta">Weiss Schwarz / 牌組</p>
           <h1 class="tcg-panel__title">WS</h1>
           <p class="tcg-panel__desc">管理 Weiss Schwarz 牌組編成、缺卡與 DeckLog 匯入。</p>
-          <p class="tcg-panel__note">進入牌組 →</p>
+          <p class="tcg-panel__note">點擊進入牌組 →</p>
         </div>
       </a>
 
@@ -432,6 +662,141 @@
         </div>
       </div>
     </main>
+
+    <div class="tcg-dots" id="tcgDots" role="tablist" aria-label="切換卡牌遊戲">
+      <button type="button" class="is-on" role="tab" aria-label="WS" aria-selected="true"></button>
+      <button type="button" role="tab" aria-label="WSR" aria-selected="false"></button>
+      <button type="button" role="tab" aria-label="Other" aria-selected="false"></button>
+    </div>
+    <p class="tcg-swipe-hint" id="tcgSwipeHint" aria-hidden="true">滑動切換</p>
   </div>
+  <script>
+    (function () {
+      var mq = window.matchMedia('(max-width: 900px)');
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var panels = document.getElementById('tcgPanels');
+      var dots = document.getElementById('tcgDots');
+      var shell = document.querySelector('.tcg-shell');
+      if (!panels || !dots) return;
+
+      var items = panels.querySelectorAll('.tcg-panel');
+      var dotNodes = dots.querySelectorAll('button');
+      var hintHidden = false;
+      var animToken = 0;
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function activeIndex() {
+        var x = panels.scrollLeft;
+        var w = panels.clientWidth || 1;
+        return clamp(Math.round(x / w), 0, items.length - 1);
+      }
+
+      function syncMotion() {
+        if (!mq.matches) {
+          for (var r = 0; r < items.length; r++) {
+            items[r].style.removeProperty('--slide');
+            items[r].style.removeProperty('--focus');
+          }
+          return;
+        }
+
+        var w = panels.clientWidth || 1;
+        var x = panels.scrollLeft;
+        var idx = activeIndex();
+
+        for (var i = 0; i < items.length; i++) {
+          var slide = (x - (i * w)) / w;
+          var focus = reduce.matches ? (i === idx ? 1 : 0) : clamp(1 - Math.abs(slide), 0, 1);
+          items[i].style.setProperty('--slide', String(reduce.matches ? 0 : slide));
+          items[i].style.setProperty('--focus', String(focus));
+          items[i].classList.toggle('is-active', i === idx);
+          if (dotNodes[i]) {
+            dotNodes[i].classList.toggle('is-on', i === idx);
+            dotNodes[i].setAttribute('aria-selected', i === idx ? 'true' : 'false');
+          }
+        }
+
+        if (!hintHidden && idx > 0 && shell) {
+          hintHidden = true;
+          shell.classList.add('is-hint-hidden');
+        }
+      }
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function animateTo(index) {
+        if (!mq.matches) return;
+        var target = clamp(index, 0, items.length - 1) * (panels.clientWidth || 0);
+        var start = panels.scrollLeft;
+        var dist = target - start;
+        if (Math.abs(dist) < 1) {
+          syncMotion();
+          return;
+        }
+
+        if (reduce.matches) {
+          panels.scrollLeft = target;
+          syncMotion();
+          return;
+        }
+
+        var token = ++animToken;
+        var duration = clamp(Math.abs(dist) * 0.55, 380, 680);
+        var t0 = null;
+        if (shell) shell.classList.add('is-animating');
+
+        function frame(now) {
+          if (token !== animToken) return;
+          if (t0 == null) t0 = now;
+          var p = clamp((now - t0) / duration, 0, 1);
+          panels.scrollLeft = start + dist * easeInOutCubic(p);
+          syncMotion();
+          if (p < 1) {
+            requestAnimationFrame(frame);
+          } else if (shell) {
+            shell.classList.remove('is-animating');
+            panels.scrollLeft = target;
+            syncMotion();
+          }
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      var ticking = false;
+      panels.addEventListener('scroll', function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          ticking = false;
+          syncMotion();
+        });
+      }, { passive: true });
+
+      for (var d = 0; d < dotNodes.length; d++) {
+        (function (index) {
+          dotNodes[index].addEventListener('click', function () {
+            animateTo(index);
+          });
+        })(d);
+      }
+
+      function onModeChange() {
+        animToken += 1;
+        if (shell) shell.classList.remove('is-animating');
+        syncMotion();
+      }
+
+      if (mq.addEventListener) mq.addEventListener('change', onModeChange);
+      else if (mq.addListener) mq.addListener(onModeChange);
+
+      syncMotion();
+    })();
+  </script>
 </body>
 </html>
