@@ -5668,96 +5668,142 @@
     .col-deck-diff-list {
       list-style: none;
       margin: 0;
-      padding: 0.55rem;
+      padding: 0.55rem 0.6rem 0.75rem;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
-      gap: 0.45rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem 0.5rem;
       overflow: auto;
       max-height: min(58vh, 640px);
       align-content: start;
     }
+    @media (min-width: 900px) {
+      .col-deck-diff-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem 0.55rem;
+      }
+    }
     .col-deck-diff-list .col-deck-entry-level-head {
       grid-column: 1 / -1;
-      margin: 0.15rem 0 0;
-      padding: 0.35rem 0.2rem 0.15rem;
-      border: 0;
+      margin: 0.35rem 0 0.05rem;
+      padding: 0.15rem 0 0.35rem;
+      border-bottom: 1px solid var(--col-line, rgba(15, 23, 42, 0.1));
       background: transparent;
     }
+    /* 對齊一般牌組卡格：小圖 + 下方卡號／卡名／價格；差異用外框＋下方底色 */
     .col-deck-diff-card {
       position: relative;
+      margin: 0;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.28rem;
       border-radius: 10px;
-      border: 1px solid rgba(15, 23, 42, 0.1);
-      background: rgba(255, 255, 255, 0.8);
-      overflow: hidden;
+      border: 2px solid transparent;
+      background: transparent;
+      overflow: visible;
       scroll-margin: 4.5rem;
-    }
-    [data-theme="dark"] .col-deck-diff-card {
-      background: rgba(20, 24, 22, 0.75);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    .col-deck-diff-card.is-removed {
-      background: rgba(220, 38, 38, 0.14);
-      border-color: rgba(220, 38, 38, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.18);
-    }
-    .col-deck-diff-card.is-added {
-      background: rgba(22, 163, 74, 0.14);
-      border-color: rgba(22, 163, 74, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.18);
-    }
-    .col-deck-diff-card.is-qty {
-      background: rgba(217, 119, 6, 0.14);
-      border-color: rgba(217, 119, 6, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.18);
-    }
-    .col-deck-diff-card.is-focus {
-      outline: 2px solid #2f6b4f;
-      outline-offset: 1px;
+      padding: 0.15rem;
     }
     .col-deck-diff-card .col-deck-entry-art {
+      position: relative;
       aspect-ratio: 63 / 88;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      flex: 0 0 auto;
     }
-    .col-deck-diff-card .cap {
-      padding: 0.28rem 0.35rem 0.4rem;
-      font-size: 0.62rem;
-      line-height: 1.25;
-      color: #4a5568;
+    .col-deck-diff-card .col-deck-entry-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.35s ease;
     }
-    [data-theme="dark"] .col-deck-diff-card .cap { color: #a0aec0; }
-    .col-deck-diff-card .cap .mono {
+    .col-deck-diff-card .col-deck-entry-art img.is-loaded { opacity: 1; }
+    .col-deck-diff-card .col-deck-entry-art.has-image .col-tile-placeholder { display: none; }
+    .col-deck-diff-card .col-deck-entry-caption {
+      min-width: 0;
+      padding: 0.28rem 0.3rem 0.35rem;
+      border-radius: 7px;
+      background: rgba(15, 23, 42, 0.03);
+    }
+    [data-theme="dark"] .col-deck-diff-card .col-deck-entry-caption {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-deck-diff-card .col-deck-entry-cardno {
       display: block;
       font-family: 'IBM Plex Mono', ui-monospace, monospace;
-      font-size: 0.58rem;
+      font-size: 0.62rem;
       font-weight: 700;
       color: #2d3748;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    [data-theme="dark"] .col-deck-diff-card .cap .mono { color: #e2e8f0; }
-    .col-deck-diff-card .cap .name {
+    [data-theme="dark"] .col-deck-diff-card .col-deck-entry-cardno { color: #e2e8f0; }
+    .col-deck-diff-card .col-deck-entry-name {
       display: block;
+      margin-top: 0.08rem;
+      font-size: 0.62rem;
+      line-height: 1.3;
+      color: #718096;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    [data-theme="dark"] .col-deck-diff-card .col-deck-entry-name { color: #a0aec0; }
+    .col-deck-diff-card .col-deck-entry-price {
+      display: block;
+      margin-top: 0.08rem;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #2f6b4f;
+    }
+    [data-theme="dark"] .col-deck-diff-card .col-deck-entry-price { color: #7dcea0; }
+    .col-deck-diff-card.is-removed {
+      border-color: #b91c1c;
+      box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.25);
+    }
+    .col-deck-diff-card.is-removed .col-deck-entry-caption {
+      background: rgba(220, 38, 38, 0.16);
+    }
+    .col-deck-diff-card.is-added {
+      border-color: #15803d;
+      box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.25);
+    }
+    .col-deck-diff-card.is-added .col-deck-entry-caption {
+      background: rgba(22, 163, 74, 0.16);
+    }
+    .col-deck-diff-card.is-qty {
+      border-color: #2f6b4f;
+      box-shadow: 0 0 0 2px rgba(47, 107, 79, 0.28);
+    }
+    .col-deck-diff-card.is-qty .col-deck-entry-caption {
+      background: rgba(217, 119, 6, 0.18);
+    }
+    .col-deck-diff-card.is-focus {
+      box-shadow: 0 0 0 3px rgba(47, 107, 79, 0.55);
+    }
     .col-deck-diff-card .diff-tag {
       position: absolute;
-      left: 0.25rem;
-      bottom: 2.55rem;
-      z-index: 2;
+      left: 0.3rem;
+      top: 0.3rem;
+      z-index: 3;
       font-size: 0.58rem;
       font-weight: 800;
-      padding: 0.1rem 0.35rem;
+      padding: 0.12rem 0.38rem;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.82);
       color: #fff;
       pointer-events: none;
+      line-height: 1.2;
     }
     .col-deck-diff-card.is-removed .diff-tag { background: #b91c1c; }
     .col-deck-diff-card.is-added .diff-tag { background: #15803d; }
-    .col-deck-diff-card.is-qty .diff-tag { background: #b45309; }
+    .col-deck-diff-card.is-qty .diff-tag { background: #2f6b4f; }
     .col-deck-diff-lock {
       position: absolute;
       inset: 0;
@@ -14862,7 +14908,7 @@
 
     function buildDeckDiffCardHtml(bucket, status, side, qty) {
       var cn = bucket.displayCardNumber || bucket.cardNumber || '';
-      var name = bucket.cardName || '（尚無卡名）';
+      var name = bucket.cardName || resolveDeckDiffCardName({ cardNumber: cn, cardName: bucket.cardName }) || '（尚無卡名）';
       var urls = buildCardImageUrls(cn);
       var tag = '';
       var cls = 'col-deck-diff-card';
@@ -14879,17 +14925,21 @@
       var html = '<li class="' + cls + '" data-deck-diff-card="' + escapeHtml(cn) + '"' +
         ' data-deck-diff-status="' + escapeHtml(status) + '"' +
         (status !== 'same' ? ' data-deck-diff-changed="1"' : '') + '>';
+      if (tag) html += '<span class="diff-tag">' + escapeHtml(tag) + '</span>';
       html += '<div class="col-deck-entry-art' + (isCxCardNumber(cn) ? ' is-landscape' : '') + '">';
       html += '<div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>載入卡面</span></div>';
       if (urls.primary) {
         html += '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' + escapeHtml(urls.fallback) +
           '" alt="' + escapeHtml(cn) + '" loading="lazy" decoding="async">';
       }
-      html += '<span class="col-deck-qty-badge">×' + escapeHtml(String(qty)) + '</span>';
-      if (tag) html += '<span class="diff-tag">' + escapeHtml(tag) + '</span>';
+      html += '<span class="col-deck-qty-badge" aria-label="編成 ' + escapeHtml(String(qty)) + ' 張">×' +
+        escapeHtml(String(qty)) + '</span>';
       html += '</div>';
-      html += '<div class="cap"><span class="mono">' + escapeHtml(cn) + '</span>' +
-        '<span class="name">' + escapeHtml(name) + '</span></div>';
+      html += '<div class="col-deck-entry-caption">';
+      html += '<span class="col-deck-entry-cardno">' + escapeHtml(cn) + '</span>';
+      html += '<span class="col-deck-entry-name">' + escapeHtml(name) + '</span>';
+      html += deckEntryPriceHtml(cn);
+      html += '</div>';
       html += '</li>';
       return html;
     }
@@ -18187,6 +18237,16 @@
         if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
       }, true);
     }
+    /* 差異比較卡圖：需 is-loaded 才會顯示（opacity） */
+    [deckDiffLeftList, deckDiffRightList].forEach(function (list) {
+      if (!list) return;
+      bindEl(list, 'load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      bindEl(list, 'error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
+    });
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
