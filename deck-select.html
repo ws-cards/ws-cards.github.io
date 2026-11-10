@@ -166,15 +166,17 @@
 
     .tcg-panel__media {
       position: absolute;
-      inset: 0;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 100vw;
       background-color: #141820;
       background-position: center;
       background-size: cover;
       background-repeat: no-repeat;
-      transform: scale(1.001);
-      transition: transform 0.9s var(--panel-ease), filter 0.65s ease;
+      /* 固定視窗寬背景 + 不 scale：hover 只露更多，避免圖片跟著放大晃動 */
+      transform: translateX(-50%);
       filter: saturate(0.92) contrast(1.05);
-      will-change: transform;
     }
 
     .tcg-panel[data-tcg="ws"] .tcg-panel__media {
@@ -204,12 +206,6 @@
       background-size: cover, cover, cover;
       background-position: center, center, center;
       filter: saturate(0.72) sepia(0.14) contrast(1.04);
-    }
-
-    .tcg-panel:hover .tcg-panel__media,
-    .tcg-panel:focus-visible .tcg-panel__media {
-      transform: scale(1.06);
-      filter: saturate(1.08) contrast(1.08);
     }
 
     .tcg-panel__veil {
@@ -424,6 +420,8 @@
       .tcg-panel + .tcg-panel::before { display: none; }
 
       .tcg-panel__media {
+        left: 0;
+        width: 100%;
         transform:
           translate3d(calc(var(--slide) * -14%), 0, 0)
           scale(calc(1.1 - (var(--focus) * 0.1)));
