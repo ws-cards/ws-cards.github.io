@@ -13,17 +13,6 @@
   <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
   <meta property="og:url" content="https://ws-cards.cloud/deck-select.html">
   <link rel="icon" href="favicon.ico" sizes="any">
-  <script>
-    /* 手機版略過選擇畫面，直接進目前牌組頁 */
-    (function () {
-      try {
-        if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
-          var q = window.location.search || '';
-          window.location.replace('decks.html' + q + (window.location.hash || ''));
-        }
-      } catch (e) { /* ignore */ }
-    })();
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
@@ -366,6 +355,181 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .tcg-dots,
+    .tcg-swipe-hint {
+      display: none;
+    }
+
+    /* 手機：橫向全幅、一次一欄、左右滑切 */
+    @media (max-width: 900px) {
+      html, body {
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      .tcg-chrome {
+        padding: 1.05rem 1.15rem;
+      }
+
+      .tcg-brand {
+        font-size: 1.15rem;
+        letter-spacing: 0.14em;
+      }
+
+      .tcg-brand span { display: none; }
+
+      .tcg-menu {
+        font-size: 0.7rem;
+        gap: 0.5rem;
+      }
+
+      .tcg-menu-btn {
+        width: 2.15rem;
+        height: 2.15rem;
+      }
+
+      .tcg-panels {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+
+      .tcg-panels::-webkit-scrollbar { display: none; }
+
+      .tcg-panel {
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        transition: none;
+        animation: panelIn 0.75s var(--panel-ease) both;
+      }
+
+      .tcg-panels:hover .tcg-panel:not(:hover),
+      .tcg-panel:hover,
+      .tcg-panel:focus-visible {
+        flex-grow: 0;
+        flex: 0 0 100%;
+      }
+
+      .tcg-panel + .tcg-panel::before { display: none; }
+
+      .tcg-panel__media {
+        transform: scale(1.04);
+        transition: transform 0.8s var(--panel-ease);
+      }
+
+      .tcg-panel.is-active .tcg-panel__media {
+        transform: scale(1.0);
+      }
+
+      .tcg-panel:hover .tcg-panel__media,
+      .tcg-panel:focus-visible .tcg-panel__media {
+        transform: scale(1.0);
+      }
+
+      .tcg-panel__body {
+        padding: 0 1.35rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
+        transform: none;
+        max-width: 100%;
+      }
+
+      .tcg-panel__rule {
+        width: 2.4rem;
+        transform: none;
+        margin-bottom: 0.85rem;
+      }
+
+      .tcg-panel__meta {
+        font-size: 0.62rem;
+        letter-spacing: 0.16em;
+      }
+
+      .tcg-panel__title {
+        font-size: clamp(2.8rem, 14vw, 3.6rem);
+        margin-bottom: 0.7rem;
+      }
+
+      .tcg-panel__desc {
+        max-width: 22rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: var(--ink-soft);
+      }
+
+      .tcg-panel__note {
+        opacity: 1;
+        transform: none;
+        margin-top: 1.15rem;
+        font-size: 0.68rem;
+      }
+
+      .tcg-panel.is-disabled {
+        pointer-events: none;
+      }
+
+      .tcg-dots {
+        display: flex;
+        position: absolute;
+        z-index: 6;
+        left: 50%;
+        bottom: calc(1.55rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        gap: 0.45rem;
+        padding: 0.35rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(8, 10, 14, 0.28);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        pointer-events: none;
+      }
+
+      .tcg-dots span {
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 999px;
+        background: rgba(244, 241, 234, 0.35);
+        transition: width 0.35s var(--panel-ease), background 0.35s ease;
+      }
+
+      .tcg-dots span.is-on {
+        width: 1.15rem;
+        background: var(--accent);
+      }
+
+      .tcg-swipe-hint {
+        display: block;
+        position: absolute;
+        z-index: 6;
+        right: 1.15rem;
+        bottom: calc(1.55rem + env(safe-area-inset-bottom, 0px));
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(244, 241, 234, 0.55);
+        pointer-events: none;
+        animation: hintPulse 2.4s ease-in-out infinite;
+      }
+
+      .tcg-shell.is-hint-hidden .tcg-swipe-hint {
+        opacity: 0;
+        animation: none;
+      }
+    }
+
+    @keyframes hintPulse {
+      0%, 100% { opacity: 0.35; transform: translateX(0); }
+      50% { opacity: 0.8; transform: translateX(0.2rem); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation: none !important;
@@ -395,8 +559,8 @@
       </a>
     </header>
 
-    <main class="tcg-panels" aria-label="選擇卡牌遊戲">
-      <a class="tcg-panel" data-tcg="ws" href="decks.html" aria-label="Weiss Schwarz，進入我的牌組">
+    <main class="tcg-panels" id="tcgPanels" aria-label="選擇卡牌遊戲">
+      <a class="tcg-panel is-active" data-tcg="ws" href="decks.html" aria-label="Weiss Schwarz，進入我的牌組">
         <div class="tcg-panel__media" aria-hidden="true"></div>
         <div class="tcg-panel__veil" aria-hidden="true"></div>
         <div class="tcg-panel__body">
@@ -404,7 +568,7 @@
           <p class="tcg-panel__meta">Weiss Schwarz / 牌組</p>
           <h1 class="tcg-panel__title">WS</h1>
           <p class="tcg-panel__desc">管理 Weiss Schwarz 牌組編成、缺卡與 DeckLog 匯入。</p>
-          <p class="tcg-panel__note">進入牌組 →</p>
+          <p class="tcg-panel__note">點擊進入牌組 →</p>
         </div>
       </a>
 
@@ -432,6 +596,59 @@
         </div>
       </div>
     </main>
+
+    <div class="tcg-dots" id="tcgDots" aria-hidden="true">
+      <span class="is-on"></span><span></span><span></span>
+    </div>
+    <p class="tcg-swipe-hint" id="tcgSwipeHint" aria-hidden="true">滑動切換 →</p>
   </div>
+  <script>
+    (function () {
+      var mq = window.matchMedia('(max-width: 900px)');
+      var panels = document.getElementById('tcgPanels');
+      var dots = document.getElementById('tcgDots');
+      var hint = document.getElementById('tcgSwipeHint');
+      var shell = document.querySelector('.tcg-shell');
+      if (!panels || !dots) return;
+
+      var items = panels.querySelectorAll('.tcg-panel');
+      var dotNodes = dots.querySelectorAll('span');
+      var hintHidden = false;
+
+      function activeIndex() {
+        var x = panels.scrollLeft;
+        var w = panels.clientWidth || 1;
+        return Math.max(0, Math.min(items.length - 1, Math.round(x / w)));
+      }
+
+      function sync() {
+        if (!mq.matches) return;
+        var idx = activeIndex();
+        for (var i = 0; i < items.length; i++) {
+          items[i].classList.toggle('is-active', i === idx);
+          if (dotNodes[i]) dotNodes[i].classList.toggle('is-on', i === idx);
+        }
+        if (!hintHidden && idx > 0 && shell) {
+          hintHidden = true;
+          shell.classList.add('is-hint-hidden');
+        }
+      }
+
+      var ticking = false;
+      panels.addEventListener('scroll', function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          ticking = false;
+          sync();
+        });
+      }, { passive: true });
+
+      if (mq.addEventListener) mq.addEventListener('change', sync);
+      else if (mq.addListener) mq.addListener(sync);
+
+      sync();
+    })();
+  </script>
 </body>
 </html>
