@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <title>選擇卡牌遊戲｜我的牌組｜WS-Cards 卡片雲</title>
+  <meta name="description" content="選擇要管理的卡牌遊戲：Weiss Schwarz、WSR 或其他。">
+  <meta property="og:title" content="選擇卡牌遊戲｜我的牌組｜WS-Cards 卡片雲">
+  <meta property="og:description" content="進入牌組前，先選擇 WS、WSR 或其他卡牌遊戲。">
+  <meta property="og:site_name" content="WS-Cards 卡片雲">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://ws-cards.cloud/assets/og-cover.png">
+  <meta property="og:url" content="https://ws-cards.cloud/deck-select.html">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <script>
+    /* 手機版略過選擇畫面，直接進目前牌組頁 */
+    (function () {
+      try {
+        if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+          var q = window.location.search || '';
+          window.location.replace('decks.html' + q + (window.location.hash || ''));
+        }
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&family=UoqMunThenKhung&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    :root {
+      --ink: #f4f1ea;
+      --ink-soft: rgba(244, 241, 234, 0.78);
+      --ink-faint: rgba(244, 241, 234, 0.55);
+      --accent: #e8a045;
+      --accent-soft: rgba(232, 160, 69, 0.85);
+      --shade: rgba(8, 10, 14, 0.55);
+      --shade-deep: rgba(8, 10, 14, 0.78);
+      --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --font-display: 'Noto Serif TC', 'UoqMunThenKhung', serif;
+      --font-body: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0b0d12;
+      color: var(--ink);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .tcg-shell {
+      position: relative;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .tcg-chrome {
+      position: absolute;
+      z-index: 5;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.35rem 1.75rem;
+      pointer-events: none;
+    }
+
+    .tcg-brand {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      text-decoration: none;
+      color: var(--ink);
+      font-family: 'UoqMunThenKhung', var(--font-display);
+      font-size: 1.35rem;
+      letter-spacing: 0.18em;
+      text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45);
+      transition: opacity 0.35s ease;
+    }
+
+    .tcg-brand:hover { opacity: 0.82; }
+
+    .tcg-brand span {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .tcg-menu {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 500;
+      text-shadow: 0 1px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .tcg-menu-btn {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      border: 1px solid rgba(244, 241, 234, 0.45);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .tcg-menu:hover .tcg-menu-btn {
+      background: rgba(244, 241, 234, 0.12);
+      border-color: rgba(244, 241, 234, 0.8);
+    }
+
+    .tcg-menu-btn i {
+      display: block;
+      width: 0.95rem;
+      height: 1px;
+      background: currentColor;
+      box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor;
+    }
+
+    .tcg-panels {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+
+    .tcg-panel {
+      position: relative;
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: 0;
+      min-width: 0;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      isolation: isolate;
+      transition: flex-grow 0.7s var(--panel-ease);
+      outline: none;
+    }
+
+    .tcg-panel.is-disabled {
+      cursor: default;
+    }
+
+    .tcg-panels:hover .tcg-panel:not(:hover) {
+      flex-grow: 0.92;
+    }
+
+    .tcg-panel:hover,
+    .tcg-panel:focus-visible {
+      flex-grow: 1.22;
+      z-index: 2;
+    }
+
+    .tcg-panel__media {
+      position: absolute;
+      inset: 0;
+      background-color: #141820;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      transform: scale(1.001);
+      transition: transform 0.9s var(--panel-ease), filter 0.65s ease;
+      filter: saturate(0.92) contrast(1.05);
+      will-change: transform;
+    }
+
+    .tcg-panel[data-tcg="ws"] .tcg-panel__media {
+      background-image:
+        linear-gradient(180deg, rgba(10, 14, 24, 0.12) 0%, rgba(10, 14, 24, 0.05) 38%, rgba(10, 14, 24, 0.7) 100%),
+        linear-gradient(90deg, rgba(12, 20, 36, 0.25), rgba(12, 20, 36, 0.05) 40%, rgba(12, 20, 36, 0.2)),
+        url('assets/deck-select/ws-card.png');
+      background-size: cover, cover, cover;
+      background-position: center, center, center 18%;
+    }
+
+    .tcg-panel[data-tcg="wsr"] .tcg-panel__media {
+      background-image:
+        linear-gradient(180deg, rgba(28, 12, 18, 0.18) 0%, rgba(28, 12, 18, 0.05) 36%, rgba(22, 8, 14, 0.74) 100%),
+        linear-gradient(90deg, rgba(56, 16, 32, 0.28), rgba(56, 16, 32, 0.05) 42%, rgba(56, 16, 32, 0.22)),
+        url('assets/deck-select/wsr-bg.jpg');
+      background-size: cover, cover, cover;
+      background-position: center, center, center;
+      filter: saturate(1.12) hue-rotate(-12deg) contrast(1.06);
+    }
+
+    .tcg-panel[data-tcg="other"] .tcg-panel__media {
+      background-image:
+        linear-gradient(180deg, rgba(16, 14, 10, 0.2) 0%, rgba(16, 14, 10, 0.08) 36%, rgba(12, 10, 8, 0.78) 100%),
+        linear-gradient(90deg, rgba(32, 28, 18, 0.28), rgba(32, 28, 18, 0.05) 40%, rgba(32, 28, 18, 0.22)),
+        url('assets/deck-select/cardback.png');
+      background-size: cover, cover, cover;
+      background-position: center, center, center;
+      filter: saturate(0.72) sepia(0.14) contrast(1.04);
+    }
+
+    .tcg-panel:hover .tcg-panel__media,
+    .tcg-panel:focus-visible .tcg-panel__media {
+      transform: scale(1.06);
+      filter: saturate(1.08) contrast(1.08);
+    }
+
+    .tcg-panel__veil {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, transparent 28%, transparent 48%, rgba(0, 0, 0, 0.55) 78%, rgba(0, 0, 0, 0.82) 100%);
+      pointer-events: none;
+      transition: background 0.55s ease;
+    }
+
+    .tcg-panel:hover .tcg-panel__veil,
+    .tcg-panel:focus-visible .tcg-panel__veil {
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, transparent 30%, transparent 45%, rgba(0, 0, 0, 0.48) 76%, rgba(0, 0, 0, 0.78) 100%);
+    }
+
+    .tcg-panel__body {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      padding: 0 11% 9vh;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      transform: translateY(0.4rem);
+      transition: transform 0.55s var(--panel-ease);
+    }
+
+    .tcg-panel:hover .tcg-panel__body,
+    .tcg-panel:focus-visible .tcg-panel__body {
+      transform: translateY(0);
+    }
+
+    .tcg-panel__rule {
+      width: 2.1rem;
+      height: 2px;
+      margin-bottom: 1rem;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(232, 160, 69, 0.35);
+      transform-origin: left center;
+      transform: scaleX(0.85);
+      transition: transform 0.55s var(--panel-ease), width 0.55s var(--panel-ease);
+    }
+
+    .tcg-panel:hover .tcg-panel__rule,
+    .tcg-panel:focus-visible .tcg-panel__rule {
+      transform: scaleX(1);
+      width: 2.75rem;
+    }
+
+    .tcg-panel__meta {
+      margin: 0 0 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .tcg-panel__title {
+      margin: 0 0 0.85rem;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(2.4rem, 4.2vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .tcg-panel__desc {
+      margin: 0;
+      max-width: 18rem;
+      font-size: 0.92rem;
+      line-height: 1.65;
+      font-weight: 400;
+      color: var(--ink-faint);
+      transition: color 0.45s ease;
+    }
+
+    .tcg-panel:hover .tcg-panel__desc,
+    .tcg-panel:focus-visible .tcg-panel__desc {
+      color: var(--ink-soft);
+    }
+
+    .tcg-panel__note {
+      margin-top: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+      opacity: 0;
+      transform: translateY(0.35rem);
+      transition: opacity 0.45s ease, transform 0.45s var(--panel-ease);
+    }
+
+    .tcg-panel:hover .tcg-panel__note,
+    .tcg-panel:focus-visible .tcg-panel__note {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tcg-panel.is-disabled .tcg-panel__note {
+      color: var(--ink-faint);
+    }
+
+    .tcg-panel + .tcg-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* 進場 */
+    .tcg-panel {
+      animation: panelIn 0.9s var(--panel-ease) both;
+    }
+    .tcg-panel:nth-child(1) { animation-delay: 0.05s; }
+    .tcg-panel:nth-child(2) { animation-delay: 0.16s; }
+    .tcg-panel:nth-child(3) { animation-delay: 0.27s; }
+
+    .tcg-chrome {
+      animation: chromeIn 0.7s 0.15s var(--panel-ease) both;
+    }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(1.25rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes chromeIn {
+      from { opacity: 0; transform: translateY(-0.5rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      .tcg-panel:hover,
+      .tcg-panel:focus-visible,
+      .tcg-panels:hover .tcg-panel:not(:hover) {
+        flex-grow: 1;
+      }
+      .tcg-panel:hover .tcg-panel__media,
+      .tcg-panel:focus-visible .tcg-panel__media {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="tcg-shell">
+    <header class="tcg-chrome">
+      <a class="tcg-brand" href="index.html" aria-label="卡片雲首頁">
+        卡片雲<span>WS-Cards</span>
+      </a>
+      <a class="tcg-menu" href="collection.html" aria-label="返回選單">
+        Menu
+        <span class="tcg-menu-btn" aria-hidden="true"><i></i></span>
+      </a>
+    </header>
+
+    <main class="tcg-panels" aria-label="選擇卡牌遊戲">
+      <a class="tcg-panel" data-tcg="ws" href="decks.html" aria-label="Weiss Schwarz，進入我的牌組">
+        <div class="tcg-panel__media" aria-hidden="true"></div>
+        <div class="tcg-panel__veil" aria-hidden="true"></div>
+        <div class="tcg-panel__body">
+          <span class="tcg-panel__rule" aria-hidden="true"></span>
+          <p class="tcg-panel__meta">Weiss Schwarz / 牌組</p>
+          <h1 class="tcg-panel__title">WS</h1>
+          <p class="tcg-panel__desc">管理 Weiss Schwarz 牌組編成、缺卡與 DeckLog 匯入。</p>
+          <p class="tcg-panel__note">進入牌組 →</p>
+        </div>
+      </a>
+
+      <div class="tcg-panel is-disabled" data-tcg="wsr" role="group" aria-label="WSR，即將開放" aria-disabled="true">
+        <div class="tcg-panel__media" aria-hidden="true"></div>
+        <div class="tcg-panel__veil" aria-hidden="true"></div>
+        <div class="tcg-panel__body">
+          <span class="tcg-panel__rule" aria-hidden="true"></span>
+          <p class="tcg-panel__meta">Weiss Schwarz Rose / 即將開放</p>
+          <h2 class="tcg-panel__title">WSR</h2>
+          <p class="tcg-panel__desc">Weiss Schwarz Rose 牌組與收藏工具，稍後開放。</p>
+          <p class="tcg-panel__note">Coming soon</p>
+        </div>
+      </div>
+
+      <div class="tcg-panel is-disabled" data-tcg="other" role="group" aria-label="Other，即將開放" aria-disabled="true">
+        <div class="tcg-panel__media" aria-hidden="true"></div>
+        <div class="tcg-panel__veil" aria-hidden="true"></div>
+        <div class="tcg-panel__body">
+          <span class="tcg-panel__rule" aria-hidden="true"></span>
+          <p class="tcg-panel__meta">Other TCG / 即將開放</p>
+          <h2 class="tcg-panel__title">Other</h2>
+          <p class="tcg-panel__desc">其他卡牌遊戲的牌組空間，預留給後續擴充。</p>
+          <p class="tcg-panel__note">Coming soon</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
