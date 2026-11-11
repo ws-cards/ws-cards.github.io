@@ -5584,12 +5584,6 @@
       color: #b45309;
     }
     [data-theme="dark"] .col-deck-diff-suggest { color: #fbbf24; }
-    .col-deck-diff-hint {
-      margin: 0;
-      font-size: 0.76rem;
-      color: var(--col-muted, #718096);
-      line-height: 1.45;
-    }
     .col-deck-diff-opts {
       display: flex;
       flex-wrap: wrap;
@@ -7548,7 +7542,6 @@
               <div class="col-deck-diff-pct" id="colDeckDiffPct">差異 —</div>
               <span class="col-deck-diff-suggest" id="colDeckDiffSuggest" hidden>差異偏大，建議直接套用新版本</span>
             </div>
-            <p class="col-deck-diff-hint" id="colDeckDiffHint"></p>
             <p class="col-deck-diff-mobile-hint">手機可左右滑動切換原版／新匯入</p>
           </div>
           <div class="col-deck-diff-opts">
@@ -8185,7 +8178,6 @@
     var deckDiffRoot = document.getElementById('colDeckDiff');
     var deckDiffPctEl = document.getElementById('colDeckDiffPct');
     var deckDiffSuggestEl = document.getElementById('colDeckDiffSuggest');
-    var deckDiffHintEl = document.getElementById('colDeckDiffHint');
     var deckDiffIgnoreVersionEl = document.getElementById('colDeckDiffIgnoreVersion');
     var deckDiffIgnoreSameNameEl = document.getElementById('colDeckDiffIgnoreSameName');
     var deckDiffApplyBtn = document.getElementById('colDeckDiffApplyBtn');
@@ -15022,13 +15014,6 @@
       }
       if (deckDiffSuggestEl) {
         deckDiffSuggestEl.hidden = !(result.diffPct >= 60 && !seriesLocked);
-      }
-      if (deckDiffHintEl) {
-        deckDiffHintEl.textContent =
-          '共 ' + result.changedPairs + ' 處差異 · 重合 ' + result.shared +
-          ' 張／原版 ' + result.leftTotal + ' · 新匯入 ' + result.rightTotal +
-          (opts.ignoreVersion ? ' · 已忽略版本' : '') +
-          (opts.ignoreSameName ? ' · 已忽略同名異號' : '');
       }
       if (deckDiffLeftMeta) {
         deckDiffLeftMeta.textContent = result.leftTotal + ' 張 · ' + (leftSeries || '未知系列');
