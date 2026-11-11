@@ -5962,6 +5962,11 @@
     [data-theme="dark"] .col-deck-diff-bar {
       background: rgba(63, 143, 107, 0.1);
     }
+    .col-deck-diff-bar-fab,
+    .col-deck-diff-bar-scrim,
+    .col-deck-diff-bar-handle {
+      display: none;
+    }
     .col-deck-diff-suggest {
       display: block;
       font-size: 0.74rem;
@@ -6046,6 +6051,118 @@
       .col-deck-diff-thumb { width: 2.15rem; }
       .col-deck-diff-cell-body .cardno,
       .col-deck-diff-cell-body .name { font-size: 0.62rem; }
+    }
+    @media (max-width: 767.98px) {
+      /* 手機：底欄改為浮動按鈕喚出的工作列，預設不佔畫面 */
+      .col-deck-diff-bar-fab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        position: absolute;
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        bottom: max(0.85rem, env(safe-area-inset-bottom, 0px));
+        z-index: 6;
+        min-height: 2.75rem;
+        padding: 0.55rem 0.95rem;
+        margin: 0;
+        border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 55%, transparent);
+        border-radius: 0;
+        background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 92%, #1a1a16);
+        color: #fff8e8;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .col-deck-diff-bar-fab[hidden] { display: none !important; }
+      .col-deck-diff-bar-fab:focus-visible {
+        outline: 2px solid var(--desk-foil, #8a6f3a);
+        outline-offset: 2px;
+      }
+      .col-deck-diff-bar-fab i { font-size: 0.9rem; }
+      .col-deck-diff.is-bar-open .col-deck-diff-bar-fab {
+        /* 工作列開啟時改由遮罩／Esc 關閉，避免 FAB 被底欄蓋住 */
+        display: none;
+      }
+      [data-theme="dark"] .col-deck-diff-bar-fab {
+        background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 70%, #0b1210);
+      }
+      .col-deck-diff-bar-scrim {
+        display: block;
+        position: absolute;
+        inset: 0;
+        z-index: 7;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.38);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .col-deck-diff.is-bar-open .col-deck-diff-bar-scrim {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .col-deck-diff-bar-handle {
+        display: flex;
+        justify-content: center;
+        padding: 0.15rem 0 0.2rem;
+      }
+      .col-deck-diff-bar-handle::before {
+        content: '';
+        width: 2.25rem;
+        height: 0.22rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
+      }
+      [data-theme="dark"] .col-deck-diff-bar-handle::before {
+        background: rgba(255, 255, 255, 0.28);
+      }
+      .col-deck-diff-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 8;
+        order: 0;
+        margin: 0;
+        border-radius: 14px 14px 0 0;
+        border-bottom: 0;
+        padding: 0.45rem 0.85rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+        background: color-mix(in srgb, var(--desk-paper, #f7f3ea) 94%, #fff);
+        box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.22);
+        transform: translateY(110%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.24s ease, opacity 0.2s ease;
+        max-height: min(68dvh, 68vh);
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      [data-theme="dark"] .col-deck-diff-bar {
+        background: color-mix(in srgb, #141816 92%, #1f2a24);
+      }
+      .col-deck-diff.is-bar-open .col-deck-diff-bar {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .col-deck-diff-actions .btn {
+        min-height: 2.35rem;
+      }
+    }
+    @media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
+      .col-deck-diff-bar,
+      .col-deck-diff-bar-scrim {
+        transition: none !important;
+      }
     }
     @media (max-width: 991.98px) {
       #colDeckModal.is-diff-compare .col-deck-editor-dialog {
@@ -7723,7 +7840,15 @@
           </div>
           <div class="col-deck-diff-rows" id="colDeckDiffRows" role="list"></div>
         </div>
-        <div class="col-deck-diff-bar">
+        <button type="button" class="col-deck-diff-bar-fab" id="colDeckDiffBarFab"
+          aria-expanded="false" aria-controls="colDeckDiffBar" title="開啟操作列">
+          <i class="fas fa-sliders-h" aria-hidden="true"></i>
+          <span>操作</span>
+        </button>
+        <button type="button" class="col-deck-diff-bar-scrim" id="colDeckDiffBarScrim"
+          tabindex="-1" aria-label="關閉操作列"></button>
+        <div class="col-deck-diff-bar" id="colDeckDiffBar" role="toolbar" aria-label="差異比較操作">
+          <div class="col-deck-diff-bar-handle" aria-hidden="true"></div>
           <span class="col-deck-diff-suggest" id="colDeckDiffSuggest" hidden>差異偏大，建議直接套用新版本</span>
           <div class="col-deck-diff-opts">
             <label>
@@ -8352,6 +8477,8 @@
     var decklogImportPurpose = 'create';
     var deckDiffBtn = document.getElementById('colDeckDiffBtn');
     var deckDiffRoot = document.getElementById('colDeckDiff');
+    var deckDiffBarFab = document.getElementById('colDeckDiffBarFab');
+    var deckDiffBarScrim = document.getElementById('colDeckDiffBarScrim');
     var deckDiffSuggestEl = document.getElementById('colDeckDiffSuggest');
     var deckDiffIgnoreVersionEl = document.getElementById('colDeckDiffIgnoreVersion');
     var deckDiffIgnoreSameNameEl = document.getElementById('colDeckDiffIgnoreSameName');
@@ -8375,7 +8502,8 @@
       ignoreSameName: false,
       seriesLocked: false,
       result: null,
-      focusIndex: -1
+      focusIndex: -1,
+      barOpen: false
     };
 
     function setStatus(msg, kind) {
@@ -15143,6 +15271,15 @@
       deckDiffBtn.hidden = !show;
     }
 
+    function setDeckDiffBarOpen(open) {
+      deckDiffState.barOpen = !!open;
+      if (deckDiffRoot) deckDiffRoot.classList.toggle('is-bar-open', deckDiffState.barOpen);
+      if (deckDiffBarFab) {
+        deckDiffBarFab.setAttribute('aria-expanded', deckDiffState.barOpen ? 'true' : 'false');
+        deckDiffBarFab.title = '開啟操作列';
+      }
+    }
+
     function exitDeckDiffCompare() {
       if (lightboxArt && lightboxArt.classList && lightboxArt.classList.contains('col-deck-diff-thumb')) {
         closeCardLightbox(true);
@@ -15152,6 +15289,7 @@
       deckDiffState.result = null;
       deckDiffState.focusIndex = -1;
       deckDiffState.seriesLocked = false;
+      setDeckDiffBarOpen(false);
       if (deckModal) deckModal.classList.remove('is-diff-compare');
       if (deckDiffRoot) deckDiffRoot.hidden = true;
       if (deckDiffLockEl) deckDiffLockEl.hidden = true;
@@ -15233,6 +15371,7 @@
       if (deckDiffIgnoreSameNameEl) deckDiffIgnoreSameNameEl.checked = !!deckDiffState.ignoreSameName;
       if (deckModal) deckModal.classList.add('is-diff-compare');
       if (deckDiffRoot) deckDiffRoot.hidden = false;
+      setDeckDiffBarOpen(false);
       applyDeckEditorMode();
       syncDeckDiffButton();
       ensureDeckCardLevels(
@@ -17822,6 +17961,17 @@
         openDecklogModal('diff');
       });
     }
+    if (deckDiffBarFab) {
+      bindEl(deckDiffBarFab, 'click', function () {
+        if (!deckDiffState.active) return;
+        setDeckDiffBarOpen(!deckDiffState.barOpen);
+      });
+    }
+    if (deckDiffBarScrim) {
+      bindEl(deckDiffBarScrim, 'click', function () {
+        setDeckDiffBarOpen(false);
+      });
+    }
     if (deckDiffIgnoreVersionEl) {
       bindEl(deckDiffIgnoreVersionEl, 'change', function () {
         if (deckDiffState.active) renderDeckDiffCompare();
@@ -17849,8 +17999,18 @@
         applyDeckDiffIncoming();
       });
     }
-    if (deckDiffPrevBtn) bindEl(deckDiffPrevBtn, 'click', jumpDeckDiffPrev);
-    if (deckDiffNextBtn) bindEl(deckDiffNextBtn, 'click', jumpDeckDiffNext);
+    if (deckDiffPrevBtn) {
+      bindEl(deckDiffPrevBtn, 'click', function () {
+        jumpDeckDiffPrev();
+        setDeckDiffBarOpen(false);
+      });
+    }
+    if (deckDiffNextBtn) {
+      bindEl(deckDiffNextBtn, 'click', function () {
+        jumpDeckDiffNext();
+        setDeckDiffBarOpen(false);
+      });
+    }
     if (deckDiffRowsEl) {
       bindEl(deckDiffRowsEl, 'click', function (e) {
         var thumb = e.target.closest('.col-deck-diff-thumb');
@@ -18440,6 +18600,10 @@
         return;
       }
       if (deckModal && deckModal.classList.contains('is-open')) {
+        if (deckDiffState.active && deckDiffState.barOpen) {
+          setDeckDiffBarOpen(false);
+          return;
+        }
         closeModalByName('deck');
         return;
       }
