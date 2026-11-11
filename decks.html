@@ -7951,7 +7951,6 @@
     </div>
     <div class="col-modal-actions col-deck-editor-actions">
       <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deck" id="colDeckCancelBtn">取消</button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckViewEditBtn" hidden>編輯此牌組</button>
       <button type="button" class="btn btn-primary btn-sm" id="colDeckSaveBtn">儲存牌組</button>
     </div>
   </div>
@@ -8288,7 +8287,6 @@
     var deckOriginNote = document.getElementById('colDeckOriginNote');
     var deckPickRow = document.getElementById('colDeckPickRow');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
-    var deckViewEditBtn = document.getElementById('colDeckViewEditBtn');
     var deckSaveBtn = document.getElementById('colDeckSaveBtn');
     var deckMetaModal = document.getElementById('colDeckMetaModal');
     var deckMetaEditBtn = document.getElementById('colDeckMetaEditBtn');
@@ -16625,7 +16623,6 @@
     function applyDeckEditorMode() {
       var isView = deckEditorMode === 'view';
       if (deckSaveBtn) deckSaveBtn.hidden = isView || deckDiffState.active;
-      if (deckViewEditBtn) deckViewEditBtn.hidden = !isView || deckDiffState.active;
       if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
       setDeckMetaFieldsEditable(!isView);
       if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView || deckDiffState.active;
@@ -18295,12 +18292,6 @@
       bindEl(deckListEl, 'error', function (e) {
         if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
       }, true);
-    }
-    if (deckViewEditBtn) {
-      bindEl(deckViewEditBtn, 'click', function () {
-        if (!deckDraft || !deckDraft.id) return;
-        openDeckEditor(deckDraft.id, 'edit');
-      });
     }
     if (deckSaveBtn) {
       bindEl(deckSaveBtn, 'click', function () {
