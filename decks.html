@@ -2955,6 +2955,15 @@
     .col-deck-overflow {
       position: relative;
       display: inline-flex;
+      z-index: 6;
+    }
+    /* 展開時選單要蓋過標題列的參考價／來源徽章，否則點不到「編輯」 */
+    .col-deck-overflow[open] {
+      z-index: 40;
+    }
+    .col-deck-overflow::details-content {
+      overflow: visible;
+      content-visibility: visible;
     }
     .col-deck-overflow > summary {
       list-style: none;
@@ -2981,7 +2990,7 @@
       right: 0;
       left: auto;
       top: calc(100% + 0.3rem);
-      z-index: 8;
+      z-index: 40;
       min-width: 11.5rem;
       padding: 0.35rem;
       border: 1px solid var(--col-line);
@@ -3083,6 +3092,7 @@
         font-weight: 800;
         line-height: 1.3;
         color: var(--col-ink);
+        overflow-wrap: anywhere;
       }
       .col-deck-detail-meta {
         margin-top: 0.25rem;
@@ -3095,11 +3105,12 @@
         gap: 0.3rem;
         margin-top: 0.45rem;
       }
-      /* 手機：編輯／輸出圖片收入「更多操作」，右上角只留 ⋯ */
+      /* 右上角只留 ⋯；編輯／輸出圖片在選單內（按鈕 display:inline-flex !important 會蓋過 display:none） */
       .col-deck-detail-actions {
         position: absolute;
         top: 0.1rem;
         right: 0;
+        z-index: 40;
         width: auto;
         display: flex;
         flex-wrap: nowrap;
@@ -3107,8 +3118,8 @@
         align-items: flex-start;
         margin: 0;
       }
-      .col-deck-detail-actions .col-deck-action-desktop {
-        display: none;
+      .col-deck-detail-title-main {
+        min-width: 0;
       }
       .col-deck-detail-actions .col-deck-overflow {
         margin: 0;
@@ -14645,11 +14656,6 @@
       html += '      </div>';
       html += '    </div>';
       html += '    <div class="col-deck-detail-actions">';
-      html += '      <button type="button" class="btn btn-primary btn-sm col-deck-action-desktop" data-deck-edit="' +
-        escapeHtml(deck.id) + '"><i class="fas fa-pen mr-1" aria-hidden="true"></i>編輯</button>';
-      html += '      <button type="button" class="btn btn-outline-secondary btn-sm col-deck-action-desktop" data-deck-export-image="' +
-        escapeHtml(deck.id) +
-        '" title="輸出類似編成一覽的牌組圖片"><i class="fas fa-image mr-1" aria-hidden="true"></i>輸出圖片</button>';
       html += '      <details class="col-deck-overflow">';
       html += '        <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>';
       html += '        <div class="col-deck-overflow-menu">';
