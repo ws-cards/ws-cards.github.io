@@ -5684,6 +5684,7 @@
       border-radius: 5px;
       overflow: hidden;
       background: linear-gradient(145deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.1));
+      cursor: zoom-in;
     }
     .col-deck-diff-thumb.is-landscape { aspect-ratio: 88 / 63; width: 3.2rem; }
     .col-deck-diff-thumb img {
@@ -5707,6 +5708,40 @@
       padding: 0.05rem 0.22rem;
       font-size: 0.58rem;
       border-radius: 4px;
+    }
+    .col-deck-diff-thumb.is-lightbox {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(78vw, 22rem);
+      height: auto;
+      aspect-ratio: 63 / 88;
+      max-height: min(82vh, 32rem);
+      z-index: 1305;
+      margin: 0;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: zoom-out;
+      box-shadow:
+        0 22px 48px rgba(8, 12, 11, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+    .col-deck-diff-thumb.is-lightbox.is-landscape {
+      width: min(88vw, 34rem);
+      aspect-ratio: 88 / 63;
+      max-height: min(72vh, 22rem);
+    }
+    .col-deck-diff-thumb.is-lightbox .col-deck-qty-badge,
+    .col-deck-diff-thumb.is-lightbox .col-tile-placeholder {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .col-deck-diff-thumb.is-lightbox img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 1;
     }
     .col-deck-diff-cell-body {
       min-width: 0;
@@ -5774,27 +5809,14 @@
     [data-theme="dark"] .col-deck-diff-bar {
       background: rgba(63, 143, 107, 0.1);
     }
-    .col-deck-diff-pct-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0.45rem 0.75rem;
-    }
-    .col-deck-diff-pct {
-      font-size: 1rem;
-      font-weight: 800;
-      color: #2f6b4f;
-      font-variant-numeric: tabular-nums;
-    }
-    [data-theme="dark"] .col-deck-diff-pct { color: #7dcea0; }
-    .col-deck-diff-pct.is-high { color: #b45309; }
-    [data-theme="dark"] .col-deck-diff-pct.is-high { color: #fbbf24; }
     .col-deck-diff-suggest {
+      display: block;
       font-size: 0.74rem;
       font-weight: 700;
       color: #b45309;
     }
     [data-theme="dark"] .col-deck-diff-suggest { color: #fbbf24; }
+    .col-deck-diff-suggest[hidden] { display: none !important; }
     .col-deck-diff-opts {
       display: flex;
       flex-wrap: wrap;
@@ -7560,10 +7582,7 @@
           <div class="col-deck-diff-rows" id="colDeckDiffRows" role="list"></div>
         </div>
         <div class="col-deck-diff-bar">
-          <div class="col-deck-diff-pct-row">
-            <div class="col-deck-diff-pct" id="colDeckDiffPct">差異 —</div>
-            <span class="col-deck-diff-suggest" id="colDeckDiffSuggest" hidden>差異偏大，建議直接套用新版本</span>
-          </div>
+          <span class="col-deck-diff-suggest" id="colDeckDiffSuggest" hidden>差異偏大，建議直接套用新版本</span>
           <div class="col-deck-diff-opts">
             <label>
               <input type="checkbox" id="colDeckDiffIgnoreVersion">
@@ -7577,6 +7596,9 @@
           <div class="col-deck-diff-actions">
             <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffApplyBtn">
               <i class="fas fa-check mr-1" aria-hidden="true"></i>套用新版本
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffPrevBtn">
+              <i class="fas fa-arrow-up mr-1" aria-hidden="true"></i>上一個差異
             </button>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffNextBtn">
               <i class="fas fa-arrow-down mr-1" aria-hidden="true"></i>下一個差異
@@ -8180,11 +8202,11 @@
     var decklogImportPurpose = 'create';
     var deckDiffBtn = document.getElementById('colDeckDiffBtn');
     var deckDiffRoot = document.getElementById('colDeckDiff');
-    var deckDiffPctEl = document.getElementById('colDeckDiffPct');
     var deckDiffSuggestEl = document.getElementById('colDeckDiffSuggest');
     var deckDiffIgnoreVersionEl = document.getElementById('colDeckDiffIgnoreVersion');
     var deckDiffIgnoreSameNameEl = document.getElementById('colDeckDiffIgnoreSameName');
     var deckDiffApplyBtn = document.getElementById('colDeckDiffApplyBtn');
+    var deckDiffPrevBtn = document.getElementById('colDeckDiffPrevBtn');
     var deckDiffNextBtn = document.getElementById('colDeckDiffNextBtn');
     var deckDiffCreateBtn = document.getElementById('colDeckDiffCreateBtn');
     var deckDiffCloseBtn = document.getElementById('colDeckDiffCloseBtn');
@@ -9944,7 +9966,7 @@
       /* 點大圖本身也可關閉（capture，避免被其他 handler 吃掉） */
       document.addEventListener('click', function (e) {
         if (!lightboxArt) return;
-        if (e.target.closest('.col-deck-entry-art.is-lightbox')) {
+        if (e.target.closest('.col-deck-entry-art.is-lightbox, .col-deck-diff-thumb.is-lightbox')) {
           e.preventDefault();
           e.stopPropagation();
           clearPendingDeckExpand();
@@ -14882,7 +14904,7 @@
       var tag = '';
       if (status === 'removed' && side === 'left') tag = '少';
       else if (status === 'added' && side === 'right') tag = '多';
-      else if (status === 'qty') tag = '張數';
+      else if (status === 'qty') tag = '張數不同';
       var html = '<div class="col-deck-diff-cell is-' + side + '">';
       if (tag) html += '<span class="diff-tag">' + escapeHtml(tag) + '</span>';
       html += '<div class="col-deck-diff-thumb' + (isCxCardNumber(cn) ? ' is-landscape' : '') + '">';
@@ -14970,6 +14992,9 @@
     }
 
     function exitDeckDiffCompare() {
+      if (lightboxArt && lightboxArt.classList && lightboxArt.classList.contains('col-deck-diff-thumb')) {
+        closeCardLightbox(true);
+      }
       deckDiffState.active = false;
       deckDiffState.incoming = null;
       deckDiffState.result = null;
@@ -14983,6 +15008,9 @@
 
     function renderDeckDiffCompare() {
       if (!deckDiffState.active || !deckDraft || !deckDiffState.incoming) return;
+      if (lightboxArt && lightboxArt.classList && lightboxArt.classList.contains('col-deck-diff-thumb')) {
+        closeCardLightbox(true);
+      }
       var opts = {
         ignoreVersion: !!(deckDiffIgnoreVersionEl && deckDiffIgnoreVersionEl.checked),
         ignoreSameName: !!(deckDiffIgnoreSameNameEl && deckDiffIgnoreSameNameEl.checked)
@@ -14999,10 +15027,6 @@
       var seriesLocked = !!(leftSeries && rightSeries && leftSeries !== rightSeries);
       deckDiffState.seriesLocked = seriesLocked;
 
-      if (deckDiffPctEl) {
-        deckDiffPctEl.textContent = '差異 ' + result.diffPct.toFixed(1) + '%';
-        deckDiffPctEl.classList.toggle('is-high', result.diffPct >= 60);
-      }
       if (deckDiffSuggestEl) {
         deckDiffSuggestEl.hidden = !(result.diffPct >= 60 && !seriesLocked);
       }
@@ -15122,14 +15146,18 @@
         });
     }
 
-    function jumpDeckDiffNext() {
+    function jumpDeckDiffBy(delta) {
       if (!deckDiffRowsEl) return;
       var nodes = deckDiffRowsEl.querySelectorAll('[data-deck-diff-changed="1"]');
       if (!nodes.length) {
         setStatus('目前沒有可跳轉的差異', 'is-ok');
         return;
       }
-      deckDiffState.focusIndex = (deckDiffState.focusIndex + 1) % nodes.length;
+      var len = nodes.length;
+      var next = deckDiffState.focusIndex + delta;
+      if (deckDiffState.focusIndex < 0) next = delta > 0 ? 0 : len - 1;
+      next = ((next % len) + len) % len;
+      deckDiffState.focusIndex = next;
       Array.prototype.forEach.call(nodes, function (el) {
         el.classList.remove('is-focus');
       });
@@ -15137,6 +15165,9 @@
       target.classList.add('is-focus');
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    function jumpDeckDiffNext() { jumpDeckDiffBy(1); }
+    function jumpDeckDiffPrev() { jumpDeckDiffBy(-1); }
 
     function openDeckAfterImport(deck) {
       selectedDeckId = deck.id;
@@ -17653,7 +17684,19 @@
         applyDeckDiffIncoming();
       });
     }
+    if (deckDiffPrevBtn) bindEl(deckDiffPrevBtn, 'click', jumpDeckDiffPrev);
     if (deckDiffNextBtn) bindEl(deckDiffNextBtn, 'click', jumpDeckDiffNext);
+    if (deckDiffRowsEl) {
+      bindEl(deckDiffRowsEl, 'click', function (e) {
+        var thumb = e.target.closest('.col-deck-diff-thumb');
+        if (!thumb || !deckDiffRowsEl.contains(thumb)) return;
+        if (thumb.classList.contains('is-empty')) return;
+        var img = thumb.querySelector('img');
+        if (!img || img.classList.contains('is-broken')) return;
+        e.preventDefault();
+        toggleCardLightbox(thumb);
+      });
+    }
     if (deckDiffCloseBtn) {
       bindEl(deckDiffCloseBtn, 'click', function () {
         exitDeckDiffCompare();
