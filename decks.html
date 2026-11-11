@@ -6031,6 +6031,13 @@
       color: var(--col-muted, #718096);
       line-height: 1.5;
     }
+    .col-deck-diff-lock-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      justify-content: center;
+      align-items: center;
+    }
     @media (max-width: 640px) {
       .col-deck-diff-cell {
         gap: 0.35rem;
@@ -7741,6 +7748,9 @@
             <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffCreateBtn" hidden>
               <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
             </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffBackViewBtn" hidden>
+              <i class="fas fa-eye mr-1" aria-hidden="true"></i>回到檢視畫面
+            </button>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffCloseBtn">
               結束比較
             </button>
@@ -7750,9 +7760,14 @@
           <div class="col-deck-diff-lock-card">
             <h4>系列不同，已鎖定比較</h4>
             <p id="colDeckDiffLockText">左右牌組主系列不一致，為避免誤覆蓋，請改以「建立為新牌組」匯入。</p>
-            <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffLockCreateBtn">
-              <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
-            </button>
+            <div class="col-deck-diff-lock-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffLockCreateBtn">
+                <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffLockBackBtn">
+                <i class="fas fa-eye mr-1" aria-hidden="true"></i>回到檢視畫面
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -8348,6 +8363,8 @@
     var deckDiffLockEl = document.getElementById('colDeckDiffLock');
     var deckDiffLockTextEl = document.getElementById('colDeckDiffLockText');
     var deckDiffLockCreateBtn = document.getElementById('colDeckDiffLockCreateBtn');
+    var deckDiffLockBackBtn = document.getElementById('colDeckDiffLockBackBtn');
+    var deckDiffBackViewBtn = document.getElementById('colDeckDiffBackViewBtn');
     var deckDiffRowsEl = document.getElementById('colDeckDiffRows');
     var deckDiffLeftMeta = document.getElementById('colDeckDiffLeftMeta');
     var deckDiffRightMeta = document.getElementById('colDeckDiffRightMeta');
@@ -15187,7 +15204,20 @@
         deckDiffApplyBtn.title = seriesLocked ? '系列不同，無法直接覆蓋' : '以新匯入編成覆蓋目前草稿（需再按儲存）';
       }
       if (deckDiffCreateBtn) deckDiffCreateBtn.hidden = !seriesLocked;
+      if (deckDiffBackViewBtn) deckDiffBackViewBtn.hidden = !seriesLocked;
       deckDiffState.focusIndex = -1;
+    }
+
+    function returnToDeckViewFromDiff() {
+      var deckId = deckDraft && deckDraft.id ? String(deckDraft.id) : '';
+      var exists = !!(deckId && allDecks.some(function (d) { return d.id === deckId; }));
+      exitDeckDiffCompare();
+      if (exists) {
+        openDeckEditor(deckId, 'view');
+        return;
+      }
+      applyDeckEditorMode();
+      renderDeckEditor();
     }
 
     function enterDeckDiffCompare(payload) {
@@ -17841,6 +17871,8 @@
     }
     if (deckDiffCreateBtn) bindEl(deckDiffCreateBtn, 'click', createDeckFromDiffIncoming);
     if (deckDiffLockCreateBtn) bindEl(deckDiffLockCreateBtn, 'click', createDeckFromDiffIncoming);
+    if (deckDiffBackViewBtn) bindEl(deckDiffBackViewBtn, 'click', returnToDeckViewFromDiff);
+    if (deckDiffLockBackBtn) bindEl(deckDiffLockBackBtn, 'click', returnToDeckViewFromDiff);
     if (decklogCodeInput) {
       bindEl(decklogCodeInput, 'keydown', function (e) {
         if (e.key === 'Enter') {
