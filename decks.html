@@ -255,6 +255,16 @@
         border-color 0.2s ease,
         color 0.2s ease !important;
     }
+    /* display:inline-flex !important 會蓋過 [hidden]；差異比較等需真正隱藏的按鈕依賴此規則 */
+    body.collection-page .btn[hidden],
+    body.collection-page .col-cta-primary[hidden],
+    body.collection-page .col-cta-secondary[hidden] {
+      display: none !important;
+    }
+    /* 差異比較：底部只留取消（儲存改走套用／建立新牌組流程） */
+    #colDeckModal.is-diff-compare #colDeckSaveBtn {
+      display: none !important;
+    }
     body.collection-page .btn:hover,
     body.collection-page .btn:focus,
     body.collection-page .col-cta-primary:hover,
@@ -16602,7 +16612,10 @@
     function applyDeckEditorMode() {
       var isView = deckEditorMode === 'view';
       if (deckSaveBtn) deckSaveBtn.hidden = isView || deckDiffState.active;
-      if (deckCancelBtn) deckCancelBtn.textContent = isView ? '關閉' : '取消';
+      if (deckCancelBtn) {
+        /* 差異比較只留取消；檢視模式才顯示「關閉」 */
+        deckCancelBtn.textContent = (isView && !deckDiffState.active) ? '關閉' : '取消';
+      }
       setDeckMetaFieldsEditable(!isView);
       if (deckModalFilterBtn) deckModalFilterBtn.hidden = !isView || deckDiffState.active;
       if (deckRarityToggleBtn) deckRarityToggleBtn.hidden = true; /* 改走 overflow */
