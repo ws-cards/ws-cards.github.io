@@ -5539,10 +5539,25 @@
     #colDeckModal.is-diff-compare .col-deck-editor-dialog {
       width: min(1180px, 100%);
       max-width: 100%;
+      /* 讓差異區吃滿 dialog 剩餘高度，避免底欄蓋住最後一列 */
+      height: min(88dvh, 88vh, 920px);
+      max-height: min(88dvh, 88vh, 920px);
     }
     /* 差異比較：資訊列不置頂；主區為左右對齊的一行一卡 */
     #colDeckModal.is-diff-compare .col-deck-editor-body {
-      min-height: min(82vh, 920px);
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    #colDeckModal.is-diff-compare .col-deck-editor-top,
+    #colDeckModal.is-diff-compare .col-deck-modal-desc {
+      flex: 0 0 auto;
+    }
+    #colDeckModal.is-diff-compare .col-deck-editor-actions {
+      position: static;
+      flex: 0 0 auto;
     }
     .col-deck-diff {
       position: relative;
@@ -5551,6 +5566,7 @@
       gap: 0.55rem;
       min-height: 0;
       flex: 1 1 auto;
+      overflow: hidden;
     }
     .col-deck-diff-table {
       min-width: 0;
@@ -5598,9 +5614,14 @@
       padding: 0;
       overflow: auto;
       flex: 1 1 auto;
-      min-height: min(62vh, 720px);
-      max-height: min(72vh, 820px);
+      min-height: 0;
       -webkit-overflow-scrolling: touch;
+    }
+    /* 捲到底時留一點空隙，避免最後一列貼邊被裁切／顯得被蓋住 */
+    .col-deck-diff-rows::after {
+      content: '';
+      display: block;
+      height: 0.75rem;
     }
     .col-deck-diff-level {
       display: grid;
@@ -5886,9 +5907,11 @@
       .col-deck-diff-thumb { width: 2.15rem; }
       .col-deck-diff-cell-body .cardno,
       .col-deck-diff-cell-body .name { font-size: 0.62rem; }
-      .col-deck-diff-rows {
-        min-height: min(58vh, 640px);
-        max-height: min(66vh, 720px);
+    }
+    @media (max-width: 991.98px) {
+      #colDeckModal.is-diff-compare .col-deck-editor-dialog {
+        height: 100%;
+        max-height: 100%;
       }
     }
     .col-deck-desc-input {
