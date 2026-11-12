@@ -883,11 +883,14 @@
       overflow: hidden !important;
       overscroll-behavior: none;
     }
-    body.is-overlay-scroll-lock {
-      position: fixed;
-      left: 0;
-      right: 0;
-      width: 100%;
+    /* 僅手機用 position:fixed；桌面 fixed 會搞亂編輯光箱／modal 定位 */
+    @media (max-width: 991.98px) {
+      body.is-overlay-scroll-lock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+      }
     }
     .col-modal-backdrop {
       position: absolute;
@@ -12111,11 +12114,26 @@
     var overlayScrollLocked = false;
     var overlayScrollY = 0;
     var overlayScrollTouchBound = false;
+    var overlayScrollFixedBody = false;
+
+    function needsFixedBodyScrollLock() {
+      return !isDeckDesktopLayout();
+    }
 
     function isInsideScrollableOverlay(target) {
       var el = target;
       while (el && el !== document.body && el !== document.documentElement) {
         if (el.nodeType === 1) {
+          if (el.classList && (
+            el.classList.contains('col-modal-body') ||
+            el.classList.contains('col-deck-diff-rows') ||
+            el.classList.contains('col-deck-series-pick-scroll') ||
+            el.classList.contains('col-deck-entry-expand') ||
+            el.classList.contains('is-lb-mobile') ||
+            el.classList.contains('col-deck-edit-choice')
+          )) {
+            return true;
+          }
           var style = window.getComputedStyle(el);
           var oy = style.overflowY;
           var ox = style.overflowX;
@@ -12145,24 +12163,35 @@
 
     function setOverlayScrollLock(locked) {
       locked = !!locked;
-      if (locked === overlayScrollLocked) return;
+      var useFixed = locked && needsFixedBodyScrollLock();
+      if (locked === overlayScrollLocked && useFixed === overlayScrollFixedBody) return;
       if (locked) {
-        overlayScrollY = window.scrollY || window.pageYOffset ||
-          document.documentElement.scrollTop || 0;
+        if (!overlayScrollLocked) {
+          overlayScrollY = window.scrollY || window.pageYOffset ||
+            document.documentElement.scrollTop || 0;
+        }
         var sb = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
         document.documentElement.classList.add('is-overlay-scroll-lock');
         document.body.classList.add('is-overlay-scroll-lock');
-        document.body.style.top = '-' + overlayScrollY + 'px';
+        if (useFixed) {
+          document.body.style.top = '-' + overlayScrollY + 'px';
+        } else {
+          document.body.style.top = '';
+        }
         if (sb) document.body.style.paddingRight = sb + 'px';
+        else document.body.style.paddingRight = '';
         bindOverlayScrollTouchLock();
       } else {
         document.documentElement.classList.remove('is-overlay-scroll-lock');
         document.body.classList.remove('is-overlay-scroll-lock');
         document.body.style.top = '';
         document.body.style.paddingRight = '';
-        window.scrollTo(0, overlayScrollY || 0);
+        if (overlayScrollFixedBody) {
+          window.scrollTo(0, overlayScrollY || 0);
+        }
       }
       overlayScrollLocked = locked;
+      overlayScrollFixedBody = useFixed;
     }
 
     function syncOverlayScrollLock() {
@@ -19068,6 +19097,21 @@
         var resizeChoiceId = deckEditChoiceDeckId;
         closeModalByName('deckEditChoice');
         openDeckEditor(resizeChoiceId, 'edit');
+      }
+      /* 視窗跨手機／桌面時，更新 fixed body lock 策略 */
+      if (overlayScrollLocked) {
+        var useFixed = needsFixedBodyScrollLock();
+        if (useFixed !== overlayScrollFixedBody) {
+          if (useFixed) {
+            document.body.style.top = '-' + (overlayScrollY || 0) + 'px';
+          } else {
+            document.body.style.top = '';
+            window.scrollTo(0, overlayScrollY || 0);
+          }
+          overlayScrollFixedBody = useFixed;
+        }
+      } else {
+        syncOverlayScrollLock();
       }
     });
     function applyDeckCardSortMode(next) {
