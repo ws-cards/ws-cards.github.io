@@ -6052,6 +6052,103 @@
         padding-bottom: max(1.1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem));
       }
     }
+    /* 桌面：不要套手機全版上下對切，改置中雙欄選擇 */
+    @media (min-width: 992px) {
+      #colDeckEditChoiceModal.col-modal {
+        padding: max(1.25rem, env(safe-area-inset-top, 0px))
+                 max(1.25rem, env(safe-area-inset-right, 0px))
+                 max(1.25rem, env(safe-area-inset-bottom, 0px))
+                 max(1.25rem, env(safe-area-inset-left, 0px));
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        height: auto;
+        max-height: none;
+        touch-action: auto;
+      }
+      #colDeckEditChoiceModal .col-modal-backdrop {
+        background: rgba(12, 12, 10, 0.55);
+      }
+      .col-deck-edit-choice {
+        flex-direction: row;
+        width: min(720px, 100%);
+        height: auto;
+        min-height: 17.5rem;
+        max-height: min(70vh, 26rem);
+        border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
+        border-radius: 12px;
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.35) inset,
+          0 18px 48px rgba(28, 26, 23, 0.18);
+        animation-name: colDeckEditChoiceInDesk;
+      }
+      [data-theme="dark"] .col-deck-edit-choice {
+        border-color: var(--desk-line, rgba(240, 238, 230, 0.12));
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.04) inset,
+          0 18px 40px rgba(0, 0, 0, 0.45);
+      }
+      @keyframes colDeckEditChoiceInDesk {
+        from { opacity: 0; transform: translateY(10px) scale(0.98); }
+        to { opacity: 1; transform: none; }
+      }
+      .col-deck-edit-choice-close {
+        top: 0.7rem;
+        right: 0.7rem;
+      }
+      .col-deck-edit-choice-btn {
+        flex: 1 1 50%;
+        min-height: 17.5rem;
+        padding: 1.75rem 1.35rem;
+        gap: 0.55rem;
+      }
+      .col-deck-edit-choice-btn + .col-deck-edit-choice-btn {
+        border-top: 0;
+        border-left: 1px solid var(--desk-line, rgba(18, 18, 16, 0.18));
+        padding-top: 1.75rem;
+        padding-bottom: 1.75rem;
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent), transparent 55%),
+          color-mix(in srgb, var(--desk-foil, #8a6f3a) 5%, var(--desk-surface-strong, #f7f7f4));
+      }
+      [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn {
+        border-left-color: var(--desk-line, rgba(240, 238, 230, 0.12));
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 14%, transparent), transparent 55%),
+          color-mix(in srgb, var(--desk-foil, #d0b27a) 6%, var(--desk-surface-strong, #1c1b18));
+      }
+      .col-deck-edit-choice-btn:hover,
+      .col-deck-edit-choice-btn:focus-visible {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, transparent), transparent 60%),
+          color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, var(--desk-surface-strong, #f7f7f4));
+      }
+      .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:hover,
+      .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:focus-visible {
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, transparent), transparent 60%),
+          color-mix(in srgb, var(--desk-foil, #8a6f3a) 12%, var(--desk-surface-strong, #f7f7f4));
+      }
+      [data-theme="dark"] .col-deck-edit-choice-btn:hover,
+      [data-theme="dark"] .col-deck-edit-choice-btn:focus-visible {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 18%, transparent), transparent 60%),
+          color-mix(in srgb, var(--desk-foil, #d0b27a) 10%, var(--desk-surface-strong, #1c1b18));
+      }
+      [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:hover,
+      [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:focus-visible {
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 22%, transparent), transparent 60%),
+          color-mix(in srgb, var(--desk-foil, #d0b27a) 14%, var(--desk-surface-strong, #1c1b18));
+      }
+      .col-deck-edit-choice-label {
+        font-size: 1.55rem;
+      }
+      .col-deck-edit-choice-hint {
+        font-size: 0.86rem;
+        max-width: 14rem;
+      }
+    }
 
     /* ——— 牌組差異比較 ——— */
     .col-deck-editor-top-actions {
@@ -8239,6 +8336,10 @@
           <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
         </div>
         <div class="col-deck-editor-top-actions">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffBtn" hidden
+            title="匯入 DeckLog 並與目前牌組做差異比較">
+            <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>差異比較
+          </button>
           <details class="col-deck-overflow" id="colDeckEditorOverflow" hidden>
             <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>
             <div class="col-deck-overflow-menu" id="colDeckEditorOverflowMenu"></div>
@@ -8904,6 +9005,7 @@
     var deckEditChoiceEditBtn = document.getElementById('colDeckEditChoiceEditBtn');
     var deckEditChoiceDiffBtn = document.getElementById('colDeckEditChoiceDiffBtn');
     var deckEditChoiceDeckId = null;
+    var deckDiffBtn = document.getElementById('colDeckDiffBtn');
     var deckDiffRoot = document.getElementById('colDeckDiff');
     var deckDiffBarFab = document.getElementById('colDeckDiffBarFab');
     var deckDiffBarScrim = document.getElementById('colDeckDiffBarScrim');
@@ -15872,6 +15974,16 @@
       return html;
     }
 
+    function syncDeckDiffButton() {
+      if (!deckDiffBtn) return;
+      /* 桌面編輯才在標題旁顯示；手機改走全版選擇裡的差異比較 */
+      var show = isDeckDesktopLayout() &&
+        deckEditorMode === 'edit' &&
+        !!deckDraft &&
+        !deckDiffState.active;
+      deckDiffBtn.hidden = !show;
+    }
+
     function openDeckEditChooser(deckId) {
       var id = normalizeText(deckId);
       if (!id) {
@@ -15883,6 +15995,11 @@
         return;
       }
       closeDeckOverflowMenus();
+      /* 桌面不要套手機全版選擇光箱，直接進編輯 */
+      if (isDeckDesktopLayout()) {
+        openDeckEditor(id, 'edit');
+        return;
+      }
       deckEditChoiceDeckId = id;
       openModal(deckEditChoiceModal);
     }
@@ -15930,6 +16047,7 @@
       if (deckModal) deckModal.classList.remove('is-diff-compare');
       if (deckDiffRoot) deckDiffRoot.hidden = true;
       if (deckDiffLockEl) deckDiffLockEl.hidden = true;
+      syncDeckDiffButton();
     }
 
     function renderDeckDiffCompare() {
@@ -17360,6 +17478,7 @@
       syncDeckRarityToggleUi();
       syncDeckFilterBtnUi();
       syncDeckEditorOverflow();
+      syncDeckDiffButton();
     }
 
     function updateDeckEditorSummary() {
@@ -17520,6 +17639,7 @@
       closeEditorFaceLightbox(true);
       if (deckDiffState.active) {
         updateDeckEditorSummary();
+        syncDeckDiffButton();
         renderDeckDiffCompare();
         return;
       }
@@ -18686,6 +18806,12 @@
     if (deckEditChoiceDiffBtn) {
       bindEl(deckEditChoiceDiffBtn, 'click', startDeckDiffFromChooser);
     }
+    if (deckDiffBtn) {
+      bindEl(deckDiffBtn, 'click', function () {
+        if (!deckDraft || deckEditorMode !== 'edit') return;
+        openDecklogModal('diff');
+      });
+    }
     if (deckDiffBarFab) {
       bindEl(deckDiffBarFab, 'click', function () {
         if (!deckDiffState.active) return;
@@ -18935,6 +19061,14 @@
         applySeriesPickLayout(true);
       } else if (!isDeckDesktopLayout() && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
       else syncSeriesPickButton();
+      syncDeckDiffButton();
+      /* 若從手機拉到桌面時還開著全版選擇，改直接進編輯 */
+      if (isDeckDesktopLayout() && deckEditChoiceModal &&
+        deckEditChoiceModal.classList.contains('is-open') && deckEditChoiceDeckId) {
+        var resizeChoiceId = deckEditChoiceDeckId;
+        closeModalByName('deckEditChoice');
+        openDeckEditor(resizeChoiceId, 'edit');
+      }
     });
     function applyDeckCardSortMode(next) {
       deckCardSortMode = normalizeDeckCardSortMode(next);
