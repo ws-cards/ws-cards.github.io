@@ -3916,6 +3916,50 @@
       #colDeckModal.col-modal {
         padding: 0;
       }
+      /* 手機編輯先滿版選牌，牌組改由浮動按鈕叫出 */
+      #colDeckModal.is-series-pick {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #colDeckModal.is-series-pick .col-deck-series-pick {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--desk-surface-strong, #f7f7f4);
+        color: var(--desk-ink, #171714);
+      }
+      [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-series-pick {
+        background: #1f1f1f;
+        color: #f7fafc;
+      }
+      #colDeckModal.is-series-pick:not(.is-mobile-deck) .col-deck-editor-dialog {
+        display: none;
+      }
+      #colDeckModal.is-series-pick.is-mobile-deck .col-deck-editor-dialog {
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+      }
+      #colDeckModal.is-series-pick .col-deck-series-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem 0.55rem;
+        padding-bottom: 5.5rem;
+      }
+      #colDeckModal.is-series-pick:not(.is-mobile-deck) .col-deck-mobile-fab {
+        display: inline-flex;
+      }
+      #colDeckModal.is-mobile-deck .col-deck-mobile-back,
+      #colDeckModal.is-series-pick .col-deck-series-pick-close {
+        display: inline-flex;
+      }
     }
     .col-deck-editor-body {
       display: flex;
@@ -5141,6 +5185,60 @@
     }
     .col-deck-series-pick[hidden] {
       display: none !important;
+    }
+    .col-deck-series-pick-close,
+    .col-deck-mobile-back,
+    .col-deck-mobile-fab {
+      display: none;
+    }
+    .col-deck-series-pick-close,
+    .col-deck-mobile-back {
+      align-items: center;
+      justify-content: center;
+      height: 2rem;
+      margin: 0 0 0 auto;
+      padding: 0 0.65rem;
+      border: 1px solid var(--col-line, #e2e8f0);
+      border-radius: 999px;
+      background: transparent;
+      color: inherit;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .col-deck-mobile-fab {
+      position: fixed;
+      right: max(1rem, env(safe-area-inset-right, 0px));
+      bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+      z-index: 5;
+      align-items: center;
+      gap: 0.4rem;
+      height: 3rem;
+      margin: 0;
+      padding: 0 1rem 0 0.85rem;
+      border: 0;
+      border-radius: 999px;
+      background: var(--desk-foil-deep, #5c4a28);
+      color: #fff;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(28, 26, 23, 0.32);
+    }
+    .col-deck-mobile-fab strong {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      #colDeckModal.is-series-pick.is-mobile-deck .col-deck-editor-dialog {
+        animation: colMobileDeckIn 0.28s ease;
+      }
+    }
+    @keyframes colMobileDeckIn {
+      from { transform: translateY(10%); }
+      to { transform: none; }
     }
     @media (min-width: 992px) {
       .col-deck-editor-tools .col-deck-series-pick-toggle:not([hidden]) {
@@ -7877,6 +7975,7 @@
       <div class="col-deck-series-pick-title-row">
         <h4 id="colDeckSeriesPickTitle">系列選牌</h4>
         <span class="col-deck-series-pick-count" id="colDeckSeriesPickCount"></span>
+        <button type="button" class="col-deck-series-pick-close" data-modal-close="deck">關閉</button>
       </div>
       <div class="col-deck-series-pick-tools">
         <input id="colDeckSeriesPickSearch" class="col-deck-series-pick-search" type="search" placeholder="搜尋卡號、卡名" autocomplete="off" aria-label="搜尋系列卡片">
@@ -7895,10 +7994,16 @@
       <button type="button" class="btn btn-outline-secondary btn-sm col-deck-series-more" id="colDeckSeriesPickMore" hidden>載入更多</button>
     </div>
   </section>
+  <button type="button" class="col-deck-mobile-fab" id="colDeckMobileFab" hidden>
+    <i class="fas fa-layer-group" aria-hidden="true"></i>
+    <span>牌組</span>
+    <strong id="colDeckMobileFabCount">0/50</strong>
+  </button>
   <div class="col-modal-dialog col-modal-wide col-deck-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckTitle">
     <div class="col-modal-body col-deck-editor-body">
       <div class="col-deck-editor-top">
         <div class="col-deck-editor-top-main">
+          <button type="button" class="col-deck-mobile-back" id="colDeckMobileBack" hidden>選牌</button>
           <h3 id="colDeckTitle">編輯牌組</h3>
           <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
         </div>
@@ -16000,6 +16105,27 @@
       if (el) el.textContent = text || '';
     }
 
+    function syncMobileDeckChrome() {
+      var fab = document.getElementById('colDeckMobileFab');
+      var back = document.getElementById('colDeckMobileBack');
+      var sheet = !!(deckModal && deckModal.classList.contains('is-mobile-deck'));
+      var mobilePick = deckEditorMode === 'edit' && !isDeckDesktopLayout() &&
+        deckSeriesPickOpen && !(deckDiffState && deckDiffState.active);
+      if (fab) {
+        fab.hidden = !(mobilePick && !sheet);
+        var count = document.getElementById('colDeckMobileFabCount');
+        if (count && deckDraft) count.textContent = deckTotalCards(deckDraft) + '/50';
+      }
+      if (back) back.hidden = !(mobilePick && sheet);
+    }
+
+    function setMobileDeckSheet(open) {
+      if (!deckModal) return;
+      var show = !!open && deckEditorMode === 'edit' && !isDeckDesktopLayout() && deckSeriesPickOpen;
+      deckModal.classList.toggle('is-mobile-deck', show);
+      syncMobileDeckChrome();
+    }
+
     function syncSeriesPickButton() {
       var btn = document.getElementById('colDeckSeriesPickBtn');
       if (!btn) return;
@@ -16022,6 +16148,7 @@
       if (!deckSeriesPickOpen || !deckDraft) return;
       var count = document.getElementById('colDeckSideCount');
       if (count) count.textContent = deckTotalCards(deckDraft) + '/50';
+      syncMobileDeckChrome();
       var price = document.getElementById('colDeckSidePrice');
       if (price) {
         if (deckHideEntryPrices) price.innerHTML = '';
@@ -16645,10 +16772,12 @@
     function applySeriesPickLayout(open) {
       if (deckModal) {
         deckModal.classList.toggle('is-series-pick', !!open);
+        if (!open) deckModal.classList.remove('is-mobile-deck');
       }
       var panel = document.getElementById('colDeckSeriesPick');
       if (panel) panel.hidden = !open;
       clearSeriesPickMotionProps();
+      syncMobileDeckChrome();
     }
 
     function readDialogRectWithoutInline(dialog) {
@@ -16813,8 +16942,8 @@
 
     function setDeckSeriesPickOpen(next, opts) {
       opts = opts || {};
-      var want = !!next && deckEditorMode === 'edit' && isDeckDesktopLayout() && !!deckDraft;
-      var animate = !!opts.animate && !prefersReducedMotion() && !!(window.gsap);
+      var want = !!next && deckEditorMode === 'edit' && !!deckDraft;
+      var animate = !!opts.animate && isDeckDesktopLayout() && !prefersReducedMotion() && !!(window.gsap);
       if (deckSeriesPickAnim) killSeriesPickAnim();
       if (want === deckSeriesPickOpen) {
         applySeriesPickLayout(want);
@@ -17180,8 +17309,8 @@
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
-      if (deckEditorMode === 'edit' && isDeckDesktopLayout()) {
-        setDeckSeriesPickOpen(true, { animate: true });
+      if (deckEditorMode === 'edit') {
+        setDeckSeriesPickOpen(true, { animate: isDeckDesktopLayout() });
       }
       prefetchDeckRaritySetMaps();
       if (deckEditorMode === 'edit') {
@@ -18443,7 +18572,12 @@
         deckWorkspaceEl.getAttribute('data-deck-pane') === 'detail') {
         if (deckSection) deckSection.classList.add('is-deck-detail');
       }
-      if (!isDeckDesktopLayout() && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
+      if (isDeckDesktopLayout() && deckModal) deckModal.classList.remove('is-mobile-deck');
+      if (!isDeckDesktopLayout() && deckSeriesPickOpen && deckEditorMode === 'edit' &&
+        !(deckDiffState && deckDiffState.active)) {
+        setMobileDeckSheet(false);
+        applySeriesPickLayout(true);
+      } else if (!isDeckDesktopLayout() && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
       else syncSeriesPickButton();
     });
     function applyDeckCardSortMode(next) {
@@ -18613,6 +18747,18 @@
       bindEl(deckCoverPickList, 'error', function (e) {
         if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
       }, true);
+    }
+    var deckMobileFab = document.getElementById('colDeckMobileFab');
+    if (deckMobileFab) {
+      bindEl(deckMobileFab, 'click', function () {
+        setMobileDeckSheet(true);
+      });
+    }
+    var deckMobileBack = document.getElementById('colDeckMobileBack');
+    if (deckMobileBack) {
+      bindEl(deckMobileBack, 'click', function () {
+        setMobileDeckSheet(false);
+      });
     }
     var deckSeriesPickBtn = document.getElementById('colDeckSeriesPickBtn');
     if (deckSeriesPickBtn) {
