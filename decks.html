@@ -4329,6 +4329,11 @@
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-art img {
       object-fit: cover;
     }
+    .col-deck-entry.is-expanded.is-lb-detail .col-series-rare,
+    .col-deck-entry.is-expanded.is-lb-detail .col-series-color,
+    .col-deck-entry.is-expanded.is-lb-detail .col-series-qty {
+      display: none;
+    }
     .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand {
       display: flex;
       overflow: auto;
@@ -4530,6 +4535,11 @@
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-trait::before {
       background: var(--col-muted);
+    }
+    /* 編輯視窗 z-index 2000，詳情光箱要浮在兩張卡片之上 */
+    .col-deck-entry.is-expanded.is-lb-detail.is-editor-lb,
+    .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile.is-editor-lb {
+      z-index: 2310;
     }
     /* 清單佔位：隱形 clone，保留與原 entry 相同的 grid 佔位，避免開關光箱擠動版面 */
     .col-deck-entry.col-lb-entry-ph {
@@ -10037,7 +10047,7 @@
 
     function hideLightboxBackdrop() {
       var bd = lightboxBackdrop || document.querySelector('.col-lb-backdrop');
-      if (bd) bd.classList.remove('is-on');
+      if (bd) bd.classList.remove('is-on', 'is-over-deck-modal');
     }
 
     function ensureLightboxBackdrop() {
@@ -10274,9 +10284,42 @@
 
     function getDeckExpandReturnArtRect() {
       if (!deckExpandListPlaceholder) return null;
+      if (deckExpandListPlaceholder.classList.contains('col-deck-entry-art')) {
+        return deckExpandListPlaceholder.getBoundingClientRect();
+      }
       var thumb = deckExpandListPlaceholder.querySelector('.col-deck-entry-art');
       if (thumb) return thumb.getBoundingClientRect();
       return deckExpandListPlaceholder.getBoundingClientRect();
+    }
+
+    /** 編輯視窗裡的詳情要搬到 body，才不會被 modal 裁切或壓在暗底下面 */
+    function liftEditorDetailEntry(entryEl) {
+      if (!entryEl) return;
+      if (!entryEl.closest('#colDeckModal') && !entryEl.classList.contains('is-series-detail-host')) return;
+      if (!entryEl._lbList) entryEl._lbList = entryEl.closest('.col-deck-entry-list');
+      entryEl.classList.add('is-editor-lb');
+      document.body.appendChild(entryEl);
+      var bd = ensureLightboxBackdrop();
+      if (bd) bd.classList.add('is-over-deck-modal');
+    }
+
+    function restoreLiftedEditorEntry(entryEl) {
+      if (!entryEl || !entryEl.classList.contains('is-editor-lb')) return;
+      entryEl.classList.remove('is-editor-lb');
+      if (entryEl.classList.contains('is-series-detail-host')) {
+        var seriesArt = entryEl.querySelector('.col-deck-entry-art');
+        var home = entryEl._seriesArtHome;
+        if (seriesArt && home && home.parent && home.parent.isConnected) {
+          var next = home.next && home.next.parentNode === home.parent ? home.next : null;
+          home.parent.insertBefore(seriesArt, next);
+        }
+        if (entryEl.parentNode) entryEl.parentNode.removeChild(entryEl);
+        return;
+      }
+      var ph = deckExpandListPlaceholder;
+      if (ph && ph.parentNode && ph.parentNode.isConnected) {
+        ph.parentNode.insertBefore(entryEl, ph);
+      }
     }
 
     /**
@@ -10614,7 +10657,7 @@
       }
       /* 開啟動畫進行中允許中斷；已展開待機時略過重複 collapse */
       if (deckCardExpandBusy && !force && !deckLbAnimTl) return;
-      var list = entryEl.closest('.col-deck-entry-list');
+      var list = entryEl.closest('.col-deck-entry-list') || entryEl._lbList || null;
       var art = entryEl.querySelector('.col-deck-entry-art');
       deckCardExpandBusy = true;
       killDeckLbAnimTl();
@@ -10643,6 +10686,7 @@
         }
         clearMobileSoftFadeProps(entryEl);
         entryEl.classList.remove('is-expanded', 'is-lb-detail', 'is-lb-mobile');
+        restoreLiftedEditorEntry(entryEl);
         entryEl.setAttribute('aria-expanded', 'false');
         entryEl.style.removeProperty('pointer-events');
         entryEl.style.removeProperty('visibility');
@@ -10778,7 +10822,8 @@
      */
     function playDesktopDeckCardReveal(entryEl, artEl) {
       if (!entryEl || !artEl) return;
-      if (!entryEl.closest('.col-deck-entry-list')) return;
+      var seriesHost = entryEl.classList.contains('is-series-detail-host');
+      if (!entryEl.closest('.col-deck-entry-list') && !seriesHost) return;
       if (deckCardExpandBusy) return;
       if (deckCardExpandEntry && deckCardExpandEntry !== entryEl) {
         collapseDeckCardExpand(true);
@@ -10804,11 +10849,13 @@
       var thumbW = Math.max(1, Math.round(startRect.width));
       var thumbH = Math.max(1, Math.round(startRect.height));
 
-      insertDeckExpandListPlaceholder(entryEl);
+      if (!seriesHost) insertDeckExpandListPlaceholder(entryEl);
       if (lightboxArt) teardownLightboxArtKeepBackdrop();
+      liftEditorDetailEntry(entryEl);
 
       var bd = setLightboxBackdropTweening(true);
       bd.classList.add('is-on');
+      if (entryEl.classList.contains('is-editor-lb')) bd.classList.add('is-over-deck-modal');
       gsap.set(bd, { opacity: 0 });
 
       entryEl.classList.add('is-expanded', 'is-lb-detail');
@@ -10944,7 +10991,7 @@
      * 目前：牌組檢視／編輯清單順序；之後其他情境可在此擴充規則。
      */
     function getLightboxNavEntries(entryEl) {
-      var list = entryEl && entryEl.closest('.col-deck-entry-list');
+      var list = (entryEl && entryEl.closest('.col-deck-entry-list')) || (entryEl && entryEl._lbList);
       if (!list) return [];
       return Array.prototype.filter.call(
         list.querySelectorAll('.col-deck-entry[data-deck-entry]'),
@@ -11291,6 +11338,7 @@
 
       insertDeckExpandListPlaceholder(entryEl);
       if (lightboxArt) teardownLightboxArtKeepBackdrop();
+      liftEditorDetailEntry(entryEl);
       document.documentElement.classList.add('col-lb-mobile-open');
 
       var bd = lightboxBackdrop;
@@ -11308,6 +11356,7 @@
         bd.classList.add('is-on');
         if (window.gsap) gsap.set(bd, { opacity: 0 });
       }
+      if (bd && entryEl.classList.contains('is-editor-lb')) bd.classList.add('is-over-deck-modal');
 
       entryEl.classList.add('is-expanded', 'is-lb-detail', 'is-lb-mobile');
       entryEl.setAttribute('aria-expanded', 'true');
@@ -11427,6 +11476,21 @@
         if (window.gsap && window.Flip) gsap.registerPlugin(Flip);
       } catch (eReg) { /* ignore */ }
       bindMobileLightboxSwipeNav();
+      bindEl(document, 'click', function (e) {
+        var entry = deckCardExpandEntry;
+        if (!entry || !entry.classList.contains('is-editor-lb') || !entry.contains(e.target)) return;
+        if (e.target.closest('[data-deck-expand-close]')) {
+          e.preventDefault();
+          collapseDeckCardExpand(!!deckLbAnimTl);
+          return;
+        }
+        /* 開啟動畫當下的那一下不要立刻縮回 */
+        if (deckCardExpandBusy) return;
+        if (e.target.closest('.col-deck-entry-art') && !e.target.closest('.col-deck-entry-expand')) {
+          e.preventDefault();
+          collapseDeckCardExpand();
+        }
+      });
       bindEl(document, 'keydown', function (e) {
         var isEsc = e.key === 'Escape' || e.keyCode === 27;
         var isLeft = e.key === 'ArrowLeft' || e.keyCode === 37;
@@ -16115,6 +16179,9 @@
       var more = document.getElementById('colDeckSeriesPickMore');
       if (!grid) return;
       if (reset) {
+        if (deckCardExpandEntry && deckCardExpandEntry.classList.contains('is-series-detail-host')) {
+          collapseDeckCardExpand(true);
+        }
         closeEditorFaceLightbox(true);
         deckSeriesVisibleCards = filteredSeriesCards();
         deckSeriesRenderCount = 0;
@@ -16385,6 +16452,68 @@
       el.classList.add('is-bump');
     }
 
+    function buildSeriesDetailExpandHtml(cardNumber, cardName) {
+      var expandMeta = getAlbumMeta(cardNumber) || {};
+      var expandName = expandMeta.cardName || cardName || '（卡冊尚無卡名）';
+      var expandEffect = expandMeta.effect || '';
+      var html = '<div class="col-deck-entry-expand" aria-hidden="true">';
+      html += '<button type="button" class="col-deck-entry-expand-close" data-deck-expand-close aria-label="關閉卡牌詳情">&times;</button>';
+      html += '<div class="col-deck-entry-expand-head col-deck-entry-expand-line">';
+      html += '<h4 class="col-deck-entry-expand-name">' + escapeHtml(expandName) + '</h4>';
+      html += '<div class="col-deck-entry-expand-no">' + escapeHtml(cardNumber) + '</div>';
+      html += '</div>';
+      html += '<div class="col-deck-entry-expand-stats col-deck-entry-expand-line" data-expand-stats></div>';
+      html += '<div class="col-deck-entry-expand-section col-deck-entry-expand-line">';
+      html += '<div class="col-deck-entry-expand-sec-label">效果</div>';
+      html += '<p class="col-deck-entry-expand-effect' + (expandEffect ? '' : ' is-empty') + '">' +
+        escapeHtml(expandEffect || '尚無效果資料') + '</p>';
+      html += '</div>';
+      html += '<div class="col-deck-entry-expand-section col-deck-entry-expand-line">';
+      html += '<div class="col-deck-entry-expand-sec-label">特徵</div>';
+      html += '<div class="col-deck-entry-expand-traits" data-expand-traits></div>';
+      html += '</div></div>';
+      return html;
+    }
+
+    function openSeriesPickCardDetail(art) {
+      if (!art || deckCardExpandBusy) return;
+      var img = art.querySelector('img');
+      if (img && img.classList.contains('is-broken')) return;
+      if (!window.gsap) {
+        openEditorFaceLightbox(art);
+        return;
+      }
+      if (deckCardExpandEntry) collapseDeckCardExpand(true);
+      closeEditorFaceLightbox(true);
+      var card = art.closest('.col-series-card');
+      if (!card) return;
+      var cardNumber = card.getAttribute('data-series-pick') || '';
+      var series = findSeriesCard(cardNumber);
+      if (series) rememberSeriesCardMeta(series);
+      var nameEl = card.querySelector('.col-series-name');
+      var cardName = (series && series.name) || (nameEl ? nameEl.textContent : '') || '';
+      var rect = art.getBoundingClientRect();
+      var spacer = document.createElement('span');
+      spacer.className = 'col-deck-entry-art col-lb-series-ph';
+      spacer.setAttribute('aria-hidden', 'true');
+      spacer.style.width = Math.max(1, Math.round(rect.width)) + 'px';
+      spacer.style.height = Math.max(1, Math.round(rect.height)) + 'px';
+      spacer.style.visibility = 'hidden';
+      spacer.style.display = 'block';
+      var homeNext = art.nextSibling;
+      art.parentNode.insertBefore(spacer, art);
+      deckExpandListPlaceholder = spacer;
+      var host = document.createElement('div');
+      host.className = 'col-deck-entry is-series-detail-host';
+      host.setAttribute('data-deck-entry', cardNumber);
+      if (art.classList.contains('is-landscape') || (series && series.kindClass === 'CX')) host.classList.add('is-cx');
+      host._seriesArtHome = { parent: art.parentNode, next: homeNext };
+      host.appendChild(art);
+      host.insertAdjacentHTML('beforeend', buildSeriesDetailExpandHtml(cardNumber, cardName));
+      card.appendChild(host);
+      playDesktopDeckCardReveal(host, art);
+    }
+
     function addSeriesPickCard(id) {
       if (!deckDraft || deckEditorMode !== 'edit') return;
       var card = findSeriesCard(id);
@@ -16645,6 +16774,9 @@
       syncSeriesPickButton();
       if (!want) {
         closeEditorFaceLightbox(true);
+        if (deckCardExpandEntry && deckCardExpandEntry.classList.contains('is-editor-lb')) {
+          collapseDeckCardExpand(true);
+        }
         if (animate) playSeriesPickCloseAnim();
         else {
           applySeriesPickLayout(false);
@@ -18505,10 +18637,10 @@
     if (deckSeriesPickScroll) {
       bindEl(deckSeriesPickScroll, 'click', function (e) {
         var face = e.target.closest('.col-series-card .col-deck-entry-art');
-        if (face && !face.classList.contains('is-lightbox')) {
+        if (face && !face.classList.contains('is-lightbox') && !face.classList.contains('col-lb-series-ph')) {
           e.preventDefault();
           e.stopPropagation();
-          openEditorFaceLightbox(face);
+          openSeriesPickCardDetail(face);
           return;
         }
         var prefixBtn = e.target.closest('[data-series-prefix]');
@@ -18552,14 +18684,6 @@
           return;
         }
         var expandHit = e.target.closest('.col-deck-entry');
-        var editorFace = e.target.closest('.col-deck-entry-art');
-        if (editorFace && expandHit && editorFace.closest('.col-deck-entry') === expandHit &&
-          !editorFace.classList.contains('is-lightbox') &&
-          !e.target.closest('.col-deck-remove-btn, button')) {
-          e.preventDefault();
-          openEditorFaceLightbox(editorFace);
-          return;
-        }
         if (expandHit &&
           !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls, .col-deck-entry-expand')) {
           e.preventDefault();
