@@ -5824,6 +5824,182 @@
       z-index: 2200;
     }
 
+    /* ——— 檢視→編輯／差異比較：全版選擇 ——— */
+    #colDeckEditChoiceModal.col-modal {
+      z-index: 2050;
+      padding: 0;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+    #colDeckEditChoiceModal .col-modal-backdrop {
+      background: rgba(12, 12, 10, 0.72);
+    }
+    .col-deck-edit-choice {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--desk-surface-strong, #f7f7f4);
+      color: var(--desk-ink, #171714);
+      animation: colDeckEditChoiceIn 0.28s var(--desk-ease, ease) both;
+    }
+    [data-theme="dark"] .col-deck-edit-choice {
+      background: var(--desk-surface-strong, #1c1b18);
+      color: var(--desk-ink, #f0eee6);
+    }
+    @keyframes colDeckEditChoiceIn {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .col-deck-edit-choice { animation: none; }
+    }
+    .col-deck-edit-choice-close {
+      position: absolute;
+      top: max(0.65rem, env(safe-area-inset-top, 0px));
+      right: max(0.65rem, env(safe-area-inset-right, 0px));
+      z-index: 2;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
+      border-radius: 0;
+      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, transparent);
+      color: var(--desk-ink, #171714);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    [data-theme="dark"] .col-deck-edit-choice-close {
+      border-color: var(--desk-line, rgba(240, 238, 230, 0.16));
+      background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 88%, transparent);
+      color: var(--desk-ink, #f0eee6);
+    }
+    .col-deck-edit-choice-close:hover,
+    .col-deck-edit-choice-close:focus-visible {
+      border-color: var(--desk-foil, #8a6f3a);
+      color: var(--desk-foil-deep, #5c4a28);
+      outline: none;
+    }
+    .col-deck-edit-choice-btn {
+      flex: 1 1 0;
+      min-height: 0;
+      margin: 0;
+      padding:
+        max(1.5rem, env(safe-area-inset-top, 0px))
+        max(1.25rem, env(safe-area-inset-right, 0px))
+        1.5rem
+        max(1.25rem, env(safe-area-inset-left, 0px));
+      border: 0;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      text-align: center;
+      cursor: pointer;
+      color: inherit;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 7%, transparent), transparent 55%),
+        var(--desk-surface-strong, #f7f7f4);
+      transition:
+        background-color 0.2s var(--desk-ease, ease),
+        color 0.2s ease,
+        transform 0.2s var(--desk-ease, ease);
+    }
+    .col-deck-edit-choice-btn + .col-deck-edit-choice-btn {
+      border-top: 1px solid var(--desk-line, rgba(18, 18, 16, 0.18));
+      padding-top: 1.5rem;
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+      background:
+        linear-gradient(0deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent), transparent 55%),
+        color-mix(in srgb, var(--desk-foil, #8a6f3a) 5%, var(--desk-surface-strong, #f7f7f4));
+    }
+    [data-theme="dark"] .col-deck-edit-choice-btn {
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 10%, transparent), transparent 55%),
+        var(--desk-surface-strong, #1c1b18);
+    }
+    [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn {
+      border-top-color: var(--desk-line, rgba(240, 238, 230, 0.12));
+      background:
+        linear-gradient(0deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 14%, transparent), transparent 55%),
+        color-mix(in srgb, var(--desk-foil, #d0b27a) 6%, var(--desk-surface-strong, #1c1b18));
+    }
+    .col-deck-edit-choice-btn:hover,
+    .col-deck-edit-choice-btn:focus-visible {
+      outline: none;
+      color: var(--desk-foil-deep, #5c4a28);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, transparent), transparent 60%),
+        color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, var(--desk-surface-strong, #f7f7f4));
+    }
+    .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:hover,
+    .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:focus-visible {
+      background:
+        linear-gradient(0deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, transparent), transparent 60%),
+        color-mix(in srgb, var(--desk-foil, #8a6f3a) 12%, var(--desk-surface-strong, #f7f7f4));
+    }
+    [data-theme="dark"] .col-deck-edit-choice-btn:hover,
+    [data-theme="dark"] .col-deck-edit-choice-btn:focus-visible {
+      color: var(--desk-foil, #d0b27a);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 18%, transparent), transparent 60%),
+        color-mix(in srgb, var(--desk-foil, #d0b27a) 10%, var(--desk-surface-strong, #1c1b18));
+    }
+    [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:hover,
+    [data-theme="dark"] .col-deck-edit-choice-btn + .col-deck-edit-choice-btn:focus-visible {
+      background:
+        linear-gradient(0deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 22%, transparent), transparent 60%),
+        color-mix(in srgb, var(--desk-foil, #d0b27a) 14%, var(--desk-surface-strong, #1c1b18));
+    }
+    .col-deck-edit-choice-btn:active {
+      transform: scale(0.992);
+    }
+    .col-deck-edit-choice-icon {
+      width: 3.1rem;
+      height: 3.1rem;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.22));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: var(--desk-foil-deep, #5c4a28);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent);
+    }
+    [data-theme="dark"] .col-deck-edit-choice-icon {
+      border-color: var(--desk-line, rgba(240, 238, 230, 0.14));
+      color: var(--desk-foil, #d0b27a);
+      background: color-mix(in srgb, var(--desk-foil, #d0b27a) 12%, transparent);
+    }
+    .col-deck-edit-choice-label {
+      margin: 0;
+      font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
+      font-size: clamp(1.45rem, 4.2vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+    .col-deck-edit-choice-hint {
+      margin: 0;
+      max-width: 18rem;
+      font-family: var(--font-serif, 'Noto Serif TC', serif);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--text-secondary, #718096);
+    }
+    [data-theme="dark"] .col-deck-edit-choice-hint {
+      color: rgba(240, 238, 230, 0.68);
+    }
+
     /* ——— 牌組差異比較 ——— */
     .col-deck-editor-top-actions {
       display: flex;
@@ -8008,10 +8184,6 @@
           <p class="col-deck-origin-note" id="colDeckOriginNote" hidden></p>
         </div>
         <div class="col-deck-editor-top-actions">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffBtn" hidden
-            title="匯入 DeckLog 並與目前牌組做差異比較">
-            <i class="fas fa-exchange-alt mr-1" aria-hidden="true"></i>差異比較
-          </button>
           <details class="col-deck-overflow" id="colDeckEditorOverflow" hidden>
             <summary title="更多操作" aria-label="更多操作"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></summary>
             <div class="col-deck-overflow-menu" id="colDeckEditorOverflowMenu"></div>
@@ -8303,6 +8475,27 @@
         <i class="fas fa-times" aria-hidden="true"></i>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- 檢視牌組 → 編輯：全版選擇（編輯牌組／差異比較） -->
+<div id="colDeckEditChoiceModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckEditChoice"></div>
+  <div class="col-deck-edit-choice" role="dialog" aria-modal="true" aria-labelledby="colDeckEditChoiceTitle">
+    <h3 id="colDeckEditChoiceTitle" class="sr-only">選擇編輯方式</h3>
+    <button type="button" class="col-deck-edit-choice-close" data-modal-close="deckEditChoice" aria-label="關閉">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="col-deck-edit-choice-btn" id="colDeckEditChoiceEditBtn">
+      <span class="col-deck-edit-choice-icon" aria-hidden="true"><i class="fas fa-pen"></i></span>
+      <span class="col-deck-edit-choice-label">編輯牌組</span>
+      <span class="col-deck-edit-choice-hint">調整編成張數、缺卡與主要卡牌</span>
+    </button>
+    <button type="button" class="col-deck-edit-choice-btn" id="colDeckEditChoiceDiffBtn">
+      <span class="col-deck-edit-choice-icon" aria-hidden="true"><i class="fas fa-exchange-alt"></i></span>
+      <span class="col-deck-edit-choice-label">差異比較</span>
+      <span class="col-deck-edit-choice-hint">匯入 DeckLog，與目前牌組左右對照</span>
+    </button>
   </div>
 </div>
 
@@ -8655,7 +8848,10 @@
     var decklogHintEl = document.getElementById('colDecklogHint');
     /** 'create' = 新建匯入；'diff' = 編輯中差異比較 */
     var decklogImportPurpose = 'create';
-    var deckDiffBtn = document.getElementById('colDeckDiffBtn');
+    var deckEditChoiceModal = document.getElementById('colDeckEditChoiceModal');
+    var deckEditChoiceEditBtn = document.getElementById('colDeckEditChoiceEditBtn');
+    var deckEditChoiceDiffBtn = document.getElementById('colDeckEditChoiceDiffBtn');
+    var deckEditChoiceDeckId = null;
     var deckDiffRoot = document.getElementById('colDeckDiff');
     var deckDiffBarFab = document.getElementById('colDeckDiffBarFab');
     var deckDiffBarScrim = document.getElementById('colDeckDiffBarScrim');
@@ -11819,6 +12015,11 @@
           decklogConfirmBtn.disabled = false;
           decklogConfirmBtn.removeAttribute('aria-busy');
         }
+        return;
+      }
+      if (name === 'deckEditChoice') {
+        closeModal(deckEditChoiceModal);
+        deckEditChoiceDeckId = null;
         return;
       }
       if (name === 'deckMeta') {
@@ -15535,10 +15736,40 @@
       return html;
     }
 
-    function syncDeckDiffButton() {
-      if (!deckDiffBtn) return;
-      var show = deckEditorMode === 'edit' && !!deckDraft && !deckDiffState.active;
-      deckDiffBtn.hidden = !show;
+    function openDeckEditChooser(deckId) {
+      var id = normalizeText(deckId);
+      if (!id) {
+        setStatus('找不到該牌組', 'is-error');
+        return;
+      }
+      if (!allDecks.some(function (d) { return d.id === id; })) {
+        setStatus('找不到該牌組', 'is-error');
+        return;
+      }
+      closeDeckOverflowMenus();
+      deckEditChoiceDeckId = id;
+      openModal(deckEditChoiceModal);
+    }
+
+    function startDeckEditFromChooser() {
+      var id = deckEditChoiceDeckId;
+      closeModalByName('deckEditChoice');
+      if (!id) return;
+      openDeckEditor(id, 'edit');
+    }
+
+    function startDeckDiffFromChooser() {
+      var id = deckEditChoiceDeckId;
+      closeModalByName('deckEditChoice');
+      if (!id) return;
+      requireDeckAuth()
+        .then(function () {
+          openDeckEditorUi(id, 'edit');
+          openDecklogModal('diff');
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || '請先登入後再比較牌組', 'is-error');
+        });
     }
 
     function setDeckDiffBarOpen(open) {
@@ -15563,7 +15794,6 @@
       if (deckModal) deckModal.classList.remove('is-diff-compare');
       if (deckDiffRoot) deckDiffRoot.hidden = true;
       if (deckDiffLockEl) deckDiffLockEl.hidden = true;
-      syncDeckDiffButton();
     }
 
     function renderDeckDiffCompare() {
@@ -15630,7 +15860,6 @@
       if (deckDiffRoot) deckDiffRoot.hidden = false;
       setDeckDiffBarOpen(false);
       applyDeckEditorMode();
-      syncDeckDiffButton();
       ensureDeckCardLevels(
         (deckDraft.cards || []).concat(deckDiffState.incoming.cards || []),
         function () {
@@ -16995,7 +17224,6 @@
       syncDeckRarityToggleUi();
       syncDeckFilterBtnUi();
       syncDeckEditorOverflow();
-      syncDeckDiffButton();
     }
 
     function updateDeckEditorSummary() {
@@ -17156,7 +17384,6 @@
       closeEditorFaceLightbox(true);
       if (deckDiffState.active) {
         updateDeckEditorSummary();
-        syncDeckDiffButton();
         renderDeckDiffCompare();
         return;
       }
@@ -18317,11 +18544,11 @@
     if (decklogConfirmBtn) {
       bindEl(decklogConfirmBtn, 'click', importFromDecklog);
     }
-    if (deckDiffBtn) {
-      bindEl(deckDiffBtn, 'click', function () {
-        if (!deckDraft || deckEditorMode !== 'edit') return;
-        openDecklogModal('diff');
-      });
+    if (deckEditChoiceEditBtn) {
+      bindEl(deckEditChoiceEditBtn, 'click', startDeckEditFromChooser);
+    }
+    if (deckEditChoiceDiffBtn) {
+      bindEl(deckEditChoiceDiffBtn, 'click', startDeckDiffFromChooser);
     }
     if (deckDiffBarFab) {
       bindEl(deckDiffBarFab, 'click', function () {
@@ -18476,7 +18703,7 @@
       }
       var editBtn = e.target.closest('[data-deck-edit]');
       if (editBtn) {
-        openDeckEditor(editBtn.getAttribute('data-deck-edit'), 'edit');
+        openDeckEditChooser(editBtn.getAttribute('data-deck-edit'));
         return;
       }
       var rarityBtn = e.target.closest('[data-deck-rarity-toggle]');
@@ -18971,6 +19198,10 @@
       }
       if (decklogModal && decklogModal.classList.contains('is-open')) {
         closeModalByName('decklog');
+        return;
+      }
+      if (deckEditChoiceModal && deckEditChoiceModal.classList.contains('is-open')) {
+        closeModalByName('deckEditChoice');
         return;
       }
       if (deckModal && deckModal.classList.contains('is-open')) {
