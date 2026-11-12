@@ -4715,7 +4715,31 @@ var CardFavorites = (function() {
         return true;
     }
 
-    function updateButtonDom(favorited) {
+    function updateFavoriteCount(count, bump) {
+        var countEl = document.getElementById('cardFavoriteCount');
+        if (!countEl) return;
+        countEl.textContent = String(Math.max(0, count | 0));
+        if (!bump) return;
+        countEl.classList.remove('is-bump');
+        // 重播數字彈跳：先移除 class 再強制 reflow
+        void countEl.offsetWidth;
+        countEl.classList.add('is-bump');
+    }
+
+    /** Like Burst：重播前先移除 .on 並觸發 reflow */
+    function playLikeBurst(btn) {
+        if (!btn) return;
+        btn.classList.remove('on');
+        void btn.offsetWidth;
+        btn.classList.add('on');
+    }
+
+    /**
+     * @param {boolean} favorited
+     * @param {{burst?: boolean, bumpCount?: boolean}=} opts
+     */
+    function updateButtonDom(favorited, opts) {
+        opts = opts || {};
         var btn = document.getElementById('cardFavoriteBtn');
         if (!btn) return;
         btn.classList.toggle('is-favorited', !!favorited);
@@ -4726,18 +4750,25 @@ var CardFavorites = (function() {
         if (icon) {
             icon.className = favorited ? 'fas fa-star' : 'far fa-star';
         }
+        if (opts.burst && favorited) {
+            playLikeBurst(btn);
+        } else if (!favorited) {
+            btn.classList.remove('on');
+        }
+        updateFavoriteCount(getFavorites().length, !!opts.bumpCount);
     }
 
     function hideButton() {
         var btn = document.getElementById('cardFavoriteBtn');
         if (!btn) return;
         btn.hidden = true;
-        btn.classList.remove('is-favorited');
+        btn.classList.remove('is-favorited', 'on');
         btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('aria-label', '加入願望清單');
         btn.title = '加入願望清單';
         var icon = btn.querySelector('i');
         if (icon) icon.className = 'far fa-star';
+        updateFavoriteCount(getFavorites().length, false);
     }
 
     function syncButton() {
@@ -4889,7 +4920,10 @@ var CardFavorites = (function() {
         }
 
         saveFavorites(list);
-        updateButtonDom(nowFavorited);
+        updateButtonDom(nowFavorited, {
+            burst: nowFavorited,
+            bumpCount: true
+        });
 
         var cloudPromise = nowFavorited
             ? syncAddToCloud(meta)

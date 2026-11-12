@@ -1262,6 +1262,7 @@ position: relative; /* 添加相對定位 */
     display: inline-block;
     max-width: 100%;
     line-height: 0;
+    overflow: visible;
 }
 
 .card-image-wrap .modern-card-image {
@@ -1275,12 +1276,13 @@ position: relative; /* 添加相對定位 */
     top: -6px;
     right: -6px;
     z-index: 2;
-    width: 44px;
+    width: auto;
+    min-width: 44px;
     height: 44px;
     margin: 0;
-    padding: 0;
+    padding: 0 0.7rem 0 0.65rem;
     border: none;
-    border-radius: 50%;
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     color: #a0aec0;
@@ -1288,6 +1290,8 @@ position: relative; /* 添加相對定位 */
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.35rem;
+    overflow: visible;
     transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -1309,13 +1313,152 @@ position: relative; /* 添加相對定位 */
     transform: scale(0.96);
 }
 
-.card-favorite-btn.is-favorited {
+.card-favorite-btn.is-favorited,
+.card-favorite-btn.on {
     color: #d69e2e;
 }
 
+.card-favorite-btn .like-burst-anchor {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
 .card-favorite-btn i {
+    position: relative;
+    z-index: 3;
     font-size: 1.15rem;
     line-height: 1;
+    transform-origin: center;
+}
+
+.card-favorite-btn .like-burst-count {
+    position: relative;
+    z-index: 3;
+    min-width: 0.9em;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    transform-origin: center;
+}
+
+.card-favorite-btn .like-burst {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.card-favorite-btn .like-burst-ring,
+.card-favorite-btn .like-burst-spark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.card-favorite-btn .like-burst-ring {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem 0 0 -0.75rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.card-favorite-btn .like-burst-spark {
+    width: 0.85rem;
+    height: 0.85rem;
+    margin: -0.425rem 0 0 -0.425rem;
+    color: currentColor;
+    font-size: 0.68rem;
+    line-height: 0.85rem;
+    text-align: center;
+}
+
+.card-favorite-btn .like-burst-spark::before {
+    content: '★';
+}
+
+/* Like Burst：加入時切換 .on（重播前先移除並 reflow） */
+.card-favorite-btn.on i {
+    animation: like-star-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.card-favorite-btn.on .like-burst-ring {
+    animation: like-ring-burst 0.5s ease-out both;
+}
+
+.card-favorite-btn.on .like-burst-spark {
+    animation: like-spark-fly 0.5s ease-out both;
+}
+
+.card-favorite-btn.on .like-burst-count,
+.card-favorite-btn .like-burst-count.is-bump {
+    animation: like-count-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes like-star-pop {
+    0% { transform: scale(0.35); }
+    55% { transform: scale(1.28); }
+    75% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
+
+@keyframes like-ring-burst {
+    0% {
+        opacity: 0.85;
+        transform: scale(0.4);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2.8);
+    }
+}
+
+@keyframes like-spark-fly {
+    0% {
+        opacity: 1;
+        transform: rotate(var(--r, 0deg)) translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: rotate(var(--r, 0deg)) translateY(-2.35rem) scale(0.28);
+    }
+}
+
+@keyframes like-count-pop {
+    0% { transform: scale(0.7); opacity: 0.55; }
+    55% { transform: scale(1.22); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-favorite-btn.on i,
+    .card-favorite-btn.on .like-burst-ring,
+    .card-favorite-btn.on .like-burst-spark,
+    .card-favorite-btn.on .like-burst-count,
+    .card-favorite-btn .like-burst-count.is-bump {
+        animation: none;
+    }
+
+    .card-favorite-btn .like-burst-ring,
+    .card-favorite-btn .like-burst-spark {
+        display: none;
+    }
 }
 
 [data-theme="dark"] .card-favorite-btn {
@@ -1325,7 +1468,8 @@ position: relative; /* 添加相對定位 */
 }
 
 [data-theme="dark"] .card-favorite-btn:hover,
-[data-theme="dark"] .card-favorite-btn.is-favorited {
+[data-theme="dark"] .card-favorite-btn.is-favorited,
+[data-theme="dark"] .card-favorite-btn.on {
     color: #ecc94b;
 }
 
