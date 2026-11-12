@@ -7355,6 +7355,10 @@
       pointer-events: auto;
       cursor: zoom-out;
     }
+    /* 編輯視窗 z-index 2000，光箱要浮在兩張卡片之上 */
+    .col-lb-backdrop.is-over-deck-modal {
+      z-index: 2300;
+    }
     .col-deck-entry-art.is-lb-flying {
       will-change: transform;
       pointer-events: none;
@@ -7390,13 +7394,19 @@
       max-height: min(72vh, 22rem);
     }
     .col-deck-entry-art.is-lightbox::before { display: none; }
+    .col-deck-entry-art.is-lightbox.is-editor-lb {
+      z-index: 2310;
+    }
     .col-deck-entry-art.is-lightbox .col-deck-qty-badge,
     .col-deck-entry-art.is-lightbox .col-deck-owned-badge,
     .col-deck-entry-art.is-lightbox .col-deck-short-badge,
     .col-deck-entry-art.is-lightbox .col-deck-cover-mark,
     .col-deck-entry-art.is-lightbox .col-deck-remove-btn,
     .col-deck-entry-art.is-lightbox .col-deck-cover-btn,
-    .col-deck-entry-art.is-lightbox .col-tile-placeholder {
+    .col-deck-entry-art.is-lightbox .col-tile-placeholder,
+    .col-deck-entry-art.is-lightbox .col-series-rare,
+    .col-deck-entry-art.is-lightbox .col-series-color,
+    .col-deck-entry-art.is-lightbox .col-series-qty {
       opacity: 0 !important;
       pointer-events: none !important;
     }
@@ -9967,6 +9977,8 @@
     var lightboxSpacer = null;
     var lightboxBusy = false;
     var lightboxBackdrop = null;
+    /** 編輯視窗內的卡面被搬到 body，關閉時放回原位 */
+    var lightboxHome = null;
     /** 清單卡：光箱開完後要接著展開的 entry（可取消） */
     var pendingDeckExpandEntry = null;
     var pendingDeckExpandTimer = null;
@@ -10049,6 +10061,41 @@
       return !!(window.gsap && window.Flip);
     }
 
+    function liftEditorLightboxArt(art) {
+      if (!art || !art.parentNode) return;
+      lightboxHome = { parent: art.parentNode, next: art.nextSibling };
+      art.classList.add('is-editor-lb');
+      document.body.appendChild(art);
+    }
+
+    function restoreEditorLightboxHome(art) {
+      if (!art) return;
+      var home = lightboxHome;
+      lightboxHome = null;
+      art.classList.remove('is-editor-lb');
+      if (!home || !home.parent) return;
+      if (!home.parent.isConnected) {
+        if (art.parentNode) art.parentNode.removeChild(art);
+        return;
+      }
+      home.parent.insertBefore(art, home.next || null);
+    }
+
+    function closeEditorFaceLightbox(force) {
+      if (!lightboxArt || !lightboxArt.classList.contains('is-editor-lb')) return;
+      closeCardLightbox(!!force);
+    }
+
+    function openEditorFaceLightbox(art) {
+      if (!art) return;
+      var img = art.querySelector('img');
+      if (img && img.classList.contains('is-broken')) return;
+      if (deckCardExpandEntry) {
+        try { collapseDeckCardExpand(true); } catch (eCollapse) { /* ignore */ }
+      }
+      openCardLightbox(art);
+    }
+
     function closeCardLightbox(force) {
       if (!lightboxArt) return;
       if (lightboxBusy && !force) return;
@@ -10056,10 +10103,11 @@
       var spacer = lightboxSpacer;
       var bd = ensureLightboxBackdrop();
       lightboxBusy = true;
-      bd.classList.remove('is-on');
+      bd.classList.remove('is-on', 'is-over-deck-modal');
 
       function restoreDom() {
         art.classList.remove('is-lightbox');
+        restoreEditorLightboxHome(art);
         if (spacer && spacer.parentNode) spacer.parentNode.removeChild(spacer);
         lightboxArt = null;
         lightboxSpacer = null;
@@ -10109,15 +10157,20 @@
         if (typeof onOpened === 'function') onOpened();
       }
 
+      var lift = !!(art.closest && art.closest('#colDeckModal'));
       if (prefersReducedMotion() || !gsapFlipReady()) {
+        if (lift) liftEditorLightboxArt(art);
         art.classList.add('is-lightbox');
         bd.classList.add('is-on');
+        if (lift) bd.classList.add('is-over-deck-modal');
         finishOpen();
         return;
       }
       var state = Flip.getState(art);
+      if (lift) liftEditorLightboxArt(art);
       art.classList.add('is-lightbox');
       bd.classList.add('is-on');
+      if (lift) bd.classList.add('is-over-deck-modal');
       Flip.from(state, {
         duration: 0.28,
         ease: 'power2.inOut',
@@ -16062,6 +16115,7 @@
       var more = document.getElementById('colDeckSeriesPickMore');
       if (!grid) return;
       if (reset) {
+        closeEditorFaceLightbox(true);
         deckSeriesVisibleCards = filteredSeriesCards();
         deckSeriesRenderCount = 0;
         grid.innerHTML = '';
@@ -16590,6 +16644,7 @@
       deckSeriesPickOpen = want;
       syncSeriesPickButton();
       if (!want) {
+        closeEditorFaceLightbox(true);
         if (animate) playSeriesPickCloseAnim();
         else {
           applySeriesPickLayout(false);
@@ -16786,6 +16841,7 @@
 
     function renderDeckEditor() {
       if (!deckDraft) return;
+      closeEditorFaceLightbox(true);
       if (deckDiffState.active) {
         updateDeckEditorSummary();
         syncDeckDiffButton();
@@ -16941,6 +16997,9 @@
       applyDeckEditorMode();
       renderDeckEditor();
       openModal(deckModal);
+      if (deckEditorMode === 'edit' && isDeckDesktopLayout()) {
+        setDeckSeriesPickOpen(true, { animate: true });
+      }
       prefetchDeckRaritySetMaps();
       if (deckEditorMode === 'edit') {
         startDeckEditorAutosave();
@@ -18445,6 +18504,13 @@
     var deckSeriesPickScroll = document.getElementById('colDeckSeriesPickScroll');
     if (deckSeriesPickScroll) {
       bindEl(deckSeriesPickScroll, 'click', function (e) {
+        var face = e.target.closest('.col-series-card .col-deck-entry-art');
+        if (face && !face.classList.contains('is-lightbox')) {
+          e.preventDefault();
+          e.stopPropagation();
+          openEditorFaceLightbox(face);
+          return;
+        }
         var prefixBtn = e.target.closest('[data-series-prefix]');
         if (prefixBtn) {
           beginSeriesCatalog(
@@ -18486,6 +18552,14 @@
           return;
         }
         var expandHit = e.target.closest('.col-deck-entry');
+        var editorFace = e.target.closest('.col-deck-entry-art');
+        if (editorFace && expandHit && editorFace.closest('.col-deck-entry') === expandHit &&
+          !editorFace.classList.contains('is-lightbox') &&
+          !e.target.closest('.col-deck-remove-btn, button')) {
+          e.preventDefault();
+          openEditorFaceLightbox(editorFace);
+          return;
+        }
         if (expandHit &&
           !e.target.closest('.col-deck-remove-btn, .col-qty-btn, button, input, label, a, .col-deck-entry-controls, .col-deck-entry-expand')) {
           e.preventDefault();
