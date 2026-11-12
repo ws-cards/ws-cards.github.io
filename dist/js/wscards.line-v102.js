@@ -4715,17 +4715,6 @@ var CardFavorites = (function() {
         return true;
     }
 
-    function updateFavoriteCount(count, bump) {
-        var countEl = document.getElementById('cardFavoriteCount');
-        if (!countEl) return;
-        countEl.textContent = String(Math.max(0, count | 0));
-        if (!bump) return;
-        countEl.classList.remove('is-bump');
-        // 重播數字彈跳：先移除 class 再強制 reflow
-        void countEl.offsetWidth;
-        countEl.classList.add('is-bump');
-    }
-
     /** Like Burst：重播前先移除 .on 並觸發 reflow */
     function playLikeBurst(btn) {
         if (!btn) return;
@@ -4736,7 +4725,7 @@ var CardFavorites = (function() {
 
     /**
      * @param {boolean} favorited
-     * @param {{burst?: boolean, bumpCount?: boolean}=} opts
+     * @param {{burst?: boolean}=} opts
      */
     function updateButtonDom(favorited, opts) {
         opts = opts || {};
@@ -4755,7 +4744,6 @@ var CardFavorites = (function() {
         } else if (!favorited) {
             btn.classList.remove('on');
         }
-        updateFavoriteCount(getFavorites().length, !!opts.bumpCount);
     }
 
     function hideButton() {
@@ -4768,7 +4756,6 @@ var CardFavorites = (function() {
         btn.title = '加入願望清單';
         var icon = btn.querySelector('i');
         if (icon) icon.className = 'far fa-star';
-        updateFavoriteCount(getFavorites().length, false);
     }
 
     function syncButton() {
@@ -4920,10 +4907,7 @@ var CardFavorites = (function() {
         }
 
         saveFavorites(list);
-        updateButtonDom(nowFavorited, {
-            burst: nowFavorited,
-            bumpCount: true
-        });
+        updateButtonDom(nowFavorited, { burst: nowFavorited });
 
         var cloudPromise = nowFavorited
             ? syncAddToCloud(meta)
