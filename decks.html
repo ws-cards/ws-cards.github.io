@@ -5342,6 +5342,57 @@
       display: flex;
       flex-direction: column;
       gap: 0.22rem;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .col-series-face {
+      position: relative;
+      border-radius: 8px;
+    }
+    .col-series-face::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      border-radius: inherit;
+      background: linear-gradient(
+        115deg,
+        transparent 32%,
+        rgba(255, 244, 214, 0.55) 48%,
+        transparent 64%
+      );
+      transform: translateX(-130%);
+      pointer-events: none;
+    }
+    .col-series-face-btn {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: zoom-in;
+    }
+    .col-series-face-btn:focus-visible {
+      outline: 2px solid var(--desk-foil, #8a6f3a);
+      outline-offset: 2px;
+      border-radius: 8px;
+    }
+    .col-series-face .col-deck-entry-art img {
+      transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .col-series-card:hover {
+      transform: translateY(-7px);
+    }
+    .col-series-card:hover .col-series-face::after {
+      animation: colSeriesSheen 0.72s ease;
+    }
+    .col-series-card:hover .col-deck-entry-art img.is-loaded {
+      transform: scale(1.045);
+    }
+    @keyframes colSeriesSheen {
+      from { transform: translateX(-130%); }
+      to { transform: translateX(130%); }
     }
     .col-series-add {
       display: flex;
@@ -5363,9 +5414,15 @@
     }
     .col-series-card .col-deck-entry-art {
       box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+      transition: box-shadow 0.32s ease;
     }
     .col-series-card.is-in-deck .col-deck-entry-art {
       box-shadow: inset 0 0 0 2px var(--desk-foil, #8a6f3a);
+    }
+    .col-series-card:hover .col-deck-entry-art {
+      box-shadow:
+        0 16px 28px rgba(28, 26, 23, 0.22),
+        inset 0 0 0 1px rgba(138, 111, 58, 0.7);
     }
     .col-series-card.is-bump .col-deck-entry-art {
       transform: translateY(-2px);
@@ -5402,25 +5459,37 @@
       line-height: 1.2;
       text-align: center;
     }
-    .col-series-dec {
+    .col-series-step {
       position: absolute;
-      top: 0.28rem;
-      left: 0.28rem;
-      z-index: 3;
-      width: 1.35rem;
-      height: 1.35rem;
+      bottom: 0.42rem;
+      z-index: 4;
+      width: 1.7rem;
+      height: 1.7rem;
       margin: 0;
       padding: 0;
       border: 0;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.82);
       color: #fff;
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 700;
       line-height: 1;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.28);
     }
+    .col-series-dec { left: 0.42rem; }
+    .col-series-inc { right: 0.42rem; background: var(--desk-foil-deep, #5c4a28); }
     .col-series-dec:hover { background: #9b2c2c; }
+    .col-series-inc:hover { background: #3f3420; }
+    .col-series-step:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .col-series-step:disabled {
+      opacity: 0.4;
+      cursor: default;
+      background: rgba(15, 23, 42, 0.55);
+    }
     .col-series-no,
     .col-series-name {
       display: block;
@@ -5469,15 +5538,16 @@
     #colDeckModal.is-series-pick .col-series-qty {
       display: none;
     }
-    #colDeckModal.is-series-pick .col-series-dec {
-      opacity: 0;
-    }
-    #colDeckModal.is-series-pick .col-series-card:hover .col-series-dec,
-    #colDeckModal.is-series-pick .col-series-card:focus-within .col-series-dec {
-      opacity: 1;
-    }
-    #colDeckModal.is-series-pick .col-series-dec[hidden] {
-      display: none;
+    @media (prefers-reduced-motion: reduce) {
+      .col-series-card,
+      .col-series-face .col-deck-entry-art img,
+      .col-series-card .col-deck-entry-art {
+        transition: none;
+      }
+      .col-series-card:hover { transform: none; }
+      .col-series-card:hover .col-series-face::after,
+      .col-series-face::after { animation: none; display: none; }
+      .col-series-card:hover .col-deck-entry-art img.is-loaded { transform: none; }
     }
     .col-deck-side-top {
       display: flex;
@@ -16020,7 +16090,7 @@
         var price = el.querySelector('[data-series-price]');
         if (price) price.textContent = seriesPickPriceText(id);
         var dec = el.querySelector('[data-series-dec]');
-        if (dec) dec.hidden = qty < 1;
+        if (dec) dec.disabled = qty < 1;
       });
     }
 
@@ -16137,9 +16207,10 @@
       var colorKey = normalizeColorKey(card.color);
       var hex = colorKey && DECK_DETAIL_COLOR_HEX[colorKey];
       var inDeck = qty > 0;
+      var label = escapeHtml(card.id + (card.name ? (' ' + card.name) : ''));
       var html = '<div class="col-series-card' + (inDeck ? ' is-in-deck' : '') + '" data-series-pick="' + escapeHtml(card.id) + '">';
-      html += '<button type="button" class="col-series-add" data-series-add="' + escapeHtml(card.id) + '" aria-label="加入 ' +
-        escapeHtml(card.id + (card.name ? (' ' + card.name) : '')) + '">';
+      html += '<div class="col-series-face">';
+      html += '<button type="button" class="col-series-face-btn" data-series-face="' + escapeHtml(card.id) + '" aria-label="查看 ' + label + '">';
       html += '<span class="col-deck-entry-art">';
       html += '<span class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i></span>';
       if (urls.primary) {
@@ -16148,13 +16219,17 @@
       if (hex) html += '<span class="col-series-color" style="background:' + hex + '"></span>';
       if (card.rarity) html += '<span class="col-series-rare">' + escapeHtml(card.rarity) + '</span>';
       html += '<span class="col-series-qty" data-series-qty' + (inDeck ? '' : ' hidden') + '>×' + qty + '</span>';
-      html += '</span>';
+      html += '</span></button>';
+      html += '<button type="button" class="col-series-step col-series-dec" data-series-dec="' + escapeHtml(card.id) + '"' +
+        (inDeck ? '' : ' disabled') + ' aria-label="減少 ' + escapeHtml(card.id) + '">−</button>';
+      html += '<button type="button" class="col-series-step col-series-inc" data-series-inc="' + escapeHtml(card.id) +
+        '" aria-label="加入 ' + label + '">+</button>';
+      html += '</div>';
+      html += '<button type="button" class="col-series-add" data-series-add="' + escapeHtml(card.id) + '" aria-label="加入 ' + label + '">';
       html += '<span class="col-series-meta"><span class="col-series-no">' + escapeHtml(card.id) + '</span>';
       html += '<span class="col-series-price" data-series-price>' + escapeHtml(seriesPickPriceText(card.id)) + '</span></span>';
       html += '<span class="col-series-name">' + escapeHtml(card.name || '') + '</span>';
       html += '</button>';
-      html += '<button type="button" class="col-series-dec" data-series-dec="' + escapeHtml(card.id) + '"' +
-        (inDeck ? '' : ' hidden') + ' aria-label="減少 ' + escapeHtml(card.id) + '">−</button>';
       html += '</div>';
       return html;
     }
@@ -18636,6 +18711,18 @@
     var deckSeriesPickScroll = document.getElementById('colDeckSeriesPickScroll');
     if (deckSeriesPickScroll) {
       bindEl(deckSeriesPickScroll, 'click', function (e) {
+        var decBtn = e.target.closest('[data-series-dec]');
+        if (decBtn) {
+          e.preventDefault();
+          if (!decBtn.disabled) decSeriesPickCard(decBtn.getAttribute('data-series-dec'));
+          return;
+        }
+        var incBtn = e.target.closest('[data-series-inc]');
+        if (incBtn) {
+          e.preventDefault();
+          addSeriesPickCard(incBtn.getAttribute('data-series-inc'));
+          return;
+        }
         var face = e.target.closest('.col-series-card .col-deck-entry-art');
         if (face && !face.classList.contains('is-lightbox') && !face.classList.contains('col-lb-series-ph')) {
           e.preventDefault();
@@ -18649,12 +18736,6 @@
             prefixBtn.getAttribute('data-series-prefix'),
             prefixBtn.getAttribute('data-series-product') || ''
           );
-          return;
-        }
-        var decBtn = e.target.closest('[data-series-dec]');
-        if (decBtn) {
-          e.preventDefault();
-          decSeriesPickCard(decBtn.getAttribute('data-series-dec'));
           return;
         }
         var addBtn = e.target.closest('[data-series-add]');
