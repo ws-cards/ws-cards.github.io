@@ -871,6 +871,24 @@
                max(0.75rem, env(safe-area-inset-left, 0px));
     }
     .col-modal.is-open { display: flex; }
+    .col-modal {
+      overscroll-behavior: none;
+    }
+    .col-modal-body {
+      overscroll-behavior: contain;
+    }
+    /* 覆蓋層開啟時鎖住底層頁面捲動（避免上下滑带动背後列表／詳情） */
+    html.is-overlay-scroll-lock,
+    html.is-overlay-scroll-lock body {
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+    body.is-overlay-scroll-lock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
     .col-modal-backdrop {
       position: absolute;
       inset: 0;
@@ -5842,6 +5860,11 @@
       max-height: 100svh;
       overflow: hidden;
       overscroll-behavior: none;
+      touch-action: none;
+    }
+    #colDeckEditChoiceModal .col-deck-edit-choice,
+    #colDeckEditChoiceModal .col-deck-edit-choice-btn {
+      touch-action: manipulation;
     }
     #colDeckEditChoiceModal .col-modal-backdrop {
       background: rgba(12, 12, 10, 0.72);
@@ -7703,6 +7726,8 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
+      overscroll-behavior: none;
+      touch-action: none;
     }
     .col-lb-backdrop.is-tweening {
       transition: none;
@@ -10421,6 +10446,7 @@
     function hideLightboxBackdrop() {
       var bd = lightboxBackdrop || document.querySelector('.col-lb-backdrop');
       if (bd) bd.classList.remove('is-on', 'is-over-deck-modal');
+      syncOverlayScrollLock();
     }
 
     function ensureLightboxBackdrop() {
@@ -10437,6 +10463,12 @@
         closeCardLightbox();
       });
       document.body.appendChild(lightboxBackdrop);
+      try {
+        var mo = new MutationObserver(function () {
+          syncOverlayScrollLock();
+        });
+        mo.observe(lightboxBackdrop, { attributes: true, attributeFilter: ['class'] });
+      } catch (eMo) { /* ignore */ }
       return lightboxBackdrop;
     }
 
@@ -10500,10 +10532,12 @@
         if (window.gsap) gsap.killTweensOf(art);
         restoreDom();
         lightboxBusy = false;
+        syncOverlayScrollLock();
         return;
       }
       var state = Flip.getState(art);
       restoreDom();
+      syncOverlayScrollLock();
       Flip.from(state, {
         duration: 0.26,
         ease: 'power2.inOut',
@@ -10537,6 +10571,7 @@
 
       function finishOpen() {
         lightboxBusy = false;
+        syncOverlayScrollLock();
         if (typeof onOpened === 'function') onOpened();
       }
 
@@ -10554,6 +10589,7 @@
       art.classList.add('is-lightbox');
       bd.classList.add('is-on');
       if (lift) bd.classList.add('is-over-deck-modal');
+      syncOverlayScrollLock();
       Flip.from(state, {
         duration: 0.28,
         ease: 'power2.inOut',
@@ -11970,11 +12006,84 @@
       }, true);
     }
 
+    var overlayScrollLocked = false;
+    var overlayScrollY = 0;
+    var overlayScrollTouchBound = false;
+
+    function isInsideScrollableOverlay(target) {
+      var el = target;
+      while (el && el !== document.body && el !== document.documentElement) {
+        if (el.nodeType === 1) {
+          var style = window.getComputedStyle(el);
+          var oy = style.overflowY;
+          var ox = style.overflowX;
+          var canY = (oy === 'auto' || oy === 'scroll' || oy === 'overlay') &&
+            el.scrollHeight > el.clientHeight + 1;
+          var canX = (ox === 'auto' || ox === 'scroll' || ox === 'overlay') &&
+            el.scrollWidth > el.clientWidth + 1;
+          if (canY || canX) return true;
+        }
+        el = el.parentElement;
+      }
+      return false;
+    }
+
+    function onOverlayTouchMove(e) {
+      if (!overlayScrollLocked) return;
+      if (e.touches && e.touches.length > 1) return;
+      if (isInsideScrollableOverlay(e.target)) return;
+      e.preventDefault();
+    }
+
+    function bindOverlayScrollTouchLock() {
+      if (overlayScrollTouchBound) return;
+      overlayScrollTouchBound = true;
+      document.addEventListener('touchmove', onOverlayTouchMove, { passive: false, capture: true });
+    }
+
+    function setOverlayScrollLock(locked) {
+      locked = !!locked;
+      if (locked === overlayScrollLocked) return;
+      if (locked) {
+        overlayScrollY = window.scrollY || window.pageYOffset ||
+          document.documentElement.scrollTop || 0;
+        var sb = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+        document.documentElement.classList.add('is-overlay-scroll-lock');
+        document.body.classList.add('is-overlay-scroll-lock');
+        document.body.style.top = '-' + overlayScrollY + 'px';
+        if (sb) document.body.style.paddingRight = sb + 'px';
+        bindOverlayScrollTouchLock();
+      } else {
+        document.documentElement.classList.remove('is-overlay-scroll-lock');
+        document.body.classList.remove('is-overlay-scroll-lock');
+        document.body.style.top = '';
+        document.body.style.paddingRight = '';
+        window.scrollTo(0, overlayScrollY || 0);
+      }
+      overlayScrollLocked = locked;
+    }
+
+    function syncOverlayScrollLock() {
+      var locked = false;
+      var modals = document.querySelectorAll('.col-modal.is-open');
+      for (var i = 0; i < modals.length; i++) {
+        if (!modals[i].hidden) {
+          locked = true;
+          break;
+        }
+      }
+      if (!locked && lightboxArt) locked = true;
+      var bd = lightboxBackdrop || document.querySelector('.col-lb-backdrop');
+      if (!locked && bd && bd.classList.contains('is-on')) locked = true;
+      setOverlayScrollLock(locked);
+    }
+
     function openModal(modal) {
       if (!modal) return;
       modal.hidden = false;
       modal.setAttribute('aria-hidden', 'false');
       modal.classList.add('is-open');
+      syncOverlayScrollLock();
     }
 
     function closeModal(modal) {
@@ -11982,6 +12091,7 @@
       modal.classList.remove('is-open');
       modal.hidden = true;
       modal.setAttribute('aria-hidden', 'true');
+      syncOverlayScrollLock();
     }
 
     function closeModalByName(name) {
