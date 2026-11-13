@@ -6593,6 +6593,68 @@
       border-left-color: #fbbf24;
     }
     .col-deck-create-preview-flags[hidden] { display: none !important; }
+    .col-deck-create-preview-faces {
+      list-style: none;
+      margin: 0.55rem 0 0.35rem;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
+      gap: 0.45rem;
+    }
+    .col-deck-create-preview-face {
+      position: relative;
+      margin: 0;
+      aspect-ratio: 63 / 88;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.18));
+      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, transparent);
+      overflow: hidden;
+    }
+    [data-theme="dark"] .col-deck-create-preview-face {
+      border-color: rgba(240, 238, 230, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .col-deck-create-preview-face img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .col-deck-create-preview-face img.is-loaded { opacity: 1; }
+    .col-deck-create-preview-face img.is-broken { display: none; }
+    .col-deck-create-preview-face .col-tile-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary, #718096);
+      font-size: 0.85rem;
+    }
+    .col-deck-create-preview-face.has-image .col-tile-placeholder { display: none; }
+    .col-deck-create-preview-qty {
+      position: absolute;
+      right: 0.22rem;
+      bottom: 0.22rem;
+      z-index: 2;
+      min-width: 1.55rem;
+      padding: 0.1rem 0.3rem;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(18, 18, 16, 0.78);
+      color: #fff;
+      font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.15;
+      text-align: center;
+      pointer-events: none;
+    }
+    [data-theme="dark"] .col-deck-create-preview-qty {
+      background: rgba(8, 8, 8, 0.82);
+      border-color: rgba(240, 238, 230, 0.22);
+    }
     .col-deck-create-core-grid,
     .col-deck-create-rec-grid {
       display: grid;
@@ -19464,7 +19526,9 @@
 
     function onAlbumImageLoad(img) {
       img.classList.add('is-loaded');
-      var art = img.closest('.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb');
+      var art = img.closest(
+        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face'
+      );
       if (art) art.classList.add('has-image');
       applyLandscapeFromImage(img);
     }
@@ -19472,7 +19536,9 @@
     /** 快取命中時 load 可能已結束，補套 is-loaded */
     function revealLoadedDeckImages(root) {
       if (!root) return;
-      root.querySelectorAll('.col-deck-entry-art img, .col-deck-cover-art img, .col-deck-diff-thumb img').forEach(function (img) {
+      root.querySelectorAll(
+        '.col-deck-entry-art img, .col-deck-cover-art img, .col-deck-diff-thumb img, .col-deck-create-preview-face img'
+      ).forEach(function (img) {
         if (img.classList.contains('is-loaded') || img.classList.contains('is-broken')) return;
         if (img.complete && img.naturalWidth > 0) onAlbumImageLoad(img);
         else if (img.complete) onAlbumImageError(img);
@@ -19488,7 +19554,9 @@
       }
       img.classList.add('is-broken');
       img.removeAttribute('src');
-      var art = img.closest('.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb');
+      var art = img.closest(
+        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face'
+      );
       if (art) {
         art.classList.remove('has-image');
         var label = art.querySelector('.col-tile-placeholder span');
@@ -20164,12 +20232,24 @@
         } else {
           html += '<div class="col-deck-create-preview-flags" style="border-left-color:#15803d;background:rgba(21,128,61,0.08);">已依目前規則檢查：合法</div>';
         }
-        html += '<p class="col-modal-hint">預覽僅顯示摘要，不在此展開完整 50 張清單。</p>';
-        var sample = entries.slice(0, 8).map(function (c) {
-          return escapeHtml((c.cardName || c.cardNumber) + '×' + c.qty);
-        }).join('、');
-        if (sample) html += '<p class="col-deck-create-preview-meta">卡表摘要：' + sample + (entries.length > 8 ? '…' : '') + '</p>';
+        html += '<ul class="col-deck-create-preview-faces" aria-label="牌表卡圖">';
+        entries.forEach(function (c) {
+          if (!c || !c.cardNumber) return;
+          var urls = buildCardImageUrls(c.cardNumber);
+          var label = (c.cardName || c.cardNumber) + ' × ' + (c.qty || 1);
+          html += '<li class="col-deck-create-preview-face" title="' + escapeHtml(label) + '">';
+          html += '<span class="col-tile-placeholder" aria-hidden="true"><i class="fas fa-image"></i></span>';
+          if (urls.primary) {
+            html += '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' +
+              escapeHtml(urls.fallback) + '" alt="' + escapeHtml(c.cardNumber) +
+              '" loading="lazy" decoding="async">';
+          }
+          html += '<span class="col-deck-create-preview-qty">× ' + escapeHtml(String(c.qty || 1)) + '</span>';
+          html += '</li>';
+        });
+        html += '</ul>';
         deckCreateWizardBody.innerHTML = html;
+        revealLoadedDeckImages(deckCreateWizardBody);
       });
     }
 
@@ -20488,6 +20568,12 @@
       });
     }
     if (deckCreateWizardBody) {
+      bindEl(deckCreateWizardBody, 'load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      bindEl(deckCreateWizardBody, 'error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
       bindEl(deckCreateWizardBody, 'click', function (e) {
         var seriesBtn = e.target.closest('[data-create-series]');
         if (seriesBtn && !seriesBtn.disabled) {
