@@ -6294,6 +6294,349 @@
       }
     }
 
+    /* ——— 新增牌組：方式選擇（三張直向大卡片） ——— */
+    #colDeckCreateMethodModal.col-modal {
+      z-index: 2050;
+      padding: 0;
+      align-items: stretch;
+      justify-content: stretch;
+      width: 100%;
+      height: 100%;
+      height: -webkit-fill-available;
+      height: 100dvh;
+      height: 100svh;
+      max-height: 100%;
+      max-height: -webkit-fill-available;
+      max-height: 100dvh;
+      max-height: 100svh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+    #colDeckCreateMethodModal .col-modal-backdrop {
+      background: rgba(12, 12, 10, 0.72);
+    }
+    .col-deck-create-method {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, transparent), transparent 55%),
+        linear-gradient(180deg, #f3f1ea 0%, #ebe7dc 100%);
+      color: var(--desk-ink, #171714);
+      animation: colDeckEditChoiceIn 0.28s var(--desk-ease, ease) both;
+    }
+    [data-theme="dark"] .col-deck-create-method {
+      background:
+        radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--desk-foil, #d0b27a) 16%, transparent), transparent 55%),
+        linear-gradient(180deg, #1a1916 0%, #12110f 100%);
+      color: var(--desk-ink, #f0eee6);
+    }
+    .col-deck-create-method-head {
+      flex: 0 0 auto;
+      padding:
+        max(1.35rem, calc(env(safe-area-inset-top, 0px) + 0.85rem))
+        1.25rem
+        0.55rem;
+      text-align: center;
+    }
+    .col-deck-create-method-head h3 {
+      margin: 0;
+      font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
+      font-size: clamp(1.45rem, 5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.25;
+    }
+    .col-deck-create-method-cards {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0.35rem 0.85rem max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.85rem));
+      gap: 0.7rem;
+    }
+    .col-deck-create-method-card {
+      flex: 1 1 0;
+      min-height: 0;
+      margin: 0;
+      padding: 1rem 1.1rem;
+      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, rgba(18, 18, 16, 0.22));
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0.35rem;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent), transparent 55%),
+        color-mix(in srgb, #fff 70%, var(--desk-surface-strong, #f7f7f4));
+      box-shadow: 0 10px 28px rgba(28, 26, 23, 0.08);
+      transition: transform 0.2s var(--desk-ease, ease), border-color 0.2s ease, background-color 0.2s ease;
+    }
+    [data-theme="dark"] .col-deck-create-method-card {
+      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 28%, rgba(240, 238, 230, 0.16));
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--desk-foil, #d0b27a) 12%, transparent), transparent 55%),
+        color-mix(in srgb, #000 35%, var(--desk-surface-strong, #1c1b18));
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    }
+    .col-deck-create-method-card:hover,
+    .col-deck-create-method-card:focus-visible {
+      outline: none;
+      border-color: var(--desk-foil, #8a6f3a);
+      transform: translateY(-1px);
+    }
+    .col-deck-create-method-card.is-last {
+      border-color: var(--desk-foil-deep, #5c4a28);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent),
+        0 12px 30px rgba(28, 26, 23, 0.12);
+    }
+    .col-deck-create-method-card:disabled,
+    .col-deck-create-method-card.is-disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .col-deck-create-method-card .col-deck-create-method-title {
+      margin: 0;
+      font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
+      font-size: clamp(1.2rem, 4vw, 1.65rem);
+      font-weight: 750;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+    .col-deck-create-method-card .col-deck-create-method-sub {
+      margin: 0;
+      font-family: var(--font-serif, 'Noto Serif TC', serif);
+      font-size: clamp(0.8rem, 2.8vw, 0.92rem);
+      line-height: 1.45;
+      color: var(--text-secondary, #718096);
+    }
+    [data-theme="dark"] .col-deck-create-method-card .col-deck-create-method-sub {
+      color: rgba(240, 238, 230, 0.68);
+    }
+    .col-deck-create-method-card .col-deck-create-method-note {
+      margin: 0.15rem 0 0;
+      font-size: 0.75rem;
+      line-height: 1.35;
+      color: #b45309;
+    }
+    [data-theme="dark"] .col-deck-create-method-card .col-deck-create-method-note {
+      color: #fbbf24;
+    }
+    .col-deck-create-method-close {
+      position: absolute;
+      top: max(0.65rem, env(safe-area-inset-top, 0px));
+      right: max(0.65rem, env(safe-area-inset-right, 0px));
+      z-index: 2;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
+      border-radius: 0;
+      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, transparent);
+      color: var(--desk-ink, #171714);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    [data-theme="dark"] .col-deck-create-method-close {
+      border-color: var(--desk-line, rgba(240, 238, 230, 0.16));
+      background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 88%, transparent);
+      color: var(--desk-ink, #f0eee6);
+    }
+    @media (min-width: 992px) {
+      #colDeckCreateMethodModal.col-modal {
+        padding: max(1.25rem, env(safe-area-inset-top, 0px));
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        height: auto;
+        max-height: none;
+        touch-action: auto;
+      }
+      #colDeckCreateMethodModal .col-modal-backdrop {
+        background: rgba(12, 12, 10, 0.55);
+      }
+      .col-deck-create-method {
+        width: min(420px, 100%);
+        height: min(78vh, 640px);
+        border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
+        border-radius: 12px;
+        box-shadow: 0 18px 48px rgba(28, 26, 23, 0.18);
+      }
+      .col-deck-create-method-close { display: none; }
+    }
+
+    /* 新增牌組精靈（比賽牌表／喜歡的牌） */
+    #colDeckCreateWizardModal.col-modal { z-index: 2060; }
+    .col-deck-create-wizard-dialog {
+      width: min(720px, 100%);
+      max-height: min(88dvh, 880px);
+      display: flex;
+      flex-direction: column;
+    }
+    .col-deck-create-wizard-dialog .col-modal-body {
+      overflow: auto;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .col-deck-create-wizard-list {
+      list-style: none;
+      margin: 0.75rem 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .col-deck-create-wizard-row {
+      width: 100%;
+      margin: 0;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.18));
+      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 92%, transparent);
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.25rem 0.75rem;
+      color: inherit;
+    }
+    [data-theme="dark"] .col-deck-create-wizard-row {
+      border-color: rgba(240, 238, 230, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .col-deck-create-wizard-row:hover,
+    .col-deck-create-wizard-row:focus-visible {
+      outline: none;
+      border-color: var(--desk-foil, #8a6f3a);
+    }
+    .col-deck-create-wizard-row strong {
+      grid-column: 1;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .col-deck-create-wizard-row .col-deck-create-rank {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      font-weight: 800;
+      color: var(--desk-foil-deep, #5c4a28);
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .col-deck-create-wizard-row .col-deck-create-rank {
+      color: var(--desk-foil, #d0b27a);
+    }
+    .col-deck-create-wizard-row .col-deck-create-code {
+      grid-column: 1;
+      font-size: 0.72rem;
+      opacity: 0.62;
+      font-family: var(--font-mono, ui-monospace, monospace);
+    }
+    .col-deck-create-preview-meta {
+      margin: 0.35rem 0 0.75rem;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--text-secondary, #718096);
+    }
+    .col-deck-create-preview-flags {
+      margin: 0 0 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-left: 3px solid #b45309;
+      background: rgba(180, 83, 9, 0.08);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    [data-theme="dark"] .col-deck-create-preview-flags {
+      background: rgba(251, 191, 36, 0.08);
+      border-left-color: #fbbf24;
+    }
+    .col-deck-create-preview-flags[hidden] { display: none !important; }
+    .col-deck-create-core-grid,
+    .col-deck-create-rec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+      gap: 0.55rem;
+      margin: 0.55rem 0 0.85rem;
+    }
+    .col-deck-create-pick {
+      margin: 0;
+      padding: 0.45rem;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.18));
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+      min-height: 4.5rem;
+    }
+    .col-deck-create-pick.is-on {
+      border-color: var(--desk-foil, #8a6f3a);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 12%, transparent);
+    }
+    .col-deck-create-pick strong {
+      display: block;
+      font-size: 0.78rem;
+      line-height: 1.3;
+    }
+    .col-deck-create-pick span {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.68rem;
+      opacity: 0.7;
+    }
+    .col-deck-create-rec-section {
+      margin: 0.85rem 0 0;
+    }
+    .col-deck-create-rec-section h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+    .col-deck-create-slot-tile {
+      border: 1px dashed color-mix(in srgb, var(--desk-foil, #8a6f3a) 45%, rgba(18, 18, 16, 0.25));
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 6px,
+          color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, transparent) 6px,
+          color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, transparent) 12px
+        );
+      color: var(--text-secondary, #718096);
+      min-height: 5.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .col-deck-origin-note.is-create-source {
+      font-size: 0.82rem;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+      color: var(--text-secondary, #4a5568);
+    }
+    [data-theme="dark"] .col-deck-origin-note.is-create-source {
+      color: rgba(240, 238, 230, 0.78);
+    }
+    .col-deck-legality-ref {
+      color: #b45309;
+      font-weight: 800;
+    }
+    [data-theme="dark"] .col-deck-legality-ref { color: #fbbf24; }
+
     /* ——— 牌組差異比較 ——— */
     .col-deck-editor-top-actions {
       display: flex;
@@ -8183,6 +8526,7 @@
   <script src="assets/js/firebase-config.js"></script>
   <script src="assets/js/ws-firebase.js"></script>
   <script src="assets/js/ws-decklog.js?v=20261106m"></script>
+  <script src="assets/js/ws-deck-create.js?v=20261113a"></script>
   <script src="assets/js/ws-trigger-map.js?v=20261027c"></script>
   <!-- html2canvas 延遲載入：僅輸出牌組圖時才拉，避免首屏佔用 JS heap -->
   <script src="assets/js/ws-deck-image-export.js?v=20261103c"></script>
@@ -8305,7 +8649,7 @@
                               </div>
                               <div class="col-deck-cta-row">
                                 <button type="button" class="col-cta-primary" id="colDeckCreateBtn">
-                                  <i class="fas fa-plus" aria-hidden="true"></i>新建牌組
+                                  <i class="fas fa-plus" aria-hidden="true"></i>新增牌組
                                 </button>
                                 <button type="button" class="col-cta-secondary" id="colDecklogImportBtn">
                                   <i class="fas fa-cloud-download-alt" aria-hidden="true"></i>匯入 DeckLog
@@ -8325,11 +8669,11 @@
                         <div id="colDeckEmpty" class="col-empty col-deck-empty" style="display:none;" data-empty-mode="">
                           <div class="col-deck-empty-icon" aria-hidden="true"><i class="fas fa-archive"></i></div>
                           <h3 class="col-deck-empty-title" id="colDeckEmptyTitle">尚未建立牌組</h3>
-                          <p class="col-deck-empty-text" id="colDeckEmptyText">建立空白牌組，或從 DeckLog 匯入編成。</p>
+                          <p class="col-deck-empty-text" id="colDeckEmptyText">新增牌組，或從 DeckLog 匯入編成。</p>
                           <p class="col-deck-empty-hint" id="colDeckEmptyHint" hidden></p>
                           <div class="col-deck-cta-row col-deck-empty-actions" id="colDeckEmptyActions">
                             <button type="button" class="col-cta-primary" id="colDeckEmptyPrimaryBtn">
-                              <i class="fas fa-plus" aria-hidden="true"></i><span id="colDeckEmptyPrimaryLabel">新建牌組</span>
+                              <i class="fas fa-plus" aria-hidden="true"></i><span id="colDeckEmptyPrimaryLabel">新增牌組</span>
                             </button>
                             <button type="button" class="col-cta-secondary" id="colDeckEmptySecondaryBtn">
                               <i class="fas fa-cloud-download-alt" aria-hidden="true"></i><span id="colDeckEmptySecondaryLabel">匯入 DeckLog</span>
@@ -8796,6 +9140,40 @@
   </div>
 </div>
 
+<!-- 新增牌組：選擇組牌方式 -->
+<div id="colDeckCreateMethodModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckCreateMethod"></div>
+  <div class="col-deck-create-method" role="dialog" aria-modal="true" aria-labelledby="colDeckCreateMethodTitle">
+    <button type="button" class="col-deck-create-method-close" data-modal-close="deckCreateMethod" aria-label="關閉">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+    <div class="col-deck-create-method-head">
+      <h3 id="colDeckCreateMethodTitle">你想怎麼開始？</h3>
+    </div>
+    <div class="col-deck-create-method-cards" id="colDeckCreateMethodCards" role="list"></div>
+  </div>
+</div>
+
+<!-- 新增牌組精靈：比賽牌表／從喜歡的牌開始 -->
+<div id="colDeckCreateWizardModal" class="col-modal" hidden aria-hidden="true">
+  <div class="col-modal-backdrop" data-modal-close="deckCreateWizard"></div>
+  <div class="col-modal-dialog col-deck-create-wizard-dialog" role="dialog" aria-modal="true" aria-labelledby="colDeckCreateWizardTitle">
+    <div class="col-modal-body">
+      <h3 id="colDeckCreateWizardTitle">選擇作品</h3>
+      <p class="col-modal-hint" id="colDeckCreateWizardHint">搜尋作品或輸入卡包代碼（例：BD/W54）。</p>
+      <div class="col-tag-input-row" id="colDeckCreateWizardSearchRow">
+        <input id="colDeckCreateWizardSearch" type="search" class="form-control" placeholder="搜尋作品…" autocomplete="off">
+      </div>
+      <div id="colDeckCreateWizardBody"></div>
+    </div>
+    <div class="col-modal-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckCreateWizardBackBtn">返回</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-modal-close="deckCreateWizard">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" id="colDeckCreateWizardNextBtn" hidden>下一步</button>
+    </div>
+  </div>
+</div>
+
 <!-- 從 DeckLog 匯入／差異比較（DeckLog 代碼或我的雲端牌組） -->
 <div id="colDecklogModal" class="col-modal" hidden aria-hidden="true">
   <div class="col-modal-backdrop" data-modal-close="decklog"></div>
@@ -8970,6 +9348,36 @@
 
     var deckModalDesc = document.getElementById('colDeckModalDesc');
     var deckOriginNote = document.getElementById('colDeckOriginNote');
+    var deckCreateMethodModal = document.getElementById('colDeckCreateMethodModal');
+    var deckCreateMethodCards = document.getElementById('colDeckCreateMethodCards');
+    var deckCreateWizardModal = document.getElementById('colDeckCreateWizardModal');
+    var deckCreateWizardTitle = document.getElementById('colDeckCreateWizardTitle');
+    var deckCreateWizardHint = document.getElementById('colDeckCreateWizardHint');
+    var deckCreateWizardBody = document.getElementById('colDeckCreateWizardBody');
+    var deckCreateWizardSearch = document.getElementById('colDeckCreateWizardSearch');
+    var deckCreateWizardSearchRow = document.getElementById('colDeckCreateWizardSearchRow');
+    var deckCreateWizardBackBtn = document.getElementById('colDeckCreateWizardBackBtn');
+    var deckCreateWizardNextBtn = document.getElementById('colDeckCreateWizardNextBtn');
+    /** 開啟編輯器前可注入的新建種子（比賽複本／喜歡草稿） */
+    var deckCreateSeed = null;
+    var deckCreateState = {
+      method: '',
+      step: '',
+      seriesPrefix: '',
+      seriesName: '',
+      officialIndex: null,
+      officialData: null,
+      officialRows: [],
+      previewRow: null,
+      previewLegality: null,
+      coreCards: [],
+      catalogCards: [],
+      recommendation: null,
+      preferredCxName: '',
+      restrictions: null
+    };
+    var deckCreateOfficialCache = {};
+    var deckCreateRestrictionsPromise = null;
     var deckPickRow = document.getElementById('colDeckPickRow');
     var deckCancelBtn = document.getElementById('colDeckCancelBtn');
     var deckSaveBtn = document.getElementById('colDeckSaveBtn');
@@ -12553,6 +12961,15 @@
         deckEditChoiceDeckId = null;
         return;
       }
+      if (name === 'deckCreateMethod') {
+        closeModal(deckCreateMethodModal);
+        return;
+      }
+      if (name === 'deckCreateWizard') {
+        closeModal(deckCreateWizardModal);
+        resetDeckCreateWizardState();
+        return;
+      }
       if (name === 'deckMeta') {
         closeModal(deckMetaModal);
         syncDeckMetaInputsFromDraft();
@@ -14017,10 +14434,28 @@
     function syncDeckOriginNote() {
       if (!deckOriginNote) return;
       deckOriginNote.classList.remove('is-detached');
+      deckOriginNote.classList.remove('is-create-source');
       if (!deckDraft) {
         deckOriginNote.hidden = true;
         deckOriginNote.textContent = '';
         return;
+      }
+      var createMeta = deckDraft.createMeta || null;
+      if (createMeta && window.WsDeckCreate && typeof window.WsDeckCreate.formatSourceRow === 'function') {
+        if (createMeta.method === 'favorites') {
+          createMeta.missingCount = window.WsDeckCreate.missingSlots(deckDraft.cards || []);
+        }
+        if (createMeta.method === 'blank' && !normalizeText(createMeta.seriesName) && deckSeriesActivePrefix) {
+          createMeta.seriesName = seriesNameForPrefix(deckSeriesActivePrefix) || deckSeriesActivePrefix;
+          createMeta.seriesPrefix = deckSeriesActivePrefix;
+        }
+        var sourceText = window.WsDeckCreate.formatSourceRow(createMeta);
+        if (sourceText) {
+          deckOriginNote.hidden = false;
+          deckOriginNote.classList.add('is-create-source');
+          deckOriginNote.textContent = sourceText;
+          return;
+        }
       }
       var name = normalizeText(deckDraft.name);
       if (!name) {
@@ -14087,6 +14522,9 @@
       var desc = normalizeDeckDescription(deck.deckDescription);
       if (desc) out.deckDescription = desc;
       applyDeckCoverCardNumber(out, deck.coverCardNumber);
+      if (deck.createMeta && typeof deck.createMeta === 'object') {
+        out.createMeta = deck.createMeta;
+      }
       if (decklogCode) {
         out.decklogCode = decklogCode;
         out.source = 'decklog';
@@ -14119,6 +14557,9 @@
       var desc = normalizeDeckDescription(deck.deckDescription);
       if (desc) out.deckDescription = desc;
       applyDeckCoverCardNumber(out, deck.coverCardNumber);
+      if (deck.createMeta && typeof deck.createMeta === 'object') {
+        out.createMeta = deck.createMeta;
+      }
       var code = normalizeText(deck.decklogCode);
       if (code) {
         out.decklogCode = code;
@@ -15771,9 +16212,9 @@
 
       var albumEmpty = !allItems.length;
       var title = '尚未建立牌組';
-      var text = '建立空白牌組，或從 DeckLog 匯入編成。';
+      var text = '新增牌組，或從 DeckLog 匯入編成。';
       var hintHtml = '';
-      var primaryLabel = '新建牌組';
+      var primaryLabel = '新增牌組';
       var primaryIcon = 'fa-plus';
       var primaryAction = 'create';
       var secondaryLabel = '匯入 DeckLog';
@@ -15792,7 +16233,7 @@
         primaryAction = '';
       } else if (mode === 'guest') {
         title = '登入後管理牌組';
-        text = '牌組需登入才能雲端同步與儲存。登入後可新建空白牌組，或從 DeckLog 匯入。';
+        text = '牌組需登入才能雲端同步與儲存。登入後可新增牌組，或從 DeckLog 匯入。';
         primaryLabel = '登入後同步牌組';
         primaryIcon = 'fa-sign-in-alt';
         primaryAction = 'login';
@@ -17535,6 +17976,11 @@
           titleEl.textContent = (catalog.label || deckSeriesActivePrefix) + ' · ' +
             (catalog.prefixLabel || deckSeriesActivePrefix);
         }
+        if (deckDraft && deckDraft.createMeta && deckDraft.createMeta.method === 'blank') {
+          deckDraft.createMeta.seriesName = catalog.label || seriesNameForPrefix(deckSeriesActivePrefix) || deckSeriesActivePrefix;
+          deckDraft.createMeta.seriesPrefix = deckSeriesActivePrefix;
+          syncDeckOriginNote();
+        }
         renderSeriesPickChrome();
         renderSeriesPickGrid(true);
         if (!deckSeriesActiveCards.length) {
@@ -17972,6 +18418,33 @@
       syncDeckDiffButton();
     }
 
+    function currentDeckAllowedPrefixes() {
+      var meta = deckDraft && deckDraft.createMeta;
+      var prefix = normalizeText((meta && meta.seriesPrefix) || deckSeriesActivePrefix);
+      if (!prefix) return [];
+      return relatedSeriesPrefixes(prefix);
+    }
+
+    function evaluateDeckLegality(cards, opts) {
+      if (!(window.WsDeckCreate && typeof window.WsDeckCreate.validateNeoStandard === 'function')) {
+        return null;
+      }
+      opts = opts || {};
+      return window.WsDeckCreate.validateNeoStandard(cards || [], {
+        allowedPrefixes: opts.allowedPrefixes || currentDeckAllowedPrefixes(),
+        restrictions: opts.restrictions || deckCreateState.restrictions || {},
+        resolveMeta: function (cardNumber) {
+          var cached = albumMetaCache[cardNumber] || getAlbumMeta(cardNumber) || {};
+          var inv = inventoryMeta(cardNumber);
+          return {
+            name: cached.cardName || inv.cardName || '',
+            kindClass: cached.kindClass || '',
+            isCx: isCxCardNumber(cardNumber)
+          };
+        }
+      });
+    }
+
     function updateDeckEditorSummary() {
       if (!deckDraft || !deckEditorSummary) return;
       var total = deckTotalCards(deckDraft);
@@ -17985,9 +18458,29 @@
       } else {
         parts += '<span>未標記缺卡</span>';
       }
+      var legality = evaluateDeckLegality(deckDraft.cards || []);
+      if (legality) {
+        if (deckDraft.createMeta && deckDraft.createMeta.method === 'tournament') {
+          deckDraft.createMeta.isReference = !!legality.isReference;
+          deckDraft.createMeta.issues = legality.issues || [];
+          deckDraft.createMeta.flaggedCards = legality.flaggedCards || [];
+        }
+        if (legality.ok) {
+          parts += '<span>規則 <strong>合法</strong></span>';
+        } else {
+          parts += '<span class="col-deck-legality-ref">參考牌組</span>';
+          var topIssue = legality.issues && legality.issues[0] ? legality.issues[0].message : '';
+          if (topIssue) {
+            parts += '<span class="col-deck-warn">' + escapeHtml(topIssue) +
+              (legality.issues.length > 1 ? (' 等 ' + legality.issues.length + ' 項') : '') +
+              '</span>';
+          }
+        }
+      }
       deckEditorSummary.innerHTML = parts;
       syncDeckEditorOverflow();
       syncSeriesPickListLabel();
+      syncDeckOriginNote();
     }
 
     function findDeckEntryTile(cardNumber) {
@@ -18160,7 +18653,9 @@
         resumeExpandCard = deckCardExpandEntry.getAttribute('data-deck-entry') || '';
         resumeExpandMobile = deckCardExpandEntry.classList.contains('is-lb-mobile');
       }
-      if (!(deckDraft.cards || []).length) {
+      var showCreateEmptySlots = !!(deckDraft.createMeta && deckDraft.createMeta.showEmptySlots &&
+        window.WsDeckCreate && !isView && !deckCardShortOnly);
+      if (!(deckDraft.cards || []).length && !showCreateEmptySlots) {
         clearDeckCardExpand(deckEntryList);
         deckCardExpandEntry = null;
         deckCardExpandBusy = false;
@@ -18182,7 +18677,7 @@
         shortOnly: deckCardShortOnly,
         sortMode: deckCardSortMode
       });
-      if (!visibleCards.length) {
+      if (!visibleCards.length && !showCreateEmptySlots) {
         clearDeckCardExpand(deckEntryList);
         deckCardExpandEntry = null;
         deckCardExpandBusy = false;
@@ -18202,13 +18697,26 @@
       document.documentElement.classList.remove('col-lb-mobile-open');
       deckCardExpandEntry = null;
       deckCardExpandBusy = false;
-      if (isView && isDeckLevelSortMode(deckCardSortMode)) {
-        deckEntryList.innerHTML = buildDeckEntriesHtmlWithLevelHeads(visibleCards, 'view');
-      } else {
-        deckEntryList.innerHTML = visibleCards.map(function (entry) {
-          return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
-        }).join('');
+      var listHtml = '';
+      if (visibleCards.length) {
+        if (isView && isDeckLevelSortMode(deckCardSortMode)) {
+          listHtml = buildDeckEntriesHtmlWithLevelHeads(visibleCards, 'view');
+        } else {
+          listHtml = visibleCards.map(function (entry) {
+            return buildDeckEntryHtml(entry, isView ? 'view' : 'edit');
+          }).join('');
+        }
       }
+      if (showCreateEmptySlots) {
+        var miss = window.WsDeckCreate.missingSlots(deckDraft.cards || []);
+        var slots = window.WsDeckCreate.buildEmptySlotPlaceholders(Math.min(miss, 50));
+        slots.forEach(function (slot) {
+          listHtml += '<li class="col-deck-entry col-deck-create-slot-tile" aria-label="' +
+            escapeHtml(slot.label) + '">' + escapeHtml(slot.label) + '</li>';
+        });
+      }
+      deckEntryList.innerHTML = listHtml || ('<li class="col-modal-hint col-deck-entry-empty">' +
+        (isView ? '此牌組尚未加入卡片。' : '尚未加入卡片。') + '</li>');
       revealLoadedDeckImages(deckEntryList);
       ensureCardMetaForEntries(deckDraft.cards || [], function (shouldRender) {
         if (shouldRender) renderDeckEditor();
@@ -18253,26 +18761,50 @@
         }
       } else {
         deckEditorMode = 'edit';
-        var local = readEditorLocalDraft();
-        var orphan = local && local.deck && local.deckId &&
-          !allDecks.some(function (d) { return d.id === local.deckId; });
-        if (orphan) {
-          deckDraft = cloneDeckDraft(local.deck);
-          restoredDraft = true;
-          document.getElementById('colDeckTitle').textContent =
-            normalizeText(deckDraft.name) ? '編輯牌組' : '新建牌組';
-        } else {
-          var now = Date.now();
+        var seed = deckCreateSeed;
+        deckCreateSeed = null;
+        if (seed) {
+          var nowSeed = Date.now();
           deckDraft = {
             id: newDeckId(),
-            name: '',
-            tags: [],
-            cards: [],
+            name: normalizeText(seed.name) || '',
+            tags: seed.tags || [],
+            cards: normalizeDeckCards(seed.cards || []),
             source: 'manual',
-            createdAt: now,
-            updatedAt: now
+            createdAt: nowSeed,
+            updatedAt: nowSeed
           };
+          if (seed.createMeta) deckDraft.createMeta = seed.createMeta;
+          else if (window.WsDeckCreate) {
+            deckDraft.createMeta = window.WsDeckCreate.buildCreateMetaBlank('', '');
+          }
+          if (seed.deckDescription) deckDraft.deckDescription = seed.deckDescription;
           document.getElementById('colDeckTitle').textContent = '新建牌組';
+        } else {
+          var local = readEditorLocalDraft();
+          var orphan = local && local.deck && local.deckId &&
+            !allDecks.some(function (d) { return d.id === local.deckId; });
+          if (orphan) {
+            deckDraft = cloneDeckDraft(local.deck);
+            restoredDraft = true;
+            document.getElementById('colDeckTitle').textContent =
+              normalizeText(deckDraft.name) ? '編輯牌組' : '新建牌組';
+          } else {
+            var now = Date.now();
+            deckDraft = {
+              id: newDeckId(),
+              name: '',
+              tags: [],
+              cards: [],
+              source: 'manual',
+              createdAt: now,
+              updatedAt: now
+            };
+            if (window.WsDeckCreate) {
+              deckDraft.createMeta = window.WsDeckCreate.buildCreateMetaBlank('', '');
+            }
+            document.getElementById('colDeckTitle').textContent = '新建牌組';
+          }
         }
       }
       deckRaritySetMaps = {};
@@ -19251,12 +19783,700 @@
       });
     });
 
-    bindEl(document.getElementById('colDeckCreateBtn'), 'click', function () {
+    function resetDeckCreateWizardState() {
+      deckCreateState.step = '';
+      deckCreateState.seriesPrefix = '';
+      deckCreateState.seriesName = '';
+      deckCreateState.officialData = null;
+      deckCreateState.officialRows = [];
+      deckCreateState.previewRow = null;
+      deckCreateState.previewLegality = null;
+      deckCreateState.coreCards = [];
+      deckCreateState.catalogCards = [];
+      deckCreateState.recommendation = null;
+      deckCreateState.preferredCxName = '';
+    }
+
+    function ensureNeoRestrictions() {
+      if (deckCreateState.restrictions) return Promise.resolve(deckCreateState.restrictions);
+      if (deckCreateRestrictionsPromise) return deckCreateRestrictionsPromise;
+      var url = (window.WsDeckCreate && window.WsDeckCreate.RESTRICTIONS_URL) ||
+        'json/neo-standard-restrictions.json';
+      deckCreateRestrictionsPromise = fetch(url)
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (data) {
+          deckCreateState.restrictions = data && typeof data === 'object' ? data : {};
+          return deckCreateState.restrictions;
+        })
+        .catch(function () {
+          deckCreateState.restrictions = {};
+          return deckCreateState.restrictions;
+        });
+      return deckCreateRestrictionsPromise;
+    }
+
+    function ensureOfficialIndex() {
+      if (deckCreateState.officialIndex) return Promise.resolve(deckCreateState.officialIndex);
+      return fetch('json/official-decks/index.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          deckCreateState.officialIndex = data || { prefixes: {} };
+          return deckCreateState.officialIndex;
+        })
+        .catch(function () {
+          deckCreateState.officialIndex = { prefixes: {} };
+          return deckCreateState.officialIndex;
+        });
+    }
+
+    function loadOfficialPrefixData(prefix) {
+      var key = String(prefix || '').toUpperCase();
+      if (!key) return Promise.resolve(null);
+      if (deckCreateOfficialCache[key]) return deckCreateOfficialCache[key];
+      var base = (window.WsDeckCreate && window.WsDeckCreate.OFFICIAL_BASE) || 'json/official-decks/';
+      var p = fetch(base + encodeURIComponent(key) + '.json')
+        .then(function (r) {
+          if (r.status === 404) return null;
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .catch(function () { return null; });
+      deckCreateOfficialCache[key] = p;
+      return p;
+    }
+
+    function prefixHasTournamentDecks(prefix) {
+      if (!(window.WsDeckCreate && window.WsDeckCreate.prefixHasOfficialDecks)) return false;
+      return window.WsDeckCreate.prefixHasOfficialDecks(deckCreateState.officialIndex, prefix);
+    }
+
+    function openDeckCreateMethodModal() {
+      requireDeckAuth()
+        .then(function () {
+          return Promise.all([ensureOfficialIndex(), ensureNeoRestrictions()]);
+        })
+        .then(function () {
+          renderDeckCreateMethodCards();
+          openModal(deckCreateMethodModal);
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || '請先登入後再新增牌組', 'is-error');
+        });
+    }
+
+    function renderDeckCreateMethodCards() {
+      if (!deckCreateMethodCards || !window.WsDeckCreate) return;
+      var last = window.WsDeckCreate.getLastMethod();
+      var html = '';
+      window.WsDeckCreate.METHODS.forEach(function (method) {
+        var disabled = false;
+        var note = '';
+        if (method.id === 'tournament') {
+          var prefixes = (deckCreateState.officialIndex && deckCreateState.officialIndex.prefixes) || {};
+          var any = Object.keys(prefixes).some(function (k) {
+            return prefixes[k] && prefixes[k].decks > 0;
+          });
+          if (!any) {
+            disabled = true;
+            note = '目前沒有公開比賽牌表資料';
+          }
+        }
+        html += '<button type="button" class="col-deck-create-method-card' +
+          (last === method.id ? ' is-last' : '') +
+          (disabled ? ' is-disabled' : '') +
+          '" data-create-method="' + escapeHtml(method.id) + '"' +
+          (disabled ? ' disabled aria-disabled="true"' : '') +
+          ' role="listitem">';
+        html += '<strong class="col-deck-create-method-title">' + escapeHtml(method.title) + '</strong>';
+        html += '<span class="col-deck-create-method-sub">' + escapeHtml(method.subtitle) + '</span>';
+        if (note) html += '<span class="col-deck-create-method-note">' + escapeHtml(note) + '</span>';
+        if (last === method.id) {
+          html += '<span class="col-deck-create-method-note">上次選擇</span>';
+        }
+        html += '</button>';
+      });
+      deckCreateMethodCards.innerHTML = html;
+    }
+
+    function startDeckCreateMethod(methodId) {
+      if (!window.WsDeckCreate || window.WsDeckCreate.METHOD_IDS.indexOf(methodId) < 0) return;
+      window.WsDeckCreate.setLastMethod(methodId);
+      deckCreateState.method = methodId;
+      closeModalByName('deckCreateMethod');
+      if (methodId === 'blank') {
+        deckCreateSeed = {
+          cards: [],
+          createMeta: window.WsDeckCreate.buildCreateMetaBlank('', '')
+        };
+        openDeckEditor(null);
+        return;
+      }
+      openDeckCreateWizard('series');
+    }
+
+    function setCreateWizardChrome(title, hint, opts) {
+      opts = opts || {};
+      if (deckCreateWizardTitle) deckCreateWizardTitle.textContent = title || '';
+      if (deckCreateWizardHint) {
+        deckCreateWizardHint.textContent = hint || '';
+        deckCreateWizardHint.hidden = !hint;
+      }
+      if (deckCreateWizardSearchRow) deckCreateWizardSearchRow.hidden = !opts.showSearch;
+      if (deckCreateWizardNextBtn) {
+        deckCreateWizardNextBtn.hidden = !opts.showNext;
+        deckCreateWizardNextBtn.textContent = opts.nextLabel || '下一步';
+        deckCreateWizardNextBtn.disabled = !!opts.nextDisabled;
+      }
+      if (deckCreateWizardBackBtn) {
+        deckCreateWizardBackBtn.hidden = !!opts.hideBack;
+      }
+    }
+
+    function openDeckCreateWizard(step) {
+      deckCreateState.step = step || 'series';
+      if (deckCreateWizardSearch) deckCreateWizardSearch.value = '';
+      openModal(deckCreateWizardModal);
+      renderDeckCreateWizard();
+    }
+
+    function renderDeckCreateWizard() {
+      var step = deckCreateState.step;
+      if (step === 'series') return renderCreateWizardSeries();
+      if (step === 'tournament-list') return renderCreateWizardTournamentList();
+      if (step === 'tournament-preview') return renderCreateWizardTournamentPreview();
+      if (step === 'favorites-core') return renderCreateWizardFavoritesCore();
+      if (step === 'favorites-cx') return renderCreateWizardFavoritesCx();
+      if (step === 'favorites-rec') return renderCreateWizardFavoritesRec();
+    }
+
+    function renderCreateWizardSeries() {
+      setCreateWizardChrome('選擇作品', '搜尋作品後點選，進入下一步。', { showSearch: true, hideBack: false });
+      if (deckCreateWizardBody) {
+        deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">載入作品清單中…</p>';
+      }
+      Promise.all([ensureDeckCardTitleMap(), ensureDeckSeriesSuggestions()]).then(function () {
+        if (deckCreateState.step !== 'series') return;
+        paintCreateWizardSeriesList(deckCreateWizardSearch && deckCreateWizardSearch.value);
+      });
+    }
+
+    function paintCreateWizardSeriesList(query) {
+      if (!deckCreateWizardBody) return;
+      var q = normalizeText(query).toLowerCase();
+      var rows = [];
+      (deckSeriesSuggestions || []).forEach(function (row) {
+        var prefixes = prefixesFromSeriesSuggestion(row);
+        if (!prefixes.length) return;
+        var title = String(row.cname || row.name || '').split('|')[0].trim();
+        var hay = (title + ' ' + prefixes.join(' ')).toLowerCase();
+        if (q && hay.indexOf(q) < 0) return;
+        var primary = prefixes[0];
+        var disabled = false;
+        var note = '';
+        if (deckCreateState.method === 'tournament') {
+          var hasOfficial = prefixes.some(function (code) {
+            return prefixHasTournamentDecks(code);
+          });
+          if (!hasOfficial) {
+            disabled = true;
+            note = '此作品尚無公開牌表';
+          }
+        }
+        rows.push({
+          prefix: primary,
+          title: title || primary,
+          sub: prefixes.join(' · '),
+          disabled: disabled,
+          note: note
+        });
+      });
+      rows = rows.slice(0, 80);
+      if (!rows.length) {
+        deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">找不到符合的作品。</p>';
+        return;
+      }
+      var html = '<ul class="col-deck-create-wizard-list">';
+      rows.forEach(function (row) {
+        html += '<li><button type="button" class="col-deck-create-wizard-row" data-create-series="' +
+          escapeHtml(row.prefix) + '"' + (row.disabled ? ' disabled' : '') + '>';
+        html += '<strong>' + escapeHtml(row.title) + '</strong>';
+        html += '<span class="col-deck-create-code">' + escapeHtml(row.sub) +
+          (row.note ? (' · ' + row.note) : '') + '</span>';
+        html += '</button></li>';
+      });
+      html += '</ul>';
+      deckCreateWizardBody.innerHTML = html;
+    }
+
+    function onCreateWizardSeriesPick(prefix) {
+      var canonical = canonicalSeriesPrefix(prefix) || prefix;
+      deckCreateState.seriesPrefix = canonical;
+      deckCreateState.seriesName = seriesNameForPrefix(canonical) || canonical;
+      if (deckCreateState.method === 'tournament') {
+        deckCreateState.step = 'tournament-list';
+        renderDeckCreateWizard();
+        return;
+      }
+      deckCreateState.step = 'favorites-core';
+      renderDeckCreateWizard();
+    }
+
+    function renderCreateWizardTournamentList() {
+      setCreateWizardChrome(
+        deckCreateState.seriesName + '・比賽牌表',
+        '點選列表項目先預覽；確認後才可建立複本。',
+        { showSearch: true }
+      );
+      if (deckCreateWizardBody) {
+        deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">載入公開牌表…</p>';
+      }
+      loadOfficialPrefixData(deckCreateState.seriesPrefix).then(function (data) {
+        if (deckCreateState.step !== 'tournament-list') return;
+        deckCreateState.officialData = data;
+        if (!data || !(data.decks || []).length) {
+          deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">此作品沒有公開牌表。</p>';
+          return;
+        }
+        var rows = window.WsDeckCreate.listOfficialDeckRows(data, { format: 'neo' });
+        if (!rows.length) {
+          rows = window.WsDeckCreate.listOfficialDeckRows(data, { format: 'all' });
+        }
+        deckCreateState.officialRows = rows;
+        paintCreateWizardTournamentRows(deckCreateWizardSearch && deckCreateWizardSearch.value);
+      });
+    }
+
+    function paintCreateWizardTournamentRows(query) {
+      if (!deckCreateWizardBody) return;
+      var q = normalizeText(query).toLowerCase();
+      var rows = (deckCreateState.officialRows || []).filter(function (row) {
+        if (!q) return true;
+        var hay = [row.eventName, row.rank, row.deckCode, row.deckName].join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      if (!rows.length) {
+        deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">沒有符合的牌表。</p>';
+        return;
+      }
+      var html = '<ul class="col-deck-create-wizard-list">';
+      rows.slice(0, 120).forEach(function (row) {
+        html += '<li><button type="button" class="col-deck-create-wizard-row" data-create-tournament="' +
+          escapeHtml(row.id) + '">';
+        html += '<strong>' + escapeHtml(row.eventName) + '</strong>';
+        html += '<span class="col-deck-create-rank">' + escapeHtml(row.rank) + '</span>';
+        html += '<span class="col-deck-create-code">deck code ' + escapeHtml(row.deckCode || '—') +
+          (row.eventDate ? (' · ' + row.eventDate) : '') + '</span>';
+        html += '</button></li>';
+      });
+      html += '</ul>';
+      deckCreateWizardBody.innerHTML = html;
+    }
+
+    function openCreateWizardTournamentPreview(rowId) {
+      var row = (deckCreateState.officialRows || []).find(function (r) { return r.id === rowId; });
+      if (!row) return;
+      deckCreateState.previewRow = row;
+      deckCreateState.step = 'tournament-preview';
+      renderDeckCreateWizard();
+    }
+
+    function renderCreateWizardTournamentPreview() {
+      var row = deckCreateState.previewRow;
+      var data = deckCreateState.officialData;
+      if (!row || !data) {
+        deckCreateState.step = 'tournament-list';
+        return renderDeckCreateWizard();
+      }
+      setCreateWizardChrome('預覽比賽牌表', '確認內容後建立我的複本（不會修改原始公開牌表）。', {
+        showNext: true,
+        nextLabel: '建立我的複本'
+      });
+      var entries = window.WsDeckCreate.officialCardsToDeckEntries(row.cards, data.cards || {});
+      var allowed = relatedSeriesPrefixes(deckCreateState.seriesPrefix);
+      ensureNeoRestrictions().then(function (restrictions) {
+        if (deckCreateState.step !== 'tournament-preview') return;
+        var legality = window.WsDeckCreate.validateNeoStandard(entries, {
+          allowedPrefixes: allowed,
+          restrictions: restrictions
+        });
+        deckCreateState.previewLegality = legality;
+        var html = '<div class="col-deck-create-preview-meta">';
+        html += escapeHtml(row.eventName) + '・' + escapeHtml(row.rank);
+        if (row.eventDate) html += '・' + escapeHtml(row.eventDate);
+        html += '<br>deck code <span class="col-deck-create-code">' + escapeHtml(row.deckCode || '—') + '</span>';
+        html += '<br>編成 ' + window.WsDeckCreate.deckTotalQty(entries) + ' 張・' + entries.length + ' 種';
+        html += '</div>';
+        if (legality.isReference) {
+          html += '<div class="col-deck-create-preview-flags">';
+          html += '<strong>參考牌組</strong>：依目前 Neo-Standard 規則檢查後有問題，仍可建立複本。<ul>';
+          (legality.issues || []).slice(0, 8).forEach(function (issue) {
+            html += '<li>' + escapeHtml(issue.message) + '</li>';
+          });
+          html += '</ul>';
+          if ((legality.flaggedCards || []).length) {
+            html += '受限制／不合法卡：' + legality.flaggedCards.slice(0, 8).map(function (f) {
+              return escapeHtml((f.name || f.cardNumber) + (f.reason ? ('（' + f.reason + '）') : ''));
+            }).join('、');
+          }
+          html += '</div>';
+        } else {
+          html += '<div class="col-deck-create-preview-flags" style="border-left-color:#15803d;background:rgba(21,128,61,0.08);">已依目前規則檢查：合法</div>';
+        }
+        html += '<p class="col-modal-hint">預覽僅顯示摘要，不在此展開完整 50 張清單。</p>';
+        var sample = entries.slice(0, 8).map(function (c) {
+          return escapeHtml((c.cardName || c.cardNumber) + '×' + c.qty);
+        }).join('、');
+        if (sample) html += '<p class="col-deck-create-preview-meta">卡表摘要：' + sample + (entries.length > 8 ? '…' : '') + '</p>';
+        deckCreateWizardBody.innerHTML = html;
+      });
+    }
+
+    function commitTournamentClone() {
+      var row = deckCreateState.previewRow;
+      var data = deckCreateState.officialData;
+      var legality = deckCreateState.previewLegality;
+      if (!row || !data || !window.WsDeckCreate) return;
+      var entries = window.WsDeckCreate.officialCardsToDeckEntries(row.cards, data.cards || {});
+      var createMeta = window.WsDeckCreate.buildCreateMetaTournament({
+        eventName: row.eventName,
+        rank: row.rank,
+        eventDate: row.eventDate,
+        deckCode: row.deckCode,
+        title: deckCreateState.seriesName,
+        seriesPrefix: deckCreateState.seriesPrefix
+      }, legality || {});
+      deckCreateSeed = {
+        name: (row.deckName || row.eventName || '比賽牌表複本').slice(0, 40),
+        tags: legality && legality.isReference ? ['參考牌組', '比賽牌表'] : ['比賽牌表'],
+        cards: entries,
+        createMeta: createMeta,
+        deckDescription: legality && legality.isReference
+          ? ('參考牌組。' + ((legality.issues || []).map(function (i) { return i.message; }).join(' ')))
+          : ''
+      };
+      closeModalByName('deckCreateWizard');
       openDeckEditor(null);
+    }
+
+    function renderCreateWizardFavoritesCore() {
+      setCreateWizardChrome(
+        '選擇喜愛的牌',
+        '先選 1–3 張角色或 CX，再產生可編輯推薦。',
+        { showSearch: true, showNext: true, nextLabel: '下一步', nextDisabled: true }
+      );
+      if (deckCreateWizardBody) {
+        deckCreateWizardBody.innerHTML = '<p class="col-modal-hint">載入卡表…</p>';
+      }
+      loadSeriesCardCatalog(deckCreateState.seriesPrefix, [], ++deckSeriesPickToken).then(function (catalog) {
+        if (deckCreateState.step !== 'favorites-core') return;
+        deckCreateState.catalogCards = (catalog && catalog.cards) || [];
+        paintCreateWizardCoreGrid(deckCreateWizardSearch && deckCreateWizardSearch.value);
+        syncFavoritesCoreNext();
+      });
+    }
+
+    function paintCreateWizardCoreGrid(query) {
+      if (!deckCreateWizardBody) return;
+      var q = normalizeText(query).toLowerCase();
+      var cores = deckCreateState.coreCards || [];
+      var coreMap = {};
+      cores.forEach(function (c) { coreMap[String(c.cardNumber).toUpperCase()] = true; });
+      var list = (deckCreateState.catalogCards || []).filter(function (card) {
+        var kind = card.kindClass || '';
+        if (!(window.WsDeckCreate.isCxKind(kind) || window.WsDeckCreate.isCharacterKind(kind))) return false;
+        if (!q) return true;
+        var hay = (card.name + ' ' + card.id).toLowerCase();
+        return hay.indexOf(q) >= 0;
+      }).slice(0, 96);
+      var html = '<div class="col-deck-create-core-grid">';
+      list.forEach(function (card) {
+        var on = !!coreMap[String(card.id).toUpperCase()];
+        html += '<button type="button" class="col-deck-create-pick' + (on ? ' is-on' : '') +
+          '" data-create-core="' + escapeHtml(card.id) + '">';
+        html += '<strong>' + escapeHtml(card.name || card.id) + '</strong>';
+        html += '<span>' + escapeHtml(card.id) +
+          (card.kindClass ? (' · ' + card.kindClass) : '') + '</span>';
+        html += '</button>';
+      });
+      html += '</div>';
+      if (!list.length) html = '<p class="col-modal-hint">沒有可選的角色／CX。</p>';
+      deckCreateWizardBody.innerHTML = html;
+    }
+
+    function toggleCreateCoreCard(cardNumber) {
+      var no = normalizeText(cardNumber).replace(/\\/g, '/');
+      var catalog = deckCreateState.catalogCards || [];
+      var card = catalog.find(function (c) { return String(c.id) === no; });
+      if (!card) return;
+      var kind = card.kindClass || '';
+      if (!(window.WsDeckCreate.isCxKind(kind) || window.WsDeckCreate.isCharacterKind(kind))) return;
+      var list = deckCreateState.coreCards || [];
+      var idx = -1;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].cardNumber === no) { idx = i; break; }
+      }
+      if (idx >= 0) list.splice(idx, 1);
+      else {
+        if (list.length >= 3) {
+          setStatus('最多選擇 3 張核心卡', 'is-error');
+          return;
+        }
+        list.push({
+          cardNumber: no,
+          cardName: card.name || no,
+          kindClass: kind,
+          level: card.level
+        });
+      }
+      deckCreateState.coreCards = list;
+      paintCreateWizardCoreGrid(deckCreateWizardSearch && deckCreateWizardSearch.value);
+      syncFavoritesCoreNext();
+    }
+
+    function syncFavoritesCoreNext() {
+      if (!deckCreateWizardNextBtn) return;
+      var n = (deckCreateState.coreCards || []).length;
+      deckCreateWizardNextBtn.disabled = n < 1 || n > 3;
+    }
+
+    function proceedFavoritesAfterCore() {
+      var cores = deckCreateState.coreCards || [];
+      if (!cores.length) return;
+      var hasCx = cores.some(function (c) { return window.WsDeckCreate.isCxKind(c.kindClass); });
+      if (!hasCx) {
+        deckCreateState.step = 'favorites-cx';
+        renderDeckCreateWizard();
+        return;
+      }
+      buildAndShowFavoritesRec();
+    }
+
+    function renderCreateWizardFavoritesCx() {
+      setCreateWizardChrome('想主打哪種 CX？', '可跳過。若已選定核心 CX，不會再問這題。', {
+        showSearch: true,
+        showNext: true,
+        nextLabel: '跳過'
+      });
+      var list = (deckCreateState.catalogCards || []).filter(function (c) {
+        return window.WsDeckCreate.isCxKind(c.kindClass);
+      });
+      var q = normalizeText(deckCreateWizardSearch && deckCreateWizardSearch.value).toLowerCase();
+      if (q) {
+        list = list.filter(function (c) {
+          return (c.name + ' ' + c.id).toLowerCase().indexOf(q) >= 0;
+        });
+      }
+      var html = '<div class="col-deck-create-core-grid">';
+      list.slice(0, 48).forEach(function (card) {
+        var on = deckCreateState.preferredCxName === card.name;
+        html += '<button type="button" class="col-deck-create-pick' + (on ? ' is-on' : '') +
+          '" data-create-cx="' + escapeHtml(card.name || card.id) + '" data-create-cx-no="' +
+          escapeHtml(card.id) + '">';
+        html += '<strong>' + escapeHtml(card.name || card.id) + '</strong>';
+        html += '<span>' + escapeHtml(card.id) + '</span></button>';
+      });
+      html += '</div>';
+      deckCreateWizardBody.innerHTML = html || '<p class="col-modal-hint">此作品找不到 CX。</p>';
+    }
+
+    function buildAndShowFavoritesRec() {
+      var cores = (deckCreateState.coreCards || []).slice();
+      if (deckCreateState.preferredCxName) {
+        var cxCard = (deckCreateState.catalogCards || []).find(function (c) {
+          return c.name === deckCreateState.preferredCxName;
+        });
+        if (cxCard && !cores.some(function (c) { return c.cardNumber === cxCard.id; }) && cores.length < 3) {
+          cores.push({
+            cardNumber: cxCard.id,
+            cardName: cxCard.name,
+            kindClass: cxCard.kindClass,
+            level: cxCard.level
+          });
+          deckCreateState.coreCards = cores;
+        }
+      }
+      var cooccur = {};
+      loadOfficialPrefixData(deckCreateState.seriesPrefix).then(function (data) {
+        if (data && data.decks) {
+          var coreSet = {};
+          cores.forEach(function (c) { coreSet[String(c.cardNumber).toUpperCase()] = true; });
+          data.decks.forEach(function (deck) {
+            var pairs = deck.c || [];
+            var hit = pairs.some(function (p) {
+              return p && coreSet[String(p[0] || '').toUpperCase()];
+            });
+            if (!hit) return;
+            pairs.forEach(function (p) {
+              var no = String((p && p[0]) || '');
+              if (!no || coreSet[no.toUpperCase()]) return;
+              cooccur[no] = (cooccur[no] || 0) + 1;
+            });
+          });
+        }
+        deckCreateState.recommendation = window.WsDeckCreate.buildFavoriteRecommendations(
+          cores,
+          deckCreateState.catalogCards,
+          cooccur
+        );
+        deckCreateState.step = 'favorites-rec';
+        renderDeckCreateWizard();
+      });
+    }
+
+    function renderCreateWizardFavoritesRec() {
+      setCreateWizardChrome('推薦草稿', '可取消或替換推薦卡。這是草稿，不會顯示勝率或強度分數。', {
+        showNext: true,
+        nextLabel: '建立草稿'
+      });
+      var rec = deckCreateState.recommendation || { linked: [], substitutes: [], undecided: [] };
+      function section(title, cards, attr) {
+        var html = '<section class="col-deck-create-rec-section"><h4>' + escapeHtml(title) + '</h4>';
+        html += '<div class="col-deck-create-rec-grid">';
+        (cards || []).forEach(function (card, idx) {
+          if (card.placeholder) {
+            html += '<div class="col-deck-create-slot-tile">' + escapeHtml(card.label) + '</div>';
+            return;
+          }
+          html += '<button type="button" class="col-deck-create-pick' + (card.selected === false ? '' : ' is-on') +
+            '" data-create-rec="' + escapeHtml(attr) + '" data-create-rec-idx="' + idx + '">';
+          html += '<strong>' + escapeHtml(card.cardName || card.cardNumber) + '</strong>';
+          html += '<span>' + escapeHtml(card.reason || '點一下取消／選取') + '</span></button>';
+        });
+        if (!(cards || []).length) html += '<p class="col-modal-hint">尚無推薦</p>';
+        html += '</div></section>';
+        return html;
+      }
+      var html = section('連動牌', rec.linked, 'linked');
+      html += section('可替換牌', rec.substitutes, 'substitutes');
+      html += section('尚未決定', rec.undecided, 'undecided');
+      var draftCards = window.WsDeckCreate.recommendationsToDeckCards(deckCreateState.coreCards, rec, true);
+      var miss = window.WsDeckCreate.missingSlots(draftCards);
+      html += '<p class="col-deck-create-preview-meta">目前草稿 ' +
+        window.WsDeckCreate.deckTotalQty(draftCards) + ' 張，進入編輯器後仍可見 ' + miss + ' 個空位。</p>';
+      deckCreateWizardBody.innerHTML = html;
+    }
+
+    function toggleCreateRecCard(bucket, idx) {
+      var rec = deckCreateState.recommendation;
+      if (!rec || !rec[bucket] || !rec[bucket][idx]) return;
+      var card = rec[bucket][idx];
+      if (card.placeholder) return;
+      card.selected = card.selected === false;
+      renderCreateWizardFavoritesRec();
+    }
+
+    function commitFavoritesDraft() {
+      var rec = deckCreateState.recommendation;
+      var cards = window.WsDeckCreate.recommendationsToDeckCards(deckCreateState.coreCards, rec, true);
+      var miss = window.WsDeckCreate.missingSlots(cards);
+      var createMeta = window.WsDeckCreate.buildCreateMetaFavorites(deckCreateState.coreCards, miss);
+      createMeta.seriesName = deckCreateState.seriesName;
+      createMeta.seriesPrefix = deckCreateState.seriesPrefix;
+      deckCreateSeed = {
+        name: '',
+        tags: ['草稿'],
+        cards: cards,
+        createMeta: createMeta
+      };
+      closeModalByName('deckCreateWizard');
+      openDeckEditor(null);
+    }
+
+    function handleCreateWizardBack() {
+      var step = deckCreateState.step;
+      if (step === 'series') {
+        closeModalByName('deckCreateWizard');
+        openDeckCreateMethodModal();
+        return;
+      }
+      if (step === 'tournament-list' || step === 'favorites-core') {
+        deckCreateState.step = 'series';
+        renderDeckCreateWizard();
+        return;
+      }
+      if (step === 'tournament-preview') {
+        deckCreateState.step = 'tournament-list';
+        renderDeckCreateWizard();
+        return;
+      }
+      if (step === 'favorites-cx') {
+        deckCreateState.step = 'favorites-core';
+        renderDeckCreateWizard();
+        return;
+      }
+      if (step === 'favorites-rec') {
+        var hasCx = (deckCreateState.coreCards || []).some(function (c) {
+          return window.WsDeckCreate.isCxKind(c.kindClass);
+        });
+        deckCreateState.step = hasCx ? 'favorites-core' : 'favorites-cx';
+        renderDeckCreateWizard();
+      }
+    }
+
+    function handleCreateWizardNext() {
+      var step = deckCreateState.step;
+      if (step === 'favorites-core') return proceedFavoritesAfterCore();
+      if (step === 'favorites-cx') return buildAndShowFavoritesRec();
+      if (step === 'favorites-rec') return commitFavoritesDraft();
+      if (step === 'tournament-preview') return commitTournamentClone();
+    }
+
+    bindEl(document.getElementById('colDeckCreateBtn'), 'click', function () {
+      openDeckCreateMethodModal();
     });
     bindEl(document.getElementById('colDecklogImportBtn'), 'click', function () {
       openDecklogModal('create');
     });
+    if (deckCreateMethodCards) {
+      bindEl(deckCreateMethodCards, 'click', function (e) {
+        var btn = e.target.closest('[data-create-method]');
+        if (!btn || btn.disabled) return;
+        startDeckCreateMethod(btn.getAttribute('data-create-method'));
+      });
+    }
+    if (deckCreateWizardBackBtn) bindEl(deckCreateWizardBackBtn, 'click', handleCreateWizardBack);
+    if (deckCreateWizardNextBtn) bindEl(deckCreateWizardNextBtn, 'click', handleCreateWizardNext);
+    if (deckCreateWizardSearch) {
+      bindEl(deckCreateWizardSearch, 'input', function () {
+        var step = deckCreateState.step;
+        if (step === 'series') paintCreateWizardSeriesList(deckCreateWizardSearch.value);
+        else if (step === 'tournament-list') paintCreateWizardTournamentRows(deckCreateWizardSearch.value);
+        else if (step === 'favorites-core') paintCreateWizardCoreGrid(deckCreateWizardSearch.value);
+        else if (step === 'favorites-cx') renderCreateWizardFavoritesCx();
+      });
+    }
+    if (deckCreateWizardBody) {
+      bindEl(deckCreateWizardBody, 'click', function (e) {
+        var seriesBtn = e.target.closest('[data-create-series]');
+        if (seriesBtn && !seriesBtn.disabled) {
+          onCreateWizardSeriesPick(seriesBtn.getAttribute('data-create-series'));
+          return;
+        }
+        var tourBtn = e.target.closest('[data-create-tournament]');
+        if (tourBtn) {
+          openCreateWizardTournamentPreview(tourBtn.getAttribute('data-create-tournament'));
+          return;
+        }
+        var coreBtn = e.target.closest('[data-create-core]');
+        if (coreBtn) {
+          toggleCreateCoreCard(coreBtn.getAttribute('data-create-core'));
+          return;
+        }
+        var cxBtn = e.target.closest('[data-create-cx]');
+        if (cxBtn) {
+          deckCreateState.preferredCxName = cxBtn.getAttribute('data-create-cx') || '';
+          buildAndShowFavoritesRec();
+          return;
+        }
+        var recBtn = e.target.closest('[data-create-rec]');
+        if (recBtn) {
+          toggleCreateRecCard(
+            recBtn.getAttribute('data-create-rec'),
+            parseInt(recBtn.getAttribute('data-create-rec-idx'), 10)
+          );
+        }
+      });
+    }
     function handleDeckEmptyPrimaryClick() {
       var action = deckEmptyPrimaryBtn && deckEmptyPrimaryBtn.getAttribute('data-empty-action');
       if (action === 'login') {
@@ -19276,7 +20496,7 @@
         renderDeckList();
         return;
       }
-      openDeckEditor(null);
+      openDeckCreateMethodModal();
     }
     function handleDeckEmptySecondaryClick() {
       var action = deckEmptySecondaryBtn && deckEmptySecondaryBtn.getAttribute('data-empty-action');
@@ -19981,6 +21201,14 @@
       }
       if (deckEditChoiceModal && deckEditChoiceModal.classList.contains('is-open')) {
         closeModalByName('deckEditChoice');
+        return;
+      }
+      if (deckCreateWizardModal && deckCreateWizardModal.classList.contains('is-open')) {
+        closeModalByName('deckCreateWizard');
+        return;
+      }
+      if (deckCreateMethodModal && deckCreateMethodModal.classList.contains('is-open')) {
+        closeModalByName('deckCreateMethod');
         return;
       }
       if (deckModal && deckModal.classList.contains('is-open')) {
