@@ -16856,6 +16856,60 @@
       return prefix || '';
     }
 
+    /**
+     * 同作品可能有多個前置碼（例：百萬人演唱會 IMS + IAS）。
+     * 依系列建議清單展開，載入選卡時全部一併納入。
+     */
+    function relatedSeriesPrefixes(prefix) {
+      var raw = String(prefix || '').trim();
+      if (!raw) return [];
+      var upper = raw.toUpperCase();
+      var list = deckSeriesSuggestions || [];
+      var i;
+      var j;
+      for (i = 0; i < list.length; i++) {
+        var codes = prefixesFromSeriesSuggestion(list[i]);
+        if (!codes.length) continue;
+        var hit = false;
+        for (j = 0; j < codes.length; j++) {
+          if (String(codes[j]).toUpperCase() === upper) {
+            hit = true;
+            break;
+          }
+        }
+        if (!hit) continue;
+        var seen = {};
+        var out = [];
+        codes.forEach(function (code) {
+          var key = String(code || '').trim();
+          if (!key) return;
+          var u = key.toUpperCase();
+          if (seen[u]) return;
+          seen[u] = true;
+          out.push(key);
+        });
+        return out.length ? out : [raw];
+      }
+      return [raw];
+    }
+
+    function productsForDeckPrefixes(prefixes, cards) {
+      var seen = {};
+      var out = [];
+      (prefixes || []).forEach(function (prefix) {
+        productsForDeckPrefix(prefix, cards).forEach(function (product) {
+          var key = String(product && product.code || '').toUpperCase();
+          if (!key || seen[key]) return;
+          seen[key] = true;
+          out.push(product);
+        });
+      });
+      out.sort(function (a, b) {
+        return String(a.code || '').localeCompare(String(b.code || ''), 'en', { sensitivity: 'base' });
+      });
+      return out;
+    }
+
     function canonicalSeriesPrefix(prefix) {
       var upper = String(prefix || '').toUpperCase();
       if (!upper) return '';
@@ -17339,10 +17393,31 @@
       if (deckSeriesCardCache[cacheKey]) return Promise.resolve(deckSeriesCardCache[cacheKey]);
       return Promise.all([ensureDeckCardTitleMap(), ensureDeckSeriesSuggestions()]).then(function () {
         var canonical = canonicalSeriesPrefix(prefix);
-        var products = productsForDeckPrefix(canonical, cards);
+        var related = relatedSeriesPrefixes(canonical).map(function (code) {
+          return canonicalSeriesPrefix(code) || code;
+        });
+        /* 去重並保留順序 */
+        var relatedSeen = {};
+        related = related.filter(function (code) {
+          var u = String(code || '').toUpperCase();
+          if (!u || relatedSeen[u]) return false;
+          relatedSeen[u] = true;
+          return true;
+        });
+        if (!related.length) related = [canonical];
+        var products = productsForDeckPrefixes(related, cards);
         var label = seriesNameForPrefix(canonical) || canonical;
+        var prefixLabel = related.join(' · ');
         if (!products.length) {
-          return { prefix: canonical, label: label, products: [], cards: [], failed: 0 };
+          return {
+            prefix: canonical,
+            prefixes: related,
+            label: label,
+            prefixLabel: prefixLabel,
+            products: [],
+            cards: [],
+            failed: 0
+          };
         }
         var failed = 0;
         var done = 0;
@@ -17398,13 +17473,19 @@
           cardsOut.sort(function (a, b) { return String(a.id).localeCompare(String(b.id)); });
           var catalog = {
             prefix: canonical,
+            prefixes: related,
             label: label,
+            prefixLabel: prefixLabel,
             products: products,
             cards: cardsOut,
             failed: failed
           };
-          if (!(products.length && failed >= products.length)) deckSeriesCardCache[cacheKey] = catalog;
-          if (canonical.toUpperCase() !== cacheKey) deckSeriesCardCache[canonical.toUpperCase()] = catalog;
+          if (!(products.length && failed >= products.length)) {
+            related.forEach(function (code) {
+              deckSeriesCardCache[String(code).toUpperCase()] = catalog;
+            });
+            deckSeriesCardCache[cacheKey] = catalog;
+          }
           return catalog;
         });
       });
@@ -17439,7 +17520,11 @@
         }
         deckSeriesActivePrefix = canonical;
         deckSeriesPickProduct = product;
-        if (titleEl) titleEl.textContent = (seriesNameForPrefix(canonical) || canonical) + ' · ' + canonical;
+        if (titleEl) {
+          var relatedPreview = relatedSeriesPrefixes(canonical);
+          titleEl.textContent = (seriesNameForPrefix(canonical) || canonical) + ' · ' +
+            (relatedPreview.length ? relatedPreview.join(' · ') : canonical);
+        }
         return loadSeriesCardCatalog(canonical, deckDraft && deckDraft.cards, token);
       }).then(function (catalog) {
         if (!catalog || token !== deckSeriesPickToken || !deckSeriesPickOpen) return;
@@ -17447,7 +17532,8 @@
         deckSeriesActiveCards = catalog.cards || [];
         deckSeriesActiveProducts = catalog.products || [];
         if (titleEl) {
-          titleEl.textContent = (catalog.label || deckSeriesActivePrefix) + ' · ' + deckSeriesActivePrefix;
+          titleEl.textContent = (catalog.label || deckSeriesActivePrefix) + ' · ' +
+            (catalog.prefixLabel || deckSeriesActivePrefix);
         }
         renderSeriesPickChrome();
         renderSeriesPickGrid(true);
