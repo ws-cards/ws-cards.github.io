@@ -6790,31 +6790,94 @@
     [data-theme="dark"] .col-deck-diff-table {
       background: rgba(0, 0, 0, 0.18);
     }
+    .col-deck-diff-baseline-guide {
+      margin: 0;
+      padding: 0.35rem 0.15rem 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--col-muted, #718096);
+    }
+    .col-deck-diff-baseline-guide[hidden] { display: none !important; }
     .col-deck-diff-table-head {
       display: grid;
       grid-template-columns: 1fr 1fr;
       border-bottom: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
       flex: 0 0 auto;
     }
-    .col-deck-diff-table-head > div {
+    .col-deck-diff-side {
       display: flex;
-      align-items: baseline;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 0.2rem;
+      margin: 0;
+      padding: 0.55rem 0.7rem;
+      border: 2px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .col-deck-diff-side + .col-deck-diff-side {
+      border-left-color: var(--col-line, rgba(0, 0, 0, 0.08));
+    }
+    .col-deck-diff-side.is-left { background: rgba(51, 65, 85, 0.06); }
+    .col-deck-diff-side.is-right { background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, transparent); }
+    .col-deck-diff-side:hover,
+    .col-deck-diff-side:focus-visible {
+      outline: none;
+      border-color: color-mix(in srgb, var(--desk-foil, #8a6f3a) 55%, transparent);
+    }
+    .col-deck-diff-side.is-baseline {
+      border-color: var(--desk-foil, #8a6f3a);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--desk-foil, #8a6f3a) 25%, transparent);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, #fff);
+      z-index: 1;
+    }
+    [data-theme="dark"] .col-deck-diff-side.is-baseline {
+      background: color-mix(in srgb, var(--desk-foil, #d0b27a) 16%, transparent);
+    }
+    .col-deck-diff-side-top {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 0.45rem;
-      padding: 0.5rem 0.7rem;
       font-size: 0.82rem;
       font-weight: 800;
     }
-    .col-deck-diff-table-head > div + div {
-      border-left: 1px solid var(--col-line, rgba(0, 0, 0, 0.08));
+    .col-deck-diff-baseline-pill {
+      display: none;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--desk-foil, #8a6f3a);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, transparent);
+      color: var(--desk-foil-deep, #5c4a28);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
     }
-    .col-deck-diff-table-head .is-left { background: rgba(51, 65, 85, 0.06); }
-    .col-deck-diff-table-head .is-right { background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, transparent); }
-    .col-deck-diff-table-head span {
+    .col-deck-diff-side.is-baseline .col-deck-diff-baseline-pill { display: inline-flex; }
+    [data-theme="dark"] .col-deck-diff-baseline-pill {
+      color: var(--desk-foil, #d0b27a);
+      border-color: var(--desk-foil, #d0b27a);
+    }
+    .col-deck-diff-side > span:last-child {
       font-size: 0.7rem;
       font-weight: 700;
       color: var(--col-muted, #718096);
       font-variant-numeric: tabular-nums;
+    }
+    .col-deck-diff-table.is-baseline-left .col-deck-diff-cell.is-left,
+    .col-deck-diff-table.is-baseline-right .col-deck-diff-cell.is-right {
+      box-shadow: inset 3px 0 0 var(--desk-foil, #8a6f3a);
+    }
+    .col-deck-diff-table.is-baseline-right .col-deck-diff-cell.is-right {
+      box-shadow: inset -3px 0 0 var(--desk-foil, #8a6f3a);
     }
     .col-deck-diff-rows {
       list-style: none;
@@ -6862,6 +6925,54 @@
       grid-template-columns: 1fr 1fr;
       border-bottom: 1px solid rgba(15, 23, 42, 0.06);
       scroll-margin: 3rem;
+    }
+    .col-deck-diff-row.has-adjust {
+      grid-template-rows: auto auto;
+    }
+    .col-deck-diff-adjust {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      padding: 0.35rem 0.55rem 0.5rem;
+      border-top: 1px dashed color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 6%, transparent);
+    }
+    .col-deck-diff-adjust-btn {
+      width: 2rem;
+      height: 2rem;
+      margin: 0;
+      padding: 0;
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.22));
+      border-radius: 8px;
+      background: var(--desk-surface-strong, #f7f7f4);
+      color: var(--desk-ink, #171714);
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .col-deck-diff-adjust-btn:hover,
+    .col-deck-diff-adjust-btn:focus-visible {
+      outline: none;
+      border-color: var(--desk-foil, #8a6f3a);
+      color: var(--desk-foil-deep, #5c4a28);
+    }
+    .col-deck-diff-adjust-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .col-deck-diff-adjust-qty {
+      min-width: 5.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--desk-foil-deep, #5c4a28);
+    }
+    [data-theme="dark"] .col-deck-diff-adjust-qty {
+      color: var(--desk-foil, #d0b27a);
     }
     .col-deck-diff-row.is-focus {
       outline: 2px solid var(--desk-foil, #8a6f3a);
@@ -8929,10 +9040,27 @@
       <p class="col-deck-modal-desc" id="colDeckModalDesc" hidden></p>
 
       <div class="col-deck-diff" id="colDeckDiff" hidden>
-        <div class="col-deck-diff-table" aria-label="牌組差異對照">
-          <div class="col-deck-diff-table-head">
-            <div class="is-left"><strong>原版</strong><span id="colDeckDiffLeftMeta">—</span></div>
-            <div class="is-right"><strong>新匯入</strong><span id="colDeckDiffRightMeta">—</span></div>
+        <p class="col-deck-diff-baseline-guide" id="colDeckDiffBaselineGuide">
+          先點選「原版」或「新匯入」作為編輯基準，再於差異列增減卡片。
+        </p>
+        <div class="col-deck-diff-table" id="colDeckDiffTable" aria-label="牌組差異對照">
+          <div class="col-deck-diff-table-head" role="group" aria-label="選擇編輯基準">
+            <button type="button" class="col-deck-diff-side is-left" id="colDeckDiffSideLeft"
+              data-deck-diff-baseline="left" aria-pressed="false">
+              <span class="col-deck-diff-side-top">
+                <strong>原版</strong>
+                <span class="col-deck-diff-baseline-pill" aria-hidden="true">基準</span>
+              </span>
+              <span id="colDeckDiffLeftMeta">—</span>
+            </button>
+            <button type="button" class="col-deck-diff-side is-right" id="colDeckDiffSideRight"
+              data-deck-diff-baseline="right" aria-pressed="false">
+              <span class="col-deck-diff-side-top">
+                <strong>新匯入</strong>
+                <span class="col-deck-diff-baseline-pill" aria-hidden="true">基準</span>
+              </span>
+              <span id="colDeckDiffRightMeta">—</span>
+            </button>
           </div>
           <div class="col-deck-diff-rows" id="colDeckDiffRows" role="list"></div>
         </div>
@@ -8965,6 +9093,10 @@
             </button>
             <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffApplyBtn">
               <i class="fas fa-check mr-1" aria-hidden="true"></i>套用新版本
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffDoneBtn" disabled
+              title="請先選擇編輯基準">
+              <i class="fas fa-save mr-1" aria-hidden="true"></i>調整完成
             </button>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="colDeckDiffCreateBtn" hidden>
               <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
@@ -9679,6 +9811,7 @@
     var deckDiffIgnoreVersionEl = document.getElementById('colDeckDiffIgnoreVersion');
     var deckDiffIgnoreSameNameEl = document.getElementById('colDeckDiffIgnoreSameName');
     var deckDiffApplyBtn = document.getElementById('colDeckDiffApplyBtn');
+    var deckDiffDoneBtn = document.getElementById('colDeckDiffDoneBtn');
     var deckDiffPrevBtn = document.getElementById('colDeckDiffPrevBtn');
     var deckDiffNextBtn = document.getElementById('colDeckDiffNextBtn');
     var deckDiffCreateBtn = document.getElementById('colDeckDiffCreateBtn');
@@ -9686,11 +9819,19 @@
     var deckDiffLockTextEl = document.getElementById('colDeckDiffLockText');
     var deckDiffLockCreateBtn = document.getElementById('colDeckDiffLockCreateBtn');
     var deckDiffRowsEl = document.getElementById('colDeckDiffRows');
+    var deckDiffTableEl = document.getElementById('colDeckDiffTable');
+    var deckDiffSideLeftBtn = document.getElementById('colDeckDiffSideLeft');
+    var deckDiffSideRightBtn = document.getElementById('colDeckDiffSideRight');
+    var deckDiffBaselineGuideEl = document.getElementById('colDeckDiffBaselineGuide');
     var deckDiffLeftMeta = document.getElementById('colDeckDiffLeftMeta');
     var deckDiffRightMeta = document.getElementById('colDeckDiffRightMeta');
     var deckDiffState = {
       active: false,
       incoming: null,
+      leftSnap: null,
+      rightSnap: null,
+      baseline: null, /* 'left' | 'right' */
+      working: null,
       ignoreVersion: false,
       ignoreSameName: false,
       seriesLocked: false,
@@ -16831,6 +16972,67 @@
       return html;
     }
 
+    function cloneDeckDiffCards(cards) {
+      return normalizeDeckCards(cards || []).map(function (c) {
+        var row = {
+          cardNumber: c.cardNumber,
+          qty: c.qty
+        };
+        if (c.cardName) row.cardName = c.cardName;
+        if (c.level != null) row.level = c.level;
+        var shortQty = clampShortQty(c.shortQty, c.qty);
+        if (shortQty > 0) row.shortQty = shortQty;
+        return row;
+      });
+    }
+
+    function deckDiffWorkingQtyForBucket(bucket) {
+      if (!bucket || !deckDiffState.working) return 0;
+      var wantCn = normalizeText(bucket.displayCardNumber || bucket.cardNumber).replace(/\\/g, '/');
+      if (!wantCn) return 0;
+      var ignoreVersion = !!deckDiffState.ignoreVersion;
+      var wantKey = ignoreVersion ? deckCardBaseNumber(wantCn) : wantCn;
+      var total = 0;
+      (deckDiffState.working || []).forEach(function (entry) {
+        var cn = normalizeText(entry && entry.cardNumber).replace(/\\/g, '/');
+        if (!cn) return;
+        var key = ignoreVersion ? deckCardBaseNumber(cn) : cn;
+        if (key === wantKey) total += entry.qty || 0;
+      });
+      return total;
+    }
+
+    function deckDiffAdjustTarget(pair, delta) {
+      if (!pair) return null;
+      var baselineIsLeft = deckDiffState.baseline === 'left';
+      var base = baselineIsLeft ? pair.left : pair.right;
+      var other = baselineIsLeft ? pair.right : pair.left;
+      var pick = delta > 0 ? (other || base) : (base || other);
+      if (!pick) return null;
+      return {
+        cardNumber: normalizeText(pick.displayCardNumber || pick.cardNumber).replace(/\\/g, '/'),
+        cardName: pick.cardName || '',
+        level: pick.level,
+        sample: pick.sample || null
+      };
+    }
+
+    function buildDeckDiffAdjustHtml(pair, pairIndex) {
+      if (!deckDiffState.baseline || pair.status === 'same') return '';
+      var baselineIsLeft = deckDiffState.baseline === 'left';
+      var baseBucket = baselineIsLeft ? pair.left : pair.right;
+      var qty = deckDiffWorkingQtyForBucket(baseBucket || pair.right || pair.left);
+      var canMinus = qty > 0;
+      var canPlus = qty < MAX_DECK_ENTRY_QTY;
+      return '<div class="col-deck-diff-adjust" role="group" aria-label="調整基準張數">' +
+        '<button type="button" class="col-deck-diff-adjust-btn" data-deck-diff-adj="-1" data-deck-diff-pair="' +
+        pairIndex + '"' + (canMinus ? '' : ' disabled') + ' aria-label="減少一張">−</button>' +
+        '<span class="col-deck-diff-adjust-qty">基準 ×' + escapeHtml(String(qty)) + '</span>' +
+        '<button type="button" class="col-deck-diff-adjust-btn" data-deck-diff-adj="1" data-deck-diff-pair="' +
+        pairIndex + '"' + (canPlus ? '' : ' disabled') + ' aria-label="增加一張">+</button>' +
+        '</div>';
+    }
+
     function buildDeckDiffAlignedRowsHtml(result) {
       var pairs = (result.pairs || []).slice();
       pairs.sort(function (a, b) {
@@ -16849,6 +17051,7 @@
         }
         return String(ea.cardNumber || '').localeCompare(String(eb.cardNumber || ''), 'en');
       });
+      result.pairs = pairs;
       if (!pairs.length) {
         return '<div class="col-modal-hint" style="padding:0.85rem;">沒有可比較的卡片</div>';
       }
@@ -16862,7 +17065,7 @@
       });
       var html = '';
       var lastKey = null;
-      pairs.forEach(function (pair) {
+      pairs.forEach(function (pair, pairIndex) {
         var gKey = deckEntryLevelGroupKey(deckDiffPairSortKey(pair));
         if (gKey !== lastKey) {
           lastKey = gKey;
@@ -16879,14 +17082,120 @@
         if (pair.status === 'removed') rowCls += ' is-removed';
         else if (pair.status === 'added') rowCls += ' is-added';
         else if (pair.status === 'qty') rowCls += ' is-qty';
+        if (deckDiffState.baseline && pair.status !== 'same') rowCls += ' has-adjust';
         html += '<div class="' + rowCls + '" role="listitem" data-deck-diff-status="' +
-          escapeHtml(pair.status) + '"' +
+          escapeHtml(pair.status) + '" data-deck-diff-pair="' + pairIndex + '"' +
           (pair.status !== 'same' ? ' data-deck-diff-changed="1"' : '') + '>';
         html += buildDeckDiffCellHtml(pair.left, pair.leftQty, 'left', pair.status);
         html += buildDeckDiffCellHtml(pair.right, pair.rightQty, 'right', pair.status);
+        html += buildDeckDiffAdjustHtml(pair, pairIndex);
         html += '</div>';
       });
       return html;
+    }
+
+    function syncDeckDiffBaselineUi() {
+      var baseline = deckDiffState.baseline;
+      if (deckDiffSideLeftBtn) {
+        deckDiffSideLeftBtn.classList.toggle('is-baseline', baseline === 'left');
+        deckDiffSideLeftBtn.setAttribute('aria-pressed', baseline === 'left' ? 'true' : 'false');
+      }
+      if (deckDiffSideRightBtn) {
+        deckDiffSideRightBtn.classList.toggle('is-baseline', baseline === 'right');
+        deckDiffSideRightBtn.setAttribute('aria-pressed', baseline === 'right' ? 'true' : 'false');
+      }
+      if (deckDiffTableEl) {
+        deckDiffTableEl.classList.toggle('is-baseline-left', baseline === 'left');
+        deckDiffTableEl.classList.toggle('is-baseline-right', baseline === 'right');
+      }
+      if (deckDiffBaselineGuideEl) {
+        if (!baseline) {
+          deckDiffBaselineGuideEl.hidden = false;
+          deckDiffBaselineGuideEl.textContent =
+            '先點選「原版」或「新匯入」作為編輯基準，再於差異列增減卡片。';
+        } else {
+          deckDiffBaselineGuideEl.hidden = false;
+          deckDiffBaselineGuideEl.textContent = baseline === 'left'
+            ? '目前基準：原版。可在差異列用 + / − 調整，完成後按「調整完成」另存新牌組。'
+            : '目前基準：新匯入。可在差異列用 + / − 調整，完成後按「調整完成」另存新牌組。';
+        }
+      }
+      if (deckDiffDoneBtn) {
+        deckDiffDoneBtn.disabled = !baseline;
+        deckDiffDoneBtn.title = baseline ? '依目前基準編成另存為新牌組' : '請先選擇編輯基準';
+      }
+    }
+
+    function setDeckDiffBaseline(side) {
+      if (!deckDiffState.active) return;
+      var next = side === 'right' ? 'right' : 'left';
+      var source = next === 'right'
+        ? (deckDiffState.rightSnap || (deckDiffState.incoming && deckDiffState.incoming.cards) || [])
+        : (deckDiffState.leftSnap || (deckDraft && deckDraft.cards) || []);
+      deckDiffState.baseline = next;
+      deckDiffState.working = cloneDeckDiffCards(source);
+      syncDeckDiffBaselineUi();
+      renderDeckDiffCompare();
+      setStatus(next === 'left' ? '已選擇原版作為編輯基準' : '已選擇新匯入作為編輯基準', 'is-ok');
+    }
+
+    function adjustDeckDiffWorking(pairIndex, delta) {
+      if (!deckDiffState.baseline || !deckDiffState.working) {
+        setStatus('請先選擇編輯基準', 'is-error');
+        return;
+      }
+      var pairs = deckDiffState.result && deckDiffState.result.pairs;
+      var pair = pairs && pairs[pairIndex];
+      if (!pair || pair.status === 'same') return;
+      var target = deckDiffAdjustTarget(pair, delta);
+      if (!target || !target.cardNumber) return;
+      var ignoreVersion = !!deckDiffState.ignoreVersion;
+      var wantKey = ignoreVersion
+        ? deckCardBaseNumber(target.cardNumber)
+        : target.cardNumber;
+      var idx = -1;
+      var i;
+      for (i = 0; i < deckDiffState.working.length; i++) {
+        var cn = normalizeText(deckDiffState.working[i].cardNumber).replace(/\\/g, '/');
+        var key = ignoreVersion ? deckCardBaseNumber(cn) : cn;
+        if (key === wantKey) {
+          idx = i;
+          break;
+        }
+      }
+      if (delta > 0) {
+        if (idx < 0) {
+          var row = {
+            cardNumber: target.cardNumber,
+            qty: 1,
+            shortQty: 0
+          };
+          if (target.cardName) row.cardName = target.cardName;
+          if (target.level != null) row.level = target.level;
+          deckDiffState.working.push(row);
+        } else {
+          var nextQty = Math.min(MAX_DECK_ENTRY_QTY, (deckDiffState.working[idx].qty || 0) + 1);
+          deckDiffState.working[idx].qty = nextQty;
+          deckDiffState.working[idx].shortQty = clampShortQty(
+            deckDiffState.working[idx].shortQty,
+            nextQty
+          );
+        }
+      } else {
+        if (idx < 0) return;
+        var qty = deckDiffState.working[idx].qty || 0;
+        if (qty <= 1) {
+          deckDiffState.working.splice(idx, 1);
+        } else {
+          deckDiffState.working[idx].qty = qty - 1;
+          deckDiffState.working[idx].shortQty = clampShortQty(
+            deckDiffState.working[idx].shortQty,
+            deckDiffState.working[idx].qty
+          );
+        }
+      }
+      deckDiffState.working = normalizeDeckCards(deckDiffState.working);
+      renderDeckDiffCompare();
     }
 
     function syncDeckDiffButton() {
@@ -16954,6 +17263,10 @@
       }
       deckDiffState.active = false;
       deckDiffState.incoming = null;
+      deckDiffState.leftSnap = null;
+      deckDiffState.rightSnap = null;
+      deckDiffState.baseline = null;
+      deckDiffState.working = null;
       deckDiffState.result = null;
       deckDiffState.focusIndex = -1;
       deckDiffState.seriesLocked = false;
@@ -16961,6 +17274,7 @@
       if (deckModal) deckModal.classList.remove('is-diff-compare');
       if (deckDiffRoot) deckDiffRoot.hidden = true;
       if (deckDiffLockEl) deckDiffLockEl.hidden = true;
+      syncDeckDiffBaselineUi();
       syncDeckDiffButton();
     }
 
@@ -16975,8 +17289,8 @@
       };
       deckDiffState.ignoreVersion = opts.ignoreVersion;
       deckDiffState.ignoreSameName = opts.ignoreSameName;
-      var leftCards = deckDraft.cards || [];
-      var rightCards = deckDiffState.incoming.cards || [];
+      var leftCards = deckDiffState.leftSnap || deckDraft.cards || [];
+      var rightCards = deckDiffState.rightSnap || deckDiffState.incoming.cards || [];
       var result = computeDeckDiff(leftCards, rightCards, opts);
       deckDiffState.result = result;
 
@@ -17010,6 +17324,7 @@
         deckDiffApplyBtn.title = seriesLocked ? '系列不同，無法直接覆蓋' : '以新匯入編成覆蓋目前草稿（需再按儲存）';
       }
       if (deckDiffCreateBtn) deckDiffCreateBtn.hidden = !seriesLocked;
+      syncDeckDiffBaselineUi();
       deckDiffState.focusIndex = -1;
     }
 
@@ -17023,6 +17338,10 @@
         source: (payload && payload.source) === 'cloud' ? 'cloud' : 'decklog',
         cards: normalizeDeckCards((payload && payload.cards) || [])
       };
+      deckDiffState.leftSnap = cloneDeckDiffCards(deckDraft.cards || []);
+      deckDiffState.rightSnap = cloneDeckDiffCards(deckDiffState.incoming.cards || []);
+      deckDiffState.baseline = null;
+      deckDiffState.working = null;
       deckDiffState.focusIndex = -1;
       if (deckDiffIgnoreVersionEl) deckDiffIgnoreVersionEl.checked = !!deckDiffState.ignoreVersion;
       if (deckDiffIgnoreSameNameEl) deckDiffIgnoreSameNameEl.checked = !!deckDiffState.ignoreSameName;
@@ -17030,11 +17349,12 @@
       if (deckDiffRoot) deckDiffRoot.hidden = false;
       setDeckDiffBarOpen(false);
       applyDeckEditorMode();
+      syncDeckDiffBaselineUi();
       ensureDeckCardLevels(
-        (deckDraft.cards || []).concat(deckDiffState.incoming.cards || []),
+        (deckDiffState.leftSnap || []).concat(deckDiffState.rightSnap || []),
         function () {
           ensureCardMetaForEntries(
-            (deckDraft.cards || []).concat(deckDiffState.incoming.cards || []),
+            (deckDiffState.leftSnap || []).concat(deckDiffState.rightSnap || []),
             function () {
               renderDeckDiffCompare();
             }
@@ -17045,10 +17365,72 @@
       renderDeckDiffCompare();
       setStatus(
         deckDiffState.incoming.source === 'cloud'
-          ? '已載入雲端牌組，可檢視左右差異'
-          : '已載入 DeckLog，可檢視左右差異',
+          ? '已載入雲端牌組，可檢視左右差異；請先選擇編輯基準'
+          : '已載入 DeckLog，可檢視左右差異；請先選擇編輯基準',
         'is-ok'
       );
+    }
+
+    function createAdjustedDeckFromDiff() {
+      if (!deckDiffState.active || !deckDiffState.baseline || !deckDiffState.working) {
+        setStatus('請先選擇編輯基準', 'is-error');
+        return;
+      }
+      var cards = normalizeDeckCards(deckDiffState.working || []);
+      cards.forEach(function (entry) { entry.shortQty = 0; });
+      if (!cards.length) {
+        setStatus('基準牌組沒有卡片可儲存', 'is-error');
+        return;
+      }
+      requireDeckAuth()
+        .then(function () {
+          if (allDecks.length >= MAX_DECKS) {
+            throw new Error('牌組數量已達上限（' + MAX_DECKS + '）');
+          }
+          var baseName = normalizeText(deckDraft && deckDraft.name) || '未命名牌組';
+          var name = (baseName + '（調整）').slice(0, 40);
+          var now = Date.now();
+          var draftPayload = {
+            id: newDeckId(),
+            name: name,
+            tags: ((deckDraft && deckDraft.tags) || []).slice(),
+            cards: cards,
+            source: 'manual',
+            createdAt: now,
+            updatedAt: now
+          };
+          if (deckDraft && deckDraft.deckDescription) {
+            draftPayload.deckDescription = deckDraft.deckDescription;
+          }
+          if (deckDraft && deckDraft.coverCardNumber) {
+            draftPayload.coverCardNumber = deckDraft.coverCardNumber;
+          }
+          var deck = serializeDeck(draftPayload);
+          return fb.saveUserDeck(deck).then(function () {
+            allDecks.unshift(deck);
+            writeDecks(allDecks);
+            return deck;
+          });
+        })
+        .then(function (deck) {
+          if (!deck) return;
+          deckDiffReturnToList = false;
+          exitDeckDiffCompare();
+          closeModalByName('deck');
+          selectedDeckId = deck.id;
+          persistDecksAndRender({ skipCloud: true });
+          focusDeckSection();
+          openDeckEditor(deck.id, 'edit');
+          setStatus(
+            '已另存調整後牌組「' + (deck.name || '') + '」（' +
+            (deck.cards || []).length + ' 種／' + deckTotalCards(deck) + ' 張）',
+            'is-ok'
+          );
+        })
+        .catch(function (err) {
+          console.error(err);
+          setStatus((err && err.message) || '另存調整牌組失敗', 'is-error');
+        });
     }
 
     function applyDeckDiffIncoming() {
@@ -20706,10 +21088,36 @@
         applyDeckDiffIncoming();
       });
     }
+    if (deckDiffDoneBtn) {
+      bindEl(deckDiffDoneBtn, 'click', function () {
+        createAdjustedDeckFromDiff();
+      });
+    }
+    if (deckDiffSideLeftBtn) {
+      bindEl(deckDiffSideLeftBtn, 'click', function () {
+        setDeckDiffBaseline('left');
+      });
+    }
+    if (deckDiffSideRightBtn) {
+      bindEl(deckDiffSideRightBtn, 'click', function () {
+        setDeckDiffBaseline('right');
+      });
+    }
     if (deckDiffPrevBtn) bindEl(deckDiffPrevBtn, 'click', jumpDeckDiffPrev);
     if (deckDiffNextBtn) bindEl(deckDiffNextBtn, 'click', jumpDeckDiffNext);
     if (deckDiffRowsEl) {
       bindEl(deckDiffRowsEl, 'click', function (e) {
+        var adjBtn = e.target.closest('[data-deck-diff-adj]');
+        if (adjBtn && deckDiffRowsEl.contains(adjBtn)) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (adjBtn.disabled) return;
+          var pairIndex = parseInt(adjBtn.getAttribute('data-deck-diff-pair'), 10);
+          var delta = parseInt(adjBtn.getAttribute('data-deck-diff-adj'), 10);
+          if (!isFinite(pairIndex) || !isFinite(delta) || !delta) return;
+          adjustDeckDiffWorking(pairIndex, delta > 0 ? 1 : -1);
+          return;
+        }
         var thumb = e.target.closest('.col-deck-diff-thumb');
         if (!thumb || !deckDiffRowsEl.contains(thumb)) return;
         if (thumb.classList.contains('is-empty')) return;
