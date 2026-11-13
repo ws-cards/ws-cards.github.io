@@ -9169,8 +9169,6 @@
     var deckEditChoiceEditBtn = document.getElementById('colDeckEditChoiceEditBtn');
     var deckEditChoiceDiffBtn = document.getElementById('colDeckEditChoiceDiffBtn');
     var deckEditChoiceDeckId = null;
-    /** 從「選擇編輯方式→差異比較」進入時，取消要回到此牌組的檢視模式 */
-    var deckDiffResumeViewId = null;
     var deckDiffBtn = document.getElementById('colDeckDiffBtn');
     var deckDiffRoot = document.getElementById('colDeckDiff');
     var deckDiffBarFab = document.getElementById('colDeckDiffBarFab');
@@ -12480,8 +12478,7 @@
       syncOverlayScrollLock();
     }
 
-    function closeModalByName(name, opts) {
-      opts = opts || {};
+    function closeModalByName(name) {
       if (name === 'add') {
         closeModal(addModal);
         resetAddCardForm();
@@ -12503,8 +12500,6 @@
         return;
       }
       if (name === 'deck') {
-        /* 差異比較中按取消：回到檢視牌組，不要整窗關掉 */
-        if (deckDiffState.active && resumeDeckDiffToView(true)) return;
         var closingDraftId = deckDraft && deckDraft.id;
         stopDeckEditorAutosave();
         // 取消／關閉編輯：清掉本地自動備份（正式儲存也走此路徑）
@@ -12516,7 +12511,6 @@
         resetDeckSimUi();
         setDeckSeriesPickOpen(false);
         exitDeckDiffCompare();
-        deckDiffResumeViewId = null;
         closeModal(deckModal);
         deckDraft = null;
         deckEditorMode = 'edit';
@@ -12533,7 +12527,6 @@
         return;
       }
       if (name === 'decklog') {
-        var wasDiffPick = decklogImportPurpose === 'diff';
         closeModal(decklogModal);
         decklogImportPurpose = 'create';
         decklogDiffTab = 'decklog';
@@ -12542,10 +12535,6 @@
         if (decklogConfirmBtn) {
           decklogConfirmBtn.disabled = false;
           decklogConfirmBtn.removeAttribute('aria-busy');
-        }
-        /* 來源選擇按取消／點暗底：回到檢視（僅從選擇器進入時） */
-        if (wasDiffPick && !opts.skipDiffResume && !deckDiffState.active && deckDiffResumeViewId) {
-          resumeDeckDiffToView(false);
         }
         return;
       }
@@ -16053,7 +16042,7 @@
         setDecklogStatus('此牌組沒有卡牌可比較', true);
         return;
       }
-      closeModalByName('decklog', { skipDiffResume: true });
+      closeModalByName('decklog');
       enterDeckDiffCompare({
         code: '',
         name: normalizeText(other.name) || '未命名牌組',
@@ -16386,7 +16375,6 @@
     function startDeckEditFromChooser() {
       var id = deckEditChoiceDeckId;
       closeModalByName('deckEditChoice');
-      deckDiffResumeViewId = null;
       if (!id) return;
       openDeckEditor(id, 'edit');
     }
@@ -16397,37 +16385,12 @@
       if (!id) return;
       requireDeckAuth()
         .then(function () {
-          deckDiffResumeViewId = id;
           openDeckEditorUi(id, 'edit');
           openDecklogModal('diff');
         })
         .catch(function (err) {
-          deckDiffResumeViewId = null;
           setStatus((err && err.message) || '請先登入後再比較牌組', 'is-error');
         });
-    }
-
-    /**
-     * 中止差異比較並回到檢視牌組。
-     * force：比較畫面中按取消也一律回檢視；來源選擇取消僅在從選擇器進入時回檢視。
-     */
-    function resumeDeckDiffToView(force) {
-      var fromChooser = !!deckDiffResumeViewId;
-      var id = normalizeText(deckDiffResumeViewId) ||
-        (deckDraft && normalizeText(deckDraft.id)) || '';
-      if (!id || (!fromChooser && !force)) {
-        deckDiffResumeViewId = null;
-        exitDeckDiffCompare();
-        return false;
-      }
-      deckDiffResumeViewId = null;
-      stopDeckEditorAutosave();
-      /* 選擇器路徑是為了比較才開編輯，取消時清掉自動備份 */
-      if (fromChooser) clearEditorLocalDraft(id);
-      closeModal(decklogModal);
-      exitDeckDiffCompare();
-      openDeckEditorUi(id, 'view');
-      return true;
     }
 
     function setDeckDiffBarOpen(open) {
@@ -16554,7 +16517,6 @@
         deckDraft.decklogDetached = true;
         deckDraft.decklogImportFingerprint = deckCardsFingerprint(cards);
       }
-      deckDiffResumeViewId = null;
       exitDeckDiffCompare();
       renderDeckEditor();
       setStatus('已套用新版本編成（尚未儲存，請按儲存寫入）', 'is-ok');
@@ -16741,7 +16703,7 @@
             }
             setDecklogStatus('正在取得 DeckLog 編成…');
             return resolveDecklogCards(code).then(function (payload) {
-              closeModalByName('decklog', { skipDiffResume: true });
+              closeModalByName('decklog');
               enterDeckDiffCompare(payload);
             });
           }
@@ -16750,7 +16712,7 @@
             if (existing) {
               // 先關匯入窗並清掉「檢查中」，避免確認框被擋在下層造成誤會
               setDecklogStatus('');
-              closeModalByName('decklog', { skipDiffResume: true });
+              closeModalByName('decklog');
               return promptDuplicateDecklog(existing).then(function (openExisting) {
                 if (openExisting) {
                   selectedDeckId = existing.id;
@@ -16770,7 +16732,7 @@
               setDecklogStatus('正在儲存到個人牌組…');
               return createDeckFromDecklogPayload(payload, preferredName);
             }).then(function (deck) {
-              closeModalByName('decklog', { skipDiffResume: true });
+              closeModalByName('decklog');
               openDeckAfterImport(deck);
             });
           });
@@ -19253,8 +19215,6 @@
     if (deckDiffBtn) {
       bindEl(deckDiffBtn, 'click', function () {
         if (!deckDraft || deckEditorMode !== 'edit') return;
-        /* 編輯中再開比較：取消應留在編輯，不要強制回檢視 */
-        deckDiffResumeViewId = null;
         openDecklogModal('diff');
       });
     }
