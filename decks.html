@@ -6914,52 +6914,170 @@
       border-bottom: 1px solid rgba(15, 23, 42, 0.06);
       scroll-margin: 3rem;
     }
-    .col-deck-diff-row.has-adjust {
-      grid-template-rows: auto auto;
+    .col-deck-diff-cell.is-adjustable {
+      cursor: pointer;
+      transition: background-color 0.16s ease, box-shadow 0.16s ease;
     }
-    .col-deck-diff-adjust {
-      grid-column: 1 / -1;
+    .col-deck-diff-cell.is-adjustable:hover,
+    .col-deck-diff-cell.is-adjustable:focus-visible {
+      outline: none;
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--desk-foil, #8a6f3a) 45%, transparent);
+    }
+    .col-deck-diff-cell.is-empty.is-adjustable {
+      justify-content: center;
+      color: var(--col-muted, #718096);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .col-deck-diff-edited-mark {
+      flex: 0 0 auto;
+      width: 1.15rem;
+      height: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, transparent);
+      color: var(--desk-foil-deep, #5c4a28);
+      font-size: 0.62rem;
+      line-height: 1;
+    }
+    [data-theme="dark"] .col-deck-diff-edited-mark {
+      color: var(--desk-foil, #d0b27a);
+    }
+    .col-deck-diff-cell.is-edited-added .col-deck-diff-edited-mark {
+      background: color-mix(in srgb, #16a34a 18%, transparent);
+      color: #15803d;
+    }
+    .col-deck-diff-cell.is-struck .col-deck-diff-thumb img {
+      filter: grayscale(1) brightness(0.92);
+      opacity: 0.55;
+    }
+    .col-deck-diff-cell.is-struck .col-deck-diff-thumb img.is-loaded {
+      opacity: 0.55;
+    }
+    .col-deck-diff-cell.is-struck .col-deck-diff-cell-body .cardno,
+    .col-deck-diff-cell.is-struck .col-deck-diff-cell-body .name,
+    .col-deck-diff-cell.is-struck .col-deck-diff-cell-body .meta {
+      text-decoration: line-through;
+      opacity: 0.72;
+    }
+    .col-deck-diff-adjust-pop {
+      position: absolute;
+      inset: 0;
+      z-index: 45;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.55rem;
-      padding: 0.35rem 0.55rem 0.5rem;
-      border-top: 1px dashed color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
-      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 6%, transparent);
+      padding: 1rem;
     }
-    .col-deck-diff-adjust-btn {
-      width: 2rem;
-      height: 2rem;
+    .col-deck-diff-adjust-pop[hidden] { display: none !important; }
+    .col-deck-diff-adjust-pop-scrim {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: rgba(15, 23, 42, 0.42);
+      cursor: pointer;
+    }
+    .col-deck-diff-adjust-pop-card {
+      position: relative;
+      z-index: 1;
+      width: min(14.5rem, 78vw);
+      padding: 0.85rem 0.85rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
+      background: var(--desk-surface-strong, #f7f7f4);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      animation: colDeckDiffAdjustPopIn 0.2s var(--desk-ease, ease) both;
+    }
+    [data-theme="dark"] .col-deck-diff-adjust-pop-card {
+      background: var(--desk-surface-strong, #1c1b18);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    }
+    @keyframes colDeckDiffAdjustPopIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.96); }
+      to { opacity: 1; transform: none; }
+    }
+    .col-deck-diff-adjust-pop-art {
+      position: relative;
+      width: 7.2rem;
+      aspect-ratio: 63 / 88;
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        linear-gradient(160deg, color-mix(in srgb, var(--desk-foil, #8a6f3a) 20%, transparent), transparent 55%),
+        #1a2420;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+    }
+    .col-deck-diff-adjust-pop-art.is-landscape {
+      width: 9.2rem;
+      aspect-ratio: 88 / 63;
+    }
+    .col-deck-diff-adjust-pop-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+    }
+    .col-deck-diff-adjust-pop-art img.is-loaded { opacity: 1; }
+    .col-deck-diff-adjust-pop-art img.is-broken { display: none; }
+    .col-deck-diff-adjust-pop-art .col-tile-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 248, 232, 0.5);
+    }
+    .col-deck-diff-adjust-pop-art.has-image .col-tile-placeholder { display: none; }
+    .col-deck-diff-adjust-pop-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+    }
+    .col-deck-diff-adjust-pop-btn {
+      width: 2.35rem;
+      height: 2.35rem;
       margin: 0;
       padding: 0;
       border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.22));
-      border-radius: 8px;
-      background: var(--desk-surface-strong, #f7f7f4);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--desk-surface, #fff) 88%, transparent);
       color: var(--desk-ink, #171714);
-      font-size: 1.05rem;
+      font-size: 1.2rem;
       font-weight: 700;
       line-height: 1;
       cursor: pointer;
     }
-    .col-deck-diff-adjust-btn:hover,
-    .col-deck-diff-adjust-btn:focus-visible {
+    .col-deck-diff-adjust-pop-btn:hover,
+    .col-deck-diff-adjust-pop-btn:focus-visible {
       outline: none;
       border-color: var(--desk-foil, #8a6f3a);
       color: var(--desk-foil-deep, #5c4a28);
     }
-    .col-deck-diff-adjust-btn:disabled {
+    .col-deck-diff-adjust-pop-btn:disabled {
       opacity: 0.4;
       cursor: default;
     }
-    .col-deck-diff-adjust-qty {
-      min-width: 5.5rem;
+    .col-deck-diff-adjust-pop-qty {
+      min-width: 3.2rem;
       text-align: center;
-      font-size: 0.78rem;
+      font-size: 1rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       color: var(--desk-foil-deep, #5c4a28);
     }
-    [data-theme="dark"] .col-deck-diff-adjust-qty {
+    [data-theme="dark"] .col-deck-diff-adjust-pop-qty {
       color: var(--desk-foil, #d0b27a);
     }
     .col-deck-diff-row.is-focus {
@@ -9029,7 +9147,7 @@
 
       <div class="col-deck-diff" id="colDeckDiff" hidden>
         <p class="col-deck-diff-baseline-guide" id="colDeckDiffBaselineGuide">
-          先點選「原版」或「新匯入」作為編輯基準，再於差異列增減卡片。
+          先點選「原版」或「新匯入」作為編輯基準，再點基準側有差異的格子調整張數。
         </p>
         <div class="col-deck-diff-table" id="colDeckDiffTable" aria-label="牌組差異對照">
           <div class="col-deck-diff-table-head" role="group" aria-label="選擇編輯基準">
@@ -9099,6 +9217,20 @@
               <button type="button" class="btn btn-primary btn-sm" id="colDeckDiffLockCreateBtn">
                 <i class="fas fa-plus mr-1" aria-hidden="true"></i>建立為新牌組
               </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-deck-diff-adjust-pop" id="colDeckDiffAdjustPop" hidden>
+          <button type="button" class="col-deck-diff-adjust-pop-scrim" id="colDeckDiffAdjustPopScrim"
+            tabindex="-1" aria-label="關閉調整視窗"></button>
+          <div class="col-deck-diff-adjust-pop-card" role="dialog" aria-modal="true" aria-label="調整基準張數">
+            <div class="col-deck-diff-adjust-pop-art" id="colDeckDiffAdjustPopArt" aria-hidden="true"></div>
+            <div class="col-deck-diff-adjust-pop-controls">
+              <button type="button" class="col-deck-diff-adjust-pop-btn" id="colDeckDiffAdjustPopMinus"
+                aria-label="減少一張">−</button>
+              <span class="col-deck-diff-adjust-pop-qty" id="colDeckDiffAdjustPopQty">×0</span>
+              <button type="button" class="col-deck-diff-adjust-pop-btn" id="colDeckDiffAdjustPopPlus"
+                aria-label="增加一張">+</button>
             </div>
           </div>
         </div>
@@ -9813,6 +9945,12 @@
     var deckDiffBaselineGuideEl = document.getElementById('colDeckDiffBaselineGuide');
     var deckDiffLeftMeta = document.getElementById('colDeckDiffLeftMeta');
     var deckDiffRightMeta = document.getElementById('colDeckDiffRightMeta');
+    var deckDiffAdjustPopEl = document.getElementById('colDeckDiffAdjustPop');
+    var deckDiffAdjustPopScrimEl = document.getElementById('colDeckDiffAdjustPopScrim');
+    var deckDiffAdjustPopArtEl = document.getElementById('colDeckDiffAdjustPopArt');
+    var deckDiffAdjustPopQtyEl = document.getElementById('colDeckDiffAdjustPopQty');
+    var deckDiffAdjustPopMinusBtn = document.getElementById('colDeckDiffAdjustPopMinus');
+    var deckDiffAdjustPopPlusBtn = document.getElementById('colDeckDiffAdjustPopPlus');
     var deckDiffState = {
       active: false,
       incoming: null,
@@ -9825,7 +9963,9 @@
       seriesLocked: false,
       result: null,
       focusIndex: -1,
-      barOpen: false
+      barOpen: false,
+      adjustPairIndex: -1,
+      keepAdjustOpen: false
     };
 
     function setStatus(msg, kind) {
@@ -16927,9 +17067,24 @@
       };
     }
 
-    function buildDeckDiffCellHtml(bucket, qty, side, status) {
+    function buildDeckDiffCellHtml(bucket, qty, side, status, opts) {
+      opts = opts || {};
+      var editable = !!opts.editable;
+      var adjusted = opts.adjusted || '';
+      var pairIndex = opts.pairIndex;
+      var attrs = '';
+      if (editable && pairIndex != null && isFinite(pairIndex)) {
+        attrs += ' data-deck-diff-pair="' + pairIndex + '" data-deck-diff-adjust-cell="1"';
+        attrs += ' role="button" tabindex="0"';
+      }
       if (!bucket) {
-        return '<div class="col-deck-diff-cell is-' + side + ' is-empty" aria-hidden="true"></div>';
+        var emptyCls = 'col-deck-diff-cell is-' + side + ' is-empty';
+        if (editable) emptyCls += ' is-adjustable';
+        if (editable) {
+          return '<div class="' + emptyCls + '"' + attrs + ' aria-label="點擊調整基準張數">' +
+            '<span class="col-deck-diff-empty-hint">點擊調整</span></div>';
+        }
+        return '<div class="' + emptyCls + '" aria-hidden="true"></div>';
       }
       var cn = bucket.displayCardNumber || bucket.cardNumber || '';
       var name = bucket.cardName || resolveDeckDiffCardName({ cardNumber: cn, cardName: bucket.cardName }) || '（尚無卡名）';
@@ -16938,8 +17093,18 @@
       if (status === 'removed' && side === 'left') tag = '少';
       else if (status === 'added' && side === 'right') tag = '多';
       else if (status === 'qty') tag = '張數不同';
-      var html = '<div class="col-deck-diff-cell is-' + side + '">';
+      var cellCls = 'col-deck-diff-cell is-' + side;
+      if (editable) cellCls += ' is-adjustable';
+      if (adjusted === 'removed') cellCls += ' is-struck';
+      if (adjusted === 'edited') cellCls += ' is-edited';
+      if (adjusted === 'added') cellCls += ' is-edited-added';
+      var html = '<div class="' + cellCls + '"' + attrs +
+        (editable ? ' aria-label="點擊調整基準張數"' : '') + '>';
       if (tag) html += '<span class="diff-tag">' + escapeHtml(tag) + '</span>';
+      if (adjusted === 'edited' || adjusted === 'added') {
+        html += '<span class="col-deck-diff-edited-mark" title="已調整" aria-label="已調整">' +
+          '<i class="fas ' + (adjusted === 'added' ? 'fa-plus' : 'fa-pen') + '" aria-hidden="true"></i></span>';
+      }
       html += '<div class="col-deck-diff-thumb' + (isCxCardNumber(cn) ? ' is-landscape' : '') + '">';
       html += '<div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>';
       if (urls.primary) {
@@ -16974,6 +17139,21 @@
       });
     }
 
+    function deckDiffBaselineOrigBucket(pair) {
+      if (!pair) return null;
+      return deckDiffState.baseline === 'right' ? pair.right : pair.left;
+    }
+
+    function deckDiffOtherBucket(pair) {
+      if (!pair) return null;
+      return deckDiffState.baseline === 'right' ? pair.left : pair.right;
+    }
+
+    function deckDiffBaselineOrigQty(pair) {
+      if (!pair) return 0;
+      return deckDiffState.baseline === 'right' ? (pair.rightQty || 0) : (pair.leftQty || 0);
+    }
+
     function deckDiffWorkingQtyForBucket(bucket) {
       if (!bucket || !deckDiffState.working) return 0;
       var wantCn = normalizeText(bucket.displayCardNumber || bucket.cardNumber).replace(/\\/g, '/');
@@ -16990,11 +17170,16 @@
       return total;
     }
 
+    function deckDiffWorkingQtyForPair(pair) {
+      return deckDiffWorkingQtyForBucket(
+        deckDiffBaselineOrigBucket(pair) || deckDiffOtherBucket(pair)
+      );
+    }
+
     function deckDiffAdjustTarget(pair, delta) {
       if (!pair) return null;
-      var baselineIsLeft = deckDiffState.baseline === 'left';
-      var base = baselineIsLeft ? pair.left : pair.right;
-      var other = baselineIsLeft ? pair.right : pair.left;
+      var base = deckDiffBaselineOrigBucket(pair);
+      var other = deckDiffOtherBucket(pair);
       var pick = delta > 0 ? (other || base) : (base || other);
       if (!pick) return null;
       return {
@@ -17005,20 +17190,71 @@
       };
     }
 
-    function buildDeckDiffAdjustHtml(pair, pairIndex) {
-      if (!deckDiffState.baseline || pair.status === 'same') return '';
-      var baselineIsLeft = deckDiffState.baseline === 'left';
-      var baseBucket = baselineIsLeft ? pair.left : pair.right;
-      var qty = deckDiffWorkingQtyForBucket(baseBucket || pair.right || pair.left);
-      var canMinus = qty > 0;
-      var canPlus = qty < MAX_DECK_ENTRY_QTY;
-      return '<div class="col-deck-diff-adjust" role="group" aria-label="調整基準張數">' +
-        '<button type="button" class="col-deck-diff-adjust-btn" data-deck-diff-adj="-1" data-deck-diff-pair="' +
-        pairIndex + '"' + (canMinus ? '' : ' disabled') + ' aria-label="減少一張">−</button>' +
-        '<span class="col-deck-diff-adjust-qty">基準 ×' + escapeHtml(String(qty)) + '</span>' +
-        '<button type="button" class="col-deck-diff-adjust-btn" data-deck-diff-adj="1" data-deck-diff-pair="' +
-        pairIndex + '"' + (canPlus ? '' : ' disabled') + ' aria-label="增加一張">+</button>' +
-        '</div>';
+    function deckDiffDisplayBucketForWorking(pair, workQty) {
+      var orig = deckDiffBaselineOrigBucket(pair);
+      var other = deckDiffOtherBucket(pair);
+      var pick = orig || other;
+      if (!pick) return null;
+      if (workQty <= 0) return orig || pick;
+      var wantCn = normalizeText(pick.displayCardNumber || pick.cardNumber).replace(/\\/g, '/');
+      var ignoreVersion = !!deckDiffState.ignoreVersion;
+      var wantKey = ignoreVersion ? deckCardBaseNumber(wantCn) : wantCn;
+      var found = null;
+      (deckDiffState.working || []).some(function (entry) {
+        var cn = normalizeText(entry && entry.cardNumber).replace(/\\/g, '/');
+        if (!cn) return false;
+        var key = ignoreVersion ? deckCardBaseNumber(cn) : cn;
+        if (key !== wantKey) return false;
+        found = {
+          cardNumber: cn,
+          displayCardNumber: cn,
+          cardName: entry.cardName || pick.cardName || '',
+          level: entry.level != null ? entry.level : pick.level,
+          sample: pick.sample || null
+        };
+        return true;
+      });
+      if (found) return found;
+      return {
+        cardNumber: wantCn,
+        displayCardNumber: pick.displayCardNumber || wantCn,
+        cardName: pick.cardName || '',
+        level: pick.level,
+        sample: pick.sample || null
+      };
+    }
+
+    function buildDeckDiffSideCellHtml(pair, pairIndex, side, status) {
+      var snapBucket = side === 'left' ? pair.left : pair.right;
+      var snapQty = side === 'left' ? (pair.leftQty || 0) : (pair.rightQty || 0);
+      var isBaselineSide = !!deckDiffState.baseline && deckDiffState.baseline === side;
+      if (!isBaselineSide || pair.status === 'same') {
+        return buildDeckDiffCellHtml(snapBucket, snapQty, side, status);
+      }
+      var origQty = snapQty;
+      var workQty = deckDiffWorkingQtyForPair(pair);
+      if (workQty <= 0 && origQty <= 0) {
+        return buildDeckDiffCellHtml(null, 0, side, status, {
+          editable: true,
+          pairIndex: pairIndex
+        });
+      }
+      if (workQty <= 0 && origQty > 0) {
+        return buildDeckDiffCellHtml(snapBucket, 0, side, status, {
+          editable: true,
+          pairIndex: pairIndex,
+          adjusted: 'removed'
+        });
+      }
+      var displayBucket = deckDiffDisplayBucketForWorking(pair, workQty);
+      var adjusted = '';
+      if (origQty <= 0) adjusted = 'added';
+      else if (workQty !== origQty) adjusted = 'edited';
+      return buildDeckDiffCellHtml(displayBucket, workQty, side, status, {
+        editable: true,
+        pairIndex: pairIndex,
+        adjusted: adjusted
+      });
     }
 
     function buildDeckDiffAlignedRowsHtml(result) {
@@ -17070,13 +17306,11 @@
         if (pair.status === 'removed') rowCls += ' is-removed';
         else if (pair.status === 'added') rowCls += ' is-added';
         else if (pair.status === 'qty') rowCls += ' is-qty';
-        if (deckDiffState.baseline && pair.status !== 'same') rowCls += ' has-adjust';
         html += '<div class="' + rowCls + '" role="listitem" data-deck-diff-status="' +
           escapeHtml(pair.status) + '" data-deck-diff-pair="' + pairIndex + '"' +
           (pair.status !== 'same' ? ' data-deck-diff-changed="1"' : '') + '>';
-        html += buildDeckDiffCellHtml(pair.left, pair.leftQty, 'left', pair.status);
-        html += buildDeckDiffCellHtml(pair.right, pair.rightQty, 'right', pair.status);
-        html += buildDeckDiffAdjustHtml(pair, pairIndex);
+        html += buildDeckDiffSideCellHtml(pair, pairIndex, 'left', pair.status);
+        html += buildDeckDiffSideCellHtml(pair, pairIndex, 'right', pair.status);
         html += '</div>';
       });
       return html;
@@ -17100,12 +17334,12 @@
         if (!baseline) {
           deckDiffBaselineGuideEl.hidden = false;
           deckDiffBaselineGuideEl.textContent =
-            '先點選「原版」或「新匯入」作為編輯基準，再於差異列增減卡片。';
+            '先點選「原版」或「新匯入」作為編輯基準，再點基準側有差異的格子調整張數。';
         } else {
           deckDiffBaselineGuideEl.hidden = false;
           deckDiffBaselineGuideEl.textContent = baseline === 'left'
-            ? '目前基準：原版。可在差異列用 + / − 調整，完成後按「調整完成」另存新牌組。'
-            : '目前基準：新匯入。可在差異列用 + / − 調整，完成後按「調整完成」另存新牌組。';
+            ? '目前基準：原版。點基準側差異格調整張數，完成後按「調整完成」另存新牌組。'
+            : '目前基準：新匯入。點基準側差異格調整張數，完成後按「調整完成」另存新牌組。';
         }
       }
       if (deckDiffDoneBtn) {
@@ -17114,12 +17348,78 @@
       }
     }
 
+    function syncDeckDiffAdjustPopoverUi() {
+      if (!deckDiffAdjustPopEl || deckDiffAdjustPopEl.hidden) return;
+      var pairIndex = deckDiffState.adjustPairIndex;
+      var pairs = deckDiffState.result && deckDiffState.result.pairs;
+      var pair = pairs && pairs[pairIndex];
+      if (!pair || pair.status === 'same' || !deckDiffState.baseline) {
+        closeDeckDiffAdjustPopover();
+        return;
+      }
+      var meta = deckDiffAdjustTarget(pair, 1) || deckDiffAdjustTarget(pair, -1);
+      var qty = deckDiffWorkingQtyForPair(pair);
+      if (deckDiffAdjustPopQtyEl) deckDiffAdjustPopQtyEl.textContent = '×' + qty;
+      if (deckDiffAdjustPopMinusBtn) deckDiffAdjustPopMinusBtn.disabled = qty <= 0;
+      if (deckDiffAdjustPopPlusBtn) {
+        deckDiffAdjustPopPlusBtn.disabled = qty >= MAX_DECK_ENTRY_QTY;
+      }
+      if (!deckDiffAdjustPopArtEl || !meta || !meta.cardNumber) return;
+      var cn = meta.cardNumber;
+      var currentCn = deckDiffAdjustPopArtEl.getAttribute('data-card-number') || '';
+      if (currentCn === cn && deckDiffAdjustPopArtEl.querySelector('img, .col-tile-placeholder')) {
+        return;
+      }
+      var urls = buildCardImageUrls(cn);
+      var artCls = 'col-deck-diff-adjust-pop-art' + (isCxCardNumber(cn) ? ' is-landscape' : '');
+      deckDiffAdjustPopArtEl.className = artCls;
+      deckDiffAdjustPopArtEl.setAttribute('data-card-number', cn);
+      var artHtml = '<div class="col-tile-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>';
+      if (urls.primary) {
+        artHtml += '<img src="' + escapeHtml(urls.primary) + '" data-fallback="' +
+          escapeHtml(urls.fallback) + '" alt="' + escapeHtml(cn) + '" decoding="async">';
+      }
+      deckDiffAdjustPopArtEl.innerHTML = artHtml;
+      revealLoadedDeckImages(deckDiffAdjustPopArtEl);
+      var img = deckDiffAdjustPopArtEl.querySelector('img');
+      if (img) {
+        if (img.complete && img.naturalWidth > 0) onAlbumImageLoad(img);
+        img.addEventListener('load', function () { onAlbumImageLoad(img); }, { once: true });
+        img.addEventListener('error', function () { onAlbumImageError(img); }, { once: true });
+      }
+    }
+
+    function closeDeckDiffAdjustPopover() {
+      deckDiffState.adjustPairIndex = -1;
+      deckDiffState.keepAdjustOpen = false;
+      if (deckDiffAdjustPopEl) deckDiffAdjustPopEl.hidden = true;
+      if (deckDiffAdjustPopArtEl) {
+        deckDiffAdjustPopArtEl.innerHTML = '';
+        deckDiffAdjustPopArtEl.removeAttribute('data-card-number');
+      }
+    }
+
+    function openDeckDiffAdjustPopover(pairIndex) {
+      if (!deckDiffState.baseline || !deckDiffState.working) {
+        setStatus('請先選擇編輯基準', 'is-error');
+        return;
+      }
+      var pairs = deckDiffState.result && deckDiffState.result.pairs;
+      var pair = pairs && pairs[pairIndex];
+      if (!pair || pair.status === 'same') return;
+      if (lightboxArt) closeCardLightbox(true);
+      deckDiffState.adjustPairIndex = pairIndex;
+      if (deckDiffAdjustPopEl) deckDiffAdjustPopEl.hidden = false;
+      syncDeckDiffAdjustPopoverUi();
+    }
+
     function setDeckDiffBaseline(side) {
       if (!deckDiffState.active) return;
       var next = side === 'right' ? 'right' : 'left';
       var source = next === 'right'
         ? (deckDiffState.rightSnap || (deckDiffState.incoming && deckDiffState.incoming.cards) || [])
         : (deckDiffState.leftSnap || (deckDraft && deckDraft.cards) || []);
+      closeDeckDiffAdjustPopover();
       deckDiffState.baseline = next;
       deckDiffState.working = cloneDeckDiffCards(source);
       syncDeckDiffBaselineUi();
@@ -17183,6 +17483,8 @@
         }
       }
       deckDiffState.working = normalizeDeckCards(deckDiffState.working);
+      deckDiffState.adjustPairIndex = pairIndex;
+      deckDiffState.keepAdjustOpen = true;
       renderDeckDiffCompare();
     }
 
@@ -17249,6 +17551,7 @@
       if (lightboxArt && lightboxArt.classList && lightboxArt.classList.contains('col-deck-diff-thumb')) {
         closeCardLightbox(true);
       }
+      closeDeckDiffAdjustPopover();
       deckDiffState.active = false;
       deckDiffState.incoming = null;
       deckDiffState.leftSnap = null;
@@ -17271,6 +17574,9 @@
       if (lightboxArt && lightboxArt.classList && lightboxArt.classList.contains('col-deck-diff-thumb')) {
         closeCardLightbox(true);
       }
+      var keepAdjustPair = deckDiffState.keepAdjustOpen ? deckDiffState.adjustPairIndex : -1;
+      deckDiffState.keepAdjustOpen = false;
+      if (keepAdjustPair < 0) closeDeckDiffAdjustPopover();
       var opts = {
         ignoreVersion: !!(deckDiffIgnoreVersionEl && deckDiffIgnoreVersionEl.checked),
         ignoreSameName: !!(deckDiffIgnoreSameNameEl && deckDiffIgnoreSameNameEl.checked)
@@ -17314,6 +17620,11 @@
       if (deckDiffCreateBtn) deckDiffCreateBtn.hidden = !seriesLocked;
       syncDeckDiffBaselineUi();
       deckDiffState.focusIndex = -1;
+      if (keepAdjustPair >= 0) {
+        deckDiffState.adjustPairIndex = keepAdjustPair;
+        if (deckDiffAdjustPopEl) deckDiffAdjustPopEl.hidden = false;
+        syncDeckDiffAdjustPopoverUi();
+      }
     }
 
     function enterDeckDiffCompare(payload) {
@@ -17330,6 +17641,7 @@
       deckDiffState.rightSnap = cloneDeckDiffCards(deckDiffState.incoming.cards || []);
       deckDiffState.baseline = null;
       deckDiffState.working = null;
+      closeDeckDiffAdjustPopover();
       deckDiffState.focusIndex = -1;
       if (deckDiffIgnoreVersionEl) deckDiffIgnoreVersionEl.checked = !!deckDiffState.ignoreVersion;
       if (deckDiffIgnoreSameNameEl) deckDiffIgnoreSameNameEl.checked = !!deckDiffState.ignoreSameName;
@@ -19897,7 +20209,7 @@
     function onAlbumImageLoad(img) {
       img.classList.add('is-loaded');
       var art = img.closest(
-        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face'
+        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face, .col-deck-diff-adjust-pop-art'
       );
       if (art) art.classList.add('has-image');
       applyLandscapeFromImage(img);
@@ -19907,7 +20219,7 @@
     function revealLoadedDeckImages(root) {
       if (!root) return;
       root.querySelectorAll(
-        '.col-deck-entry-art img, .col-deck-cover-art img, .col-deck-diff-thumb img, .col-deck-create-preview-face img'
+        '.col-deck-entry-art img, .col-deck-cover-art img, .col-deck-diff-thumb img, .col-deck-create-preview-face img, .col-deck-diff-adjust-pop-art img'
       ).forEach(function (img) {
         if (img.classList.contains('is-loaded') || img.classList.contains('is-broken')) return;
         if (img.complete && img.naturalWidth > 0) onAlbumImageLoad(img);
@@ -19925,7 +20237,7 @@
       img.classList.add('is-broken');
       img.removeAttribute('src');
       var art = img.closest(
-        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face'
+        '.col-tile-art, .col-deck-entry-art, .col-deck-cover-art, .col-deck-diff-thumb, .col-deck-create-preview-face, .col-deck-diff-adjust-pop-art'
       );
       if (art) {
         art.classList.remove('has-image');
@@ -21095,24 +21407,49 @@
     if (deckDiffNextBtn) bindEl(deckDiffNextBtn, 'click', jumpDeckDiffNext);
     if (deckDiffRowsEl) {
       bindEl(deckDiffRowsEl, 'click', function (e) {
-        var adjBtn = e.target.closest('[data-deck-diff-adj]');
-        if (adjBtn && deckDiffRowsEl.contains(adjBtn)) {
+        var adjustCell = e.target.closest('[data-deck-diff-adjust-cell]');
+        if (adjustCell && deckDiffRowsEl.contains(adjustCell)) {
           e.preventDefault();
           e.stopPropagation();
-          if (adjBtn.disabled) return;
-          var pairIndex = parseInt(adjBtn.getAttribute('data-deck-diff-pair'), 10);
-          var delta = parseInt(adjBtn.getAttribute('data-deck-diff-adj'), 10);
-          if (!isFinite(pairIndex) || !isFinite(delta) || !delta) return;
-          adjustDeckDiffWorking(pairIndex, delta > 0 ? 1 : -1);
+          var pairIndex = parseInt(adjustCell.getAttribute('data-deck-diff-pair'), 10);
+          if (!isFinite(pairIndex)) return;
+          openDeckDiffAdjustPopover(pairIndex);
           return;
         }
         var thumb = e.target.closest('.col-deck-diff-thumb');
         if (!thumb || !deckDiffRowsEl.contains(thumb)) return;
+        if (thumb.closest('[data-deck-diff-adjust-cell]')) return;
         if (thumb.classList.contains('is-empty')) return;
         var img = thumb.querySelector('img');
         if (!img || img.classList.contains('is-broken')) return;
         e.preventDefault();
         toggleCardLightbox(thumb);
+      });
+      bindEl(deckDiffRowsEl, 'keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var adjustCell = e.target.closest('[data-deck-diff-adjust-cell]');
+        if (!adjustCell || !deckDiffRowsEl.contains(adjustCell)) return;
+        e.preventDefault();
+        var pairIndex = parseInt(adjustCell.getAttribute('data-deck-diff-pair'), 10);
+        if (!isFinite(pairIndex)) return;
+        openDeckDiffAdjustPopover(pairIndex);
+      });
+    }
+    if (deckDiffAdjustPopScrimEl) {
+      bindEl(deckDiffAdjustPopScrimEl, 'click', function () {
+        closeDeckDiffAdjustPopover();
+      });
+    }
+    if (deckDiffAdjustPopMinusBtn) {
+      bindEl(deckDiffAdjustPopMinusBtn, 'click', function () {
+        if (deckDiffState.adjustPairIndex < 0) return;
+        adjustDeckDiffWorking(deckDiffState.adjustPairIndex, -1);
+      });
+    }
+    if (deckDiffAdjustPopPlusBtn) {
+      bindEl(deckDiffAdjustPopPlusBtn, 'click', function () {
+        if (deckDiffState.adjustPairIndex < 0) return;
+        adjustDeckDiffWorking(deckDiffState.adjustPairIndex, 1);
       });
     }
     if (deckDiffCreateBtn) bindEl(deckDiffCreateBtn, 'click', createDeckFromDiffIncoming);
@@ -21703,6 +22040,10 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
+      if (deckDiffAdjustPopEl && !deckDiffAdjustPopEl.hidden) {
+        closeDeckDiffAdjustPopover();
+        return;
+      }
       if (lightboxArt || pendingDeckExpandEntry) {
         clearPendingDeckExpand();
         closeCardLightbox(true);
