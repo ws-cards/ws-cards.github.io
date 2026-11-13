@@ -4479,8 +4479,8 @@
       box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
       cursor: default;
       overflow: hidden;
-      /* 真實手機：卡圖區交給 JS 辨識左右滑，避免被直向捲動吃掉 */
-      touch-action: none;
+      /* 允許在卡圖上直向捲動看詳情；橫滑仍交給 JS 切卡（見 bindMobileLightboxSwipeNav） */
+      touch-action: pan-y;
       -webkit-user-select: none;
       user-select: none;
     }
@@ -11786,10 +11786,13 @@
     function resolveMobileLbSwipeAxis(dx, dy, fromArt) {
       var absX = Math.abs(dx);
       var absY = Math.abs(dy);
+      /*
+       * 卡圖／詳情共用：優先保留直向捲動（touch-action: pan-y）。
+       * 只有明確偏橫才鎖 h 並 preventDefault 切卡，避免在卡圖上滑不動。
+       */
       if (fromArt) {
-        /* 卡圖區：偏橫滑；只有明顯直滑才交給頁面捲動 */
-        if (absY > absX * 1.75 && absY > 22) return 'v';
-        if (absX > 8) return 'h';
+        if (absX > absY * 1.15 && absX > 14) return 'h';
+        if (absY > 8) return 'v';
         return '';
       }
       /* 詳情文字：需更明確的橫滑才切卡，其餘保留直向捲動 */
