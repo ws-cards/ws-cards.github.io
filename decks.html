@@ -11522,6 +11522,37 @@
       return !!(art && img && !img.classList.contains('is-broken'));
     }
 
+    function isSeriesPickArtOpenable(art) {
+      if (!art) return false;
+      var img = art.querySelector('img.is-loaded, img');
+      return !!(img && !img.classList.contains('is-broken'));
+    }
+
+    /** 編輯選牌格：依左右滑找上一／下一張可開的系列卡 */
+    function findSeriesPickNavArt(entryEl, dir) {
+      if (!entryEl || !entryEl.classList.contains('is-series-detail-host') || !dir) return null;
+      var cardNo = entryEl.getAttribute('data-deck-entry') || '';
+      var grid = document.getElementById('colDeckSeriesPickGrid');
+      if (!grid || !cardNo) return null;
+      var cards = Array.prototype.slice.call(
+        grid.querySelectorAll('.col-series-card[data-series-pick]')
+      );
+      var idx = -1;
+      var i;
+      for (i = 0; i < cards.length; i++) {
+        if (cards[i].getAttribute('data-series-pick') === cardNo) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx < 0) return null;
+      for (i = idx + dir; i >= 0 && i < cards.length; i += dir) {
+        var art = cards[i].querySelector('.col-deck-entry-art');
+        if (isSeriesPickArtOpenable(art)) return art;
+      }
+      return null;
+    }
+
     function findLightboxNavTarget(entryEl, dir) {
       var entries = getLightboxNavEntries(entryEl);
       var idx = entries.indexOf(entryEl);
@@ -11571,6 +11602,8 @@
       } else {
         entryEl.style.removeProperty('transform');
       }
+      /* 編輯 modal／選牌 host：放回原位，避免滑動切卡留下殘件 */
+      restoreLiftedEditorEntry(entryEl);
       removeDeckExpandListPlaceholder();
       removeDeckExpandArtSlot();
     }
@@ -11656,11 +11689,64 @@
       }, 0);
     }
 
+    /** 選牌格手機光箱：滑動切到鄰近系列卡（同款往下滑展開） */
+    function switchSeriesMobileLightboxTo(nextArt, dir) {
+      var cur = deckCardExpandEntry;
+      if (!cur || !nextArt || deckCardExpandBusy) return;
+      if (!cur.classList.contains('is-lb-mobile') || !cur.classList.contains('is-series-detail-host')) return;
+      if (!isSeriesPickArtOpenable(nextArt)) return;
+
+      deckCardExpandBusy = true;
+      killDeckLbAnimTl();
+
+      function goNext() {
+        quietlyUndockMobileLbEntry(cur);
+        if (deckCardExpandEntry === cur) deckCardExpandEntry = null;
+        deckCardExpandBusy = false;
+        if (!nextArt || !nextArt.isConnected || !isSeriesPickArtOpenable(nextArt)) {
+          document.documentElement.classList.remove('col-lb-mobile-open');
+          hideLightboxBackdrop();
+          return;
+        }
+        openSeriesPickCardDetail(nextArt, { switchDir: dir, keepBackdrop: true });
+      }
+
+      if (prefersReducedMotion() || !window.gsap) {
+        goNext();
+        return;
+      }
+
+      clearMobileSoftFadeProps(cur);
+      gsap.killTweensOf(cur);
+      var outX = dir > 0 ? -72 : 72;
+      deckLbAnimTl = gsap.timeline({
+        onComplete: function () {
+          deckLbAnimTl = null;
+          goNext();
+        }
+      });
+      deckLbAnimTl.to(cur, {
+        opacity: 0,
+        x: outX,
+        duration: 0.2,
+        ease: 'power2.in'
+      }, 0);
+    }
+
     /** dir: 1 = 下一張（左滑），-1 = 上一張（右滑） */
     function navigateMobileLightbox(dir) {
       var cur = deckCardExpandEntry;
       if (!cur || !cur.classList.contains('is-lb-mobile') || deckCardExpandBusy) return false;
       if (!dir) return false;
+      if (cur.classList.contains('is-series-detail-host')) {
+        var nextArt = findSeriesPickNavArt(cur, dir);
+        if (!nextArt) {
+          bumpMobileLightboxEdge(dir);
+          return false;
+        }
+        switchSeriesMobileLightboxTo(nextArt, dir);
+        return true;
+      }
       var next = findLightboxNavTarget(cur, dir);
       if (!next) {
         bumpMobileLightboxEdge(dir);
@@ -11833,7 +11919,9 @@
       var switchDir = opts.switchDir || 0;
       var keepBackdrop = !!(opts.keepBackdrop || switchDir);
       if (!entryEl || !artEl) return;
-      if (!entryEl.closest('.col-deck-entry-list')) return;
+      var seriesHost = entryEl.classList.contains('is-series-detail-host');
+      /* 檢視清單 or 編輯選牌 host 都可開手機往下滑光箱 */
+      if (!entryEl.closest('.col-deck-entry-list') && !seriesHost) return;
       if (deckCardExpandBusy) return;
       if (deckCardExpandEntry && deckCardExpandEntry !== entryEl) {
         if (keepBackdrop) {
@@ -11850,7 +11938,8 @@
       deckCardExpandBusy = true;
       deckCardExpandEntry = entryEl;
 
-      insertDeckExpandListPlaceholder(entryEl);
+      /* 選牌 host 已自備 spacer；清單卡才插入佔位 clone */
+      if (!seriesHost) insertDeckExpandListPlaceholder(entryEl);
       if (lightboxArt) teardownLightboxArtKeepBackdrop();
       liftEditorDetailEntry(entryEl);
       document.documentElement.classList.add('col-lb-mobile-open');
@@ -17165,15 +17254,19 @@
       return html;
     }
 
-    function openSeriesPickCardDetail(art) {
+    function openSeriesPickCardDetail(art, opts) {
+      opts = opts || {};
       if (!art || deckCardExpandBusy) return;
       var img = art.querySelector('img');
       if (img && img.classList.contains('is-broken')) return;
-      if (!window.gsap) {
-        openEditorFaceLightbox(art);
-        return;
+      if (deckCardExpandEntry) {
+        if (opts.keepBackdrop) {
+          quietlyUndockMobileLbEntry(deckCardExpandEntry);
+          deckCardExpandEntry = null;
+        } else {
+          collapseDeckCardExpand(true);
+        }
       }
-      if (deckCardExpandEntry) collapseDeckCardExpand(true);
       closeEditorFaceLightbox(true);
       var card = art.closest('.col-series-card');
       if (!card) return;
@@ -17201,6 +17294,18 @@
       host.appendChild(art);
       host.insertAdjacentHTML('beforeend', buildSeriesDetailExpandHtml(cardNumber, cardName));
       card.appendChild(host);
+      /* 手機編輯選牌：與檢視模式相同，詳情往下滑的全螢幕光箱 */
+      if (!isDeckDesktopLayout()) {
+        playMobileDeckCardReveal(host, art, {
+          switchDir: opts.switchDir || 0,
+          keepBackdrop: !!opts.keepBackdrop
+        });
+        return;
+      }
+      if (!window.gsap) {
+        openEditorFaceLightbox(art);
+        return;
+      }
       playDesktopDeckCardReveal(host, art);
     }
 
