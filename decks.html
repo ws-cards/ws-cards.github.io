@@ -17235,6 +17235,7 @@
     }
 
     var DECK_CARD_TITLE_URL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
+    var DECK_SERIES_SUGGESTIONS_URL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/wsSeriesSuggestions.json';
     var deckCardTitlePromise = null;
     var deckSeriesSuggestionsPromise = null;
     var deckCardTitleMap = null;
@@ -17288,8 +17289,17 @@
     function ensureDeckSeriesSuggestions() {
       if (deckSeriesSuggestions) return Promise.resolve(deckSeriesSuggestions);
       if (deckSeriesSuggestionsPromise) return deckSeriesSuggestionsPromise;
-      deckSeriesSuggestionsPromise = fetch('json/wsSeriesSuggestions.json')
-        .then(function (r) { return r.ok ? r.json() : []; })
+      deckSeriesSuggestionsPromise = fetch(DECK_SERIES_SUGGESTIONS_URL)
+        .then(function (r) {
+          if (!r.ok) throw new Error('series suggestions');
+          return r.json();
+        })
+        .catch(function () {
+          return fetch('json/wsSeriesSuggestions.json').then(function (r) {
+            if (!r.ok) throw new Error('series suggestions');
+            return r.json();
+          });
+        })
         .then(function (list) {
           deckSeriesSuggestions = Array.isArray(list) ? list : [];
           return deckSeriesSuggestions;
