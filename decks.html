@@ -5845,7 +5845,7 @@
       z-index: 2200;
     }
 
-    /* ——— 檢視→編輯／差異比較：全版選擇 ——— */
+    /* ——— 檢視→編輯／差異比較：選擇（手機全版；桌面置中雙欄） ——— */
     #colDeckEditChoiceModal.col-modal {
       z-index: 2050;
       padding: 0;
@@ -6055,7 +6055,7 @@
         padding-bottom: max(1.1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem));
       }
     }
-    /* 桌面：不要套手機全版上下對切，改置中雙欄選擇 */
+    /* 桌面：置中雙欄選擇（編輯／差異比較） */
     @media (min-width: 992px) {
       #colDeckEditChoiceModal.col-modal {
         padding: max(1.25rem, env(safe-area-inset-top, 0px))
@@ -16116,11 +16116,7 @@
         return;
       }
       closeDeckOverflowMenus();
-      /* 桌面不要套手機全版選擇光箱，直接進編輯 */
-      if (isDeckDesktopLayout()) {
-        openDeckEditor(id, 'edit');
-        return;
-      }
+      /* 手機全版／桌面置中雙欄：同一套選擇（編輯牌組／差異比較） */
       deckEditChoiceDeckId = id;
       openModal(deckEditChoiceModal);
     }
@@ -19199,13 +19195,6 @@
       } else if (!isDeckDesktopLayout() && deckSeriesPickOpen) setDeckSeriesPickOpen(false);
       else syncSeriesPickButton();
       syncDeckDiffButton();
-      /* 若從手機拉到桌面時還開著全版選擇，改直接進編輯 */
-      if (isDeckDesktopLayout() && deckEditChoiceModal &&
-        deckEditChoiceModal.classList.contains('is-open') && deckEditChoiceDeckId) {
-        var resizeChoiceId = deckEditChoiceDeckId;
-        closeModalByName('deckEditChoice');
-        openDeckEditor(resizeChoiceId, 'edit');
-      }
       /* 視窗跨手機／桌面時，更新 fixed body lock 策略 */
       if (overlayScrollLocked) {
         var useFixed = needsFixedBodyScrollLock();
