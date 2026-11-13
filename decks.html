@@ -21401,6 +21401,15 @@
         if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
       }, true);
     }
+    /* 差異比較「我的牌組」清單封面：需 is-loaded 才會顯示（opacity） */
+    if (decklogCloudListEl) {
+      bindEl(decklogCloudListEl, 'load', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageLoad(e.target);
+      }, true);
+      bindEl(decklogCloudListEl, 'error', function (e) {
+        if (e.target && e.target.tagName === 'IMG') onAlbumImageError(e.target);
+      }, true);
+    }
     if (deckSaveBtn) {
       bindEl(deckSaveBtn, 'click', function () {
         if (deckEditorMode === 'view') return;
