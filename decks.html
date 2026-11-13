@@ -20052,6 +20052,8 @@
       var canonical = canonicalSeriesPrefix(prefix) || prefix;
       deckCreateState.seriesPrefix = canonical;
       deckCreateState.seriesName = seriesNameForPrefix(canonical) || canonical;
+      /* 進入牌表／選核心卡前清掉作品搜尋，避免沿用關鍵字誤篩下一頁 */
+      if (deckCreateWizardSearch) deckCreateWizardSearch.value = '';
       if (deckCreateState.method === 'tournament') {
         deckCreateState.step = 'tournament-list';
         renderDeckCreateWizard();
