@@ -1,6 +1,7 @@
 /**
- * 收藏庫共用：卡冊（單卡）與牌組分開頁面，但共用同一組 localStorage key。
- * 構想：兩者都是實體庫存；拆頁是為了操作單純，不是資料隔離。
+ * 收藏庫資料層：卡冊（wsCardsCollection）與牌組（wsCardsDecks）分頁獨立操作。
+ * 此模組只提供 storage key／讀寫輔助；頁面之間不再靠 VIEW_KEY 做分頁切換。
+ * pageMode／albumUrl／decksUrl 僅供舊連結與明確導向使用。
  */
 (function (global) {
   'use strict';
@@ -41,8 +42,7 @@
   }
 
   /**
-   * 舊單頁 ?view=decks 或書籤相容：在卡冊頁遇到明確要看牌組時導向 decks.html。
-   * 不會只因 VIEW_KEY 就自動跳轉，避免側欄「收藏庫」被帶走。
+   * 舊單頁 ?view=decks／?tab=decks 書籤相容：僅在明確 query 時導向 decks.html。
    */
   function maybeRedirectLegacyDeckView() {
     if (pageMode() !== 'album') return false;

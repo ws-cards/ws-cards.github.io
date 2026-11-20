@@ -4426,7 +4426,6 @@
     var stageEl = document.getElementById('colStage');
     var viewAlbumBtn = document.getElementById('colViewAlbumBtn');
     var viewDecksBtn = document.getElementById('colViewDecksBtn');
-    var VIEW_KEY = Store.VIEW_KEY || 'wsCardsCollectionView';
     var addModal = document.getElementById('colAddModal');
     var addCardNumberInput = document.getElementById('colAddCardNumber');
     var addCardNameInput = document.getElementById('colAddCardName');
@@ -4505,41 +4504,27 @@
       }, 2600);
     }
 
+    /** 本頁固定為卡冊；若明確要開牌組則導向 decks.html（不再共用 view 記憶）。 */
     function setCollectionView(view, opts) {
-      var next = view === 'decks' ? 'decks' : 'album';
-      if (next !== COL_PAGE) {
-        if (Store.rememberView) Store.rememberView(next);
-        else try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
-        var target = next === 'decks'
-          ? ((Store.decksUrl && Store.decksUrl()) || 'decks.html')
-          : ((Store.albumUrl && Store.albumUrl()) || 'collection.html');
-        window.location.href = target;
+      if (view === 'decks') {
+        window.location.href = (Store.decksUrl && Store.decksUrl()) || 'decks.html';
         return;
       }
-      if (stageEl) stageEl.setAttribute('data-col-view', next);
-      if (viewAlbumBtn) {
-        viewAlbumBtn.setAttribute('aria-current', next === 'album' ? 'page' : null);
-        if (next !== 'album') viewAlbumBtn.removeAttribute('aria-current');
-        else viewAlbumBtn.setAttribute('aria-current', 'page');
+      if (stageEl) {
+        stageEl.setAttribute('data-col-view', 'album');
+        stageEl.setAttribute('data-col-page', 'album');
       }
-      if (viewDecksBtn) {
-        if (next === 'decks') viewDecksBtn.setAttribute('aria-current', 'page');
-        else viewDecksBtn.removeAttribute('aria-current');
-      }
-      if (Store.rememberView) Store.rememberView(next);
-      else try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* ignore */ }
-      if (opts && opts.focus && next === 'decks') {
-        var el = document.getElementById('colSectionDecks');
+      if (opts && opts.focus) {
+        var el = document.getElementById('colSectionAlbum') || document.getElementById('colStage');
         if (el && typeof el.scrollIntoView === 'function') {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
-      if (next === 'album') scheduleBinderFit();
-      else clearBinderFit();
+      scheduleBinderFit();
     }
 
     function readCollectionView() {
-      return COL_PAGE === 'decks' ? 'decks' : 'album';
+      return 'album';
     }
 
     function normalizeText(value) {
@@ -4655,7 +4640,7 @@
     }
 
     function focusDeckSection() {
-      setCollectionView('decks', { focus: true });
+      window.location.href = (Store.decksUrl && Store.decksUrl()) || 'decks.html';
     }
 
     function focusAlbumSection() {
