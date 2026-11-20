@@ -17617,7 +17617,7 @@
         deckDiffApplyBtn.disabled = !!seriesLocked;
         deckDiffApplyBtn.title = seriesLocked
           ? '系列不同，無法直接覆蓋'
-          : '以新匯入編成為主，並補上原版有、新版缺少的牌（需再按儲存）';
+          : '採用新匯入編成，並依相對原版多出的張數標記缺卡（需再按儲存）';
       }
       if (deckDiffCreateBtn) deckDiffCreateBtn.hidden = !seriesLocked;
       syncDeckDiffBaselineUi();
@@ -17735,13 +17735,17 @@
         });
     }
 
-    function deckDiffBucketToCardEntry(bucket, qty) {
+    function deckDiffBucketToCardEntry(bucket, qty, shortQty) {
       if (!bucket) return null;
       var cn = normalizeText(bucket.displayCardNumber || bucket.cardNumber).replace(/\\/g, '/');
       if (!cn) return null;
       var q = parseInt(qty, 10);
       if (isNaN(q) || q < 1) return null;
-      var row = { cardNumber: cn, qty: q, shortQty: 0 };
+      var row = {
+        cardNumber: cn,
+        qty: q,
+        shortQty: clampShortQty(shortQty, q)
+      };
       if (bucket.cardName) row.cardName = bucket.cardName;
       if (bucket.level != null) row.level = bucket.level;
       else if (bucket.sample && bucket.sample.level != null) row.level = bucket.sample.level;
@@ -17749,39 +17753,43 @@
     }
 
     /**
-     * 套用新版本：以新匯入編成為主，並補上原版有、新版沒有的牌（差異列「少」）。
-     * 張數不同時仍採用新版張數。
+     * 套用新版本：編成完全採用新匯入張數；
+     * 缺卡 = max(0, 新版張數 − 原版張數)
+     * （原版沒有的牌 → 缺卡=編成；新版較少或相等 → 缺卡=0；原版有、新版沒有的牌不帶入）。
      */
     function buildApplyDeckDiffMergedCards() {
       var result = deckDiffState.result;
-      var incoming = normalizeDeckCards(
-        (deckDiffState.rightSnap || (deckDiffState.incoming && deckDiffState.incoming.cards) || [])
-      );
-      if (!result || !result.pairs || !result.pairs.length) {
-        return { cards: incoming, missingKinds: 0, missingQty: 0 };
+      var incomingCards = deckDiffState.rightSnap ||
+        (deckDiffState.incoming && deckDiffState.incoming.cards) || [];
+      var originalCards = deckDiffState.leftSnap ||
+        (deckDraft && deckDraft.cards) || [];
+      var opts = {
+        ignoreVersion: !!deckDiffState.ignoreVersion,
+        ignoreSameName: !!deckDiffState.ignoreSameName
+      };
+      if (!result || !result.pairs) {
+        result = computeDeckDiff(originalCards, incomingCards, opts);
       }
       var out = [];
-      var missingKinds = 0;
-      var missingQty = 0;
-      result.pairs.forEach(function (pair) {
-        if (!pair) return;
-        if (pair.status === 'removed' && pair.left) {
-          var missing = deckDiffBucketToCardEntry(pair.left, pair.leftQty);
-          if (!missing) return;
-          out.push(missing);
-          missingKinds += 1;
-          missingQty += missing.qty || 0;
-          return;
-        }
-        if (pair.right) {
-          var keep = deckDiffBucketToCardEntry(pair.right, pair.rightQty);
-          if (keep) out.push(keep);
+      var shortKinds = 0;
+      var shortCopies = 0;
+      (result.pairs || []).forEach(function (pair) {
+        if (!pair || !pair.right) return;
+        var newQty = pair.rightQty || 0;
+        var oldQty = pair.leftQty || 0;
+        var shortQty = clampShortQty(Math.max(0, newQty - oldQty), newQty);
+        var row = deckDiffBucketToCardEntry(pair.right, newQty, shortQty);
+        if (!row) return;
+        out.push(row);
+        if (shortQty > 0) {
+          shortKinds += 1;
+          shortCopies += shortQty;
         }
       });
       return {
         cards: normalizeDeckCards(out),
-        missingKinds: missingKinds,
-        missingQty: missingQty
+        shortKinds: shortKinds,
+        shortCopies: shortCopies
       };
     }
 
@@ -17789,7 +17797,6 @@
       if (!deckDraft || !deckDiffState.incoming || deckDiffState.seriesLocked) return;
       var merged = buildApplyDeckDiffMergedCards();
       var cards = merged.cards || [];
-      cards.forEach(function (entry) { entry.shortQty = 0; });
       deckDraft.cards = cards;
       sanitizeDeckCoverCardNumber(deckDraft);
       if (deckDiffState.incoming.code) {
@@ -17802,9 +17809,9 @@
       exitDeckDiffCompare();
       renderDeckEditor();
       var msg = '已套用新版本編成';
-      if (merged.missingKinds > 0) {
-        msg += '，並補上原版有、新版缺少的 ' + merged.missingKinds +
-          ' 種（' + merged.missingQty + ' 張）';
+      if (merged.shortKinds > 0) {
+        msg += '，並標記缺卡 ' + merged.shortKinds +
+          ' 種（共缺 ' + merged.shortCopies + ' 張）';
       }
       msg += '（尚未儲存，請按儲存寫入）';
       setStatus(msg, 'is-ok');
@@ -21439,7 +21446,7 @@
             okLabel: '套用編成',
             html: '目前差異約 <strong>' +
               escapeHtml(String(deckDiffState.result.diffPct.toFixed(1))) +
-              '%</strong>。套用後會以<strong>新匯入編成</strong>為主，並把<strong>原版有、新版缺少</strong>的牌一併計入目前草稿（仍需按儲存才寫入雲端）。',
+              '%</strong>。套用後會採用<strong>新匯入編成張數</strong>，並把相對原版<strong>多出的張數標記為缺卡</strong>（仍需按儲存才寫入雲端）。',
             onOk: function () { applyDeckDiffIncoming(); }
           });
           return;
