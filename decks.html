@@ -7429,13 +7429,13 @@
 <script>
   (function () {
     if (!window.WsPageLoader) return;
+    /* 牌組頁不再載入卡冊；勿留 album 階段，否則會卡在 ~70% 等到 safety */
     WsPageLoader.configure([
-      { id: 'fonts', weight: 22, label: '載入字體…' },
-      { id: 'boot', weight: 18, label: '初始化…' },
-      { id: 'album', weight: 30, label: '載入牌組…' },
-      { id: 'decks', weight: 30, label: '同步牌組…' }
+      { id: 'fonts', weight: 25, label: '載入字體…' },
+      { id: 'boot', weight: 25, label: '初始化…' },
+      { id: 'decks', weight: 50, label: '同步牌組…' }
     ]);
-    WsPageLoader.armSafety(20000);
+    WsPageLoader.armSafety(12000);
     if (document.documentElement.classList.contains('fonts-ready')) {
       WsPageLoader.mark('fonts', '字體就緒');
     }
@@ -19341,11 +19341,8 @@
       if (selectedDeckId) renderDeckDetail();
       if (deckDraft) renderDeckEditor();
     });
-    // 等 auth＋雲端牌組就緒後才關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
+    // 等 auth＋雲端牌組就緒後才 mark('decks')／關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
     showDeckLoadingEmpty();
-    if (window.WsPageLoader) {
-      WsPageLoader.mark('decks', '牌組就緒');
-    }
     bindDeckAuth();
     setStatus('正在同步牌組…', '');
     // 重整／關閉分頁前再寫一次本地草稿（正式儲存仍以記憶體為準）
