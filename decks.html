@@ -4302,12 +4302,17 @@
       max-width: 14rem;
       font-weight: 700;
     }
-    .col-deck-series-level {
+    .col-deck-series-level,
+    .col-deck-series-color {
       display: flex;
       flex-wrap: wrap;
       gap: 0.28rem;
     }
+    .col-deck-series-color {
+      margin-top: 0.28rem;
+    }
     .col-deck-series-level button,
+    .col-deck-series-color button,
     .col-deck-series-switch {
       height: 1.7rem;
       margin: 0;
@@ -4320,14 +4325,34 @@
       font-weight: 800;
       cursor: pointer;
     }
-    .col-deck-series-level button.is-active {
+    .col-deck-series-color button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+    }
+    .col-deck-series-level button.is-active,
+    .col-deck-series-color button.is-active {
       background: var(--desk-foil-deep, #5c4a28);
       border-color: var(--desk-foil-deep, #5c4a28);
       color: #fff;
     }
     [data-theme="dark"] .col-deck-series-level button,
+    [data-theme="dark"] .col-deck-series-color button,
     [data-theme="dark"] .col-deck-series-switch {
       color: #cbd5e0;
+    }
+    .col-deck-series-color .col-filter-swatch {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      flex: 0 0 auto;
+    }
+    [data-theme="dark"] .col-deck-series-color .col-filter-swatch {
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+    .col-deck-series-color button.is-active .col-filter-swatch {
+      border-color: rgba(255, 255, 255, 0.55);
     }
     .col-deck-series-normal {
       display: inline-flex;
@@ -7729,6 +7754,7 @@
         <button type="button" class="col-deck-series-switch" id="colDeckSeriesPickSwitchBtn" hidden>換系列</button>
       </div>
       <div class="col-deck-series-level" id="colDeckSeriesPickLevels" role="group" aria-label="依等級篩選" hidden></div>
+      <div class="col-deck-series-color" id="colDeckSeriesPickColors" role="group" aria-label="依顏色篩選" hidden></div>
       <p class="col-modal-hint col-deck-series-status" id="colDeckSeriesPickStatus" hidden></p>
     </div>
     <div class="col-deck-series-pick-scroll" id="colDeckSeriesPickScroll">
@@ -15778,6 +15804,7 @@
     var deckSeriesRenderCount = 0;
     var deckSeriesPickQuery = '';
     var deckSeriesPickLevel = '';
+    var deckSeriesPickColor = '';
     var deckSeriesPickProduct = '';
     var deckSeriesPickNormalOnly = false;
     var deckSeriesPickObserver = null;
@@ -16165,10 +16192,12 @@
       var product = document.getElementById('colDeckSeriesPickProduct');
       var normalWrap = document.getElementById('colDeckSeriesPickNormalWrap');
       var levels = document.getElementById('colDeckSeriesPickLevels');
+      var colors = document.getElementById('colDeckSeriesPickColors');
       var switchBtn = document.getElementById('colDeckSeriesPickSwitchBtn');
       if (product) product.hidden = !showCards;
       if (normalWrap) normalWrap.hidden = !showCards;
       if (levels) levels.hidden = !showCards;
+      if (colors) colors.hidden = !showCards;
       if (switchBtn) switchBtn.hidden = !showCards;
       var search = document.getElementById('colDeckSeriesPickSearch');
       if (search) {
@@ -16206,6 +16235,26 @@
             ' aria-pressed="' + (active ? 'true' : 'false') + '">' + opt.label + '</button>';
         }).join('');
       }
+      var colors = document.getElementById('colDeckSeriesPickColors');
+      if (colors) {
+        var colorOpts = [
+          { id: '', label: '全部顏色' },
+          { id: 'yellow', label: '黃' },
+          { id: 'red', label: '赤' },
+          { id: 'blue', label: '青' },
+          { id: 'green', label: '綠' }
+        ];
+        colors.innerHTML = colorOpts.map(function (opt) {
+          var active = deckSeriesPickColor === opt.id;
+          var swatch = opt.id
+            ? '<span class="col-filter-swatch" data-color="' + opt.id + '" aria-hidden="true"></span>'
+            : '';
+          return '<button type="button" data-series-color="' + opt.id + '"' +
+            (active ? ' class="is-active"' : '') +
+            ' aria-pressed="' + (active ? 'true' : 'false') + '">' +
+            swatch + opt.label + '</button>';
+        }).join('');
+      }
       var normal = document.getElementById('colDeckSeriesPickNormal');
       if (normal) normal.checked = !!deckSeriesPickNormalOnly;
     }
@@ -16232,6 +16281,9 @@
         } else if (deckSeriesPickLevel !== '') {
           if (card.kindClass === 'CX') return false;
           if (String(card.level == null ? '' : card.level) !== String(deckSeriesPickLevel)) return false;
+        }
+        if (deckSeriesPickColor) {
+          if (normalizeColorKey(card.color) !== deckSeriesPickColor) return false;
         }
         if (!query) return true;
         return [card.id, card.name, card.rarity, card.productCode].join(' ').toLowerCase().indexOf(query) >= 0;
@@ -16503,6 +16555,7 @@
       deckSeriesPickMode = 'cards';
       deckSeriesPickQuery = '';
       deckSeriesPickLevel = '';
+      deckSeriesPickColor = '';
       deckSeriesPickNormalOnly = false;
       var search = document.getElementById('colDeckSeriesPickSearch');
       if (search) search.value = '';
@@ -16789,6 +16842,7 @@
     function resetSeriesPickFilters() {
       deckSeriesPickQuery = '';
       deckSeriesPickLevel = '';
+      deckSeriesPickColor = '';
       deckSeriesPickProduct = '';
       deckSeriesPickNormalOnly = false;
       var search = document.getElementById('colDeckSeriesPickSearch');
@@ -19139,6 +19193,16 @@
         var levelBtn = e.target.closest('[data-series-level]');
         if (!levelBtn) return;
         deckSeriesPickLevel = levelBtn.getAttribute('data-series-level') || '';
+        renderSeriesPickChrome();
+        renderSeriesPickGrid(true);
+      });
+    }
+    var deckSeriesPickColorsEl = document.getElementById('colDeckSeriesPickColors');
+    if (deckSeriesPickColorsEl) {
+      bindEl(deckSeriesPickColorsEl, 'click', function (e) {
+        var colorBtn = e.target.closest('[data-series-color]');
+        if (!colorBtn) return;
+        deckSeriesPickColor = colorBtn.getAttribute('data-series-color') || '';
         renderSeriesPickChrome();
         renderSeriesPickGrid(true);
       });
