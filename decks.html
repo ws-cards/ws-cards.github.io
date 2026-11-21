@@ -2567,6 +2567,110 @@
       }
     }
 
+    /* 基礎 modal 殼層（#421 清卡冊殘留時誤刪，編輯／選擇視窗會因此打不開） */
+    .col-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(0.75rem, env(safe-area-inset-top, 0px))
+               max(0.75rem, env(safe-area-inset-right, 0px))
+               max(0.75rem, env(safe-area-inset-bottom, 0px))
+               max(0.75rem, env(safe-area-inset-left, 0px));
+      overscroll-behavior: none;
+    }
+    .col-modal.is-open { display: flex; }
+    .col-modal-body {
+      overscroll-behavior: contain;
+    }
+    /* 覆蓋層開啟時鎖住底層頁面捲動（避免上下滑带动背後列表／詳情） */
+    html.is-overlay-scroll-lock,
+    html.is-overlay-scroll-lock body {
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+    /* 僅手機用 position:fixed；桌面 fixed 會搞亂編輯光箱／modal 定位 */
+    @media (max-width: 991.98px) {
+      body.is-overlay-scroll-lock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+      }
+    }
+    .col-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .col-modal-dialog {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      width: min(560px, 100%);
+      max-height: min(88dvh, 88vh, 820px);
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--desk-surface-strong, #f7f7f4);
+      color: var(--desk-ink, #171714);
+      border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35) inset,
+        0 18px 48px rgba(28, 26, 23, 0.18);
+    }
+    [data-theme="dark"] .col-modal-dialog {
+      background: var(--desk-surface-strong, #1c1b18);
+      color: var(--desk-ink, #f0eee6);
+      border-color: var(--desk-line, rgba(240, 238, 230, 0.12));
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .col-modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 1rem 1rem 0.85rem;
+    }
+    .col-modal-dialog h3 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--desk-ink, #171714);
+    }
+    [data-theme="dark"] .col-modal-dialog h3 { color: var(--desk-ink, #f0eee6); }
+    .col-modal-hint {
+      margin: 0 0 0.75rem;
+      font-family: var(--font-serif, 'Noto Serif TC', serif);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #687385;
+    }
+    [data-theme="dark"] .col-modal-hint { color: rgba(240, 238, 230, 0.68); }
+    .col-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--desk-line, rgba(18, 18, 16, 0.14));
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 6%, transparent);
+    }
+    .col-modal-actions .btn {
+      min-height: 2.35rem;
+      padding: 0.4rem 0.9rem;
+    }
+    [data-theme="dark"] .col-modal-actions {
+      border-top-color: var(--desk-line, rgba(240, 238, 230, 0.12));
+      background: rgba(0, 0, 0, 0.2);
+    }
+
     .col-modal-dialog.col-modal-wide {
       width: min(880px, 100%);
     }
