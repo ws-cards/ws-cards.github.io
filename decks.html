@@ -3253,6 +3253,13 @@
     /* 桌面：光箱內展開（固定層、backdrop 之上，圖在左）
        不用 transform 置中，避免 Flip／fixed 子元素座標系錯亂導致裁切 */
     .col-deck-entry.is-expanded.is-lb-detail {
+      /* 光箱會 lift 到 body，需自備色票（不再依賴 .col-shell 內的 --col-ink） */
+      --col-ink: var(--desk-ink, #171714);
+      --col-muted: #687385;
+      --col-line: var(--desk-line, rgba(18, 18, 16, 0.16));
+      --col-shell-bg: #fff;
+      --col-accent: var(--desk-foil, #8a6f3a);
+      --col-accent-soft: color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, transparent);
       position: fixed;
       inset: 0;
       left: 0;
@@ -3282,6 +3289,16 @@
       background: transparent;
       border-color: transparent;
       box-shadow: none;
+      color: var(--col-ink);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail {
+      --col-ink: var(--desk-ink, #f0eee6);
+      --col-muted: rgba(240, 238, 230, 0.72);
+      --col-line: var(--desk-line, rgba(240, 238, 230, 0.14));
+      --col-shell-bg: #1c1b18;
+      --col-accent: var(--desk-foil, #d0b27a);
+      --col-accent-soft: color-mix(in srgb, var(--desk-foil, #d0b27a) 18%, transparent);
+      color: var(--col-ink);
     }
     /* 桌面展開只留圖＋詳情兩欄；避免 caption 等仍佔 grid 格造成左欄量測偏移 */
     .col-deck-entry.is-expanded.is-lb-detail > .col-deck-entry-caption {
@@ -3330,6 +3347,7 @@
       align-self: center;
       gap: 0.75rem;
       background: var(--col-shell-bg, #fff);
+      color: var(--col-ink);
       border-radius: 0 14px 14px 0;
       box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
       cursor: default;
@@ -3340,8 +3358,37 @@
       overflow: auto;
     }
     [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand {
-      background: #1a1a1a;
+      background: var(--col-shell-bg, #1c1b18);
+      color: var(--col-ink, #f0eee6);
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-name,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-stat-value,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-effect,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-trait {
+      color: var(--col-ink, #f0eee6);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-no,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-effect.is-empty,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-traits-empty {
+      color: var(--col-muted, rgba(240, 238, 230, 0.72));
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-stat-label,
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-sec-label {
+      background: rgba(240, 238, 230, 0.12);
+      color: rgba(240, 238, 230, 0.78);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-stats {
+      border-bottom-color: var(--col-line, rgba(240, 238, 230, 0.14));
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-trait {
+      border-color: rgba(240, 238, 230, 0.28);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-deck-entry-expand-trait::before {
+      background: rgba(240, 238, 230, 0.55);
+    }
+    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail .col-lb-qty-value {
+      color: var(--col-ink, #f0eee6);
     }
     /* 手機：全螢幕光箱（上卡圖、可選增減、下詳情；跟隨深淺主題） */
     html.col-lb-mobile-open,
@@ -4250,23 +4297,14 @@
     }
     .col-deck-series-pick-title-row {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: flex-end;
       gap: 0.5rem;
       min-width: 0;
     }
-    .col-deck-series-pick-title-row h4 {
-      margin: 0;
-      min-width: 0;
-      font-size: 0.92rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     .col-deck-series-pick-count {
-      flex: 0 0 auto;
+      flex: 1 1 auto;
+      min-width: 0;
       font-family: 'IBM Plex Mono', ui-monospace, monospace;
       font-size: 0.72rem;
       font-weight: 600;
@@ -7894,7 +7932,6 @@
   <section class="col-deck-series-pick" id="colDeckSeriesPick" hidden aria-label="系列選牌">
     <div class="col-deck-series-pick-head">
       <div class="col-deck-series-pick-title-row">
-        <h4 id="colDeckSeriesPickTitle">系列選牌</h4>
         <span class="col-deck-series-pick-count" id="colDeckSeriesPickCount"></span>
         <button type="button" class="col-deck-series-pick-close" data-modal-close="deck">關閉</button>
       </div>
@@ -16652,8 +16689,6 @@
       deckSeriesActiveProducts = [];
       clearSeriesPickGrid();
       toggleSeriesPickChrome(false);
-      var title = document.getElementById('colDeckSeriesPickTitle');
-      if (title) title.textContent = '選擇系列';
       setSeriesPickCount('');
       setSeriesPickStatus('這副牌還沒有卡片。搜尋系列，或輸入卡包代碼（例：BD/W54）。');
       return Promise.all([ensureDeckCardTitleMap(), ensureDeckSeriesSuggestions()]).then(function () {
@@ -16780,7 +16815,6 @@
       toggleSeriesPickChrome(false);
       setSeriesPickCount('');
       setSeriesPickStatus('正在讀取系列卡表…');
-      var titleEl = document.getElementById('colDeckSeriesPickTitle');
       return Promise.all([ensureDeckCardTitleMap(), ensureDeckSeriesSuggestions()]).then(function () {
         if (token !== deckSeriesPickToken) return null;
         var canonical = canonicalSeriesPrefix(prefix);
@@ -16795,21 +16829,12 @@
         }
         deckSeriesActivePrefix = canonical;
         deckSeriesPickProduct = product;
-        if (titleEl) {
-          var relatedPreview = relatedSeriesPrefixes(canonical);
-          titleEl.textContent = (seriesNameForPrefix(canonical) || canonical) + ' · ' +
-            (relatedPreview.length ? relatedPreview.join(' · ') : canonical);
-        }
         return loadSeriesCardCatalog(canonical, deckDraft && deckDraft.cards, token);
       }).then(function (catalog) {
         if (!catalog || token !== deckSeriesPickToken || !deckSeriesPickOpen) return;
         deckSeriesActivePrefix = catalog.prefix || deckSeriesActivePrefix;
         deckSeriesActiveCards = catalog.cards || [];
         deckSeriesActiveProducts = catalog.products || [];
-        if (titleEl) {
-          titleEl.textContent = (catalog.label || deckSeriesActivePrefix) + ' · ' +
-            (catalog.prefixLabel || deckSeriesActivePrefix);
-        }
         if (deckDraft && deckDraft.createMeta && deckDraft.createMeta.method === 'blank') {
           deckDraft.createMeta.seriesName = catalog.label || seriesNameForPrefix(deckSeriesActivePrefix) || deckSeriesActivePrefix;
           deckDraft.createMeta.seriesPrefix = deckSeriesActivePrefix;
