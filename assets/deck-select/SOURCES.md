@@ -4,9 +4,9 @@ Used by `deck-select.html` (and decks handoff cover).
 
 | Local File | Source | Used as |
 | --- | --- | --- |
-| ws-landscape.jpg | Unsplash `photo-1506905925346-21bda4d32df4` (mountain lake) | WS panel background |
-| wsr-landscape.jpg | Unsplash `photo-1441974231531-c6227db76b6e` (forest) | WSR panel background |
-| other-landscape.jpg | Unsplash `photo-1464822759023-fed622ff2c3b` (mountain peak) | Other panel background |
+| ws-keyvisual.jpg | AI-generated promotional key visual (cool blue/silver) | WS panel background |
+| wsr-keyvisual.jpg | AI-generated promotional key visual (rose/crimson) | WSR panel background |
+| other-keyvisual.jpg | AI-generated promotional key visual (dark gold fantasy) | Other panel background |
 
-Images cropped to 1600×2400 for vertical panels and recompressed for web.
-Unsplash license: free to use; no ownership claimed.
+Vertical 9:16 scene illustrations (no card frame / no watermark).
+Generated for this page; not official publisher art. No ownership or endorsement claimed.
