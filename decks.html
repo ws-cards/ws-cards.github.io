@@ -4614,7 +4614,7 @@
       cursor: default;
       background: rgba(15, 23, 42, 0.55);
     }
-    /* 光箱增減：桌面在特徵列右側；手機在卡面下方 */
+    /* 光箱增減：桌面在 .col-deck-entry-traits 最右；手機在卡面下方 */
     .col-lb-qty-stepper {
       display: none;
       align-items: center;
@@ -4625,28 +4625,29 @@
       pointer-events: auto;
       flex: 0 0 auto;
     }
-    .col-expand-traits-head {
+    .col-deck-entry-traits {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.65rem;
       min-width: 0;
     }
-    .col-expand-traits-head .col-deck-entry-expand-sec-label {
-      align-self: center;
-      flex: 0 0 auto;
+    .col-deck-entry-traits .col-deck-entry-expand-traits {
+      flex: 1 1 auto;
+      min-width: 0;
     }
-    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-stepper {
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-deck-entry-traits .col-lb-qty-stepper {
       display: flex;
       gap: 0.4rem;
+      margin-left: auto;
     }
-    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-series-step,
-    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-btn {
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-deck-entry-traits .col-series-step,
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-deck-entry-traits .col-lb-qty-btn {
       width: 2.05rem;
       height: 2.05rem;
       font-size: 1.15rem;
     }
-    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-value {
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-deck-entry-traits .col-lb-qty-value {
       min-width: 2.5rem;
       font-size: 0.92rem;
     }
@@ -4674,7 +4675,7 @@
       background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 92%, transparent);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     }
-    .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-expand-traits-head .col-lb-qty-stepper {
+    .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-traits .col-lb-qty-stepper {
       display: none;
     }
     .col-lb-qty-stepper .col-series-step,
@@ -16930,12 +16931,12 @@
         escapeHtml(expandEffect || '尚無效果資料') + '</p>';
       html += '</div>';
       html += '<div class="col-deck-entry-expand-section col-deck-entry-expand-line is-traits">';
-      html += '<div class="col-expand-traits-head">';
       html += '<div class="col-deck-entry-expand-sec-label">特徵</div>';
-      /* 桌面光箱：增減放在特徵列右側；手機改用卡面下方 stepper */
+      /* 桌面：增減在特徵 chips 列最右；手機改用卡面下方 stepper */
+      html += '<div class="col-deck-entry-traits">';
+      html += '<div class="col-deck-entry-expand-traits" data-expand-traits></div>';
       html += buildSeriesLbQtyStepperHtml(cardNumber, qty);
       html += '</div>';
-      html += '<div class="col-deck-entry-expand-traits" data-expand-traits></div>';
       html += '</div></div>';
       return html;
     }
