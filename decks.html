@@ -3276,9 +3276,9 @@
       transform: none;
       padding: 0;
       gap: 0;
-      /* 左欄依光箱圖實際寬度，避免把圖拉伸／縮小；第二列留給卡面下方增減 */
+      /* 左欄依光箱圖實際寬度，避免把圖拉伸／縮小；桌面增減改放右側特徵列 */
       grid-template-columns: auto minmax(12rem, 1fr);
-      grid-template-rows: auto auto;
+      grid-template-rows: auto;
       /* 與光箱同高：避免右欄內容把列撑高、左移時圖被抬高 */
       align-items: center;
       pointer-events: auto;
@@ -4614,25 +4614,41 @@
       cursor: default;
       background: rgba(15, 23, 42, 0.55);
     }
-    /* 光箱：卡面下方增減編成 */
+    /* 光箱增減：桌面在特徵列右側；手機在卡面下方 */
     .col-lb-qty-stepper {
       display: none;
       align-items: center;
       justify-content: center;
-      gap: 0.75rem;
+      gap: 0.55rem;
       margin: 0;
-      padding: 0.55rem 0.65rem 0.2rem;
+      padding: 0;
       pointer-events: auto;
+      flex: 0 0 auto;
     }
-    .col-deck-entry.is-expanded.is-lb-detail > .col-lb-qty-stepper {
+    .col-expand-traits-head {
       display: flex;
-      grid-column: 1;
-      grid-row: 2;
-      align-self: start;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 0.55rem 0.35rem 0.15rem;
-      background: transparent;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .col-expand-traits-head .col-deck-entry-expand-sec-label {
+      align-self: center;
+      flex: 0 0 auto;
+    }
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-stepper {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-series-step,
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-btn {
+      width: 2.05rem;
+      height: 2.05rem;
+      font-size: 1.15rem;
+    }
+    .col-deck-entry.is-expanded.is-lb-detail:not(.is-lb-mobile) .col-expand-traits-head .col-lb-qty-value {
+      min-width: 2.5rem;
+      font-size: 0.92rem;
     }
     .col-deck-entry.is-expanded.is-lb-detail > .col-deck-entry-art,
     .col-deck-entry.is-expanded.is-lb-detail > .col-lb-art-slot {
@@ -4644,21 +4660,8 @@
       grid-row: 1;
       align-self: center;
     }
-    .col-deck-entry.is-expanded.is-lb-detail:has(> .col-lb-qty-stepper) > .col-deck-entry-art {
-      border-radius: 14px 0 0 0;
-    }
-    .col-deck-entry.is-expanded.is-lb-detail:has(> .col-lb-qty-stepper) > .col-lb-qty-stepper {
-      border-radius: 0 0 0 14px;
-      background: color-mix(in srgb, var(--col-shell-bg, #fff) 88%, transparent);
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
-    }
-    [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail:has(> .col-lb-qty-stepper) > .col-lb-qty-stepper {
-      background: color-mix(in srgb, #1a1a1a 90%, transparent);
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-    }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile > .col-lb-qty-stepper {
-      grid-column: auto;
-      grid-row: auto;
+      display: flex;
       width: min(92vw, 26rem);
       max-width: 92vw;
       margin: 0.15rem auto 0.35rem;
@@ -4670,6 +4673,9 @@
     [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile > .col-lb-qty-stepper {
       background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 92%, transparent);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+    .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-expand-traits-head .col-lb-qty-stepper {
+      display: none;
     }
     .col-lb-qty-stepper .col-series-step,
     .col-lb-qty-stepper .col-lb-qty-btn {
@@ -16894,7 +16900,20 @@
       el.classList.add('is-bump');
     }
 
-    function buildSeriesDetailExpandHtml(cardNumber, cardName) {
+    function buildSeriesLbQtyStepperHtml(cardNumber, qty) {
+      var n = qty || 0;
+      var label = escapeHtml(cardNumber);
+      var html = '<div class="col-lb-qty-stepper" data-lb-qty-for="' + escapeHtml(cardNumber) + '" role="group" aria-label="調整編成張數">';
+      html += '<button type="button" class="col-series-step col-series-dec" data-series-dec="' + escapeHtml(cardNumber) + '"' +
+        (n < 1 ? ' disabled' : '') + ' aria-label="減少 ' + label + '">−</button>';
+      html += '<span class="col-lb-qty-value" data-lb-qty-value>×' + n + '</span>';
+      html += '<button type="button" class="col-series-step col-series-inc" data-series-inc="' + escapeHtml(cardNumber) + '"' +
+        (n >= MAX_DECK_ENTRY_QTY ? ' disabled' : '') + ' aria-label="增加 ' + label + '">+</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function buildSeriesDetailExpandHtml(cardNumber, cardName, qty) {
       var expandMeta = getAlbumMeta(cardNumber) || {};
       var expandName = expandMeta.cardName || cardName || '（尚無卡名）';
       var expandEffect = expandMeta.effect || '';
@@ -16910,23 +16929,14 @@
       html += '<p class="col-deck-entry-expand-effect' + (expandEffect ? '' : ' is-empty') + '">' +
         escapeHtml(expandEffect || '尚無效果資料') + '</p>';
       html += '</div>';
-      html += '<div class="col-deck-entry-expand-section col-deck-entry-expand-line">';
+      html += '<div class="col-deck-entry-expand-section col-deck-entry-expand-line is-traits">';
+      html += '<div class="col-expand-traits-head">';
       html += '<div class="col-deck-entry-expand-sec-label">特徵</div>';
+      /* 桌面光箱：增減放在特徵列右側；手機改用卡面下方 stepper */
+      html += buildSeriesLbQtyStepperHtml(cardNumber, qty);
+      html += '</div>';
       html += '<div class="col-deck-entry-expand-traits" data-expand-traits></div>';
       html += '</div></div>';
-      return html;
-    }
-
-    function buildSeriesLbQtyStepperHtml(cardNumber, qty) {
-      var n = qty || 0;
-      var label = escapeHtml(cardNumber);
-      var html = '<div class="col-lb-qty-stepper" data-lb-qty-for="' + escapeHtml(cardNumber) + '" role="group" aria-label="調整編成張數">';
-      html += '<button type="button" class="col-series-step col-series-dec" data-series-dec="' + escapeHtml(cardNumber) + '"' +
-        (n < 1 ? ' disabled' : '') + ' aria-label="減少 ' + label + '">−</button>';
-      html += '<span class="col-lb-qty-value" data-lb-qty-value>×' + n + '</span>';
-      html += '<button type="button" class="col-series-step col-series-inc" data-series-inc="' + escapeHtml(cardNumber) + '"' +
-        (n >= MAX_DECK_ENTRY_QTY ? ' disabled' : '') + ' aria-label="增加 ' + label + '">+</button>';
-      html += '</div>';
       return html;
     }
 
@@ -16970,8 +16980,11 @@
       if (art.classList.contains('is-landscape') || (series && series.kindClass === 'CX')) host.classList.add('is-cx');
       host._seriesArtHome = { parent: art.parentNode, next: homeNext };
       host.appendChild(art);
-      host.insertAdjacentHTML('beforeend', buildSeriesLbQtyStepperHtml(cardNumber, qty));
-      host.insertAdjacentHTML('beforeend', buildSeriesDetailExpandHtml(cardNumber, cardName));
+      /* 手機：卡面下方另放一份增減；桌面只用特徵列右側那份 */
+      if (!isDeckDesktopLayout()) {
+        host.insertAdjacentHTML('beforeend', buildSeriesLbQtyStepperHtml(cardNumber, qty));
+      }
+      host.insertAdjacentHTML('beforeend', buildSeriesDetailExpandHtml(cardNumber, cardName, qty));
       card.appendChild(host);
       /* 手機編輯選牌：與檢視模式相同，詳情往下滑的全螢幕光箱 */
       if (!isDeckDesktopLayout()) {
