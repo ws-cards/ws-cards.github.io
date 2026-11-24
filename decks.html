@@ -7816,8 +7816,14 @@
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
     }
+    /*
+     * 勿用 animation-fill-mode: both／forwards 留住 transform。
+     * 即使視覺上是 identity matrix，仍會變成 fixed／Flip 的 containing block，
+     * 編輯光箱量測與置中會跑位。
+     */
     .col-modal.is-open .col-modal-dialog {
-      animation: colModalIn 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+      animation: colModalIn 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+      transform: none;
     }
     @keyframes colModalIn {
       from {
@@ -10232,8 +10238,17 @@
       return !!(window.gsap && window.Flip);
     }
 
+    /** 進場 animation 可能留下 identity transform，變成 fixed／Flip containing block */
+    function clearDeckModalDialogTransform() {
+      var dialog = document.querySelector('#colDeckModal .col-modal-dialog, #colDeckModal .col-deck-editor-dialog');
+      if (!dialog) return;
+      dialog.style.animation = 'none';
+      dialog.style.transform = 'none';
+    }
+
     function liftEditorLightboxArt(art) {
       if (!art || !art.parentNode) return;
+      clearDeckModalDialogTransform();
       lightboxHome = { parent: art.parentNode, next: art.nextSibling };
       art.classList.add('is-editor-lb');
       document.body.appendChild(art);
@@ -10461,6 +10476,7 @@
     function liftEditorDetailEntry(entryEl) {
       if (!entryEl) return;
       if (!entryEl.closest('#colDeckModal') && !entryEl.classList.contains('is-series-detail-host')) return;
+      clearDeckModalDialogTransform();
       if (!entryEl._lbList) entryEl._lbList = entryEl.closest('.col-deck-entry-list');
       entryEl.classList.add('is-editor-lb');
       document.body.appendChild(entryEl);
@@ -11765,12 +11781,14 @@
         if (!isEsc) return;
         if (deckCardExpandEntry || deckLbAnimTl) {
           e.preventDefault();
+          e.stopPropagation();
           clearPendingDeckExpand();
           collapseDeckCardExpand(!!deckLbAnimTl);
           return;
         }
         if (lightboxArt || pendingDeckExpandEntry) {
           e.preventDefault();
+          e.stopPropagation();
           clearPendingDeckExpand();
           killDeckLbAnimTl();
           closeCardLightbox();
@@ -20348,6 +20366,12 @@
       if (e.key !== 'Escape') return;
       if (deckDiffAdjustPopEl && !deckDiffAdjustPopEl.hidden) {
         closeDeckDiffAdjustPopover();
+        return;
+      }
+      /* 展開詳情光箱優先關閉；勿落到下面把編輯 modal 一併關掉 */
+      if (typeof deckCardExpandEntry !== 'undefined' && (deckCardExpandEntry || deckLbAnimTl)) {
+        clearPendingDeckExpand();
+        collapseDeckCardExpand(!!deckLbAnimTl);
         return;
       }
       if (lightboxArt || pendingDeckExpandEntry) {
