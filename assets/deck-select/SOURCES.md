@@ -4,9 +4,9 @@ Used by `deck-select.html` (and decks handoff cover).
 
 | Local File | Source | Used as |
 | --- | --- | --- |
-| ws-table-card.jpg | Composite: wooden table photo + Weiss Schwarz card face (BanG Dream Yukina layout reference from site assets) | WS panel background |
-| wsr-table-card.jpg | AI-generated natural tabletop photo (rose card + petals on wood) | WSR panel background |
-| other-table-card.jpg | AI-generated natural tabletop photo (gold emblem card on dark wood) | Other panel background |
+| ws-table-card.jpg | AI tabletop photo, Weiss Schwarz–style card on wood (upper half) | WS panel background |
+| wsr-table-card.jpg | AI tabletop photo, rose-theme card on wood (upper half, parallel framing) | WSR panel background |
+| other-table-card.jpg | AI tabletop photo, gold-crest card back on wood (upper half, parallel framing) | Other panel background |
 
-Vertical 9:16 product-style photos: a physical card on a wooden table.
+Vertical 9:16 product-style photos with shared composition: card in the upper half, wooden table below for text.
 Decorative use only; not official publisher art. No ownership or endorsement claimed.
