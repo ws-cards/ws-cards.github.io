@@ -233,6 +233,8 @@
       --select-shade: #ebe4d8;
       background: #ebe4d8 !important;
       color: var(--select-ink);
+      /* 讓 ::before 桌面底可叠在內容下，又不必給 .wrapper 設 z-index（否則會困住 fixed 光箱） */
+      isolation: isolate;
     }
     [data-theme="dark"] body.collection-page {
       --desk-foil: #e8a045;
@@ -353,7 +355,7 @@
       content: '';
       position: fixed;
       inset: -8px;
-      z-index: 0;
+      z-index: -1;
       pointer-events: none;
       background:
         radial-gradient(120% 90% at 50% 28%, rgba(235, 228, 216, 0.08) 0%, rgba(235, 228, 216, 0.34) 58%, rgba(220, 210, 190, 0.58) 100%),
@@ -381,7 +383,8 @@
     body.collection-page .content-wrapper,
     body.collection-page .main-footer {
       position: relative;
-      z-index: 1;
+      /* 不可設 z-index：會建立 stacking context，讓 fixed 光箱被 .col-lb-backdrop 蓋住變暗 */
+      z-index: auto;
     }
     body.collection-page .main-header .hamburger span,
     body.collection-page #leftbar .hamburger span {
@@ -4249,10 +4252,15 @@
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-expand-trait::before {
       background: var(--col-muted);
     }
-    /* 編輯視窗 z-index 2000，詳情光箱要浮在兩張卡片之上 */
+    /* 編輯視窗 z-index 2000，詳情光箱要浮在遮罩之上 */
     .col-deck-entry.is-expanded.is-lb-detail.is-editor-lb,
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile.is-editor-lb {
       z-index: 2310;
+    }
+    /* 頁面詳情光箱（非編輯 modal）同樣要高於 .col-lb-backdrop:1290 */
+    .col-deck-entry.is-expanded.is-lb-detail.is-page-lb,
+    .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile.is-page-lb {
+      z-index: 1306;
     }
     /* 清單佔位：隱形 clone，保留與原 entry 相同的 grid 佔位，避免開關光箱擠動版面 */
     .col-deck-entry.col-lb-entry-ph {
@@ -10248,9 +10256,11 @@
 
     function liftEditorLightboxArt(art) {
       if (!art || !art.parentNode) return;
+      if (art.parentNode === document.body) return;
       clearDeckModalDialogTransform();
       lightboxHome = { parent: art.parentNode, next: art.nextSibling };
-      art.classList.add('is-editor-lb');
+      var fromModal = !!(art.closest && art.closest('#colDeckModal'));
+      art.classList.add(fromModal ? 'is-editor-lb' : 'is-page-lb');
       document.body.appendChild(art);
     }
 
@@ -10258,7 +10268,7 @@
       if (!art) return;
       var home = lightboxHome;
       lightboxHome = null;
-      art.classList.remove('is-editor-lb');
+      art.classList.remove('is-editor-lb', 'is-page-lb');
       if (!home || !home.parent) return;
       if (!home.parent.isConnected) {
         if (art.parentNode) art.parentNode.removeChild(art);
@@ -10268,7 +10278,8 @@
     }
 
     function closeEditorFaceLightbox(force) {
-      if (!lightboxArt || !lightboxArt.classList.contains('is-editor-lb')) return;
+      if (!lightboxArt) return;
+      if (!lightboxArt.classList.contains('is-editor-lb') && !lightboxArt.classList.contains('is-page-lb')) return;
       closeCardLightbox(!!force);
     }
 
@@ -10346,20 +10357,21 @@
         if (typeof onOpened === 'function') onOpened();
       }
 
-      var lift = !!(art.closest && art.closest('#colDeckModal'));
+      /* 一律 lift 到 body，避免被頁面殼層 stacking context 壓在遮罩下 */
+      var fromModal = !!(art.closest && art.closest('#colDeckModal'));
       if (prefersReducedMotion() || !gsapFlipReady()) {
-        if (lift) liftEditorLightboxArt(art);
+        liftEditorLightboxArt(art);
         art.classList.add('is-lightbox');
         bd.classList.add('is-on');
-        if (lift) bd.classList.add('is-over-deck-modal');
+        if (fromModal) bd.classList.add('is-over-deck-modal');
         finishOpen();
         return;
       }
       var state = Flip.getState(art);
-      if (lift) liftEditorLightboxArt(art);
+      liftEditorLightboxArt(art);
       art.classList.add('is-lightbox');
       bd.classList.add('is-on');
-      if (lift) bd.classList.add('is-over-deck-modal');
+      if (fromModal) bd.classList.add('is-over-deck-modal');
       syncOverlayScrollLock();
       Flip.from(state, {
         duration: 0.28,
@@ -10472,21 +10484,27 @@
       return deckExpandListPlaceholder.getBoundingClientRect();
     }
 
-    /** 編輯視窗裡的詳情要搬到 body，才不會被 modal 裁切或壓在暗底下面 */
+    /**
+     * 光箱／展開詳情一律搬到 body，與 .col-lb-backdrop 同層比較 z-index。
+     * 若留在 .wrapper 內，即使 position:fixed 也會被祖先 stacking context 壓在遮罩下面變暗。
+     */
     function liftEditorDetailEntry(entryEl) {
       if (!entryEl) return;
-      if (!entryEl.closest('#colDeckModal') && !entryEl.classList.contains('is-series-detail-host')) return;
+      if (entryEl.parentNode === document.body) return;
       clearDeckModalDialogTransform();
       if (!entryEl._lbList) entryEl._lbList = entryEl.closest('.col-deck-entry-list');
-      entryEl.classList.add('is-editor-lb');
+      var fromModal = !!(entryEl.closest('#colDeckModal') || entryEl.classList.contains('is-series-detail-host'));
+      entryEl.classList.add(fromModal ? 'is-editor-lb' : 'is-page-lb');
       document.body.appendChild(entryEl);
       var bd = ensureLightboxBackdrop();
-      if (bd) bd.classList.add('is-over-deck-modal');
+      if (bd && fromModal) bd.classList.add('is-over-deck-modal');
     }
 
     function restoreLiftedEditorEntry(entryEl) {
-      if (!entryEl || !entryEl.classList.contains('is-editor-lb')) return;
-      entryEl.classList.remove('is-editor-lb');
+      if (!entryEl) return;
+      var wasLifted = entryEl.classList.contains('is-editor-lb') || entryEl.classList.contains('is-page-lb');
+      if (!wasLifted) return;
+      entryEl.classList.remove('is-editor-lb', 'is-page-lb');
       if (entryEl.classList.contains('is-series-detail-host')) {
         var seriesArt = entryEl.querySelector('.col-deck-entry-art');
         var home = entryEl._seriesArtHome;
