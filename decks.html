@@ -11771,7 +11771,9 @@
       bindMobileLightboxSwipeNav();
       bindEl(document, 'click', function (e) {
         var entry = deckCardExpandEntry;
-        if (!entry || !entry.classList.contains('is-editor-lb') || !entry.contains(e.target)) return;
+        /* 展開詳情一律 lift 到 body（is-editor-lb／is-page-lb），清單上的 click 接不到關閉鈕 */
+        if (!entry || !entry.contains(e.target)) return;
+        if (!entry.classList.contains('is-editor-lb') && !entry.classList.contains('is-page-lb')) return;
         if (e.target.closest('[data-deck-expand-close]')) {
           e.preventDefault();
           collapseDeckCardExpand(!!deckLbAnimTl);
