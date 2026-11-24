@@ -22,9 +22,9 @@
   </script>
   <style>
     /* 頁面就緒前藏內文（進度 overlay 除外），避免字體 swap 閃爍與半載入畫面 */
-    html { background: #0b0d12; }
+    html { background: #ebe4d8; }
     html[data-theme="dark"] { background: #0b0d12; }
-    html[data-theme="light"] { background: #0b0d12; }
+    html[data-theme="light"] { background: #ebe4d8; }
     html:not(.page-ready) body > *:not(#wsPageLoader):not(#deckHandoffCover) { visibility: hidden; }
     html.page-ready body > *:not(#wsPageLoader) { visibility: visible; }
     html.deck-handoff { background: #0b0d12 !important; }
@@ -98,11 +98,13 @@
       position: fixed; inset: 0; z-index: 20000;
       display: flex; align-items: center; justify-content: center;
       padding: 1.5rem; visibility: visible !important;
+      background: #ebe4d8; color: #171714;
+    }
+    html[data-theme="dark"] #wsPageLoader.ws-page-loader {
       background: #0b0d12; color: #f4f1ea;
     }
-    html[data-theme="dark"] #wsPageLoader.ws-page-loader,
     html[data-theme="light"] #wsPageLoader.ws-page-loader {
-      background: #0b0d12; color: #f4f1ea;
+      background: #ebe4d8; color: #171714;
     }
     #wsPageLoader .ws-page-loader-panel {
       width: min(20.5rem, 100%); text-align: center;
@@ -209,39 +211,58 @@
       font-family: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
     }
 
-    /* 對齊 deck-select：暗木桌工作台（此頁預設暗桌旅程，淺／深主題同殼） */
+    /* 對齊 deck-select 材質：深色＝暗胡桃桌，淺色＝亮橡木桌 */
     body.collection-page {
       --font-display: 'Zen Old Mincho', 'Noto Serif TC', serif;
       --font-ui: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
       --font-serif: 'Noto Serif TC', 'Zen Old Mincho', serif;
       --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+      --desk-foil: #8a6f3a;
+      --desk-foil-deep: #5c4a28;
+      --desk-surface-strong: rgba(23, 23, 20, 0.05);
+      --desk-line: rgba(23, 23, 20, 0.16);
+      --desk-ink: #171714;
+      --desk-paper: #ebe4d8;
+      --desk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --select-ink: #171714;
+      --select-ink-soft: rgba(23, 23, 20, 0.72);
+      --select-ink-faint: rgba(23, 23, 20, 0.55);
+      --select-accent: #8a6f3a;
+      --select-shade: #ebe4d8;
+      background: #ebe4d8 !important;
+      color: var(--select-ink);
+    }
+    [data-theme="dark"] body.collection-page {
       --desk-foil: #e8a045;
       --desk-foil-deep: #cbb083;
       --desk-surface-strong: rgba(244, 241, 234, 0.06);
       --desk-line: rgba(244, 241, 234, 0.16);
       --desk-ink: #f4f1ea;
       --desk-paper: #0b0d12;
-      --desk-ease: cubic-bezier(0.22, 1, 0.36, 1);
       --select-ink: #f4f1ea;
       --select-ink-soft: rgba(244, 241, 234, 0.78);
       --select-ink-faint: rgba(244, 241, 234, 0.55);
       --select-accent: #e8a045;
       --select-shade: #0b0d12;
       background: #0b0d12 !important;
-      color: var(--select-ink);
-    }
-    [data-theme="dark"] body.collection-page,
-    [data-theme="light"] body.collection-page {
-      --desk-foil: #e8a045;
-      --desk-foil-deep: #cbb083;
-      --desk-surface-strong: rgba(244, 241, 234, 0.06);
-      --desk-line: rgba(244, 241, 234, 0.16);
-      --desk-ink: #f4f1ea;
-      --desk-paper: #0b0d12;
-      background: #0b0d12 !important;
       color: var(--select-ink, #f4f1ea);
     }
-    /* 暗桌殼：navbar／content／footer 延續選廳氣氛 */
+    [data-theme="light"] body.collection-page {
+      --desk-foil: #8a6f3a;
+      --desk-foil-deep: #5c4a28;
+      --desk-surface-strong: rgba(23, 23, 20, 0.05);
+      --desk-line: rgba(23, 23, 20, 0.16);
+      --desk-ink: #171714;
+      --desk-paper: #ebe4d8;
+      --select-ink: #171714;
+      --select-ink-soft: rgba(23, 23, 20, 0.72);
+      --select-ink-faint: rgba(23, 23, 20, 0.55);
+      --select-accent: #8a6f3a;
+      --select-shade: #ebe4d8;
+      background: #ebe4d8 !important;
+      color: var(--select-ink, #171714);
+    }
+    /* 工作台殼：navbar／content／footer 隨主題切換 */
     body.collection-page .wrapper {
       background: transparent !important;
       min-height: 100vh;
@@ -253,37 +274,73 @@
       background: transparent !important;
     }
     body.collection-page .main-header,
-    body.collection-page .main-header.navbar {
-      background: rgba(11, 13, 18, 0.72) !important;
-      border-bottom: 1px solid rgba(244, 241, 234, 0.1) !important;
+    body.collection-page .main-header.navbar,
+    body.collection-page .main-header.navbar-white,
+    body.collection-page .main-header.navbar-light {
+      background: rgba(244, 241, 234, 0.78) !important;
+      border-bottom: 1px solid rgba(23, 23, 20, 0.1) !important;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      color: #171714 !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header,
+    [data-theme="dark"] body.collection-page .main-header.navbar,
+    [data-theme="dark"] body.collection-page .main-header.navbar-white,
+    [data-theme="dark"] body.collection-page .main-header.navbar-light {
+      background: rgba(11, 13, 18, 0.72) !important;
+      border-bottom-color: rgba(244, 241, 234, 0.1) !important;
       color: #f4f1ea !important;
     }
     body.collection-page .main-header .nav-link,
     body.collection-page .main-header .navbar-badge,
     body.collection-page .main-header .fa,
     body.collection-page .main-header .fas,
-    body.collection-page .main-header .far {
-      color: #f4f1ea !important;
-    }
+    body.collection-page .main-header .far,
     body.collection-page .main-header .navbar-title-text,
-    body.collection-page .main-header .navbar-title-char {
+    body.collection-page .main-header .navbar-title-char,
+    body.collection-page .main-header .navbar-nav .nav-link,
+    body.collection-page .main-header button,
+    body.collection-page .main-header .btn,
+    body.collection-page .main-header i {
+      color: #171714 !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header .nav-link,
+    [data-theme="dark"] body.collection-page .main-header .navbar-badge,
+    [data-theme="dark"] body.collection-page .main-header .fa,
+    [data-theme="dark"] body.collection-page .main-header .fas,
+    [data-theme="dark"] body.collection-page .main-header .far,
+    [data-theme="dark"] body.collection-page .main-header .navbar-title-text,
+    [data-theme="dark"] body.collection-page .main-header .navbar-title-char,
+    [data-theme="dark"] body.collection-page .main-header .navbar-nav .nav-link,
+    [data-theme="dark"] body.collection-page .main-header button,
+    [data-theme="dark"] body.collection-page .main-header .btn,
+    [data-theme="dark"] body.collection-page .main-header i {
       color: #f4f1ea !important;
     }
     body.collection-page .main-header .navbar-title-mark {
+      background: #8a6f3a !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header .navbar-title-mark {
       background: #e8a045 !important;
     }
     body.collection-page .main-footer,
     body.collection-page .site-footer {
       background: transparent !important;
-      border-top: 1px solid rgba(244, 241, 234, 0.1) !important;
-      color: rgba(244, 241, 234, 0.55) !important;
+      border-top: 1px solid rgba(23, 23, 20, 0.1) !important;
+      color: rgba(23, 23, 20, 0.55) !important;
     }
     body.collection-page .site-footer a {
+      color: rgba(23, 23, 20, 0.72) !important;
+    }
+    [data-theme="dark"] body.collection-page .main-footer,
+    [data-theme="dark"] body.collection-page .site-footer {
+      border-top-color: rgba(244, 241, 234, 0.1) !important;
+      color: rgba(244, 241, 234, 0.55) !important;
+    }
+    [data-theme="dark"] body.collection-page .site-footer a {
       color: rgba(244, 241, 234, 0.72) !important;
     }
-    /* 暗桌氣氛底：空桌木紋圖＋輕暗罩（可讀木紋，避免黑成一團） */
+    /* 桌氣氛底：深＝胡桃空桌，淺＝橡木空桌 */
     body.collection-page::before {
       content: '';
       position: fixed;
@@ -291,13 +348,22 @@
       z-index: 0;
       pointer-events: none;
       background:
+        linear-gradient(180deg, rgba(235, 228, 216, 0.2) 0%, rgba(235, 228, 216, 0.28) 52%, rgba(235, 228, 216, 0.42) 100%),
+        radial-gradient(85% 55% at 72% 18%, rgba(138, 111, 58, 0.1), transparent 58%),
+        url('assets/decks/desk-empty-light.jpg');
+      background-size: cover, cover, cover;
+      background-position: center, center, center;
+      filter: saturate(0.96) brightness(1.02) contrast(1.02);
+      opacity: 1;
+    }
+    [data-theme="dark"] body.collection-page::before {
+      background:
         linear-gradient(180deg, rgba(11, 13, 18, 0.12) 0%, rgba(11, 13, 18, 0.22) 52%, rgba(11, 13, 18, 0.4) 100%),
         radial-gradient(85% 55% at 72% 18%, rgba(232, 160, 69, 0.12), transparent 58%),
         url('assets/decks/desk-empty.jpg');
       background-size: cover, cover, cover;
       background-position: center, center, center;
       filter: saturate(1) brightness(1.05) contrast(1.02);
-      opacity: 1;
     }
     body.collection-page .wrapper,
     body.collection-page .content-wrapper,
@@ -305,32 +371,32 @@
       position: relative;
       z-index: 1;
     }
-    /* 導覽列控件：暗底上的 cream 對比（蓋過淺色主題殘留） */
-    body.collection-page .main-header.navbar-white,
-    body.collection-page .main-header.navbar-light {
-      background: rgba(11, 13, 18, 0.72) !important;
-    }
-    body.collection-page .main-header .navbar-nav .nav-link,
-    body.collection-page .main-header .nav-link,
-    body.collection-page .main-header button,
-    body.collection-page .main-header .btn,
-    body.collection-page .main-header i,
-    body.collection-page .main-header .fas,
-    body.collection-page .main-header .far,
-    body.collection-page .main-header .fa {
-      color: #f4f1ea !important;
-    }
     body.collection-page .main-header .hamburger span,
     body.collection-page #leftbar .hamburger span {
+      background: #171714 !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header .hamburger span,
+    [data-theme="dark"] body.collection-page #leftbar .hamburger span {
       background: #f4f1ea !important;
     }
     body.collection-page .main-header .theme-toggle-btn {
+      border-color: rgba(23, 23, 20, 0.28) !important;
+      background: rgba(23, 23, 20, 0.04) !important;
+      color: #171714 !important;
+    }
+    body.collection-page .main-header .theme-toggle-btn:hover,
+    body.collection-page .main-header .theme-toggle-btn:focus {
+      border-color: rgba(138, 111, 58, 0.7) !important;
+      background: rgba(23, 23, 20, 0.08) !important;
+      color: #171714 !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header .theme-toggle-btn {
       border-color: rgba(244, 241, 234, 0.35) !important;
       background: rgba(244, 241, 234, 0.06) !important;
       color: #f4f1ea !important;
     }
-    body.collection-page .main-header .theme-toggle-btn:hover,
-    body.collection-page .main-header .theme-toggle-btn:focus {
+    [data-theme="dark"] body.collection-page .main-header .theme-toggle-btn:hover,
+    [data-theme="dark"] body.collection-page .main-header .theme-toggle-btn:focus {
       border-color: rgba(232, 160, 69, 0.7) !important;
       background: rgba(244, 241, 234, 0.1) !important;
       color: #fff8ef !important;
@@ -339,6 +405,13 @@
     body.collection-page .main-header .nav-link:focus,
     body.collection-page .main-header button:hover,
     body.collection-page .main-header button:focus {
+      color: #171714 !important;
+      background: rgba(23, 23, 20, 0.06) !important;
+    }
+    [data-theme="dark"] body.collection-page .main-header .nav-link:hover,
+    [data-theme="dark"] body.collection-page .main-header .nav-link:focus,
+    [data-theme="dark"] body.collection-page .main-header button:hover,
+    [data-theme="dark"] body.collection-page .main-header button:focus {
       color: #fff8ef !important;
       background: rgba(244, 241, 234, 0.08) !important;
     }
@@ -394,14 +467,14 @@
     body.collection-page .btn-outline-secondary:not(:disabled):not(.disabled),
     body.collection-page .col-cta-primary,
     body.collection-page .col-cta-secondary {
-      color: rgba(244, 241, 234, 0.78) !important;
+      color: rgba(23, 23, 20, 0.78) !important;
       background-color: transparent !important;
-      border: 1px solid rgba(244, 241, 234, 0.22) !important;
+      border: 1px solid rgba(23, 23, 20, 0.22) !important;
     }
     body.collection-page .btn-primary,
     body.collection-page .btn-primary:not(:disabled):not(.disabled),
     body.collection-page .col-cta-primary {
-      color: #f4f1ea !important;
+      color: #171714 !important;
       font-weight: 600 !important;
     }
     body.collection-page .btn-primary:hover,
@@ -418,9 +491,9 @@
     body.collection-page .btn-outline-secondary:not(:disabled):not(.disabled).active,
     body.collection-page .col-cta-primary:hover,
     body.collection-page .col-cta-secondary:hover {
-      color: #f4f1ea !important;
-      background-color: rgba(244, 241, 234, 0.08) !important;
-      border-color: rgba(232, 160, 69, 0.7) !important;
+      color: #171714 !important;
+      background-color: rgba(23, 23, 20, 0.06) !important;
+      border-color: rgba(138, 111, 58, 0.7) !important;
     }
     body.collection-page .btn-primary:focus,
     body.collection-page .btn-primary.focus,
@@ -630,21 +703,20 @@
     }
     [data-theme="dark"] .col-view-bridge { color: #94a3b8; }
 
-    /* —— 牌組舞台：暗桌工作台 —— */
+    /* —— 牌組舞台：隨主題切換桌面工作台 —— */
     .col-stage {
       --deckbox-shell: transparent;
       --deckbox-lid: transparent;
-      --deckbox-paper: rgba(244, 241, 234, 0.04);
-      --deckbox-accent: var(--desk-foil, #e8a045);
-      --deckbox-well: rgba(244, 241, 234, 0.04);
-      --deckbox-ink: #f4f1ea;
-      --deckbox-muted: rgba(244, 241, 234, 0.62);
+      --deckbox-paper: rgba(23, 23, 20, 0.04);
+      --deckbox-accent: var(--desk-foil, #8a6f3a);
+      --deckbox-well: rgba(23, 23, 20, 0.04);
+      --deckbox-ink: #171714;
+      --deckbox-muted: rgba(23, 23, 20, 0.62);
       display: grid;
       gap: 1.15rem;
       margin-bottom: 1.5rem;
     }
-    [data-theme="dark"] .col-stage,
-    [data-theme="light"] .col-stage {
+    [data-theme="dark"] .col-stage {
       --deckbox-shell: transparent;
       --deckbox-lid: transparent;
       --deckbox-paper: rgba(244, 241, 234, 0.04);
@@ -652,6 +724,15 @@
       --deckbox-well: rgba(244, 241, 234, 0.04);
       --deckbox-ink: #f4f1ea;
       --deckbox-muted: rgba(244, 241, 234, 0.62);
+    }
+    [data-theme="light"] .col-stage {
+      --deckbox-shell: transparent;
+      --deckbox-lid: transparent;
+      --deckbox-paper: rgba(23, 23, 20, 0.04);
+      --deckbox-accent: var(--desk-foil, #8a6f3a);
+      --deckbox-well: rgba(23, 23, 20, 0.04);
+      --deckbox-ink: #171714;
+      --deckbox-muted: rgba(23, 23, 20, 0.62);
     }
 
     /* 一窗檢視專用：漏斗篩選（等級／稀有度／顏色） */
@@ -927,8 +1008,18 @@
       box-shadow: none;
       border-color: transparent;
     }
-    /* —— 頁首：延續選廳，去色帶 —— */
+    /* —— 頁首：去色帶；深色用 cream／金，淺色用墨色／古銅 —— */
     .col-stage {
+      --deck-lib-ink: #171714;
+      --deck-lib-ink-soft: rgba(23, 23, 20, 0.08);
+      --deck-lib-ink-deep: #0f0f0d;
+      --deck-lib-cream: #171714;
+      --deck-lib-cream-soft: rgba(23, 23, 20, 0.72);
+      --deck-lib-gold: #8a6f3a;
+      --deck-lib-gold-soft: rgba(138, 111, 58, 0.9);
+      --deck-lib-line: rgba(23, 23, 20, 0.28);
+    }
+    [data-theme="dark"] .col-stage {
       --deck-lib-ink: #0b0d12;
       --deck-lib-ink-soft: rgba(244, 241, 234, 0.08);
       --deck-lib-ink-deep: #07080c;
@@ -1008,11 +1099,15 @@
       letter-spacing: 0.06em;
       line-height: 1.08;
       color: var(--deck-lib-cream);
+      text-shadow: none;
+    }
+    [data-theme="dark"] .col-deckbox-title {
+      color: var(--deck-lib-cream);
       text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35);
     }
-    [data-theme="dark"] .col-deckbox-title,
     [data-theme="light"] .col-deckbox-title {
       color: var(--deck-lib-cream);
+      text-shadow: none;
     }
     .col-deckbox-lede {
       margin: 0.2rem 0 0;
@@ -1181,35 +1276,42 @@
     }
     .col-deckbox .col-search-wrap .form-control,
     .col-deckbox .col-sort-chip {
-      background: rgba(244, 241, 234, 0.06) !important;
-      border-color: rgba(244, 241, 234, 0.2) !important;
-      color: #f4f1ea !important;
+      background: rgba(23, 23, 20, 0.04) !important;
+      border-color: rgba(23, 23, 20, 0.18) !important;
+      color: #171714 !important;
       box-shadow: none !important;
     }
     [data-theme="dark"] .col-deckbox .col-deck-toolbar .col-search-wrap .form-control,
     [data-theme="dark"] .col-deckbox .col-deck-toolbar .col-sort-chip,
     [data-theme="dark"] .col-deckbox .col-search-wrap .form-control,
-    [data-theme="dark"] .col-deckbox .col-sort-chip,
-    [data-theme="light"] .col-deckbox .col-deck-toolbar .col-search-wrap .form-control,
-    [data-theme="light"] .col-deckbox .col-deck-toolbar .col-sort-chip,
-    [data-theme="light"] .col-deckbox .col-search-wrap .form-control,
-    [data-theme="light"] .col-deckbox .col-sort-chip {
+    [data-theme="dark"] .col-deckbox .col-sort-chip {
       background: rgba(244, 241, 234, 0.06) !important;
       border-color: rgba(244, 241, 234, 0.2) !important;
       color: #f4f1ea !important;
       box-shadow: none !important;
     }
+    [data-theme="light"] .col-deckbox .col-deck-toolbar .col-search-wrap .form-control,
+    [data-theme="light"] .col-deckbox .col-deck-toolbar .col-sort-chip,
+    [data-theme="light"] .col-deckbox .col-search-wrap .form-control,
+    [data-theme="light"] .col-deckbox .col-sort-chip {
+      background: rgba(23, 23, 20, 0.04) !important;
+      border-color: rgba(23, 23, 20, 0.18) !important;
+      color: #171714 !important;
+      box-shadow: none !important;
+    }
     .col-deckbox .col-search-wrap .form-control::placeholder {
+      color: rgba(23, 23, 20, 0.45);
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control::placeholder {
       color: rgba(244, 241, 234, 0.45);
     }
-    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control::placeholder,
     [data-theme="light"] .col-deckbox .col-search-wrap .form-control::placeholder {
-      color: rgba(244, 241, 234, 0.45);
+      color: rgba(23, 23, 20, 0.45);
     }
     .col-deckbox .col-search-wrap > i,
     .col-deckbox .col-sort-chip > i,
     .col-deckbox .col-sort-chip::after {
-      color: rgba(244, 241, 234, 0.5);
+      color: rgba(23, 23, 20, 0.5);
     }
     [data-theme="dark"] .col-deckbox .col-search-wrap > i,
     [data-theme="dark"] .col-deckbox .col-sort-chip > i,
@@ -1218,22 +1320,27 @@
     }
     .col-deckbox .col-sort-chip select,
     .col-deckbox .col-sort-chip select option {
-      color: #f4f1ea !important;
-      background-color: #151820 !important;
+      color: #171714 !important;
+      background-color: #f4f1ea !important;
     }
     [data-theme="dark"] .col-deckbox .col-sort-chip select,
-    [data-theme="dark"] .col-deckbox .col-sort-chip select option,
-    [data-theme="light"] .col-deckbox .col-sort-chip select,
-    [data-theme="light"] .col-deckbox .col-sort-chip select option {
+    [data-theme="dark"] .col-deckbox .col-sort-chip select option {
       color: #f4f1ea !important;
       background-color: #151820 !important;
     }
+    [data-theme="light"] .col-deckbox .col-sort-chip select,
+    [data-theme="light"] .col-deckbox .col-sort-chip select option {
+      color: #171714 !important;
+      background-color: #f4f1ea !important;
+    }
     .col-deckbox .col-search-wrap .form-control {
+      color: #171714 !important;
+    }
+    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control {
       color: #f4f1ea !important;
     }
-    [data-theme="dark"] .col-deckbox .col-search-wrap .form-control,
     [data-theme="light"] .col-deckbox .col-search-wrap .form-control {
-      color: #f4f1ea !important;
+      color: #171714 !important;
     }
     /* 牌組 CTA 樣式改由上方 collection-page 直角灰框規則統一處理 */
     .col-deckbox .col-deck-stats {
@@ -1249,15 +1356,15 @@
     .col-deckbox .col-deck-stat strong { color: var(--deckbox-ink); }
     .col-deckbox .col-deck-stat i { color: var(--deckbox-accent); }
     @media (min-width: 992px) {
-      /* 桌面主從：暗桌半透明工作面 */
+      /* 桌面主從：半透明工作面，隨主題換對比 */
       .col-deckbox .col-deck-sidebar,
       .col-deckbox .col-deck-detail {
-        --col-ink: #f4f1ea;
-        --col-muted: rgba(244, 241, 234, 0.62);
-        --col-line: rgba(244, 241, 234, 0.14);
-        --col-accent: var(--desk-foil, #e8a045);
-        --col-accent-soft: rgba(232, 160, 69, 0.14);
-        color: #f4f1ea;
+        --col-ink: #171714;
+        --col-muted: rgba(23, 23, 20, 0.62);
+        --col-line: rgba(23, 23, 20, 0.14);
+        --col-accent: var(--desk-foil, #8a6f3a);
+        --col-accent-soft: rgba(138, 111, 58, 0.14);
+        color: #171714;
         box-shadow: none;
       }
       .col-deckbox .col-deck-sidebar {
@@ -1265,15 +1372,13 @@
         border: 0;
       }
       .col-deckbox .col-deck-detail {
-        background: rgba(244, 241, 234, 0.05);
-        border: 1px solid rgba(244, 241, 234, 0.12);
+        background: rgba(255, 252, 245, 0.55);
+        border: 1px solid rgba(23, 23, 20, 0.12);
         border-radius: 12px;
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+        box-shadow: 0 16px 36px rgba(40, 28, 12, 0.12);
       }
       [data-theme="dark"] .col-deckbox .col-deck-sidebar,
-      [data-theme="dark"] .col-deckbox .col-deck-detail,
-      [data-theme="light"] .col-deckbox .col-deck-sidebar,
-      [data-theme="light"] .col-deckbox .col-deck-detail {
+      [data-theme="dark"] .col-deckbox .col-deck-detail {
         --col-ink: #f4f1ea;
         --col-muted: rgba(244, 241, 234, 0.62);
         --col-line: rgba(244, 241, 234, 0.14);
@@ -1282,16 +1387,30 @@
         color: #f4f1ea;
         box-shadow: none;
       }
+      [data-theme="light"] .col-deckbox .col-deck-sidebar,
+      [data-theme="light"] .col-deckbox .col-deck-detail {
+        --col-ink: #171714;
+        --col-muted: rgba(23, 23, 20, 0.62);
+        --col-line: rgba(23, 23, 20, 0.14);
+        --col-accent: var(--desk-foil, #8a6f3a);
+        --col-accent-soft: rgba(138, 111, 58, 0.14);
+        color: #171714;
+        box-shadow: none;
+      }
       [data-theme="dark"] .col-deckbox .col-deck-sidebar,
       [data-theme="light"] .col-deckbox .col-deck-sidebar {
         background: transparent;
         border: 0;
       }
-      [data-theme="dark"] .col-deckbox .col-deck-detail,
-      [data-theme="light"] .col-deckbox .col-deck-detail {
+      [data-theme="dark"] .col-deckbox .col-deck-detail {
         background: rgba(244, 241, 234, 0.05);
         border-color: rgba(244, 241, 234, 0.12);
         box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+      }
+      [data-theme="light"] .col-deckbox .col-deck-detail {
+        background: rgba(255, 252, 245, 0.55);
+        border-color: rgba(23, 23, 20, 0.12);
+        box-shadow: 0 16px 36px rgba(40, 28, 12, 0.12);
       }
       .col-deckbox .col-deck-sidebar-title,
       .col-deckbox .col-deck-detail-title,
@@ -1749,31 +1868,35 @@
       font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
       font-size: clamp(1.45rem, 3.6vw, 1.85rem);
       font-weight: 700;
-      color: #f4f1ea;
+      color: #171714;
       letter-spacing: 0.04em;
       line-height: 1.25;
       text-align: left;
-      text-shadow: 0 1px 14px rgba(0, 0, 0, 0.35);
+      text-shadow: none;
     }
     .col-deck-empty-text {
       margin: 0;
       max-width: 34rem;
-      color: rgba(244, 241, 234, 0.68);
+      color: rgba(23, 23, 20, 0.68);
       font-size: 0.95rem;
       line-height: 1.65;
       text-align: left;
     }
-    [data-theme="dark"] .col-deck-empty-title,
-    [data-theme="light"] .col-deck-empty-title { color: #f4f1ea; }
-    [data-theme="dark"] .col-deck-empty-text,
-    [data-theme="light"] .col-deck-empty-text { color: rgba(244, 241, 234, 0.68); }
+    [data-theme="dark"] .col-deck-empty-title {
+      color: #f4f1ea;
+      text-shadow: 0 1px 14px rgba(0, 0, 0, 0.35);
+    }
+    [data-theme="light"] .col-deck-empty-title { color: #171714; text-shadow: none; }
+    [data-theme="dark"] .col-deck-empty-text { color: rgba(244, 241, 234, 0.68); }
+    [data-theme="light"] .col-deck-empty-text { color: rgba(23, 23, 20, 0.68); }
     .col-deck-empty-hint {
       margin: 0.75rem 0 0;
       font-size: 0.8rem;
       line-height: 1.45;
-      color: rgba(244, 241, 234, 0.55);
+      color: rgba(23, 23, 20, 0.55);
       text-align: left;
     }
+    [data-theme="dark"] .col-deck-empty-hint { color: rgba(244, 241, 234, 0.55); }
     .col-deck-empty-hint a {
       color: inherit;
       font-weight: 700;
@@ -1854,9 +1977,9 @@
     }
     body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
     body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
-      color: #0b0d12 !important;
-      background-color: #f4f1ea !important;
-      border: 1px solid #f4f1ea !important;
+      color: #f4f1ea !important;
+      background-color: #171714 !important;
+      border: 1px solid #171714 !important;
       font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif) !important;
       font-weight: 500 !important;
       letter-spacing: 0.01em !important;
@@ -1865,16 +1988,16 @@
     body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary:focus,
     body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:hover,
     body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:focus {
-      background-color: #fff8ef !important;
-      border-color: #e8a045 !important;
-      color: #0b0d12 !important;
+      background-color: #2a2620 !important;
+      border-color: #8a6f3a !important;
+      color: #f4f1ea !important;
       transform: translateY(-1px) !important;
     }
     body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
     body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
-      color: #f4f1ea !important;
-      background-color: rgba(244, 241, 234, 0.04) !important;
-      border: 1px solid rgba(244, 241, 234, 0.28) !important;
+      color: #171714 !important;
+      background-color: rgba(255, 252, 245, 0.35) !important;
+      border: 1px solid rgba(23, 23, 20, 0.28) !important;
       font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif) !important;
       font-weight: 500 !important;
     }
@@ -1882,9 +2005,9 @@
     body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary:focus,
     body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile:hover,
     body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile:focus {
-      background-color: rgba(244, 241, 234, 0.08) !important;
-      border-color: rgba(232, 160, 69, 0.7) !important;
-      color: #f4f1ea !important;
+      background-color: rgba(255, 252, 245, 0.55) !important;
+      border-color: rgba(138, 111, 58, 0.7) !important;
+      color: #171714 !important;
       transform: translateY(-1px) !important;
     }
     body.collection-page #colDeckEmptyPrimaryBtn.col-cta-primary[data-empty-action="create"] {
@@ -1893,20 +2016,36 @@
       letter-spacing: 0.02em !important;
     }
     [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile,
-    [data-theme="light"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
-    [data-theme="light"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
       color: #0b0d12 !important;
       background-color: #f4f1ea !important;
       border-color: #f4f1ea !important;
     }
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary:hover,
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary:focus,
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:hover,
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:focus {
+      background-color: #fff8ef !important;
+      border-color: #e8a045 !important;
+      color: #0b0d12 !important;
+    }
+    [data-theme="light"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
+    [data-theme="light"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
+      color: #f4f1ea !important;
+      background-color: #171714 !important;
+      border-color: #171714 !important;
+    }
     [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile,
-    [data-theme="light"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
-    [data-theme="light"] body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
       color: #f4f1ea !important;
       background-color: rgba(244, 241, 234, 0.04) !important;
       border-color: rgba(244, 241, 234, 0.28) !important;
+    }
+    [data-theme="light"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
+    [data-theme="light"] body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
+      color: #171714 !important;
+      background-color: rgba(255, 252, 245, 0.35) !important;
+      border-color: rgba(23, 23, 20, 0.28) !important;
     }
     .col-deck-empty[data-empty-mode="loading"] .col-deck-empty-actions {
       display: none;
