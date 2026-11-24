@@ -220,6 +220,8 @@
       --desk-foil: #8a6f3a;
       --desk-foil-deep: #5c4a28;
       --desk-surface-strong: rgba(23, 23, 20, 0.05);
+      --desk-panel: #f7f4ec;
+      --desk-panel-soft: #efe8dc;
       --desk-line: rgba(23, 23, 20, 0.16);
       --desk-ink: #171714;
       --desk-paper: #ebe4d8;
@@ -236,6 +238,8 @@
       --desk-foil: #e8a045;
       --desk-foil-deep: #cbb083;
       --desk-surface-strong: rgba(244, 241, 234, 0.06);
+      --desk-panel: #16151a;
+      --desk-panel-soft: #1c1b22;
       --desk-line: rgba(244, 241, 234, 0.16);
       --desk-ink: #f4f1ea;
       --desk-paper: #0b0d12;
@@ -251,6 +255,8 @@
       --desk-foil: #8a6f3a;
       --desk-foil-deep: #5c4a28;
       --desk-surface-strong: rgba(23, 23, 20, 0.05);
+      --desk-panel: #f7f4ec;
+      --desk-panel-soft: #efe8dc;
       --desk-line: rgba(23, 23, 20, 0.16);
       --desk-ink: #171714;
       --desk-paper: #ebe4d8;
@@ -1411,10 +1417,12 @@
         border: 0;
       }
       .col-deckbox .col-deck-detail {
-        background: rgba(255, 252, 245, 0.55);
+        background: color-mix(in srgb, var(--desk-panel, #f7f4ec) 92%, transparent);
         border: 1px solid rgba(23, 23, 20, 0.12);
         border-radius: 12px;
         box-shadow: 0 16px 36px rgba(40, 28, 12, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
       }
       [data-theme="dark"] .col-deckbox .col-deck-sidebar,
       [data-theme="dark"] .col-deckbox .col-deck-detail {
@@ -1442,12 +1450,14 @@
         border: 0;
       }
       [data-theme="dark"] .col-deckbox .col-deck-detail {
-        background: rgba(244, 241, 234, 0.05);
+        background: color-mix(in srgb, var(--desk-panel, #16151a) 88%, transparent);
         border-color: rgba(244, 241, 234, 0.12);
         box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       [data-theme="light"] .col-deckbox .col-deck-detail {
-        background: rgba(255, 252, 245, 0.55);
+        background: color-mix(in srgb, var(--desk-panel, #f7f4ec) 92%, transparent);
         border-color: rgba(23, 23, 20, 0.12);
         box-shadow: 0 16px 36px rgba(40, 28, 12, 0.12);
       }
@@ -2804,12 +2814,16 @@
         display: block;
         border: 1px solid var(--col-line);
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.72);
+        background: color-mix(in srgb, var(--desk-panel, #f7f4ec) 92%, transparent);
         min-height: 28rem;
         overflow: hidden;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
       }
       [data-theme="dark"] .col-deck-detail {
-        background: rgba(255, 255, 255, 0.04);
+        background: color-mix(in srgb, var(--desk-panel, #16151a) 88%, transparent);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
       .col-deck-detail-empty {
         display: flex;
@@ -3288,7 +3302,8 @@
       max-height: min(88dvh, 88vh, 820px);
       overflow: hidden;
       border-radius: 12px;
-      background: var(--desk-surface-strong, #f7f7f4);
+      /* 工作對話框用不透明背板，避免桌面木紋透出蓋掉內容 */
+      background: var(--desk-panel, #f7f4ec);
       color: var(--desk-ink, #171714);
       border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
       box-shadow:
@@ -3296,7 +3311,7 @@
         0 18px 48px rgba(28, 26, 23, 0.18);
     }
     [data-theme="dark"] .col-modal-dialog {
-      background: var(--desk-surface-strong, #1c1b18);
+      background: var(--desk-panel, #16151a);
       color: var(--desk-ink, #f0eee6);
       border-color: var(--desk-line, rgba(240, 238, 230, 0.12));
       box-shadow:
@@ -3334,7 +3349,7 @@
       gap: 0.45rem;
       padding: 0.75rem 1rem;
       border-top: 1px solid var(--desk-line, rgba(18, 18, 16, 0.14));
-      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 6%, transparent);
+      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 8%, var(--desk-panel-soft, #efe8dc));
     }
     .col-modal-actions .btn {
       min-height: 2.35rem;
@@ -3342,7 +3357,7 @@
     }
     [data-theme="dark"] .col-modal-actions {
       border-top-color: var(--desk-line, rgba(240, 238, 230, 0.12));
-      background: rgba(0, 0, 0, 0.2);
+      background: color-mix(in srgb, #000 28%, var(--desk-panel-soft, #1c1b22));
     }
 
     /* #421 誤刪的共用殼層：空狀態／確認文案／差異比較來源選擇 */
@@ -3407,7 +3422,7 @@
       outline: none;
     }
     .col-decklog-diff-tab.is-active {
-      background: var(--desk-surface-strong, #f7f7f4);
+      background: var(--desk-panel, #f7f4ec);
       color: var(--desk-ink, #171714);
       box-shadow: 0 1px 2px rgba(28, 26, 23, 0.08);
     }
@@ -3416,7 +3431,7 @@
       color: var(--desk-foil, #d0b27a);
     }
     [data-theme="dark"] .col-decklog-diff-tab.is-active {
-      background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 92%, #fff);
+      background: var(--desk-panel-soft, #1c1b22);
       color: var(--desk-ink, #f0eee6);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     }
@@ -3543,11 +3558,11 @@
         height: 100%;
         min-height: 0;
         overflow: hidden;
-        background: var(--desk-surface-strong, #f7f7f4);
+        background: var(--desk-panel, #f7f4ec);
         color: var(--desk-ink, #171714);
       }
       [data-theme="dark"] #colDeckModal.is-series-pick .col-deck-series-pick {
-        background: #1f1f1f;
+        background: var(--desk-panel, #16151a);
         color: #f7fafc;
       }
       #colDeckModal.is-series-pick:not(.is-mobile-deck) .col-deck-editor-dialog {
@@ -5342,11 +5357,11 @@
       margin: 0.15rem auto 0.35rem;
       padding: 0.45rem 0.65rem;
       border-radius: 12px;
-      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 92%, transparent);
+      background: var(--desk-panel, #f7f4ec);
       box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
     }
     [data-theme="dark"] .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile > .col-lb-qty-stepper {
-      background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 92%, transparent);
+      background: var(--desk-panel, #16151a);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     }
     .col-deck-entry.is-expanded.is-lb-detail.is-lb-mobile .col-deck-entry-traits .col-lb-qty-stepper {
@@ -5666,12 +5681,12 @@
       min-height: 0;
       max-height: 100%;
       overflow: hidden;
-      background: var(--desk-surface-strong, #f7f7f4);
+      background: var(--desk-panel, #f7f4ec);
       color: var(--desk-ink, #171714);
       animation: colDeckEditChoiceIn 0.28s var(--desk-ease, ease) both;
     }
     [data-theme="dark"] .col-deck-edit-choice {
-      background: var(--desk-surface-strong, #1c1b18);
+      background: var(--desk-panel, #16151a);
       color: var(--desk-ink, #f0eee6);
     }
     @keyframes colDeckEditChoiceIn {
@@ -5690,7 +5705,7 @@
       height: 2.5rem;
       border: 1px solid var(--desk-line, rgba(18, 18, 16, 0.28));
       border-radius: 0;
-      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, transparent);
+      background: var(--desk-panel, #f7f4ec);
       color: var(--desk-ink, #171714);
       display: inline-flex;
       align-items: center;
@@ -5701,7 +5716,7 @@
     }
     [data-theme="dark"] .col-deck-edit-choice-close {
       border-color: var(--desk-line, rgba(240, 238, 230, 0.16));
-      background: color-mix(in srgb, var(--desk-surface-strong, #1c1b18) 88%, transparent);
+      background: var(--desk-panel, #16151a);
       color: var(--desk-ink, #f0eee6);
     }
     .col-deck-edit-choice-close:hover,
@@ -6626,7 +6641,7 @@
       padding: 0.85rem 0.85rem 0.95rem;
       border-radius: 14px;
       border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
-      background: var(--desk-surface-strong, #f7f7f4);
+      background: var(--desk-panel, #f7f4ec);
       box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
       display: flex;
       flex-direction: column;
@@ -6635,7 +6650,7 @@
       animation: colDeckDiffAdjustPopIn 0.2s var(--desk-ease, ease) both;
     }
     [data-theme="dark"] .col-deck-diff-adjust-pop-card {
-      background: var(--desk-surface-strong, #1c1b18);
+      background: var(--desk-panel, #16151a);
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
     }
     @keyframes colDeckDiffAdjustPopIn {
