@@ -791,7 +791,6 @@
       .col-deckbox-lede,
       .col-deckbox-lid-art,
       .col-deck-empty,
-      .col-deck-empty-case,
       .col-deck-empty-actions {
         animation: none !important;
         transition: none !important;
@@ -812,7 +811,14 @@
       box-shadow: none;
       border-color: transparent;
     }
-    /* —— 頁首：開盒瞬間 —— */
+    /* —— 頁首：Deck Library 深綠橫幅（對齊空狀態稿） —— */
+    .col-stage {
+      --deck-lib-ink: #1e3228;
+      --deck-lib-ink-soft: #2a4538;
+      --deck-lib-cream: #f4f1ea;
+      --deck-lib-cream-soft: rgba(244, 241, 234, 0.78);
+      --deck-lib-line: rgba(244, 241, 234, 0.28);
+    }
     .col-deckbox-lid {
       position: relative;
       display: grid;
@@ -821,82 +827,32 @@
         "kicker art"
         "title art"
         "lede art";
-      align-items: start;
-      column-gap: 1.25rem;
-      row-gap: 0.28rem;
-      padding: 1.15rem 1.15rem 1.2rem;
-      margin: 0 0 1rem;
+      align-items: center;
+      column-gap: 1.5rem;
+      row-gap: 0.4rem;
+      padding: 2rem 1.65rem 2.1rem;
+      margin: 0 0 0;
       overflow: hidden;
       isolation: isolate;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 28%, var(--desk-line, rgba(18, 18, 16, 0.16)));
+      border: 0;
+      border-bottom: 1px solid rgba(212, 175, 110, 0.28);
       background:
-        linear-gradient(
-          135deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent) 0%,
-          transparent 42%,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 6%, transparent) 100%
-        ),
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 92%, #fff) 0%,
-          var(--desk-paper, #f3f3f0) 100%
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.65),
-        0 10px 28px rgba(23, 23, 20, 0.05);
+        radial-gradient(120% 90% at 100% 0%, rgba(244, 241, 234, 0.1), transparent 55%),
+        linear-gradient(135deg, var(--deck-lib-ink-soft) 0%, var(--deck-lib-ink) 55%, #15241d 100%);
+      color: var(--deck-lib-cream);
+      box-shadow: none;
       animation: deckLidRise 0.7s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
     }
-    .col-deckbox-lid::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.45;
-      background-image:
-        repeating-linear-gradient(
-          -18deg,
-          transparent 0 11px,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 7%, transparent) 11px 12px
-        );
-      mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 72%, transparent 100%);
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 72%, transparent 100%);
-    }
+    .col-deckbox-lid::before,
     .col-deckbox-lid::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 3px;
-      z-index: 1;
-      pointer-events: none;
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        var(--desk-foil, #8a6f3a) 18%,
-        color-mix(in srgb, var(--desk-foil, #8a6f3a) 55%, #fff) 50%,
-        var(--desk-foil, #8a6f3a) 82%,
-        transparent 100%
-      );
-      opacity: 0.85;
+      content: none;
+      display: none;
     }
     [data-theme="dark"] .col-deckbox-lid {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 32%, rgba(240, 238, 230, 0.1));
       background:
-        linear-gradient(
-          135deg,
-          color-mix(in srgb, var(--desk-foil, #d0b27a) 12%, transparent) 0%,
-          transparent 46%,
-          color-mix(in srgb, var(--desk-foil, #d0b27a) 7%, transparent) 100%
-        ),
-        linear-gradient(180deg, #1a1916 0%, var(--desk-paper, #141412) 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 14px 32px rgba(0, 0, 0, 0.28);
-    }
-    [data-theme="dark"] .col-deckbox-lid::before {
-      opacity: 0.28;
+        radial-gradient(120% 90% at 100% 0%, rgba(244, 241, 234, 0.06), transparent 55%),
+        linear-gradient(135deg, #243a30 0%, #15241d 60%, #0f1a15 100%);
+      box-shadow: none;
     }
     .col-deckbox-kicker,
     .col-deckbox-title,
@@ -911,50 +867,50 @@
     .col-deckbox-lede { animation-delay: 0.22s; grid-area: lede; }
     .col-deckbox-kicker {
       margin: 0;
-      font-family: 'UoqMunThenKhung', var(--font-display, 'Zen Old Mincho', serif);
-      font-size: clamp(1.7rem, 4.8vw, 2.35rem);
-      font-weight: 400;
-      letter-spacing: 0.2em;
-      text-transform: none;
-      color: var(--deckbox-ink);
-      line-height: 1.12;
+      font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--deck-lib-cream-soft);
+      line-height: 1.3;
     }
     [data-theme="dark"] .col-deckbox-kicker {
-      color: var(--deckbox-ink);
+      color: var(--deck-lib-cream-soft);
     }
     .col-deckbox-title {
       margin: 0;
       font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
-      font-size: clamp(1.05rem, 2.8vw, 1.28rem);
+      font-size: clamp(2.2rem, 6vw, 3.05rem);
       font-weight: 700;
-      letter-spacing: 0.14em;
-      line-height: 1.25;
-      color: var(--desk-foil-deep, #5c4a28);
+      letter-spacing: 0.06em;
+      line-height: 1.08;
+      color: #fff;
     }
     [data-theme="dark"] .col-deckbox-title {
-      color: var(--desk-foil, #d0b27a);
+      color: #fff;
     }
     .col-deckbox-lede {
-      margin: 0.15rem 0 0;
+      margin: 0.1rem 0 0;
       max-width: 28rem;
       font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif);
-      font-size: 0.88rem;
+      font-size: 0.92rem;
       font-weight: 500;
       line-height: 1.55;
       letter-spacing: 0.02em;
-      color: var(--deckbox-muted, #687385);
+      color: var(--deck-lib-cream-soft);
       text-wrap: pretty;
     }
     [data-theme="dark"] .col-deckbox-lede {
-      color: rgba(240, 238, 230, 0.68);
+      color: var(--deck-lib-cream-soft);
     }
     .col-deckbox-lid-art {
       position: relative;
       z-index: 2;
       grid-area: art;
       align-self: center;
-      width: 8.2rem;
-      height: 5.8rem;
+      width: 8.8rem;
+      height: 6.2rem;
       margin: 0;
       flex: 0 0 auto;
       pointer-events: none;
@@ -962,127 +918,68 @@
     }
     .col-deckbox-lid-card {
       position: absolute;
-      width: 2.7rem;
-      height: 3.75rem;
-      border-radius: 0.22rem;
-      border: 1.5px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 72%, rgba(18, 18, 16, 0.25));
-      background:
-        linear-gradient(
-          160deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 34%, #fff) 0%,
-          color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 70%, #fff) 42%,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 22%, #ebe4d4) 100%
-        );
-      box-shadow:
-        0 8px 16px rgba(23, 23, 20, 0.14),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+      width: 3.05rem;
+      height: 4.25rem;
+      border-radius: 0.18rem;
+      border: 1.5px solid rgba(244, 241, 234, 0.55);
+      background: transparent;
+      box-shadow: none;
     }
-    .col-deckbox-lid-card::before {
-      content: '';
-      position: absolute;
-      inset: 0.35rem 0.32rem auto;
-      height: 0.55rem;
-      border-radius: 1px;
-      background: color-mix(in srgb, var(--desk-foil, #8a6f3a) 35%, transparent);
-    }
+    .col-deckbox-lid-card::before,
     .col-deckbox-lid-card::after {
-      content: '';
-      position: absolute;
-      left: 0.32rem;
-      right: 0.32rem;
-      bottom: 0.38rem;
-      height: 1.55rem;
-      border-radius: 1px;
-      background:
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 16%, transparent),
-          transparent 70%
-        );
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 22%, transparent);
+      content: none;
+      display: none;
     }
     .col-deckbox-lid-card.is-back {
-      left: 0.85rem;
-      bottom: 0.35rem;
-      transform: rotate(-14deg);
-      opacity: 0.72;
+      left: 1.1rem;
+      bottom: 0.85rem;
+      transform: rotate(-18deg);
+      opacity: 0.55;
     }
     .col-deckbox-lid-card.is-mid {
-      left: 2.55rem;
-      bottom: 0.55rem;
-      transform: rotate(4deg);
+      left: 2.85rem;
+      bottom: 0.95rem;
+      transform: rotate(-4deg);
       z-index: 1;
+      opacity: 0.75;
     }
     .col-deckbox-lid-card.is-front {
-      left: 4.35rem;
-      bottom: 0.25rem;
-      transform: rotate(16deg);
+      left: 4.7rem;
+      bottom: 0.7rem;
+      transform: rotate(12deg);
       z-index: 2;
-      border-color: var(--desk-foil, #8a6f3a);
+      border-color: rgba(244, 226, 180, 0.82);
+      display: grid;
+      place-items: center;
+    }
+    .col-deckbox-lid-card.is-front::after {
+      content: 'WS';
+      display: block;
+      font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(244, 226, 180, 0.95);
     }
     [data-theme="dark"] .col-deckbox-lid-card {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 50%, rgba(240, 238, 230, 0.18));
-      background:
-        linear-gradient(
-          160deg,
-          color-mix(in srgb, var(--desk-foil, #d0b27a) 22%, #2a2823) 0%,
-          #1f1e1a 55%,
-          #181714 100%
-        );
-      box-shadow:
-        0 8px 18px rgba(0, 0, 0, 0.35),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      border-color: var(--deck-lib-line);
+      background: transparent;
+      box-shadow: none;
     }
     .col-deckbox-lid-case {
-      position: absolute;
-      left: 0.2rem;
-      right: 0.15rem;
-      bottom: 0;
-      height: 1.15rem;
-      border-radius: 0.15rem 0.15rem 0.28rem 0.28rem;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 40%, rgba(18, 18, 16, 0.2));
-      background:
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 22%, #ebe6da) 0%,
-          color-mix(in srgb, var(--desk-foil-deep, #5c4a28) 18%, #d9d2c4) 100%
-        );
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    }
-    [data-theme="dark"] .col-deckbox-lid-case {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 40%, rgba(240, 238, 230, 0.12));
-      background: linear-gradient(180deg, #2c2923 0%, #1a1814 100%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      display: none;
     }
     @keyframes deckLidRise {
-      from {
-        opacity: 0;
-        transform: translateY(0.55rem);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
+      from { opacity: 0; transform: translateY(0.45rem); }
+      to { opacity: 1; transform: none; }
     }
     @keyframes deckLidCopyIn {
-      from {
-        opacity: 0;
-        transform: translateY(0.4rem);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
+      from { opacity: 0; transform: translateY(0.35rem); }
+      to { opacity: 1; transform: none; }
     }
     @keyframes deckLidArtIn {
-      from {
-        opacity: 0;
-        transform: translateX(0.55rem) rotate(4deg);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
+      from { opacity: 0; transform: translateX(0.45rem); }
+      to { opacity: 1; transform: none; }
     }
     .col-deckbox-badge {
       display: inline-flex;
@@ -1115,10 +1012,9 @@
           "kicker art"
           "title art"
           "lede lede";
-        align-items: center;
-        padding: 0.95rem 0.9rem 1rem;
-        column-gap: 0.65rem;
-        row-gap: 0.2rem;
+        padding: 1.2rem 1rem 1.25rem;
+        column-gap: 0.7rem;
+        row-gap: 0.22rem;
       }
       .col-deckbox-lede {
         margin-top: 0.35rem;
@@ -1126,22 +1022,20 @@
         max-width: none;
       }
       .col-deckbox-lid-art {
-        width: 5.6rem;
-        height: 4.2rem;
+        width: 5.8rem;
+        height: 4.4rem;
         justify-self: end;
-        align-self: center;
       }
       .col-deckbox-lid-card {
-        width: 1.9rem;
-        height: 2.7rem;
+        width: 1.95rem;
+        height: 2.75rem;
       }
-      .col-deckbox-lid-card.is-back { left: 0.4rem; bottom: 0.3rem; }
-      .col-deckbox-lid-card.is-mid { left: 1.7rem; bottom: 0.45rem; }
-      .col-deckbox-lid-card.is-front { left: 3rem; bottom: 0.2rem; }
-      .col-deckbox-lid-case {
-        height: 0.95rem;
-      }
+      .col-deckbox-lid-card.is-back { left: 0.45rem; bottom: 0.55rem; }
+      .col-deckbox-lid-card.is-mid { left: 1.7rem; bottom: 0.65rem; }
+      .col-deckbox-lid-card.is-front { left: 2.95rem; bottom: 0.45rem; }
+      .col-deckbox-lid-card.is-front::after { font-size: 0.72rem; }
     }
+
     .col-deckbox .col-shell {
       --col-accent: var(--desk-foil, #8a6f3a);
       --col-accent-soft: color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, transparent);
@@ -1435,9 +1329,8 @@
       padding: 0.5rem 0.85rem;
       cursor: pointer;
     }
-    /* 新增牌組入口：明朝字，和其他 CTA 的 UI 黑體區隔 */
-    body.collection-page #colDeckCreateBtn.col-cta-primary,
-    body.collection-page #colDeckEmptyPrimaryBtn.col-cta-primary[data-empty-action="create"] {
+    /* 工具列「新增牌組」入口：明朝字；空狀態磁貼維持 UI 黑體 */
+    body.collection-page #colDeckCreateBtn.col-cta-primary {
       font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif) !important;
       font-weight: 700 !important;
       letter-spacing: 0.08em !important;
@@ -1675,195 +1568,68 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* 空狀態：隱藏搜尋／統計列，讓開盒舞台成為第一眼主體 */
+    /* 空狀態：隱藏搜尋／統計列，對齊 Deck Library 稿 */
     #colPanelDecks.is-showing-empty:not([data-empty-mode="filtered"]) .col-deck-chrome {
       display: none;
     }
     .col-deck-empty {
       position: relative;
-      max-width: 34rem;
-      margin: 0.35rem auto 0;
-      padding: 2rem 1.35rem 2.15rem;
-      text-align: center;
-      overflow: hidden;
+      width: min(40rem, 100%);
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 2.35rem 1.1rem 2.6rem;
+      text-align: left !important;
+      overflow: visible;
       isolation: isolate;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 36%, var(--desk-line, rgba(18, 18, 16, 0.16)));
-      background:
-        radial-gradient(
-          120% 80% at 50% 0%,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 12%, transparent) 0%,
-          transparent 58%
-        ),
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, #fff) 0%,
-          color-mix(in srgb, var(--desk-paper, #f3f3f0) 94%, #ebe8e0) 100%
-        );
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-      animation: deckEmptyRise 0.75s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.12s both;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      animation: deckEmptyRise 0.7s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.1s both;
     }
-    .col-deck-empty::before {
-      content: '';
-      position: absolute;
-      inset: 0.55rem;
-      z-index: 0;
-      pointer-events: none;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, transparent);
-      opacity: 0.85;
-    }
+    .col-deck-empty::before { content: none; display: none; }
     [data-theme="dark"] .col-deck-empty {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 38%, transparent);
-      background:
-        radial-gradient(
-          120% 80% at 50% 0%,
-          color-mix(in srgb, var(--desk-foil, #d0b27a) 14%, transparent) 0%,
-          transparent 58%
-        ),
-        linear-gradient(180deg, #1a1916 0%, #141310 100%);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    }
-    [data-theme="dark"] .col-deck-empty::before {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 16%, transparent);
-    }
-    .col-deck-empty-stage {
-      position: relative;
-      z-index: 1;
-      width: 9.5rem;
-      height: 6.6rem;
-      margin: 0 auto 1.15rem;
-      perspective: 520px;
-    }
-    .col-deck-empty-case {
-      position: absolute;
-      inset: 0.85rem 0.9rem 0.35rem;
-      border-radius: 0.28rem 0.28rem 0.4rem 0.4rem;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 48%, rgba(18, 18, 16, 0.22));
-      background:
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 18%, #e8e2d4) 0%,
-          #d6cfbf 100%
-        );
-      box-shadow:
-        0 10px 22px rgba(23, 23, 20, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      transform-origin: 50% 100%;
-      animation: deckCaseSettle 0.85s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.2s both;
-    }
-    .col-deck-empty-case::before {
-      content: '';
-      position: absolute;
-      left: 0.45rem;
-      right: 0.45rem;
-      top: 0.45rem;
-      bottom: 0.55rem;
-      border-radius: 0.12rem;
-      border: 1px dashed color-mix(in srgb, var(--desk-foil-deep, #5c4a28) 28%, transparent);
-      background:
-        repeating-linear-gradient(
-          90deg,
-          transparent 0 0.55rem,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 10%, transparent) 0.55rem 0.58rem
-        );
-      opacity: 0.85;
-    }
-    .col-deck-empty-case-lid {
-      position: absolute;
-      left: 0.55rem;
-      right: 0.55rem;
-      top: -0.05rem;
-      height: 1.45rem;
-      border-radius: 0.2rem 0.2rem 0.08rem 0.08rem;
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 55%, rgba(18, 18, 16, 0.2));
-      background:
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 28%, #f2ecdf) 0%,
-          color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, #ddd5c4) 100%
-        );
-      transform-origin: 50% 100%;
-      transform: rotateX(-58deg) translateY(-0.15rem);
-      box-shadow: 0 -4px 10px rgba(23, 23, 20, 0.08);
-      animation: deckCaseLidOpen 0.9s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.28s both;
-    }
-    [data-theme="dark"] .col-deck-empty-case {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 42%, rgba(240, 238, 230, 0.14));
-      background: linear-gradient(180deg, #2a2721 0%, #1a1814 100%);
-      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
-    [data-theme="dark"] .col-deck-empty-case::before {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 28%, transparent);
-    }
-    [data-theme="dark"] .col-deck-empty-case-lid {
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 48%, rgba(240, 238, 230, 0.14));
-      background: linear-gradient(180deg, #3a3428 0%, #241f18 100%);
-    }
-    .col-deck-empty-icon {
-      position: absolute;
-      z-index: 2;
-      left: 50%;
-      top: 52%;
-      width: 2.55rem;
-      height: 2.55rem;
-      margin: 0;
-      border-radius: 0;
-      display: grid;
-      place-items: center;
-      transform: translate(-50%, -50%);
-      background: color-mix(in srgb, var(--desk-surface-strong, #f7f7f4) 88%, #fff);
-      border: 1px solid color-mix(in srgb, var(--desk-foil, #8a6f3a) 40%, transparent);
-      color: var(--desk-foil-deep, #5c4a28);
-      font-size: 1.05rem;
-      box-shadow: 0 4px 12px rgba(23, 23, 20, 0.08);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
     .col-deck-empty.col-empty {
       color: inherit;
-      padding: 2rem 1.35rem 2.15rem;
+      padding: 2.35rem 1.1rem 2.6rem;
+      text-align: left !important;
     }
-    .col-deck-empty.col-empty p {
-      margin-bottom: 0;
-    }
-    .col-deck-empty .col-deck-empty-icon i,
-    .col-deck-empty.col-empty .col-deck-empty-icon i {
-      margin: 0;
-      font-size: 1.05rem;
-      opacity: 1;
-      line-height: 1;
-    }
-    [data-theme="dark"] .col-deck-empty-icon {
-      background: rgba(28, 27, 24, 0.92);
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 40%, transparent);
-      color: var(--desk-foil, #d0b27a);
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
-    }
-    .col-deck-empty[data-empty-mode="loading"] .col-deck-empty-icon {
-      color: var(--desk-foil, #8a6f3a);
-    }
+    .col-deck-empty.col-empty p { margin-bottom: 0; }
     .col-deck-empty-copy {
       position: relative;
       z-index: 1;
+      width: 100%;
+      text-align: left;
     }
     .col-deck-empty-title {
-      margin: 0 0 0.45rem;
+      margin: 0 0 0.55rem;
       font-family: var(--font-display, 'Zen Old Mincho', 'Noto Serif TC', serif);
-      font-size: clamp(1.28rem, 3.4vw, 1.55rem);
+      font-size: clamp(1.45rem, 3.6vw, 1.85rem);
       font-weight: 700;
       color: var(--deckbox-ink, #171714);
-      letter-spacing: 0.06em;
-      line-height: 1.2;
+      letter-spacing: 0.04em;
+      line-height: 1.25;
+      text-align: left;
     }
     .col-deck-empty-text {
-      margin: 0 auto;
-      max-width: 22rem;
-      color: var(--deckbox-muted, #687385);
-      font-size: 0.92rem;
-      line-height: 1.6;
+      margin: 0;
+      max-width: 34rem;
+      color: #667085;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      text-align: left;
     }
+    [data-theme="dark"] .col-deck-empty-title { color: var(--deckbox-ink, #f0eee6); }
+    [data-theme="dark"] .col-deck-empty-text { color: rgba(240, 238, 230, 0.68); }
     .col-deck-empty-hint {
       margin: 0.75rem 0 0;
       font-size: 0.8rem;
       line-height: 1.45;
-      color: var(--deckbox-muted, #667a70);
+      color: #667085;
+      text-align: left;
     }
     .col-deck-empty-hint a {
       color: inherit;
@@ -1874,121 +1640,152 @@
     .col-deck-empty-actions {
       position: relative;
       z-index: 1;
-      margin-top: 1.35rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      width: min(26rem, 100%);
-      max-width: 100%;
-      margin-left: auto;
-      margin-right: auto;
+      display: grid !important;
       grid-template-columns: 1fr 1fr;
-      animation: deckEmptyActionsIn 0.65s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.38s both;
+      gap: 0.9rem;
+      width: 100%;
+      max-width: none;
+      margin: 1.55rem 0 0;
+      animation: deckEmptyActionsIn 0.65s var(--desk-ease, cubic-bezier(0.22, 1, 0.36, 1)) 0.28s both;
     }
-    .col-deck-empty[data-empty-mode="guest"] .col-cta-primary {
+    body.collection-page .col-deck-empty .col-deck-empty-tile,
+    body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile,
+    body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
+      display: flex !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      gap: 0.85rem !important;
+      width: 100% !important;
+      min-height: 5.6rem;
+      margin: 0 !important;
+      padding: 1.2rem 1.2rem 1.25rem !important;
+      text-align: left !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      background-image: none !important;
+      cursor: pointer;
+      transition:
+        background-color 0.2s var(--desk-ease, ease),
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease !important;
+    }
+    .col-deck-empty-tile-icon {
+      flex: 0 0 auto;
+      width: 1.35rem;
+      margin-top: 0.15rem;
+      font-size: 1.05rem;
+      line-height: 1;
+      text-align: left;
+    }
+    .col-deck-empty-tile-icon i {
+      margin: 0 !important;
+      font-size: 1.05rem !important;
+      opacity: 1 !important;
+      line-height: 1 !important;
+    }
+    .col-deck-empty-tile-copy {
+      display: grid;
+      gap: 0.3rem;
       min-width: 0;
+      text-align: left;
     }
-    /* 空狀態主 CTA：箔金邊＋淺底，避免透明框看起來像「沒按鈕」 */
-    body.collection-page .col-deck-empty .col-cta-primary {
-      color: var(--desk-ink, #171714) !important;
-      border-color: var(--desk-foil, #8a6f3a) !important;
-      background-color: color-mix(in srgb, var(--desk-foil, #8a6f3a) 14%, #fff) !important;
+    .col-deck-empty-tile-title {
+      display: block;
+      font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif);
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+      text-align: left;
     }
-    body.collection-page .col-deck-empty .col-cta-primary:hover,
-    body.collection-page .col-deck-empty .col-cta-primary:focus {
-      background-color: color-mix(in srgb, var(--desk-foil, #8a6f3a) 22%, #fff) !important;
-      border-color: var(--desk-foil-deep, #5c4a28) !important;
-      color: var(--desk-ink, #171714) !important;
+    .col-deck-empty-tile-desc {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      line-height: 1.5;
+      opacity: 0.78;
+      text-align: left;
     }
-    body.collection-page .col-deck-empty .col-cta-secondary {
-      color: var(--desk-ink, #171714) !important;
-      border-color: color-mix(in srgb, var(--desk-line, rgba(18, 18, 16, 0.28)) 80%, var(--desk-foil, #8a6f3a)) !important;
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
+    body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
+      color: #fff !important;
+      background-color: var(--deck-lib-ink, #1e3228) !important;
+      border: 1px solid var(--deck-lib-ink, #1e3228) !important;
+      font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif) !important;
+      font-weight: 500 !important;
+      letter-spacing: 0.01em !important;
+    }
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary:hover,
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary:focus,
+    body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:hover,
+    body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile:focus {
+      background-color: #274536 !important;
+      border-color: #274536 !important;
+      color: #fff !important;
+      transform: translateY(-1px) !important;
+    }
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
+    body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
+      color: #2d3748 !important;
       background-color: #fff !important;
+      border: 1px solid #d7dbe3 !important;
+      font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif) !important;
+      font-weight: 500 !important;
     }
-    body.collection-page .col-deck-empty .col-cta-secondary:hover,
-    body.collection-page .col-deck-empty .col-cta-secondary:focus {
-      border-color: var(--desk-foil, #8a6f3a) !important;
-      color: var(--desk-foil-deep, #5c4a28) !important;
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary:hover,
+    body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary:focus,
+    body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile:hover,
+    body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile:focus {
+      background-color: #f8fafc !important;
+      border-color: #c5cbd6 !important;
+      color: #1f2937 !important;
+      transform: translateY(-1px) !important;
     }
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary {
-      color: #16140f !important;
-      border-color: var(--desk-foil, #d0b27a) !important;
-      background-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 82%, #fff) !important;
+    body.collection-page #colDeckEmptyPrimaryBtn.col-cta-primary[data-empty-action="create"] {
+      font-family: var(--font-ui, 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif) !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.02em !important;
     }
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary:hover,
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary:focus {
-      background-color: var(--desk-foil, #d0b27a) !important;
-      color: #16140f !important;
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-primary,
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-primary.col-deck-empty-tile {
+      color: #f4f1ea !important;
+      background-color: #2a4538 !important;
+      border-color: #2a4538 !important;
     }
-    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-secondary {
-      color: var(--desk-ink, #f0eee6) !important;
-      border-color: color-mix(in srgb, var(--desk-foil, #d0b27a) 45%, rgba(240, 238, 230, 0.2)) !important;
-      background-color: rgba(255, 255, 255, 0.04) !important;
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-deck-empty-tile.is-secondary,
+    [data-theme="dark"] body.collection-page .col-deck-empty .col-cta-secondary.col-deck-empty-tile {
+      color: #f0eee6 !important;
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(240, 238, 230, 0.16) !important;
     }
     .col-deck-empty[data-empty-mode="loading"] .col-deck-empty-actions {
       display: none;
     }
-    .col-deck-empty[data-empty-mode="loading"] .col-deck-empty-case-lid {
-      animation: deckCaseLidPulse 1.4s ease-in-out infinite;
+    .col-deck-empty[data-empty-mode="filtered"] .col-deck-empty-actions {
+      grid-template-columns: 1fr;
+      max-width: 22rem;
     }
     @keyframes deckEmptyRise {
-      from {
-        opacity: 0;
-        transform: translateY(0.7rem);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-    @keyframes deckCaseSettle {
-      from {
-        opacity: 0;
-        transform: translateY(0.45rem) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-    @keyframes deckCaseLidOpen {
-      from {
-        opacity: 0;
-        transform: rotateX(-12deg) translateY(0.2rem);
-      }
-      to {
-        opacity: 1;
-        transform: rotateX(-58deg) translateY(-0.15rem);
-      }
-    }
-    @keyframes deckCaseLidPulse {
-      0%, 100% { transform: rotateX(-52deg) translateY(-0.1rem); }
-      50% { transform: rotateX(-64deg) translateY(-0.2rem); }
+      from { opacity: 0; transform: translateY(0.55rem); }
+      to { opacity: 1; transform: none; }
     }
     @keyframes deckEmptyActionsIn {
-      from {
-        opacity: 0;
-        transform: translateY(0.35rem);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
+      from { opacity: 0; transform: translateY(0.35rem); }
+      to { opacity: 1; transform: none; }
     }
-    @media (max-width: 640px) {
-      .col-deck-empty {
-        padding: 1.55rem 1rem 1.7rem;
-        margin-top: 0.15rem;
-      }
-      .col-deck-empty-stage {
-        width: 8.2rem;
-        height: 5.8rem;
-        margin-bottom: 0.95rem;
+    @media (max-width: 720px) {
+      .col-deck-empty,
+      .col-deck-empty.col-empty {
+        padding: 1.7rem 0.85rem 2rem;
       }
       .col-deck-empty-actions {
         grid-template-columns: 1fr;
-        width: min(18rem, 100%);
       }
     }
+
     .col-deck-cover-count,
     .col-deck-cover-short {
       position: absolute;
@@ -8315,14 +8112,13 @@
               <section class="col-deckbox" id="colSectionDecks" aria-labelledby="colDeckboxTitle">
                 <div class="col-deckbox-shell">
                   <header class="col-deckbox-lid">
-                    <p class="col-deckbox-kicker">卡片雲</p>
+                    <p class="col-deckbox-kicker">WS-Cards / Deck Library</p>
                     <h2 class="col-deckbox-title" id="colDeckboxTitle">我的牌組</h2>
-                    <p class="col-deckbox-lede">編成、缺卡與 DeckLog — 打開牌盒，收齊你的戰術庫。</p>
+                    <p class="col-deckbox-lede">收藏你的牌表，隨時回來調整編成。</p>
                     <div class="col-deckbox-lid-art" aria-hidden="true">
                       <span class="col-deckbox-lid-card is-back"></span>
                       <span class="col-deckbox-lid-card is-mid"></span>
                       <span class="col-deckbox-lid-card is-front"></span>
-                      <span class="col-deckbox-lid-case"></span>
                     </div>
                   </header>
                   <div class="col-deckbox-body">
@@ -8363,23 +8159,25 @@
                         </div>
 
                         <div id="colDeckEmpty" class="col-empty col-deck-empty" style="display:none;" data-empty-mode="">
-                          <div class="col-deck-empty-stage" aria-hidden="true">
-                            <div class="col-deck-empty-case">
-                              <span class="col-deck-empty-case-lid"></span>
-                            </div>
-                            <div class="col-deck-empty-icon"><i class="fas fa-archive"></i></div>
-                          </div>
                           <div class="col-deck-empty-copy">
-                            <h3 class="col-deck-empty-title" id="colDeckEmptyTitle">尚未建立牌組</h3>
-                            <p class="col-deck-empty-text" id="colDeckEmptyText">牌盒還是空的。新增一副，或從 DeckLog 匯入編成。</p>
+                            <h3 class="col-deck-empty-title" id="colDeckEmptyTitle">從這裡開始組牌</h3>
+                            <p class="col-deck-empty-text" id="colDeckEmptyText">登入後就能建立、匯入牌組，也能在其他裝置接著編輯。</p>
                             <p class="col-deck-empty-hint" id="colDeckEmptyHint" hidden></p>
                           </div>
-                          <div class="col-deck-cta-row col-deck-empty-actions" id="colDeckEmptyActions">
-                            <button type="button" class="col-cta-primary" id="colDeckEmptyPrimaryBtn">
-                              <i class="fas fa-plus" aria-hidden="true"></i><span id="colDeckEmptyPrimaryLabel">新增牌組</span>
+                          <div class="col-deck-empty-actions" id="colDeckEmptyActions">
+                            <button type="button" class="col-cta-primary col-deck-empty-tile is-primary" id="colDeckEmptyPrimaryBtn" data-empty-action="login">
+                              <span class="col-deck-empty-tile-icon" aria-hidden="true"><i class="fas fa-sign-in-alt"></i></span>
+                              <span class="col-deck-empty-tile-copy">
+                                <span class="col-deck-empty-tile-title" id="colDeckEmptyPrimaryLabel">登入我的牌組</span>
+                                <span class="col-deck-empty-tile-desc" id="colDeckEmptyPrimaryDesc">同步已有牌組，或建立第一副。</span>
+                              </span>
                             </button>
-                            <button type="button" class="col-cta-secondary" id="colDeckEmptySecondaryBtn">
-                              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i><span id="colDeckEmptySecondaryLabel">匯入 DeckLog</span>
+                            <button type="button" class="col-cta-secondary col-deck-empty-tile is-secondary" id="colDeckEmptySecondaryBtn" data-empty-action="decklog">
+                              <span class="col-deck-empty-tile-icon" aria-hidden="true"><i class="fas fa-cloud-download-alt"></i></span>
+                              <span class="col-deck-empty-tile-copy">
+                                <span class="col-deck-empty-tile-title" id="colDeckEmptySecondaryLabel">匯入 DeckLog</span>
+                                <span class="col-deck-empty-tile-desc" id="colDeckEmptySecondaryDesc">輸入代碼，保存一份可編輯的牌表。</span>
+                              </span>
                             </button>
                           </div>
                         </div>
@@ -9166,9 +8964,11 @@
     var deckEmptyHintEl = document.getElementById('colDeckEmptyHint');
     var deckEmptyPrimaryBtn = document.getElementById('colDeckEmptyPrimaryBtn');
     var deckEmptyPrimaryLabel = document.getElementById('colDeckEmptyPrimaryLabel');
+    var deckEmptyPrimaryDesc = document.getElementById('colDeckEmptyPrimaryDesc');
     var deckEmptySecondaryBtn = document.getElementById('colDeckEmptySecondaryBtn');
     var deckEmptySecondaryLabel = document.getElementById('colDeckEmptySecondaryLabel');
-    var deckEmptyIconEl = deckEmptyEl ? deckEmptyEl.querySelector('.col-deck-empty-icon i') : null;
+    var deckEmptySecondaryDesc = document.getElementById('colDeckEmptySecondaryDesc');
+    var deckEmptyIconEl = deckEmptyPrimaryBtn ? deckEmptyPrimaryBtn.querySelector('.col-deck-empty-tile-icon i') : null;
     var deckSearchInput = document.getElementById('colDeckSearchInput');
     var deckSortSelect = document.getElementById('colDeckSortSelect');
     var deckTotalValueEl = document.getElementById('colDeckTotalValue');
@@ -15082,44 +14882,46 @@
         panelDecks.setAttribute('data-empty-mode', mode || '');
       }
 
-      var title = '尚未建立牌組';
-      var text = '牌盒還是空的。新增一副，或從 DeckLog 匯入編成。';
+      var title = '從這裡開始組牌';
+      var text = '新增一副牌組，或從 DeckLog 匯入編成，之後都能回來調整。';
       var hintHtml = '';
       var primaryLabel = '新增牌組';
+      var primaryDesc = '建立你的第一副編成。';
       var primaryIcon = 'fa-plus';
       var primaryAction = 'create';
       var secondaryLabel = '匯入 DeckLog';
+      var secondaryDesc = '輸入代碼，保存一份可編輯的牌表。';
       var secondaryIcon = 'fa-cloud-download-alt';
       var secondaryAction = 'decklog';
       var showSecondary = true;
-      var iconClass = 'fa-archive';
 
       if (mode === 'loading') {
         title = '同步牌組中…';
         text = '正在確認登入狀態並載入雲端牌組，請稍候。';
         showSecondary = false;
-        iconClass = 'fa-sync-alt';
         primaryLabel = '載入中';
+        primaryDesc = '';
         primaryIcon = 'fa-spinner';
         primaryAction = '';
       } else if (mode === 'guest') {
-        title = '登入後管理牌組';
-        text = '登入後牌組可雲端同步；也可先從 DeckLog 匯入一副。';
-        primaryLabel = '登入後同步牌組';
+        title = '從這裡開始組牌';
+        text = '登入後就能建立、匯入牌組，也能在其他裝置接著編輯。';
+        primaryLabel = '登入我的牌組';
+        primaryDesc = '同步已有牌組，或建立第一副。';
         primaryIcon = 'fa-sign-in-alt';
         primaryAction = 'login';
         secondaryLabel = '匯入 DeckLog';
+        secondaryDesc = '輸入代碼，保存一份可編輯的牌表。';
         secondaryIcon = 'fa-cloud-download-alt';
         secondaryAction = 'decklog';
-        iconClass = 'fa-user-lock';
       } else if (mode === 'filtered') {
         title = '沒有符合的牌組';
         text = '試著調整關鍵字，或清除搜尋後再看全部牌組。';
         primaryLabel = '清除搜尋';
+        primaryDesc = '回到完整牌組列表。';
         primaryIcon = 'fa-times';
         primaryAction = 'clear';
         showSecondary = false;
-        iconClass = 'fa-search';
       }
 
       if (deckEmptyTitleEl) deckEmptyTitleEl.textContent = title;
@@ -15133,10 +14935,14 @@
           deckEmptyHintEl.hidden = true;
         }
       }
-      if (deckEmptyIconEl) deckEmptyIconEl.className = 'fas ' + iconClass;
       if (deckEmptyPrimaryLabel) deckEmptyPrimaryLabel.textContent = primaryLabel;
+      if (deckEmptyPrimaryDesc) {
+        deckEmptyPrimaryDesc.textContent = primaryDesc;
+        deckEmptyPrimaryDesc.hidden = !primaryDesc;
+      }
       if (deckEmptyPrimaryBtn) {
-        var primaryIconEl = deckEmptyPrimaryBtn.querySelector('i');
+        var primaryIconEl = deckEmptyPrimaryBtn.querySelector('.col-deck-empty-tile-icon i') ||
+          deckEmptyPrimaryBtn.querySelector('i');
         if (primaryIconEl) {
           primaryIconEl.className = 'fas ' + primaryIcon + (mode === 'loading' ? ' fa-spin' : '');
         }
@@ -15151,7 +14957,12 @@
         deckEmptySecondaryBtn.hidden = !showSecondary || mode === 'loading';
         if (showSecondary && mode !== 'loading') {
           if (deckEmptySecondaryLabel) deckEmptySecondaryLabel.textContent = secondaryLabel;
-          var secondaryIconEl = deckEmptySecondaryBtn.querySelector('i');
+          if (deckEmptySecondaryDesc) {
+            deckEmptySecondaryDesc.textContent = secondaryDesc;
+            deckEmptySecondaryDesc.hidden = !secondaryDesc;
+          }
+          var secondaryIconEl = deckEmptySecondaryBtn.querySelector('.col-deck-empty-tile-icon i') ||
+            deckEmptySecondaryBtn.querySelector('i');
           if (secondaryIconEl) secondaryIconEl.className = 'fas ' + secondaryIcon;
           deckEmptySecondaryBtn.setAttribute('data-empty-action', secondaryAction);
         } else {
