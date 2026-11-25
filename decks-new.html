@@ -818,6 +818,96 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* —— Empty / loading / guest —— */
+    .deck-status {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      z-index: 8;
+      transform: translate(-50%, -50%);
+      width: min(22rem, calc(100% - 2rem));
+      padding: 1.4rem 1.25rem;
+      border-radius: 18px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 14px 32px rgba(40, 20, 80, 0.12);
+      color: #2a2150;
+    }
+    .app.is-empty .deck-status { display: block; }
+    .app.is-empty .carousel-wrap,
+    .app.is-empty .info-panel,
+    .app.is-empty .actions-mobile {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .deck-status-kicker {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.55;
+    }
+    .deck-status-title {
+      margin: 0 0 0.45rem;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+    .deck-status-text {
+      margin: 0 0 1rem;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      opacity: 0.72;
+    }
+    .deck-status-actions {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .deck-status-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 2.6rem;
+      padding: 0.55rem 1rem;
+      border: 0;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: filter 0.2s ease, transform 0.2s ease;
+    }
+    .deck-status-btn:active { transform: scale(0.98); }
+    .deck-status-btn.is-primary {
+      background: linear-gradient(135deg, #8b6cff, #5f7dff);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(95, 90, 220, 0.3);
+    }
+    .deck-status-btn.is-secondary {
+      background: rgba(42, 33, 80, 0.08);
+      color: #2a2150;
+    }
+    .deck-status-btn:hover { filter: brightness(1.05); }
+    .deck-status.is-loading .deck-status-actions { display: none; }
+    .deck-status-spinner {
+      display: none;
+      width: 1.6rem;
+      height: 1.6rem;
+      margin: 0 auto 0.85rem;
+      border: 2.5px solid rgba(90, 70, 200, 0.2);
+      border-top-color: #7b5cff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .deck-status.is-loading .deck-status-spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     @keyframes riseIn {
       from { opacity: 0; transform: translateY(14px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1190,6 +1280,22 @@
         </section>
       </header>
 
+      <aside class="deck-status is-loading" id="deckStatus" hidden>
+        <div class="deck-status-spinner" aria-hidden="true"></div>
+        <p class="deck-status-kicker" id="deckStatusKicker">DECKS</p>
+        <h2 class="deck-status-title" id="deckStatusTitle">正在載入牌組</h2>
+        <p class="deck-status-text" id="deckStatusText">同步雲端資料中，請稍候…</p>
+        <div class="deck-status-actions">
+          <button type="button" class="deck-status-btn is-primary" id="deckStatusPrimary">
+            <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+            <span id="deckStatusPrimaryLabel">登入我的牌組</span>
+          </button>
+          <a class="deck-status-btn is-secondary" id="deckStatusSecondary" href="decks.html">
+            前往完整牌組頁
+          </a>
+        </div>
+      </aside>
+
       <section class="carousel-wrap" aria-label="牌組輪播">
         <div class="carousel" id="carousel">
           <div class="carousel-track" id="carouselTrack"></div>
@@ -1288,126 +1394,31 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
+  <script src="assets/js/ws-collection-store.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/ws-firebase.js"></script>
   <script>
     (function () {
-      var IMG = 'https://imgs.devilfox.net/ws/';
-      var DECKS = [
-        {
-          id: 'ba-abydos',
-          title: 'Blue Archive',
-          subtitle: 'Abydos / 8 扉構築',
-          work: '蔚藍檔案',
-          build: '8扉',
-          created: '2026.11.14',
-          winRate: '62.5%',
-          winNote: '最近 50 場',
-          cards: 50,
-          competitive: true,
-          favorite: true,
-          tag: '競技向け',
-          game: 'WS',
-          desc: '來自阿拜多斯高中的少女們，為了守護學園而展開的故事——',
-          cover: IMG + 'bav_w112/bav_w112_t15sp.png',
-          createdAt: Date.parse('2026-11-14')
-        },
-        {
-          id: 'hololive',
-          title: 'Hololive',
-          subtitle: 'JP / 扉軸構築',
-          work: 'Hololive',
-          build: '扉軸',
-          created: '2026.10.28',
-          winRate: '58.0%',
-          winNote: '最近 40 場',
-          cards: 50,
-          competitive: true,
-          favorite: false,
-          tag: '競技向け',
-          game: 'WS',
-          desc: '虛擬偶像們的舞台——以歌與羈絆組成的娛樂構築。',
-          cover: IMG + 'hol_w104/hol_w104_001.png',
-          createdAt: Date.parse('2026-10-28')
-        },
-        {
-          id: 'sao',
-          title: 'Sword Art Online',
-          subtitle: 'Alicization / 8 扉',
-          work: '刀劍神域',
-          build: '8扉',
-          created: '2026.09.12',
-          winRate: '54.2%',
-          winNote: '最近 36 場',
-          cards: 50,
-          competitive: false,
-          favorite: true,
-          tag: '休閒向け',
-          game: 'WS',
-          desc: '在虛擬世界中戰鬥的劍士們，以羈絆開啟通往勝利的門扉。',
-          cover: IMG + 'sao_s100/sao_s100_001.png',
-          createdAt: Date.parse('2026-09-12')
-        },
-        {
-          id: 'bocchi',
-          title: 'Bocchi the Rock!',
-          subtitle: '結束バンド / 8 扉',
-          work: '孤獨搖滾！',
-          build: '8扉',
-          created: '2026.08.03',
-          winRate: '49.0%',
-          winNote: '最近 30 場',
-          cards: 50,
-          competitive: false,
-          favorite: false,
-          tag: '休閒向け',
-          game: 'WS',
-          desc: '害羞吉他手與夥伴們的搖滾物語——在舞台上綻放光芒。',
-          cover: IMG + 'btr_w107/btr_w107_001.png',
-          createdAt: Date.parse('2026-08-03')
-        },
-        {
-          id: 'lycoris',
-          title: 'Lycoris Recoil',
-          subtitle: 'LycoReco / 8 扉',
-          work: 'Lycoris Recoil',
-          build: '8扉',
-          created: '2026.07.19',
-          winRate: '61.1%',
-          winNote: '最近 45 場',
-          cards: 50,
-          competitive: true,
-          favorite: false,
-          tag: '競技向け',
-          game: 'WSR',
-          desc: '咖啡廳裡的日常與街頭上的戰鬥——雙面生活的少女們。',
-          cover: IMG + 'lrc_w105/lrc_w105_001.png',
-          createdAt: Date.parse('2026-07-19')
-        },
-        {
-          id: 'date-a-live',
-          title: 'Date A Live',
-          subtitle: '精靈 / 8 扉構築',
-          work: '約會大作戰',
-          build: '8扉',
-          created: '2026.06.02',
-          winRate: '52.8%',
-          winNote: '最近 28 場',
-          cards: 50,
-          competitive: false,
-          favorite: true,
-          tag: '休閒向け',
-          game: 'WS',
-          desc: '與精靈們的邂逅——用約會改寫毀滅結局的故事。',
-          cover: IMG + 'dal_w79/dal_w79_001.png',
-          createdAt: Date.parse('2026-06-02')
-        }
-      ];
+      var Store = window.WsCollectionStore || {};
+      var DECKS_KEY = Store.DECKS_KEY || 'wsCardsDecks';
+      var FAV_KEY = 'wsDeckSelectFavorites';
+      var fb = window.WsFirebase || null;
+
+      var allDecks = [];
+      var deckCloudUser = null;
+      var deckAuthResolved = false;
+      var deckSyncing = false;
+      var favoriteIds = Object.create(null);
 
       var state = {
         index: 0,
         filter: 'all',
         sort: 'newest',
         query: '',
-        list: DECKS.slice()
+        list: []
       };
 
       var track = document.getElementById('carouselTrack');
@@ -1415,6 +1426,14 @@
       var toastEl = document.getElementById('toast');
       var toastTimer = null;
       var mqDesk = window.matchMedia('(min-width: 900px)');
+
+      var appEl = document.querySelector('.app');
+      var statusEl = document.getElementById('deckStatus');
+      var statusTitle = document.getElementById('deckStatusTitle');
+      var statusText = document.getElementById('deckStatusText');
+      var statusPrimary = document.getElementById('deckStatusPrimary');
+      var statusPrimaryLabel = document.getElementById('deckStatusPrimaryLabel');
+      var statusSecondary = document.getElementById('deckStatusSecondary');
 
       function showToast(msg) {
         if (!toastEl) return;
@@ -1426,25 +1445,258 @@
         }, 1800);
       }
 
+      function readFavoriteIds() {
+        try {
+          var raw = localStorage.getItem(FAV_KEY);
+          var list = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(list)) return {};
+          var map = Object.create(null);
+          list.forEach(function (id) {
+            id = String(id || '').trim();
+            if (id) map[id] = true;
+          });
+          return map;
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function writeFavoriteIds() {
+        try {
+          localStorage.setItem(FAV_KEY, JSON.stringify(Object.keys(favoriteIds)));
+        } catch (e) { /* ignore */ }
+      }
+
+      function normalizeText(v) {
+        return String(v == null ? '' : v).trim();
+      }
+
+      function decksFirebaseReady() {
+        return !!(fb && fb.ready && fb.firestoreReady && typeof fb.loadUserDecks === 'function');
+      }
+
+      function readLocalDecks() {
+        try {
+          var raw = localStorage.getItem(DECKS_KEY);
+          var list = raw ? JSON.parse(raw) : [];
+          return Array.isArray(list) ? list : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function writeLocalDecks(list) {
+        try {
+          localStorage.setItem(DECKS_KEY, JSON.stringify(list || []));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function deckTotalCards(deck) {
+        return ((deck && deck.cards) || []).reduce(function (sum, c) {
+          var q = parseInt(c && c.qty, 10);
+          return sum + (isNaN(q) || q < 1 ? 0 : q);
+        }, 0);
+      }
+
+      function deckKindCount(deck) {
+        return ((deck && deck.cards) || []).length;
+      }
+
+      function formatDotDate(ts) {
+        if (!ts) return '—';
+        var d = new Date(ts);
+        if (isNaN(d.getTime())) return '—';
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '.' + m + '.' + day;
+      }
+
+      function buildCardImageUrls(cardNumberDisplay) {
+        var cardNum = String(cardNumberDisplay || '').trim();
+        if (cardNum.indexOf(' ') >= 0) cardNum = cardNum.substr(0, cardNum.indexOf(' '));
+        if (!cardNum || cardNum.indexOf('-') < 0) return { primary: '', fallback: '' };
+        var cardFirst = cardNum.substr(0, 1);
+        var cardSecond = cardNum.substr(0, cardNum.indexOf('-')).replace('/', '_');
+        var cardThird = cardNum.replace('/', '_').replace('-', '_');
+        return {
+          primary: 'https://imgs.devilfox.net/ws/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png',
+          fallback: 'https://ws-tcg.com/wordpress/wp-content/images/cardlist/' +
+            cardFirst.toLowerCase() + '/' + cardSecond.toLowerCase() + '/' + cardThird.toLowerCase() + '.png'
+        };
+      }
+
+      function pickDeckCoverCard(deck) {
+        var cards = (deck && deck.cards) || [];
+        if (!cards.length) return null;
+        var preferred = normalizeText(deck && deck.coverCardNumber).replace(/\\/g, '/');
+        if (preferred) {
+          for (var p = 0; p < cards.length; p++) {
+            if (cards[p] && cards[p].cardNumber === preferred) return cards[p];
+          }
+        }
+        var best = cards[0];
+        var bestQty = best && best.qty ? best.qty : 0;
+        for (var i = 1; i < cards.length; i++) {
+          var q = cards[i] && cards[i].qty ? cards[i].qty : 0;
+          if (q > bestQty) {
+            best = cards[i];
+            bestQty = q;
+          }
+        }
+        return best && best.cardNumber ? best : cards[0];
+      }
+
+      function coverUrlsForDeck(deck) {
+        var cover = pickDeckCoverCard(deck);
+        if (!cover || !cover.cardNumber) return { primary: '', fallback: '' };
+        return buildCardImageUrls(cover.cardNumber);
+      }
+
+      function inferBuild(tags) {
+        for (var i = 0; i < tags.length; i++) {
+          if (/扉|門|軸|控|速攻|燃燒|墓地|倒數/.test(tags[i])) return tags[i];
+        }
+        return '—';
+      }
+
+      function inferCompetitive(tags) {
+        return tags.some(function (t) { return /競技|對戰|比賽|競技向け/.test(t); });
+      }
+
+      function inferTagLabel(tags, competitive) {
+        for (var i = 0; i < tags.length; i++) {
+          if (/競技|休閒|娛樂|對戰/.test(tags[i])) return tags[i];
+        }
+        return competitive ? '競技向け' : (tags[0] || '一般');
+      }
+
+      function seriesCodeFromDeck(deck) {
+        var cover = pickDeckCoverCard(deck);
+        var no = cover && cover.cardNumber ? String(cover.cardNumber) : '';
+        if (!no) return '';
+        var slash = no.indexOf('/');
+        var dash = no.indexOf('-');
+        if (slash < 0 || dash < 0) return '';
+        return no.slice(0, dash);
+      }
+
+      function toViewModel(deck) {
+        var tags = Array.isArray(deck.tags) ? deck.tags.map(normalizeText).filter(Boolean) : [];
+        var total = deckTotalCards(deck);
+        var kinds = deckKindCount(deck);
+        var competitive = inferCompetitive(tags);
+        var urls = coverUrlsForDeck(deck);
+        var series = seriesCodeFromDeck(deck);
+        var build = inferBuild(tags);
+        var subtitleParts = [];
+        if (tags[0] && tags[0] !== build) subtitleParts.push(tags[0]);
+        if (build !== '—') subtitleParts.push(build + ( /扉|門/.test(build) ? '' : '' ));
+        if (!subtitleParts.length) subtitleParts.push(kinds + ' 種 · ' + total + ' 張');
+        return {
+          id: deck.id,
+          title: normalizeText(deck.name) || '未命名牌組',
+          subtitle: subtitleParts.join(' / '),
+          work: tags.find(function (t) { return !/競技|休閒|扉|門|軸/.test(t); }) || series || '—',
+          build: build,
+          created: formatDotDate(deck.createdAt),
+          winRate: '—',
+          winNote: '尚無對戰資料',
+          cards: total,
+          kinds: kinds,
+          competitive: competitive,
+          favorite: !!favoriteIds[deck.id],
+          tag: inferTagLabel(tags, competitive),
+          game: 'WS',
+          desc: normalizeText(deck.deckDescription) || '尚未填寫牌組說明。',
+          cover: urls.primary,
+          coverFallback: urls.fallback,
+          createdAt: deck.createdAt || 0,
+          updatedAt: deck.updatedAt || deck.createdAt || 0,
+          raw: deck
+        };
+      }
+
+      function bindImgFallback(img, fallback) {
+        if (!img) return;
+        img.onerror = function () {
+          if (fallback && img.getAttribute('data-tried-fallback') !== '1') {
+            img.setAttribute('data-tried-fallback', '1');
+            img.src = fallback;
+            return;
+          }
+          img.style.opacity = '0.35';
+          img.onerror = null;
+        };
+      }
+
+      function setStatusMode(mode) {
+        if (!statusEl || !appEl) return;
+        var isEmptyMode = mode === 'loading' || mode === 'guest' || mode === 'ready-empty' || mode === 'filtered' || mode === 'error';
+        appEl.classList.toggle('is-empty', isEmptyMode);
+        statusEl.hidden = !isEmptyMode;
+        statusEl.classList.toggle('is-loading', mode === 'loading');
+        if (mode === 'loading') {
+          statusTitle.textContent = '正在載入牌組';
+          statusText.textContent = '同步雲端資料中，請稍候…';
+          statusPrimary.hidden = true;
+          statusSecondary.hidden = true;
+        } else if (mode === 'guest') {
+          statusTitle.textContent = '登入後查看你的牌組';
+          statusText.textContent = '牌組資料存放在雲端，登入後即可在此挑選並使用。';
+          statusPrimary.hidden = false;
+          statusPrimaryLabel.textContent = '登入我的牌組';
+          statusSecondary.hidden = false;
+          statusSecondary.textContent = '前往完整牌組頁';
+          statusSecondary.setAttribute('href', 'decks.html');
+        } else if (mode === 'ready-empty') {
+          statusTitle.textContent = '尚未建立牌組';
+          statusText.textContent = '先到完整牌組頁建立或匯入 DeckLog，再回來這裡選擇。';
+          statusPrimary.hidden = true;
+          statusSecondary.hidden = false;
+          statusSecondary.textContent = '前往建立牌組';
+          statusSecondary.setAttribute('href', 'decks.html');
+        } else if (mode === 'filtered') {
+          statusTitle.textContent = '沒有符合的牌組';
+          statusText.textContent = '調整搜尋或篩選條件再試試。';
+          statusPrimary.hidden = true;
+          statusSecondary.hidden = true;
+        } else if (mode === 'error') {
+          statusTitle.textContent = '無法載入牌組';
+          statusText.textContent = '雲端同步失敗，請稍後再試或改用完整牌組頁。';
+          statusPrimary.hidden = false;
+          statusPrimaryLabel.textContent = '重新載入';
+          statusSecondary.hidden = false;
+          statusSecondary.textContent = '前往完整牌組頁';
+          statusSecondary.setAttribute('href', 'decks.html');
+        } else {
+          appEl.classList.remove('is-empty');
+          statusEl.hidden = true;
+        }
+      }
+
       function getVisible() {
-        var list = DECKS.slice();
+        var list = allDecks.map(toViewModel);
         if (state.filter === 'fav') {
           list = list.filter(function (d) { return d.favorite; });
-        } else if (state.filter === 'ws' || state.filter === 'wsr') {
-          list = list.filter(function (d) {
-            return String(d.game || '').toUpperCase() === state.filter.toUpperCase();
-          });
+        } else if (state.filter === 'ws') {
+          list = list.filter(function (d) { return d.game === 'WS'; });
+        } else if (state.filter === 'wsr') {
+          list = list.filter(function () { return false; });
         }
         if (state.query) {
           var q = state.query.toLowerCase();
           list = list.filter(function (d) {
-            return (d.title + ' ' + d.subtitle + ' ' + d.work + ' ' + d.tag + ' ' + d.game)
+            return (d.title + ' ' + d.subtitle + ' ' + d.work + ' ' + d.tag + ' ' + d.desc + ' ' + d.game)
               .toLowerCase()
               .indexOf(q) >= 0;
           });
         }
         if (state.sort === 'newest') {
-          list.sort(function (a, b) { return b.createdAt - a.createdAt; });
+          list.sort(function (a, b) {
+            return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
+          });
         } else if (state.sort === 'name') {
           list.sort(function (a, b) { return a.title.localeCompare(b.title, 'zh-Hant'); });
         }
@@ -1506,11 +1758,12 @@
             '" data-index="' + i + '" aria-label="' + deck.title + '"' +
             (i === state.index ? ' aria-current="true"' : '') + '>';
           html += '<span class="deck-slide-inner">';
-          html += '<img src="' + deck.cover + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+          html += '<img src="' + (deck.cover || '') + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"' +
+            (deck.coverFallback ? ' data-fallback="' + deck.coverFallback.replace(/"/g, '&quot;') + '"' : '') + '>';
           html += '<span class="deck-fav' + (deck.favorite ? ' is-on' : '') + '" aria-hidden="true"><i class="fas fa-star"></i></span>';
           html += '</span></button>';
         });
-        track.innerHTML = html || '<p style="position:absolute;inset:0;display:grid;place-items:center;color:#3a2f68;font-weight:700;">找不到牌組</p>';
+        track.innerHTML = html || '';
 
         Array.prototype.forEach.call(track.querySelectorAll('.deck-slide'), function (el) {
           var i = Number(el.getAttribute('data-index'));
@@ -1520,6 +1773,8 @@
           el.style.opacity = String(t.opacity);
           el.style.zIndex = String(t.z);
           el.style.filter = t.filter;
+          var img = el.querySelector('img');
+          if (img) bindImgFallback(img, img.getAttribute('data-fallback') || '');
           el.addEventListener('click', function () {
             if (i === state.index) return;
             state.index = i;
@@ -1564,7 +1819,13 @@
           return;
         }
 
-        thumb.src = deck.cover;
+        thumb.removeAttribute('data-tried-fallback');
+        if (deck.cover) {
+          thumb.src = deck.cover;
+          bindImgFallback(thumb, deck.coverFallback || '');
+        } else {
+          thumb.removeAttribute('src');
+        }
         thumb.alt = deck.title;
         badge.hidden = !deck.competitive;
         title.textContent = deck.title;
@@ -1589,6 +1850,33 @@
       }
 
       function renderAll() {
+        state.list = getVisible();
+        if (!deckAuthResolved) {
+          setStatusMode('loading');
+          renderCarousel();
+          renderInfo();
+          return;
+        }
+        if (!deckCloudUser) {
+          setStatusMode('guest');
+          renderCarousel();
+          renderInfo();
+          return;
+        }
+        if (!allDecks.length) {
+          setStatusMode('ready-empty');
+          renderCarousel();
+          renderInfo();
+          return;
+        }
+        if (!state.list.length) {
+          setStatusMode('filtered');
+          renderCarousel();
+          renderInfo();
+          return;
+        }
+        setStatusMode('ready');
+        clampIndex();
         renderCarousel();
         renderInfo();
       }
@@ -1610,11 +1898,162 @@
 
       function onEdit() {
         var deck = currentDeck();
-        showToast(deck ? ('開啟編輯：' + deck.title) : '沒有可編輯的牌組');
+        if (!deck) {
+          showToast('沒有可編輯的牌組');
+          return;
+        }
+        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
       }
       function onStart() {
         var deck = currentDeck();
         showToast(deck ? ('準備使用「' + deck.title + '」開始對戰') : '請先選擇牌組');
+      }
+
+      function applyCloudDecks(list) {
+        allDecks = Array.isArray(list) ? list.filter(function (d) { return d && d.id; }) : [];
+        writeLocalDecks(allDecks);
+        renderAll();
+      }
+
+      function migrateLocalDecksIfCloudEmpty(cloudList) {
+        var cloud = Array.isArray(cloudList) ? cloudList : [];
+        if (cloud.length) return Promise.resolve(cloud);
+        var local = readLocalDecks();
+        if (!local.length || !decksFirebaseReady()) return Promise.resolve([]);
+        showToast('正在將本機牌組上傳到雲端…');
+        return Promise.all(local.map(function (d) {
+          return fb.saveUserDeck(d);
+        })).then(function () {
+          return fb.loadUserDecks();
+        });
+      }
+
+      function refreshDecksFromCloud() {
+        if (!decksFirebaseReady() || !deckCloudUser) {
+          allDecks = [];
+          renderAll();
+          return Promise.resolve([]);
+        }
+        if (deckSyncing) return Promise.resolve(allDecks);
+        deckSyncing = true;
+        return fb.loadUserDecks()
+          .then(function (cloud) {
+            return migrateLocalDecksIfCloudEmpty(cloud);
+          })
+          .then(function (list) {
+            applyCloudDecks(list);
+            return allDecks;
+          })
+          .catch(function (err) {
+            console.error(err);
+            setStatusMode('error');
+            showToast((err && err.message) || '牌組雲端同步失敗');
+            return allDecks;
+          })
+          .then(function (list) {
+            deckSyncing = false;
+            return list;
+          });
+      }
+
+      function waitFirebaseAuthReady() {
+        if (fb && fb.auth && typeof fb.auth.authStateReady === 'function') {
+          return fb.auth.authStateReady();
+        }
+        return new Promise(function (resolve) {
+          if (!(fb && typeof fb.onAuth === 'function')) {
+            resolve();
+            return;
+          }
+          var settled = false;
+          var unsub = fb.onAuth(function () {
+            if (settled) return;
+            settled = true;
+            if (typeof unsub === 'function') {
+              try { unsub(); } catch (e) { /* ignore */ }
+            }
+            resolve();
+          });
+        });
+      }
+
+      function signInAndLoad() {
+        if (!decksFirebaseReady()) {
+          showToast((fb && fb.reason) || 'Firebase 尚未就緒');
+          return;
+        }
+        var user = fb.currentUser && fb.currentUser();
+        var p = user
+          ? Promise.resolve(user)
+          : fb.signInWithGoogle().then(function (cred) {
+              return (cred && cred.user) || (fb.currentUser && fb.currentUser());
+            });
+        setStatusMode('loading');
+        p.then(function (signed) {
+          if (!signed) throw new Error('登入失敗');
+          deckCloudUser = signed;
+          var profileP = typeof fb.ensureUserProfile === 'function'
+            ? fb.ensureUserProfile()
+            : Promise.resolve(null);
+          return profileP.then(function () {
+            return refreshDecksFromCloud();
+          });
+        }).catch(function (err) {
+          console.error(err);
+          showToast((err && err.message) || '登入失敗');
+          deckAuthResolved = true;
+          renderAll();
+        });
+      }
+
+      function bootstrapDecks() {
+        favoriteIds = readFavoriteIds();
+        setStatusMode('loading');
+        if (!(fb && typeof fb.onAuth === 'function')) {
+          deckAuthResolved = true;
+          deckCloudUser = null;
+          allDecks = [];
+          setStatusMode('error');
+          statusText.textContent = (fb && fb.reason) || 'Firebase 未載入，請改用完整牌組頁。';
+          return;
+        }
+        waitFirebaseAuthReady().then(function () {
+          var user = fb.currentUser && fb.currentUser();
+          deckCloudUser = user || null;
+          deckAuthResolved = true;
+          if (!user) {
+            allDecks = [];
+            renderAll();
+            return null;
+          }
+          setStatusMode('loading');
+          return refreshDecksFromCloud().then(function (list) {
+            if (list && list.length) {
+              showToast('已同步雲端牌組 ' + list.length + ' 副');
+            }
+          });
+        }).catch(function (err) {
+          console.error(err);
+          deckAuthResolved = true;
+          deckCloudUser = null;
+          allDecks = [];
+          setStatusMode('error');
+        });
+
+        fb.onAuth(function (user) {
+          if (!deckAuthResolved) return;
+          deckCloudUser = user || null;
+          if (!user) {
+            allDecks = [];
+            renderAll();
+            return;
+          }
+          refreshDecksFromCloud().then(function (list) {
+            if (list && list.length) {
+              showToast('已同步雲端牌組 ' + list.length + ' 副');
+            }
+          });
+        });
       }
 
       document.getElementById('prevBtn').addEventListener('click', function () { go(-1); });
@@ -1627,24 +2066,27 @@
       document.getElementById('favToggle').addEventListener('click', function () {
         var deck = currentDeck();
         if (!deck) return;
-        deck.favorite = !deck.favorite;
-        showToast(deck.favorite ? '已加入我的最愛' : '已從最愛移除');
-        if (state.filter === 'fav' && !deck.favorite) renderAll();
-        else {
-          renderCarousel();
-          renderInfo();
-        }
+        if (favoriteIds[deck.id]) delete favoriteIds[deck.id];
+        else favoriteIds[deck.id] = true;
+        writeFavoriteIds();
+        showToast(favoriteIds[deck.id] ? '已加入我的最愛' : '已從最愛移除');
+        renderAll();
       });
 
       document.getElementById('infoMore').addEventListener('click', function () {
         var deck = currentDeck();
-        showToast(deck ? ('牌組詳情：' + deck.title) : '');
+        if (!deck) return;
+        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
       });
       document.getElementById('menuBtn').addEventListener('click', function () {
-        showToast('選單（示意）');
+        window.location.href = 'decks.html';
       });
       document.getElementById('helpBtn').addEventListener('click', function () {
         showToast('← → 選牌組 · Enter 使用 · Esc 返回');
+      });
+      statusPrimary.addEventListener('click', function () {
+        if (!deckCloudUser) signInAndLoad();
+        else refreshDecksFromCloud();
       });
 
       Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (chip) {
@@ -1723,7 +2165,7 @@
         mqDesk.addListener(function () { renderCarousel(); });
       }
 
-      renderAll();
+      bootstrapDecks();
     })();
   </script>
 </body>
