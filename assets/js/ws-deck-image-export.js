@@ -690,14 +690,16 @@
     return panel;
   }
 
-  function buildCardTile(card) {
+  function buildCardTile(card, tileOpts) {
+    tileOpts = tileOpts || {};
+    var compact = !!tileOpts.compact;
     var isCx = isCxKind(card.kindClass, card.kindLabel);
     var colorKey = normalizeColorKey(card.color);
     var border = COLOR_HEX[colorKey] || "#cbd5e1";
     // 緊密網格：卡面略縮、細框；輸出再乘 html2canvas scale
     var tile = el("div", {
-      width: isCx ? "118px" : "92px",
-      height: isCx ? "84px" : "128px",
+      width: compact ? (isCx ? "108px" : "84px") : (isCx ? "118px" : "92px"),
+      height: compact ? (isCx ? "76px" : "118px") : (isCx ? "84px" : "128px"),
       borderRadius: "5px",
       overflow: "hidden",
       border: "2px solid " + border,
@@ -728,63 +730,227 @@
         return;
       }
       img.style.display = "none";
+      tile.style.borderStyle = "dashed";
+      tile.style.borderColor = "#94a3b8";
+      tile.style.background = "#f1f5f9";
+      tile.setAttribute("data-img-missing", "1");
     };
     if (primary) img.src = primary;
+    else {
+      img.style.display = "none";
+      tile.style.borderStyle = "dashed";
+      tile.style.borderColor = "#94a3b8";
+      tile.style.background = "#f1f5f9";
+      tile.setAttribute("data-img-missing", "1");
+    }
     tile.appendChild(img);
     return tile;
   }
 
-  function buildExportDom(deck, cards, stats) {
+  function expandCardFaces(cards, preserveOrder) {
+    var list = preserveOrder ? (cards || []).slice() : sortCardsForGrid(cards || []);
+    var faces = [];
+    list.forEach(function (card) {
+      var qty = Math.max(0, card.qty || 0);
+      for (var i = 0; i < qty; i++) faces.push(card);
+    });
+    return faces;
+  }
+
+  function chunkFaces(faces, pageSize) {
+    var size = Math.max(1, pageSize || 50);
+    var pages = [];
+    for (var i = 0; i < faces.length; i += size) {
+      pages.push(faces.slice(i, i + size));
+    }
+    return pages.length ? pages : [[]];
+  }
+
+  function pad2(n) {
+    return (n < 10 ? "0" : "") + n;
+  }
+
+  function makeExportStamp(dateObj) {
+    var d = dateObj || new Date();
+    return {
+      date: d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()),
+      time: pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds())
+    };
+  }
+
+  function buildDatedFilename(deckName, stamp, pageIndex, pageCount) {
+    var base = stamp.date + "_" + stamp.time + "_" + safeFilename(deckName);
+    if (pageCount > 1) return base + "-" + (pageIndex + 1) + ".png";
+    return base + ".png";
+  }
+
+  function buildNumbersStrip(stats) {
+    var row = el("div", {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "6px 12px",
+      alignItems: "center",
+      marginBottom: "8px",
+      fontSize: "13px",
+      fontWeight: "700",
+      color: "#1f2937"
+    });
+    function chip(label, value) {
+      var node = el("span", {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        padding: "3px 8px",
+        borderRadius: "8px",
+        background: "#f3f4f6",
+        border: "1px solid #e5e7eb"
+      });
+      node.appendChild(el("span", { color: "#6b7280", fontWeight: "700" }, { text: label }));
+      node.appendChild(el("span", { fontWeight: "900" }, { text: String(value) }));
+      return node;
+    }
+    row.appendChild(chip("總張數", stats.total || 0));
+    LEVEL_KEYS.forEach(function (lv) {
+      row.appendChild(chip("Lv" + lv, (stats.levelCount && stats.levelCount[lv]) || 0));
+    });
+    row.appendChild(chip("CX", (stats.levelCount && stats.levelCount.cx) || 0));
+    COLOR_ORDER.forEach(function (key) {
+      row.appendChild(chip(COLOR_LABEL[key], (stats.colorCount && stats.colorCount[key]) || 0));
+    });
+    return row;
+  }
+
+  function buildExportDom(deck, cards, stats, domOpts) {
+    domOpts = domOpts || {};
+    var fixed = !!(domOpts.width && domOpts.height);
+    var width = fixed ? domOpts.width : 1480;
+    var height = fixed ? domOpts.height : null;
+    var siteLabel = domOpts.siteLabel || "WS-Cards · 牌組圖";
+    var pageIndex = domOpts.pageIndex || 0;
+    var pageCount = domOpts.pageCount || 1;
+    var faceMode = !!domOpts.faces;
+    var compact = !!fixed;
+
     var wrap = el("div", {
       background: "#ffffff",
-      padding: "22px 22px 16px",
-      width: "1480px",
+      padding: fixed ? "18px 20px 14px" : "22px 22px 16px",
+      width: width + "px",
+      height: height ? height + "px" : "auto",
       boxSizing: "border-box",
       fontFamily: '"Zen Kaku Gothic New","Noto Sans TC",system-ui,sans-serif',
       color: "#111827",
       position: "fixed",
       top: "-99999px",
       left: "-99999px",
-      zIndex: "-1"
+      zIndex: "-1",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column"
     });
 
-    wrap.appendChild(el("div", {
-      fontSize: "32px",
+    var titleRow = el("div", {
+      display: "flex",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+      gap: "12px",
+      marginBottom: fixed ? "8px" : "12px",
+      flex: "0 0 auto"
+    });
+    titleRow.appendChild(el("div", {
+      fontSize: fixed ? "28px" : "32px",
       fontWeight: "800",
       letterSpacing: "0.04em",
-      marginBottom: "12px",
       lineHeight: "1.25",
-      wordBreak: "break-word"
+      wordBreak: "break-word",
+      flex: "1 1 auto",
+      minWidth: "0"
     }, { text: (deck && deck.name) || "未命名牌組" }));
+    if (pageCount > 1) {
+      titleRow.appendChild(el("div", {
+        fontSize: "14px",
+        fontWeight: "800",
+        color: "#6b7280",
+        flex: "0 0 auto"
+      }, { text: (pageIndex + 1) + " / " + pageCount }));
+    }
+    wrap.appendChild(titleRow);
 
-    wrap.appendChild(buildSectionBox("牌組資訊", buildStatsPanel(stats)));
+    if (fixed) wrap.appendChild(buildNumbersStrip(stats));
+
+    var statsBox = buildSectionBox("牌組資訊", buildStatsPanel(stats));
+    statsBox.style.flex = "0 0 auto";
+    wrap.appendChild(statsBox);
 
     var grid = el("div", {
       display: "flex",
       flexWrap: "wrap",
-      gap: "2px",
-      alignContent: "flex-start"
+      gap: compact ? "3px" : "2px",
+      alignContent: "flex-start",
+      alignItems: "flex-start"
     });
 
-    sortCardsForGrid(cards).forEach(function (card) {
-      var qty = Math.max(0, card.qty || 0);
-      for (var i = 0; i < qty; i++) {
-        grid.appendChild(buildCardTile(card));
-      }
-    });
+    if (faceMode) {
+      (cards || []).forEach(function (card) {
+        grid.appendChild(buildCardTile(card, { compact: compact }));
+      });
+    } else {
+      var ordered = domOpts.preserveOrder ? (cards || []).slice() : sortCardsForGrid(cards);
+      ordered.forEach(function (card) {
+        var qty = Math.max(0, card.qty || 0);
+        for (var i = 0; i < qty; i++) {
+          grid.appendChild(buildCardTile(card, { compact: compact }));
+        }
+      });
+    }
     var listBox = buildSectionBox("牌組清單", grid);
-    listBox.style.marginTop = "12px";
+    listBox.style.marginTop = fixed ? "8px" : "12px";
+    listBox.style.flex = "1 1 auto";
+    listBox.style.minHeight = "0";
+    listBox.style.overflow = "hidden";
     wrap.appendChild(listBox);
 
-    wrap.appendChild(el("div", {
-      marginTop: "12px",
+    var foot = el("div", {
+      marginTop: "8px",
       fontSize: "12px",
       color: "#9ca3af",
       textAlign: "right",
-      letterSpacing: "0.08em"
-    }, { text: "WS-Cards · 牌組圖" }));
+      letterSpacing: "0.08em",
+      flex: "0 0 auto",
+      display: "flex",
+      justifyContent: "space-between",
+      gap: "12px"
+    });
+    foot.appendChild(el("span", {
+      color: "#f59e0b",
+      fontWeight: "700",
+      opacity: "0"
+    }, { text: "部分圖片未載入", "data-partial-hint": "1" }));
+    foot.appendChild(el("span", null, { text: siteLabel }));
+    wrap.appendChild(foot);
 
     return wrap;
+  }
+
+  function markPartialHint(wrap) {
+    if (!wrap) return false;
+    var missing = wrap.querySelectorAll("[data-img-missing]");
+    var hint = wrap.querySelector("[data-partial-hint]");
+    var has = !!(missing && missing.length);
+    if (hint) hint.style.opacity = has ? "1" : "0";
+    return has;
+  }
+
+  function fitCanvasSize(source, width, height) {
+    if (!width || !height) return source;
+    if (source.width === width && source.height === height) return source;
+    var out = document.createElement("canvas");
+    out.width = width;
+    out.height = height;
+    var ctx = out.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
+    return out;
   }
 
   function waitForImages(root, timeoutMs) {
@@ -838,10 +1004,49 @@
       .slice(0, 40) || "deck";
   }
 
+  function renderAndDownloadPage(h2c, deck, pageFaces, stats, pageOpts) {
+    pageOpts = pageOpts || {};
+    var wrap = buildExportDom(deck, pageFaces, stats, {
+      faces: true,
+      width: pageOpts.width,
+      height: pageOpts.height,
+      siteLabel: pageOpts.siteLabel,
+      pageIndex: pageOpts.pageIndex,
+      pageCount: pageOpts.pageCount,
+      preserveOrder: true
+    });
+    document.body.appendChild(wrap);
+    return waitForImages(wrap, 15000).then(function () {
+      var partial = markPartialHint(wrap);
+      return h2c(wrap, {
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        allowTaint: false,
+        scale: pageOpts.scale || 1,
+        width: pageOpts.width || undefined,
+        height: pageOpts.height || undefined,
+        logging: false,
+        imageTimeout: 15000
+      }).then(function (canvas) {
+        if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        var out = fitCanvasSize(canvas, pageOpts.width, pageOpts.height);
+        return downloadCanvas(out, pageOpts.filename).then(function () {
+          return { filename: pageOpts.filename, partialImages: partial };
+        });
+      }).catch(function (err) {
+        if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        throw err;
+      });
+    }).catch(function (err) {
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      throw err;
+    });
+  }
+
   /**
    * @param {object} deck
    * @param {object} [opts]
-   * @returns {Promise<{total:number}>}
+   * @returns {Promise<{total:number,filename?:string,filenames?:string[],partialImages?:boolean}>}
    */
   function exportDeckImage(deck, opts) {
     opts = opts || {};
@@ -854,45 +1059,101 @@
     }
     var triggerMap = opts.triggerMap || global.WsTriggerMap || null;
     var onProgress = typeof opts.onProgress === "function" ? opts.onProgress : function () {};
+    var pageSize = parseInt(opts.pageSize, 10);
+    var usePaged = isFinite(pageSize) && pageSize > 0;
+    var canvasW = parseInt(opts.width, 10) || 0;
+    var canvasH = parseInt(opts.height, 10) || 0;
+    var siteLabel = opts.siteLabel || (usePaged ? "ws-cards" : "WS-Cards · 牌組圖");
+    var preserveOrder = opts.preserveOrder != null ? !!opts.preserveOrder : !!usePaged;
 
     onProgress("正在讀取卡片資料…");
     return enrichDeckCards(deck).then(function (cards) {
       if (!cards.length) throw new Error("找不到可輸出的卡片");
       var stats = computeStats(cards, triggerMap);
       if (!stats.total) throw new Error("牌組張數為 0");
-      onProgress("正在載入卡面…");
-      var wrap = buildExportDom(deck, cards, stats);
-      document.body.appendChild(wrap);
-      return waitForImages(wrap, 15000).then(function () {
-        onProgress("正在產生圖片…");
-        return h2c(wrap, {
-          backgroundColor: "#ffffff",
-          useCORS: true,
-          allowTaint: false,
-          // 預設 3x：版面約 1480px → 輸出寬約 4440px
-          scale: opts.scale || 3,
-          logging: false,
-          imageTimeout: 15000
-        }).then(function (canvas) {
-          if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
-          var filename = safeFilename(deck.name) + ".png";
-          onProgress("正在下載…");
-          return downloadCanvas(canvas, filename).then(function () {
-            return { total: stats.total, filename: filename };
+
+      if (!usePaged) {
+        onProgress("正在載入卡面…");
+        var wrap = buildExportDom(deck, cards, stats, {
+          preserveOrder: preserveOrder,
+          siteLabel: siteLabel
+        });
+        document.body.appendChild(wrap);
+        return waitForImages(wrap, 15000).then(function () {
+          var partial = markPartialHint(wrap);
+          onProgress("正在產生圖片…");
+          return h2c(wrap, {
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            allowTaint: false,
+            // 預設 3x：版面約 1480px → 輸出寬約 4440px
+            scale: opts.scale || 3,
+            logging: false,
+            imageTimeout: 15000
+          }).then(function (canvas) {
+            if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+            var filename = opts.datedFilename
+              ? buildDatedFilename(deck.name, makeExportStamp(), 0, 1)
+              : (safeFilename(deck.name) + ".png");
+            onProgress("正在下載…");
+            return downloadCanvas(canvas, filename).then(function () {
+              return { total: stats.total, filename: filename, partialImages: partial };
+            });
+          }).catch(function (err) {
+            if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+            throw err;
           });
         }).catch(function (err) {
           if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
           throw err;
         });
-      }).catch(function (err) {
-        if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
-        throw err;
-      });
+      }
+
+      var faces = expandCardFaces(cards, preserveOrder);
+      var pages = chunkFaces(faces, pageSize);
+      var stamp = makeExportStamp();
+      var filenames = [];
+      var partialAny = false;
+
+      function runPage(i) {
+        if (i >= pages.length) {
+          return {
+            total: stats.total,
+            filename: filenames[0],
+            filenames: filenames,
+            pages: pages.length,
+            partialImages: partialAny
+          };
+        }
+        onProgress("正在產生圖片（" + (i + 1) + "/" + pages.length + "）…");
+        var filename = buildDatedFilename(deck.name, stamp, i, pages.length);
+        return renderAndDownloadPage(h2c, deck, pages[i], stats, {
+          width: canvasW || 1920,
+          height: canvasH || 1080,
+          scale: opts.scale != null ? opts.scale : 1,
+          siteLabel: siteLabel,
+          pageIndex: i,
+          pageCount: pages.length,
+          filename: filename
+        }).then(function (result) {
+          filenames.push(result.filename);
+          if (result.partialImages) partialAny = true;
+          return new Promise(function (resolve) {
+            setTimeout(resolve, 350);
+          }).then(function () {
+            return runPage(i + 1);
+          });
+        });
+      }
+
+      onProgress("正在載入卡面…");
+      return runPage(0);
     });
   }
 
   global.WsDeckImageExport = {
     exportDeckImage: exportDeckImage,
-    computeStats: computeStats
+    computeStats: computeStats,
+    buildDatedFilename: buildDatedFilename
   };
 })(window);
