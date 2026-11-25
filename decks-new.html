@@ -1066,33 +1066,133 @@
     }
     .deck-sheet-analyze {
       display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.55rem;
+      align-items: stretch;
+    }
+    .deck-sheet-chart {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.65rem 0.55rem 0.7rem;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-width: 0;
+    }
+    .deck-sheet-chart-title {
+      margin: 0;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.72;
+      text-align: center;
+    }
+    .deck-sheet-pie {
+      display: grid;
+      justify-items: center;
       gap: 0.45rem;
     }
-    .deck-sheet-bar-row {
-      display: grid;
-      grid-template-columns: 3.2rem minmax(0, 1fr) 2rem;
-      gap: 0.4rem;
+    .deck-sheet-pie-wrap {
+      position: relative;
+      width: min(100%, 7.6rem);
+      aspect-ratio: 1;
+    }
+    .deck-sheet-pie-wrap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
+    }
+    .deck-sheet-pie-total {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 800;
+      opacity: 0.85;
+      text-align: center;
+    }
+    .deck-sheet-pie-total span {
+      font-size: 0.62rem;
+      font-weight: 700;
+      opacity: 0.7;
+      margin-left: 0.12rem;
+    }
+    .deck-sheet-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.28rem;
+    }
+    .deck-sheet-legend-pill {
+      display: inline-flex;
       align-items: center;
-      font-size: 0.72rem;
+      gap: 0.28rem;
+      padding: 0.18rem 0.42rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.62rem;
       font-weight: 700;
     }
-    .deck-sheet-bar-track {
+    .deck-sheet-legend-dot {
+      width: 0.45rem;
       height: 0.45rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .deck-sheet-vbars {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.28rem;
+      align-items: end;
+      min-height: 7.6rem;
+      padding: 0.15rem 0.1rem 0;
+    }
+    .deck-sheet-vbar-col {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0.22rem;
+      justify-items: center;
+      min-height: 0;
+      height: 100%;
+    }
+    .deck-sheet-vbar-n {
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      font-weight: 800;
+      line-height: 1;
+      opacity: 0.9;
+    }
+    .deck-sheet-vbar-track {
+      width: 100%;
+      max-width: 1.55rem;
+      height: 100%;
+      min-height: 4.8rem;
+      border-radius: 8px 8px 4px 4px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: flex-end;
       overflow: hidden;
     }
-    .deck-sheet-bar-fill {
-      height: 100%;
+    .deck-sheet-vbar-fill {
+      width: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #8b7cff, #6aa8ff);
-      width: 0;
-      transition: width 0.55s var(--ease);
+      background: linear-gradient(180deg, #9b8cff 0%, #6aa8ff 100%);
+      height: 0;
+      transition: height 0.55s var(--ease);
+      min-height: 0;
     }
-    .deck-sheet-bar-fill.is-y { background: linear-gradient(90deg, #f0c14b, #f5a623); }
-    .deck-sheet-bar-fill.is-g { background: linear-gradient(90deg, #5dce8a, #2faa5c); }
-    .deck-sheet-bar-fill.is-r { background: linear-gradient(90deg, #ff7b8a, #e4455a); }
-    .deck-sheet-bar-fill.is-b { background: linear-gradient(90deg, #6aa8ff, #3d7dff); }
+    .deck-sheet-vbar-fill.is-cx {
+      background: linear-gradient(180deg, #ffe08a 0%, #f0c14b 100%);
+    }
+    .deck-sheet-vbar-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      opacity: 0.72;
+    }
+    .deck-sheet-analyze-empty {
+      grid-column: 1 / -1;
+    }
     .deck-sheet-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
@@ -1769,6 +1869,22 @@
         grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr));
         gap: 0.65rem;
       }
+      .deck-sheet-analyze {
+        gap: 0.75rem;
+      }
+      .deck-sheet-chart {
+        padding: 0.85rem 0.75rem 0.9rem;
+      }
+      .deck-sheet-pie-wrap {
+        width: min(100%, 8.5rem);
+      }
+      .deck-sheet-vbars {
+        min-height: 8.5rem;
+      }
+      .deck-sheet-vbar-track {
+        max-width: 1.85rem;
+        min-height: 5.4rem;
+      }
       .deck-sheet-dock {
         left: 50%;
         right: auto;
@@ -2070,9 +2186,9 @@
           <div class="deck-sheet-stats" id="deckSheetStats"></div>
         </section>
         <section class="deck-sheet-section">
-          <h4>色別／等級分布</h4>
+          <h4>色別／等級</h4>
           <div class="deck-sheet-analyze" id="deckSheetAnalyze">
-            <div class="deck-sheet-empty">載入分析中…</div>
+            <div class="deck-sheet-empty deck-sheet-analyze-empty">載入分析中…</div>
           </div>
         </section>
         <section class="deck-sheet-section">
@@ -3129,31 +3245,113 @@
           else levelTotals.other += qty;
         });
         if (!cards.length) {
-          return '<div class="deck-sheet-empty">此牌組尚未加入卡片</div>';
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
         }
         if (!known) {
-          return '<div class="deck-sheet-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
         }
-        var total = Math.max(1, deckTotalCards(rawDeck));
-        function row(label, n, fillClass) {
-          var pct = Math.round((n / total) * 100);
-          return '<div class="deck-sheet-bar-row">' +
-            '<span>' + label + '</span>' +
-            '<div class="deck-sheet-bar-track"><div class="deck-sheet-bar-fill ' + (fillClass || '') +
-            '" style="width:' + pct + '%"></div></div>' +
-            '<span>' + n + '</span></div>';
+
+        var colorOrder = [
+          { key: 'y', label: '黃', hex: '#f0c14b' },
+          { key: 'g', label: '綠', hex: '#5dce8a' },
+          { key: 'r', label: '紅', hex: '#ff7b8a' },
+          { key: 'b', label: '藍', hex: '#6aa8ff' }
+        ];
+        var colorSegs = [];
+        var colorSum = 0;
+        colorOrder.forEach(function (c) {
+          var n = colorTotals[c.key] || 0;
+          if (!n) return;
+          colorSum += n;
+          colorSegs.push({ label: c.label, hex: c.hex, value: n });
+        });
+        if (colorTotals.other) {
+          colorSum += colorTotals.other;
+          colorSegs.push({ label: '其他', hex: 'rgba(180,180,200,0.55)', value: colorTotals.other });
         }
-        var html = '';
-        html += row('黃', colorTotals.y, 'is-y');
-        html += row('綠', colorTotals.g, 'is-g');
-        html += row('紅', colorTotals.r, 'is-r');
-        html += row('藍', colorTotals.b, 'is-b');
-        html += row('Lv0', levelTotals[0], '');
-        html += row('Lv1', levelTotals[1], '');
-        html += row('Lv2', levelTotals[2], '');
-        html += row('Lv3', levelTotals[3], '');
-        html += row('CX', levelTotals.cx, 'is-y');
-        return html;
+
+        var size = 120;
+        var cx = size / 2;
+        var cy = size / 2;
+        var radius = 52;
+        var gapRad = colorSegs.length > 1 ? 0.035 : 0;
+        var usable = Math.PI * 2 - gapRad * colorSegs.length;
+        var angle = -Math.PI / 2;
+        function polar(a, rad) {
+          return {
+            x: cx + Math.cos(a) * rad,
+            y: cy + Math.sin(a) * rad
+          };
+        }
+        var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">';
+        if (!colorSegs.length) {
+          svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius +
+            '" fill="rgba(255,255,255,0.08)"></circle>';
+        } else if (colorSegs.length === 1) {
+          svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius +
+            '" fill="' + colorSegs[0].hex + '"></circle>';
+        } else {
+          colorSegs.forEach(function (seg) {
+            var span = colorSum > 0 ? (seg.value / colorSum) * usable : 0;
+            var start = angle;
+            var end = angle + span;
+            var large = span > Math.PI ? 1 : 0;
+            var p0 = polar(start, radius);
+            var p1 = polar(end, radius);
+            svg += '<path d="M ' + cx + ' ' + cy +
+              ' L ' + p0.x.toFixed(2) + ' ' + p0.y.toFixed(2) +
+              ' A ' + radius + ' ' + radius + ' 0 ' + large + ' 1 ' +
+              p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
+              ' Z" fill="' + seg.hex + '"></path>';
+            angle = end + gapRad;
+          });
+        }
+        svg += '</svg>';
+        var legend = '<div class="deck-sheet-legend">';
+        if (colorSegs.length) {
+          colorSegs.forEach(function (seg) {
+            legend += '<span class="deck-sheet-legend-pill">' +
+              '<span class="deck-sheet-legend-dot" style="background:' + seg.hex + '"></span>' +
+              escapeHtml(seg.label) + ' ' + seg.value + '</span>';
+          });
+        } else {
+          legend += '<span class="deck-sheet-legend-pill">尚無顏色資料</span>';
+        }
+        legend += '</div>';
+        var donut = '<div class="deck-sheet-chart">' +
+          '<p class="deck-sheet-chart-title">色別分布</p>' +
+          '<div class="deck-sheet-pie">' +
+          '<div class="deck-sheet-pie-wrap">' + svg + '</div>' +
+          '<div class="deck-sheet-pie-total">' + colorSum + '<span>張</span></div>' +
+          legend + '</div></div>';
+
+        var levelOrder = [
+          { key: 0, label: 'Lv0' },
+          { key: 1, label: 'Lv1' },
+          { key: 2, label: 'Lv2' },
+          { key: 3, label: 'Lv3' },
+          { key: 'cx', label: 'CX', cx: true }
+        ];
+        var levelMax = 1;
+        levelOrder.forEach(function (lv) {
+          levelMax = Math.max(levelMax, levelTotals[lv.key] || 0);
+        });
+        var vbars = '<div class="deck-sheet-vbars" role="img" aria-label="等級分布直條圖">';
+        levelOrder.forEach(function (lv) {
+          var n = levelTotals[lv.key] || 0;
+          var pct = Math.round((n / levelMax) * 100);
+          if (n > 0 && pct < 8) pct = 8;
+          vbars += '<div class="deck-sheet-vbar-col">' +
+            '<span class="deck-sheet-vbar-n">' + n + '</span>' +
+            '<div class="deck-sheet-vbar-track"><div class="deck-sheet-vbar-fill' +
+            (lv.cx ? ' is-cx' : '') + '" style="height:' + pct + '%"></div></div>' +
+            '<span class="deck-sheet-vbar-label">' + lv.label + '</span></div>';
+        });
+        vbars += '</div>';
+        var levelChart = '<div class="deck-sheet-chart">' +
+          '<p class="deck-sheet-chart-title">等級分布</p>' + vbars + '</div>';
+
+        return donut + levelChart;
       }
 
       function renderSheetCards(rawDeck) {
