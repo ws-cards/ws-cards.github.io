@@ -1859,10 +1859,13 @@
         renderAll();
       }
 
-      function goDecksWithIntent(intent) {
+      function goDecksWithIntent(intent, deckId) {
         var url = 'decks.html';
+        var id = deckId ? encodeURIComponent(deckId) : '';
         if (intent === 'decklog') url += '?open=decklog';
         else if (intent === 'create') url += '?open=create';
+        else if (intent === 'edit' && id) url += '?open=edit&deck=' + id;
+        else if (intent === 'detail' && id) url += '?open=detail&deck=' + id;
         window.location.href = url;
       }
 
@@ -2092,7 +2095,13 @@
           showToast('沒有可編輯的牌組');
           return;
         }
-        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
+        if (!deckCloudUser) {
+          showToast('編輯牌組前請先登入');
+          try { sessionStorage.setItem('wsDeckSelectOpen', 'edit:' + deck.id); } catch (e) { /* ignore */ }
+          signInAndLoad();
+          return;
+        }
+        goDecksWithIntent('edit', deck.id);
       }
       function onStart() {
         var deck = currentDeck();
@@ -2168,14 +2177,23 @@
       }
 
       function consumePendingOpenIntent() {
-        var intent = '';
+        var raw = '';
         try {
-          intent = sessionStorage.getItem('wsDeckSelectOpen') || '';
+          raw = sessionStorage.getItem('wsDeckSelectOpen') || '';
           sessionStorage.removeItem('wsDeckSelectOpen');
         } catch (e) { /* ignore */ }
-        if (intent === 'decklog' || intent === 'create') {
-          goDecksWithIntent(intent);
+        if (raw === 'decklog' || raw === 'create') {
+          goDecksWithIntent(raw);
           return true;
+        }
+        var colon = raw.indexOf(':');
+        if (colon > 0) {
+          var kind = raw.slice(0, colon);
+          var id = raw.slice(colon + 1);
+          if ((kind === 'edit' || kind === 'detail') && id) {
+            goDecksWithIntent(kind, id);
+            return true;
+          }
         }
         return false;
       }
@@ -2282,7 +2300,7 @@
       document.getElementById('infoMore').addEventListener('click', function () {
         var deck = currentDeck();
         if (!deck) return;
-        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
+        goDecksWithIntent('detail', deck.id);
       });
       document.getElementById('menuBtn').addEventListener('click', function () {
         window.location.href = 'decks.html';

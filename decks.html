@@ -13767,6 +13767,8 @@
       deckAuthResolved = true;
       deckBootstrapDone = true;
       markPageLoaderDecks(label);
+      // decks-new「編輯牌組／詳情」deep link 優先於本機編輯草稿還原
+      if (consumeDeckEditIntent()) return;
       tryResumeEditorLocalDraftAfterDecksReady();
     }
 
@@ -20433,22 +20435,59 @@
       if (selectedDeckId) renderDeckDetail();
       if (deckDraft) renderDeckEditor();
     });
+    function parseWsDeckSelectStored(raw) {
+      var text = normalizeText(raw);
+      if (!text) return null;
+      var colon = text.indexOf(':');
+      if (colon > 0) {
+        var kind = normalizeText(text.slice(0, colon)).toLowerCase();
+        var id = normalizeText(text.slice(colon + 1));
+        if ((kind === 'edit' || kind === 'detail') && id) {
+          return { intent: kind, deckId: id };
+        }
+      }
+      var simple = text.toLowerCase();
+      if (simple === 'decklog' || simple === 'create' || simple === 'edit' || simple === 'detail') {
+        return { intent: simple, deckId: '' };
+      }
+      return null;
+    }
+
+    function stripDeckQueryParams(keys) {
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        var dirty = false;
+        (keys || []).forEach(function (key) {
+          if (params.has(key)) {
+            params.delete(key);
+            dirty = true;
+          }
+        });
+        if (!dirty) return;
+        var next = params.toString();
+        var url = window.location.pathname + (next ? ('?' + next) : '') + (window.location.hash || '');
+        if (window.history && typeof window.history.replaceState === 'function') {
+          window.history.replaceState({}, '', url);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     function consumeDeckOpenIntent() {
       var intent = '';
       try {
         var params = new URLSearchParams(window.location.search || '');
-        intent = normalizeText(params.get('open'));
-        if (!intent) {
-          intent = normalizeText(sessionStorage.getItem('wsDeckSelectOpen'));
-        }
-        sessionStorage.removeItem('wsDeckSelectOpen');
-        if (params.has('open')) {
-          params.delete('open');
-          var next = params.toString();
-          var url = window.location.pathname + (next ? ('?' + next) : '') + (window.location.hash || '');
-          if (window.history && typeof window.history.replaceState === 'function') {
-            window.history.replaceState({}, '', url);
+        intent = normalizeText(params.get('open')).toLowerCase();
+        if (intent !== 'decklog' && intent !== 'create') {
+          var storedEarly = parseWsDeckSelectStored(sessionStorage.getItem('wsDeckSelectOpen'));
+          if (storedEarly && (storedEarly.intent === 'decklog' || storedEarly.intent === 'create')) {
+            intent = storedEarly.intent;
+            sessionStorage.removeItem('wsDeckSelectOpen');
+          } else {
+            intent = '';
           }
+        } else {
+          try { sessionStorage.removeItem('wsDeckSelectOpen'); } catch (e) { /* ignore */ }
+          stripDeckQueryParams(['open']);
         }
       } catch (e) {
         intent = '';
@@ -20460,6 +20499,50 @@
       if (intent === 'create') {
         openDeckCreateMethodModal();
       }
+    }
+
+    /** decks-new 編輯／詳情 deep link：須等雲端牌組列表就緒後再開編成 modal */
+    function consumeDeckEditIntent() {
+      var intent = '';
+      var deckId = '';
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        intent = normalizeText(params.get('open')).toLowerCase();
+        deckId = normalizeText(params.get('deck'));
+        var stored = parseWsDeckSelectStored(sessionStorage.getItem('wsDeckSelectOpen'));
+        if (intent !== 'edit' && intent !== 'detail') {
+          if (stored && (stored.intent === 'edit' || stored.intent === 'detail')) {
+            intent = stored.intent;
+            if (!deckId) deckId = stored.deckId;
+            sessionStorage.removeItem('wsDeckSelectOpen');
+          } else if (!intent && deckId) {
+            // 舊版 decks-new 只用 ?deck=：預設開編成編輯
+            intent = 'edit';
+          } else {
+            intent = '';
+          }
+        } else {
+          try { sessionStorage.removeItem('wsDeckSelectOpen'); } catch (e) { /* ignore */ }
+        }
+        if (intent === 'edit' || intent === 'detail') {
+          stripDeckQueryParams(['open', 'deck']);
+        }
+      } catch (e) {
+        intent = '';
+        deckId = '';
+      }
+      if (!(intent === 'edit' || intent === 'detail') || !deckId) return false;
+      if (!allDecks.some(function (d) { return d.id === deckId; })) {
+        setStatus('找不到該牌組', 'is-error');
+        return true;
+      }
+      selectedDeckId = deckId;
+      if (intent === 'detail') {
+        selectDeck(deckId);
+        return true;
+      }
+      openDeckEditor(deckId, 'edit');
+      return true;
     }
 
     // 等 auth＋雲端牌組就緒後才 mark('decks')／關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
