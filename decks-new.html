@@ -1103,12 +1103,42 @@
       height: 100%;
       display: block;
       filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
+      transform-origin: 50% 50%;
+      transform: scale(0.72) rotate(-14deg);
+      opacity: 0;
+      transition:
+        transform 0.55s var(--ease),
+        opacity 0.4s ease;
+    }
+    .deck-sheet-pie.is-in .deck-sheet-pie-wrap svg {
+      transform: none;
+      opacity: 1;
+    }
+    .deck-sheet-pie-wrap svg > * {
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+    .deck-sheet-pie.is-in .deck-sheet-pie-wrap svg > * {
+      opacity: 1;
+    }
+    .deck-sheet-pie-total,
+    .deck-sheet-pie-caption {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.35s ease, transform 0.35s var(--ease);
+    }
+    .deck-sheet-pie.is-in .deck-sheet-pie-total {
+      opacity: 0.85;
+      transform: none;
+    }
+    .deck-sheet-pie.is-in .deck-sheet-pie-caption {
+      opacity: 1;
+      transform: none;
     }
     .deck-sheet-pie-total {
       font-family: var(--font-display);
       font-size: 0.78rem;
       font-weight: 800;
-      opacity: 0.85;
       text-align: center;
     }
     .deck-sheet-pie-total span {
@@ -1133,6 +1163,13 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       font-size: 0.62rem;
       font-weight: 700;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s var(--ease);
+    }
+    .deck-sheet-pie.is-in .deck-sheet-legend-pill {
+      opacity: 1;
+      transform: none;
     }
     .deck-sheet-legend-dot {
       width: 0.45rem;
@@ -1183,7 +1220,13 @@
       font-size: 0.68rem;
       font-weight: 800;
       line-height: 1;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s var(--ease), color 0.2s ease;
+    }
+    .deck-sheet-vbars.is-in .deck-sheet-vbar-n {
       opacity: 0.9;
+      transform: none;
     }
     .deck-sheet-vbar-track {
       width: 100%;
@@ -1201,6 +1244,7 @@
       border-radius: inherit;
       background: linear-gradient(180deg, #9b8cff 0%, #6aa8ff 100%);
       height: 0;
+      transform-origin: center bottom;
       transition: height 0.55s var(--ease);
       min-height: 0;
     }
@@ -1216,10 +1260,14 @@
     .deck-sheet-vbar-label {
       font-size: 0.62rem;
       font-weight: 800;
+      opacity: 0;
+      transition: opacity 0.3s ease, color 0.2s ease;
+    }
+    .deck-sheet-vbars.is-in .deck-sheet-vbar-label {
       opacity: 0.72;
     }
-    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-label,
-    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-n {
+    .deck-sheet-vbars.is-in .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-label,
+    .deck-sheet-vbars.is-in .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-n {
       opacity: 1;
       color: #fff;
     }
@@ -1230,6 +1278,28 @@
       letter-spacing: 0.06em;
       color: rgba(220, 230, 255, 0.78);
       text-align: center;
+    }
+    .deck-sheet-chart {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.45s var(--ease);
+    }
+    .deck-sheet-analyze.is-in .deck-sheet-chart {
+      opacity: 1;
+      transform: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .deck-sheet-pie-wrap svg,
+      .deck-sheet-pie-wrap svg > *,
+      .deck-sheet-pie-total,
+      .deck-sheet-pie-caption,
+      .deck-sheet-legend-pill,
+      .deck-sheet-vbar-n,
+      .deck-sheet-vbar-label,
+      .deck-sheet-vbar-fill,
+      .deck-sheet-chart {
+        transition: none !important;
+      }
     }
     .deck-sheet-analyze-empty {
       grid-column: 1 / -1;
@@ -3425,7 +3495,7 @@
             (selected ? '，已選取' : '') + '">' +
             '<span class="deck-sheet-vbar-n">' + n + '</span>' +
             '<div class="deck-sheet-vbar-track"><div class="deck-sheet-vbar-fill' +
-            (lv.cx ? ' is-cx' : '') + '" style="height:' + pct + '%"></div></div>' +
+            (lv.cx ? ' is-cx' : '') + '" data-h="' + pct + '%" style="height:0"></div></div>' +
             '<span class="deck-sheet-vbar-label">' + lv.label + '</span></button>';
         });
         vbars += '</div>';
@@ -3433,6 +3503,101 @@
           '<p class="deck-sheet-chart-title">等級分布</p>' + vbars + '</div>';
 
         return donut + levelChart;
+      }
+
+      function prefersSheetChartMotionReduce() {
+        try {
+          return !!(window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function playSheetAnalyzeIntro() {
+        var host = document.getElementById('deckSheetAnalyze');
+        if (!host) return;
+        var pie = host.querySelector('.deck-sheet-pie');
+        var vbars = host.querySelector('.deck-sheet-vbars');
+        var fills = host.querySelectorAll('.deck-sheet-vbar-fill');
+        var legendPills = host.querySelectorAll('.deck-sheet-legend-pill');
+        var pieSegs = host.querySelectorAll('.deck-sheet-pie-wrap svg > *');
+        var charts = host.querySelectorAll('.deck-sheet-chart');
+        var cols = host.querySelectorAll('.deck-sheet-vbar-col');
+
+        host.classList.remove('is-in');
+        if (pie) pie.classList.remove('is-in');
+        if (vbars) vbars.classList.remove('is-in');
+
+        Array.prototype.forEach.call(fills, function (el) {
+          el.style.height = '0';
+        });
+
+        function applyFinal() {
+          host.classList.add('is-in');
+          if (pie) pie.classList.add('is-in');
+          if (vbars) vbars.classList.add('is-in');
+          Array.prototype.forEach.call(fills, function (el) {
+            var h = el.getAttribute('data-h');
+            if (h) el.style.height = h;
+          });
+          Array.prototype.forEach.call(legendPills, function (el) {
+            el.style.transitionDelay = '0s';
+          });
+          Array.prototype.forEach.call(pieSegs, function (el) {
+            el.style.transitionDelay = '0s';
+          });
+          Array.prototype.forEach.call(charts, function (el) {
+            el.style.transitionDelay = '0s';
+          });
+          Array.prototype.forEach.call(fills, function (el) {
+            el.style.transitionDelay = '0s';
+          });
+          Array.prototype.forEach.call(cols, function (col) {
+            var nEl = col.querySelector('.deck-sheet-vbar-n');
+            var labelEl = col.querySelector('.deck-sheet-vbar-label');
+            if (nEl) nEl.style.transitionDelay = '0s';
+            if (labelEl) labelEl.style.transitionDelay = '0s';
+          });
+        }
+
+        if (prefersSheetChartMotionReduce() || (!pie && !vbars)) {
+          applyFinal();
+          return;
+        }
+
+        Array.prototype.forEach.call(legendPills, function (el, i) {
+          el.style.transitionDelay = (0.2 + i * 0.045) + 's';
+        });
+        Array.prototype.forEach.call(pieSegs, function (el, i) {
+          el.style.transitionDelay = (0.1 + i * 0.05) + 's';
+        });
+        Array.prototype.forEach.call(charts, function (el, i) {
+          el.style.transitionDelay = (i * 0.07) + 's';
+        });
+        Array.prototype.forEach.call(fills, function (el, i) {
+          el.style.transitionDelay = (0.08 + i * 0.05) + 's';
+        });
+        Array.prototype.forEach.call(cols, function (col, i) {
+          var delay = (0.12 + i * 0.05) + 's';
+          var nEl = col.querySelector('.deck-sheet-vbar-n');
+          var labelEl = col.querySelector('.deck-sheet-vbar-label');
+          if (nEl) nEl.style.transitionDelay = delay;
+          if (labelEl) labelEl.style.transitionDelay = delay;
+        });
+
+        void host.offsetWidth;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            host.classList.add('is-in');
+            if (pie) pie.classList.add('is-in');
+            if (vbars) vbars.classList.add('is-in');
+            Array.prototype.forEach.call(fills, function (el) {
+              var h = el.getAttribute('data-h');
+              if (h) el.style.height = h;
+            });
+          });
+        });
       }
 
       function bindSheetAnalyzeInteractions() {
@@ -3452,6 +3617,7 @@
               : deck;
             host.innerHTML = buildSheetAnalyzeHtml(source);
             bindSheetAnalyzeInteractions();
+            playSheetAnalyzeIntro();
           });
         });
       }
@@ -3577,6 +3743,7 @@
           : raw;
         document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(analyzeSource);
         bindSheetAnalyzeInteractions();
+        playSheetAnalyzeIntro();
         renderSheetCards(raw);
 
         var secondary = document.getElementById('deckSheetSecondary');
