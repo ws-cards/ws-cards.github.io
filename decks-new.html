@@ -869,6 +869,297 @@
 
     .desk-footer { display: none; }
 
+    /* —— Inline deck workspace（檢視／編成，不跳轉 decks.html） —— */
+    .deck-sheet {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      background:
+        linear-gradient(180deg, rgba(18, 14, 36, 0.92) 0%, rgba(24, 20, 48, 0.96) 100%);
+      color: #f4f1fb;
+      transform: translateY(108%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.42s var(--ease), opacity 0.28s ease;
+      overflow: hidden;
+    }
+    .deck-sheet.is-open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .deck-sheet-bar {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.55rem;
+      padding:
+        max(0.55rem, env(safe-area-inset-top, 0px))
+        0.85rem
+        0.55rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(12, 10, 28, 0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .deck-sheet-back,
+    .deck-sheet-mode-btn {
+      border: 0;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .deck-sheet-back:hover,
+    .deck-sheet-mode-btn:hover { background: rgba(255, 255, 255, 0.18); }
+    .deck-sheet-heading {
+      min-width: 0;
+      text-align: center;
+    }
+    .deck-sheet-kicker {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.62;
+    }
+    .deck-sheet-title {
+      margin: 0.1rem 0 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-sheet-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0.85rem 0.85rem calc(5.5rem + var(--safe-b));
+    }
+    .deck-sheet-hero {
+      display: grid;
+      grid-template-columns: 5.2rem minmax(0, 1fr);
+      gap: 0.85rem;
+      align-items: start;
+      margin-bottom: 0.95rem;
+    }
+    .deck-sheet-cover {
+      width: 5.2rem;
+      aspect-ratio: 63 / 88;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #120c24;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
+    .deck-sheet-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .deck-sheet-meta h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .deck-sheet-meta p {
+      margin: 0 0 0.45rem;
+      font-size: 0.78rem;
+      opacity: 0.78;
+      line-height: 1.45;
+    }
+    .deck-sheet-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .deck-sheet-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .deck-sheet-chip.is-accent {
+      background: rgba(240, 193, 75, 0.2);
+      border-color: rgba(240, 193, 75, 0.35);
+      color: #ffe7a8;
+    }
+    .deck-sheet-edit-fields {
+      display: none;
+      gap: 0.55rem;
+      margin-bottom: 0.95rem;
+    }
+    .deck-sheet.is-edit .deck-sheet-edit-fields { display: grid; }
+    .deck-sheet.is-edit .deck-sheet-view-meta { display: none; }
+    .deck-sheet-field {
+      display: grid;
+      gap: 0.28rem;
+    }
+    .deck-sheet-field label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+    }
+    .deck-sheet-field input,
+    .deck-sheet-field textarea {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.55rem 0.7rem;
+      font: inherit;
+      font-size: 0.88rem;
+      resize: vertical;
+    }
+    .deck-sheet-field textarea { min-height: 4.2rem; }
+    .deck-sheet-section {
+      margin-bottom: 1rem;
+    }
+    .deck-sheet-section h4 {
+      margin: 0 0 0.55rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.72;
+    }
+    .deck-sheet-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.45rem;
+    }
+    .deck-sheet-stat {
+      padding: 0.55rem 0.5rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+    .deck-sheet-stat strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+    .deck-sheet-stat span {
+      font-size: 0.62rem;
+      opacity: 0.65;
+      font-weight: 700;
+    }
+    .deck-sheet-analyze {
+      display: grid;
+      gap: 0.45rem;
+    }
+    .deck-sheet-bar-row {
+      display: grid;
+      grid-template-columns: 3.2rem minmax(0, 1fr) 2rem;
+      gap: 0.4rem;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .deck-sheet-bar-track {
+      height: 0.45rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .deck-sheet-bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8b7cff, #6aa8ff);
+      width: 0;
+      transition: width 0.55s var(--ease);
+    }
+    .deck-sheet-bar-fill.is-y { background: linear-gradient(90deg, #f0c14b, #f5a623); }
+    .deck-sheet-bar-fill.is-g { background: linear-gradient(90deg, #5dce8a, #2faa5c); }
+    .deck-sheet-bar-fill.is-r { background: linear-gradient(90deg, #ff7b8a, #e4455a); }
+    .deck-sheet-bar-fill.is-b { background: linear-gradient(90deg, #6aa8ff, #3d7dff); }
+    .deck-sheet-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
+      gap: 0.45rem;
+    }
+    .deck-sheet-card {
+      position: relative;
+      border: 0;
+      padding: 0;
+      background: #120c24;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 63 / 88;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+    }
+    .deck-sheet-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .deck-sheet-card-qty {
+      position: absolute;
+      right: 0.2rem;
+      bottom: 0.2rem;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      padding: 0 0.28rem;
+      border-radius: 6px;
+      background: rgba(12, 10, 28, 0.82);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .deck-sheet-empty {
+      padding: 1.2rem 0.8rem;
+      text-align: center;
+      opacity: 0.7;
+      font-size: 0.84rem;
+    }
+    .deck-sheet-dock {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 0.45rem;
+      padding: 0.65rem 0.85rem calc(0.65rem + var(--safe-b));
+      background: linear-gradient(180deg, transparent, rgba(10, 8, 24, 0.92) 28%);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .deck-sheet.is-edit .deck-sheet-dock {
+      grid-template-columns: 1fr 1fr;
+    }
+    .deck-sheet-dock .btn-skew {
+      min-height: 2.75rem;
+      transform: none;
+      border-radius: 12px;
+    }
+    .deck-sheet-dock .btn-skew > * { transform: none; }
+    .deck-sheet-dock .btn-skew:active { transform: scale(0.98); }
+    .stage.is-sheet-open .toast { bottom: calc(5.2rem + var(--safe-b)); }
+
     .toast {
       position: absolute;
       left: 50%;
@@ -1413,6 +1704,34 @@
       }
 
       .toast { bottom: 4.2rem; }
+
+      .deck-sheet-bar {
+        padding: 0.75rem 1.4rem;
+      }
+      .deck-sheet-scroll {
+        padding: 1.1rem 1.6rem 6rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .deck-sheet-hero {
+        grid-template-columns: 7rem minmax(0, 1fr);
+        gap: 1.15rem;
+      }
+      .deck-sheet-cover { width: 7rem; }
+      .deck-sheet-meta h3 { font-size: 1.55rem; }
+      .deck-sheet-cards {
+        grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr));
+        gap: 0.65rem;
+      }
+      .deck-sheet-dock {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(640px, calc(100% - 2rem));
+        padding-bottom: 0.85rem;
+        border-radius: 16px 16px 0 0;
+      }
     }
 
     @media (min-width: 900px) and (max-width: 1100px) {
@@ -1558,8 +1877,8 @@
             </span>
           </button>
         </div>
-        <a class="deck-status-link" id="deckStatusLink" href="decks.html">
-          前往完整牌組頁 <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        <a class="deck-status-link" id="deckStatusLink" hidden>
+          牌組功能已整合在本頁
         </a>
       </aside>
 
@@ -1600,8 +1919,8 @@
         <div class="info-actions">
           <button type="button" class="btn-skew btn-start" id="startBtnDesk">
             <span class="btn-start-main">
-              <span>使用此牌組</span>
-              <span class="btn-start-sub">START GAME</span>
+              <span>檢視牌組</span>
+              <span class="btn-start-sub">VIEW DECK</span>
             </span>
             <span class="arrows" aria-hidden="true">›</span>
           </button>
@@ -1610,7 +1929,7 @@
             <span>編輯牌組</span>
           </button>
         </div>
-        <button type="button" class="info-more" id="infoMore" aria-label="查看詳情">
+        <button type="button" class="info-more" id="infoMore" aria-label="檢視牌組">
           <i class="fas fa-chevron-right" aria-hidden="true"></i>
         </button>
       </article>
@@ -1622,10 +1941,10 @@
         </button>
         <button type="button" class="btn-skew btn-start" id="startBtn">
           <span class="btn-start-main">
-            使用此牌組
+            檢視牌組
             <span class="arrows" aria-hidden="true">»</span>
           </span>
-          <span class="btn-start-sub">START GAME</span>
+          <span class="btn-start-sub">VIEW DECK</span>
         </button>
       </div>
 
@@ -1655,15 +1974,83 @@
         </button>
         <div class="desk-footer-keys">
           <span class="kbd"><kbd>←</kbd><kbd>→</kbd> 選擇牌組</span>
-          <span class="kbd"><kbd>Enter</kbd> 確定</span>
+          <span class="kbd"><kbd>Enter</kbd> 檢視</span>
           <span class="kbd"><kbd>Esc</kbd> 返回</span>
         </div>
       </footer>
     </div>
+
+    <section class="deck-sheet" id="deckSheet" hidden aria-hidden="true">
+      <header class="deck-sheet-bar">
+        <button type="button" class="deck-sheet-back" id="deckSheetBack" aria-label="返回選牌">
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div class="deck-sheet-heading">
+          <p class="deck-sheet-kicker" id="deckSheetKicker">檢視牌組</p>
+          <h2 class="deck-sheet-title" id="deckSheetTitle">—</h2>
+        </div>
+        <button type="button" class="deck-sheet-mode-btn" id="deckSheetModeBtn" aria-label="切換編成">
+          <i class="fas fa-pen" aria-hidden="true"></i>
+        </button>
+      </header>
+      <div class="deck-sheet-scroll" id="deckSheetScroll">
+        <div class="deck-sheet-hero">
+          <div class="deck-sheet-cover">
+            <img id="deckSheetCover" src="" alt="">
+          </div>
+          <div class="deck-sheet-meta">
+            <div class="deck-sheet-view-meta" id="deckSheetViewMeta">
+              <h3 id="deckSheetName">—</h3>
+              <p id="deckSheetDesc">—</p>
+              <div class="deck-sheet-chips" id="deckSheetChips"></div>
+            </div>
+            <div class="deck-sheet-edit-fields" id="deckSheetEditFields">
+              <div class="deck-sheet-field">
+                <label for="deckSheetNameInput">牌組名稱</label>
+                <input id="deckSheetNameInput" type="text" maxlength="80" autocomplete="off">
+              </div>
+              <div class="deck-sheet-field">
+                <label for="deckSheetTagsInput">標籤（逗號分隔）</label>
+                <input id="deckSheetTagsInput" type="text" maxlength="160" autocomplete="off">
+              </div>
+              <div class="deck-sheet-field">
+                <label for="deckSheetDescInput">說明</label>
+                <textarea id="deckSheetDescInput" maxlength="800"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <section class="deck-sheet-section">
+          <h4>概況</h4>
+          <div class="deck-sheet-stats" id="deckSheetStats"></div>
+        </section>
+        <section class="deck-sheet-section">
+          <h4>色別／等級分布</h4>
+          <div class="deck-sheet-analyze" id="deckSheetAnalyze">
+            <div class="deck-sheet-empty">載入分析中…</div>
+          </div>
+        </section>
+        <section class="deck-sheet-section">
+          <h4>卡表 <span id="deckSheetCardCount"></span></h4>
+          <div class="deck-sheet-cards" id="deckSheetCards"></div>
+        </section>
+      </div>
+      <div class="deck-sheet-dock">
+        <button type="button" class="btn-skew btn-edit" id="deckSheetSecondary">
+          <i class="fas fa-pen" aria-hidden="true"></i>
+          <span>編成</span>
+        </button>
+        <button type="button" class="btn-skew btn-start" id="deckSheetPrimary">
+          <span class="btn-start-main">關閉</span>
+        </button>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
   <script src="assets/js/ws-collection-store.js"></script>
+  <script src="assets/js/ws-decklog.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -2038,9 +2425,8 @@
         }
 
         if (statusLink) {
-          statusLink.hidden = false;
-          statusLink.setAttribute('href', 'decks.html');
-          statusLink.innerHTML = '前往完整牌組頁 <i class="fas fa-arrow-right" aria-hidden="true"></i>';
+          statusLink.hidden = true;
+          statusLink.removeAttribute('href');
         }
 
         if (mode === 'guest') {
@@ -2344,7 +2730,10 @@
         btn.addEventListener('click', function () {
           if (dragMoved) return;
           var i = Number(btn.getAttribute('data-index'));
-          if (i === state.index) return;
+          if (i === state.index) {
+            openDeckSheet('view');
+            return;
+          }
           dragFrac = 0;
           state.index = i;
           persistCarouselPosition();
@@ -2563,17 +2952,384 @@
         });
       }
 
-      function onEdit() {
-        var deck = currentDeck();
-        if (!deck) {
-          showToast('沒有可編輯的牌組');
+      var sheetEl = document.getElementById('deckSheet');
+      var sheetScrollEl = document.getElementById('deckSheetScroll');
+      var sheetState = {
+        open: false,
+        mode: 'view', /* view | edit */
+        deckId: '',
+        metaCache: Object.create(null),
+        saving: false
+      };
+
+      function findRawDeckById(id) {
+        id = String(id || '');
+        for (var i = 0; i < allDecks.length; i++) {
+          if (allDecks[i] && allDecks[i].id === id) return allDecks[i];
+        }
+        return null;
+      }
+
+      function colorKey(raw) {
+        var c = normalizeText(raw).toLowerCase();
+        if (/黄|yel|yellow|y/.test(c)) return 'y';
+        if (/緑|綠|gre|green|g/.test(c)) return 'g';
+        if (/赤|紅|red|r/.test(c)) return 'r';
+        if (/青|blu|blue|b/.test(c)) return 'b';
+        return '';
+      }
+
+      function enrichSheetCards(rawDeck, done) {
+        var cards = (rawDeck && rawDeck.cards) || [];
+        var need = [];
+        var seen = Object.create(null);
+        cards.forEach(function (c) {
+          var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
+          if (!key || seen[key] || sheetState.metaCache[key]) return;
+          seen[key] = true;
+          need.push({ cardNo: key, name: c.cardName || key });
+        });
+        if (!need.length || !(window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function')) {
+          done(false);
           return;
         }
-        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
+        window.WsDecklog.enrichCards(need).then(function (rows) {
+          (rows || []).forEach(function (row) {
+            var key = normalizeText(row && (row.cardNo || row.cardNumber)).replace(/\\/g, '/');
+            if (!key) return;
+            var lv = parseInt(row.level != null ? row.level : row.cardlevel, 10);
+            sheetState.metaCache[key] = {
+              level: isNaN(lv) ? null : lv,
+              color: normalizeText(row.color || row.cardcolor || ''),
+              name: normalizeText(row.name || row.cardName || ''),
+              kind: normalizeText(row.kindLabel || row.kind || '')
+            };
+          });
+          done(true);
+        }).catch(function () { done(false); });
+      }
+
+      function buildSheetAnalyzeHtml(rawDeck) {
+        var cards = (rawDeck && rawDeck.cards) || [];
+        var colorTotals = { y: 0, g: 0, r: 0, b: 0, other: 0 };
+        var levelTotals = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0, other: 0 };
+        var known = 0;
+        cards.forEach(function (c) {
+          var qty = parseInt(c && c.qty, 10);
+          if (isNaN(qty) || qty < 1) qty = 1;
+          var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
+          var meta = sheetState.metaCache[key];
+          if (!meta) {
+            colorTotals.other += qty;
+            levelTotals.other += qty;
+            return;
+          }
+          known += qty;
+          var ck = colorKey(meta.color);
+          if (ck) colorTotals[ck] += qty;
+          else colorTotals.other += qty;
+          if (/cx/i.test(meta.kind || '')) levelTotals.cx += qty;
+          else if (meta.level != null && levelTotals[meta.level] != null) levelTotals[meta.level] += qty;
+          else levelTotals.other += qty;
+        });
+        if (!cards.length) {
+          return '<div class="deck-sheet-empty">此牌組尚未加入卡片</div>';
+        }
+        if (!known) {
+          return '<div class="deck-sheet-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
+        }
+        var total = Math.max(1, deckTotalCards(rawDeck));
+        function row(label, n, fillClass) {
+          var pct = Math.round((n / total) * 100);
+          return '<div class="deck-sheet-bar-row">' +
+            '<span>' + label + '</span>' +
+            '<div class="deck-sheet-bar-track"><div class="deck-sheet-bar-fill ' + (fillClass || '') +
+            '" style="width:' + pct + '%"></div></div>' +
+            '<span>' + n + '</span></div>';
+        }
+        var html = '';
+        html += row('黃', colorTotals.y, 'is-y');
+        html += row('綠', colorTotals.g, 'is-g');
+        html += row('紅', colorTotals.r, 'is-r');
+        html += row('藍', colorTotals.b, 'is-b');
+        html += row('Lv0', levelTotals[0], '');
+        html += row('Lv1', levelTotals[1], '');
+        html += row('Lv2', levelTotals[2], '');
+        html += row('Lv3', levelTotals[3], '');
+        html += row('CX', levelTotals.cx, 'is-y');
+        return html;
+      }
+
+      function renderSheetCards(rawDeck) {
+        var host = document.getElementById('deckSheetCards');
+        var countEl = document.getElementById('deckSheetCardCount');
+        var cards = (rawDeck && rawDeck.cards) || [];
+        countEl.textContent = cards.length ? ('（' + cards.length + ' 種／' + deckTotalCards(rawDeck) + ' 張）') : '';
+        if (!cards.length) {
+          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">尚未加入卡片</div>';
+          return;
+        }
+        host.innerHTML = cards.map(function (c) {
+          var no = normalizeText(c && c.cardNumber);
+          var urls = buildCardImageUrls(no);
+          var qty = parseInt(c && c.qty, 10);
+          if (isNaN(qty) || qty < 1) qty = 1;
+          var meta = sheetState.metaCache[no.replace(/\\/g, '/')];
+          var label = (meta && meta.name) || c.cardName || no;
+          return '<button type="button" class="deck-sheet-card" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
+            '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+            (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
+            '<span class="deck-sheet-card-qty">×' + qty + '</span></button>';
+        }).join('');
+        Array.prototype.forEach.call(host.querySelectorAll('img'), function (img) {
+          bindImgFallback(img, img.getAttribute('data-fallback') || '');
+        });
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function fillSheetForm(rawDeck) {
+        document.getElementById('deckSheetNameInput').value = normalizeText(rawDeck && rawDeck.name);
+        document.getElementById('deckSheetTagsInput').value = (Array.isArray(rawDeck && rawDeck.tags) ? rawDeck.tags : []).join(', ');
+        document.getElementById('deckSheetDescInput').value = normalizeText(rawDeck && rawDeck.deckDescription);
+      }
+
+      function renderDeckSheet() {
+        if (!sheetEl || !sheetState.deckId) return;
+        var raw = findRawDeckById(sheetState.deckId);
+        if (!raw) {
+          closeDeckSheet();
+          showToast('找不到這副牌組');
+          return;
+        }
+        var vm = toViewModel(raw);
+        var isEdit = sheetState.mode === 'edit';
+        sheetEl.classList.toggle('is-edit', isEdit);
+        document.getElementById('deckSheetKicker').textContent = isEdit ? '編成牌組' : '檢視牌組';
+        document.getElementById('deckSheetTitle').textContent = vm.title;
+        document.getElementById('deckSheetName').textContent = vm.title;
+        document.getElementById('deckSheetDesc').textContent = vm.desc;
+        var cover = document.getElementById('deckSheetCover');
+        cover.removeAttribute('data-tried-fallback');
+        if (vm.cover) {
+          cover.src = vm.cover;
+          bindImgFallback(cover, vm.coverFallback || '');
+        } else {
+          cover.removeAttribute('src');
+        }
+        var chips = [];
+        if (vm.competitive) chips.push('<span class="deck-sheet-chip is-accent">競技</span>');
+        chips.push('<span class="deck-sheet-chip">' + escapeHtml(vm.game) + '</span>');
+        chips.push('<span class="deck-sheet-chip">' + vm.cards + ' 張</span>');
+        (Array.isArray(raw.tags) ? raw.tags : []).slice(0, 6).forEach(function (t) {
+          chips.push('<span class="deck-sheet-chip">' + escapeHtml(t) + '</span>');
+        });
+        document.getElementById('deckSheetChips').innerHTML = chips.join('');
+        document.getElementById('deckSheetStats').innerHTML =
+          '<div class="deck-sheet-stat"><strong>' + vm.cards + '</strong><span>總張數</span></div>' +
+          '<div class="deck-sheet-stat"><strong>' + vm.kinds + '</strong><span>卡種</span></div>' +
+          '<div class="deck-sheet-stat"><strong>' + escapeHtml(vm.created) + '</strong><span>建立</span></div>';
+        document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(raw);
+        renderSheetCards(raw);
+        if (isEdit) fillSheetForm(raw);
+
+        var secondary = document.getElementById('deckSheetSecondary');
+        var primary = document.getElementById('deckSheetPrimary');
+        var modeBtn = document.getElementById('deckSheetModeBtn');
+        if (isEdit) {
+          secondary.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i><span>預覽</span>';
+          primary.innerHTML = '<span class="btn-start-main">儲存變更</span>';
+          modeBtn.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i>';
+          modeBtn.setAttribute('aria-label', '切換檢視');
+        } else {
+          secondary.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i><span>編成</span>';
+          primary.innerHTML = '<span class="btn-start-main">完成</span>';
+          modeBtn.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i>';
+          modeBtn.setAttribute('aria-label', '切換編成');
+        }
+      }
+
+      function openDeckSheet(mode, deckId) {
+        var deck = deckId ? { id: deckId, raw: findRawDeckById(deckId) } : currentDeck();
+        var raw = deck && (deck.raw || findRawDeckById(deck.id));
+        if (!raw) {
+          showToast('請先選擇牌組');
+          return;
+        }
+        sheetState.open = true;
+        sheetState.mode = mode === 'edit' ? 'edit' : 'view';
+        sheetState.deckId = raw.id;
+        persistCarouselPosition();
+        sheetEl.hidden = false;
+        sheetEl.setAttribute('aria-hidden', 'false');
+        requestAnimationFrame(function () {
+          sheetEl.classList.add('is-open');
+        });
+        document.getElementById('stage').classList.add('is-sheet-open');
+        if (sheetScrollEl) sheetScrollEl.scrollTop = 0;
+        renderDeckSheet();
+        enrichSheetCards(raw, function () {
+          if (sheetState.open && sheetState.deckId === raw.id) renderDeckSheet();
+        });
+      }
+
+      function closeDeckSheet() {
+        if (!sheetState.open) return;
+        sheetState.open = false;
+        sheetEl.classList.remove('is-open');
+        sheetEl.setAttribute('aria-hidden', 'true');
+        document.getElementById('stage').classList.remove('is-sheet-open');
+        setTimeout(function () {
+          if (!sheetState.open) sheetEl.hidden = true;
+        }, 420);
+      }
+
+      function setSheetMode(mode) {
+        sheetState.mode = mode === 'edit' ? 'edit' : 'view';
+        renderDeckSheet();
+      }
+
+      function saveSheetEdits() {
+        if (sheetState.saving) return;
+        var raw = findRawDeckById(sheetState.deckId);
+        if (!raw) return;
+        var name = normalizeText(document.getElementById('deckSheetNameInput').value) || '未命名牌組';
+        var tagsRaw = document.getElementById('deckSheetTagsInput').value || '';
+        var tags = tagsRaw.split(/[,，、]/).map(function (t) { return normalizeText(t); }).filter(Boolean);
+        var desc = normalizeText(document.getElementById('deckSheetDescInput').value);
+        var next = Object.assign({}, raw, {
+          name: name,
+          tags: tags,
+          deckDescription: desc,
+          updatedAt: Date.now()
+        });
+        sheetState.saving = true;
+        var saveP = (decksFirebaseReady() && deckCloudUser && typeof fb.saveUserDeck === 'function')
+          ? fb.saveUserDeck(next)
+          : Promise.resolve(true);
+        saveP.then(function () {
+          for (var i = 0; i < allDecks.length; i++) {
+            if (allDecks[i] && allDecks[i].id === next.id) {
+              allDecks[i] = next;
+              break;
+            }
+          }
+          writeLocalDecks(allDecks);
+          sheetState.saving = false;
+          showToast('已儲存牌組');
+          setSheetMode('view');
+          renderAll();
+        }).catch(function (err) {
+          console.error(err);
+          sheetState.saving = false;
+          showToast((err && err.message) || '儲存失敗');
+        });
+      }
+
+      function onEdit() {
+        openDeckSheet('edit');
       }
       function onStart() {
-        var deck = currentDeck();
-        showToast(deck ? ('準備使用「' + deck.title + '」開始對戰') : '請先選擇牌組');
+        openDeckSheet('view');
+      }
+
+      function upsertLocalDeck(deck) {
+        var found = false;
+        for (var i = 0; i < allDecks.length; i++) {
+          if (allDecks[i] && allDecks[i].id === deck.id) {
+            allDecks[i] = deck;
+            found = true;
+            break;
+          }
+        }
+        if (!found) allDecks.unshift(deck);
+        writeLocalDecks(allDecks);
+        state.index = 0;
+        carouselPosRestored = true;
+        try { localStorage.setItem(CAROUSEL_POS_KEY, String(deck.id)); } catch (e) { /* ignore */ }
+        renderAll();
+      }
+
+      function persistNewDeck(deck) {
+        var saveP = (decksFirebaseReady() && deckCloudUser && typeof fb.saveUserDeck === 'function')
+          ? fb.saveUserDeck(deck).then(function (saved) {
+              return (saved && saved.id) ? saved : deck;
+            })
+          : Promise.resolve(deck);
+        return saveP.then(function (saved) {
+          upsertLocalDeck(saved);
+          return saved;
+        });
+      }
+
+      function createBlankDeckInPage() {
+        var now = Date.now();
+        var deck = {
+          id: 'local-' + now.toString(36),
+          name: '新牌組',
+          tags: [],
+          cards: [],
+          deckDescription: '',
+          createdAt: now,
+          updatedAt: now,
+          source: 'manual'
+        };
+        showToast('建立空白牌組…');
+        persistNewDeck(deck).then(function (saved) {
+          openDeckSheet('edit', saved.id);
+        }).catch(function (err) {
+          console.error(err);
+          showToast((err && err.message) || '建立失敗');
+        });
+      }
+
+      function importDecklogInPage() {
+        if (!(window.WsDecklog && typeof window.WsDecklog.fetchDecklogByCode === 'function')) {
+          showToast('DeckLog 模組未載入');
+          return;
+        }
+        var code = window.prompt('請輸入 DeckLog 代碼');
+        if (code == null) return;
+        code = normalizeText(code);
+        if (!code) {
+          showToast('請輸入代碼');
+          return;
+        }
+        showToast('匯入 DeckLog 中…');
+        window.WsDecklog.fetchDecklogByCode(code).then(function (payload) {
+          var now = Date.now();
+          var cards = (payload && payload.cards || []).map(function (c) {
+            return {
+              cardNumber: c.cardNo || c.cardNumber,
+              cardName: c.name || c.cardName || '',
+              qty: c.qty || 1
+            };
+          }).filter(function (c) { return c.cardNumber; });
+          var deck = {
+            id: 'decklog-' + now.toString(36),
+            name: 'DeckLog ' + ((payload && payload.code) || code),
+            tags: [],
+            cards: cards,
+            deckDescription: '',
+            decklogCode: (payload && payload.code) || code,
+            createdAt: now,
+            updatedAt: now,
+            source: 'decklog'
+          };
+          return persistNewDeck(deck);
+        }).then(function (saved) {
+          showToast('已匯入 ' + ((saved.cards || []).length) + ' 種卡');
+          openDeckSheet('view', saved.id);
+        }).catch(function (err) {
+          console.error(err);
+          showToast((err && err.message) || '匯入失敗');
+        });
       }
 
       function applyCloudDecks(list) {
@@ -2650,8 +3406,12 @@
           intent = sessionStorage.getItem('wsDeckSelectOpen') || '';
           sessionStorage.removeItem('wsDeckSelectOpen');
         } catch (e) { /* ignore */ }
-        if (intent === 'decklog' || intent === 'create') {
-          goDecksWithIntent(intent);
+        if (intent === 'decklog') {
+          setTimeout(function () { importDecklogInPage(); }, 60);
+          return true;
+        }
+        if (intent === 'create') {
+          setTimeout(function () { createBlankDeckInPage(); }, 60);
           return true;
         }
         return false;
@@ -2757,15 +3517,29 @@
       });
 
       document.getElementById('infoMore').addEventListener('click', function () {
-        var deck = currentDeck();
-        if (!deck) return;
-        window.location.href = 'decks.html?deck=' + encodeURIComponent(deck.id);
+        openDeckSheet('view');
+      });
+      document.getElementById('infoPanel').addEventListener('click', function (e) {
+        if (e.target.closest('.fav-toggle, .info-actions, .info-more, a, button')) return;
+        openDeckSheet('view');
+      });
+      document.getElementById('deckSheetBack').addEventListener('click', closeDeckSheet);
+      document.getElementById('deckSheetModeBtn').addEventListener('click', function () {
+        setSheetMode(sheetState.mode === 'edit' ? 'view' : 'edit');
+      });
+      document.getElementById('deckSheetSecondary').addEventListener('click', function () {
+        if (sheetState.mode === 'edit') setSheetMode('view');
+        else setSheetMode('edit');
+      });
+      document.getElementById('deckSheetPrimary').addEventListener('click', function () {
+        if (sheetState.mode === 'edit') saveSheetEdits();
+        else closeDeckSheet();
       });
       document.getElementById('menuBtn').addEventListener('click', function () {
-        window.location.href = 'decks.html';
+        showToast('牌組功能已整合在本頁');
       });
       document.getElementById('helpBtn').addEventListener('click', function () {
-        showToast('← → 選牌組 · Enter 使用 · Esc 返回');
+        showToast('← → 選牌組 · Enter 檢視 · Esc 返回');
       });
       function handleEmptyAction(action) {
         if (action === 'login') {
@@ -2786,22 +3560,21 @@
           return;
         }
         if (action === 'create') {
-          goDecksWithIntent('create');
+          createBlankDeckInPage();
           return;
         }
         if (action === 'decklog') {
           if (!deckCloudUser) {
             showToast('匯入 DeckLog 前請先登入');
-            signInAndLoad();
-            // After login user can click again; also stash intent
             try { sessionStorage.setItem('wsDeckSelectOpen', 'decklog'); } catch (e) { /* ignore */ }
+            signInAndLoad();
             return;
           }
-          goDecksWithIntent('decklog');
+          importDecklogInPage();
           return;
         }
         if (action === 'decks') {
-          window.location.href = 'decks.html';
+          showToast('已在牌組頁');
         }
       }
 
@@ -2912,12 +3685,27 @@
       track.addEventListener('pointercancel', endDrag);
 
       document.addEventListener('keydown', function (e) {
-        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+          if (e.key === 'Escape' && sheetState.open) {
+            e.preventDefault();
+            if (sheetState.mode === 'edit') setSheetMode('view');
+            else closeDeckSheet();
+          }
+          return;
+        }
+        if (sheetState.open) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            if (sheetState.mode === 'edit') setSheetMode('view');
+            else closeDeckSheet();
+          }
+          return;
+        }
         if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
         if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
         if (e.key === 'Enter') { e.preventDefault(); onStart(); }
         if (e.key === 'Escape') {
-          showToast('返回（示意）');
+          showToast('已在牌組選擇');
         }
       });
 
