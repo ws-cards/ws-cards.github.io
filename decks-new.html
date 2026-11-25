@@ -1155,6 +1155,28 @@
       justify-items: center;
       min-height: 0;
       height: 100%;
+      width: 100%;
+      border: 0;
+      padding: 0.1rem 0 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    }
+    .deck-sheet-vbar-col:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .deck-sheet-vbar-col:focus-visible {
+      outline: 2px solid rgba(160, 180, 255, 0.75);
+      outline-offset: 1px;
+    }
+    .deck-sheet-vbar-col.is-selected {
+      background: rgba(160, 180, 255, 0.16);
+    }
+    .deck-sheet-vbars.has-selection .deck-sheet-vbar-col:not(.is-selected) {
+      opacity: 0.42;
     }
     .deck-sheet-vbar-n {
       font-family: var(--font-display);
@@ -1185,10 +1207,29 @@
     .deck-sheet-vbar-fill.is-cx {
       background: linear-gradient(180deg, #ffe08a 0%, #f0c14b 100%);
     }
+    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-fill {
+      box-shadow: 0 0 12px rgba(180, 200, 255, 0.45);
+    }
+    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-fill.is-cx {
+      box-shadow: 0 0 12px rgba(240, 193, 75, 0.5);
+    }
     .deck-sheet-vbar-label {
       font-size: 0.62rem;
       font-weight: 800;
       opacity: 0.72;
+    }
+    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-label,
+    .deck-sheet-vbar-col.is-selected .deck-sheet-vbar-n {
+      opacity: 1;
+      color: #fff;
+    }
+    .deck-sheet-pie-caption {
+      margin: 0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: rgba(220, 230, 255, 0.78);
+      text-align: center;
     }
     .deck-sheet-analyze-empty {
       grid-column: 1 / -1;
@@ -3120,9 +3161,29 @@
         mode: 'view', /* view | edit */
         deckId: '',
         draftCards: null,
+        levelFilter: null, /* null | 0 | 1 | 2 | 3 | 'cx' */
         metaCache: Object.create(null),
         saving: false
       };
+
+      function isSheetLevelFilter(value) {
+        return value === 0 || value === 1 || value === 2 || value === 3 || value === 'cx';
+      }
+
+      function sheetLevelLabel(value) {
+        return value === 'cx' ? 'CX' : ('Lv' + value);
+      }
+
+      function cardLevelBucket(meta) {
+        if (!meta) return { isCx: false, level: null };
+        var isCx = /cx/i.test(meta.kind || '');
+        if (isCx) return { isCx: true, level: 'cx' };
+        var lv = meta.level;
+        if (lv == null || !isFinite(lv) || lv < 0) return { isCx: false, level: null };
+        lv = Math.floor(lv);
+        if (lv > 3) lv = 3;
+        return { isCx: false, level: lv };
+      }
 
       function cloneDeckCards(cards) {
         return (cards || []).map(function (c) {
@@ -3223,6 +3284,8 @@
 
       function buildSheetAnalyzeHtml(rawDeck) {
         var cards = (rawDeck && rawDeck.cards) || [];
+        var selectedLevel = sheetState.levelFilter;
+        var hasSelection = isSheetLevelFilter(selectedLevel);
         var colorTotals = { y: 0, g: 0, r: 0, b: 0, other: 0 };
         var levelTotals = { 0: 0, 1: 0, 2: 0, 3: 0, cx: 0, other: 0 };
         var known = 0;
@@ -3232,17 +3295,22 @@
           var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
           var meta = sheetState.metaCache[key];
           if (!meta) {
-            colorTotals.other += qty;
             levelTotals.other += qty;
+            if (!hasSelection) colorTotals.other += qty;
             return;
           }
           known += qty;
+          var bucket = cardLevelBucket(meta);
+          if (bucket.isCx) levelTotals.cx += qty;
+          else if (bucket.level != null) levelTotals[bucket.level] += qty;
+          else levelTotals.other += qty;
+
+          var includeColor = !hasSelection ||
+            (selectedLevel === 'cx' ? bucket.isCx : (!bucket.isCx && bucket.level === selectedLevel));
+          if (!includeColor) return;
           var ck = colorKey(meta.color);
           if (ck) colorTotals[ck] += qty;
           else colorTotals.other += qty;
-          if (/cx/i.test(meta.kind || '')) levelTotals.cx += qty;
-          else if (meta.level != null && levelTotals[meta.level] != null) levelTotals[meta.level] += qty;
-          else levelTotals.other += qty;
         });
         if (!cards.length) {
           return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
@@ -3315,14 +3383,19 @@
               escapeHtml(seg.label) + ' ' + seg.value + '</span>';
           });
         } else {
-          legend += '<span class="deck-sheet-legend-pill">尚無顏色資料</span>';
+          legend += '<span class="deck-sheet-legend-pill">' +
+            (hasSelection ? '此等級尚無顏色資料' : '尚無顏色資料') + '</span>';
         }
         legend += '</div>';
+        var pieCaption = hasSelection
+          ? '<p class="deck-sheet-pie-caption">' + escapeHtml(sheetLevelLabel(selectedLevel)) + '</p>'
+          : '';
         var donut = '<div class="deck-sheet-chart">' +
           '<p class="deck-sheet-chart-title">色別分布</p>' +
           '<div class="deck-sheet-pie">' +
           '<div class="deck-sheet-pie-wrap">' + svg + '</div>' +
           '<div class="deck-sheet-pie-total">' + colorSum + '<span>張</span></div>' +
+          pieCaption +
           legend + '</div></div>';
 
         var levelOrder = [
@@ -3336,22 +3409,51 @@
         levelOrder.forEach(function (lv) {
           levelMax = Math.max(levelMax, levelTotals[lv.key] || 0);
         });
-        var vbars = '<div class="deck-sheet-vbars" role="img" aria-label="等級分布直條圖">';
+        var vbars = '<div class="deck-sheet-vbars' + (hasSelection ? ' has-selection' : '') +
+          '" role="group" aria-label="等級分布直條圖，點選可篩選色別">';
         levelOrder.forEach(function (lv) {
           var n = levelTotals[lv.key] || 0;
           var pct = Math.round((n / levelMax) * 100);
           if (n > 0 && pct < 8) pct = 8;
-          vbars += '<div class="deck-sheet-vbar-col">' +
+          var selected = hasSelection && selectedLevel === lv.key;
+          var title = selected
+            ? '取消篩選色別分布'
+            : ('依 ' + lv.label + ' 篩選色別分布');
+          vbars += '<button type="button" class="deck-sheet-vbar-col' + (selected ? ' is-selected' : '') +
+            '" data-sheet-chart-level="' + lv.key + '" aria-pressed="' + (selected ? 'true' : 'false') +
+            '" title="' + title + '" aria-label="' + lv.label + '，' + n + ' 張' +
+            (selected ? '，已選取' : '') + '">' +
             '<span class="deck-sheet-vbar-n">' + n + '</span>' +
             '<div class="deck-sheet-vbar-track"><div class="deck-sheet-vbar-fill' +
             (lv.cx ? ' is-cx' : '') + '" style="height:' + pct + '%"></div></div>' +
-            '<span class="deck-sheet-vbar-label">' + lv.label + '</span></div>';
+            '<span class="deck-sheet-vbar-label">' + lv.label + '</span></button>';
         });
         vbars += '</div>';
         var levelChart = '<div class="deck-sheet-chart">' +
           '<p class="deck-sheet-chart-title">等級分布</p>' + vbars + '</div>';
 
         return donut + levelChart;
+      }
+
+      function bindSheetAnalyzeInteractions() {
+        var host = document.getElementById('deckSheetAnalyze');
+        if (!host) return;
+        Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-chart-level]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var raw = btn.getAttribute('data-sheet-chart-level');
+            var next = raw === 'cx' ? 'cx' : Number(raw);
+            if (!isSheetLevelFilter(next)) return;
+            sheetState.levelFilter = sheetState.levelFilter === next ? null : next;
+            var deck = findRawDeckById(sheetState.deckId);
+            if (!deck) return;
+            var cards = sheetCardsForRender(deck);
+            var source = sheetState.mode === 'edit'
+              ? Object.assign({}, deck, { cards: cards })
+              : deck;
+            host.innerHTML = buildSheetAnalyzeHtml(source);
+            bindSheetAnalyzeInteractions();
+          });
+        });
       }
 
       function renderSheetCards(rawDeck) {
@@ -3474,6 +3576,7 @@
           ? Object.assign({}, raw, { cards: cardsForStats })
           : raw;
         document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(analyzeSource);
+        bindSheetAnalyzeInteractions();
         renderSheetCards(raw);
 
         var secondary = document.getElementById('deckSheetSecondary');
@@ -3502,6 +3605,7 @@
         sheetState.open = true;
         sheetState.mode = mode === 'edit' ? 'edit' : 'view';
         sheetState.deckId = raw.id;
+        sheetState.levelFilter = null;
         sheetState.draftCards = sheetState.mode === 'edit' ? cloneDeckCards(raw.cards) : null;
         persistCarouselPosition();
         sheetEl.hidden = false;
@@ -3522,6 +3626,7 @@
         if (!sheetState.open) return;
         sheetState.open = false;
         sheetState.draftCards = null;
+        sheetState.levelFilter = null;
         sheetEl.classList.remove('is-open');
         sheetEl.setAttribute('aria-hidden', 'true');
         document.getElementById('stage').classList.remove('is-sheet-open');
