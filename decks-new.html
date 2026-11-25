@@ -136,14 +136,14 @@
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-rows: auto 1fr auto auto auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto auto;
       height: 100%;
       padding:
         max(0.7rem, env(safe-area-inset-top, 0px))
         0.9rem
         calc(0.35rem + var(--safe-b))
         0.9rem;
-      gap: 0.7rem;
+      gap: 0.65rem;
     }
 
     /* —— Header —— */
@@ -315,18 +315,25 @@
     /* —— Carousel —— */
     .carousel-wrap {
       position: relative;
+      z-index: 0;
+      isolation: isolate;
       display: grid;
-      align-content: center;
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-content: stretch;
+      gap: 0.5rem;
       min-height: 0;
       animation: riseIn 0.8s var(--ease) 0.12s both;
     }
     .carousel {
       position: relative;
-      height: min(44vh, 360px);
-      min-height: 240px;
+      height: 100%;
+      min-height: 0;
       perspective: 1400px;
       touch-action: pan-y;
       user-select: none;
+      /* 留給 active scale／底部光暈，避免壓到圓點與資訊卡 */
+      padding: 0.35rem 0 0.85rem;
+      box-sizing: border-box;
     }
     .carousel.is-dragging { cursor: grabbing; }
     .carousel.is-dragging .deck-slide {
@@ -334,7 +341,7 @@
     }
     .carousel-track {
       position: absolute;
-      inset: 0;
+      inset: 0.35rem 0 0.85rem;
       transform-style: preserve-3d;
       cursor: grab;
     }
@@ -343,7 +350,10 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: min(46%, 176px);
+      /* 依輪播區高度縮放，避免超出下方資訊區 */
+      height: min(78%, 252px);
+      width: auto;
+      max-width: min(48%, 168px);
       aspect-ratio: 63 / 88;
       margin: 0;
       padding: 0;
@@ -397,13 +407,13 @@
     .deck-slide.is-active::after {
       content: '';
       position: absolute;
-      left: 8%;
-      right: 8%;
-      bottom: -18px;
-      height: 28px;
+      left: 10%;
+      right: 10%;
+      bottom: -12px;
+      height: 20px;
       border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(140, 150, 255, 0.55), transparent 72%);
-      filter: blur(6px);
+      background: radial-gradient(ellipse, rgba(140, 150, 255, 0.5), transparent 72%);
+      filter: blur(5px);
       pointer-events: none;
       z-index: -1;
     }
@@ -464,7 +474,8 @@
       justify-content: center;
       align-items: center;
       gap: 0.4rem;
-      margin-top: 0.55rem;
+      margin: 0;
+      flex-shrink: 0;
     }
     .dots-compact {
       font-size: 0.78rem;
@@ -495,6 +506,7 @@
     /* —— Info panel —— */
     .info-panel {
       position: relative;
+      z-index: 2;
       display: grid;
       grid-template-columns: 4.6rem minmax(0, 1fr);
       gap: 0.75rem 0.85rem;
@@ -698,6 +710,8 @@
 
     /* —— Action buttons (mobile) —— */
     .actions-mobile {
+      position: relative;
+      z-index: 2;
       display: grid;
       grid-template-columns: 0.85fr 1.15fr;
       gap: 0.55rem;
@@ -1017,11 +1031,14 @@
     }
 
     @media (max-height: 700px) {
-      .carousel { height: min(36vh, 260px); min-height: 190px; }
+      .deck-slide { height: min(74%, 210px); max-width: min(46%, 148px); }
+      .carousel { padding-bottom: 0.55rem; }
+      .carousel-track { inset: 0.25rem 0 0.55rem; }
       .info-panel { padding: 0.7rem 0.75rem 0.8rem; gap: 0.6rem; }
       .info-title { font-size: 1.1rem; }
       .btn-skew { min-height: 2.85rem; }
-      .app { gap: 0.55rem; }
+      .app { gap: 0.5rem; }
+      .carousel-wrap { gap: 0.35rem; }
     }
 
     /* =========================================================
@@ -1128,15 +1145,24 @@
 
       .carousel-wrap {
         align-content: end;
+        grid-template-rows: minmax(0, 1fr) auto;
         padding-bottom: 0.4rem;
+        gap: 0.65rem;
       }
       .carousel {
         height: min(52vh, 460px);
         min-height: 320px;
+        max-height: 100%;
+        padding: 0;
         perspective: 2000px;
       }
+      .carousel-track {
+        inset: 0;
+      }
       .deck-slide {
+        height: auto;
         width: min(19vw, 236px);
+        max-width: min(19vw, 236px);
       }
       .deck-slide.is-active .deck-slide-inner {
         box-shadow:
@@ -2088,9 +2114,9 @@
         var z = -abs * zUnit;
         var rot = offset * rotUnit;
         var scale;
-        if (abs < 0.001) scale = desk ? 1.16 : 1.08;
+        if (abs < 0.001) scale = desk ? 1.16 : 1.03;
         else if (desk) scale = Math.max(0.72, 0.94 - (abs - 1) * 0.1);
-        else scale = Math.max(0.68, 0.84 - (abs - 1) * 0.08);
+        else scale = Math.max(0.7, 0.88 - (abs - 1) * 0.07);
         var opacity = abs < 0.001 ? 1 : Math.max(0.42, 0.96 - abs * 0.16);
         var blur = abs < 0.15 ? 'none' : ('blur(' + (Math.min(1.2, abs * 0.22)) + 'px)');
         return {
