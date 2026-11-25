@@ -891,6 +891,8 @@
       pointer-events: auto;
     }
     .deck-sheet-bar {
+      position: relative;
+      z-index: 40;
       flex: 0 0 auto;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
@@ -901,7 +903,7 @@
         0.85rem
         0.55rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(12, 10, 28, 0.55);
+      background: rgba(12, 10, 28, 0.92);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
@@ -938,12 +940,13 @@
       min-width: 10.5rem;
       padding: 0.35rem;
       border-radius: 12px;
-      background: rgba(18, 16, 36, 0.96);
+      background: rgba(18, 16, 36, 0.98);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-      z-index: 5;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      z-index: 50;
       display: grid;
       gap: 0.2rem;
+      pointer-events: auto;
     }
     .deck-sheet-more-menu[hidden] { display: none !important; }
     .deck-sheet-more-item {
@@ -969,6 +972,83 @@
       width: 1rem;
       text-align: center;
       opacity: 0.85;
+    }
+    .deck-sheet-kicker-row {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .deck-sheet-unsaved {
+      display: none;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(240, 193, 75, 0.45);
+      background: rgba(240, 193, 75, 0.16);
+      color: #ffe08a;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .deck-sheet-unsaved.is-on { display: inline-flex; }
+    .deck-sheet-dialog {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 1.2rem;
+      background: rgba(6, 5, 16, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .deck-sheet-dialog[hidden] { display: none !important; }
+    .deck-sheet-dialog-card {
+      width: min(100%, 22rem);
+      padding: 1.1rem 1.15rem 1rem;
+      border-radius: 16px;
+      background: rgba(24, 20, 48, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    }
+    .deck-sheet-dialog-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .deck-sheet-dialog-card p {
+      margin: 0.45rem 0 0;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: rgba(244, 241, 251, 0.78);
+    }
+    .deck-sheet-dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1rem;
+      justify-content: flex-end;
+    }
+    .deck-sheet-dialog-actions button {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.55rem 0.95rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .deck-sheet-dialog-actions .is-ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .deck-sheet-dialog-actions .is-danger {
+      background: rgba(220, 38, 38, 0.22);
+      color: #fecaca;
+    }
+    .deck-sheet-dialog-actions .is-primary {
+      background: linear-gradient(135deg, #f0c14b, #e09220);
+      color: #1a1208;
     }
     .deck-sheet-heading {
       min-width: 0;
@@ -2295,7 +2375,10 @@
           <i class="fas fa-arrow-left" aria-hidden="true"></i>
         </button>
         <div class="deck-sheet-heading">
-          <p class="deck-sheet-kicker" id="deckSheetKicker">檢視牌組</p>
+          <div class="deck-sheet-kicker-row">
+            <p class="deck-sheet-kicker" id="deckSheetKicker">檢視牌組</p>
+            <span class="deck-sheet-unsaved" id="deckSheetUnsaved">未儲存</span>
+          </div>
           <h2 class="deck-sheet-title" id="deckSheetTitle">—</h2>
         </div>
         <div class="deck-sheet-bar-actions">
@@ -2369,6 +2452,13 @@
         <button type="button" class="btn-skew btn-start" id="deckSheetPrimary">
           <span class="btn-start-main">關閉</span>
         </button>
+      </div>
+      <div class="deck-sheet-dialog" id="deckSheetDialog" hidden aria-hidden="true">
+        <div class="deck-sheet-dialog-card" role="dialog" aria-modal="true" aria-labelledby="deckSheetDialogTitle">
+          <h3 id="deckSheetDialogTitle">尚未儲存</h3>
+          <p id="deckSheetDialogText">要儲存變更，還是丟棄草稿？</p>
+          <div class="deck-sheet-dialog-actions" id="deckSheetDialogActions"></div>
+        </div>
       </div>
     </section>
 
@@ -3281,14 +3371,20 @@
 
       var sheetEl = document.getElementById('deckSheet');
       var sheetScrollEl = document.getElementById('deckSheetScroll');
+      var SHEET_DRAFT_PREFIX = 'wsDeckSheetDraft:';
       var sheetState = {
         open: false,
         mode: 'view', /* view | edit */
         deckId: '',
         draftCards: null,
+        draftMeta: null, /* { name, tags, deckDescription, baseUpdatedAt, savedAt } */
         levelFilter: null, /* null | 0 | 1 | 2 | 3 | 'cx' */
         metaCache: Object.create(null),
-        saving: false
+        saving: false,
+        dirty: false,
+        unsavedHintTimer: null,
+        leavePromptOpen: false,
+        suppressDraftPersist: false
       };
 
       function isSheetLevelFilter(value) {
@@ -3317,10 +3413,121 @@
             cardName: (c && (c.cardName || c.name)) || '',
             qty: (function () {
               var q = parseInt(c && c.qty, 10);
-              return isNaN(q) || q < 1 ? 1 : Math.min(4, q);
+              return isNaN(q) || q < 1 ? 1 : q;
             })()
           };
         }).filter(function (c) { return c.cardNumber; });
+      }
+
+      function sheetDraftStorageKey(deckId) {
+        return SHEET_DRAFT_PREFIX + String(deckId || '');
+      }
+
+      function readSheetDraft(deckId) {
+        try {
+          var raw = localStorage.getItem(sheetDraftStorageKey(deckId));
+          if (!raw) return null;
+          var data = JSON.parse(raw);
+          if (!data || data.deckId !== deckId) return null;
+          return data;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function clearSheetDraft(deckId) {
+        try { localStorage.removeItem(sheetDraftStorageKey(deckId)); } catch (e) { /* ignore */ }
+      }
+
+      function readSheetFormMeta() {
+        var nameEl = document.getElementById('deckSheetNameInput');
+        var tagsEl = document.getElementById('deckSheetTagsInput');
+        var descEl = document.getElementById('deckSheetDescInput');
+        var tagsRaw = (tagsEl && tagsEl.value) || '';
+        return {
+          name: normalizeText(nameEl && nameEl.value) || '未命名牌組',
+          tags: tagsRaw.split(/[,，、]/).map(function (t) { return normalizeText(t); }).filter(Boolean),
+          deckDescription: normalizeText(descEl && descEl.value)
+        };
+      }
+
+      function buildSheetDraftPayload() {
+        var meta = readSheetFormMeta();
+        return {
+          deckId: sheetState.deckId,
+          name: meta.name,
+          tags: meta.tags,
+          deckDescription: meta.deckDescription,
+          cards: cloneDeckCards(sheetState.draftCards || []),
+          baseUpdatedAt: (sheetState.draftMeta && sheetState.draftMeta.baseUpdatedAt) || 0,
+          savedAt: Date.now()
+        };
+      }
+
+      function writeSheetDraftToStorage() {
+        if (sheetState.suppressDraftPersist) return;
+        if (sheetState.mode !== 'edit' || !sheetState.deckId) return;
+        if (!Array.isArray(sheetState.draftCards)) return;
+        try {
+          localStorage.setItem(sheetDraftStorageKey(sheetState.deckId), JSON.stringify(buildSheetDraftPayload()));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function cardsSignature(cards) {
+        return cloneDeckCards(cards).map(function (c) {
+          return normalizeText(c.cardNumber).replace(/\\/g, '/') + ':' + (c.qty || 1);
+        }).join('|');
+      }
+
+      function isSheetDraftDirty(rawDeck) {
+        if (sheetState.mode !== 'edit' || !rawDeck) return false;
+        var meta = readSheetFormMeta();
+        var serverName = normalizeText(rawDeck.name) || '未命名牌組';
+        var serverTags = (Array.isArray(rawDeck.tags) ? rawDeck.tags : []).map(function (t) {
+          return normalizeText(t);
+        }).filter(Boolean);
+        var serverDesc = normalizeText(rawDeck.deckDescription);
+        if (meta.name !== serverName) return true;
+        if (meta.deckDescription !== serverDesc) return true;
+        if (meta.tags.join('\u0001') !== serverTags.join('\u0001')) return true;
+        return cardsSignature(sheetState.draftCards) !== cardsSignature(rawDeck.cards);
+      }
+
+      function syncSheetUnsavedUi() {
+        var badge = document.getElementById('deckSheetUnsaved');
+        var raw = findRawDeckById(sheetState.deckId);
+        var dirty = sheetState.mode === 'edit' && isSheetDraftDirty(raw);
+        sheetState.dirty = dirty;
+        if (!badge) return;
+        if (dirty) badge.classList.add('is-on');
+        else badge.classList.remove('is-on');
+      }
+
+      function clearUnsavedHintTimer() {
+        if (sheetState.unsavedHintTimer) {
+          clearTimeout(sheetState.unsavedHintTimer);
+          sheetState.unsavedHintTimer = null;
+        }
+      }
+
+      function scheduleUnsavedHint() {
+        clearUnsavedHintTimer();
+        sheetState.unsavedHintTimer = setTimeout(function () {
+          sheetState.unsavedHintTimer = null;
+          if (sheetState.open && sheetState.mode === 'edit' && sheetState.dirty) {
+            showToast('編成尚未儲存到伺服器');
+          }
+        }, 60000);
+      }
+
+      function markSheetDraftChanged() {
+        if (sheetState.mode !== 'edit') return;
+        writeSheetDraftToStorage();
+        syncSheetUnsavedUi();
+        if (sheetState.dirty) scheduleUnsavedHint();
+        else clearUnsavedHintTimer();
       }
 
       function sheetCardsForRender(rawDeck) {
@@ -3330,8 +3537,35 @@
         return (rawDeck && rawDeck.cards) || [];
       }
 
-      function beginSheetDraft(rawDeck) {
-        sheetState.draftCards = cloneDeckCards(rawDeck && rawDeck.cards);
+      function beginSheetDraft(rawDeck, stored) {
+        sheetState.suppressDraftPersist = true;
+        if (stored && Array.isArray(stored.cards)) {
+          sheetState.draftCards = cloneDeckCards(stored.cards);
+          sheetState.draftMeta = {
+            name: normalizeText(stored.name) || '未命名牌組',
+            tags: Array.isArray(stored.tags) ? stored.tags.slice() : [],
+            deckDescription: normalizeText(stored.deckDescription),
+            baseUpdatedAt: stored.baseUpdatedAt || (rawDeck && rawDeck.updatedAt) || 0,
+            savedAt: stored.savedAt || Date.now()
+          };
+        } else {
+          sheetState.draftCards = cloneDeckCards(rawDeck && rawDeck.cards);
+          sheetState.draftMeta = {
+            name: normalizeText(rawDeck && rawDeck.name) || '未命名牌組',
+            tags: Array.isArray(rawDeck && rawDeck.tags) ? rawDeck.tags.slice() : [],
+            deckDescription: normalizeText(rawDeck && rawDeck.deckDescription),
+            baseUpdatedAt: (rawDeck && rawDeck.updatedAt) || 0,
+            savedAt: Date.now()
+          };
+        }
+        sheetState.suppressDraftPersist = false;
+      }
+
+      function applyStoredDraftToForm(stored) {
+        if (!stored) return;
+        document.getElementById('deckSheetNameInput').value = normalizeText(stored.name) || '';
+        document.getElementById('deckSheetTagsInput').value = (Array.isArray(stored.tags) ? stored.tags : []).join(', ');
+        document.getElementById('deckSheetDescInput').value = normalizeText(stored.deckDescription);
       }
 
       function adjustSheetCardQty(cardNumber, delta) {
@@ -3340,12 +3574,15 @@
         for (var i = 0; i < sheetState.draftCards.length; i++) {
           var no = normalizeText(sheetState.draftCards[i].cardNumber).replace(/\\/g, '/');
           if (no !== key) continue;
-          var next = (sheetState.draftCards[i].qty || 1) + delta;
+          var prev = sheetState.draftCards[i].qty || 1;
+          var next = prev + delta;
           if (next < 1) {
             sheetState.draftCards.splice(i, 1);
           } else {
-            sheetState.draftCards[i].qty = Math.min(4, next);
+            if (prev <= 4 && next > 4) showToast('已超過常見上限 4 張（仍可繼續）');
+            sheetState.draftCards[i].qty = next;
           }
+          markSheetDraftChanged();
           renderDeckSheet();
           return;
         }
@@ -3357,6 +3594,159 @@
         sheetState.draftCards = sheetState.draftCards.filter(function (c) {
           return normalizeText(c.cardNumber).replace(/\\/g, '/') !== key;
         });
+        markSheetDraftChanged();
+        renderDeckSheet();
+      }
+
+      function closeSheetDialog() {
+        var dialog = document.getElementById('deckSheetDialog');
+        if (!dialog) return;
+        dialog.hidden = true;
+        dialog.setAttribute('aria-hidden', 'true');
+        sheetState.leavePromptOpen = false;
+      }
+
+      function openSheetDialog(opts) {
+        opts = opts || {};
+        var dialog = document.getElementById('deckSheetDialog');
+        var titleEl = document.getElementById('deckSheetDialogTitle');
+        var textEl = document.getElementById('deckSheetDialogText');
+        var actionsEl = document.getElementById('deckSheetDialogActions');
+        if (!dialog || !actionsEl) return;
+        titleEl.textContent = opts.title || '提示';
+        textEl.textContent = opts.text || '';
+        actionsEl.innerHTML = '';
+        (opts.actions || []).forEach(function (action) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = action.label;
+          btn.className = action.className || 'is-ghost';
+          btn.addEventListener('click', function () {
+            closeSheetDialog();
+            if (typeof action.onClick === 'function') action.onClick();
+          });
+          actionsEl.appendChild(btn);
+        });
+        dialog.hidden = false;
+        dialog.setAttribute('aria-hidden', 'false');
+        sheetState.leavePromptOpen = true;
+      }
+
+      function discardSheetDraftAndView() {
+        clearUnsavedHintTimer();
+        clearSheetDraft(sheetState.deckId);
+        sheetState.draftCards = null;
+        sheetState.draftMeta = null;
+        sheetState.dirty = false;
+        sheetState.mode = 'view';
+        syncSheetUnsavedUi();
+        renderDeckSheet();
+      }
+
+      function requestLeaveEdit(opts) {
+        opts = opts || {};
+        var raw = findRawDeckById(sheetState.deckId);
+        if (sheetState.mode !== 'edit') {
+          if (typeof opts.onClean === 'function') opts.onClean();
+          return;
+        }
+        markSheetDraftChanged();
+        if (!isSheetDraftDirty(raw)) {
+          clearSheetDraft(sheetState.deckId);
+          sheetState.draftCards = null;
+          sheetState.draftMeta = null;
+          sheetState.dirty = false;
+          clearUnsavedHintTimer();
+          if (typeof opts.onClean === 'function') opts.onClean();
+          else {
+            sheetState.mode = 'view';
+            renderDeckSheet();
+          }
+          return;
+        }
+        openSheetDialog({
+          title: '尚未儲存',
+          text: '編成變更只存在此裝置草稿。要儲存到伺服器，或丟棄草稿？',
+          actions: [
+            {
+              label: '繼續編成',
+              className: 'is-ghost',
+              onClick: function () { /* stay */ }
+            },
+            {
+              label: '丟棄',
+              className: 'is-danger',
+              onClick: function () {
+                discardSheetDraftAndView();
+                if (typeof opts.onDiscard === 'function') opts.onDiscard();
+              }
+            },
+            {
+              label: '儲存',
+              className: 'is-primary',
+              onClick: function () {
+                saveSheetEdits({ after: opts.onSaved || null });
+              }
+            }
+          ]
+        });
+      }
+
+      function promptCloudDraftChoice(rawDeck, stored, onDone) {
+        openSheetDialog({
+          title: '發現未存草稿',
+          text: '雲端牌組較新，同時此裝置也有未儲存草稿。要用哪一份？',
+          actions: [
+            {
+              label: '用雲端',
+              className: 'is-ghost',
+              onClick: function () {
+                clearSheetDraft(rawDeck.id);
+                beginSheetDraft(rawDeck, null);
+                fillSheetForm(rawDeck);
+                writeSheetDraftToStorage();
+                if (typeof onDone === 'function') onDone();
+              }
+            },
+            {
+              label: '用本地草稿',
+              className: 'is-primary',
+              onClick: function () {
+                beginSheetDraft(rawDeck, stored);
+                applyStoredDraftToForm(stored);
+                writeSheetDraftToStorage();
+                if (typeof onDone === 'function') onDone();
+              }
+            }
+          ]
+        });
+      }
+
+      function enterSheetEdit(rawDeck) {
+        var stored = readSheetDraft(rawDeck.id);
+        var serverUpdated = Number(rawDeck && rawDeck.updatedAt) || 0;
+        var baseUpdated = stored ? (Number(stored.baseUpdatedAt) || 0) : 0;
+        sheetState.mode = 'edit';
+        if (stored && serverUpdated > baseUpdated) {
+          beginSheetDraft(rawDeck, null);
+          fillSheetForm(rawDeck);
+          renderDeckSheet();
+          promptCloudDraftChoice(rawDeck, stored, function () {
+            markSheetDraftChanged();
+            renderDeckSheet();
+          });
+          return;
+        }
+        if (stored) {
+          beginSheetDraft(rawDeck, stored);
+          applyStoredDraftToForm(stored);
+          showToast('已恢復未儲存草稿');
+        } else {
+          beginSheetDraft(rawDeck, null);
+          fillSheetForm(rawDeck);
+          writeSheetDraftToStorage();
+        }
+        markSheetDraftChanged();
         renderDeckSheet();
       }
 
@@ -4041,10 +4431,10 @@
         var primary = document.getElementById('deckSheetPrimary');
         var modeBtn = document.getElementById('deckSheetModeBtn');
         if (isEdit) {
-          secondary.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i><span>預覽</span>';
-          primary.innerHTML = '<span class="btn-start-main">儲存變更</span>';
+          secondary.innerHTML = '<i class="fas fa-search" aria-hidden="true"></i><span>選牌</span>';
+          primary.innerHTML = '<span class="btn-start-main">儲存</span>';
           modeBtn.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i>';
-          modeBtn.setAttribute('aria-label', '切換檢視');
+          modeBtn.setAttribute('aria-label', '返回檢視');
         } else {
           secondary.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i><span>編成</span>';
           primary.innerHTML = '<span class="btn-start-main">完成</span>';
@@ -4052,6 +4442,7 @@
           modeBtn.setAttribute('aria-label', '切換編成');
         }
         syncSheetMoreMenu(raw);
+        syncSheetUnsavedUi();
       }
 
       function openDeckSheet(mode, deckId) {
@@ -4062,10 +4453,11 @@
           return;
         }
         sheetState.open = true;
-        sheetState.mode = mode === 'edit' ? 'edit' : 'view';
         sheetState.deckId = raw.id;
         sheetState.levelFilter = null;
-        sheetState.draftCards = sheetState.mode === 'edit' ? cloneDeckCards(raw.cards) : null;
+        sheetState.dirty = false;
+        clearUnsavedHintTimer();
+        closeSheetDialog();
         persistCarouselPosition();
         sheetEl.hidden = false;
         sheetEl.setAttribute('aria-hidden', 'false');
@@ -4074,19 +4466,30 @@
         });
         document.getElementById('stage').classList.add('is-sheet-open');
         if (sheetScrollEl) sheetScrollEl.scrollTop = 0;
-        if (sheetState.mode === 'edit') fillSheetForm(raw);
-        renderDeckSheet();
+        if (mode === 'edit') {
+          enterSheetEdit(raw);
+        } else {
+          sheetState.mode = 'view';
+          sheetState.draftCards = null;
+          sheetState.draftMeta = null;
+          renderDeckSheet();
+        }
         enrichSheetCards(raw, function () {
           if (sheetState.open && sheetState.deckId === raw.id) renderDeckSheet();
         });
       }
 
-      function closeDeckSheet() {
+      function forceCloseDeckSheet() {
         if (!sheetState.open) return;
         sheetState.open = false;
         sheetState.draftCards = null;
+        sheetState.draftMeta = null;
         sheetState.levelFilter = null;
+        sheetState.dirty = false;
+        clearUnsavedHintTimer();
+        closeSheetDialog();
         setSheetMoreOpen(false);
+        syncSheetUnsavedUi();
         sheetEl.classList.remove('is-open');
         sheetEl.setAttribute('aria-hidden', 'true');
         document.getElementById('stage').classList.remove('is-sheet-open');
@@ -4095,38 +4498,75 @@
         }, 420);
       }
 
-      function setSheetMode(mode) {
-        var next = mode === 'edit' ? 'edit' : 'view';
-        var raw = findRawDeckById(sheetState.deckId);
-        if (next === 'edit') {
-          beginSheetDraft(raw);
-          fillSheetForm(raw);
-        } else {
-          sheetState.draftCards = null;
-        }
-        sheetState.mode = next;
+      function leaveEditToView() {
+        clearUnsavedHintTimer();
+        sheetState.mode = 'view';
+        sheetState.draftCards = null;
+        sheetState.draftMeta = null;
+        sheetState.dirty = false;
+        syncSheetUnsavedUi();
         renderDeckSheet();
       }
 
-      function saveSheetEdits() {
+      function onSheetBack() {
+        if (!sheetState.open) return;
+        if (sheetState.leavePromptOpen) {
+          closeSheetDialog();
+          return;
+        }
+        if (sheetState.mode === 'edit') {
+          requestLeaveEdit({
+            onClean: leaveEditToView,
+            onDiscard: function () { /* discardSheetDraftAndView already */ },
+            onSaved: function () { /* saveSheetEdits already to view */ }
+          });
+          return;
+        }
+        forceCloseDeckSheet();
+      }
+
+      function closeDeckSheet() {
+        if (!sheetState.open) return;
+        if (sheetState.mode === 'edit') {
+          onSheetBack();
+          return;
+        }
+        forceCloseDeckSheet();
+      }
+
+      function setSheetMode(mode) {
+        var next = mode === 'edit' ? 'edit' : 'view';
+        var raw = findRawDeckById(sheetState.deckId);
+        if (!raw) return;
+        if (next === 'edit') {
+          enterSheetEdit(raw);
+          return;
+        }
+        requestLeaveEdit({
+          onClean: leaveEditToView,
+          onDiscard: function () { /* already view */ },
+          onSaved: function () { /* saveSheetEdits switches to view */ }
+        });
+      }
+
+      function saveSheetEdits(opts) {
+        opts = opts || {};
         if (sheetState.saving) return;
         var raw = findRawDeckById(sheetState.deckId);
         if (!raw) return;
-        var name = normalizeText(document.getElementById('deckSheetNameInput').value) || '未命名牌組';
-        var tagsRaw = document.getElementById('deckSheetTagsInput').value || '';
-        var tags = tagsRaw.split(/[,，、]/).map(function (t) { return normalizeText(t); }).filter(Boolean);
-        var desc = normalizeText(document.getElementById('deckSheetDescInput').value);
+        var meta = readSheetFormMeta();
         var cards = Array.isArray(sheetState.draftCards)
           ? cloneDeckCards(sheetState.draftCards)
           : cloneDeckCards(raw.cards);
         var next = Object.assign({}, raw, {
-          name: name,
-          tags: tags,
-          deckDescription: desc,
+          name: meta.name,
+          tags: meta.tags,
+          deckDescription: meta.deckDescription,
           cards: cards,
           updatedAt: Date.now()
         });
         sheetState.saving = true;
+        writeSheetDraftToStorage();
         var saveP = (decksFirebaseReady() && deckCloudUser && typeof fb.saveUserDeck === 'function')
           ? fb.saveUserDeck(next)
           : Promise.resolve(true);
@@ -4139,14 +4579,21 @@
           }
           writeLocalDecks(allDecks);
           sheetState.saving = false;
+          clearSheetDraft(next.id);
           sheetState.draftCards = null;
+          sheetState.draftMeta = null;
+          sheetState.dirty = false;
+          clearUnsavedHintTimer();
           showToast('已儲存牌組');
-          setSheetMode('view');
+          sheetState.mode = 'view';
+          renderDeckSheet();
           renderAll();
+          if (typeof opts.after === 'function') opts.after(next);
         }).catch(function (err) {
           console.error(err);
           sheetState.saving = false;
-          showToast((err && err.message) || '儲存失敗');
+          writeSheetDraftToStorage();
+          showToast((err && err.message) || '儲存失敗，草稿仍保留可重試');
         });
       }
 
@@ -4441,37 +4888,81 @@
         if (e.target.closest('.fav-toggle, .info-actions, .info-more, a, button')) return;
         openDeckSheet('view');
       });
-      document.getElementById('deckSheetBack').addEventListener('click', closeDeckSheet);
+      document.getElementById('deckSheetBack').addEventListener('click', onSheetBack);
       document.getElementById('deckSheetModeBtn').addEventListener('click', function () {
         setSheetMode(sheetState.mode === 'edit' ? 'view' : 'edit');
       });
       document.getElementById('deckSheetMoreBtn').addEventListener('click', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         var menu = document.getElementById('deckSheetMoreMenu');
         setSheetMoreOpen(!!(menu && menu.hidden));
       });
-      document.getElementById('deckSheetExportImageBtn').addEventListener('click', function (e) {
+      document.getElementById('deckSheetExportImageBtn').addEventListener('pointerdown', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         exportSheetDeckImage();
       });
-      document.getElementById('deckSheetSimDrawBtn').addEventListener('click', function (e) {
+      document.getElementById('deckSheetSimDrawBtn').addEventListener('pointerdown', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         setSheetMoreOpen(false);
         showToast('模擬抽牌即將推出');
       });
-      document.addEventListener('click', function (e) {
+      document.addEventListener('pointerdown', function (e) {
         var wrap = document.getElementById('deckSheetMoreWrap');
         if (!wrap || wrap.hidden) return;
         if (wrap.contains(e.target)) return;
         setSheetMoreOpen(false);
+      }, true);
+      ['deckSheetNameInput', 'deckSheetTagsInput', 'deckSheetDescInput'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function () {
+          markSheetDraftChanged();
+        });
+      });
+      window.addEventListener('storage', function (e) {
+        if (!e || !e.key || e.key.indexOf(SHEET_DRAFT_PREFIX) !== 0) return;
+        if (!sheetState.open || sheetState.mode !== 'edit') return;
+        if (e.key !== sheetDraftStorageKey(sheetState.deckId)) return;
+        if (sheetState.leavePromptOpen) return;
+        openSheetDialog({
+          title: '草稿衝突',
+          text: '另一分頁也在編這副牌組的草稿。要載入對方的草稿，或保留此分頁目前內容？',
+          actions: [
+            {
+              label: '保留此分頁',
+              className: 'is-ghost',
+              onClick: function () { writeSheetDraftToStorage(); }
+            },
+            {
+              label: '載入對方草稿',
+              className: 'is-primary',
+              onClick: function () {
+                var stored = readSheetDraft(sheetState.deckId);
+                var raw = findRawDeckById(sheetState.deckId);
+                if (!stored || !raw) return;
+                beginSheetDraft(raw, stored);
+                applyStoredDraftToForm(stored);
+                markSheetDraftChanged();
+                renderDeckSheet();
+              }
+            }
+          ]
+        });
       });
       document.getElementById('deckSheetSecondary').addEventListener('click', function () {
-        if (sheetState.mode === 'edit') setSheetMode('view');
-        else setSheetMode('edit');
+        if (sheetState.mode === 'edit') {
+          setSheetMoreOpen(false);
+          showToast('選牌加卡即將推出');
+          return;
+        }
+        setSheetMode('edit');
       });
       document.getElementById('deckSheetPrimary').addEventListener('click', function () {
         if (sheetState.mode === 'edit') saveSheetEdits();
-        else closeDeckSheet();
+        else forceCloseDeckSheet();
       });
       document.getElementById('menuBtn').addEventListener('click', function () {
         showToast('牌組功能已整合在本頁');
@@ -4626,21 +5117,23 @@
         if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
           if (e.key === 'Escape' && sheetState.open) {
             e.preventDefault();
-            if (sheetState.mode === 'edit') setSheetMode('view');
-            else closeDeckSheet();
+            onSheetBack();
           }
           return;
         }
         if (sheetState.open) {
           if (e.key === 'Escape') {
             e.preventDefault();
+            if (sheetState.leavePromptOpen) {
+              closeSheetDialog();
+              return;
+            }
             var moreMenu = document.getElementById('deckSheetMoreMenu');
             if (moreMenu && !moreMenu.hidden) {
               setSheetMoreOpen(false);
               return;
             }
-            if (sheetState.mode === 'edit') setSheetMode('view');
-            else closeDeckSheet();
+            onSheetBack();
           }
           return;
         }
