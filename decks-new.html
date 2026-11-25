@@ -1674,7 +1674,9 @@
       var Store = window.WsCollectionStore || {};
       var DECKS_KEY = Store.DECKS_KEY || 'wsCardsDecks';
       var FAV_KEY = 'wsDeckSelectFavorites';
+      var CAROUSEL_POS_KEY = 'wsDeckSelectCarouselId';
       var fb = window.WsFirebase || null;
+      var carouselPosRestored = false;
 
       var allDecks = [];
       var deckCloudUser = null;
@@ -1753,6 +1755,37 @@
         try {
           localStorage.setItem(FAV_KEY, JSON.stringify(Object.keys(favoriteIds)));
         } catch (e) { /* ignore */ }
+      }
+
+      function readSavedCarouselDeckId() {
+        try {
+          return String(localStorage.getItem(CAROUSEL_POS_KEY) || '').trim();
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function persistCarouselPosition() {
+        var deck = currentDeck();
+        if (!deck || !deck.id) return;
+        try {
+          localStorage.setItem(CAROUSEL_POS_KEY, String(deck.id));
+        } catch (e) { /* ignore */ }
+      }
+
+      /** 首次有可見牌組時，依上次選中的 deck id 還原輪播位置 */
+      function restoreCarouselPositionIfNeeded() {
+        if (carouselPosRestored) return;
+        if (!state.list.length) return;
+        carouselPosRestored = true;
+        var id = readSavedCarouselDeckId();
+        if (!id) return;
+        for (var i = 0; i < state.list.length; i++) {
+          if (state.list[i] && state.list[i].id === id) {
+            state.index = i;
+            return;
+          }
+        }
       }
 
       function normalizeText(v) {
@@ -2314,6 +2347,7 @@
           if (i === state.index) return;
           dragFrac = 0;
           state.index = i;
+          persistCarouselPosition();
           renderCarousel({ skipListRefresh: true });
           renderInfo();
         });
@@ -2360,6 +2394,7 @@
           dot.addEventListener('click', function () {
             state.index = Number(dot.getAttribute('data-index'));
             dragFrac = 0;
+            persistCarouselPosition();
             renderCarousel({ skipListRefresh: true });
             renderInfo();
           });
@@ -2368,7 +2403,10 @@
 
       function renderCarousel(opts) {
         opts = opts || {};
-        if (!opts.skipListRefresh) state.list = getVisible();
+        if (!opts.skipListRefresh) {
+          state.list = getVisible();
+          restoreCarouselPositionIfNeeded();
+        }
         clampIndex();
         var len = state.list.length;
         var maxSide = carouselMaxSide();
@@ -2511,6 +2549,7 @@
         dragFrac = 0;
         if (carouselEl) carouselEl.classList.remove('is-dragging');
         state.index = (state.index + delta + state.list.length) % state.list.length;
+        persistCarouselPosition();
         renderCarousel({ skipListRefresh: true });
         renderInfo();
       }
