@@ -1130,6 +1130,51 @@
       place-items: center;
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
+    .deck-sheet.is-edit .deck-sheet-card {
+      cursor: default;
+    }
+    .deck-sheet-card-tools {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 0;
+      background: linear-gradient(180deg, transparent, rgba(8, 6, 20, 0.92) 35%);
+      padding: 0.55rem 0.15rem 0.15rem;
+    }
+    .deck-sheet-card-tools button {
+      border: 0;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      min-height: 1.55rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .deck-sheet-card-tools button:first-child { border-radius: 6px 0 0 6px; }
+    .deck-sheet-card-tools button:last-child { border-radius: 0 6px 6px 0; }
+    .deck-sheet-card-tools .is-qty {
+      background: rgba(12, 10, 28, 0.75);
+      font-size: 0.72rem;
+      pointer-events: none;
+    }
+    .deck-sheet-card-remove {
+      position: absolute;
+      top: 0.2rem;
+      right: 0.2rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(180, 40, 60, 0.88);
+      color: #fff;
+      font-size: 0.68rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
     .deck-sheet-empty {
       padding: 1.2rem 0.8rem;
       text-align: center;
@@ -2958,9 +3003,60 @@
         open: false,
         mode: 'view', /* view | edit */
         deckId: '',
+        draftCards: null,
         metaCache: Object.create(null),
         saving: false
       };
+
+      function cloneDeckCards(cards) {
+        return (cards || []).map(function (c) {
+          return {
+            cardNumber: c && c.cardNumber,
+            cardName: (c && (c.cardName || c.name)) || '',
+            qty: (function () {
+              var q = parseInt(c && c.qty, 10);
+              return isNaN(q) || q < 1 ? 1 : Math.min(4, q);
+            })()
+          };
+        }).filter(function (c) { return c.cardNumber; });
+      }
+
+      function sheetCardsForRender(rawDeck) {
+        if (sheetState.mode === 'edit' && Array.isArray(sheetState.draftCards)) {
+          return sheetState.draftCards;
+        }
+        return (rawDeck && rawDeck.cards) || [];
+      }
+
+      function beginSheetDraft(rawDeck) {
+        sheetState.draftCards = cloneDeckCards(rawDeck && rawDeck.cards);
+      }
+
+      function adjustSheetCardQty(cardNumber, delta) {
+        if (!Array.isArray(sheetState.draftCards)) return;
+        var key = normalizeText(cardNumber).replace(/\\/g, '/');
+        for (var i = 0; i < sheetState.draftCards.length; i++) {
+          var no = normalizeText(sheetState.draftCards[i].cardNumber).replace(/\\/g, '/');
+          if (no !== key) continue;
+          var next = (sheetState.draftCards[i].qty || 1) + delta;
+          if (next < 1) {
+            sheetState.draftCards.splice(i, 1);
+          } else {
+            sheetState.draftCards[i].qty = Math.min(4, next);
+          }
+          renderDeckSheet();
+          return;
+        }
+      }
+
+      function removeSheetCard(cardNumber) {
+        if (!Array.isArray(sheetState.draftCards)) return;
+        var key = normalizeText(cardNumber).replace(/\\/g, '/');
+        sheetState.draftCards = sheetState.draftCards.filter(function (c) {
+          return normalizeText(c.cardNumber).replace(/\\/g, '/') !== key;
+        });
+        renderDeckSheet();
+      }
 
       function findRawDeckById(id) {
         id = String(id || '');
@@ -3063,27 +3159,62 @@
       function renderSheetCards(rawDeck) {
         var host = document.getElementById('deckSheetCards');
         var countEl = document.getElementById('deckSheetCardCount');
-        var cards = (rawDeck && rawDeck.cards) || [];
-        countEl.textContent = cards.length ? ('（' + cards.length + ' 種／' + deckTotalCards(rawDeck) + ' 張）') : '';
+        var cards = sheetCardsForRender(rawDeck);
+        var total = cards.reduce(function (sum, c) {
+          var q = parseInt(c && c.qty, 10);
+          return sum + (isNaN(q) || q < 1 ? 0 : q);
+        }, 0);
+        var isEdit = sheetState.mode === 'edit';
+        countEl.textContent = cards.length ? ('（' + cards.length + ' 種／' + total + ' 張）') : '';
         if (!cards.length) {
-          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">尚未加入卡片</div>';
+          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">' +
+            (isEdit ? '尚未加入卡片（可先儲存名稱，加卡功能之後會接上）' : '尚未加入卡片') +
+            '</div>';
           return;
         }
         host.innerHTML = cards.map(function (c) {
           var no = normalizeText(c && c.cardNumber);
+          var key = no.replace(/\\/g, '/');
           var urls = buildCardImageUrls(no);
           var qty = parseInt(c && c.qty, 10);
           if (isNaN(qty) || qty < 1) qty = 1;
-          var meta = sheetState.metaCache[no.replace(/\\/g, '/')];
+          var meta = sheetState.metaCache[key];
           var label = (meta && meta.name) || c.cardName || no;
-          return '<button type="button" class="deck-sheet-card" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
+          if (!isEdit) {
+            return '<div class="deck-sheet-card" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
+              '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+              (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
+              '<span class="deck-sheet-card-qty">×' + qty + '</span></div>';
+          }
+          return '<div class="deck-sheet-card" data-card-no="' + escapeHtml(no) + '" title="' +
+            escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
             '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
             (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
-            '<span class="deck-sheet-card-qty">×' + qty + '</span></button>';
+            '<button type="button" class="deck-sheet-card-remove" data-sheet-remove="' + escapeHtml(no) +
+            '" aria-label="移除 ' + escapeHtml(label) + '"><i class="fas fa-times" aria-hidden="true"></i></button>' +
+            '<div class="deck-sheet-card-tools">' +
+            '<button type="button" data-sheet-qty="-1" data-card-no="' + escapeHtml(no) + '" aria-label="減少張數">−</button>' +
+            '<button type="button" class="is-qty" tabindex="-1">×' + qty + '</button>' +
+            '<button type="button" data-sheet-qty="1" data-card-no="' + escapeHtml(no) + '" aria-label="增加張數">+</button>' +
+            '</div></div>';
         }).join('');
         Array.prototype.forEach.call(host.querySelectorAll('img'), function (img) {
           bindImgFallback(img, img.getAttribute('data-fallback') || '');
         });
+        if (isEdit) {
+          Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-qty]'), function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.preventDefault();
+              adjustSheetCardQty(btn.getAttribute('data-card-no'), Number(btn.getAttribute('data-sheet-qty')));
+            });
+          });
+          Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-remove]'), function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.preventDefault();
+              removeSheetCard(btn.getAttribute('data-sheet-remove'));
+            });
+          });
+        }
       }
 
       function escapeHtml(s) {
@@ -3131,13 +3262,21 @@
           chips.push('<span class="deck-sheet-chip">' + escapeHtml(t) + '</span>');
         });
         document.getElementById('deckSheetChips').innerHTML = chips.join('');
+        var cardsForStats = sheetCardsForRender(raw);
+        var liveTotal = cardsForStats.reduce(function (sum, c) {
+          var q = parseInt(c && c.qty, 10);
+          return sum + (isNaN(q) || q < 1 ? 0 : q);
+        }, 0);
+        var liveKinds = cardsForStats.length;
         document.getElementById('deckSheetStats').innerHTML =
-          '<div class="deck-sheet-stat"><strong>' + vm.cards + '</strong><span>總張數</span></div>' +
-          '<div class="deck-sheet-stat"><strong>' + vm.kinds + '</strong><span>卡種</span></div>' +
+          '<div class="deck-sheet-stat"><strong>' + liveTotal + '</strong><span>總張數</span></div>' +
+          '<div class="deck-sheet-stat"><strong>' + liveKinds + '</strong><span>卡種</span></div>' +
           '<div class="deck-sheet-stat"><strong>' + escapeHtml(vm.created) + '</strong><span>建立</span></div>';
-        document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(raw);
+        var analyzeSource = isEdit
+          ? Object.assign({}, raw, { cards: cardsForStats })
+          : raw;
+        document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(analyzeSource);
         renderSheetCards(raw);
-        if (isEdit) fillSheetForm(raw);
 
         var secondary = document.getElementById('deckSheetSecondary');
         var primary = document.getElementById('deckSheetPrimary');
@@ -3165,6 +3304,7 @@
         sheetState.open = true;
         sheetState.mode = mode === 'edit' ? 'edit' : 'view';
         sheetState.deckId = raw.id;
+        sheetState.draftCards = sheetState.mode === 'edit' ? cloneDeckCards(raw.cards) : null;
         persistCarouselPosition();
         sheetEl.hidden = false;
         sheetEl.setAttribute('aria-hidden', 'false');
@@ -3173,6 +3313,7 @@
         });
         document.getElementById('stage').classList.add('is-sheet-open');
         if (sheetScrollEl) sheetScrollEl.scrollTop = 0;
+        if (sheetState.mode === 'edit') fillSheetForm(raw);
         renderDeckSheet();
         enrichSheetCards(raw, function () {
           if (sheetState.open && sheetState.deckId === raw.id) renderDeckSheet();
@@ -3182,6 +3323,7 @@
       function closeDeckSheet() {
         if (!sheetState.open) return;
         sheetState.open = false;
+        sheetState.draftCards = null;
         sheetEl.classList.remove('is-open');
         sheetEl.setAttribute('aria-hidden', 'true');
         document.getElementById('stage').classList.remove('is-sheet-open');
@@ -3191,7 +3333,15 @@
       }
 
       function setSheetMode(mode) {
-        sheetState.mode = mode === 'edit' ? 'edit' : 'view';
+        var next = mode === 'edit' ? 'edit' : 'view';
+        var raw = findRawDeckById(sheetState.deckId);
+        if (next === 'edit') {
+          beginSheetDraft(raw);
+          fillSheetForm(raw);
+        } else {
+          sheetState.draftCards = null;
+        }
+        sheetState.mode = next;
         renderDeckSheet();
       }
 
@@ -3203,10 +3353,14 @@
         var tagsRaw = document.getElementById('deckSheetTagsInput').value || '';
         var tags = tagsRaw.split(/[,，、]/).map(function (t) { return normalizeText(t); }).filter(Boolean);
         var desc = normalizeText(document.getElementById('deckSheetDescInput').value);
+        var cards = Array.isArray(sheetState.draftCards)
+          ? cloneDeckCards(sheetState.draftCards)
+          : cloneDeckCards(raw.cards);
         var next = Object.assign({}, raw, {
           name: name,
           tags: tags,
           deckDescription: desc,
+          cards: cards,
           updatedAt: Date.now()
         });
         sheetState.saving = true;
@@ -3222,6 +3376,7 @@
           }
           writeLocalDecks(allDecks);
           sheetState.saving = false;
+          sheetState.draftCards = null;
           showToast('已儲存牌組');
           setSheetMode('view');
           renderAll();
