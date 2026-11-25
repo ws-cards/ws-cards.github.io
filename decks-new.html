@@ -906,7 +906,8 @@
       -webkit-backdrop-filter: blur(12px);
     }
     .deck-sheet-back,
-    .deck-sheet-mode-btn {
+    .deck-sheet-mode-btn,
+    .deck-sheet-more-btn {
       border: 0;
       background: rgba(255, 255, 255, 0.1);
       color: #fff;
@@ -919,7 +920,56 @@
       font-size: 0.95rem;
     }
     .deck-sheet-back:hover,
-    .deck-sheet-mode-btn:hover { background: rgba(255, 255, 255, 0.18); }
+    .deck-sheet-mode-btn:hover,
+    .deck-sheet-more-btn:hover { background: rgba(255, 255, 255, 0.18); }
+    .deck-sheet-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .deck-sheet-more {
+      position: relative;
+    }
+    .deck-sheet-more[hidden] { display: none !important; }
+    .deck-sheet-more-menu {
+      position: absolute;
+      top: calc(100% + 0.35rem);
+      right: 0;
+      min-width: 10.5rem;
+      padding: 0.35rem;
+      border-radius: 12px;
+      background: rgba(18, 16, 36, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      z-index: 5;
+      display: grid;
+      gap: 0.2rem;
+    }
+    .deck-sheet-more-menu[hidden] { display: none !important; }
+    .deck-sheet-more-item {
+      border: 0;
+      background: transparent;
+      color: #fff;
+      text-align: left;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .deck-sheet-more-item:hover { background: rgba(255, 255, 255, 0.1); }
+    .deck-sheet-more-item:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+    .deck-sheet-more-item i {
+      width: 1rem;
+      text-align: center;
+      opacity: 0.85;
+    }
     .deck-sheet-heading {
       min-width: 0;
       text-align: center;
@@ -2248,9 +2298,26 @@
           <p class="deck-sheet-kicker" id="deckSheetKicker">檢視牌組</p>
           <h2 class="deck-sheet-title" id="deckSheetTitle">—</h2>
         </div>
-        <button type="button" class="deck-sheet-mode-btn" id="deckSheetModeBtn" aria-label="切換編成">
-          <i class="fas fa-pen" aria-hidden="true"></i>
-        </button>
+        <div class="deck-sheet-bar-actions">
+          <div class="deck-sheet-more" id="deckSheetMoreWrap" hidden>
+            <button type="button" class="deck-sheet-more-btn" id="deckSheetMoreBtn" aria-label="更多操作" aria-haspopup="menu" aria-expanded="false" aria-controls="deckSheetMoreMenu">
+              <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+            </button>
+            <div class="deck-sheet-more-menu" id="deckSheetMoreMenu" role="menu" hidden>
+              <button type="button" class="deck-sheet-more-item" role="menuitem" id="deckSheetExportImageBtn" data-sheet-action="export-image">
+                <i class="fas fa-image" aria-hidden="true"></i>
+                <span>輸出圖片</span>
+              </button>
+              <button type="button" class="deck-sheet-more-item" role="menuitem" id="deckSheetSimDrawBtn" data-sheet-action="sim-draw">
+                <i class="fas fa-random" aria-hidden="true"></i>
+                <span>模擬抽牌</span>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="deck-sheet-mode-btn" id="deckSheetModeBtn" aria-label="切換編成">
+            <i class="fas fa-pen" aria-hidden="true"></i>
+          </button>
+        </div>
       </header>
       <div class="deck-sheet-scroll" id="deckSheetScroll">
         <div class="deck-sheet-hero">
@@ -2310,6 +2377,7 @@
 
   <script src="assets/js/ws-collection-store.js"></script>
   <script src="assets/js/ws-decklog.js"></script>
+  <script src="assets/js/ws-deck-image-export.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -3791,6 +3859,135 @@
         document.getElementById('deckSheetDescInput').value = normalizeText(rawDeck && rawDeck.deckDescription);
       }
 
+      var sheetImageExportBusy = false;
+      var html2canvasLoadPromise = null;
+      var HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+
+      function ensureHtml2Canvas() {
+        if (typeof window.html2canvas === 'function') return Promise.resolve(window.html2canvas);
+        if (html2canvasLoadPromise) return html2canvasLoadPromise;
+        html2canvasLoadPromise = new Promise(function (resolve, reject) {
+          var existing = document.querySelector('script[data-ws-html2canvas]');
+          if (existing) {
+            existing.addEventListener('load', function () {
+              if (typeof window.html2canvas === 'function') resolve(window.html2canvas);
+              else reject(new Error('html2canvas 載入失敗'));
+            });
+            existing.addEventListener('error', function () {
+              reject(new Error('html2canvas 載入失敗'));
+            });
+            return;
+          }
+          var s = document.createElement('script');
+          s.src = HTML2CANVAS_SRC;
+          s.async = true;
+          s.setAttribute('data-ws-html2canvas', '1');
+          s.onload = function () {
+            if (typeof window.html2canvas === 'function') resolve(window.html2canvas);
+            else reject(new Error('html2canvas 載入失敗'));
+          };
+          s.onerror = function () {
+            html2canvasLoadPromise = null;
+            reject(new Error('html2canvas 載入失敗'));
+          };
+          document.head.appendChild(s);
+        });
+        return html2canvasLoadPromise;
+      }
+
+      function setSheetMoreOpen(open) {
+        var wrap = document.getElementById('deckSheetMoreWrap');
+        var btn = document.getElementById('deckSheetMoreBtn');
+        var menu = document.getElementById('deckSheetMoreMenu');
+        if (!wrap || !btn || !menu) return;
+        var on = !!open && !wrap.hidden;
+        menu.hidden = !on;
+        btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      }
+
+      function syncSheetMoreMenu(rawDeck) {
+        var wrap = document.getElementById('deckSheetMoreWrap');
+        var exportBtn = document.getElementById('deckSheetExportImageBtn');
+        var simBtn = document.getElementById('deckSheetSimDrawBtn');
+        if (!wrap) return;
+        var isView = sheetState.mode !== 'edit';
+        wrap.hidden = !isView;
+        if (!isView) setSheetMoreOpen(false);
+        var cards = (rawDeck && rawDeck.cards) || [];
+        var hasCards = cards.some(function (c) {
+          var q = parseInt(c && c.qty, 10);
+          return !isNaN(q) && q > 0;
+        });
+        if (exportBtn) {
+          exportBtn.disabled = !hasCards || sheetImageExportBusy;
+          exportBtn.title = hasCards ? '輸出牌組圖片' : '牌組尚無卡片';
+        }
+        if (simBtn) {
+          simBtn.disabled = !hasCards;
+          simBtn.title = hasCards ? '模擬抽牌（即將推出）' : '牌組尚無卡片';
+        }
+      }
+
+      function exportSheetDeckImage() {
+        var raw = findRawDeckById(sheetState.deckId);
+        if (!raw) {
+          showToast('找不到這副牌組');
+          return;
+        }
+        if (sheetState.mode === 'edit') {
+          showToast('請先回到檢視再輸出圖片');
+          return;
+        }
+        var cards = Array.isArray(raw.cards) ? raw.cards : [];
+        if (!cards.length) {
+          showToast('牌組尚無卡片，無法輸出圖片');
+          return;
+        }
+        if (sheetImageExportBusy) {
+          showToast('正在輸出圖片，請稍候…');
+          return;
+        }
+        if (!(window.WsDeckImageExport && typeof window.WsDeckImageExport.exportDeckImage === 'function')) {
+          showToast('牌組圖模組尚未載入');
+          return;
+        }
+        sheetImageExportBusy = true;
+        setSheetMoreOpen(false);
+        syncSheetMoreMenu(raw);
+        showToast('正在產生牌組圖片…');
+        ensureHtml2Canvas()
+          .then(function () {
+            return window.WsDeckImageExport.exportDeckImage(raw, {
+              pageSize: 50,
+              width: 1920,
+              height: 1080,
+              preserveOrder: true,
+              siteLabel: 'ws-cards',
+              scale: 1,
+              onProgress: function (msg) {
+                if (msg) showToast(msg);
+              }
+            });
+          })
+          .then(function (result) {
+            var names = (result && result.filenames) || [];
+            var first = (result && result.filename) || names[0] || '牌組圖.png';
+            var msg = names.length > 1
+              ? ('已輸出 ' + names.length + ' 張圖片（' + first + ' …）')
+              : ('已輸出「' + first + '」');
+            if (result && result.partialImages) msg += '（部分圖片未載入）';
+            showToast(msg);
+          })
+          .catch(function (err) {
+            console.error(err);
+            showToast((err && err.message) || '輸出圖片失敗');
+          })
+          .then(function () {
+            sheetImageExportBusy = false;
+            syncSheetMoreMenu(findRawDeckById(sheetState.deckId));
+          });
+      }
+
       function renderDeckSheet() {
         if (!sheetEl || !sheetState.deckId) return;
         var raw = findRawDeckById(sheetState.deckId);
@@ -3854,6 +4051,7 @@
           modeBtn.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i>';
           modeBtn.setAttribute('aria-label', '切換編成');
         }
+        syncSheetMoreMenu(raw);
       }
 
       function openDeckSheet(mode, deckId) {
@@ -3888,6 +4086,7 @@
         sheetState.open = false;
         sheetState.draftCards = null;
         sheetState.levelFilter = null;
+        setSheetMoreOpen(false);
         sheetEl.classList.remove('is-open');
         sheetEl.setAttribute('aria-hidden', 'true');
         document.getElementById('stage').classList.remove('is-sheet-open');
@@ -4246,6 +4445,26 @@
       document.getElementById('deckSheetModeBtn').addEventListener('click', function () {
         setSheetMode(sheetState.mode === 'edit' ? 'view' : 'edit');
       });
+      document.getElementById('deckSheetMoreBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var menu = document.getElementById('deckSheetMoreMenu');
+        setSheetMoreOpen(!!(menu && menu.hidden));
+      });
+      document.getElementById('deckSheetExportImageBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        exportSheetDeckImage();
+      });
+      document.getElementById('deckSheetSimDrawBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        setSheetMoreOpen(false);
+        showToast('模擬抽牌即將推出');
+      });
+      document.addEventListener('click', function (e) {
+        var wrap = document.getElementById('deckSheetMoreWrap');
+        if (!wrap || wrap.hidden) return;
+        if (wrap.contains(e.target)) return;
+        setSheetMoreOpen(false);
+      });
       document.getElementById('deckSheetSecondary').addEventListener('click', function () {
         if (sheetState.mode === 'edit') setSheetMode('view');
         else setSheetMode('edit');
@@ -4415,6 +4634,11 @@
         if (sheetState.open) {
           if (e.key === 'Escape') {
             e.preventDefault();
+            var moreMenu = document.getElementById('deckSheetMoreMenu');
+            if (moreMenu && !moreMenu.hidden) {
+              setSheetMoreOpen(false);
+              return;
+            }
             if (sheetState.mode === 'edit') setSheetMode('view');
             else closeDeckSheet();
           }
