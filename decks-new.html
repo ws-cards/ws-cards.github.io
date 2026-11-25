@@ -1354,9 +1354,12 @@
       text-transform: uppercase;
       opacity: 0.72;
     }
+    .deck-sheet-section-head h4 {
+      margin: 0;
+    }
     .deck-sheet-stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(4.8rem, 1fr));
       gap: 0.45rem;
     }
     .deck-sheet-stat {
@@ -1685,6 +1688,112 @@
       cursor: pointer;
       display: grid;
       place-items: center;
+    }
+    .deck-sheet-card.is-short {
+      box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.72);
+    }
+    .deck-sheet-card.is-short::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.22);
+      pointer-events: none;
+    }
+    .deck-sheet-card-short-badge {
+      position: absolute;
+      left: 0.25rem;
+      top: 0.25rem;
+      z-index: 2;
+      padding: 0.08rem 0.32rem;
+      border-radius: 999px;
+      background: rgba(185, 28, 28, 0.92);
+      color: #fff;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .deck-sheet-card-short {
+      position: absolute;
+      left: 0.25rem;
+      right: 0.25rem;
+      bottom: 2.15rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem;
+      padding: 0.2rem 0.28rem;
+      border-radius: 8px;
+      background: rgba(12, 10, 28, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .deck-sheet-card-short label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.22rem;
+      font-size: 0.62rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .deck-sheet-card-short input {
+      width: 0.85rem;
+      height: 0.85rem;
+      accent-color: #dc2626;
+    }
+    .deck-sheet-short-step {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .deck-sheet-short-step[hidden] { display: none !important; }
+    .deck-sheet-short-step button {
+      border: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      width: 1.2rem;
+      height: 1.2rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .deck-sheet-short-step span {
+      min-width: 1.1rem;
+      text-align: center;
+      font-size: 0.62rem;
+      font-weight: 800;
+      background: rgba(12, 10, 28, 0.55);
+      line-height: 1.2rem;
+    }
+    .deck-sheet-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+    .deck-sheet-section-head h4 {
+      margin: 0;
+    }
+    .deck-sheet-filter-chip {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(244, 241, 251, 0.82);
+      border-radius: 999px;
+      padding: 0.22rem 0.55rem;
+      font-size: 0.68rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .deck-sheet-filter-chip.is-on {
+      background: rgba(220, 38, 38, 0.22);
+      border-color: rgba(252, 165, 165, 0.45);
+      color: #fecaca;
+    }
+    .deck-sheet-stat.is-short strong {
+      color: #fecaca;
     }
     .deck-sheet-empty {
       padding: 1.2rem 0.8rem;
@@ -2623,7 +2732,12 @@
           </div>
         </section>
         <section class="deck-sheet-section">
-          <h4>卡表 <span id="deckSheetCardCount"></span></h4>
+          <div class="deck-sheet-section-head">
+            <h4>卡表 <span id="deckSheetCardCount"></span></h4>
+            <button type="button" class="deck-sheet-filter-chip" id="deckSheetShortFilter" aria-pressed="false" hidden>
+              僅缺卡
+            </button>
+          </div>
           <div class="deck-sheet-cards" id="deckSheetCards"></div>
         </section>
       </div>
@@ -3581,6 +3695,7 @@
         draftCards: null,
         draftMeta: null, /* { name, tags, deckDescription, baseUpdatedAt, savedAt } */
         levelFilter: null, /* null | 0 | 1 | 2 | 3 | 'cx' */
+        cardFilter: null, /* null | 'short' */
         metaCache: Object.create(null),
         saving: false,
         dirty: false,
@@ -3622,17 +3737,46 @@
         return { isCx: false, level: lv };
       }
 
+      function clampShortQty(shortQty, qty) {
+        var n = parseInt(shortQty, 10);
+        if (isNaN(n) || n < 0) n = 0;
+        var max = Math.max(0, qty || 0);
+        if (n > max) n = max;
+        return n;
+      }
+
+      function entryShortQty(entry) {
+        var qty = parseInt(entry && entry.qty, 10);
+        if (isNaN(qty) || qty < 1) qty = 0;
+        return clampShortQty(entry && entry.shortQty, qty);
+      }
+
       function cloneDeckCards(cards) {
         return (cards || []).map(function (c) {
-          return {
+          var qty = parseInt(c && c.qty, 10);
+          if (isNaN(qty) || qty < 1) qty = 1;
+          var shortQty = clampShortQty(c && c.shortQty, qty);
+          var row = {
             cardNumber: c && c.cardNumber,
             cardName: (c && (c.cardName || c.name)) || '',
-            qty: (function () {
-              var q = parseInt(c && c.qty, 10);
-              return isNaN(q) || q < 1 ? 1 : q;
-            })()
+            qty: qty
           };
+          if (shortQty > 0) row.shortQty = shortQty;
+          return row;
         }).filter(function (c) { return c.cardNumber; });
+      }
+
+      function sheetShortage(cards) {
+        var shortKinds = 0;
+        var shortCopies = 0;
+        (cards || []).forEach(function (entry) {
+          var shortQty = entryShortQty(entry);
+          if (shortQty > 0) {
+            shortKinds += 1;
+            shortCopies += shortQty;
+          }
+        });
+        return { shortKinds: shortKinds, shortCopies: shortCopies };
       }
 
       function sheetDraftStorageKey(deckId) {
@@ -3693,7 +3837,7 @@
 
       function cardsSignature(cards) {
         return cloneDeckCards(cards).map(function (c) {
-          return normalizeText(c.cardNumber).replace(/\\/g, '/') + ':' + (c.qty || 1);
+          return normalizeText(c.cardNumber).replace(/\\/g, '/') + ':' + (c.qty || 1) + ':' + entryShortQty(c);
         }).join('|');
       }
 
@@ -3797,6 +3941,9 @@
           } else {
             if (prev <= 4 && next > 4) showToast('已超過常見上限 4 張（仍可繼續）');
             sheetState.draftCards[i].qty = next;
+            var shortQty = clampShortQty(sheetState.draftCards[i].shortQty, next);
+            if (shortQty > 0) sheetState.draftCards[i].shortQty = shortQty;
+            else delete sheetState.draftCards[i].shortQty;
           }
           markSheetDraftChanged();
           renderDeckSheet();
@@ -3813,6 +3960,47 @@
         markSheetDraftChanged();
         renderDeckSheet();
         syncSheetPickQtyBadges();
+      }
+
+      function toggleSheetCardShort(cardNumber, enabled) {
+        if (!Array.isArray(sheetState.draftCards)) return;
+        var key = normalizeText(cardNumber).replace(/\\/g, '/');
+        for (var i = 0; i < sheetState.draftCards.length; i++) {
+          var no = normalizeText(sheetState.draftCards[i].cardNumber).replace(/\\/g, '/');
+          if (no !== key) continue;
+          if (enabled) {
+            sheetState.draftCards[i].shortQty = clampShortQty(
+              Math.max(1, entryShortQty(sheetState.draftCards[i]) || 1),
+              sheetState.draftCards[i].qty || 1
+            );
+          } else {
+            delete sheetState.draftCards[i].shortQty;
+          }
+          markSheetDraftChanged();
+          renderDeckSheet();
+          return;
+        }
+      }
+
+      function adjustSheetCardShortQty(cardNumber, delta) {
+        if (!Array.isArray(sheetState.draftCards)) return;
+        var key = normalizeText(cardNumber).replace(/\\/g, '/');
+        for (var i = 0; i < sheetState.draftCards.length; i++) {
+          var no = normalizeText(sheetState.draftCards[i].cardNumber).replace(/\\/g, '/');
+          if (no !== key) continue;
+          var qty = sheetState.draftCards[i].qty || 1;
+          var prev = entryShortQty(sheetState.draftCards[i]);
+          if (prev < 1) prev = 1;
+          var next = clampShortQty(prev + delta, qty);
+          if (next < 1) {
+            delete sheetState.draftCards[i].shortQty;
+          } else {
+            sheetState.draftCards[i].shortQty = next;
+          }
+          markSheetDraftChanged();
+          renderDeckSheet();
+          return;
+        }
       }
 
       function draftQtyMap() {
@@ -4805,17 +4993,36 @@
       function renderSheetCards(rawDeck) {
         var host = document.getElementById('deckSheetCards');
         var countEl = document.getElementById('deckSheetCardCount');
+        var filterBtn = document.getElementById('deckSheetShortFilter');
         var cards = sheetCardsForRender(rawDeck);
+        var shortage = sheetShortage(cards);
         var total = cards.reduce(function (sum, c) {
           var q = parseInt(c && c.qty, 10);
           return sum + (isNaN(q) || q < 1 ? 0 : q);
         }, 0);
         var isEdit = sheetState.mode === 'edit';
-        countEl.textContent = cards.length ? ('（' + cards.length + ' 種／' + total + ' 張）') : '';
-        if (!cards.length) {
+        var filterShort = sheetState.cardFilter === 'short';
+        var allCount = cards.length;
+        if (filterBtn) {
+          filterBtn.hidden = shortage.shortKinds < 1;
+          filterBtn.classList.toggle('is-on', filterShort);
+          filterBtn.setAttribute('aria-pressed', filterShort ? 'true' : 'false');
+        }
+        countEl.textContent = allCount
+          ? ('（' + allCount + ' 種／' + total + ' 張' +
+            (shortage.shortKinds ? ('・缺 ' + shortage.shortKinds + ' 種') : '') + '）')
+          : '';
+        if (!allCount) {
           host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">' +
             (isEdit ? '尚未加入卡片（按底部「選牌」搜尋加入）' : '尚未加入卡片') +
             '</div>';
+          return;
+        }
+        if (filterShort) {
+          cards = cards.filter(function (c) { return entryShortQty(c) > 0; });
+        }
+        if (!cards.length) {
+          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">沒有缺卡的卡片</div>';
           return;
         }
         host.innerHTML = cards.map(function (c) {
@@ -4824,20 +5031,34 @@
           var urls = buildCardImageUrls(no);
           var qty = parseInt(c && c.qty, 10);
           if (isNaN(qty) || qty < 1) qty = 1;
+          var shortQty = entryShortQty(c);
+          var isShort = shortQty > 0;
           var meta = sheetState.metaCache[key];
           var label = (meta && meta.name) || c.cardName || no;
           if (!isEdit) {
-            return '<div class="deck-sheet-card" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
+            return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" title="' +
+              escapeHtml(label) + '\\n' + escapeHtml(no) +
+              (isShort ? ('\\n缺 ' + shortQty + ' 張') : '') + '">' +
+              (isShort ? ('<span class="deck-sheet-card-short-badge">缺' + shortQty + '</span>') : '') +
               '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
               (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
               '<span class="deck-sheet-card-qty">×' + qty + '</span></div>';
           }
-          return '<div class="deck-sheet-card" data-card-no="' + escapeHtml(no) + '" title="' +
-            escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
+          return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" data-card-no="' +
+            escapeHtml(no) + '" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
             '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
             (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
             '<button type="button" class="deck-sheet-card-remove" data-sheet-remove="' + escapeHtml(no) +
             '" aria-label="移除 ' + escapeHtml(label) + '"><i class="fas fa-times" aria-hidden="true"></i></button>' +
+            '<div class="deck-sheet-card-short">' +
+            '<label><input type="checkbox" data-sheet-short-toggle="' + escapeHtml(no) + '"' +
+            (isShort ? ' checked' : '') + '><span>缺卡</span></label>' +
+            '<div class="deck-sheet-short-step"' + (isShort ? '' : ' hidden') + '>' +
+            '<button type="button" data-sheet-short-qty="-1" data-card-no="' + escapeHtml(no) +
+            '" aria-label="減少缺卡">−</button>' +
+            '<span>' + Math.max(1, shortQty || 1) + '</span>' +
+            '<button type="button" data-sheet-short-qty="1" data-card-no="' + escapeHtml(no) +
+            '" aria-label="增加缺卡">+</button></div></div>' +
             '<div class="deck-sheet-card-tools">' +
             '<button type="button" data-sheet-qty="-1" data-card-no="' + escapeHtml(no) + '" aria-label="減少張數">−</button>' +
             '<button type="button" class="is-qty" tabindex="-1">×' + qty + '</button>' +
@@ -4858,6 +5079,17 @@
             btn.addEventListener('click', function (e) {
               e.preventDefault();
               removeSheetCard(btn.getAttribute('data-sheet-remove'));
+            });
+          });
+          Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-short-toggle]'), function (input) {
+            input.addEventListener('change', function () {
+              toggleSheetCardShort(input.getAttribute('data-sheet-short-toggle'), !!input.checked);
+            });
+          });
+          Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-short-qty]'), function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.preventDefault();
+              adjustSheetCardShortQty(btn.getAttribute('data-card-no'), Number(btn.getAttribute('data-sheet-short-qty')));
             });
           });
         }
@@ -5029,23 +5261,35 @@
         } else {
           cover.removeAttribute('src');
         }
-        var chips = [];
-        if (vm.competitive) chips.push('<span class="deck-sheet-chip is-accent">競技</span>');
-        chips.push('<span class="deck-sheet-chip">' + escapeHtml(vm.game) + '</span>');
-        chips.push('<span class="deck-sheet-chip">' + vm.cards + ' 張</span>');
-        (Array.isArray(raw.tags) ? raw.tags : []).slice(0, 6).forEach(function (t) {
-          chips.push('<span class="deck-sheet-chip">' + escapeHtml(t) + '</span>');
-        });
-        document.getElementById('deckSheetChips').innerHTML = chips.join('');
         var cardsForStats = sheetCardsForRender(raw);
+        var liveShortage = sheetShortage(cardsForStats);
+        if (sheetState.cardFilter === 'short' && liveShortage.shortKinds < 1) {
+          sheetState.cardFilter = null;
+        }
         var liveTotal = cardsForStats.reduce(function (sum, c) {
           var q = parseInt(c && c.qty, 10);
           return sum + (isNaN(q) || q < 1 ? 0 : q);
         }, 0);
         var liveKinds = cardsForStats.length;
+        var chips = [];
+        if (vm.competitive) chips.push('<span class="deck-sheet-chip is-accent">競技</span>');
+        chips.push('<span class="deck-sheet-chip">' + escapeHtml(vm.game) + '</span>');
+        chips.push('<span class="deck-sheet-chip">' + liveTotal + ' 張</span>');
+        if (liveShortage.shortKinds) {
+          chips.push('<span class="deck-sheet-chip" style="border-color:rgba(252,165,165,0.4);color:#fecaca">缺 ' +
+            liveShortage.shortCopies + ' 張</span>');
+        }
+        (Array.isArray(raw.tags) ? raw.tags : []).slice(0, 6).forEach(function (t) {
+          chips.push('<span class="deck-sheet-chip">' + escapeHtml(t) + '</span>');
+        });
+        document.getElementById('deckSheetChips').innerHTML = chips.join('');
         document.getElementById('deckSheetStats').innerHTML =
           '<div class="deck-sheet-stat"><strong>' + liveTotal + '</strong><span>總張數</span></div>' +
           '<div class="deck-sheet-stat"><strong>' + liveKinds + '</strong><span>卡種</span></div>' +
+          (liveShortage.shortKinds
+            ? ('<div class="deck-sheet-stat is-short"><strong>' + liveShortage.shortCopies +
+              '</strong><span>缺卡</span></div>')
+            : '') +
           '<div class="deck-sheet-stat"><strong>' + escapeHtml(vm.created) + '</strong><span>建立</span></div>';
         var analyzeSource = isEdit
           ? Object.assign({}, raw, { cards: cardsForStats })
@@ -5083,6 +5327,7 @@
         sheetState.open = true;
         sheetState.deckId = raw.id;
         sheetState.levelFilter = null;
+        sheetState.cardFilter = null;
         sheetState.dirty = false;
         clearUnsavedHintTimer();
         closeSheetDialog();
@@ -5113,6 +5358,7 @@
         sheetState.draftCards = null;
         sheetState.draftMeta = null;
         sheetState.levelFilter = null;
+        sheetState.cardFilter = null;
         sheetState.dirty = false;
         clearUnsavedHintTimer();
         closeSheetPick();
@@ -5525,6 +5771,11 @@
         openDeckSheet('view');
       });
       document.getElementById('deckSheetBack').addEventListener('click', onSheetBack);
+      document.getElementById('deckSheetShortFilter').addEventListener('click', function () {
+        if (sheetState.cardFilter === 'short') sheetState.cardFilter = null;
+        else sheetState.cardFilter = 'short';
+        renderDeckSheet();
+      });
       document.getElementById('deckSheetModeBtn').addEventListener('click', function () {
         setSheetMode(sheetState.mode === 'edit' ? 'view' : 'edit');
       });
