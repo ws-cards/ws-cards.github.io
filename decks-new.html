@@ -1314,22 +1314,22 @@
         <section class="filters" aria-label="搜尋與篩選">
           <label class="search">
             <i class="fas fa-search" aria-hidden="true"></i>
-            <input id="searchInput" type="search" placeholder="搜尋牌組名稱..." autocomplete="off" aria-label="搜尋牌組名稱">
+            <input id="searchInput" type="search" placeholder="名稱、標籤、卡號…" autocomplete="off" aria-label="搜尋牌組名稱、標籤或卡號">
           </label>
           <div class="chip-row" role="toolbar" aria-label="篩選與排序">
             <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">
               全部
               <i class="fas fa-caret-down chev" aria-hidden="true"></i>
             </button>
-            <button type="button" class="chip is-desk-only" data-filter="ws" aria-pressed="false">WS</button>
-            <button type="button" class="chip is-desk-only" data-filter="wsr" aria-pressed="false">WSR</button>
+            <button type="button" class="chip is-desk-only" data-filter="ws" aria-pressed="false" title="Weiss Schwarz">WS</button>
+            <button type="button" class="chip is-desk-only" data-filter="wsr" aria-pressed="false" title="Weiss Schwarz Revue">WSR</button>
             <button type="button" class="chip" data-filter="fav" aria-pressed="false">
               <i class="fas fa-star" aria-hidden="true"></i>
               我的最愛
             </button>
-            <button type="button" class="chip" data-sort="newest" aria-pressed="false">
+            <button type="button" class="chip" data-sort="newest" aria-pressed="false" id="sortChip">
               <i class="fas fa-sort" aria-hidden="true"></i>
-              最新建立
+              最近更新
             </button>
           </div>
         </section>
@@ -1658,6 +1658,52 @@
         return no.slice(0, dash);
       }
 
+      /** 雲端尚無專用欄位時，以 tcg／gameType／標籤推斷；預設 WS */
+      function inferDeckTcg(deck) {
+        var raw = normalizeText(
+          (deck && (deck.tcg || deck.gameType || deck.game)) || ''
+        ).toLowerCase();
+        if (raw === 'wsr' || raw === 'revue' || raw === 'weiss schwarz revue') return 'wsr';
+        if (raw === 'ws' || raw === 'weiss' || raw === 'weiss schwarz') return 'ws';
+        var tags = Array.isArray(deck && deck.tags) ? deck.tags : [];
+        for (var i = 0; i < tags.length; i++) {
+          var t = normalizeText(tags[i]).toLowerCase();
+          if (!t) continue;
+          if (/(^|[^a-z])wsr([^a-z]|$)|revue|レヴュー/.test(t)) return 'wsr';
+        }
+        return 'ws';
+      }
+
+      function deckSearchHaystack(deck) {
+        if (!deck) return '';
+        var tags = Array.isArray(deck.tags) ? deck.tags : [];
+        var cards = Array.isArray(deck.cards) ? deck.cards : [];
+        var meta = deck.createMeta || {};
+        var parts = [
+          deck.name,
+          deck.deckDescription,
+          deck.decklogCode,
+          deck.coverCardNumber,
+          deck.source,
+          tags.join(' '),
+          cards.map(function (c) {
+            if (!c) return '';
+            return [c.cardNumber, c.cardName].filter(Boolean).join(' ');
+          }).join(' '),
+          meta.seriesName,
+          meta.seriesPrefix,
+          seriesCodeFromDeck(deck),
+          inferDeckTcg(deck)
+        ];
+        return parts.filter(Boolean).join(' ').toLowerCase();
+      }
+
+      function deckMatchesQuery(deck, query) {
+        var q = normalizeText(query).toLowerCase();
+        if (!q) return true;
+        return deckSearchHaystack(deck).indexOf(q) >= 0;
+      }
+
       function toViewModel(deck) {
         var tags = Array.isArray(deck.tags) ? deck.tags.map(normalizeText).filter(Boolean) : [];
         var total = deckTotalCards(deck);
@@ -1666,6 +1712,7 @@
         var urls = coverUrlsForDeck(deck);
         var series = seriesCodeFromDeck(deck);
         var build = inferBuild(tags);
+        var tcg = inferDeckTcg(deck);
         var subtitleParts = [];
         if (tags[0] && tags[0] !== build) subtitleParts.push(tags[0]);
         if (build !== '—') subtitleParts.push(build + ( /扉|門/.test(build) ? '' : '' ));
@@ -1684,7 +1731,9 @@
           competitive: competitive,
           favorite: !!favoriteIds[deck.id],
           tag: inferTagLabel(tags, competitive),
-          game: 'WS',
+          game: tcg === 'wsr' ? 'WSR' : 'WS',
+          tcg: tcg,
+          searchText: deckSearchHaystack(deck),
           desc: normalizeText(deck.deckDescription) || '尚未填寫牌組說明。',
           cover: urls.primary,
           coverFallback: urls.fallback,
@@ -1843,6 +1892,31 @@
         statusEl.hidden = true;
       }
 
+      function sortChipLabel(mode) {
+        if (mode === 'name') {
+          return '<i class="fas fa-sort-alpha-down" aria-hidden="true"></i>名稱 A→Z';
+        }
+        if (mode === 'cardsDesc') {
+          return '<i class="fas fa-layer-group" aria-hidden="true"></i>張數多→少';
+        }
+        return '<i class="fas fa-sort" aria-hidden="true"></i>最近更新';
+      }
+
+      function syncSortChip() {
+        var sortChip = document.getElementById('sortChip') || document.querySelector('[data-sort]');
+        if (!sortChip) return;
+        sortChip.setAttribute('data-sort', state.sort);
+        sortChip.setAttribute('aria-pressed', state.sort !== 'newest' ? 'true' : 'false');
+        sortChip.classList.toggle('is-active', state.sort !== 'newest');
+        sortChip.innerHTML = sortChipLabel(state.sort);
+      }
+
+      function nextSortMode(mode) {
+        if (mode === 'newest') return 'name';
+        if (mode === 'name') return 'cardsDesc';
+        return 'newest';
+      }
+
       function clearFiltersAndSearch() {
         state.filter = 'all';
         state.sort = 'newest';
@@ -1851,10 +1925,7 @@
         var input = document.getElementById('searchInput');
         if (input) input.value = '';
         syncFilterChips();
-        var sortChip = document.querySelector('[data-sort]');
-        if (sortChip) {
-          sortChip.innerHTML = '<i class="fas fa-sort" aria-hidden="true"></i>最新建立';
-        }
+        syncSortChip();
         showToast('已清除搜尋與篩選');
         renderAll();
       }
@@ -1871,24 +1942,26 @@
         if (state.filter === 'fav') {
           list = list.filter(function (d) { return d.favorite; });
         } else if (state.filter === 'ws') {
-          list = list.filter(function (d) { return d.game === 'WS'; });
+          list = list.filter(function (d) { return d.tcg === 'ws'; });
         } else if (state.filter === 'wsr') {
-          list = list.filter(function () { return false; });
+          list = list.filter(function (d) { return d.tcg === 'wsr'; });
         }
         if (state.query) {
-          var q = state.query.toLowerCase();
           list = list.filter(function (d) {
-            return (d.title + ' ' + d.subtitle + ' ' + d.work + ' ' + d.tag + ' ' + d.desc + ' ' + d.game)
-              .toLowerCase()
-              .indexOf(q) >= 0;
+            return deckMatchesQuery(d.raw, state.query);
           });
         }
-        if (state.sort === 'newest') {
-          list.sort(function (a, b) {
-            return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
-          });
-        } else if (state.sort === 'name') {
+        if (state.sort === 'name') {
           list.sort(function (a, b) { return a.title.localeCompare(b.title, 'zh-Hant'); });
+        } else if (state.sort === 'cardsDesc') {
+          list.sort(function (a, b) {
+            return (b.cards - a.cards) || a.title.localeCompare(b.title, 'zh-Hant');
+          });
+        } else {
+          list.sort(function (a, b) {
+            return (b.updatedAt || 0) - (a.updatedAt || 0) ||
+              (b.createdAt || 0) - (a.createdAt || 0);
+          });
         }
         return list;
       }
@@ -2339,23 +2412,25 @@
         chip.addEventListener('click', function () {
           if (chip.hasAttribute('data-filter')) {
             var f = chip.getAttribute('data-filter');
-            if (f === 'fav' && state.filter === 'fav') state.filter = 'all';
+            if ((f === 'fav' || f === 'ws' || f === 'wsr') && state.filter === f) state.filter = 'all';
             else state.filter = f;
             syncFilterChips();
             state.index = 0;
             renderAll();
+            if (f === 'wsr' && state.filter === 'wsr' && !state.list.length) {
+              showToast('目前尚無 WSR 牌組');
+            }
             return;
           }
           if (chip.hasAttribute('data-sort')) {
-            state.sort = state.sort === 'newest' ? 'name' : 'newest';
-            chip.innerHTML = state.sort === 'newest'
-              ? '<i class="fas fa-sort" aria-hidden="true"></i>最新建立'
-              : '<i class="fas fa-sort-alpha-down" aria-hidden="true"></i>名稱 A→Z';
+            state.sort = nextSortMode(state.sort);
+            syncSortChip();
             state.index = 0;
             renderAll();
           }
         });
       });
+      syncSortChip();
 
       var searchInput = document.getElementById('searchInput');
       var searchTimer = null;
