@@ -1103,43 +1103,32 @@
       height: 100%;
       display: block;
       filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
-      transform-origin: 50% 50%;
-      transform: scale(0.72) rotate(-14deg);
+    }
+    .deck-sheet-pie-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      padding: 0.35rem;
       opacity: 0;
-      transition:
-        transform 0.55s var(--ease),
-        opacity 0.4s ease;
+      transform: scale(0.9);
+      transition: opacity 0.3s ease, transform 0.35s var(--ease);
     }
-    .deck-sheet-pie.is-in .deck-sheet-pie-wrap svg {
-      transform: none;
-      opacity: 1;
-    }
-    .deck-sheet-pie-wrap svg > * {
-      opacity: 0;
-      transition: opacity 0.28s ease;
-    }
-    .deck-sheet-pie.is-in .deck-sheet-pie-wrap svg > * {
-      opacity: 1;
-    }
-    .deck-sheet-pie-total,
-    .deck-sheet-pie-caption {
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.35s ease, transform 0.35s var(--ease);
-    }
-    .deck-sheet-pie.is-in .deck-sheet-pie-total {
-      opacity: 0.85;
-      transform: none;
-    }
-    .deck-sheet-pie.is-in .deck-sheet-pie-caption {
+    .deck-sheet-pie.is-in .deck-sheet-pie-center {
       opacity: 1;
       transform: none;
     }
     .deck-sheet-pie-total {
       font-family: var(--font-display);
-      font-size: 0.78rem;
+      font-size: 0.92rem;
       font-weight: 800;
+      line-height: 1.05;
       text-align: center;
+      opacity: 0.92;
     }
     .deck-sheet-pie-total span {
       font-size: 0.62rem;
@@ -1272,13 +1261,14 @@
       color: #fff;
     }
     .deck-sheet-pie-caption {
-      margin: 0;
-      font-size: 0.62rem;
-      font-weight: 700;
+      margin: 0.12rem 0 0;
+      font-size: 0.58rem;
+      font-weight: 800;
       letter-spacing: 0.06em;
       color: rgba(220, 230, 255, 0.78);
       text-align: center;
     }
+    .deck-sheet-pie-caption:empty { display: none; }
     .deck-sheet-chart {
       opacity: 0;
       transform: translateY(10px);
@@ -1289,10 +1279,7 @@
       transform: none;
     }
     @media (prefers-reduced-motion: reduce) {
-      .deck-sheet-pie-wrap svg,
-      .deck-sheet-pie-wrap svg > *,
-      .deck-sheet-pie-total,
-      .deck-sheet-pie-caption,
+      .deck-sheet-pie-center,
       .deck-sheet-legend-pill,
       .deck-sheet-vbar-n,
       .deck-sheet-vbar-label,
@@ -3352,7 +3339,7 @@
         }).catch(function () { done(false); });
       }
 
-      function buildSheetAnalyzeHtml(rawDeck) {
+      function computeSheetAnalyzeStats(rawDeck) {
         var cards = (rawDeck && rawDeck.cards) || [];
         var selectedLevel = sheetState.levelFilter;
         var hasSelection = isSheetLevelFilter(selectedLevel);
@@ -3382,13 +3369,17 @@
           if (ck) colorTotals[ck] += qty;
           else colorTotals.other += qty;
         });
-        if (!cards.length) {
-          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
-        }
-        if (!known) {
-          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
-        }
+        return {
+          cards: cards,
+          known: known,
+          colorTotals: colorTotals,
+          levelTotals: levelTotals,
+          selectedLevel: selectedLevel,
+          hasSelection: hasSelection
+        };
+      }
 
+      function sheetColorSegments(colorTotals) {
         var colorOrder = [
           { key: 'y', label: '黃', hex: '#f0c14b' },
           { key: 'g', label: '綠', hex: '#5dce8a' },
@@ -3407,44 +3398,63 @@
           colorSum += colorTotals.other;
           colorSegs.push({ label: '其他', hex: 'rgba(180,180,200,0.55)', value: colorTotals.other });
         }
+        return { segs: colorSegs, sum: colorSum };
+      }
+
+      function applySheetDonutSegDraw(el, startPct, endPct) {
+        if (!el) return;
+        var start = Math.max(0, Math.min(1, Number(startPct) || 0));
+        var end = Math.max(start, Math.min(1, Number(endPct) || 0));
+        var len = Math.max(0, end - start);
+        el.setAttribute('stroke-dasharray', len + ' 1');
+        el.setAttribute('stroke-dashoffset', String(-start));
+      }
+
+      function buildSheetDonutBodyHtml(stats) {
+        var colorPack = sheetColorSegments(stats.colorTotals);
+        var colorSegs = colorPack.segs;
+        var colorSum = colorPack.sum;
+        var hasSelection = stats.hasSelection;
+        var selectedLevel = stats.selectedLevel;
 
         var size = 120;
         var cx = size / 2;
         var cy = size / 2;
-        var radius = 52;
-        var gapRad = colorSegs.length > 1 ? 0.035 : 0;
-        var usable = Math.PI * 2 - gapRad * colorSegs.length;
-        var angle = -Math.PI / 2;
-        function polar(a, rad) {
-          return {
-            x: cx + Math.cos(a) * rad,
-            y: cy + Math.sin(a) * rad
-          };
-        }
+        var radius = 40;
+        var stroke = 18;
+        var gapPct = colorSegs.length > 1 ? 0.015 : 0;
+        var usable = Math.max(0, 1 - gapPct * colorSegs.length);
+        var cursor = 0;
+        colorSegs.forEach(function (seg) {
+          var span = colorSum > 0 ? (seg.value / colorSum) * usable : 0;
+          seg.start = cursor;
+          seg.end = cursor + span;
+          cursor = seg.end + gapPct;
+        });
+
         var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">';
-        if (!colorSegs.length) {
-          svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius +
-            '" fill="rgba(255,255,255,0.08)"></circle>';
-        } else if (colorSegs.length === 1) {
-          svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius +
-            '" fill="' + colorSegs[0].hex + '"></circle>';
-        } else {
-          colorSegs.forEach(function (seg) {
-            var span = colorSum > 0 ? (seg.value / colorSum) * usable : 0;
-            var start = angle;
-            var end = angle + span;
-            var large = span > Math.PI ? 1 : 0;
-            var p0 = polar(start, radius);
-            var p1 = polar(end, radius);
-            svg += '<path d="M ' + cx + ' ' + cy +
-              ' L ' + p0.x.toFixed(2) + ' ' + p0.y.toFixed(2) +
-              ' A ' + radius + ' ' + radius + ' 0 ' + large + ' 1 ' +
-              p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
-              ' Z" fill="' + seg.hex + '"></path>';
-            angle = end + gapRad;
-          });
-        }
-        svg += '</svg>';
+        svg += '<g transform="rotate(-90 ' + cx + ' ' + cy + ')">';
+        svg += '<circle class="deck-sheet-donut-track" cx="' + cx + '" cy="' + cy + '" r="' + radius +
+          '" fill="none" stroke="rgba(148,163,184,0.28)" stroke-width="' + stroke +
+          '" pathLength="1"></circle>';
+        colorSegs.forEach(function (seg) {
+          svg += '<circle class="deck-sheet-donut-seg" data-donut-seg data-draw-start="' +
+            seg.start.toFixed(5) + '" data-draw-end="' + seg.end.toFixed(5) +
+            '" cx="' + cx + '" cy="' + cy + '" r="' + radius +
+            '" fill="none" stroke="' + seg.hex + '" stroke-width="' + stroke +
+            '" stroke-linecap="butt" pathLength="1" stroke-dasharray="0 1" stroke-dashoffset="' +
+            (-seg.start).toFixed(5) + '"></circle>';
+        });
+        svg += '</g></svg>';
+
+        var caption = hasSelection
+          ? '<p class="deck-sheet-pie-caption">' + escapeHtml(sheetLevelLabel(selectedLevel)) + '</p>'
+          : '<p class="deck-sheet-pie-caption"></p>';
+        var center = '<div class="deck-sheet-pie-center">' +
+          '<div class="deck-sheet-pie-total">' + colorSum + '<span>張</span></div>' +
+          caption +
+          '</div>';
+
         var legend = '<div class="deck-sheet-legend">';
         if (colorSegs.length) {
           colorSegs.forEach(function (seg) {
@@ -3457,16 +3467,22 @@
             (hasSelection ? '此等級尚無顏色資料' : '尚無顏色資料') + '</span>';
         }
         legend += '</div>';
-        var pieCaption = hasSelection
-          ? '<p class="deck-sheet-pie-caption">' + escapeHtml(sheetLevelLabel(selectedLevel)) + '</p>'
-          : '';
-        var donut = '<div class="deck-sheet-chart">' +
+
+        return '<div class="deck-sheet-pie-wrap">' + svg + center + '</div>' + legend;
+      }
+
+      function buildSheetAnalyzeHtml(rawDeck) {
+        var stats = computeSheetAnalyzeStats(rawDeck);
+        if (!stats.cards.length) {
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
+        }
+        if (!stats.known) {
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
+        }
+
+        var donut = '<div class="deck-sheet-chart" data-sheet-chart="color">' +
           '<p class="deck-sheet-chart-title">色別分布</p>' +
-          '<div class="deck-sheet-pie">' +
-          '<div class="deck-sheet-pie-wrap">' + svg + '</div>' +
-          '<div class="deck-sheet-pie-total">' + colorSum + '<span>張</span></div>' +
-          pieCaption +
-          legend + '</div></div>';
+          '<div class="deck-sheet-pie">' + buildSheetDonutBodyHtml(stats) + '</div></div>';
 
         var levelOrder = [
           { key: 0, label: 'Lv0' },
@@ -3477,15 +3493,15 @@
         ];
         var levelMax = 1;
         levelOrder.forEach(function (lv) {
-          levelMax = Math.max(levelMax, levelTotals[lv.key] || 0);
+          levelMax = Math.max(levelMax, stats.levelTotals[lv.key] || 0);
         });
-        var vbars = '<div class="deck-sheet-vbars' + (hasSelection ? ' has-selection' : '') +
+        var vbars = '<div class="deck-sheet-vbars' + (stats.hasSelection ? ' has-selection' : '') +
           '" role="group" aria-label="等級分布直條圖，點選可篩選色別">';
         levelOrder.forEach(function (lv) {
-          var n = levelTotals[lv.key] || 0;
+          var n = stats.levelTotals[lv.key] || 0;
           var pct = Math.round((n / levelMax) * 100);
           if (n > 0 && pct < 8) pct = 8;
-          var selected = hasSelection && selectedLevel === lv.key;
+          var selected = stats.hasSelection && stats.selectedLevel === lv.key;
           var title = selected
             ? '取消篩選色別分布'
             : ('依 ' + lv.label + ' 篩選色別分布');
@@ -3499,7 +3515,7 @@
             '<span class="deck-sheet-vbar-label">' + lv.label + '</span></button>';
         });
         vbars += '</div>';
-        var levelChart = '<div class="deck-sheet-chart">' +
+        var levelChart = '<div class="deck-sheet-chart" data-sheet-chart="level">' +
           '<p class="deck-sheet-chart-title">等級分布</p>' + vbars + '</div>';
 
         return donut + levelChart;
@@ -3514,38 +3530,90 @@
         }
       }
 
+      function playSheetDonutIntro(pie) {
+        if (!pie) return;
+        var segs = pie.querySelectorAll('[data-donut-seg]');
+        var legendPills = pie.querySelectorAll('.deck-sheet-legend-pill');
+        var center = pie.querySelector('.deck-sheet-pie-center');
+
+        pie.classList.remove('is-in');
+        Array.prototype.forEach.call(segs, function (seg) {
+          var start = Number(seg.getAttribute('data-draw-start')) || 0;
+          applySheetDonutSegDraw(seg, start, start);
+        });
+        Array.prototype.forEach.call(legendPills, function (el) {
+          el.style.transitionDelay = '0s';
+        });
+
+        function applyFinal() {
+          Array.prototype.forEach.call(segs, function (seg) {
+            applySheetDonutSegDraw(
+              seg,
+              seg.getAttribute('data-draw-start'),
+              seg.getAttribute('data-draw-end')
+            );
+          });
+          pie.classList.add('is-in');
+          Array.prototype.forEach.call(legendPills, function (el) {
+            el.style.transitionDelay = '0s';
+          });
+        }
+
+        if (prefersSheetChartMotionReduce()) {
+          applyFinal();
+          return;
+        }
+
+        Array.prototype.forEach.call(legendPills, function (el, i) {
+          el.style.transitionDelay = (0.18 + i * 0.045) + 's';
+        });
+
+        void pie.offsetWidth;
+        requestAnimationFrame(function () {
+          pie.classList.add('is-in');
+          if (center) {
+            /* center fades via CSS is-in */
+          }
+          Array.prototype.forEach.call(segs, function (seg, i) {
+            var start = Number(seg.getAttribute('data-draw-start')) || 0;
+            var end = Number(seg.getAttribute('data-draw-end')) || 0;
+            var delay = 40 + i * 70;
+            var dur = 240;
+            var t0 = null;
+            function frame(now) {
+              if (t0 == null) t0 = now;
+              var p = Math.min(1, (now - t0) / dur);
+              var ease = 1 - Math.pow(1 - p, 2);
+              applySheetDonutSegDraw(seg, start, start + (end - start) * ease);
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            setTimeout(function () { requestAnimationFrame(frame); }, delay);
+          });
+        });
+      }
+
       function playSheetAnalyzeIntro() {
         var host = document.getElementById('deckSheetAnalyze');
         if (!host) return;
         var pie = host.querySelector('.deck-sheet-pie');
         var vbars = host.querySelector('.deck-sheet-vbars');
         var fills = host.querySelectorAll('.deck-sheet-vbar-fill');
-        var legendPills = host.querySelectorAll('.deck-sheet-legend-pill');
-        var pieSegs = host.querySelectorAll('.deck-sheet-pie-wrap svg > *');
         var charts = host.querySelectorAll('.deck-sheet-chart');
         var cols = host.querySelectorAll('.deck-sheet-vbar-col');
 
         host.classList.remove('is-in');
-        if (pie) pie.classList.remove('is-in');
         if (vbars) vbars.classList.remove('is-in');
 
         Array.prototype.forEach.call(fills, function (el) {
           el.style.height = '0';
         });
 
-        function applyFinal() {
+        function applyBarFinal() {
           host.classList.add('is-in');
-          if (pie) pie.classList.add('is-in');
           if (vbars) vbars.classList.add('is-in');
           Array.prototype.forEach.call(fills, function (el) {
             var h = el.getAttribute('data-h');
             if (h) el.style.height = h;
-          });
-          Array.prototype.forEach.call(legendPills, function (el) {
-            el.style.transitionDelay = '0s';
-          });
-          Array.prototype.forEach.call(pieSegs, function (el) {
-            el.style.transitionDelay = '0s';
           });
           Array.prototype.forEach.call(charts, function (el) {
             el.style.transitionDelay = '0s';
@@ -3562,16 +3630,11 @@
         }
 
         if (prefersSheetChartMotionReduce() || (!pie && !vbars)) {
-          applyFinal();
+          applyBarFinal();
+          if (pie) playSheetDonutIntro(pie);
           return;
         }
 
-        Array.prototype.forEach.call(legendPills, function (el, i) {
-          el.style.transitionDelay = (0.2 + i * 0.045) + 's';
-        });
-        Array.prototype.forEach.call(pieSegs, function (el, i) {
-          el.style.transitionDelay = (0.1 + i * 0.05) + 's';
-        });
         Array.prototype.forEach.call(charts, function (el, i) {
           el.style.transitionDelay = (i * 0.07) + 's';
         });
@@ -3590,14 +3653,45 @@
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
             host.classList.add('is-in');
-            if (pie) pie.classList.add('is-in');
             if (vbars) vbars.classList.add('is-in');
             Array.prototype.forEach.call(fills, function (el) {
               var h = el.getAttribute('data-h');
               if (h) el.style.height = h;
             });
+            if (pie) playSheetDonutIntro(pie);
           });
         });
+      }
+
+      function syncSheetLevelBarSelection(host, selectedLevel) {
+        if (!host) return;
+        var hasSelection = isSheetLevelFilter(selectedLevel);
+        var vbars = host.querySelector('.deck-sheet-vbars');
+        if (vbars) vbars.classList.toggle('has-selection', hasSelection);
+        Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-chart-level]'), function (btn) {
+          var raw = btn.getAttribute('data-sheet-chart-level');
+          var key = raw === 'cx' ? 'cx' : Number(raw);
+          var selected = hasSelection && selectedLevel === key;
+          var label = raw === 'cx' ? 'CX' : ('Lv' + raw);
+          btn.classList.toggle('is-selected', selected);
+          btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          btn.title = selected
+            ? '取消篩選色別分布'
+            : ('依 ' + label + ' 篩選色別分布');
+          var nEl = btn.querySelector('.deck-sheet-vbar-n');
+          var n = nEl ? nEl.textContent : '';
+          btn.setAttribute('aria-label', label + '，' + n + ' 張' + (selected ? '，已選取' : ''));
+        });
+      }
+
+      function updateSheetColorDonut(rawDeck) {
+        var host = document.getElementById('deckSheetAnalyze');
+        if (!host) return;
+        var pie = host.querySelector('.deck-sheet-pie');
+        if (!pie) return;
+        var stats = computeSheetAnalyzeStats(rawDeck);
+        pie.innerHTML = buildSheetDonutBodyHtml(stats);
+        playSheetDonutIntro(pie);
       }
 
       function bindSheetAnalyzeInteractions() {
@@ -3615,9 +3709,8 @@
             var source = sheetState.mode === 'edit'
               ? Object.assign({}, deck, { cards: cards })
               : deck;
-            host.innerHTML = buildSheetAnalyzeHtml(source);
-            bindSheetAnalyzeInteractions();
-            playSheetAnalyzeIntro();
+            syncSheetLevelBarSelection(host, sheetState.levelFilter);
+            updateSheetColorDonut(source);
           });
         });
       }
