@@ -1612,6 +1612,32 @@
       grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
       gap: 0.45rem;
     }
+    .deck-sheet-level-head {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin: 0.65rem 0 0.1rem;
+      padding: 0.42rem 0.05rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    .deck-sheet-level-head:first-child {
+      margin-top: 0.1rem;
+    }
+    .deck-sheet-level-head-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: rgba(244, 241, 251, 0.92);
+    }
+    .deck-sheet-level-head-meta {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: rgba(244, 241, 251, 0.58);
+      white-space: nowrap;
+    }
     .deck-sheet-card {
       position: relative;
       border: 0;
@@ -4272,6 +4298,53 @@
         return { isCx: false, level: lv };
       }
 
+      function sheetEntryLevelGroupKey(entry) {
+        var no = normalizeText(entry && entry.cardNumber).replace(/\\/g, '/');
+        var meta = sheetState.metaCache[no] || null;
+        var bucket = cardLevelBucket(meta);
+        if (bucket.isCx) return 'cx';
+        if (/cx|クライ|climax/i.test(no) || /cx|クライ|climax/i.test((entry && entry.cardName) || '')) {
+          return 'cx';
+        }
+        if (bucket.level == null) return 'unknown';
+        return bucket.level;
+      }
+
+      function sheetEntryLevelGroupLabel(key) {
+        if (key === 'cx') return 'CX';
+        if (key === 'unknown') return '未定等級';
+        return sheetLevelLabel(key);
+      }
+
+      function sortSheetCardsByLevelDesc(cards) {
+        return (cards || []).slice().sort(function (a, b) {
+          var keyA = sheetEntryLevelGroupKey(a);
+          var keyB = sheetEntryLevelGroupKey(b);
+          var cxA = keyA === 'cx';
+          var cxB = keyB === 'cx';
+          if (cxA !== cxB) return cxA ? 1 : -1;
+          var unkA = keyA === 'unknown';
+          var unkB = keyB === 'unknown';
+          if (unkA !== unkB) return unkA ? 1 : -1;
+          if (!cxA && !unkA && !cxB && !unkB && keyA !== keyB) {
+            return Number(keyB) - Number(keyA);
+          }
+          return String(a && a.cardNumber || '').localeCompare(String(b && b.cardNumber || ''));
+        });
+      }
+
+      function buildSheetLevelHeadHtml(key, kinds, qty) {
+        var metaParts = [];
+        if (kinds > 0) metaParts.push(kinds + ' 種');
+        if (qty > 0) metaParts.push(qty + ' 張');
+        return '<div class="deck-sheet-level-head" role="presentation">' +
+          '<span class="deck-sheet-level-head-label">' + escapeHtml(sheetEntryLevelGroupLabel(key)) + '</span>' +
+          (metaParts.length
+            ? '<span class="deck-sheet-level-head-meta">' + escapeHtml(metaParts.join(' · ')) + '</span>'
+            : '') +
+          '</div>';
+      }
+
       function clampShortQty(shortQty, qty) {
         var n = parseInt(shortQty, 10);
         if (isNaN(n) || n < 0) n = 0;
@@ -5560,6 +5633,16 @@
           host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">沒有缺卡的卡片</div>';
           return;
         }
+        cards = sortSheetCardsByLevelDesc(cards);
+        var groupCounts = Object.create(null);
+        cards.forEach(function (c) {
+          var gKey = sheetEntryLevelGroupKey(c);
+          if (!groupCounts[gKey]) groupCounts[gKey] = { kinds: 0, qty: 0 };
+          groupCounts[gKey].kinds += 1;
+          var gq = parseInt(c && c.qty, 10);
+          groupCounts[gKey].qty += isNaN(gq) || gq < 1 ? 0 : gq;
+        });
+        var lastGroupKey = null;
         host.innerHTML = cards.map(function (c) {
           var no = normalizeText(c && c.cardNumber);
           var key = no.replace(/\\/g, '/');
@@ -5570,8 +5653,15 @@
           var isShort = shortQty > 0;
           var meta = sheetState.metaCache[key];
           var label = (meta && meta.name) || c.cardName || no;
+          var groupKey = sheetEntryLevelGroupKey(c);
+          var headHtml = '';
+          if (groupKey !== lastGroupKey) {
+            lastGroupKey = groupKey;
+            var counts = groupCounts[groupKey] || { kinds: 0, qty: 0 };
+            headHtml = buildSheetLevelHeadHtml(groupKey, counts.kinds, counts.qty);
+          }
           if (!isEdit) {
-            return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" title="' +
+            return headHtml + '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" title="' +
               escapeHtml(label) + '\\n' + escapeHtml(no) +
               (isShort ? ('\\n缺 ' + shortQty + ' 張') : '') + '">' +
               (isShort ? ('<span class="deck-sheet-card-short-badge">缺' + shortQty + '</span>') : '') +
@@ -5579,7 +5669,7 @@
               (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
               '<span class="deck-sheet-card-qty">×' + qty + '</span></div>';
           }
-          return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" data-card-no="' +
+          return headHtml + '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" data-card-no="' +
             escapeHtml(no) + '" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
             '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
             (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
