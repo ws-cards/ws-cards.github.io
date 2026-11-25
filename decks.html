@@ -20433,10 +20433,46 @@
       if (selectedDeckId) renderDeckDetail();
       if (deckDraft) renderDeckEditor();
     });
+    function consumeDeckOpenIntent() {
+      var intent = '';
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        intent = normalizeText(params.get('open'));
+        if (!intent) {
+          intent = normalizeText(sessionStorage.getItem('wsDeckSelectOpen'));
+        }
+        sessionStorage.removeItem('wsDeckSelectOpen');
+        if (params.has('open')) {
+          params.delete('open');
+          var next = params.toString();
+          var url = window.location.pathname + (next ? ('?' + next) : '') + (window.location.hash || '');
+          if (window.history && typeof window.history.replaceState === 'function') {
+            window.history.replaceState({}, '', url);
+          }
+        }
+      } catch (e) {
+        intent = '';
+      }
+      if (intent === 'decklog') {
+        openDecklogModal('create');
+        return;
+      }
+      if (intent === 'create') {
+        openDeckCreateMethodModal();
+      }
+    }
+
     // 等 auth＋雲端牌組就緒後才 mark('decks')／關閉全頁 loader；先顯示 loading，避免 guest 空狀態閃爍
     showDeckLoadingEmpty();
     bindDeckAuth();
     setStatus('正在同步牌組…', '');
+    // decks-new 空狀態「新增／匯入」入口：等 auth 就緒後再開對應流程
+    waitFirebaseAuthReady().then(function () {
+      // 稍候一拍，避免與首屏 empty／modal 初始化搶焦點
+      setTimeout(consumeDeckOpenIntent, 120);
+    }).catch(function () {
+      setTimeout(consumeDeckOpenIntent, 120);
+    });
     // 重整／關閉分頁前再寫一次本地草稿（正式儲存仍以記憶體為準）
     bindEl(window, 'pagehide', function () {
       if (deckDraft && deckEditorMode === 'edit') writeEditorLocalDraft();

@@ -866,35 +866,90 @@
     }
     .deck-status-actions {
       display: grid;
-      gap: 0.5rem;
+      gap: 0.55rem;
     }
-    .deck-status-btn {
+    .deck-status-tile {
+      display: grid;
+      grid-template-columns: 2.4rem minmax(0, 1fr);
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      min-height: 3.5rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .deck-status-tile:active { transform: scale(0.985); }
+    .deck-status-tile:hover { filter: brightness(1.03); }
+    .deck-status-tile-icon {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .deck-status-tile-copy {
+      display: grid;
+      gap: 0.12rem;
+      min-width: 0;
+    }
+    .deck-status-tile-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+    .deck-status-tile-desc {
+      font-size: 0.75rem;
+      line-height: 1.35;
+      opacity: 0.72;
+    }
+    .deck-status-tile.is-primary {
+      background: linear-gradient(135deg, #8b6cff, #5f7dff);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(95, 90, 220, 0.28);
+    }
+    .deck-status-tile.is-primary .deck-status-tile-icon {
+      background: rgba(255, 255, 255, 0.18);
+    }
+    .deck-status-tile.is-primary .deck-status-tile-desc { opacity: 0.85; }
+    .deck-status-tile.is-secondary {
+      background: rgba(42, 33, 80, 0.06);
+      border-color: rgba(42, 33, 80, 0.1);
+      color: #2a2150;
+    }
+    .deck-status-tile.is-secondary .deck-status-tile-icon {
+      background: rgba(123, 92, 255, 0.12);
+      color: #5a3fd4;
+    }
+    .deck-status-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.45rem;
-      min-height: 2.6rem;
-      padding: 0.55rem 1rem;
+      gap: 0.35rem;
+      margin-top: 0.15rem;
+      padding: 0.35rem;
       border: 0;
-      border-radius: 999px;
+      background: transparent;
+      color: rgba(42, 33, 80, 0.62);
       font: inherit;
-      font-weight: 800;
-      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 700;
       text-decoration: none;
-      transition: filter 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
     }
-    .deck-status-btn:active { transform: scale(0.98); }
-    .deck-status-btn.is-primary {
-      background: linear-gradient(135deg, #8b6cff, #5f7dff);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(95, 90, 220, 0.3);
-    }
-    .deck-status-btn.is-secondary {
-      background: rgba(42, 33, 80, 0.08);
-      color: #2a2150;
-    }
-    .deck-status-btn:hover { filter: brightness(1.05); }
-    .deck-status.is-loading .deck-status-actions { display: none; }
+    .deck-status-link:hover { color: #2a2150; }
+    .deck-status-tile[hidden],
+    .deck-status-link[hidden] { display: none !important; }
+    .deck-status.is-loading .deck-status-actions,
+    .deck-status.is-loading .deck-status-link { display: none; }
     .deck-status-spinner {
       display: none;
       width: 1.6rem;
@@ -1280,20 +1335,34 @@
         </section>
       </header>
 
-      <aside class="deck-status is-loading" id="deckStatus" hidden>
+      <aside class="deck-status is-loading" id="deckStatus" hidden aria-live="polite">
         <div class="deck-status-spinner" aria-hidden="true"></div>
         <p class="deck-status-kicker" id="deckStatusKicker">DECKS</p>
         <h2 class="deck-status-title" id="deckStatusTitle">正在載入牌組</h2>
-        <p class="deck-status-text" id="deckStatusText">同步雲端資料中，請稍候…</p>
+        <p class="deck-status-text" id="deckStatusText">正在確認登入狀態並載入雲端牌組，請稍候。</p>
         <div class="deck-status-actions">
-          <button type="button" class="deck-status-btn is-primary" id="deckStatusPrimary">
-            <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
-            <span id="deckStatusPrimaryLabel">登入我的牌組</span>
+          <button type="button" class="deck-status-tile is-primary" id="deckStatusPrimary" data-empty-action="login">
+            <span class="deck-status-tile-icon" aria-hidden="true">
+              <i class="fas fa-sign-in-alt" id="deckStatusPrimaryIcon"></i>
+            </span>
+            <span class="deck-status-tile-copy">
+              <span class="deck-status-tile-title" id="deckStatusPrimaryLabel">登入我的牌組</span>
+              <span class="deck-status-tile-desc" id="deckStatusPrimaryDesc">同步已有牌組，或建立第一副。</span>
+            </span>
           </button>
-          <a class="deck-status-btn is-secondary" id="deckStatusSecondary" href="decks.html">
-            前往完整牌組頁
-          </a>
+          <button type="button" class="deck-status-tile is-secondary" id="deckStatusSecondary" data-empty-action="decklog">
+            <span class="deck-status-tile-icon" aria-hidden="true">
+              <i class="fas fa-cloud-download-alt" id="deckStatusSecondaryIcon"></i>
+            </span>
+            <span class="deck-status-tile-copy">
+              <span class="deck-status-tile-title" id="deckStatusSecondaryLabel">匯入 DeckLog</span>
+              <span class="deck-status-tile-desc" id="deckStatusSecondaryDesc">輸入代碼，保存可編輯牌表。</span>
+            </span>
+          </button>
         </div>
+        <a class="deck-status-link" id="deckStatusLink" href="decks.html">
+          前往完整牌組頁 <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
       </aside>
 
       <section class="carousel-wrap" aria-label="牌組輪播">
@@ -1433,7 +1502,14 @@
       var statusText = document.getElementById('deckStatusText');
       var statusPrimary = document.getElementById('deckStatusPrimary');
       var statusPrimaryLabel = document.getElementById('deckStatusPrimaryLabel');
+      var statusPrimaryDesc = document.getElementById('deckStatusPrimaryDesc');
+      var statusPrimaryIcon = document.getElementById('deckStatusPrimaryIcon');
       var statusSecondary = document.getElementById('deckStatusSecondary');
+      var statusSecondaryLabel = document.getElementById('deckStatusSecondaryLabel');
+      var statusSecondaryDesc = document.getElementById('deckStatusSecondaryDesc');
+      var statusSecondaryIcon = document.getElementById('deckStatusSecondaryIcon');
+      var statusLink = document.getElementById('deckStatusLink');
+      var statusMode = 'loading';
 
       function showToast(msg) {
         if (!toastEl) return;
@@ -1631,49 +1707,163 @@
         };
       }
 
+      function setTile(btn, opts) {
+        if (!btn) return;
+        btn.hidden = !!opts.hidden;
+        if (opts.hidden) {
+          btn.removeAttribute('data-empty-action');
+          return;
+        }
+        btn.setAttribute('data-empty-action', opts.action || '');
+        if (opts.labelEl) opts.labelEl.textContent = opts.label || '';
+        if (opts.descEl) {
+          opts.descEl.textContent = opts.desc || '';
+          opts.descEl.hidden = !opts.desc;
+        }
+        if (opts.iconEl) {
+          opts.iconEl.className = 'fas ' + (opts.icon || 'fa-circle') + (opts.spin ? ' fa-spin' : '');
+        }
+      }
+
       function setStatusMode(mode) {
         if (!statusEl || !appEl) return;
+        statusMode = mode || 'ready';
         var isEmptyMode = mode === 'loading' || mode === 'guest' || mode === 'ready-empty' || mode === 'filtered' || mode === 'error';
         appEl.classList.toggle('is-empty', isEmptyMode);
         statusEl.hidden = !isEmptyMode;
         statusEl.classList.toggle('is-loading', mode === 'loading');
+        statusEl.setAttribute('data-empty-mode', mode || '');
+
         if (mode === 'loading') {
-          statusTitle.textContent = '正在載入牌組';
-          statusText.textContent = '同步雲端資料中，請稍候…';
-          statusPrimary.hidden = true;
-          statusSecondary.hidden = true;
-        } else if (mode === 'guest') {
-          statusTitle.textContent = '登入後查看你的牌組';
-          statusText.textContent = '牌組資料存放在雲端，登入後即可在此挑選並使用。';
-          statusPrimary.hidden = false;
-          statusPrimaryLabel.textContent = '登入我的牌組';
-          statusSecondary.hidden = false;
-          statusSecondary.textContent = '前往完整牌組頁';
-          statusSecondary.setAttribute('href', 'decks.html');
-        } else if (mode === 'ready-empty') {
-          statusTitle.textContent = '尚未建立牌組';
-          statusText.textContent = '先到完整牌組頁建立或匯入 DeckLog，再回來這裡選擇。';
-          statusPrimary.hidden = true;
-          statusSecondary.hidden = false;
-          statusSecondary.textContent = '前往建立牌組';
-          statusSecondary.setAttribute('href', 'decks.html');
-        } else if (mode === 'filtered') {
-          statusTitle.textContent = '沒有符合的牌組';
-          statusText.textContent = '調整搜尋或篩選條件再試試。';
-          statusPrimary.hidden = true;
-          statusSecondary.hidden = true;
-        } else if (mode === 'error') {
-          statusTitle.textContent = '無法載入牌組';
-          statusText.textContent = '雲端同步失敗，請稍後再試或改用完整牌組頁。';
-          statusPrimary.hidden = false;
-          statusPrimaryLabel.textContent = '重新載入';
-          statusSecondary.hidden = false;
-          statusSecondary.textContent = '前往完整牌組頁';
-          statusSecondary.setAttribute('href', 'decks.html');
-        } else {
-          appEl.classList.remove('is-empty');
-          statusEl.hidden = true;
+          statusTitle.textContent = '同步牌組中…';
+          statusText.textContent = '正在確認登入狀態並載入雲端牌組，請稍候。';
+          setTile(statusPrimary, { hidden: true });
+          setTile(statusSecondary, { hidden: true });
+          if (statusLink) statusLink.hidden = true;
+          return;
         }
+
+        if (statusLink) {
+          statusLink.hidden = false;
+          statusLink.setAttribute('href', 'decks.html');
+          statusLink.innerHTML = '前往完整牌組頁 <i class="fas fa-arrow-right" aria-hidden="true"></i>';
+        }
+
+        if (mode === 'guest') {
+          statusTitle.textContent = '從這裡開始組牌';
+          statusText.textContent = '登入後就能建立、匯入牌組，也能在其他裝置接著編輯。';
+          setTile(statusPrimary, {
+            action: 'login',
+            label: '登入我的牌組',
+            desc: '同步已有牌組，或建立第一副。',
+            icon: 'fa-sign-in-alt',
+            labelEl: statusPrimaryLabel,
+            descEl: statusPrimaryDesc,
+            iconEl: statusPrimaryIcon
+          });
+          setTile(statusSecondary, {
+            action: 'decklog',
+            label: '匯入 DeckLog',
+            desc: '輸入代碼，保存可編輯牌表。',
+            icon: 'fa-cloud-download-alt',
+            labelEl: statusSecondaryLabel,
+            descEl: statusSecondaryDesc,
+            iconEl: statusSecondaryIcon
+          });
+          return;
+        }
+
+        if (mode === 'ready-empty') {
+          statusTitle.textContent = '從這裡開始組牌';
+          statusText.textContent = '新增一副牌組，或從 DeckLog 匯入編成，之後都能回來挑選使用。';
+          setTile(statusPrimary, {
+            action: 'create',
+            label: '新增牌組',
+            desc: '到完整牌組頁建立你的第一副編成。',
+            icon: 'fa-plus',
+            labelEl: statusPrimaryLabel,
+            descEl: statusPrimaryDesc,
+            iconEl: statusPrimaryIcon
+          });
+          setTile(statusSecondary, {
+            action: 'decklog',
+            label: '匯入 DeckLog',
+            desc: '輸入代碼，保存可編輯牌表。',
+            icon: 'fa-cloud-download-alt',
+            labelEl: statusSecondaryLabel,
+            descEl: statusSecondaryDesc,
+            iconEl: statusSecondaryIcon
+          });
+          return;
+        }
+
+        if (mode === 'filtered') {
+          statusTitle.textContent = '沒有符合的牌組';
+          statusText.textContent = '試著調整關鍵字，或清除搜尋／篩選後再看全部牌組。';
+          setTile(statusPrimary, {
+            action: 'clear',
+            label: '清除搜尋與篩選',
+            desc: '回到完整牌組列表。',
+            icon: 'fa-times',
+            labelEl: statusPrimaryLabel,
+            descEl: statusPrimaryDesc,
+            iconEl: statusPrimaryIcon
+          });
+          setTile(statusSecondary, { hidden: true });
+          if (statusLink) statusLink.hidden = true;
+          return;
+        }
+
+        if (mode === 'error') {
+          statusTitle.textContent = '無法載入牌組';
+          statusText.textContent = '雲端同步失敗，請稍後再試，或改用完整牌組頁。';
+          setTile(statusPrimary, {
+            action: 'retry',
+            label: '重新載入',
+            desc: '再次同步雲端牌組。',
+            icon: 'fa-sync-alt',
+            labelEl: statusPrimaryLabel,
+            descEl: statusPrimaryDesc,
+            iconEl: statusPrimaryIcon
+          });
+          setTile(statusSecondary, {
+            action: 'decks',
+            label: '前往完整牌組頁',
+            desc: '用原有介面管理牌組。',
+            icon: 'fa-external-link-alt',
+            labelEl: statusSecondaryLabel,
+            descEl: statusSecondaryDesc,
+            iconEl: statusSecondaryIcon
+          });
+          if (statusLink) statusLink.hidden = true;
+          return;
+        }
+
+        appEl.classList.remove('is-empty');
+        statusEl.hidden = true;
+      }
+
+      function clearFiltersAndSearch() {
+        state.filter = 'all';
+        state.sort = 'newest';
+        state.query = '';
+        state.index = 0;
+        var input = document.getElementById('searchInput');
+        if (input) input.value = '';
+        syncFilterChips();
+        var sortChip = document.querySelector('[data-sort]');
+        if (sortChip) {
+          sortChip.innerHTML = '<i class="fas fa-sort" aria-hidden="true"></i>最新建立';
+        }
+        showToast('已清除搜尋與篩選');
+        renderAll();
+      }
+
+      function goDecksWithIntent(intent) {
+        var url = 'decks.html';
+        if (intent === 'decklog') url += '?open=decklog';
+        else if (intent === 'create') url += '?open=create';
+        window.location.href = url;
       }
 
       function getVisible() {
@@ -1977,6 +2167,19 @@
         });
       }
 
+      function consumePendingOpenIntent() {
+        var intent = '';
+        try {
+          intent = sessionStorage.getItem('wsDeckSelectOpen') || '';
+          sessionStorage.removeItem('wsDeckSelectOpen');
+        } catch (e) { /* ignore */ }
+        if (intent === 'decklog' || intent === 'create') {
+          goDecksWithIntent(intent);
+          return true;
+        }
+        return false;
+      }
+
       function signInAndLoad() {
         if (!decksFirebaseReady()) {
           showToast((fb && fb.reason) || 'Firebase 尚未就緒');
@@ -1997,6 +2200,9 @@
             : Promise.resolve(null);
           return profileP.then(function () {
             return refreshDecksFromCloud();
+          }).then(function () {
+            if (consumePendingOpenIntent()) return;
+            if (!allDecks.length) showToast('已登入，可以建立或匯入牌組');
           });
         }).catch(function (err) {
           console.error(err);
@@ -2084,9 +2290,49 @@
       document.getElementById('helpBtn').addEventListener('click', function () {
         showToast('← → 選牌組 · Enter 使用 · Esc 返回');
       });
+      function handleEmptyAction(action) {
+        if (action === 'login') {
+          signInAndLoad();
+          return;
+        }
+        if (action === 'retry') {
+          if (!deckCloudUser) {
+            signInAndLoad();
+            return;
+          }
+          setStatusMode('loading');
+          refreshDecksFromCloud();
+          return;
+        }
+        if (action === 'clear') {
+          clearFiltersAndSearch();
+          return;
+        }
+        if (action === 'create') {
+          goDecksWithIntent('create');
+          return;
+        }
+        if (action === 'decklog') {
+          if (!deckCloudUser) {
+            showToast('匯入 DeckLog 前請先登入');
+            signInAndLoad();
+            // After login user can click again; also stash intent
+            try { sessionStorage.setItem('wsDeckSelectOpen', 'decklog'); } catch (e) { /* ignore */ }
+            return;
+          }
+          goDecksWithIntent('decklog');
+          return;
+        }
+        if (action === 'decks') {
+          window.location.href = 'decks.html';
+        }
+      }
+
       statusPrimary.addEventListener('click', function () {
-        if (!deckCloudUser) signInAndLoad();
-        else refreshDecksFromCloud();
+        handleEmptyAction(statusPrimary.getAttribute('data-empty-action'));
+      });
+      statusSecondary.addEventListener('click', function () {
+        handleEmptyAction(statusSecondary.getAttribute('data-empty-action'));
       });
 
       Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (chip) {
