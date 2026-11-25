@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DECK SELECT｜我的牌組｜WS-Cards 卡片雲</title>
+  <meta name="description" content="選擇並使用你的 Weiss Schwarz 牌組。">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#d4c8ef">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+  <style>
+    :root {
+      --ink: #1a1430;
+      --ink-soft: rgba(26, 20, 48, 0.72);
+      --paper: #f4f0fb;
+      --glass: rgba(28, 22, 52, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.22);
+      --violet: #7b5cff;
+      --violet-deep: #5a3fd4;
+      --violet-glow: rgba(123, 92, 255, 0.55);
+      --gold: #f0c14b;
+      --gold-deep: #e8a020;
+      --gold-glow: rgba(240, 193, 75, 0.55);
+      --chip: rgba(255, 255, 255, 0.42);
+      --chip-ink: #3a2f68;
+      --nav: #1c1538;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --font-ui: 'Zen Kaku Gothic New', 'Noto Sans TC', sans-serif;
+      --font-display: 'Outfit', 'Zen Kaku Gothic New', sans-serif;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --phone-w: min(430px, 100vw);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #1a1230;
+      color: var(--ink);
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    /* Desktop ambient frame */
+    .stage {
+      position: relative;
+      width: var(--phone-w);
+      height: min(932px, 100dvh);
+      max-height: 100dvh;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(ellipse 80% 50% at 15% 18%, rgba(255, 255, 255, 0.55), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 85% 12%, rgba(180, 150, 255, 0.45), transparent 50%),
+        radial-gradient(ellipse 70% 55% at 70% 75%, rgba(140, 170, 255, 0.35), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(200, 170, 255, 0.3), transparent 50%),
+        linear-gradient(165deg, #e8dff8 0%, #d5c8f0 38%, #c8d4f5 72%, #d2c4ee 100%);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.18),
+        0 28px 80px rgba(20, 10, 50, 0.45);
+    }
+
+    @media (min-width: 480px) {
+      .stage {
+        border-radius: 28px;
+      }
+      body {
+        background:
+          radial-gradient(ellipse at 30% 20%, #3a2a68, transparent 50%),
+          radial-gradient(ellipse at 80% 80%, #1e2a58, transparent 45%),
+          #120c24;
+        padding: 12px;
+      }
+    }
+
+    /* Soft geometric / bokeh atmosphere */
+    .stage-fx {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .stage-fx::before {
+      content: '';
+      position: absolute;
+      inset: -20%;
+      background-image:
+        linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.07) 50%, transparent 60%),
+        repeating-linear-gradient(
+          -28deg,
+          transparent 0 28px,
+          rgba(123, 92, 255, 0.035) 28px 29px
+        );
+      animation: drift 18s linear infinite;
+    }
+    .stage-fx::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle 7px at 18% 32%, rgba(255, 255, 255, 0.55), transparent 70%),
+        radial-gradient(circle 5px at 72% 28%, rgba(255, 255, 255, 0.4), transparent 70%),
+        radial-gradient(circle 9px at 88% 58%, rgba(180, 160, 255, 0.45), transparent 70%),
+        radial-gradient(circle 4px at 32% 68%, rgba(255, 255, 255, 0.35), transparent 70%),
+        radial-gradient(circle 6px at 58% 82%, rgba(200, 180, 255, 0.4), transparent 70%);
+      animation: floatBokeh 9s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(-4%, 3%, 0); }
+    }
+    @keyframes floatBokeh {
+      from { transform: translateY(0) scale(1); opacity: 0.85; }
+      to { transform: translateY(-12px) scale(1.04); opacity: 1; }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto auto auto;
+      height: 100%;
+      padding:
+        max(0.7rem, env(safe-area-inset-top, 0px))
+        0.9rem
+        calc(0.35rem + var(--safe-b))
+        0.9rem;
+      gap: 0.7rem;
+    }
+
+    /* —— Header —— */
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 0.55rem;
+      animation: riseIn 0.7s var(--ease) both;
+    }
+    .brand-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+    .ws-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+    }
+    .ws-logo-mark {
+      width: 2.35rem;
+      height: 2.35rem;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 2px 8px rgba(40, 20, 80, 0.28));
+    }
+    .page-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(0.95rem, 4.2vw, 1.12rem);
+      letter-spacing: 0.16em;
+      color: #2a2150;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+      white-space: nowrap;
+    }
+    .menu-btn {
+      width: 2.35rem;
+      height: 2.35rem;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #2a2150;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .menu-btn:hover { background: rgba(255, 255, 255, 0.55); }
+    .menu-btn:active { transform: scale(0.96); }
+    .menu-btn i {
+      display: block;
+      width: 1rem;
+      height: 1.5px;
+      background: currentColor;
+      border-radius: 2px;
+      box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor;
+    }
+
+    /* —— Search + filters —— */
+    .filters {
+      display: grid;
+      gap: 0.55rem;
+      animation: riseIn 0.75s var(--ease) 0.06s both;
+    }
+    .search {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search i {
+      position: absolute;
+      left: 0.9rem;
+      color: rgba(58, 47, 104, 0.55);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    .search input {
+      width: 100%;
+      height: 2.55rem;
+      padding: 0 1rem 0 2.45rem;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.48);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.55) inset,
+        0 8px 20px rgba(80, 50, 140, 0.08);
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .search input::placeholder { color: rgba(58, 47, 104, 0.45); }
+    .search input:focus {
+      border-color: rgba(123, 92, 255, 0.55);
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow:
+        0 0 0 3px rgba(123, 92, 255, 0.18),
+        0 8px 20px rgba(80, 50, 140, 0.1);
+    }
+    .chip-row {
+      display: flex;
+      gap: 0.4rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 0.1rem;
+    }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      height: 2.05rem;
+      padding: 0 0.78rem;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--chip-ink);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.2s ease;
+    }
+    .chip i { font-size: 0.72rem; opacity: 0.85; }
+    .chip .chev { font-size: 0.58rem; opacity: 0.65; margin-left: 0.05rem; }
+    .chip:hover { background: rgba(255, 255, 255, 0.62); }
+    .chip:active { transform: scale(0.97); }
+    .chip.is-active {
+      background: linear-gradient(135deg, #8b6cff 0%, #5f7dff 100%);
+      border-color: transparent;
+      color: #fff;
+      box-shadow:
+        0 6px 16px rgba(95, 90, 220, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.28) inset;
+    }
+    .chip.is-active i,
+    .chip.is-active .chev { opacity: 1; }
+
+    /* —— Carousel —— */
+    .carousel-wrap {
+      position: relative;
+      display: grid;
+      align-content: center;
+      min-height: 0;
+      animation: riseIn 0.8s var(--ease) 0.12s both;
+    }
+    .carousel {
+      position: relative;
+      height: min(44vh, 360px);
+      min-height: 240px;
+      perspective: 1400px;
+      touch-action: pan-y;
+      user-select: none;
+    }
+    .carousel-track {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      cursor: grab;
+    }
+    .carousel-track:active { cursor: grabbing; }
+    .deck-slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(46%, 176px);
+      aspect-ratio: 63 / 88;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      transform-origin: center center;
+      transform-style: preserve-3d;
+      transition:
+        transform 0.55s var(--ease),
+        opacity 0.45s ease,
+        filter 0.45s ease;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .deck-slide-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #1a1430;
+      box-shadow:
+        0 18px 36px rgba(40, 20, 80, 0.28),
+        0 2px 0 rgba(255, 255, 255, 0.25) inset;
+      transition: box-shadow 0.45s ease;
+    }
+    .deck-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 8%;
+      display: block;
+      pointer-events: none;
+      transform: scale(1.04);
+      transition: transform 0.6s var(--ease);
+    }
+    .deck-slide.is-active .deck-slide-inner {
+      box-shadow:
+        0 0 0 3px #fff,
+        0 0 0 6px rgba(190, 170, 255, 0.75),
+        0 0 36px rgba(160, 140, 255, 0.7),
+        0 0 60px rgba(120, 160, 255, 0.35),
+        0 24px 44px rgba(40, 20, 80, 0.38);
+    }
+    .deck-slide.is-active img {
+      transform: scale(1.08);
+    }
+    .deck-slide.is-active::after {
+      content: '';
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      bottom: -14px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(120, 100, 220, 0.35), transparent 70%);
+      filter: blur(4px);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .deck-fav {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.45rem;
+      width: 1.45rem;
+      height: 1.45rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(20, 14, 40, 0.35);
+      backdrop-filter: blur(6px);
+      color: var(--gold);
+      font-size: 0.72rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .deck-slide.is-active .deck-fav.is-on,
+    .deck-slide.is-fav .deck-fav {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .carousel-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 20;
+      width: 2.75rem;
+      height: 2.75rem;
+      margin-top: -1.35rem;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.38);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(42, 33, 80, 0.82);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 6px 16px rgba(40, 20, 80, 0.16);
+      transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+      pointer-events: auto;
+    }
+    .carousel-nav:hover {
+      background: rgba(255, 255, 255, 0.62);
+      color: #2a2150;
+    }
+    .carousel-nav:active { transform: scale(0.94); }
+    .carousel-nav.prev { left: 0; }
+    .carousel-nav.next { right: 0; }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 0.55rem;
+    }
+    .dot {
+      width: 0.42rem;
+      height: 0.42rem;
+      border: 0;
+      border-radius: 999px;
+      padding: 0;
+      background: rgba(60, 50, 110, 0.28);
+      cursor: pointer;
+      transition: width 0.35s var(--ease), background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .dot.is-active {
+      width: 1.05rem;
+      background: linear-gradient(90deg, #8b6cff, #6a8cff);
+      box-shadow: 0 0 10px rgba(123, 92, 255, 0.55);
+    }
+
+    /* —— Info panel —— */
+    .info-panel {
+      position: relative;
+      display: grid;
+      grid-template-columns: 4.6rem minmax(0, 1fr);
+      gap: 0.75rem;
+      padding: 0.85rem 0.9rem 0.95rem;
+      border-radius: 18px;
+      background: linear-gradient(
+        160deg,
+        rgba(32, 26, 58, 0.72) 0%,
+        rgba(22, 18, 44, 0.78) 100%
+      );
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(18px) saturate(1.2);
+      -webkit-backdrop-filter: blur(18px) saturate(1.2);
+      color: #f4f1fb;
+      box-shadow:
+        0 16px 36px rgba(20, 10, 50, 0.28),
+        0 1px 0 rgba(255, 255, 255, 0.12) inset;
+      animation: riseIn 0.85s var(--ease) 0.18s both;
+      overflow: hidden;
+    }
+    .info-panel::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -20%;
+      width: 55%;
+      height: 80%;
+      background: radial-gradient(circle, rgba(123, 92, 255, 0.22), transparent 70%);
+      pointer-events: none;
+    }
+    .info-thumb {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 63 / 88;
+      background: #120c24;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+      align-self: start;
+    }
+    .info-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 12%;
+      display: block;
+    }
+    .info-badge {
+      position: absolute;
+      left: 0.2rem;
+      right: 0.2rem;
+      bottom: 0.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      padding: 0.18rem 0.25rem;
+      border-radius: 5px;
+      background: linear-gradient(135deg, #f0c14b, #e09220);
+      color: #2a1800;
+      font-family: var(--font-display);
+      font-size: 0.48rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .info-badge i { font-size: 0.45rem; }
+    .info-body {
+      position: relative;
+      min-width: 0;
+      display: grid;
+      gap: 0.4rem;
+    }
+    .info-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.35rem;
+      align-items: start;
+    }
+    .info-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.28rem;
+      font-weight: 800;
+      font-style: italic;
+      letter-spacing: 0.01em;
+      line-height: 1.1;
+      color: #fff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+    .info-sub {
+      margin: 0.15rem 0 0;
+      font-size: 0.78rem;
+      color: rgba(244, 241, 251, 0.7);
+      font-weight: 500;
+    }
+    .fav-toggle {
+      width: 1.85rem;
+      height: 1.85rem;
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.78rem;
+      transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+    .fav-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .fav-toggle.is-on {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(240, 193, 75, 0.12);
+    }
+    .fav-toggle:active { transform: scale(0.92); }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .tag.is-comp {
+      background: linear-gradient(135deg, #f0a040, #e87820);
+      color: #2a1400;
+    }
+    .tag.is-muted {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(244, 241, 251, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .meta-list {
+      display: grid;
+      gap: 0.22rem;
+      margin: 0.1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .meta-list li {
+      display: grid;
+      grid-template-columns: 0.9rem minmax(0, 1fr);
+      gap: 0.45rem;
+      align-items: baseline;
+      font-size: 0.72rem;
+      color: rgba(244, 241, 251, 0.78);
+      line-height: 1.35;
+    }
+    .meta-list i {
+      font-size: 0.68rem;
+      color: rgba(180, 170, 230, 0.85);
+      text-align: center;
+    }
+    .meta-list strong {
+      font-weight: 700;
+      color: #fff;
+    }
+    .info-desc {
+      margin: 0.1rem 0 0;
+      font-size: 0.7rem;
+      line-height: 1.45;
+      color: rgba(244, 241, 251, 0.62);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .info-more {
+      position: absolute;
+      right: 0.7rem;
+      bottom: 0.55rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.7rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .info-more:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    /* —— Action buttons —— */
+    .actions {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 0.55rem;
+      padding: 0 0.15rem;
+      animation: riseIn 0.9s var(--ease) 0.24s both;
+    }
+    .btn-skew {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 3.15rem;
+      padding: 0.55rem 1rem;
+      border: 0;
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transform: skewX(-12deg);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.25s ease;
+    }
+    .btn-skew > * {
+      transform: skewX(12deg);
+    }
+    .btn-skew:active {
+      transform: skewX(-12deg) scale(0.97);
+    }
+    .btn-edit {
+      background: linear-gradient(135deg, #3a3568 0%, #2a3a78 55%, #354088 100%);
+      box-shadow:
+        0 8px 18px rgba(40, 40, 100, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.18) inset;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+    }
+    .btn-edit:hover {
+      filter: brightness(1.08);
+    }
+    .btn-start {
+      background: linear-gradient(135deg, #ffe58a 0%, #f5c040 40%, #ef8f1c 100%);
+      color: #2a1600;
+      box-shadow:
+        0 12px 28px rgba(232, 160, 40, 0.5),
+        0 0 28px rgba(240, 193, 75, 0.48),
+        0 0 0 1px rgba(255, 220, 140, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.5) inset;
+      flex-direction: column;
+      gap: 0.05rem;
+      padding-block: 0.4rem;
+      animation: startPulse 2.8s ease-in-out infinite;
+    }
+    @keyframes startPulse {
+      0%, 100% { box-shadow: 0 12px 28px rgba(232, 160, 40, 0.5), 0 0 28px rgba(240, 193, 75, 0.42), 0 0 0 1px rgba(255, 220, 140, 0.55), 0 1px 0 rgba(255, 255, 255, 0.5) inset; }
+      50% { box-shadow: 0 14px 32px rgba(232, 160, 40, 0.58), 0 0 40px rgba(240, 193, 75, 0.62), 0 0 0 1px rgba(255, 230, 160, 0.7), 0 1px 0 rgba(255, 255, 255, 0.55) inset; }
+    }
+    .btn-start:hover {
+      filter: brightness(1.05);
+      animation: none;
+      box-shadow:
+        0 14px 32px rgba(232, 160, 40, 0.6),
+        0 0 40px rgba(240, 193, 75, 0.55),
+        0 0 0 1px rgba(255, 230, 160, 0.7),
+        0 1px 0 rgba(255, 255, 255, 0.55) inset;
+    }
+    .btn-start-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+    .btn-start-sub {
+      font-family: var(--font-display);
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      opacity: 0.72;
+    }
+    .btn-start .arrows {
+      font-size: 0.85rem;
+      letter-spacing: -0.08em;
+      opacity: 0.85;
+    }
+
+    /* —— Bottom nav —— */
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: end;
+      gap: 0.15rem;
+      margin: 0.15rem -0.9rem calc(-0.35rem - var(--safe-b));
+      padding: 0.45rem 0.4rem calc(0.55rem + var(--safe-b));
+      background: linear-gradient(180deg, #241a48 0%, #1a1335 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 -10px 28px rgba(20, 10, 40, 0.28);
+      animation: riseIn 0.95s var(--ease) 0.28s both;
+    }
+    .nav-item {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 0.22rem;
+      padding: 0.45rem 0.2rem 0.35rem;
+      border: 0;
+      background: transparent;
+      color: rgba(220, 210, 245, 0.55);
+      font: inherit;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .nav-item i {
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+    .nav-item.is-active {
+      color: #fff;
+    }
+    .nav-item.is-active::before {
+      content: '';
+      position: absolute;
+      top: 0.05rem;
+      left: 50%;
+      width: 78%;
+      height: 2.55rem;
+      transform: translateX(-50%) skewX(-16deg);
+      border-radius: 10px;
+      background: linear-gradient(160deg, rgba(140, 110, 255, 0.95), rgba(90, 70, 210, 0.65));
+      box-shadow:
+        0 0 22px rgba(123, 92, 255, 0.6),
+        0 0 40px rgba(123, 92, 255, 0.28),
+        0 1px 0 rgba(255, 255, 255, 0.3) inset;
+      z-index: -1;
+    }
+    .nav-item.is-active i {
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+    }
+    .nav-item:not(.is-active):hover {
+      color: rgba(244, 241, 251, 0.85);
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: calc(4.8rem + var(--safe-b));
+      z-index: 20;
+      transform: translateX(-50%) translateY(12px);
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      background: rgba(22, 16, 42, 0.9);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s var(--ease);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    }
+    .toast.is-on {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .deck-slide { transition: none; }
+    }
+
+    /* Compact phones */
+    @media (max-height: 700px) {
+      .carousel { height: min(36vh, 260px); min-height: 190px; }
+      .info-panel { padding: 0.7rem 0.75rem 0.8rem; gap: 0.6rem; }
+      .info-title { font-size: 1.1rem; }
+      .btn-skew { min-height: 2.85rem; }
+      .app { gap: 0.55rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="stage-fx" aria-hidden="true"></div>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand-cluster">
+          <a class="ws-logo" href="deck-select.html" aria-label="Weiss Schwarz">
+            <svg class="ws-logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+              <defs>
+                <linearGradient id="wsGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#2e2e2e"/>
+                  <stop offset="100%" stop-color="#0e0e0e"/>
+                </linearGradient>
+              </defs>
+              <path fill="url(#wsGrad)" stroke="#fff" stroke-width="2.4" d="M32 3.5 L55 14.2 V34.5 C55 49 42.5 56.5 32 60.5 C21.5 56.5 9 49 9 34.5 V14.2 Z"/>
+              <text x="32" y="27" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="8.5" font-weight="800" letter-spacing="0.8">WEISS</text>
+              <text x="32" y="39" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="7.5" font-weight="700" letter-spacing="0.3">SCHWARZ</text>
+              <path fill="#ff5fad" d="M17 10.5l1.1 2.2 2.4.35-1.75 1.7.42 2.35-2.17-1.15-2.17 1.15.42-2.35-1.75-1.7 2.4-.35z"/>
+              <path fill="#ff5fad" d="M47 10.5l1.1 2.2 2.4.35-1.75 1.7.42 2.35-2.17-1.15-2.17 1.15.42-2.35-1.75-1.7 2.4-.35z"/>
+            </svg>
+          </a>
+          <h1 class="page-title">DECK SELECT</h1>
+        </div>
+        <button type="button" class="menu-btn" id="menuBtn" aria-label="選單">
+          <i aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <section class="filters" aria-label="搜尋與篩選">
+        <label class="search">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <input id="searchInput" type="search" placeholder="搜尋牌組名稱..." autocomplete="off" aria-label="搜尋牌組名稱">
+        </label>
+        <div class="chip-row" role="toolbar" aria-label="篩選與排序">
+          <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">
+            <i class="fas fa-th" aria-hidden="true"></i>
+            全部
+            <i class="fas fa-caret-down chev" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="chip" data-filter="fav" aria-pressed="false">
+            <i class="fas fa-star" aria-hidden="true"></i>
+            我的最愛
+          </button>
+          <button type="button" class="chip" data-sort="newest" aria-pressed="false">
+            <i class="fas fa-sort" aria-hidden="true"></i>
+            最新建立
+            <i class="fas fa-caret-down chev" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      <section class="carousel-wrap" aria-label="牌組輪播">
+        <div class="carousel" id="carousel">
+          <div class="carousel-track" id="carouselTrack"></div>
+          <button type="button" class="carousel-nav prev" id="prevBtn" aria-label="上一副">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="carousel-nav next" id="nextBtn" aria-label="下一副">
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="dots" id="dots" role="tablist" aria-label="牌組位置"></div>
+      </section>
+
+      <article class="info-panel" id="infoPanel" aria-live="polite">
+        <div class="info-thumb">
+          <img id="infoThumb" src="" alt="">
+          <span class="info-badge" id="infoBadge" hidden><i class="fas fa-trophy" aria-hidden="true"></i> COMPETITIVE</span>
+        </div>
+        <div class="info-body">
+          <div class="info-head">
+            <div>
+              <h2 class="info-title" id="infoTitle">—</h2>
+              <p class="info-sub" id="infoSub"></p>
+            </div>
+            <button type="button" class="fav-toggle" id="favToggle" aria-label="加入最愛" aria-pressed="false">
+              <i class="far fa-star" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="tag-row" id="infoTags"></div>
+          <ul class="meta-list" id="infoMeta"></ul>
+          <p class="info-desc" id="infoDesc"></p>
+        </div>
+        <button type="button" class="info-more" id="infoMore" aria-label="查看詳情">
+          <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        </button>
+      </article>
+
+      <div class="actions">
+        <button type="button" class="btn-skew btn-edit" id="editBtn">
+          <i class="fas fa-pen" aria-hidden="true"></i>
+          <span>編輯牌組</span>
+        </button>
+        <button type="button" class="btn-skew btn-start" id="startBtn">
+          <span class="btn-start-main">
+            使用此牌組
+            <span class="arrows" aria-hidden="true">»</span>
+          </span>
+          <span class="btn-start-sub">START GAME</span>
+        </button>
+      </div>
+
+      <nav class="bottom-nav" aria-label="主要導覽">
+        <a class="nav-item" href="index.html">
+          <i class="fas fa-home" aria-hidden="true"></i>
+          首頁
+        </a>
+        <a class="nav-item is-active" href="decks-new.html" aria-current="page">
+          <i class="fas fa-layer-group" aria-hidden="true"></i>
+          牌組
+        </a>
+        <a class="nav-item" href="attackGameLog.html">
+          <i class="fas fa-chart-bar" aria-hidden="true"></i>
+          對戰紀錄
+        </a>
+        <a class="nav-item" href="account.html">
+          <i class="fas fa-cog" aria-hidden="true"></i>
+          設定
+        </a>
+      </nav>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+    (function () {
+      var IMG = 'https://imgs.devilfox.net/ws/';
+      var DECKS = [
+        {
+          id: 'ba-abydos',
+          title: 'Blue Archive',
+          subtitle: 'Abydos / 8 扉構築',
+          work: '蔚藍檔案',
+          created: '2026.11.14',
+          winRate: '62.5%',
+          winNote: '最近 50 場',
+          cards: 50,
+          competitive: true,
+          favorite: true,
+          tag: '競技向け',
+          game: 'WS',
+          desc: '來自阿拜多斯高中的少女們，為了守護學園而展開的故事——',
+          cover: IMG + 'bav_w112/bav_w112_t15sp.png',
+          createdAt: Date.parse('2026-11-14')
+        },
+        {
+          id: 'hololive',
+          title: 'Hololive',
+          subtitle: 'JP / 扉軸構築',
+          work: 'Hololive',
+          created: '2026.10.28',
+          winRate: '58.0%',
+          winNote: '最近 40 場',
+          cards: 50,
+          competitive: true,
+          favorite: false,
+          tag: '競技向け',
+          game: 'WS',
+          desc: '虛擬偶像們的舞台——以歌與羈絆組成的娛樂構築。',
+          cover: IMG + 'hol_w104/hol_w104_001.png',
+          createdAt: Date.parse('2026-10-28')
+        },
+        {
+          id: 'sao',
+          title: 'Sword Art Online',
+          subtitle: 'Alicization / 8 扉',
+          work: '刀劍神域',
+          created: '2026.09.12',
+          winRate: '54.2%',
+          winNote: '最近 36 場',
+          cards: 50,
+          competitive: false,
+          favorite: true,
+          tag: '休閒向け',
+          game: 'WS',
+          desc: '在虛擬世界中戰鬥的劍士們，以羈絆開啟通往勝利的門扉。',
+          cover: IMG + 'sao_s100/sao_s100_001.png',
+          createdAt: Date.parse('2026-09-12')
+        },
+        {
+          id: 'bocchi',
+          title: 'Bocchi the Rock!',
+          subtitle: '結束バンド / 8 扉',
+          work: '孤獨搖滾！',
+          created: '2026.08.03',
+          winRate: '49.0%',
+          winNote: '最近 30 場',
+          cards: 50,
+          competitive: false,
+          favorite: false,
+          tag: '休閒向け',
+          game: 'WS',
+          desc: '害羞吉他手與夥伴們的搖滾物語——在舞台上綻放光芒。',
+          cover: IMG + 'btr_w107/btr_w107_001.png',
+          createdAt: Date.parse('2026-08-03')
+        },
+        {
+          id: 'lycoris',
+          title: 'Lycoris Recoil',
+          subtitle: 'LycoReco / 8 扉',
+          work: 'Lycoris Recoil',
+          created: '2026.07.19',
+          winRate: '61.1%',
+          winNote: '最近 45 場',
+          cards: 50,
+          competitive: true,
+          favorite: false,
+          tag: '競技向け',
+          game: 'WS',
+          desc: '咖啡廳裡的日常與街頭上的戰鬥——雙面生活的少女們。',
+          cover: IMG + 'lrc_w105/lrc_w105_001.png',
+          createdAt: Date.parse('2026-07-19')
+        },
+        {
+          id: 'date-a-live',
+          title: 'Date A Live',
+          subtitle: '精靈 / 8 扉構築',
+          work: '約會大作戰',
+          created: '2026.06.02',
+          winRate: '52.8%',
+          winNote: '最近 28 場',
+          cards: 50,
+          competitive: false,
+          favorite: true,
+          tag: '休閒向け',
+          game: 'WS',
+          desc: '與精靈們的邂逅——用約會改寫毀滅結局的故事。',
+          cover: IMG + 'dal_w79/dal_w79_001.png',
+          createdAt: Date.parse('2026-06-02')
+        }
+      ];
+
+      var state = {
+        index: 0,
+        filter: 'all',
+        sort: 'newest',
+        query: '',
+        list: DECKS.slice()
+      };
+
+      var track = document.getElementById('carouselTrack');
+      var dotsEl = document.getElementById('dots');
+      var toastEl = document.getElementById('toast');
+      var toastTimer = null;
+
+      function showToast(msg) {
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.classList.add('is-on');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastEl.classList.remove('is-on');
+        }, 1800);
+      }
+
+      function getVisible() {
+        var list = DECKS.slice();
+        if (state.filter === 'fav') {
+          list = list.filter(function (d) { return d.favorite; });
+        }
+        if (state.query) {
+          var q = state.query.toLowerCase();
+          list = list.filter(function (d) {
+            return (d.title + ' ' + d.subtitle + ' ' + d.work + ' ' + d.tag)
+              .toLowerCase()
+              .indexOf(q) >= 0;
+          });
+        }
+        if (state.sort === 'newest') {
+          list.sort(function (a, b) { return b.createdAt - a.createdAt; });
+        } else if (state.sort === 'name') {
+          list.sort(function (a, b) { return a.title.localeCompare(b.title, 'zh-Hant'); });
+        }
+        return list;
+      }
+
+      function clampIndex() {
+        if (!state.list.length) {
+          state.index = 0;
+          return;
+        }
+        if (state.index >= state.list.length) state.index = state.list.length - 1;
+        if (state.index < 0) state.index = 0;
+      }
+
+      function currentDeck() {
+        return state.list[state.index] || null;
+      }
+
+      function slideTransform(offset) {
+        var abs = Math.abs(offset);
+        if (abs > 2) return { transform: 'translate(-50%, -50%) scale(0.35)', opacity: 0, z: 0, filter: 'blur(2px)' };
+        var x = offset * 78;
+        var z = -Math.abs(offset) * 155;
+        var rot = offset * -42;
+        var scale = offset === 0 ? 1.08 : (0.84 - (abs - 1) * 0.08);
+        var opacity = offset === 0 ? 1 : (0.88 - abs * 0.12);
+        var blur = abs === 0 ? 'none' : ('blur(' + (abs * 0.35) + 'px)');
+        return {
+          transform: 'translate(-50%, -50%) translateX(' + x + '%) translateZ(' + z + 'px) rotateY(' + rot + 'deg) scale(' + scale + ')',
+          opacity: Math.max(0.3, opacity),
+          z: 10 - abs,
+          filter: blur
+        };
+      }
+
+      function renderCarousel() {
+        state.list = getVisible();
+        clampIndex();
+        var html = '';
+        state.list.forEach(function (deck, i) {
+          html += '<button type="button" class="deck-slide' +
+            (i === state.index ? ' is-active' : '') +
+            (deck.favorite ? ' is-fav' : '') +
+            '" data-index="' + i + '" aria-label="' + deck.title + '"' +
+            (i === state.index ? ' aria-current="true"' : '') + '>';
+          html += '<span class="deck-slide-inner">';
+          html += '<img src="' + deck.cover + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+          html += '<span class="deck-fav' + (deck.favorite ? ' is-on' : '') + '" aria-hidden="true"><i class="fas fa-star"></i></span>';
+          html += '</span></button>';
+        });
+        track.innerHTML = html || '<p style="position:absolute;inset:0;display:grid;place-items:center;color:#3a2f68;font-weight:700;">找不到牌組</p>';
+
+        Array.prototype.forEach.call(track.querySelectorAll('.deck-slide'), function (el) {
+          var i = Number(el.getAttribute('data-index'));
+          var t = slideTransform(i - state.index);
+          el.style.transform = t.transform;
+          el.style.opacity = String(t.opacity);
+          el.style.zIndex = String(t.z);
+          el.style.filter = t.filter;
+          el.addEventListener('click', function () {
+            if (i === state.index) return;
+            state.index = i;
+            renderAll();
+          });
+        });
+
+        var dotsHtml = '';
+        state.list.forEach(function (_, i) {
+          dotsHtml += '<button type="button" class="dot' + (i === state.index ? ' is-active' : '') +
+            '" data-index="' + i + '" aria-label="第 ' + (i + 1) + ' 副"' +
+            (i === state.index ? ' aria-current="true"' : '') + '></button>';
+        });
+        dotsEl.innerHTML = dotsHtml;
+        Array.prototype.forEach.call(dotsEl.querySelectorAll('.dot'), function (dot) {
+          dot.addEventListener('click', function () {
+            state.index = Number(dot.getAttribute('data-index'));
+            renderAll();
+          });
+        });
+      }
+
+      function renderInfo() {
+        var deck = currentDeck();
+        var thumb = document.getElementById('infoThumb');
+        var badge = document.getElementById('infoBadge');
+        var title = document.getElementById('infoTitle');
+        var sub = document.getElementById('infoSub');
+        var tags = document.getElementById('infoTags');
+        var meta = document.getElementById('infoMeta');
+        var desc = document.getElementById('infoDesc');
+        var fav = document.getElementById('favToggle');
+
+        if (!deck) {
+          title.textContent = '沒有牌組';
+          sub.textContent = '調整搜尋或篩選條件試試';
+          thumb.removeAttribute('src');
+          badge.hidden = true;
+          tags.innerHTML = '';
+          meta.innerHTML = '';
+          desc.textContent = '';
+          return;
+        }
+
+        thumb.src = deck.cover;
+        thumb.alt = deck.title;
+        badge.hidden = !deck.competitive;
+        title.textContent = deck.title;
+        sub.textContent = deck.subtitle;
+        tags.innerHTML =
+          '<span class="tag ' + (deck.competitive ? 'is-comp' : 'is-muted') + '">' + deck.tag + '</span>' +
+          '<span class="tag is-muted"><i class="fas fa-clone" aria-hidden="true"></i>' + deck.cards + ' 張</span>' +
+          '<span class="tag is-muted">' + deck.game + '</span>';
+        meta.innerHTML =
+          '<li><i class="fas fa-book" aria-hidden="true"></i><span>作品 : <strong>' + deck.work + '</strong></span></li>' +
+          '<li><i class="far fa-calendar" aria-hidden="true"></i><span>建立日期 : <strong>' + deck.created + '</strong></span></li>' +
+          '<li><i class="fas fa-chart-line" aria-hidden="true"></i><span>勝率 : <strong>' + deck.winRate + '</strong> (' + deck.winNote + ')</span></li>';
+        desc.textContent = deck.desc;
+        fav.classList.toggle('is-on', !!deck.favorite);
+        fav.setAttribute('aria-pressed', deck.favorite ? 'true' : 'false');
+        fav.innerHTML = deck.favorite
+          ? '<i class="fas fa-star" aria-hidden="true"></i>'
+          : '<i class="far fa-star" aria-hidden="true"></i>';
+      }
+
+      function renderAll() {
+        renderCarousel();
+        renderInfo();
+      }
+
+      function go(delta) {
+        if (!state.list.length) return;
+        state.index = (state.index + delta + state.list.length) % state.list.length;
+        renderAll();
+      }
+
+      document.getElementById('prevBtn').addEventListener('click', function () { go(-1); });
+      document.getElementById('nextBtn').addEventListener('click', function () { go(1); });
+
+      document.getElementById('favToggle').addEventListener('click', function () {
+        var deck = currentDeck();
+        if (!deck) return;
+        deck.favorite = !deck.favorite;
+        showToast(deck.favorite ? '已加入我的最愛' : '已從最愛移除');
+        if (state.filter === 'fav' && !deck.favorite) {
+          renderAll();
+        } else {
+          renderCarousel();
+          renderInfo();
+        }
+      });
+
+      document.getElementById('editBtn').addEventListener('click', function () {
+        var deck = currentDeck();
+        showToast(deck ? ('開啟編輯：' + deck.title) : '沒有可編輯的牌組');
+      });
+      document.getElementById('startBtn').addEventListener('click', function () {
+        var deck = currentDeck();
+        showToast(deck ? ('準備使用「' + deck.title + '」開始對戰') : '請先選擇牌組');
+      });
+      document.getElementById('infoMore').addEventListener('click', function () {
+        var deck = currentDeck();
+        showToast(deck ? ('牌組詳情：' + deck.title) : '');
+      });
+      document.getElementById('menuBtn').addEventListener('click', function () {
+        showToast('選單（示意）');
+      });
+
+      Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (chip) {
+        chip.addEventListener('click', function () {
+          if (chip.hasAttribute('data-filter')) {
+            var f = chip.getAttribute('data-filter');
+            state.filter = state.filter === f && f === 'fav' ? 'all' : f;
+            Array.prototype.forEach.call(document.querySelectorAll('[data-filter]'), function (c) {
+              var on = c.getAttribute('data-filter') === state.filter ||
+                (state.filter === 'all' && c.getAttribute('data-filter') === 'all');
+              if (c.getAttribute('data-filter') === 'fav') on = state.filter === 'fav';
+              if (c.getAttribute('data-filter') === 'all') on = state.filter === 'all';
+              c.classList.toggle('is-active', on);
+              c.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            state.index = 0;
+            renderAll();
+            return;
+          }
+          if (chip.hasAttribute('data-sort')) {
+            state.sort = state.sort === 'newest' ? 'name' : 'newest';
+            chip.innerHTML = state.sort === 'newest'
+              ? '<i class="fas fa-sort" aria-hidden="true"></i>最新建立<i class="fas fa-caret-down chev" aria-hidden="true"></i>'
+              : '<i class="fas fa-sort-alpha-down" aria-hidden="true"></i>名稱 A→Z<i class="fas fa-caret-down chev" aria-hidden="true"></i>';
+            state.index = 0;
+            renderAll();
+          }
+        });
+      });
+
+      var searchInput = document.getElementById('searchInput');
+      var searchTimer = null;
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          state.query = searchInput.value.trim();
+          state.index = 0;
+          renderAll();
+        }, 160);
+      });
+
+      /* Touch / drag swipe — only on track so nav arrows stay clickable */
+      var startX = 0;
+      var startY = 0;
+      var dragging = false;
+      var activePointer = null;
+      track.addEventListener('pointerdown', function (e) {
+        if (e.button && e.button !== 0) return;
+        if (e.target.closest && e.target.closest('.carousel-nav')) return;
+        dragging = true;
+        activePointer = e.pointerId;
+        startX = e.clientX;
+        startY = e.clientY;
+        try { track.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      });
+      track.addEventListener('pointerup', function (e) {
+        if (!dragging || activePointer !== e.pointerId) return;
+        dragging = false;
+        activePointer = null;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          go(dx < 0 ? 1 : -1);
+        }
+      });
+      track.addEventListener('pointercancel', function () {
+        dragging = false;
+        activePointer = null;
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') go(-1);
+        if (e.key === 'ArrowRight') go(1);
+      });
+
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
