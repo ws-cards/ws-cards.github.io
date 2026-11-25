@@ -338,7 +338,9 @@
       position: relative;
       height: 100%;
       min-height: 0;
-      perspective: 1400px;
+      /* 較緊的透視讓圓柱弧面更明顯 */
+      perspective: 820px;
+      perspective-origin: 50% 45%;
       touch-action: pan-y;
       user-select: none;
       /* 留給 active scale／底部光暈，避免壓到圓點與資訊卡 */
@@ -353,6 +355,7 @@
       position: absolute;
       inset: 0.1rem 0 0.45rem;
       transform-style: preserve-3d;
+      transform: translateZ(0);
       cursor: grab;
     }
     .carousel-track:active { cursor: grabbing; }
@@ -376,6 +379,7 @@
       -webkit-appearance: none;
       appearance: none;
       will-change: transform, opacity;
+      backface-visibility: hidden;
     }
     .deck-slide-inner {
       position: relative;
@@ -388,6 +392,8 @@
         0 18px 36px rgba(40, 20, 80, 0.28),
         0 2px 0 rgba(255, 255, 255, 0.25) inset;
       transition: box-shadow 0.45s ease;
+      backface-visibility: hidden;
+      transform: translateZ(0.1px);
     }
     .deck-slide img {
       width: 100%;
@@ -1184,7 +1190,8 @@
         min-height: 320px;
         max-height: 100%;
         padding: 0;
-        perspective: 2000px;
+        perspective: 1180px;
+        perspective-origin: 50% 44%;
       }
       .carousel-track {
         inset: 0;
@@ -2131,8 +2138,19 @@
       }
 
       function carouselMaxSide() {
-        // 設計稿五卡扇形：中心 + 左右各 2
+        // 圓環可見弧：中心 + 左右各 2
         return mqDesk.matches ? 2 : 2;
+      }
+
+      /** 圓柱半徑（px）：依軌道寬度，讓側卡圍成圓環 */
+      function ringRadiusPx() {
+        var w = (track && track.getBoundingClientRect().width) || 320;
+        return mqDesk.matches ? Math.max(320, w * 0.42) : Math.max(220, w * 0.62);
+      }
+
+      /** 每格對應圓心角（度）：約 36–38° 可見牌面又有明顯弧度 */
+      function ringStepDeg() {
+        return mqDesk.matches ? 34 : 38;
       }
 
       function slideTransform(offset) {
@@ -2141,7 +2159,7 @@
         var maxSide = carouselMaxSide();
         if (abs > maxSide + 0.02) {
           return {
-            transform: 'translate(-50%, -50%) scale(0.28)',
+            transform: 'translate(-50%, -50%) translate3d(0,0,-520px) scale(0.18)',
             opacity: 0,
             z: 0,
             filter: 'blur(2px)',
@@ -2149,22 +2167,37 @@
             active: false
           };
         }
-        var xUnit = desk ? 78 : 78;
-        var zUnit = desk ? 150 : 155;
-        var rotUnit = desk ? -28 : -42;
-        var x = offset * xUnit;
-        var z = -abs * zUnit;
-        var rot = offset * rotUnit;
-        var scale;
-        if (abs < 0.001) scale = desk ? 1.16 : 1.03;
-        else if (desk) scale = Math.max(0.72, 0.94 - (abs - 1) * 0.1);
-        else scale = Math.max(0.7, 0.88 - (abs - 1) * 0.07);
-        var opacity = abs < 0.001 ? 1 : Math.max(0.42, 0.96 - abs * 0.16);
-        var blur = abs < 0.15 ? 'none' : ('blur(' + (Math.min(1.2, abs * 0.22)) + 'px)');
+
+        // 圓柱座標：正前方 offset=0，左右沿圓環後退並朝向圓心
+        var step = ringStepDeg();
+        var radius = ringRadiusPx();
+        var angleDeg = offset * step;
+        var angleRad = angleDeg * Math.PI / 180;
+        var x = Math.sin(angleRad) * radius;
+        var z = (Math.cos(angleRad) - 1) * radius;
+        // 整圈略向前推，讓中心卡更貼近鏡頭、側卡弧面更明顯
+        var pop = desk ? 48 : 36;
+        z += pop;
+        var rot = -angleDeg;
+        // 尺寸主要交給透視；只微調中心卡強調感
+        var scale = abs < 0.001
+          ? (desk ? 1.08 : 1.04)
+          : Math.max(desk ? 0.82 : 0.78, 1 - abs * (desk ? 0.08 : 0.07));
+        var opacity = abs < 0.001
+          ? 1
+          : Math.max(0.28, 1 - abs * (desk ? 0.22 : 0.28));
+        var blur = abs < 0.35
+          ? 'none'
+          : ('blur(' + (Math.min(1.4, (abs - 0.35) * 0.55)) + 'px)');
+
         return {
-          transform: 'translate(-50%, -50%) translateX(' + x + '%) translateZ(' + z + 'px) rotateY(' + rot + 'deg) scale(' + scale + ')',
+          transform:
+            'translate(-50%, -50%)' +
+            ' translate3d(' + x.toFixed(2) + 'px, 0, ' + z.toFixed(2) + 'px)' +
+            ' rotateY(' + rot.toFixed(2) + 'deg)' +
+            ' scale(' + scale.toFixed(3) + ')',
           opacity: opacity,
-          z: 20 - Math.round(abs * 10),
+          z: 40 + Math.round(z),
           filter: blur,
           near: abs > 0.35 && abs < 1.45,
           active: abs < 0.45
@@ -2786,6 +2819,14 @@
       } else if (mqDesk.addListener) {
         mqDesk.addListener(function () { renderCarousel(); });
       }
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          renderCarousel({ skipListRefresh: true, transformsOnly: true });
+        }, 120);
+      });
 
       bootstrapDecks();
     })();
