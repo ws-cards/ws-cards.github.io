@@ -992,6 +992,189 @@
       letter-spacing: 0.08em;
     }
     .deck-sheet-unsaved.is-on { display: inline-flex; }
+    .deck-sheet-pick {
+      position: absolute;
+      z-index: 45;
+      display: flex;
+      flex-direction: column;
+      background: rgba(14, 12, 32, 0.98);
+      color: #f4f1fb;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      transform: translateX(104%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.34s var(--ease), opacity 0.24s ease;
+    }
+    .deck-sheet-pick.is-open {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .deck-sheet-pick[hidden] { display: none !important; }
+    .deck-sheet-pick-bar {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.55rem;
+      align-items: center;
+      padding: 0.7rem 0.85rem 0.55rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .deck-sheet-pick-title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+    .deck-sheet-pick-sub {
+      margin: 0.12rem 0 0;
+      font-size: 0.68rem;
+      opacity: 0.62;
+    }
+    .deck-sheet-pick-search-wrap {
+      flex: 0 0 auto;
+      padding: 0.55rem 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .deck-sheet-pick-search {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      padding: 0.65rem 0.8rem;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .deck-sheet-pick-search:focus {
+      border-color: rgba(160, 180, 255, 0.55);
+    }
+    .deck-sheet-pick-status {
+      margin: 0.35rem 0 0;
+      font-size: 0.72rem;
+      color: rgba(220, 230, 255, 0.7);
+      min-height: 1em;
+    }
+    .deck-sheet-pick-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0.65rem 0.75rem 1rem;
+    }
+    .deck-sheet-pick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr));
+      gap: 0.5rem;
+    }
+    .deck-sheet-pick-card {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      gap: 0.28rem;
+    }
+    .deck-sheet-pick-card:focus-visible {
+      outline: 2px solid rgba(160, 180, 255, 0.8);
+      outline-offset: 2px;
+    }
+    .deck-sheet-pick-face {
+      position: relative;
+      aspect-ratio: 63 / 88;
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .deck-sheet-pick-face img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    .deck-sheet-pick-qty {
+      position: absolute;
+      right: 0.25rem;
+      bottom: 0.25rem;
+      min-width: 1.35rem;
+      padding: 0.08rem 0.3rem;
+      border-radius: 999px;
+      background: rgba(12, 10, 28, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .deck-sheet-pick-qty[hidden] { display: none !important; }
+    .deck-sheet-pick-no {
+      margin: 0;
+      font-size: 0.58rem;
+      font-weight: 700;
+      opacity: 0.7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-sheet-pick-name {
+      margin: 0;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .deck-sheet-pick-chooser {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.4rem;
+    }
+    .deck-sheet-pick-chooser button {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      text-align: left;
+      padding: 0.7rem 0.8rem;
+      cursor: pointer;
+      display: grid;
+      gap: 0.15rem;
+    }
+    .deck-sheet-pick-chooser button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .deck-sheet-pick-chooser strong {
+      font-size: 0.86rem;
+    }
+    .deck-sheet-pick-chooser span {
+      font-size: 0.7rem;
+      opacity: 0.65;
+    }
+    @media (max-width: 899.98px) {
+      .deck-sheet-pick {
+        inset: 0;
+      }
+    }
+    @media (min-width: 900px) {
+      .deck-sheet-pick {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(24rem, 42vw);
+        box-shadow: -16px 0 36px rgba(0, 0, 0, 0.28);
+      }
+      .deck-sheet.is-pick-open .deck-sheet-scroll,
+      .deck-sheet.is-pick-open .deck-sheet-dock {
+        padding-right: min(24rem, 42vw);
+      }
+    }
     .deck-sheet-dialog {
       position: absolute;
       inset: 0;
@@ -2453,6 +2636,24 @@
           <span class="btn-start-main">關閉</span>
         </button>
       </div>
+      <aside class="deck-sheet-pick" id="deckSheetPick" hidden aria-hidden="true" aria-label="選牌加卡">
+        <div class="deck-sheet-pick-bar">
+          <button type="button" class="deck-sheet-back" id="deckSheetPickBack" aria-label="關閉選牌">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <div>
+            <p class="deck-sheet-pick-title">選牌加卡</p>
+            <p class="deck-sheet-pick-sub" id="deckSheetPickSub">搜尋卡號或卡名</p>
+          </div>
+        </div>
+        <div class="deck-sheet-pick-search-wrap">
+          <input id="deckSheetPickSearch" class="deck-sheet-pick-search" type="search" placeholder="卡號／卡包／卡名，例：BD/W54-001" autocomplete="off" enterkeyhint="search">
+          <p class="deck-sheet-pick-status" id="deckSheetPickStatus" role="status"></p>
+        </div>
+        <div class="deck-sheet-pick-scroll" id="deckSheetPickScroll">
+          <div class="deck-sheet-pick-grid" id="deckSheetPickGrid"></div>
+        </div>
+      </aside>
       <div class="deck-sheet-dialog" id="deckSheetDialog" hidden aria-hidden="true">
         <div class="deck-sheet-dialog-card" role="dialog" aria-modal="true" aria-labelledby="deckSheetDialogTitle">
           <h3 id="deckSheetDialogTitle">尚未儲存</h3>
@@ -3372,6 +3573,7 @@
       var sheetEl = document.getElementById('deckSheet');
       var sheetScrollEl = document.getElementById('deckSheetScroll');
       var SHEET_DRAFT_PREFIX = 'wsDeckSheetDraft:';
+      var CARD_TITLE_URL = 'https://storage.googleapis.com/divine-vehicle-292507.appspot.com/json/cardTitle.json';
       var sheetState = {
         open: false,
         mode: 'view', /* view | edit */
@@ -3384,7 +3586,21 @@
         dirty: false,
         unsavedHintTimer: null,
         leavePromptOpen: false,
-        suppressDraftPersist: false
+        suppressDraftPersist: false,
+        pickOpen: false
+      };
+      var sheetPickState = {
+        query: '',
+        status: '',
+        mode: 'idle', /* idle | chooser | cards | loading | error */
+        results: [],
+        products: [],
+        activeSet: '',
+        catalog: [],
+        token: 0,
+        searchTimer: null,
+        titleMap: null,
+        titlePromise: null
       };
 
       function isSheetLevelFilter(value) {
@@ -3596,6 +3812,417 @@
         });
         markSheetDraftChanged();
         renderDeckSheet();
+        syncSheetPickQtyBadges();
+      }
+
+      function draftQtyMap() {
+        var map = Object.create(null);
+        (sheetState.draftCards || []).forEach(function (c) {
+          var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
+          if (!key) return;
+          map[key] = parseInt(c.qty, 10) || 0;
+        });
+        return map;
+      }
+
+      function ensureCardTitleMap() {
+        if (sheetPickState.titleMap) return Promise.resolve(sheetPickState.titleMap);
+        if (sheetPickState.titlePromise) return sheetPickState.titlePromise;
+        sheetPickState.titlePromise = fetch(CARD_TITLE_URL)
+          .then(function (r) {
+            if (!r.ok) throw new Error('title');
+            return r.json();
+          })
+          .catch(function () {
+            return fetch('cardTitle.json').then(function (r) {
+              if (!r.ok) throw new Error('title');
+              return r.json();
+            });
+          })
+          .then(function (map) {
+            sheetPickState.titleMap = map && typeof map === 'object' ? map : {};
+            return sheetPickState.titleMap;
+          })
+          .catch(function () {
+            sheetPickState.titleMap = {};
+            return sheetPickState.titleMap;
+          });
+        return sheetPickState.titlePromise;
+      }
+
+      function titleCodeFromQuery(q) {
+        var s = normalizeText(q).replace(/\\/g, '/');
+        var card = s.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)-([A-Za-z0-9]+)$/i);
+        if (card) return { titleCode: card[1] + '_' + card[2], cardNo: card[1] + '/' + card[2] + '-' + card[3], setCode: card[1] + '/' + card[2] };
+        var setSlash = s.match(/^([A-Za-z0-9]+)\/([A-Za-z0-9]+)$/i);
+        if (setSlash) return { titleCode: setSlash[1] + '_' + setSlash[2], setCode: setSlash[1] + '/' + setSlash[2] };
+        var setUnder = s.match(/^([A-Za-z0-9]+)_([A-Za-z0-9]+)$/i);
+        if (setUnder) return { titleCode: setUnder[1] + '_' + setUnder[2], setCode: setUnder[1] + '/' + setUnder[2] };
+        return null;
+      }
+
+      function setCardsFromMap(byId) {
+        if (!byId || typeof byId.forEach !== 'function') return [];
+        var list = [];
+        byId.forEach(function (raw, id) {
+          if (!id || !raw) return;
+          var meta = null;
+          if (window.WsDecklog && typeof window.WsDecklog.enrichCards === 'function') {
+            /* normalize via local fields */
+          }
+          var kindRaw = raw.kind != null ? raw.kind : raw.cardkind;
+          var kindLabel = '';
+          if (kindRaw === 0 || kindRaw === '0') kindLabel = '角色';
+          else if (kindRaw === 1 || kindRaw === '1') kindLabel = '事件';
+          else if (kindRaw === 2 || kindRaw === '2') kindLabel = 'CX';
+          else kindLabel = String(raw.kindLabel || kindRaw || '');
+          var lv = raw.level != null ? Number(raw.level) : (raw.cardlevel != null ? Number(raw.cardlevel) : null);
+          list.push({
+            cardNumber: String(id),
+            cardName: String(raw.name || raw.cardname || id),
+            color: String(raw.color || raw.cardcolor || ''),
+            level: isFinite(lv) ? lv : null,
+            kind: kindLabel,
+            rarity: String(raw.rarity || raw.cardrare || '')
+          });
+        });
+        list.sort(function (a, b) {
+          return String(a.cardNumber).localeCompare(String(b.cardNumber));
+        });
+        return list;
+      }
+
+      function loadPickSetCatalog(titleCode) {
+        if (!(window.WsDecklog && typeof window.WsDecklog.loadSetJson === 'function')) {
+          return Promise.reject(new Error('無資料或是網路存取有誤'));
+        }
+        return window.WsDecklog.loadSetJson(titleCode).then(function (byId) {
+          if (!byId) throw new Error('無資料或是網路存取有誤');
+          return setCardsFromMap(byId);
+        });
+      }
+
+      function filterPickCatalog(catalog, query) {
+        var q = normalizeText(query).toLowerCase();
+        if (!q) return catalog.slice();
+        var parsed = titleCodeFromQuery(query);
+        if (parsed && parsed.cardNo) {
+          var want = parsed.cardNo.toLowerCase();
+          return catalog.filter(function (c) {
+            return String(c.cardNumber).toLowerCase() === want ||
+              String(c.cardNumber).toLowerCase().indexOf(want) === 0;
+          });
+        }
+        return catalog.filter(function (c) {
+          return [c.cardNumber, c.cardName, c.rarity].join(' ').toLowerCase().indexOf(q) >= 0;
+        });
+      }
+
+      function findTitleProducts(query) {
+        var q = normalizeText(query).toLowerCase();
+        if (!q || !sheetPickState.titleMap) return [];
+        var rows = [];
+        Object.keys(sheetPickState.titleMap).forEach(function (code) {
+          var label = String(sheetPickState.titleMap[code] || '');
+          var blob = (code + ' ' + label).toLowerCase();
+          if (blob.indexOf(q) < 0) return;
+          rows.push({ code: code, label: label || code });
+        });
+        rows.sort(function (a, b) {
+          return a.code.length - b.code.length || a.code.localeCompare(b.code);
+        });
+        return rows.slice(0, 40);
+      }
+
+      function setPickStatus(text) {
+        sheetPickState.status = text || '';
+        var el = document.getElementById('deckSheetPickStatus');
+        if (el) el.textContent = sheetPickState.status;
+      }
+
+      function syncSheetPickQtyBadges() {
+        var grid = document.getElementById('deckSheetPickGrid');
+        if (!grid || !sheetState.pickOpen) return;
+        var qtyMap = draftQtyMap();
+        Array.prototype.forEach.call(grid.querySelectorAll('[data-pick-card]'), function (btn) {
+          var no = btn.getAttribute('data-pick-card');
+          var key = normalizeText(no).replace(/\\/g, '/');
+          var qty = qtyMap[key] || 0;
+          var badge = btn.querySelector('.deck-sheet-pick-qty');
+          if (!badge) return;
+          if (qty > 0) {
+            badge.hidden = false;
+            badge.textContent = '×' + qty;
+          } else {
+            badge.hidden = true;
+          }
+        });
+      }
+
+      function renderSheetPickGrid() {
+        var grid = document.getElementById('deckSheetPickGrid');
+        var sub = document.getElementById('deckSheetPickSub');
+        if (!grid) return;
+        if (sheetPickState.mode === 'chooser') {
+          if (sub) sub.textContent = '選擇卡包以載入卡表';
+          if (!sheetPickState.products.length) {
+            grid.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">無資料或是網路存取有誤</div>';
+            return;
+          }
+          var chooser = '<ul class="deck-sheet-pick-chooser">';
+          sheetPickState.products.forEach(function (p) {
+            chooser += '<li><button type="button" data-pick-product="' + escapeHtml(p.code) + '">' +
+              '<strong>' + escapeHtml(p.code) + '</strong>' +
+              '<span>' + escapeHtml(p.label) + '</span></button></li>';
+          });
+          chooser += '</ul>';
+          grid.innerHTML = chooser;
+          Array.prototype.forEach.call(grid.querySelectorAll('[data-pick-product]'), function (btn) {
+            btn.addEventListener('click', function () {
+              openPickProduct(btn.getAttribute('data-pick-product'), sheetPickState.query);
+            });
+          });
+          return;
+        }
+
+        if (sub) {
+          sub.textContent = sheetPickState.activeSet
+            ? ('目前：' + sheetPickState.activeSet)
+            : '搜尋卡號或卡名';
+        }
+        var list = sheetPickState.results || [];
+        if (!list.length) {
+          grid.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">' +
+            (sheetPickState.mode === 'error'
+              ? '無資料或是網路存取有誤'
+              : (sheetPickState.query ? '沒有符合的卡片' : '輸入卡號、卡包代碼或卡名開始搜尋')) +
+            '</div>';
+          return;
+        }
+        var qtyMap = draftQtyMap();
+        grid.innerHTML = list.map(function (c) {
+          var no = c.cardNumber;
+          var key = normalizeText(no).replace(/\\/g, '/');
+          var qty = qtyMap[key] || 0;
+          var urls = buildCardImageUrls(no);
+          return '<button type="button" class="deck-sheet-pick-card" data-pick-card="' + escapeHtml(no) + '"' +
+            ' aria-label="加入 ' + escapeHtml(c.cardName || no) + '">' +
+            '<span class="deck-sheet-pick-face">' +
+            (urls.primary
+              ? ('<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+                (urls.fallback ? (' data-fallback="' + escapeHtml(urls.fallback) + '"') : '') + '>')
+              : '') +
+            '<span class="deck-sheet-pick-qty"' + (qty ? '' : ' hidden') + '>×' + qty + '</span></span>' +
+            '<p class="deck-sheet-pick-no">' + escapeHtml(no) + '</p>' +
+            '<p class="deck-sheet-pick-name">' + escapeHtml(c.cardName || '') + '</p></button>';
+        }).join('');
+        Array.prototype.forEach.call(grid.querySelectorAll('img'), function (img) {
+          bindImgFallback(img, img.getAttribute('data-fallback') || '');
+        });
+        Array.prototype.forEach.call(grid.querySelectorAll('[data-pick-card]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var no = btn.getAttribute('data-pick-card');
+            var hit = null;
+            for (var i = 0; i < list.length; i++) {
+              if (list[i].cardNumber === no) { hit = list[i]; break; }
+            }
+            addCardToSheetDraft(hit || { cardNumber: no, cardName: no });
+          });
+        });
+      }
+
+      function rememberPickMeta(card) {
+        if (!card || !card.cardNumber) return;
+        var key = normalizeText(card.cardNumber).replace(/\\/g, '/');
+        sheetState.metaCache[key] = {
+          level: card.level != null && isFinite(card.level) ? card.level : null,
+          color: normalizeText(card.color),
+          name: normalizeText(card.cardName),
+          kind: normalizeText(card.kind)
+        };
+      }
+
+      function addCardToSheetDraft(card) {
+        if (sheetState.mode !== 'edit') return;
+        if (!Array.isArray(sheetState.draftCards)) {
+          var raw = findRawDeckById(sheetState.deckId);
+          beginSheetDraft(raw, null);
+        }
+        var no = normalizeText(card && card.cardNumber);
+        if (!no) return;
+        var key = no.replace(/\\/g, '/');
+        var name = normalizeText(card.cardName) || no;
+        var found = false;
+        var crossedLimit = false;
+        for (var i = 0; i < sheetState.draftCards.length; i++) {
+          var cur = normalizeText(sheetState.draftCards[i].cardNumber).replace(/\\/g, '/');
+          if (cur !== key) continue;
+          var prev = sheetState.draftCards[i].qty || 1;
+          var next = prev + 1;
+          if (prev <= 4 && next > 4) crossedLimit = true;
+          sheetState.draftCards[i].qty = next;
+          if (!sheetState.draftCards[i].cardName) sheetState.draftCards[i].cardName = name;
+          found = true;
+          break;
+        }
+        if (!found) {
+          sheetState.draftCards.push({ cardNumber: no, cardName: name, qty: 1 });
+        }
+        rememberPickMeta(card);
+        markSheetDraftChanged();
+        renderDeckSheet();
+        syncSheetPickQtyBadges();
+        showToast(crossedLimit
+          ? ('已加入 ' + name + '（已超過常見上限 4 張）')
+          : ('已加入 ' + name));
+      }
+
+      function openPickProduct(productCode, nameFilter) {
+        var parsed = titleCodeFromQuery(productCode) || {
+          titleCode: String(productCode || '').replace(/\//g, '_'),
+          setCode: String(productCode || '')
+        };
+        var token = ++sheetPickState.token;
+        sheetPickState.mode = 'loading';
+        sheetPickState.activeSet = parsed.setCode || productCode;
+        setPickStatus('正在載入卡表…');
+        renderSheetPickGrid();
+        loadPickSetCatalog(parsed.titleCode).then(function (catalog) {
+          if (token !== sheetPickState.token) return;
+          sheetPickState.catalog = catalog;
+          sheetPickState.mode = 'cards';
+          sheetPickState.results = filterPickCatalog(catalog, nameFilter || '');
+          setPickStatus(sheetPickState.results.length
+            ? ('找到 ' + sheetPickState.results.length + ' 張')
+            : '沒有符合的卡片');
+          renderSheetPickGrid();
+        }).catch(function () {
+          if (token !== sheetPickState.token) return;
+          sheetPickState.mode = 'error';
+          sheetPickState.results = [];
+          sheetPickState.catalog = [];
+          setPickStatus('無資料或是網路存取有誤');
+          renderSheetPickGrid();
+        });
+      }
+
+      function runSheetPickSearch(query) {
+        var q = normalizeText(query);
+        sheetPickState.query = q;
+        var token = ++sheetPickState.token;
+        if (!q) {
+          sheetPickState.mode = sheetPickState.catalog.length ? 'cards' : 'idle';
+          sheetPickState.results = sheetPickState.catalog.slice();
+          sheetPickState.products = [];
+          setPickStatus(sheetPickState.catalog.length ? ('共 ' + sheetPickState.catalog.length + ' 張') : '');
+          renderSheetPickGrid();
+          return;
+        }
+
+        var parsed = titleCodeFromQuery(q);
+        if (parsed && parsed.titleCode) {
+          sheetPickState.mode = 'loading';
+          setPickStatus('正在載入卡表…');
+          renderSheetPickGrid();
+          loadPickSetCatalog(parsed.titleCode).then(function (catalog) {
+            if (token !== sheetPickState.token) return;
+            sheetPickState.catalog = catalog;
+            sheetPickState.activeSet = parsed.setCode || parsed.titleCode;
+            sheetPickState.mode = 'cards';
+            sheetPickState.results = filterPickCatalog(catalog, parsed.cardNo || '');
+            setPickStatus(sheetPickState.results.length
+              ? ('找到 ' + sheetPickState.results.length + ' 張')
+              : '沒有符合的卡片');
+            renderSheetPickGrid();
+          }).catch(function () {
+            if (token !== sheetPickState.token) return;
+            sheetPickState.mode = 'error';
+            sheetPickState.results = [];
+            setPickStatus('無資料或是網路存取有誤');
+            renderSheetPickGrid();
+          });
+          return;
+        }
+
+        if (sheetPickState.catalog.length) {
+          sheetPickState.mode = 'cards';
+          sheetPickState.results = filterPickCatalog(sheetPickState.catalog, q);
+          setPickStatus(sheetPickState.results.length
+            ? ('找到 ' + sheetPickState.results.length + ' 張')
+            : '沒有符合的卡片');
+          renderSheetPickGrid();
+          return;
+        }
+
+        sheetPickState.mode = 'loading';
+        setPickStatus('正在搜尋…');
+        renderSheetPickGrid();
+        ensureCardTitleMap().then(function () {
+          if (token !== sheetPickState.token) return;
+          var products = findTitleProducts(q);
+          if (!products.length) {
+            sheetPickState.mode = 'error';
+            sheetPickState.products = [];
+            sheetPickState.results = [];
+            setPickStatus('無資料或是網路存取有誤');
+            renderSheetPickGrid();
+            return;
+          }
+          if (products.length === 1) {
+            openPickProduct(products[0].code, q);
+            return;
+          }
+          sheetPickState.mode = 'chooser';
+          sheetPickState.products = products;
+          sheetPickState.results = [];
+          setPickStatus('找到 ' + products.length + ' 個卡包，請選擇');
+          renderSheetPickGrid();
+        });
+      }
+
+      function scheduleSheetPickSearch(query) {
+        if (sheetPickState.searchTimer) clearTimeout(sheetPickState.searchTimer);
+        sheetPickState.searchTimer = setTimeout(function () {
+          sheetPickState.searchTimer = null;
+          runSheetPickSearch(query);
+        }, 280);
+      }
+
+      function openSheetPick() {
+        if (sheetState.mode !== 'edit') return;
+        var pick = document.getElementById('deckSheetPick');
+        var search = document.getElementById('deckSheetPickSearch');
+        if (!pick) return;
+        sheetState.pickOpen = true;
+        pick.hidden = false;
+        pick.setAttribute('aria-hidden', 'false');
+        sheetEl.classList.add('is-pick-open');
+        requestAnimationFrame(function () {
+          pick.classList.add('is-open');
+        });
+        if (!sheetPickState.catalog.length && !sheetPickState.query) {
+          sheetPickState.mode = 'idle';
+          sheetPickState.results = [];
+          setPickStatus('輸入卡號（例 BD/W54-001）或卡包／卡名');
+          renderSheetPickGrid();
+        } else {
+          renderSheetPickGrid();
+        }
+        setTimeout(function () {
+          if (search) search.focus();
+        }, 220);
+      }
+
+      function closeSheetPick() {
+        var pick = document.getElementById('deckSheetPick');
+        if (!pick) return;
+        sheetState.pickOpen = false;
+        pick.classList.remove('is-open');
+        sheetEl.classList.remove('is-pick-open');
+        pick.setAttribute('aria-hidden', 'true');
+        setTimeout(function () {
+          if (!sheetState.pickOpen) pick.hidden = true;
+        }, 320);
       }
 
       function closeSheetDialog() {
@@ -3634,6 +4261,7 @@
 
       function discardSheetDraftAndView() {
         clearUnsavedHintTimer();
+        closeSheetPick();
         clearSheetDraft(sheetState.deckId);
         sheetState.draftCards = null;
         sheetState.draftMeta = null;
@@ -4186,7 +4814,7 @@
         countEl.textContent = cards.length ? ('（' + cards.length + ' 種／' + total + ' 張）') : '';
         if (!cards.length) {
           host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">' +
-            (isEdit ? '尚未加入卡片（可先儲存名稱，加卡功能之後會接上）' : '尚未加入卡片') +
+            (isEdit ? '尚未加入卡片（按底部「選牌」搜尋加入）' : '尚未加入卡片') +
             '</div>';
           return;
         }
@@ -4487,10 +5115,12 @@
         sheetState.levelFilter = null;
         sheetState.dirty = false;
         clearUnsavedHintTimer();
+        closeSheetPick();
         closeSheetDialog();
         setSheetMoreOpen(false);
         syncSheetUnsavedUi();
         sheetEl.classList.remove('is-open');
+        sheetEl.classList.remove('is-pick-open');
         sheetEl.setAttribute('aria-hidden', 'true');
         document.getElementById('stage').classList.remove('is-sheet-open');
         setTimeout(function () {
@@ -4500,6 +5130,7 @@
 
       function leaveEditToView() {
         clearUnsavedHintTimer();
+        closeSheetPick();
         sheetState.mode = 'view';
         sheetState.draftCards = null;
         sheetState.draftMeta = null;
@@ -4512,6 +5143,10 @@
         if (!sheetState.open) return;
         if (sheetState.leavePromptOpen) {
           closeSheetDialog();
+          return;
+        }
+        if (sheetState.pickOpen) {
+          closeSheetPick();
           return;
         }
         if (sheetState.mode === 'edit') {
@@ -4584,6 +5219,7 @@
           sheetState.draftMeta = null;
           sheetState.dirty = false;
           clearUnsavedHintTimer();
+          closeSheetPick();
           showToast('已儲存牌組');
           sheetState.mode = 'view';
           renderDeckSheet();
@@ -4952,10 +5588,23 @@
           ]
         });
       });
+      document.getElementById('deckSheetPickBack').addEventListener('click', function () {
+        closeSheetPick();
+      });
+      document.getElementById('deckSheetPickSearch').addEventListener('input', function (e) {
+        scheduleSheetPickSearch(e.target.value);
+      });
+      document.getElementById('deckSheetPickSearch').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (sheetPickState.searchTimer) clearTimeout(sheetPickState.searchTimer);
+          runSheetPickSearch(e.target.value);
+        }
+      });
       document.getElementById('deckSheetSecondary').addEventListener('click', function () {
         if (sheetState.mode === 'edit') {
           setSheetMoreOpen(false);
-          showToast('選牌加卡即將推出');
+          openSheetPick();
           return;
         }
         setSheetMode('edit');
@@ -5131,6 +5780,10 @@
             var moreMenu = document.getElementById('deckSheetMoreMenu');
             if (moreMenu && !moreMenu.hidden) {
               setSheetMoreOpen(false);
+              return;
+            }
+            if (sheetState.pickOpen) {
+              closeSheetPick();
               return;
             }
             onSheetBack();
