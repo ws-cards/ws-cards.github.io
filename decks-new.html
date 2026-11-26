@@ -871,14 +871,26 @@
 
     /* —— Inline deck workspace（檢視／編成，不跳轉 decks.html） —— */
     .deck-sheet {
+      --sheet-ink: #2a2f55;
+      --sheet-ink-soft: rgba(42, 47, 85, 0.72);
+      --sheet-muted: rgba(42, 47, 85, 0.55);
+      --sheet-panel: rgba(255, 255, 255, 0.58);
+      --sheet-panel-strong: rgba(255, 255, 255, 0.72);
+      --sheet-panel-border: rgba(255, 255, 255, 0.7);
+      --sheet-line: rgba(120, 130, 190, 0.22);
+      --sheet-deep: rgba(55, 48, 110, 0.78);
+      --sheet-deep-soft: rgba(70, 60, 140, 0.42);
       position: absolute;
       inset: 0;
       z-index: 30;
       display: flex;
       flex-direction: column;
       background:
-        linear-gradient(180deg, rgba(18, 14, 36, 0.92) 0%, rgba(24, 20, 48, 0.96) 100%);
-      color: #f4f1fb;
+        radial-gradient(ellipse 75% 45% at 12% 8%, rgba(255, 255, 255, 0.7), transparent 55%),
+        radial-gradient(ellipse 55% 40% at 92% 14%, rgba(186, 170, 255, 0.42), transparent 52%),
+        radial-gradient(ellipse 60% 50% at 70% 88%, rgba(150, 180, 255, 0.32), transparent 55%),
+        linear-gradient(165deg, #ebe4f8 0%, #d9cef2 38%, #cdd8f6 72%, #d6c8ee 100%);
+      color: var(--sheet-ink);
       transform: translateY(108%);
       opacity: 0;
       pointer-events: none;
@@ -902,16 +914,17 @@
         max(0.55rem, env(safe-area-inset-top, 0px))
         0.85rem
         0.55rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(12, 10, 28, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
     }
     .deck-sheet-back,
     .deck-sheet-mode-btn,
     .deck-sheet-more-btn {
       border: 0;
-      background: rgba(255, 255, 255, 0.1);
+      background: linear-gradient(160deg, #3d356e 0%, #2b2550 100%);
       color: #fff;
       width: 2.35rem;
       height: 2.35rem;
@@ -920,10 +933,13 @@
       place-items: center;
       cursor: pointer;
       font-size: 0.95rem;
+      box-shadow: 0 6px 14px rgba(45, 35, 100, 0.28);
     }
     .deck-sheet-back:hover,
     .deck-sheet-mode-btn:hover,
-    .deck-sheet-more-btn:hover { background: rgba(255, 255, 255, 0.18); }
+    .deck-sheet-more-btn:hover {
+      background: linear-gradient(160deg, #4a4180 0%, #342c60 100%);
+    }
     .deck-sheet-bar-actions {
       display: flex;
       align-items: center;
@@ -940,19 +956,20 @@
       min-width: 10.5rem;
       padding: 0.35rem;
       border-radius: 12px;
-      background: rgba(18, 16, 36, 0.98);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(160, 170, 220, 0.35);
+      box-shadow: 0 12px 28px rgba(60, 50, 120, 0.22);
       z-index: 50;
       display: grid;
       gap: 0.2rem;
       pointer-events: auto;
+      color: var(--sheet-ink);
     }
     .deck-sheet-more-menu[hidden] { display: none !important; }
     .deck-sheet-more-item {
       border: 0;
       background: transparent;
-      color: #fff;
+      color: var(--sheet-ink);
       text-align: left;
       padding: 0.55rem 0.7rem;
       border-radius: 8px;
@@ -963,7 +980,7 @@
       align-items: center;
       gap: 0.45rem;
     }
-    .deck-sheet-more-item:hover { background: rgba(255, 255, 255, 0.1); }
+    .deck-sheet-more-item:hover { background: rgba(120, 130, 200, 0.12); }
     .deck-sheet-more-item:disabled {
       opacity: 0.42;
       cursor: not-allowed;
@@ -1244,7 +1261,7 @@
       font-weight: 700;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      opacity: 0.62;
+      color: var(--sheet-muted);
     }
     .deck-sheet-title {
       margin: 0.1rem 0 0;
@@ -1253,6 +1270,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--sheet-ink);
     }
     .deck-sheet-scroll {
       flex: 1 1 auto;
@@ -1282,12 +1300,13 @@
       align-items: center;
       padding: 0.18rem 0.55rem;
       border-radius: 999px;
-      background: rgba(240, 193, 75, 0.22);
-      border: 1px solid rgba(240, 193, 75, 0.4);
-      color: #ffe7a8;
+      background: linear-gradient(135deg, #f0c14b, #e8a82e);
+      border: 1px solid rgba(200, 150, 40, 0.35);
+      color: #3a2a08;
       font-size: 0.68rem;
       font-weight: 800;
       letter-spacing: 0.04em;
+      box-shadow: 0 4px 10px rgba(200, 150, 40, 0.28);
     }
     .deck-sheet-comp-badge[hidden] { display: none !important; }
     .deck-sheet-inline-stats {
@@ -1297,12 +1316,12 @@
       margin: 0 0 0.55rem;
       font-size: 0.82rem;
       font-weight: 700;
-      opacity: 0.88;
+      color: var(--sheet-ink-soft);
     }
     .deck-sheet-inline-stats strong {
       font-family: var(--font-display);
       font-weight: 800;
-      color: #fff;
+      color: var(--sheet-ink);
     }
     .deck-sheet-check {
       display: none;
@@ -1319,11 +1338,11 @@
       display: inline-flex;
       align-items: center;
       gap: 0.28rem;
-      padding: 0.28rem 0.65rem;
-      border-radius: 10px;
-      background: rgba(214, 220, 255, 0.82);
-      border: 1px solid rgba(148, 163, 220, 0.45);
-      color: #2a2f55;
+      padding: 0.28rem 0.7rem;
+      border-radius: 999px;
+      background: #eef2ff;
+      border: 1px solid rgba(170, 180, 220, 0.55);
+      color: #374151;
       font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.02em;
@@ -1341,10 +1360,11 @@
       gap: 0.65rem;
       min-height: 3.6rem;
       padding: 0.7rem 4.6rem 0.7rem 0.75rem;
-      border-radius: 14px;
-      background: linear-gradient(105deg, #3a2a78 0%, #2a1f5c 55%, #24184f 100%);
-      border: 1px solid rgba(196, 181, 253, 0.28);
-      box-shadow: 0 10px 24px rgba(28, 18, 70, 0.35);
+      border-radius: 12px;
+      border-top-left-radius: 4px;
+      background: linear-gradient(105deg, #353770 0%, #313366 55%, #2a2d5c 100%);
+      border: 1px solid rgba(120, 130, 190, 0.35);
+      box-shadow: 0 10px 24px rgba(40, 40, 90, 0.28);
       overflow: visible;
     }
     .deck-sheet-check-banner.is-fail {
@@ -1358,10 +1378,10 @@
       border-radius: 999px;
       display: grid;
       place-items: center;
-      background: #22c55e;
+      background: #4ade80;
       color: #fff;
       font-size: 0.85rem;
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.28);
     }
     .deck-sheet-check-banner.is-fail .deck-sheet-check-icon {
       background: #ef4444;
@@ -1373,7 +1393,7 @@
       gap: 0.12rem;
     }
     .deck-sheet-check-copy strong {
-      color: #fde68a;
+      color: #facc15;
       font-size: 0.86rem;
       font-weight: 800;
       line-height: 1.25;
@@ -1407,30 +1427,32 @@
       margin-top: 0.85rem;
       padding: 0.85rem 0.9rem;
       border-radius: 14px;
-      background: rgba(40, 28, 78, 0.55);
-      border: 1px solid rgba(196, 181, 253, 0.22);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: linear-gradient(160deg, rgba(70, 55, 130, 0.72), rgba(50, 40, 105, 0.78));
+      border: 1px solid rgba(200, 190, 255, 0.28);
+      color: #f4f1fb;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 24px rgba(40, 30, 90, 0.2);
     }
     .deck-sheet-intro-head {
       display: flex;
       align-items: center;
       gap: 0.45rem;
       margin-bottom: 0.45rem;
-      color: #e9e2ff;
+      color: #fff;
       font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.04em;
     }
     .deck-sheet-intro-head i {
       color: #f0c14b;
-      opacity: 0.9;
+      opacity: 0.95;
     }
     .deck-sheet-intro p {
       margin: 0;
       font-size: 0.78rem;
       line-height: 1.55;
-      opacity: 0.82;
+      color: rgba(244, 241, 251, 0.88);
       display: -webkit-box;
       -webkit-line-clamp: 5;
       -webkit-box-orient: vertical;
@@ -1461,8 +1483,10 @@
       aspect-ratio: 63 / 88;
       border-radius: 12px;
       overflow: hidden;
-      background: #120c24;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      background: #d8d0f0;
+      box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.85),
+        0 12px 28px rgba(60, 50, 120, 0.22);
     }
     .deck-sheet-cover img {
       width: 100%;
@@ -1475,11 +1499,12 @@
       font-size: clamp(1.2rem, 4.6vw, 1.4rem);
       font-weight: 800;
       line-height: 1.25;
+      color: var(--sheet-ink);
     }
     .deck-sheet-meta p {
       margin: 0 0 0.55rem;
       font-size: clamp(0.8rem, 3.1vw, 0.9rem);
-      opacity: 0.78;
+      color: var(--sheet-ink-soft);
       line-height: 1.5;
     }
     .deck-sheet-chips {
@@ -1492,15 +1517,17 @@
       align-items: center;
       padding: 0.28rem 0.65rem;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(160, 170, 220, 0.4);
+      color: var(--sheet-ink);
       font-size: 0.74rem;
       font-weight: 700;
+      box-shadow: 0 2px 8px rgba(70, 60, 130, 0.06);
     }
     .deck-sheet-chip.is-accent {
-      background: rgba(240, 193, 75, 0.2);
-      border-color: rgba(240, 193, 75, 0.35);
-      color: #ffe7a8;
+      background: rgba(240, 193, 75, 0.28);
+      border-color: rgba(200, 150, 40, 0.4);
+      color: #6a4a10;
     }
     .deck-sheet-edit-fields {
       display: none;
@@ -1517,19 +1544,20 @@
       font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.06em;
-      opacity: 0.7;
+      color: var(--sheet-muted);
     }
     .deck-sheet-field input,
     .deck-sheet-field textarea {
       width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
+      border: 1px solid rgba(140, 150, 210, 0.35);
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--sheet-ink);
       border-radius: 12px;
       padding: 0.65rem 0.8rem;
       font: inherit;
       font-size: 0.92rem;
       resize: vertical;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
     }
     .deck-sheet-field textarea { min-height: 3.6rem; }
     .deck-sheet-section {
@@ -1541,7 +1569,7 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      opacity: 0.72;
+      color: var(--sheet-muted);
     }
     .deck-sheet-section-head h4 {
       margin: 0;
@@ -1554,19 +1582,23 @@
     .deck-sheet-stat {
       padding: 0.7rem 0.55rem;
       border-radius: 14px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--sheet-panel);
+      border: 1px solid var(--sheet-panel-border);
       text-align: center;
+      box-shadow: 0 8px 18px rgba(70, 60, 130, 0.08);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .deck-sheet-stat strong {
       display: block;
       font-family: var(--font-display);
       font-size: clamp(1.15rem, 4.2vw, 1.35rem);
       font-weight: 800;
+      color: var(--sheet-ink);
     }
     .deck-sheet-stat span {
       font-size: 0.68rem;
-      opacity: 0.65;
+      color: var(--sheet-muted);
       font-weight: 700;
     }
     .deck-sheet-analyze {
@@ -1580,9 +1612,12 @@
       gap: 0.5rem;
       padding: 0.75rem 0.65rem 0.8rem;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--sheet-panel);
+      border: 1px solid var(--sheet-panel-border);
       min-width: 0;
+      box-shadow: 0 10px 22px rgba(70, 60, 130, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .deck-sheet-chart-title {
       margin: 0;
@@ -1590,7 +1625,7 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      opacity: 0.72;
+      color: var(--sheet-muted);
       text-align: center;
     }
     .deck-sheet-pie {
@@ -1607,7 +1642,7 @@
       width: 100%;
       height: 100%;
       display: block;
-      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
+      filter: drop-shadow(0 6px 14px rgba(70, 60, 130, 0.18));
     }
     .deck-sheet-pie-center {
       position: absolute;
@@ -1653,8 +1688,9 @@
       gap: 0.28rem;
       padding: 0.18rem 0.42rem;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(160, 170, 220, 0.4);
+      color: var(--sheet-ink);
       font-size: 0.62rem;
       font-weight: 700;
       opacity: 0;
@@ -1697,14 +1733,14 @@
       transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
     }
     .deck-sheet-vbar-col:hover {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(120, 140, 220, 0.1);
     }
     .deck-sheet-vbar-col:focus-visible {
-      outline: 2px solid rgba(160, 180, 255, 0.75);
+      outline: 2px solid rgba(110, 130, 220, 0.65);
       outline-offset: 1px;
     }
     .deck-sheet-vbar-col.is-selected {
-      background: rgba(160, 180, 255, 0.16);
+      background: rgba(130, 150, 230, 0.16);
     }
     .deck-sheet-vbars.has-selection .deck-sheet-vbar-col:not(.is-selected) {
       opacity: 0.42;
@@ -1728,7 +1764,7 @@
       height: 100%;
       min-height: 4.8rem;
       border-radius: 8px 8px 4px 4px;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(170, 185, 230, 0.28);
       display: flex;
       align-items: flex-end;
       overflow: hidden;
@@ -1736,7 +1772,7 @@
     .deck-sheet-vbar-fill {
       width: 100%;
       border-radius: inherit;
-      background: linear-gradient(180deg, #9b8cff 0%, #6aa8ff 100%);
+      background: linear-gradient(180deg, #a8c4ff 0%, #7aa8ff 100%);
       height: 0;
       transform-origin: center bottom;
       transition: height 0.55s var(--ease);
@@ -1809,8 +1845,8 @@
       gap: 0.55rem;
       margin: 0.75rem 0 0.2rem;
       padding: 0.48rem 0.05rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.16);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      border-top: 1px solid var(--sheet-line);
+      border-bottom: 1px solid var(--sheet-line);
     }
     .deck-sheet-level-head:first-child {
       margin-top: 0.1rem;
@@ -1819,23 +1855,25 @@
       font-size: 0.82rem;
       font-weight: 800;
       letter-spacing: 0.04em;
-      color: rgba(244, 241, 251, 0.92);
+      color: var(--sheet-ink);
     }
     .deck-sheet-level-head-meta {
       font-size: 0.7rem;
       font-weight: 600;
-      color: rgba(244, 241, 251, 0.58);
+      color: var(--sheet-muted);
       white-space: nowrap;
     }
     .deck-sheet-card {
       position: relative;
       border: 0;
       padding: 0;
-      background: #120c24;
+      background: #d8d0f0;
       border-radius: 8px;
       overflow: hidden;
       aspect-ratio: 63 / 88;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.7),
+        0 6px 14px rgba(60, 50, 120, 0.16);
     }
     .deck-sheet-card img {
       width: 100%;
@@ -1851,13 +1889,13 @@
       height: 1.25rem;
       padding: 0 0.28rem;
       border-radius: 6px;
-      background: rgba(12, 10, 28, 0.82);
+      background: rgba(42, 47, 85, 0.88);
       color: #fff;
       font-size: 0.68rem;
       font-weight: 800;
       display: grid;
       place-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
     }
     .deck-sheet.is-edit .deck-sheet-card {
       cursor: default;
@@ -1993,9 +2031,9 @@
       margin: 0;
     }
     .deck-sheet-filter-chip {
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(244, 241, 251, 0.82);
+      border: 1px solid rgba(140, 150, 210, 0.35);
+      background: rgba(255, 255, 255, 0.65);
+      color: var(--sheet-ink-soft);
       border-radius: 999px;
       padding: 0.22rem 0.55rem;
       font-size: 0.68rem;
@@ -2003,17 +2041,17 @@
       cursor: pointer;
     }
     .deck-sheet-filter-chip.is-on {
-      background: rgba(220, 38, 38, 0.22);
-      border-color: rgba(252, 165, 165, 0.45);
-      color: #fecaca;
+      background: rgba(220, 38, 38, 0.12);
+      border-color: rgba(220, 38, 38, 0.35);
+      color: #b91c1c;
     }
     .deck-sheet-stat.is-short strong {
-      color: #fecaca;
+      color: #dc2626;
     }
     .deck-sheet-empty {
       padding: 1.2rem 0.8rem;
       text-align: center;
-      opacity: 0.7;
+      color: var(--sheet-muted);
       font-size: 0.84rem;
     }
     .deck-sheet-dock {
@@ -2026,8 +2064,10 @@
       grid-template-columns: 1fr 1.15fr;
       gap: 0.55rem;
       padding: 0.75rem 0.95rem calc(0.75rem + var(--safe-b));
-      background: linear-gradient(180deg, transparent, rgba(10, 8, 24, 0.94) 28%);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, transparent, rgba(45, 40, 90, 0.78) 24%, rgba(35, 32, 72, 0.92) 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .deck-sheet.is-edit .deck-sheet-dock {
       grid-template-columns: 1fr 1fr;
@@ -2706,8 +2746,29 @@
         max-width: none;
         border-radius: 16px;
         box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.22),
-          0 16px 36px rgba(0, 0, 0, 0.38);
+          0 0 0 3px rgba(255, 255, 255, 0.9),
+          0 16px 36px rgba(60, 50, 120, 0.22);
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-section.is-cards {
+        padding: 0.85rem 0.9rem 1rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow: 0 12px 28px rgba(70, 60, 130, 0.08);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-section.is-analyze {
+        padding: 0.85rem 0.9rem 0.95rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow: 0 12px 28px rgba(70, 60, 130, 0.08);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-section.is-analyze .deck-sheet-chart {
+        background: rgba(255, 255, 255, 0.55);
       }
       .deck-sheet:not(.is-edit) .deck-sheet-intro {
         display: block;
@@ -5730,7 +5791,7 @@
         var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">';
         svg += '<g transform="rotate(-90 ' + cx + ' ' + cy + ')">';
         svg += '<circle class="deck-sheet-donut-track" cx="' + cx + '" cy="' + cy + '" r="' + radius +
-          '" fill="none" stroke="rgba(148,163,184,0.28)" stroke-width="' + stroke +
+          '" fill="none" stroke="rgba(148,163,184,0.38)" stroke-width="' + stroke +
           '" pathLength="1"></circle>';
         colorSegs.forEach(function (seg) {
           svg += '<circle class="deck-sheet-donut-seg" data-donut-seg data-draw-start="' +
@@ -7011,7 +7072,7 @@
         chips.push('<span class="deck-sheet-chip">' + escapeHtml(vm.game) + '</span>');
         chips.push('<span class="deck-sheet-chip">' + liveTotal + ' 張</span>');
         if (liveShortage.shortKinds) {
-          chips.push('<span class="deck-sheet-chip" style="border-color:rgba(252,165,165,0.4);color:#fecaca">缺 ' +
+          chips.push('<span class="deck-sheet-chip" style="border-color:rgba(220,38,38,0.35);color:#b91c1c;background:rgba(254,226,226,0.85)">缺 ' +
             liveShortage.shortCopies + ' 張</span>');
         }
         (Array.isArray(raw.tags) ? raw.tags : []).slice(0, 6).forEach(function (t) {
@@ -7026,7 +7087,7 @@
             '<span><strong>' + escapeHtml(winLabel) + '</strong> 勝率</span>' +
             '<span>建立 <strong>' + escapeHtml(vm.created) + '</strong></span>' +
             (liveShortage.shortKinds
-              ? ('<span style="color:#fecaca">缺 <strong>' + liveShortage.shortCopies + '</strong> 張</span>')
+              ? ('<span style="color:#b91c1c">缺 <strong>' + liveShortage.shortCopies + '</strong> 張</span>')
               : '');
         }
         document.getElementById('deckSheetStats').innerHTML =
