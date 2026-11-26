@@ -1328,31 +1328,6 @@
       margin-top: 0.85rem;
       position: relative;
     }
-    .deck-sheet-check-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin: 0 0 0.55rem;
-    }
-    .deck-sheet-check-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.28rem;
-      padding: 0.28rem 0.7rem;
-      border-radius: 999px;
-      background: #eef2ff;
-      border: 1px solid rgba(170, 180, 220, 0.55);
-      color: #374151;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      box-shadow: 0 2px 8px rgba(60, 70, 120, 0.08);
-    }
-    .deck-sheet-check-chip em {
-      font-style: normal;
-      opacity: 0.75;
-      font-variant-numeric: tabular-nums;
-    }
     .deck-sheet-check-banner {
       position: relative;
       display: flex;
@@ -3658,7 +3633,6 @@
             </div>
           </section>
           <div class="deck-sheet-check" id="deckSheetCheck" hidden>
-            <div class="deck-sheet-check-chips" id="deckSheetCheckChips"></div>
             <div class="deck-sheet-check-banner" id="deckSheetCheckBanner">
               <span class="deck-sheet-check-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
               <div class="deck-sheet-check-copy">
@@ -6933,41 +6907,6 @@
         }
       }
 
-      function classifySheetEffectBucket(text) {
-        var t = String(text || '');
-        if (/集中|ブレイン|ブレイ|brainstorm|光景|ゲート|門トリ|サーチ/i.test(t)) return '光景';
-        if (/シャッフル|洗牌|山札に戻|デッキに戻|再構成|リフレ|リシャッ/i.test(t)) return '洗牌';
-        if (t) return '其他';
-        return '';
-      }
-
-      function computeSheetCheckChips(cards) {
-        var counts = { '光景': 0, '洗牌': 0, '其他': 0 };
-        (cards || []).forEach(function (c) {
-          var qty = parseInt(c && c.qty, 10);
-          if (isNaN(qty) || qty < 1) qty = 1;
-          var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
-          var meta = sheetState.metaCache[key] || {};
-          var bucket = classifySheetEffectBucket(meta.effect || '');
-          if (!bucket && meta.trigger) {
-            var trig = String(meta.trigger);
-            if (/2|gate|扉|門|金/i.test(trig)) bucket = '光景';
-            else if (/1|soul|魂/i.test(trig)) bucket = '其他';
-            else bucket = '其他';
-          }
-          if (!bucket) {
-            var kind = String(meta.kind || '');
-            if (/cx|名場|climax/i.test(kind)) bucket = '其他';
-          }
-          if (bucket && counts[bucket] != null) counts[bucket] += qty;
-        });
-        return [
-          { label: '光景', value: counts['光景'] },
-          { label: '洗牌', value: counts['洗牌'] },
-          { label: '其他', value: counts['其他'] }
-        ];
-      }
-
       function evaluateSheetLegality(cards) {
         if (!(window.WsDeckCreate && typeof window.WsDeckCreate.validateNeoStandard === 'function')) {
           return null;
@@ -6989,18 +6928,10 @@
       function renderSheetCheckPanel(cards) {
         var host = document.getElementById('deckSheetCheck');
         if (!host) return;
-        var chipsEl = document.getElementById('deckSheetCheckChips');
         var banner = document.getElementById('deckSheetCheckBanner');
         var titleEl = document.getElementById('deckSheetCheckTitle');
         var textEl = document.getElementById('deckSheetCheckText');
         var iconEl = banner && banner.querySelector('.deck-sheet-check-icon');
-        var chipRows = computeSheetCheckChips(cards);
-        if (chipsEl) {
-          chipsEl.innerHTML = chipRows.map(function (row) {
-            return '<span class="deck-sheet-check-chip">' + escapeHtml(row.label) +
-              ' <em>' + row.value + '</em></span>';
-          }).join('');
-        }
         var legality = evaluateSheetLegality(cards);
         var ok = !legality || !!legality.ok;
         host.hidden = false;
