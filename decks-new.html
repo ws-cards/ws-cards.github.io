@@ -880,8 +880,9 @@
       --sheet-line: rgba(120, 130, 190, 0.22);
       --sheet-deep: rgba(55, 48, 110, 0.78);
       --sheet-deep-soft: rgba(70, 60, 140, 0.42);
-      /* 底部操作列佔位，避免卡表／檢查被挡住 */
+      /* 底部操作列／浮動檢查佔位，避免卡表被挡住 */
       --sheet-dock-space: calc(5.85rem + var(--safe-b));
+      --sheet-check-space: 4.35rem;
       --sheet-bar-space: 3.6rem;
       position: absolute;
       inset: 0;
@@ -1285,8 +1286,8 @@
       padding:
         clamp(0.9rem, 2.4vw, 1.15rem)
         clamp(0.85rem, 3.2vw, 1.15rem)
-        calc(var(--sheet-dock-space) + 1.35rem);
-      scroll-padding-bottom: calc(var(--sheet-dock-space) + 1.35rem);
+        calc(var(--sheet-dock-space) + var(--sheet-check-space) + 0.55rem);
+      scroll-padding-bottom: calc(var(--sheet-dock-space) + var(--sheet-check-space) + 0.55rem);
     }
     .deck-sheet-desk-col.is-left .deck-sheet-cover {
       display: none;
@@ -1328,12 +1329,14 @@
       color: var(--sheet-ink);
     }
     .deck-sheet-check {
-      display: none;
+      display: block;
       position: absolute;
       z-index: 8;
-      right: clamp(0.85rem, 2.2vw, 1.6rem);
-      bottom: calc(var(--sheet-dock-space) + 0.45rem);
-      width: min(22.5rem, calc(100% - 1.7rem));
+      left: 0.7rem;
+      right: 0.7rem;
+      bottom: calc(var(--sheet-dock-space) + 0.3rem);
+      width: auto;
+      max-width: none;
       margin: 0;
       pointer-events: none;
     }
@@ -1342,9 +1345,9 @@
       position: relative;
       display: flex;
       align-items: center;
-      gap: 0.65rem;
-      min-height: 3.6rem;
-      padding: 0.7rem 5.2rem 0.7rem 0.75rem;
+      gap: 0.5rem;
+      min-height: 2.95rem;
+      padding: 0.52rem 3.85rem 0.52rem 0.6rem;
       border-radius: 12px;
       border-top-left-radius: 4px;
       background: linear-gradient(105deg, #353770 0%, #313366 55%, #2a2d5c 100%);
@@ -1358,14 +1361,14 @@
     }
     .deck-sheet-check-icon {
       flex: 0 0 auto;
-      width: 1.85rem;
-      height: 1.85rem;
+      width: 1.55rem;
+      height: 1.55rem;
       border-radius: 999px;
       display: grid;
       place-items: center;
       background: #4ade80;
       color: #fff;
-      font-size: 0.85rem;
+      font-size: 0.72rem;
       box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.28);
     }
     .deck-sheet-check-banner.is-fail .deck-sheet-check-icon {
@@ -1379,7 +1382,7 @@
     }
     .deck-sheet-check-copy strong {
       color: #facc15;
-      font-size: 0.86rem;
+      font-size: 0.76rem;
       font-weight: 800;
       line-height: 1.25;
     }
@@ -1388,19 +1391,23 @@
     }
     .deck-sheet-check-copy span {
       color: rgba(255, 255, 255, 0.92);
-      font-size: 0.72rem;
+      font-size: 0.64rem;
       font-weight: 650;
-      line-height: 1.35;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .deck-sheet-check-mascot {
       position: absolute;
-      right: -0.15rem;
-      bottom: -0.15rem;
-      width: 5.4rem;
-      height: 5.9rem;
+      right: -0.1rem;
+      bottom: -0.1rem;
+      width: 3.85rem;
+      height: 4.2rem;
       pointer-events: none;
       filter: drop-shadow(0 8px 12px rgba(40, 20, 90, 0.28));
-      transform: translateY(-22%);
+      transform: translateY(-18%);
     }
     .deck-sheet-check-mascot img {
       width: 100%;
@@ -2635,20 +2642,52 @@
       }
       .deck-sheet-title { font-size: 1.2rem; }
       .deck-sheet {
-        /* 浮起操作列高度 + bottom 間距 */
+        /* 浮起操作列高度 + bottom 間距；檢查改靠右不需全寬留白 */
         --sheet-dock-space: 7.4rem;
+        --sheet-check-space: 1.1rem;
         --sheet-bar-space: 4rem;
       }
       .deck-sheet-scroll {
         padding:
           clamp(1.15rem, 2.4vh, 1.7rem)
           clamp(1.3rem, 3vw, 2.2rem)
-          calc(var(--sheet-dock-space) + 1.6rem);
-        scroll-padding-bottom: calc(var(--sheet-dock-space) + 1.6rem);
+          calc(var(--sheet-dock-space) + var(--sheet-check-space) + 0.7rem);
+        scroll-padding-bottom: calc(var(--sheet-dock-space) + var(--sheet-check-space) + 0.7rem);
         max-width: min(1380px, 100%);
         margin: 0 auto;
         width: 100%;
         box-sizing: border-box;
+      }
+      .deck-sheet-check {
+        left: auto;
+        right: clamp(0.85rem, 2.2vw, 1.6rem);
+        width: min(22.5rem, calc(100% - 1.7rem));
+        bottom: calc(var(--sheet-dock-space) + 0.45rem);
+      }
+      .deck-sheet-check-banner {
+        min-height: 3.6rem;
+        gap: 0.65rem;
+        padding: 0.7rem 5.2rem 0.7rem 0.75rem;
+      }
+      .deck-sheet-check-icon {
+        width: 1.85rem;
+        height: 1.85rem;
+        font-size: 0.85rem;
+      }
+      .deck-sheet-check-copy strong { font-size: 0.86rem; }
+      .deck-sheet-check-copy span {
+        font-size: 0.72rem;
+        line-height: 1.35;
+        display: block;
+        -webkit-line-clamp: unset;
+        overflow: visible;
+      }
+      .deck-sheet-check-mascot {
+        width: 5.4rem;
+        height: 5.9rem;
+        right: -0.15rem;
+        bottom: -0.15rem;
+        transform: translateY(-22%);
       }
       .deck-sheet-hero {
         grid-template-columns: clamp(8rem, 11vw, 10.5rem) minmax(0, 1fr);
@@ -2823,9 +2862,6 @@
       }
       .deck-sheet:not(.is-edit) .deck-sheet-section.is-cards > .deck-sheet-section-head h4 {
         font-size: 0.9rem;
-      }
-      .deck-sheet-check {
-        display: block;
       }
       .deck-sheet.is-pick-open .deck-sheet-check {
         right: calc(min(24rem, 42vw) + clamp(0.85rem, 2.2vw, 1.6rem));
