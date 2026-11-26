@@ -1329,9 +1329,15 @@
     }
     .deck-sheet-check {
       display: none;
-      margin-top: 0.85rem;
-      position: relative;
+      position: absolute;
+      z-index: 8;
+      right: clamp(0.85rem, 2.2vw, 1.6rem);
+      bottom: calc(var(--sheet-dock-space) + 0.45rem);
+      width: min(22.5rem, calc(100% - 1.7rem));
+      margin: 0;
+      pointer-events: none;
     }
+    .deck-sheet-check[hidden] { display: none !important; }
     .deck-sheet-check-banner {
       position: relative;
       display: flex;
@@ -1453,7 +1459,6 @@
     .deck-sheet-section.is-stats { order: 2; }
     .deck-sheet-section.is-analyze { order: 3; }
     .deck-sheet-section.is-cards { order: 4; }
-    .deck-sheet-check { order: 5; }
     .deck-sheet-hero {
       display: grid;
       grid-template-columns: clamp(5.8rem, 30vw, 7rem) minmax(0, 1fr);
@@ -2787,21 +2792,17 @@
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
-        padding-bottom: 0.45rem;
+        padding-bottom: 0.25rem;
       }
       .deck-sheet-desk-col.is-side .deck-sheet-section.is-analyze {
         min-height: 0;
         flex: 1 1 auto;
-      }
-      .deck-sheet-desk-col.is-side .deck-sheet-check {
-        flex: 0 0 auto;
-        margin-top: auto;
+        margin-bottom: 0;
       }
       .deck-sheet-hero,
       .deck-sheet-section.is-stats,
       .deck-sheet-section.is-analyze,
-      .deck-sheet-section.is-cards,
-      .deck-sheet-check {
+      .deck-sheet-section.is-cards {
         order: initial;
       }
       .deck-sheet-hero .deck-sheet-cover.is-mobile-cover {
@@ -2825,7 +2826,9 @@
       }
       .deck-sheet-check {
         display: block;
-        margin-top: 0;
+      }
+      .deck-sheet.is-pick-open .deck-sheet-check {
+        right: calc(min(24rem, 42vw) + clamp(0.85rem, 2.2vw, 1.6rem));
       }
       .deck-sheet-section.is-analyze {
         margin-bottom: 0;
@@ -3668,19 +3671,19 @@
               <div class="deck-sheet-empty deck-sheet-analyze-empty">載入分析中…</div>
             </div>
           </section>
-          <div class="deck-sheet-check" id="deckSheetCheck" hidden>
-            <div class="deck-sheet-check-banner" id="deckSheetCheckBanner">
-              <span class="deck-sheet-check-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
-              <div class="deck-sheet-check-copy">
-                <strong id="deckSheetCheckTitle">牌組檢查</strong>
-                <span id="deckSheetCheckText">—</span>
-              </div>
-              <div class="deck-sheet-check-mascot" aria-hidden="true">
-                <img id="deckSheetCheckMascot" src="assets/decks/deck-check-mascot.png" alt="" width="88" height="96" decoding="async">
-              </div>
-            </div>
-          </div>
         </aside>
+      </div>
+      <div class="deck-sheet-check" id="deckSheetCheck" hidden>
+        <div class="deck-sheet-check-banner" id="deckSheetCheckBanner">
+          <span class="deck-sheet-check-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+          <div class="deck-sheet-check-copy">
+            <strong id="deckSheetCheckTitle">牌組檢查</strong>
+            <span id="deckSheetCheckText">—</span>
+          </div>
+          <div class="deck-sheet-check-mascot" aria-hidden="true">
+            <img id="deckSheetCheckMascot" src="assets/decks/deck-check-mascot.png" alt="" width="88" height="96" decoding="async">
+          </div>
+        </div>
       </div>
       <div class="deck-sheet-dock">
         <button type="button" class="btn-skew btn-edit" id="deckSheetSecondary">
