@@ -1448,18 +1448,40 @@
     }
     .deck-sheet-check-fab-dot {
       position: absolute;
-      top: 0.35rem;
-      right: 0.45rem;
-      width: 0.72rem;
-      height: 0.72rem;
+      top: 0.28rem;
+      right: 0.38rem;
+      width: 1.05rem;
+      height: 1.05rem;
       border-radius: 999px;
       background: #4ade80;
       border: 2px solid #fff;
       box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+    .deck-sheet-check-fab-dot::before {
+      content: '';
+    }
+    .deck-sheet-check-fab.is-ok .deck-sheet-check-fab-dot::before {
+      content: '';
+      width: 0.34rem;
+      height: 0.34rem;
+      border-radius: 999px;
+      background: #fff;
+    }
+    .deck-sheet-check-fab.is-fail {
+      filter: drop-shadow(0 10px 16px rgba(180, 40, 70, 0.35));
     }
     .deck-sheet-check-fab.is-fail .deck-sheet-check-fab-dot {
       background: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.28);
+    }
+    .deck-sheet-check-fab.is-fail .deck-sheet-check-fab-dot::before {
+      content: '!';
     }
     .deck-sheet-check-fab:active {
       transform: scale(0.96);
@@ -1468,8 +1490,17 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-7px); }
     }
+    @keyframes sheetCheckFailNudge {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      35% { transform: translateY(-6px) rotate(-4deg); }
+      70% { transform: translateY(-8px) rotate(3deg); }
+    }
+    .deck-sheet-check-fab.is-fail {
+      animation: sheetCheckFailNudge 2.6s ease-in-out infinite;
+    }
     @media (prefers-reduced-motion: reduce) {
-      .deck-sheet-check-fab { animation: none; }
+      .deck-sheet-check-fab,
+      .deck-sheet-check-fab.is-fail { animation: none; }
     }
     .deck-sheet-check-panel {
       position: absolute;
@@ -8219,7 +8250,14 @@
         if (panel) panel.hidden = !on;
         if (fab) {
           fab.setAttribute('aria-expanded', on ? 'true' : 'false');
-          fab.setAttribute('aria-label', on ? '牌組檢查結果已開啟' : '開啟牌組檢查');
+          /* 保留通過／未通過語意，只補開關狀態 */
+          var fail = fab.classList.contains('is-fail');
+          var ok = fab.classList.contains('is-ok');
+          var status = fail ? '（未通過）' : (ok ? '（已通過）' : '');
+          fab.setAttribute(
+            'aria-label',
+            on ? ('牌組檢查結果已開啟' + status) : ('開啟牌組檢查' + status)
+          );
         }
       }
 
@@ -8252,17 +8290,27 @@
         }
         host.hidden = false;
         if (banner) banner.classList.toggle('is-fail', !ok);
-        if (fab) fab.classList.toggle('is-fail', !ok);
+        if (fab) {
+          fab.classList.toggle('is-fail', !ok);
+          fab.classList.toggle('is-ok', !!ok);
+          fab.setAttribute(
+            'aria-label',
+            ok ? '開啟牌組檢查（已通過）' : '開啟牌組檢查（未通過）'
+          );
+        }
         if (iconEl) {
           iconEl.innerHTML = ok
             ? '<i class="fas fa-check" aria-hidden="true"></i>'
             : '<i class="fas fa-times" aria-hidden="true"></i>';
         }
         if (mascotEl) {
+          /* 未通過時改為哭臉 Q 版；通過為開心 Q 版（手機 FAB／桌面吉祥物共用） */
           var nextSrc = ok
             ? 'assets/decks/deck-check-mascot.png'
             : 'assets/decks/deck-check-mascot-fail.png';
-          if (mascotEl.getAttribute('src') !== nextSrc) mascotEl.src = nextSrc;
+          mascotEl.setAttribute('src', nextSrc);
+          mascotEl.src = nextSrc;
+          mascotEl.alt = ok ? '牌組檢查通過' : '牌組檢查未通過';
         }
         if (titleEl) {
           titleEl.textContent = ok ? '牌組檢查：通過' : '牌組檢查：未通過';
@@ -8861,7 +8909,15 @@
 
       function isDemoSheetMode() {
         try {
-          return /(?:\?|&)demoSheet=1(?:&|$)/.test(window.location.search || '');
+          return /(?:\?|&)demoSheet=(?:1|fail)(?:&|$)/.test(window.location.search || '');
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function isDemoSheetFailMode() {
+        try {
+          return /(?:\?|&)demoSheet=fail(?:&|$)/.test(window.location.search || '');
         } catch (e) {
           return false;
         }
@@ -8869,6 +8925,7 @@
 
       function seedDemoSheetDeck() {
         var now = Date.now();
+        var failDemo = isDemoSheetFailMode();
         var demoCards = [
           { cardNumber: 'BAV/W112-001', cardName: 'シロコ', qty: 4, color: '青', level: 0, effect: '【自】【集中】あなたのクライマックス置場にこのカードが置かれた時、山札の上から5枚を見て、カードを1枚選び手札に加える。' },
           { cardNumber: 'BAV/W112-002', cardName: 'セリカ', qty: 4, color: '赤', level: 0, effect: '【自】このカードがアタックした時、あなたは自分の山札を上から1枚見て、山札の上か下に置く。' },
@@ -8885,6 +8942,12 @@
           { cardNumber: 'BAV/W112-004', cardName: 'シャーレ支援', qty: 2, color: '緑', level: 0, effect: 'あなたは自分の山札の上から1枚を公開し、そのカードを手札に加える。' },
           { cardNumber: 'BAV/W112-022', cardName: '戦術変更', qty: 2, color: '赤', level: 2, effect: '【永】【チェンジ】経験 あなたのレベル置場にカードが2枚以上なら、このカードのパワーを＋1500。' }
         ];
+        if (failDemo) {
+          /* 故意少 10 張，觸發未通過 → 手機 FAB 改哭臉 Q 版 */
+          demoCards.forEach(function (c) {
+            if (c.qty >= 4) c.qty = 3;
+          });
+        }
         demoCards.forEach(function (c) {
           var key = normalizeText(c.cardNumber).replace(/\\/g, '/');
           sheetState.metaCache[key] = {
@@ -8897,17 +8960,19 @@
           };
         });
         var deck = {
-          id: 'demo-abydos',
-          name: 'Blue Archive / Abydos',
+          id: failDemo ? 'demo-abydos-fail' : 'demo-abydos',
+          name: failDemo ? 'Blue Archive / Abydos（未通過示範）' : 'Blue Archive / Abydos',
           tags: ['競技', 'Blue Archive', 'Abydos'],
-          deckDescription: 'アビドス軸の高効率サーチと盤面制圧を狙う競技向け構築。序盤の安定感と中盤のリソース循環を両立。',
+          deckDescription: failDemo
+            ? '示範未通過構築：張數不足，右下 Q 版應顯示哭臉。'
+            : 'アビドス軸の高効率サーチと盤面制圧を狙う競技向け構築。序盤の安定感と中盤のリソース循環を両立。',
           cards: demoCards.map(function (c) {
             return { cardNumber: c.cardNumber, cardName: c.cardName, qty: c.qty };
           }),
           createdAt: now - 86400000 * 12,
           updatedAt: now,
           source: 'demo',
-          winRate: '62.5%',
+          winRate: failDemo ? '41.0%' : '62.5%',
           winSample: 50
         };
         allDecks = [deck];
