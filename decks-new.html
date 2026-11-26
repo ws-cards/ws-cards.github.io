@@ -882,8 +882,8 @@
       --sheet-deep-soft: rgba(70, 60, 140, 0.42);
       /* 底部操作列／浮動檢查佔位，避免卡表被挡住 */
       --sheet-dock-space: calc(5.85rem + var(--safe-b));
-      --sheet-check-space: 4.35rem;
-      --sheet-bar-space: 3.6rem;
+      --sheet-check-space: 3.4rem;
+      --sheet-bar-space: 4.6rem;
       position: absolute;
       inset: 0;
       z-index: 30;
@@ -1420,6 +1420,170 @@
       user-select: none;
       -webkit-user-drag: none;
     }
+    .deck-sheet-check-fab {
+      position: absolute;
+      right: 0.55rem;
+      bottom: calc(var(--sheet-dock-space) + 0.15rem);
+      z-index: 12;
+      width: 4.6rem;
+      height: 4.9rem;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+      filter: drop-shadow(0 10px 16px rgba(40, 20, 90, 0.32));
+      animation: sheetCheckFloat 2.8s ease-in-out infinite;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .deck-sheet-check-fab img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: bottom center;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .deck-sheet-check-fab-dot {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.45rem;
+      width: 0.72rem;
+      height: 0.72rem;
+      border-radius: 999px;
+      background: #4ade80;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25);
+    }
+    .deck-sheet-check-fab.is-fail .deck-sheet-check-fab-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+    }
+    .deck-sheet-check-fab:active {
+      transform: scale(0.96);
+    }
+    @keyframes sheetCheckFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .deck-sheet-check-fab { animation: none; }
+    }
+    .deck-sheet-check-panel {
+      position: absolute;
+      left: 0.7rem;
+      right: 0.7rem;
+      bottom: calc(var(--sheet-dock-space) + 4.7rem);
+      z-index: 11;
+      pointer-events: auto;
+    }
+    .deck-sheet-check-panel[hidden] { display: none !important; }
+    .deck-sheet-check-close {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.35rem;
+      width: 1.55rem;
+      height: 1.55rem;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+    }
+    .deck-sheet-check-banner {
+      padding-right: 2.2rem;
+    }
+    .deck-sheet-main-tabs {
+      order: 3;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.35rem;
+      margin: 0 0 0.75rem;
+      padding: 0.28rem;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 18px rgba(70, 60, 130, 0.08);
+    }
+    .deck-sheet-main-tab {
+      border: 0;
+      background: transparent;
+      color: var(--sheet-muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      padding: 0.62rem 0.35rem;
+      border-radius: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.28rem;
+      white-space: nowrap;
+    }
+    .deck-sheet-main-tab.is-on {
+      color: #fff;
+      background: linear-gradient(135deg, #7b5cff 0%, #5b8dff 100%);
+      box-shadow: 0 8px 16px rgba(90, 100, 220, 0.28);
+    }
+    .deck-sheet-card-info,
+    .deck-sheet-main-ai {
+      display: grid;
+      gap: 0.55rem;
+    }
+    .deck-sheet-card-info-row {
+      display: grid;
+      grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+      gap: 0.65rem;
+      align-items: center;
+      padding: 0.45rem 0.55rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+    .deck-sheet-card-info-row img {
+      width: 3.2rem;
+      aspect-ratio: 63 / 88;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+      background: #d8d0f0;
+    }
+    .deck-sheet-card-info-copy {
+      min-width: 0;
+    }
+    .deck-sheet-card-info-copy strong {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--sheet-ink);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-sheet-card-info-copy span {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.68rem;
+      font-weight: 650;
+      color: var(--sheet-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-sheet-card-info-qty {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--sheet-ink);
+    }
     .deck-sheet-intro {
       display: none;
       margin-top: 0.85rem;
@@ -1467,13 +1631,164 @@
     .deck-sheet-hero { order: 1; }
     .deck-sheet-section.is-stats { order: 2; }
     .deck-sheet-section.is-analyze { order: 3; }
-    .deck-sheet-section.is-cards { order: 4; }
+    .deck-sheet-main-tabs { order: 4; }
+    .deck-sheet-section.is-cards,
+    .deck-sheet-section.is-card-info,
+    .deck-sheet-section.is-main-ai { order: 5; }
+    .deck-sheet:not(.is-edit) .deck-sheet-section.is-stats {
+      display: none;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-inline-stats {
+      display: flex;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-chips {
+      display: none;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-analyze-tabs {
+      display: none;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock-detail {
+      display: none !important;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock {
+      grid-template-columns: 1fr;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock-actions {
+      display: grid;
+      grid-template-columns: 0.92fr 1.2fr;
+      gap: 0.55rem;
+      min-width: 0;
+    }
     .deck-sheet-hero {
       display: grid;
-      grid-template-columns: clamp(5.8rem, 30vw, 7rem) minmax(0, 1fr);
-      gap: clamp(0.85rem, 3vw, 1.1rem);
+      grid-template-columns: clamp(5.6rem, 28vw, 6.8rem) minmax(0, 1fr);
+      gap: clamp(0.75rem, 2.8vw, 1rem);
       align-items: start;
-      margin-bottom: clamp(1rem, 2.8vw, 1.25rem);
+      margin-bottom: clamp(0.85rem, 2.4vw, 1.05rem);
+      padding: 0.75rem 0.8rem 0.85rem;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(78, 62, 150, 0.78), rgba(52, 70, 150, 0.72)),
+        rgba(40, 36, 90, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 0 14px 30px rgba(40, 30, 100, 0.22);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: #f7f4ff;
+    }
+    .deck-sheet.is-edit .deck-sheet-hero {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      padding: 0;
+      color: inherit;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-meta h3 {
+      color: #fff;
+      text-shadow: 0 1px 8px rgba(20, 10, 60, 0.28);
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-meta p {
+      color: rgba(255, 255, 255, 0.86);
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-inline-stats {
+      color: rgba(255, 255, 255, 0.88);
+      gap: 0.45rem 0.7rem;
+      margin: 0 0 0.45rem;
+      font-size: 0.72rem;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-inline-stats strong {
+      color: #fff;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-section.is-analyze {
+      padding: 0.8rem 0.75rem 0.85rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 12px 26px rgba(70, 60, 130, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      margin-bottom: 0.75rem;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-section.is-cards,
+    .deck-sheet:not(.is-edit) .deck-sheet-section.is-card-info,
+    .deck-sheet:not(.is-edit) .deck-sheet-section.is-main-ai {
+      padding: 0.8rem 0.7rem 0.9rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.52);
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      box-shadow: 0 12px 26px rgba(70, 60, 130, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-analyze.is-overview .deck-sheet-charts-row {
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 0.55rem;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-analyze .deck-sheet-ai-tip {
+      display: none;
+    }
+    .deck-sheet-bar {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "brand actions"
+        "back back";
+      gap: 0.4rem 0.55rem;
+    }
+    .deck-sheet-bar-brand {
+      display: inline-flex;
+      grid-area: brand;
+    }
+    .deck-sheet-bar-actions { grid-area: actions; }
+    .deck-sheet-back {
+      grid-area: back;
+      width: auto;
+      min-width: 0;
+      justify-self: start;
+      padding: 0 0.9rem;
+      height: 2.15rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      place-items: unset;
+    }
+    .deck-sheet-back-label {
+      display: inline;
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+    .deck-sheet-heading { display: none; }
+    .deck-sheet.is-edit .deck-sheet-heading { display: block; }
+    .deck-sheet.is-edit .deck-sheet-bar {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: "back heading actions";
+    }
+    .deck-sheet.is-edit .deck-sheet-bar-brand,
+    .deck-sheet.is-edit .deck-sheet-main-tabs,
+    .deck-sheet.is-edit .deck-sheet-section.is-card-info,
+    .deck-sheet.is-edit .deck-sheet-section.is-main-ai {
+      display: none !important;
+    }
+    .deck-sheet.is-edit .deck-sheet-back-label { display: none; }
+    .deck-sheet:not(.is-edit) .deck-sheet-mode-btn { display: none; }
+    .deck-sheet-check {
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: auto;
+      max-width: none;
+      pointer-events: none;
+    }
+    .deck-sheet-check .deck-sheet-check-fab,
+    .deck-sheet-check .deck-sheet-check-panel {
+      pointer-events: auto;
     }
     .deck-sheet-cover {
       width: clamp(5.8rem, 30vw, 7rem);
@@ -2103,7 +2418,7 @@
       display: none;
     }
     .deck-sheet-bar-brand {
-      display: none;
+      display: inline-flex;
       align-items: center;
       gap: 0.55rem;
       min-width: 0;
@@ -2135,8 +2450,8 @@
       color: #2a2150;
     }
     .deck-sheet-back-label {
-      display: none;
-      margin-left: 0.35rem;
+      display: inline;
+      margin-left: 0.15rem;
       font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.04em;
@@ -3001,10 +3316,97 @@
       }
       .deck-sheet-bar-brand {
         display: inline-flex;
+        grid-area: auto;
       }
       .deck-sheet-heading {
+        display: block;
         justify-self: center;
         text-align: center;
+        grid-area: auto;
+      }
+      .deck-sheet-bar {
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-areas: none;
+      }
+      .deck-sheet-bar-actions { grid-area: auto; }
+      .deck-sheet-back { grid-area: auto; }
+      .deck-sheet:not(.is-edit) .deck-sheet-mode-btn { display: grid; }
+      .deck-sheet-main-tabs,
+      .deck-sheet-section.is-card-info,
+      .deck-sheet-section.is-main-ai {
+        display: none !important;
+      }
+      .deck-sheet-section.is-cards[hidden] {
+        display: block !important;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-analyze-tabs {
+        display: inline-flex;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-analyze .deck-sheet-ai-tip {
+        display: grid;
+      }
+      .deck-sheet-hero {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        padding: 0;
+        color: inherit;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-meta h3 {
+        color: var(--sheet-ink);
+        text-shadow: none;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-meta p {
+        color: var(--sheet-ink-soft);
+        -webkit-line-clamp: unset;
+        display: block;
+        overflow: visible;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-inline-stats {
+        color: var(--sheet-ink-soft);
+        font-size: 0.82rem;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-inline-stats strong {
+        color: var(--sheet-ink);
+      }
+      .deck-sheet-check {
+        left: auto;
+        right: clamp(0.85rem, 2.2vw, 1.6rem);
+        top: auto;
+        width: min(22.5rem, calc(100% - 1.7rem));
+        bottom: calc(var(--sheet-dock-space) + 0.45rem);
+        height: auto;
+        pointer-events: none;
+      }
+      .deck-sheet-check-fab {
+        right: -0.15rem;
+        bottom: -0.15rem;
+        width: 5.4rem;
+        height: 5.9rem;
+        transform: translateY(-22%);
+        animation: none;
+        pointer-events: none !important;
+        filter: drop-shadow(0 8px 12px rgba(40, 20, 90, 0.28));
+        z-index: 2;
+      }
+      .deck-sheet-check-fab-dot { display: none; }
+      .deck-sheet-check-panel {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        display: block !important;
+        pointer-events: none;
+      }
+      .deck-sheet-check-panel[hidden] {
+        display: block !important;
+      }
+      .deck-sheet-check-close { display: none !important; }
+      .deck-sheet-check-banner {
+        padding: 0.7rem 5.2rem 0.7rem 0.75rem;
+        pointer-events: none;
       }
       .deck-sheet-back {
         width: auto;
@@ -3038,6 +3440,9 @@
       .deck-sheet:not(.is-edit) .deck-sheet-dock-actions {
         justify-self: end;
         width: min(24rem, 100%);
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-dock-detail {
+        display: inline-flex !important;
       }
       .deck-sheet-back,
       .deck-sheet-mode-btn,
@@ -4153,7 +4558,15 @@
             <h4>概況</h4>
             <div class="deck-sheet-stats" id="deckSheetStats"></div>
           </section>
-          <section class="deck-sheet-section is-cards">
+          <nav class="deck-sheet-main-tabs" id="deckSheetMainTabs" role="tablist" aria-label="牌組內容分頁">
+            <button type="button" class="deck-sheet-main-tab is-on" role="tab" aria-selected="true" data-main-tab="cards">牌組構築</button>
+            <button type="button" class="deck-sheet-main-tab" role="tab" aria-selected="false" data-main-tab="info">卡片資訊</button>
+            <button type="button" class="deck-sheet-main-tab" role="tab" aria-selected="false" data-main-tab="ai">
+              <i class="fas fa-magic" aria-hidden="true"></i>
+              AI 建議
+            </button>
+          </nav>
+          <section class="deck-sheet-section is-cards" data-main-pane="cards">
             <div class="deck-sheet-section-head">
               <h4>牌組構築 <span id="deckSheetCardCount"></span></h4>
               <button type="button" class="deck-sheet-filter-chip" id="deckSheetShortFilter" aria-pressed="false" hidden>
@@ -4161,6 +4574,18 @@
               </button>
             </div>
             <div class="deck-sheet-cards" id="deckSheetCards"></div>
+          </section>
+          <section class="deck-sheet-section is-card-info" data-main-pane="info" hidden>
+            <div class="deck-sheet-section-head">
+              <h4>卡片資訊</h4>
+            </div>
+            <div class="deck-sheet-card-info" id="deckSheetCardInfo"></div>
+          </section>
+          <section class="deck-sheet-section is-main-ai" data-main-pane="ai" hidden>
+            <div class="deck-sheet-section-head">
+              <h4>AI 建議</h4>
+            </div>
+            <div class="deck-sheet-main-ai" id="deckSheetMainAi"></div>
           </section>
         </div>
 
@@ -4184,14 +4609,20 @@
         </aside>
       </div>
       <div class="deck-sheet-check" id="deckSheetCheck" hidden>
-        <div class="deck-sheet-check-banner" id="deckSheetCheckBanner">
-          <span class="deck-sheet-check-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
-          <div class="deck-sheet-check-copy">
-            <strong id="deckSheetCheckTitle">牌組檢查</strong>
-            <span id="deckSheetCheckText">—</span>
-          </div>
-          <div class="deck-sheet-check-mascot" aria-hidden="true">
-            <img id="deckSheetCheckMascot" src="assets/decks/deck-check-mascot.png" alt="" width="88" height="96" decoding="async">
+        <button type="button" class="deck-sheet-check-fab" id="deckSheetCheckFab" aria-label="開啟牌組檢查" aria-expanded="false" aria-controls="deckSheetCheckPanel">
+          <img id="deckSheetCheckMascot" src="assets/decks/deck-check-mascot.png" alt="" width="96" height="104" decoding="async">
+          <span class="deck-sheet-check-fab-dot" id="deckSheetCheckFabDot" aria-hidden="true"></span>
+        </button>
+        <div class="deck-sheet-check-panel" id="deckSheetCheckPanel" hidden>
+          <div class="deck-sheet-check-banner" id="deckSheetCheckBanner">
+            <span class="deck-sheet-check-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+            <div class="deck-sheet-check-copy">
+              <strong id="deckSheetCheckTitle">牌組檢查</strong>
+              <span id="deckSheetCheckText">—</span>
+            </div>
+            <button type="button" class="deck-sheet-check-close" id="deckSheetCheckClose" aria-label="關閉牌組檢查">
+              <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -5244,6 +5675,8 @@
         levelFilter: null, /* null | 0 | 1 | 2 | 3 | 'cx' */
         cardFilter: null, /* null | 'short' */
         analyzeTab: 'overview', /* overview | effects | stats | ai */
+        mainTab: 'cards', /* cards | info | ai */
+        checkOpen: false,
         metaCache: Object.create(null),
         saving: false,
         dirty: false,
@@ -7768,6 +8201,36 @@
         });
       }
 
+      function isSheetMobileViewport() {
+        try {
+          return !(window.matchMedia && window.matchMedia('(min-width: 900px)').matches);
+        } catch (e) {
+          return true;
+        }
+      }
+
+      function setSheetCheckOpen(open) {
+        var panel = document.getElementById('deckSheetCheckPanel');
+        var fab = document.getElementById('deckSheetCheckFab');
+        var on = !!open;
+        /* 桌面固定展開；手機點 FAB 才開 */
+        if (!isSheetMobileViewport()) on = true;
+        sheetState.checkOpen = on;
+        if (panel) panel.hidden = !on;
+        if (fab) {
+          fab.setAttribute('aria-expanded', on ? 'true' : 'false');
+          fab.setAttribute('aria-label', on ? '牌組檢查結果已開啟' : '開啟牌組檢查');
+        }
+      }
+
+      function toggleSheetCheckOpen() {
+        if (!isSheetMobileViewport()) {
+          setSheetCheckOpen(true);
+          return;
+        }
+        setSheetCheckOpen(!sheetState.checkOpen);
+      }
+
       function renderSheetCheckPanel(cards) {
         var host = document.getElementById('deckSheetCheck');
         if (!host) return;
@@ -7776,10 +8239,20 @@
         var textEl = document.getElementById('deckSheetCheckText');
         var iconEl = banner && banner.querySelector('.deck-sheet-check-icon');
         var mascotEl = document.getElementById('deckSheetCheckMascot');
+        var fab = document.getElementById('deckSheetCheckFab');
         var legality = evaluateSheetLegality(cards);
         var ok = !legality || !!legality.ok;
+        var hideCheck = sheetState.mode === 'edit';
+        host.hidden = hideCheck;
+        if (hideCheck) {
+          sheetState.checkOpen = false;
+          var panel = document.getElementById('deckSheetCheckPanel');
+          if (panel) panel.hidden = true;
+          return;
+        }
         host.hidden = false;
         if (banner) banner.classList.toggle('is-fail', !ok);
+        if (fab) fab.classList.toggle('is-fail', !ok);
         if (iconEl) {
           iconEl.innerHTML = ok
             ? '<i class="fas fa-check" aria-hidden="true"></i>'
@@ -7807,6 +8280,86 @@
             textEl.textContent = first ? (first + extra) : '尚未符合構築規則';
           }
         }
+        setSheetCheckOpen(isSheetMobileViewport() ? sheetState.checkOpen : true);
+      }
+
+      function syncSheetMainTabsUi() {
+        var tab = sheetState.mainTab || 'cards';
+        Array.prototype.forEach.call(document.querySelectorAll('[data-main-tab]'), function (btn) {
+          var on = btn.getAttribute('data-main-tab') === tab;
+          btn.classList.toggle('is-on', on);
+          btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-main-pane]'), function (pane) {
+          var on = pane.getAttribute('data-main-pane') === tab;
+          pane.hidden = !on;
+        });
+      }
+
+      function setSheetMainTab(nextTab) {
+        var allowed = { cards: 1, info: 1, ai: 1 };
+        if (!allowed[nextTab]) nextTab = 'cards';
+        if (sheetState.mode === 'edit') nextTab = 'cards';
+        sheetState.mainTab = nextTab;
+        syncSheetMainTabsUi();
+        if (nextTab === 'info' || nextTab === 'ai') {
+          var raw = findRawDeckById(sheetState.deckId);
+          if (raw) {
+            if (nextTab === 'info') renderSheetCardInfo(raw);
+            if (nextTab === 'ai') renderSheetMainAi(raw);
+          }
+        }
+      }
+
+      function renderSheetCardInfo(rawDeck) {
+        var host = document.getElementById('deckSheetCardInfo');
+        if (!host) return;
+        var cards = sortSheetCardsByLevelDesc(sheetCardsForRender(rawDeck));
+        if (!cards.length) {
+          host.innerHTML = '<div class="deck-sheet-empty">尚未加入卡片</div>';
+          return;
+        }
+        host.innerHTML = cards.map(function (c) {
+          var no = normalizeText(c && c.cardNumber);
+          var key = no.replace(/\\/g, '/');
+          var urls = buildCardImageUrls(no);
+          var qty = parseInt(c && c.qty, 10);
+          if (isNaN(qty) || qty < 1) qty = 1;
+          var meta = sheetState.metaCache[key];
+          var label = (meta && meta.name) || c.cardName || no;
+          var levelLabel = sheetEntryLevelGroupLabel(sheetEntryLevelGroupKey(c));
+          var color = (meta && meta.color) || '';
+          var effect = (meta && meta.effect) || '';
+          var sub = [levelLabel, color, no].filter(Boolean).join(' · ');
+          if (effect) sub += ' · ' + effect.replace(/\s+/g, ' ').slice(0, 42);
+          return '<div class="deck-sheet-card-info-row" title="' + escapeHtml(label) + '">' +
+            '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+            (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
+            '<div class="deck-sheet-card-info-copy"><strong>' + escapeHtml(label) + '</strong>' +
+            '<span>' + escapeHtml(sub) + '</span></div>' +
+            '<span class="deck-sheet-card-info-qty">×' + qty + '</span></div>';
+        }).join('');
+        Array.prototype.forEach.call(host.querySelectorAll('img'), function (img) {
+          bindImgFallback(img, img.getAttribute('data-fallback') || '');
+        });
+      }
+
+      function renderSheetMainAi(rawDeck) {
+        var host = document.getElementById('deckSheetMainAi');
+        if (!host) return;
+        var cards = sheetCardsForRender(rawDeck);
+        var source = sheetState.mode === 'edit'
+          ? Object.assign({}, rawDeck, { cards: cards })
+          : rawDeck;
+        var stats = computeSheetAnalyzeStats(source);
+        var effectPack = computeSheetEffectCounts(source);
+        var ai = buildSheetAiTip(stats, effectPack);
+        if (!cards.length) {
+          host.innerHTML = '<div class="deck-sheet-empty">加入卡片後可產生 AI 建議</div>';
+          return;
+        }
+        host.innerHTML = buildSheetAiTipHtml(ai, { full: true }) +
+          buildSheetEffectTagsHtml(effectPack, { limit: 8, title: '參考關鍵效果' });
       }
 
       function renderDeckSheet() {
@@ -7888,8 +8441,17 @@
         document.getElementById('deckSheetAnalyze').innerHTML = buildSheetAnalyzeHtml(analyzeSource);
         bindSheetAnalyzeInteractions();
         playSheetAnalyzeIntro();
+        if (isSheetMobileViewport()) {
+          sheetState.analyzeTab = 'overview';
+        }
         renderSheetCheckPanel(cardsForStats);
         renderSheetCards(raw);
+        if (sheetState.mode === 'edit') {
+          sheetState.mainTab = 'cards';
+        }
+        syncSheetMainTabsUi();
+        if (sheetState.mainTab === 'info') renderSheetCardInfo(raw);
+        if (sheetState.mainTab === 'ai') renderSheetMainAi(raw);
 
         var secondary = document.getElementById('deckSheetSecondary');
         var primary = document.getElementById('deckSheetPrimary');
@@ -7922,6 +8484,8 @@
         sheetState.levelFilter = null;
         sheetState.cardFilter = null;
         sheetState.analyzeTab = 'overview';
+        sheetState.mainTab = 'cards';
+        sheetState.checkOpen = false;
         sheetState.dirty = false;
         clearUnsavedHintTimer();
         closeSheetDialog();
@@ -8542,6 +9106,24 @@
           setSheetAnalyzeTab(btn.getAttribute('data-analyze-tab'));
         });
       }
+      var mainTabs = document.getElementById('deckSheetMainTabs');
+      if (mainTabs) {
+        mainTabs.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-main-tab]');
+          if (!btn || !mainTabs.contains(btn)) return;
+          setSheetMainTab(btn.getAttribute('data-main-tab'));
+        });
+      }
+      var checkFab = document.getElementById('deckSheetCheckFab');
+      if (checkFab) checkFab.addEventListener('click', function (e) {
+        e.preventDefault();
+        toggleSheetCheckOpen();
+      });
+      var checkClose = document.getElementById('deckSheetCheckClose');
+      if (checkClose) checkClose.addEventListener('click', function (e) {
+        e.preventDefault();
+        setSheetCheckOpen(false);
+      });
       var sheetFavBtn = document.getElementById('deckSheetFavBtn');
       if (sheetFavBtn) sheetFavBtn.addEventListener('click', toggleSheetFavorite);
       var sheetShareBtn = document.getElementById('deckSheetShareBtn');
