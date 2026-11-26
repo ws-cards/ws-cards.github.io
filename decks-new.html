@@ -1600,7 +1600,7 @@
     }
     .deck-sheet-analyze {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 0.65rem;
       align-items: stretch;
     }
@@ -1829,36 +1829,378 @@
     .deck-sheet-analyze-empty {
       grid-column: 1 / -1;
     }
+    .deck-sheet-analyze-head {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-bottom: 0.55rem;
+    }
+    .deck-sheet-analyze-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .deck-sheet-analyze-title-row h4 {
+      margin: 0;
+    }
+    .deck-sheet-analyze-tabs {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.28rem;
+      padding: 0.22rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      box-shadow: 0 6px 16px rgba(70, 60, 130, 0.08);
+    }
+    .deck-sheet-analyze-tab {
+      border: 0;
+      background: transparent;
+      color: var(--sheet-muted);
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 0.38rem 0.72rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .deck-sheet-analyze-tab:hover {
+      color: var(--sheet-ink);
+      background: rgba(255, 255, 255, 0.45);
+    }
+    .deck-sheet-analyze-tab.is-on {
+      color: #fff;
+      background: linear-gradient(135deg, #7b5cff 0%, #5b8dff 100%);
+      box-shadow: 0 6px 14px rgba(90, 100, 220, 0.28);
+    }
+    .deck-sheet-analyze-pane {
+      display: grid;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .deck-sheet-analyze-pane[hidden] {
+      display: none !important;
+    }
+    .deck-sheet-analyze.is-overview {
+      grid-template-columns: 1fr;
+    }
+    .deck-sheet-analyze.is-overview .deck-sheet-charts-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.65rem;
+    }
+    .deck-sheet-effect-block,
+    .deck-sheet-ai-tip,
+    .deck-sheet-stat-list {
+      padding: 0.75rem 0.7rem 0.8rem;
+      border-radius: 16px;
+      background: var(--sheet-panel);
+      border: 1px solid var(--sheet-panel-border);
+      box-shadow: 0 10px 22px rgba(70, 60, 130, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      min-width: 0;
+    }
+    .deck-sheet-effect-block-title,
+    .deck-sheet-stat-list-title {
+      margin: 0 0 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sheet-muted);
+    }
+    .deck-sheet-effect-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .deck-sheet-effect-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(150, 160, 220, 0.4);
+      color: var(--sheet-ink);
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.2;
+      box-shadow: 0 2px 8px rgba(70, 60, 130, 0.06);
+    }
+    .deck-sheet-effect-tag strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: #5a4bb8;
+    }
+    .deck-sheet-effect-tag.is-muted {
+      opacity: 0.55;
+    }
+    .deck-sheet-ai-tip {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.55rem;
+      align-items: start;
+      background:
+        linear-gradient(135deg, rgba(255, 245, 210, 0.65), rgba(255, 255, 255, 0.55)),
+        var(--sheet-panel);
+      border-color: rgba(240, 193, 75, 0.35);
+    }
+    .deck-sheet-ai-tip-icon {
+      width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #ffe08a, #f0c14b);
+      color: #5a4208;
+      font-size: 0.78rem;
+      box-shadow: 0 4px 10px rgba(200, 150, 40, 0.28);
+    }
+    .deck-sheet-ai-tip strong {
+      display: block;
+      margin: 0 0 0.2rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--sheet-ink);
+    }
+    .deck-sheet-ai-tip p {
+      margin: 0;
+      font-size: 0.74rem;
+      line-height: 1.45;
+      color: var(--sheet-ink-soft);
+    }
+    .deck-sheet-stat-list ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.35rem;
+    }
+    .deck-sheet-stat-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.42rem 0.5rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(170, 180, 230, 0.28);
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--sheet-ink-soft);
+    }
+    .deck-sheet-stat-list li strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: var(--sheet-ink);
+      font-variant-numeric: tabular-nums;
+    }
     .deck-sheet-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(5.7rem, 1fr));
-      gap: 0.6rem;
+      gap: 0.7rem;
     }
-    .deck-sheet-level-head {
-      grid-column: 1 / -1;
+    .deck-sheet-card-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.45rem;
+      align-items: stretch;
+      min-width: 0;
+      padding: 0.45rem 0.4rem 0.5rem 0.35rem;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 18px rgba(70, 60, 130, 0.07);
+    }
+    .deck-sheet-card-row-rail {
+      width: 0.28rem;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #7aa8ff, #5b8dff);
+      align-self: stretch;
+      min-height: 4.2rem;
+    }
+    .deck-sheet-card-row[data-level="0"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #8ec5ff, #4f8dff);
+    }
+    .deck-sheet-card-row[data-level="1"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #8dffb0, #3ecf78);
+    }
+    .deck-sheet-card-row[data-level="2"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #ff9aa8, #ef5b72);
+    }
+    .deck-sheet-card-row[data-level="3"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #d2b4ff, #9b6bff);
+    }
+    .deck-sheet-card-row[data-level="cx"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #ffe08a, #f0c14b);
+    }
+    .deck-sheet-card-row[data-level="unknown"] .deck-sheet-card-row-rail {
+      background: linear-gradient(180deg, #c8cde0, #9aa3c0);
+    }
+    .deck-sheet-card-row-main {
+      min-width: 0;
+      display: grid;
+      gap: 0.35rem;
+    }
+    .deck-sheet-card-row-head {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 0.55rem;
-      margin: 0.75rem 0 0.2rem;
-      padding: 0.48rem 0.05rem;
-      border-top: 1px solid var(--sheet-line);
-      border-bottom: 1px solid var(--sheet-line);
+      gap: 0.5rem;
+      padding: 0 0.15rem;
     }
-    .deck-sheet-level-head:first-child {
-      margin-top: 0.1rem;
-    }
-    .deck-sheet-level-head-label {
-      font-size: 0.82rem;
+    .deck-sheet-card-row-label {
+      font-size: 0.78rem;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       color: var(--sheet-ink);
     }
-    .deck-sheet-level-head-meta {
-      font-size: 0.7rem;
-      font-weight: 600;
+    .deck-sheet-card-row-meta {
+      font-size: 0.68rem;
+      font-weight: 700;
       color: var(--sheet-muted);
       white-space: nowrap;
+    }
+    .deck-sheet-card-row-track {
+      display: flex;
+      gap: 0.45rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.1rem 0.1rem 0.25rem;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .deck-sheet-card-row-track .deck-sheet-card {
+      flex: 0 0 auto;
+      width: 4.55rem;
+      scroll-snap-align: start;
+    }
+    .deck-sheet.is-edit .deck-sheet-card-row-track .deck-sheet-card {
+      width: 5.4rem;
+    }
+    .deck-sheet-card-row-more {
+      border: 0;
+      width: 1.85rem;
+      border-radius: 10px;
+      background: rgba(55, 48, 110, 0.12);
+      color: var(--sheet-ink);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .deck-sheet-card-row-more:hover {
+      background: rgba(55, 48, 110, 0.2);
+      transform: translateX(1px);
+    }
+    .deck-sheet-level-head {
+      display: none;
+    }
+    .deck-sheet-bar-brand {
+      display: none;
+      align-items: center;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+    .deck-sheet-bar-brand-mark {
+      width: 2rem;
+      height: 2rem;
+      filter: drop-shadow(0 2px 8px rgba(40, 20, 80, 0.28));
+    }
+    .deck-sheet-bar-brand-copy {
+      min-width: 0;
+      line-height: 1.15;
+    }
+    .deck-sheet-bar-brand-kicker {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: rgba(42, 33, 80, 0.55);
+      text-transform: uppercase;
+    }
+    .deck-sheet-bar-brand-title {
+      margin: 0.08rem 0 0;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #2a2150;
+    }
+    .deck-sheet-back-label {
+      display: none;
+      margin-left: 0.35rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .deck-sheet-action-btn {
+      border: 0;
+      background: linear-gradient(160deg, #3d356e 0%, #2b2550 100%);
+      color: #fff;
+      min-width: 2.35rem;
+      height: 2.35rem;
+      padding: 0 0.7rem;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 800;
+      box-shadow: 0 6px 14px rgba(45, 35, 100, 0.28);
+      white-space: nowrap;
+    }
+    .deck-sheet-action-btn:hover {
+      background: linear-gradient(160deg, #4a4180 0%, #342c60 100%);
+    }
+    .deck-sheet-action-btn.is-on {
+      background: linear-gradient(160deg, #f0c14b 0%, #e0a83a 100%);
+      color: #3a2a08;
+    }
+    .deck-sheet-action-btn .btn-text {
+      display: none;
+    }
+    .deck-sheet-dock-detail {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.88);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0.35rem 0.2rem;
+      white-space: nowrap;
+    }
+    .deck-sheet-dock-detail:hover {
+      color: #fff;
+    }
+    .deck-sheet-dock-actions {
+      display: contents;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock-detail {
+      display: inline-flex;
+    }
+    .deck-sheet:not(.is-edit) .deck-sheet-dock-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 0.55rem;
+      min-width: 0;
     }
     .deck-sheet-card {
       position: relative;
@@ -2067,7 +2409,20 @@
       -webkit-backdrop-filter: blur(10px);
     }
     .deck-sheet.is-edit .deck-sheet-dock {
+      grid-template-columns: 1fr;
+    }
+    .deck-sheet.is-edit .deck-sheet-dock-detail {
+      display: none !important;
+    }
+    .deck-sheet.is-edit #deckSheetFavBtn,
+    .deck-sheet.is-edit #deckSheetShareBtn {
+      display: none;
+    }
+    .deck-sheet.is-edit .deck-sheet-dock-actions {
+      display: grid;
       grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      min-width: 0;
     }
     .deck-sheet-dock .btn-skew {
       min-height: 3rem;
@@ -2642,6 +2997,47 @@
       .deck-sheet-bar {
         padding: 0.42rem clamp(1rem, 2.2vw, 1.6rem) 0.45rem;
         gap: 0.45rem;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+      }
+      .deck-sheet-bar-brand {
+        display: inline-flex;
+      }
+      .deck-sheet-heading {
+        justify-self: center;
+        text-align: center;
+      }
+      .deck-sheet-back {
+        width: auto;
+        min-width: 2.15rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+      }
+      .deck-sheet-back-label {
+        display: inline;
+      }
+      .deck-sheet-action-btn .btn-text {
+        display: inline;
+      }
+      .deck-sheet-action-btn {
+        height: 2.15rem;
+        min-width: 2.15rem;
+        font-size: 0.74rem;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-dock {
+        left: clamp(0.9rem, 2.2vw, 1.7rem);
+        right: clamp(0.9rem, 2.2vw, 1.7rem);
+        width: auto;
+        max-width: none;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        justify-content: stretch;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 0.85rem calc(0.65rem + var(--safe-b));
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-dock-actions {
+        justify-self: end;
+        width: min(24rem, 100%);
       }
       .deck-sheet-back,
       .deck-sheet-mode-btn,
@@ -2731,9 +3127,11 @@
       }
       .deck-sheet-stat strong { font-size: 1.45rem; }
       .deck-sheet-stat span { font-size: 0.74rem; }
-      .deck-sheet-cards {
-        grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-        gap: 0.8rem;
+      .deck-sheet-card-row-track .deck-sheet-card {
+        width: 5.1rem;
+      }
+      .deck-sheet.is-edit .deck-sheet-card-row-track .deck-sheet-card {
+        width: 5.8rem;
       }
       .deck-sheet-analyze {
         gap: 0.9rem;
@@ -2769,6 +3167,13 @@
         box-shadow: 0 14px 32px rgba(30, 24, 70, 0.28);
       }
       .deck-sheet.is-edit .deck-sheet-dock {
+        grid-template-columns: 1fr;
+        width: auto;
+        max-width: calc(100% - 1.8rem);
+        display: inline-grid;
+        justify-content: end;
+      }
+      .deck-sheet.is-edit .deck-sheet-dock-actions {
         grid-template-columns: auto auto;
       }
       .deck-sheet-dock .btn-skew {
@@ -2901,9 +3306,14 @@
       .deck-sheet-section.is-analyze .deck-sheet-pie-wrap {
         width: min(100%, 11rem);
       }
-      .deck-sheet-cards {
-        grid-template-columns: repeat(auto-fill, minmax(7.4rem, 1fr));
-        gap: 0.85rem;
+      .deck-sheet-card-row-track .deck-sheet-card {
+        width: 5.35rem;
+      }
+      .deck-sheet.is-edit .deck-sheet-card-row-track .deck-sheet-card {
+        width: 6rem;
+      }
+      .deck-sheet:not(.is-edit) .deck-sheet-analyze.is-overview .deck-sheet-charts-row {
+        grid-template-columns: 1fr;
       }
       .deck-sheet.is-edit .deck-sheet-scroll {
         grid-template-columns:
@@ -2924,8 +3334,8 @@
     }
 
     @media (min-width: 1400px) {
-      .deck-sheet-cards {
-        grid-template-columns: repeat(auto-fill, minmax(8.2rem, 1fr));
+      .deck-sheet-card-row-track .deck-sheet-card {
+        width: 5.7rem;
       }
       .deck-sheet-scroll {
         grid-template-columns:
@@ -3635,17 +4045,45 @@
 
     <section class="deck-sheet" id="deckSheet" hidden aria-hidden="true">
       <header class="deck-sheet-bar">
-        <button type="button" class="deck-sheet-back" id="deckSheetBack" aria-label="返回選牌">
+        <div class="deck-sheet-bar-brand" aria-hidden="true">
+          <svg class="deck-sheet-bar-brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="wsSheetGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#2e2e2e"/>
+                <stop offset="100%" stop-color="#0e0e0e"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#wsSheetGrad)" stroke="#fff" stroke-width="2.4" d="M32 3.5 L55 14.2 V34.5 C55 49 42.5 56.5 32 60.5 C21.5 56.5 9 49 9 34.5 V14.2 Z"/>
+            <text x="32" y="27" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="8.5" font-weight="800" letter-spacing="0.8">WEISS</text>
+            <text x="32" y="39" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="7.5" font-weight="700" letter-spacing="0.3">SCHWARZ</text>
+            <path fill="#ff5fad" d="M17 10.5l1.1 2.2 2.4.35-1.75 1.7.42 2.35-2.17-1.15-2.17 1.15.42-2.35-1.75-1.7 2.4-.35z"/>
+            <path fill="#ff5fad" d="M47 10.5l1.1 2.2 2.4.35-1.75 1.7.42 2.35-2.17-1.15-2.17 1.15.42-2.35-1.75-1.7 2.4-.35z"/>
+          </svg>
+          <div class="deck-sheet-bar-brand-copy">
+            <p class="deck-sheet-bar-brand-kicker">Weiss Schwarz</p>
+            <p class="deck-sheet-bar-brand-title">DECK VIEWER</p>
+          </div>
+        </div>
+        <button type="button" class="deck-sheet-back" id="deckSheetBack" aria-label="返回牌組列表">
           <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span class="deck-sheet-back-label">返回牌組列表</span>
         </button>
         <div class="deck-sheet-heading">
           <div class="deck-sheet-kicker-row">
-            <p class="deck-sheet-kicker" id="deckSheetKicker">檢視牌組</p>
+            <p class="deck-sheet-kicker" id="deckSheetKicker">Deck Detail</p>
             <span class="deck-sheet-unsaved" id="deckSheetUnsaved">未儲存</span>
           </div>
           <h2 class="deck-sheet-title" id="deckSheetTitle">—</h2>
         </div>
         <div class="deck-sheet-bar-actions">
+          <button type="button" class="deck-sheet-action-btn" id="deckSheetFavBtn" aria-label="我的最愛" aria-pressed="false">
+            <i class="far fa-star" aria-hidden="true"></i>
+            <span class="btn-text">我的最愛</span>
+          </button>
+          <button type="button" class="deck-sheet-action-btn" id="deckSheetShareBtn" aria-label="分享">
+            <i class="fas fa-share-alt" aria-hidden="true"></i>
+            <span class="btn-text">分享</span>
+          </button>
           <div class="deck-sheet-more" id="deckSheetMoreWrap" hidden>
             <button type="button" class="deck-sheet-more-btn" id="deckSheetMoreBtn" aria-label="更多操作" aria-haspopup="menu" aria-expanded="false" aria-controls="deckSheetMoreMenu">
               <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
@@ -3717,7 +4155,7 @@
           </section>
           <section class="deck-sheet-section is-cards">
             <div class="deck-sheet-section-head">
-              <h4>卡表 <span id="deckSheetCardCount"></span></h4>
+              <h4>牌組構築 <span id="deckSheetCardCount"></span></h4>
               <button type="button" class="deck-sheet-filter-chip" id="deckSheetShortFilter" aria-pressed="false" hidden>
                 僅缺卡
               </button>
@@ -3728,7 +4166,17 @@
 
         <aside class="deck-sheet-desk-col is-side" aria-label="牌組分析">
           <section class="deck-sheet-section is-analyze">
-            <h4>牌組分析</h4>
+            <div class="deck-sheet-analyze-head">
+              <div class="deck-sheet-analyze-title-row">
+                <h4>牌組分析</h4>
+              </div>
+              <div class="deck-sheet-analyze-tabs" id="deckSheetAnalyzeTabs" role="tablist" aria-label="分析分頁">
+                <button type="button" class="deck-sheet-analyze-tab is-on" role="tab" aria-selected="true" data-analyze-tab="overview">總覽</button>
+                <button type="button" class="deck-sheet-analyze-tab" role="tab" aria-selected="false" data-analyze-tab="effects">效果</button>
+                <button type="button" class="deck-sheet-analyze-tab" role="tab" aria-selected="false" data-analyze-tab="stats">統計</button>
+                <button type="button" class="deck-sheet-analyze-tab" role="tab" aria-selected="false" data-analyze-tab="ai">AI 建議</button>
+              </div>
+            </div>
             <div class="deck-sheet-analyze" id="deckSheetAnalyze">
               <div class="deck-sheet-empty deck-sheet-analyze-empty">載入分析中…</div>
             </div>
@@ -3748,13 +4196,19 @@
         </div>
       </div>
       <div class="deck-sheet-dock">
-        <button type="button" class="btn-skew btn-edit" id="deckSheetSecondary">
-          <i class="fas fa-pen" aria-hidden="true"></i>
-          <span>編成</span>
+        <button type="button" class="deck-sheet-dock-detail" id="deckSheetDetailBtn">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <span>查看卡片詳情</span>
         </button>
-        <button type="button" class="btn-skew btn-start" id="deckSheetPrimary">
-          <span class="btn-start-main">關閉</span>
-        </button>
+        <div class="deck-sheet-dock-actions">
+          <button type="button" class="btn-skew btn-edit" id="deckSheetSecondary">
+            <i class="fas fa-pen" aria-hidden="true"></i>
+            <span>編輯牌組</span>
+          </button>
+          <button type="button" class="btn-skew btn-start" id="deckSheetPrimary">
+            <span class="btn-start-main">使用此牌組</span>
+          </button>
+        </div>
       </div>
       <aside class="deck-sheet-pick" id="deckSheetPick" hidden aria-hidden="true" aria-label="選牌加卡">
         <div class="deck-sheet-pick-bar">
@@ -4178,8 +4632,11 @@
           work: tags.find(function (t) { return !/競技|休閒|扉|門|軸/.test(t); }) || series || '—',
           build: build,
           created: formatDotDate(deck.createdAt),
-          winRate: '—',
-          winNote: '尚無對戰資料',
+          winRate: normalizeText(deck.winRate) || '—',
+          winNote: deck.winSample
+            ? ('近 ' + deck.winSample + ' 戰')
+            : (normalizeText(deck.winNote) || '尚無對戰資料'),
+          winSample: deck.winSample || 0,
           cards: total,
           kinds: kinds,
           competitive: competitive,
@@ -4786,6 +5243,7 @@
         draftMeta: null, /* { name, tags, deckDescription, baseUpdatedAt, savedAt } */
         levelFilter: null, /* null | 0 | 1 | 2 | 3 | 'cx' */
         cardFilter: null, /* null | 'short' */
+        analyzeTab: 'overview', /* overview | effects | stats | ai */
         metaCache: Object.create(null),
         saving: false,
         dirty: false,
@@ -4794,6 +5252,23 @@
         suppressDraftPersist: false,
         pickOpen: false
       };
+
+      var SHEET_EFFECT_KEYS = [
+        { id: 'brainstorm', label: 'Brainstorm', patterns: [/ブレイン/i, /集中/i, /brainstorm/i] },
+        { id: 'stockShoot', label: 'Stock Shoot', patterns: [/ストックに置/, /ストック送り/, /stock\s*shoot/i] },
+        { id: 'gate', label: 'Gate', patterns: [/ゲート/, /\bgate\b/i] },
+        { id: 'salvage', label: 'Salvage', patterns: [/サルベージ/, /控え室から/, /salvage/i] },
+        { id: 'search', label: 'Search', patterns: [/サーチ/, /山札を上から/, /公開し/, /search/i] },
+        { id: 'draw', label: 'Draw', patterns: [/カードを\s*\d*枚?引/, /ドロー/, /\bdraw\b/i] },
+        { id: 'bounce', label: 'Bounce', patterns: [/手札に戻/, /bounce/i] },
+        { id: 'clock', label: 'Clock', patterns: [/クロック置場/, /clock/i] },
+        { id: 'heal', label: 'Heal', patterns: [/クライマックス置場に送/, /回復/, /\bheal\b/i] },
+        { id: 'change', label: 'Change', patterns: [/チェンジ/, /\bchange\b/i] },
+        { id: 'assist', label: 'Assist', patterns: [/アシスト/, /\bassist\b/i] },
+        { id: 'bond', label: 'Bond', patterns: [/【絆】/, /絆/, /\bbond\b/i] },
+        { id: 'counter', label: 'Counter', patterns: [/カウンター/, /counter/i] },
+        { id: 'memory', label: 'Memory', patterns: [/思い出/, /memory/i] }
+      ];
       var sheetPickState = {
         query: '',
         status: '',
@@ -4840,12 +5315,14 @@
       }
 
       function sheetEntryLevelGroupLabel(key) {
-        if (key === 'cx') return 'CX';
+        if (key === 'cx') return 'CLIMAX';
         if (key === 'unknown') return '未定等級';
+        if (key === 0 || key === 1 || key === 2 || key === 3) return 'LEVEL ' + key;
         return sheetLevelLabel(key);
       }
 
       function sortSheetCardsByLevelDesc(cards) {
+        /* 名稱保留 Desc 相容呼叫端；顯示順序改為 Lv0→Lv3→CX（對齊檢視附圖） */
         return (cards || []).slice().sort(function (a, b) {
           var keyA = sheetEntryLevelGroupKey(a);
           var keyB = sheetEntryLevelGroupKey(b);
@@ -4856,7 +5333,7 @@
           var unkB = keyB === 'unknown';
           if (unkA !== unkB) return unkA ? 1 : -1;
           if (!cxA && !unkA && !cxB && !unkB && keyA !== keyB) {
-            return Number(keyB) - Number(keyA);
+            return Number(keyA) - Number(keyB);
           }
           return String(a && a.cardNumber || '').localeCompare(String(b && b.cardNumber || ''));
         });
@@ -5867,8 +6344,8 @@
           ? '<p class="deck-sheet-pie-caption">' + escapeHtml(sheetLevelLabel(selectedLevel)) + '</p>'
           : '<p class="deck-sheet-pie-caption"></p>';
         var center = '<div class="deck-sheet-pie-center">' +
-          '<div class="deck-sheet-pie-total">' + colorSum + '<span>張</span></div>' +
-          caption +
+          '<div class="deck-sheet-pie-total">' + colorSum + '<span>/50</span></div>' +
+          (hasSelection ? caption : '<p class="deck-sheet-pie-caption">總張數</p>') +
           '</div>';
 
         var legend = '<div class="deck-sheet-legend">';
@@ -5887,19 +6364,149 @@
         return '<div class="deck-sheet-pie-wrap">' + svg + center + '</div>' + legend;
       }
 
-      function buildSheetAnalyzeHtml(rawDeck) {
-        var stats = computeSheetAnalyzeStats(rawDeck);
-        if (!stats.cards.length) {
-          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
-        }
-        if (!stats.known) {
-          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
-        }
+      function matchSheetEffectKeys(effectText) {
+        var text = normalizeText(effectText);
+        if (!text) return [];
+        var hits = [];
+        SHEET_EFFECT_KEYS.forEach(function (key) {
+          for (var i = 0; i < key.patterns.length; i++) {
+            if (key.patterns[i].test(text)) {
+              hits.push(key);
+              return;
+            }
+          }
+        });
+        return hits;
+      }
 
-        var donut = '<div class="deck-sheet-chart" data-sheet-chart="color">' +
-          '<p class="deck-sheet-chart-title">色別分布</p>' +
-          '<div class="deck-sheet-pie">' + buildSheetDonutBodyHtml(stats) + '</div></div>';
+      function computeSheetEffectCounts(rawDeck) {
+        var cards = (rawDeck && rawDeck.cards) || [];
+        var counts = Object.create(null);
+        SHEET_EFFECT_KEYS.forEach(function (key) { counts[key.id] = 0; });
+        var matchedCards = 0;
+        cards.forEach(function (c) {
+          var qty = parseInt(c && c.qty, 10);
+          if (isNaN(qty) || qty < 1) qty = 1;
+          var key = normalizeText(c && c.cardNumber).replace(/\\/g, '/');
+          var meta = sheetState.metaCache[key];
+          if (!meta || !meta.effect) return;
+          var hits = matchSheetEffectKeys(meta.effect);
+          if (!hits.length) return;
+          matchedCards += qty;
+          hits.forEach(function (hit) {
+            counts[hit.id] += qty;
+          });
+        });
+        var list = SHEET_EFFECT_KEYS.map(function (key) {
+          return { id: key.id, label: key.label, count: counts[key.id] || 0 };
+        }).filter(function (row) { return row.count > 0; })
+          .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label); });
+        return { list: list, matchedCards: matchedCards, counts: counts };
+      }
 
+      function buildSheetEffectTagsHtml(effectPack, opts) {
+        opts = opts || {};
+        var limit = opts.limit != null ? opts.limit : 0;
+        var list = effectPack.list || [];
+        if (limit > 0) list = list.slice(0, limit);
+        if (!list.length) {
+          return '<div class="deck-sheet-effect-block">' +
+            '<p class="deck-sheet-effect-block-title">關鍵效果</p>' +
+            '<div class="deck-sheet-effect-tags">' +
+            '<span class="deck-sheet-effect-tag is-muted">尚無可辨識效果關鍵字</span>' +
+            '</div></div>';
+        }
+        var tags = list.map(function (row) {
+          return '<span class="deck-sheet-effect-tag">' +
+            escapeHtml(row.label) + ' <strong>' + row.count + '</strong></span>';
+        }).join('');
+        return '<div class="deck-sheet-effect-block">' +
+          '<p class="deck-sheet-effect-block-title">' + escapeHtml(opts.title || '關鍵效果') + '</p>' +
+          '<div class="deck-sheet-effect-tags">' + tags + '</div></div>';
+      }
+
+      function buildSheetAiTip(stats, effectPack) {
+        var total = 0;
+        (stats.cards || []).forEach(function (c) {
+          var q = parseInt(c && c.qty, 10);
+          total += isNaN(q) || q < 1 ? 0 : q;
+        });
+        var lv0 = stats.levelTotals[0] || 0;
+        var lv3 = stats.levelTotals[3] || 0;
+        var cx = stats.levelTotals.cx || 0;
+        var colors = [
+          { k: 'y', n: stats.colorTotals.y || 0, label: '黃' },
+          { k: 'g', n: stats.colorTotals.g || 0, label: '綠' },
+          { k: 'r', n: stats.colorTotals.r || 0, label: '紅' },
+          { k: 'b', n: stats.colorTotals.b || 0, label: '藍' }
+        ].sort(function (a, b) { return b.n - a.n; });
+        var topColor = colors[0];
+        var search = (effectPack.counts && effectPack.counts.search) || 0;
+        var brainstorm = (effectPack.counts && effectPack.counts.brainstorm) || 0;
+        var tips = [];
+        if (total === 50) tips.push('張數完整（50/50），結構可直接投入實戰測試。');
+        else if (total > 50) tips.push('目前 ' + total + ' 張，超過標準 50 張，建議先精簡核心軸。');
+        else tips.push('目前 ' + total + ' 張，距 50 張還差 ' + Math.max(0, 50 - total) + ' 張。');
+        if (topColor && topColor.n) {
+          tips.push('主色偏' + topColor.label + '（' + topColor.n + ' 張），構築辨識度清楚。');
+        }
+        if (lv0 >= 14 && lv0 <= 18) tips.push('Lv0 落在常見密度，前期鋪場節奏穩。');
+        else if (lv0 > 18) tips.push('Lv0 偏多，可檢查是否擠壓後段火力。');
+        else if (lv0 && lv0 < 12) tips.push('Lv0 偏少，開局 continuity 可能不穩。');
+        if (lv3 >= 4 && lv3 <= 8) tips.push('後期 Lv3 數量適中。');
+        if (cx && (cx < 6 || cx > 8)) tips.push('CX 建議維持 8 張左右，目前為 ' + cx + ' 張。');
+        if (search >= 8) tips.push('Search 資源充足，檢索軸可靠。');
+        else if (search > 0 && search < 6) tips.push('Search 偏少，可考慮補強檢索點。');
+        if (brainstorm >= 6) tips.push('Brainstorm 密度高，CX 轉換與資源循環佳。');
+        if (tips.length < 2) tips.push('這是一副方向清楚的構築，可再對照對戰紀錄微調曲線。');
+        return {
+          title: 'AI 分析',
+          summary: tips.slice(0, 2).join(' '),
+          details: tips
+        };
+      }
+
+      function buildSheetAiTipHtml(ai, opts) {
+        opts = opts || {};
+        var body = opts.full
+          ? ai.details.map(function (line) {
+              return '<p>' + escapeHtml(line) + '</p>';
+            }).join('')
+          : '<p>' + escapeHtml(ai.summary) + '</p>';
+        return '<div class="deck-sheet-ai-tip">' +
+          '<span class="deck-sheet-ai-tip-icon" aria-hidden="true"><i class="fas fa-lightbulb"></i></span>' +
+          '<div><strong>' + escapeHtml(ai.title) + '</strong>' + body + '</div></div>';
+      }
+
+      function buildSheetStatsListHtml(stats, effectPack) {
+        var total = 0;
+        (stats.cards || []).forEach(function (c) {
+          var q = parseInt(c && c.qty, 10);
+          total += isNaN(q) || q < 1 ? 0 : q;
+        });
+        var rows = [
+          ['總張數', total + ' / 50'],
+          ['卡種', String((stats.cards || []).length)],
+          ['Lv0', String(stats.levelTotals[0] || 0)],
+          ['Lv1', String(stats.levelTotals[1] || 0)],
+          ['Lv2', String(stats.levelTotals[2] || 0)],
+          ['Lv3', String(stats.levelTotals[3] || 0)],
+          ['CX', String(stats.levelTotals.cx || 0)],
+          ['黃 / 綠 / 紅 / 藍',
+            (stats.colorTotals.y || 0) + ' / ' +
+            (stats.colorTotals.g || 0) + ' / ' +
+            (stats.colorTotals.r || 0) + ' / ' +
+            (stats.colorTotals.b || 0)],
+          ['效果關鍵字命中', String(effectPack.matchedCards || 0) + ' 張']
+        ];
+        var lis = rows.map(function (row) {
+          return '<li><span>' + escapeHtml(row[0]) + '</span><strong>' + escapeHtml(row[1]) + '</strong></li>';
+        }).join('');
+        return '<div class="deck-sheet-stat-list">' +
+          '<p class="deck-sheet-stat-list-title">構築統計</p><ul>' + lis + '</ul></div>';
+      }
+
+      function buildSheetLevelChartHtml(stats) {
         var levelOrder = [
           { key: 0, label: 'Lv0' },
           { key: 1, label: 'Lv1' },
@@ -5931,10 +6538,58 @@
             '<span class="deck-sheet-vbar-label">' + lv.label + '</span></button>';
         });
         vbars += '</div>';
-        var levelChart = '<div class="deck-sheet-chart" data-sheet-chart="level">' +
-          '<p class="deck-sheet-chart-title">等級分布</p>' + vbars + '</div>';
+        return '<div class="deck-sheet-chart" data-sheet-chart="level">' +
+          '<p class="deck-sheet-chart-title">等級曲線</p>' + vbars + '</div>';
+      }
 
-        return donut + levelChart;
+      function syncSheetAnalyzeTabsUi() {
+        var tab = sheetState.analyzeTab || 'overview';
+        Array.prototype.forEach.call(document.querySelectorAll('[data-analyze-tab]'), function (btn) {
+          var on = btn.getAttribute('data-analyze-tab') === tab;
+          btn.classList.toggle('is-on', on);
+          btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+      }
+
+      function buildSheetAnalyzeHtml(rawDeck) {
+        var stats = computeSheetAnalyzeStats(rawDeck);
+        var effectPack = computeSheetEffectCounts(rawDeck);
+        var ai = buildSheetAiTip(stats, effectPack);
+        var tab = sheetState.analyzeTab || 'overview';
+        if (!stats.cards.length) {
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">此牌組尚未加入卡片</div>';
+        }
+        if (!stats.known && tab === 'overview') {
+          return '<div class="deck-sheet-empty deck-sheet-analyze-empty">尚無色別／等級資料（可稍後自動補齊）</div>';
+        }
+
+        var donut = '<div class="deck-sheet-chart" data-sheet-chart="color">' +
+          '<p class="deck-sheet-chart-title">色別分布</p>' +
+          '<div class="deck-sheet-pie">' + buildSheetDonutBodyHtml(stats) + '</div></div>';
+        var levelChart = buildSheetLevelChartHtml(stats);
+        var overviewEffects = buildSheetEffectTagsHtml(effectPack, { limit: 10, title: '關鍵效果' });
+        var overviewAi = buildSheetAiTipHtml(ai, { full: false });
+
+        var overview = '<div class="deck-sheet-analyze-pane" data-analyze-pane="overview"' +
+          (tab === 'overview' ? '' : ' hidden') + '>' +
+          '<div class="deck-sheet-charts-row">' + donut + levelChart + '</div>' +
+          overviewEffects + overviewAi + '</div>';
+
+        var effectsPane = '<div class="deck-sheet-analyze-pane" data-analyze-pane="effects"' +
+          (tab === 'effects' ? '' : ' hidden') + '>' +
+          buildSheetEffectTagsHtml(effectPack, { title: '效果一覽' }) + '</div>';
+
+        var statsPane = '<div class="deck-sheet-analyze-pane" data-analyze-pane="stats"' +
+          (tab === 'stats' ? '' : ' hidden') + '>' +
+          buildSheetStatsListHtml(stats, effectPack) + levelChart + '</div>';
+
+        var aiPane = '<div class="deck-sheet-analyze-pane" data-analyze-pane="ai"' +
+          (tab === 'ai' ? '' : ' hidden') + '>' +
+          buildSheetAiTipHtml(ai, { full: true }) +
+          buildSheetEffectTagsHtml(effectPack, { limit: 6, title: '參考關鍵效果' }) +
+          '</div>';
+
+        return overview + effectsPane + statsPane + aiPane;
       }
 
       function prefersSheetChartMotionReduce() {
@@ -6113,6 +6768,9 @@
       function bindSheetAnalyzeInteractions() {
         var host = document.getElementById('deckSheetAnalyze');
         if (!host) return;
+        var tab = sheetState.analyzeTab || 'overview';
+        host.classList.toggle('is-overview', tab === 'overview');
+        syncSheetAnalyzeTabsUi();
         Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-chart-level]'), function (btn) {
           btn.addEventListener('click', function () {
             var raw = btn.getAttribute('data-sheet-chart-level');
@@ -6129,6 +6787,67 @@
             updateSheetColorDonut(source);
           });
         });
+      }
+
+      function setSheetAnalyzeTab(nextTab) {
+        var allowed = { overview: 1, effects: 1, stats: 1, ai: 1 };
+        if (!allowed[nextTab]) nextTab = 'overview';
+        sheetState.analyzeTab = nextTab;
+        var host = document.getElementById('deckSheetAnalyze');
+        if (!host) {
+          syncSheetAnalyzeTabsUi();
+          return;
+        }
+        Array.prototype.forEach.call(host.querySelectorAll('[data-analyze-pane]'), function (pane) {
+          var on = pane.getAttribute('data-analyze-pane') === nextTab;
+          pane.hidden = !on;
+        });
+        host.classList.toggle('is-overview', nextTab === 'overview');
+        syncSheetAnalyzeTabsUi();
+        if (nextTab === 'overview' || nextTab === 'stats') {
+          playSheetAnalyzeIntro();
+        }
+      }
+
+      function buildSheetCardCellHtml(c, isEdit) {
+        var no = normalizeText(c && c.cardNumber);
+        var key = no.replace(/\\/g, '/');
+        var urls = buildCardImageUrls(no);
+        var qty = parseInt(c && c.qty, 10);
+        if (isNaN(qty) || qty < 1) qty = 1;
+        var shortQty = entryShortQty(c);
+        var isShort = shortQty > 0;
+        var meta = sheetState.metaCache[key];
+        var label = (meta && meta.name) || c.cardName || no;
+        if (!isEdit) {
+          return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" title="' +
+            escapeHtml(label) + ' | ' + escapeHtml(no) +
+            (isShort ? (' | 缺 ' + shortQty + ' 張') : '') + '">' +
+            (isShort ? ('<span class="deck-sheet-card-short-badge">缺' + shortQty + '</span>') : '') +
+            '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+            (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
+            '<span class="deck-sheet-card-qty">×' + qty + '</span></div>';
+        }
+        return '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" data-card-no="' +
+          escapeHtml(no) + '" title="' + escapeHtml(label) + ' | ' + escapeHtml(no) + '">' +
+          '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
+          (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
+          '<button type="button" class="deck-sheet-card-remove" data-sheet-remove="' + escapeHtml(no) +
+          '" aria-label="移除 ' + escapeHtml(label) + '"><i class="fas fa-times" aria-hidden="true"></i></button>' +
+          '<div class="deck-sheet-card-short">' +
+          '<label><input type="checkbox" data-sheet-short-toggle="' + escapeHtml(no) + '"' +
+          (isShort ? ' checked' : '') + '><span>缺卡</span></label>' +
+          '<div class="deck-sheet-short-step"' + (isShort ? '' : ' hidden') + '>' +
+          '<button type="button" data-sheet-short-qty="-1" data-card-no="' + escapeHtml(no) +
+          '" aria-label="減少缺卡">−</button>' +
+          '<span>' + Math.max(1, shortQty || 1) + '</span>' +
+          '<button type="button" data-sheet-short-qty="1" data-card-no="' + escapeHtml(no) +
+          '" aria-label="增加缺卡">+</button></div></div>' +
+          '<div class="deck-sheet-card-tools">' +
+          '<button type="button" data-sheet-qty="-1" data-card-no="' + escapeHtml(no) + '" aria-label="減少張數">−</button>' +
+          '<button type="button" class="is-qty" tabindex="-1">×' + qty + '</button>' +
+          '<button type="button" data-sheet-qty="1" data-card-no="' + escapeHtml(no) + '" aria-label="增加張數">+</button>' +
+          '</div></div>';
       }
 
       function renderSheetCards(rawDeck) {
@@ -6154,7 +6873,7 @@
             (shortage.shortKinds ? ('・缺 ' + shortage.shortKinds + ' 種') : '') + '）')
           : '';
         if (!allCount) {
-          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">' +
+          host.innerHTML = '<div class="deck-sheet-empty">' +
             (isEdit ? '尚未加入卡片（按底部「選牌」搜尋加入）' : '尚未加入卡片') +
             '</div>';
           return;
@@ -6163,68 +6882,50 @@
           cards = cards.filter(function (c) { return entryShortQty(c) > 0; });
         }
         if (!cards.length) {
-          host.innerHTML = '<div class="deck-sheet-empty" style="grid-column:1/-1">沒有缺卡的卡片</div>';
+          host.innerHTML = '<div class="deck-sheet-empty">沒有缺卡的卡片</div>';
           return;
         }
         cards = sortSheetCardsByLevelDesc(cards);
-        var groupCounts = Object.create(null);
+        var groups = [];
+        var groupMap = Object.create(null);
         cards.forEach(function (c) {
           var gKey = sheetEntryLevelGroupKey(c);
-          if (!groupCounts[gKey]) groupCounts[gKey] = { kinds: 0, qty: 0 };
-          groupCounts[gKey].kinds += 1;
+          if (!groupMap[gKey]) {
+            groupMap[gKey] = { key: gKey, kinds: 0, qty: 0, cards: [] };
+            groups.push(groupMap[gKey]);
+          }
+          groupMap[gKey].kinds += 1;
           var gq = parseInt(c && c.qty, 10);
-          groupCounts[gKey].qty += isNaN(gq) || gq < 1 ? 0 : gq;
+          groupMap[gKey].qty += isNaN(gq) || gq < 1 ? 0 : gq;
+          groupMap[gKey].cards.push(c);
         });
-        var lastGroupKey = null;
-        host.innerHTML = cards.map(function (c) {
-          var no = normalizeText(c && c.cardNumber);
-          var key = no.replace(/\\/g, '/');
-          var urls = buildCardImageUrls(no);
-          var qty = parseInt(c && c.qty, 10);
-          if (isNaN(qty) || qty < 1) qty = 1;
-          var shortQty = entryShortQty(c);
-          var isShort = shortQty > 0;
-          var meta = sheetState.metaCache[key];
-          var label = (meta && meta.name) || c.cardName || no;
-          var groupKey = sheetEntryLevelGroupKey(c);
-          var headHtml = '';
-          if (groupKey !== lastGroupKey) {
-            lastGroupKey = groupKey;
-            var counts = groupCounts[groupKey] || { kinds: 0, qty: 0 };
-            headHtml = buildSheetLevelHeadHtml(groupKey, counts.kinds, counts.qty);
-          }
-          if (!isEdit) {
-            return headHtml + '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" title="' +
-              escapeHtml(label) + '\\n' + escapeHtml(no) +
-              (isShort ? ('\\n缺 ' + shortQty + ' 張') : '') + '">' +
-              (isShort ? ('<span class="deck-sheet-card-short-badge">缺' + shortQty + '</span>') : '') +
-              '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
-              (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
-              '<span class="deck-sheet-card-qty">×' + qty + '</span></div>';
-          }
-          return headHtml + '<div class="deck-sheet-card' + (isShort ? ' is-short' : '') + '" data-card-no="' +
-            escapeHtml(no) + '" title="' + escapeHtml(label) + '\\n' + escapeHtml(no) + '">' +
-            '<img src="' + escapeHtml(urls.primary) + '" alt="" loading="lazy" decoding="async"' +
-            (urls.fallback ? ' data-fallback="' + escapeHtml(urls.fallback) + '"' : '') + '>' +
-            '<button type="button" class="deck-sheet-card-remove" data-sheet-remove="' + escapeHtml(no) +
-            '" aria-label="移除 ' + escapeHtml(label) + '"><i class="fas fa-times" aria-hidden="true"></i></button>' +
-            '<div class="deck-sheet-card-short">' +
-            '<label><input type="checkbox" data-sheet-short-toggle="' + escapeHtml(no) + '"' +
-            (isShort ? ' checked' : '') + '><span>缺卡</span></label>' +
-            '<div class="deck-sheet-short-step"' + (isShort ? '' : ' hidden') + '>' +
-            '<button type="button" data-sheet-short-qty="-1" data-card-no="' + escapeHtml(no) +
-            '" aria-label="減少缺卡">−</button>' +
-            '<span>' + Math.max(1, shortQty || 1) + '</span>' +
-            '<button type="button" data-sheet-short-qty="1" data-card-no="' + escapeHtml(no) +
-            '" aria-label="增加缺卡">+</button></div></div>' +
-            '<div class="deck-sheet-card-tools">' +
-            '<button type="button" data-sheet-qty="-1" data-card-no="' + escapeHtml(no) + '" aria-label="減少張數">−</button>' +
-            '<button type="button" class="is-qty" tabindex="-1">×' + qty + '</button>' +
-            '<button type="button" data-sheet-qty="1" data-card-no="' + escapeHtml(no) + '" aria-label="增加張數">+</button>' +
-            '</div></div>';
+        host.innerHTML = groups.map(function (group) {
+          var cells = group.cards.map(function (c) {
+            return buildSheetCardCellHtml(c, isEdit);
+          }).join('');
+          return '<div class="deck-sheet-card-row" data-level="' + escapeHtml(String(group.key)) + '">' +
+            '<span class="deck-sheet-card-row-rail" aria-hidden="true"></span>' +
+            '<div class="deck-sheet-card-row-main">' +
+            '<div class="deck-sheet-card-row-head">' +
+            '<span class="deck-sheet-card-row-label">' + escapeHtml(sheetEntryLevelGroupLabel(group.key)) + '</span>' +
+            '<span class="deck-sheet-card-row-meta">' + group.qty + ' 張 · ' + group.kinds + ' 種</span>' +
+            '</div>' +
+            '<div class="deck-sheet-card-row-track">' + cells + '</div>' +
+            '</div>' +
+            '<button type="button" class="deck-sheet-card-row-more" data-sheet-row-scroll="1" aria-label="向右捲動卡片">' +
+            '<i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
+            '</div>';
         }).join('');
         Array.prototype.forEach.call(host.querySelectorAll('img'), function (img) {
           bindImgFallback(img, img.getAttribute('data-fallback') || '');
+        });
+        Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-row-scroll]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var row = btn.closest('.deck-sheet-card-row');
+            var track = row && row.querySelector('.deck-sheet-card-row-track');
+            if (!track) return;
+            track.scrollBy({ left: Math.max(160, track.clientWidth * 0.72), behavior: 'smooth' });
+          });
         });
         if (isEdit) {
           Array.prototype.forEach.call(host.querySelectorAll('[data-sheet-qty]'), function (btn) {
@@ -6311,6 +7012,62 @@
         var on = !!open && !wrap.hidden;
         menu.hidden = !on;
         btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      }
+
+      function syncSheetFavButton(rawDeck) {
+        var btn = document.getElementById('deckSheetFavBtn');
+        if (!btn) return;
+        var id = rawDeck && rawDeck.id;
+        var on = !!(id && favoriteIds[id]);
+        btn.classList.toggle('is-on', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn.innerHTML = (on
+          ? '<i class="fas fa-star" aria-hidden="true"></i>'
+          : '<i class="far fa-star" aria-hidden="true"></i>') +
+          '<span class="btn-text">我的最愛</span>';
+      }
+
+      function toggleSheetFavorite() {
+        var id = sheetState.deckId;
+        if (!id) {
+          showToast('請先選擇牌組');
+          return;
+        }
+        if (favoriteIds[id]) delete favoriteIds[id];
+        else favoriteIds[id] = true;
+        writeFavoriteIds();
+        var on = !!favoriteIds[id];
+        showToast(on ? '已加入我的最愛' : '已從最愛移除');
+        syncSheetFavButton({ id: id });
+        renderAll();
+      }
+
+      function shareSheetDeck() {
+        var raw = findRawDeckById(sheetState.deckId);
+        var name = normalizeText(raw && raw.name) || '我的牌組';
+        var url = window.location.href.split('#')[0] + '#deck=' + encodeURIComponent(sheetState.deckId || '');
+        var payload = { title: name + '｜Weiss Schwarz Deck', text: '查看牌組：' + name, url: url };
+        if (navigator.share) {
+          navigator.share(payload).catch(function () { /* user cancel */ });
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            showToast('已複製分享連結');
+          }).catch(function () {
+            showToast('無法複製連結');
+          });
+          return;
+        }
+        showToast('此裝置不支援分享');
+      }
+
+      function focusSheetCardDetails() {
+        var section = document.querySelector('.deck-sheet-section.is-cards');
+        if (section && typeof section.scrollIntoView === 'function') {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast('點選卡表中的卡片可查看詳情');
       }
 
       function syncSheetMoreMenu(rawDeck) {
@@ -7106,9 +7863,12 @@
         var inlineStats = document.getElementById('deckSheetInlineStats');
         if (inlineStats) {
           var winLabel = (vm.winRate && vm.winRate !== '—') ? vm.winRate : '—';
+          var winNote = (vm.winRate && vm.winRate !== '—' && vm.winNote)
+            ? (' <small style="opacity:.7;font-weight:600">' + escapeHtml(vm.winNote) + '</small>')
+            : '';
           inlineStats.innerHTML =
             '<span><strong>' + liveTotal + '/50</strong> 張</span>' +
-            '<span><strong>' + escapeHtml(winLabel) + '</strong> 勝率</span>' +
+            '<span><strong>' + escapeHtml(winLabel) + '</strong> 勝率' + winNote + '</span>' +
             '<span>建立 <strong>' + escapeHtml(vm.created) + '</strong></span>' +
             (liveShortage.shortKinds
               ? ('<span style="color:#b91c1c">缺 <strong>' + liveShortage.shortCopies + '</strong> 張</span>')
@@ -7140,11 +7900,12 @@
           modeBtn.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i>';
           modeBtn.setAttribute('aria-label', '返回檢視');
         } else {
-          secondary.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i><span>編成</span>';
-          primary.innerHTML = '<span class="btn-start-main">完成</span>';
+          secondary.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i><span>編輯牌組</span>';
+          primary.innerHTML = '<span class="btn-start-main">使用此牌組</span>';
           modeBtn.innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i>';
           modeBtn.setAttribute('aria-label', '切換編成');
         }
+        syncSheetFavButton(raw);
         syncSheetMoreMenu(raw);
         syncSheetUnsavedUi();
       }
@@ -7160,6 +7921,7 @@
         sheetState.deckId = raw.id;
         sheetState.levelFilter = null;
         sheetState.cardFilter = null;
+        sheetState.analyzeTab = 'overview';
         sheetState.dirty = false;
         clearUnsavedHintTimer();
         closeSheetDialog();
@@ -7533,8 +8295,74 @@
         });
       }
 
+      function isDemoSheetMode() {
+        try {
+          return /(?:\?|&)demoSheet=1(?:&|$)/.test(window.location.search || '');
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function seedDemoSheetDeck() {
+        var now = Date.now();
+        var demoCards = [
+          { cardNumber: 'BAV/W112-001', cardName: 'シロコ', qty: 4, color: '青', level: 0, effect: '【自】【集中】あなたのクライマックス置場にこのカードが置かれた時、山札の上から5枚を見て、カードを1枚選び手札に加える。' },
+          { cardNumber: 'BAV/W112-002', cardName: 'セリカ', qty: 4, color: '赤', level: 0, effect: '【自】このカードがアタックした時、あなたは自分の山札を上から1枚見て、山札の上か下に置く。' },
+          { cardNumber: 'BAV/W112-003', cardName: 'ノノミ', qty: 4, color: '黄', level: 0, effect: '【起】[手札を1枚控え室に置く] あなたは自分の山札を上から4枚まで見て、キャラを1枚選び、相手に見せ、手札に加え、残りを山札に戻す。' },
+          { cardNumber: 'BAV/W112-011', cardName: 'ホシノ', qty: 4, color: '黄', level: 1, effect: '【永】【アシスト】あなたの、《アビドス》のキャラすべてに、パワーを＋500。' },
+          { cardNumber: 'BAV/W112-012', cardName: 'アヤネ', qty: 4, color: '青', level: 1, effect: '【自】このカードが手札から舞台に置かれた時、あなたは自分の控え室のキャラを1枚選び、手札に戻してよい。' },
+          { cardNumber: 'BAV/W112-021', cardName: 'シロコ（ライディング）', qty: 4, color: '青', level: 2, effect: '【自】このカードがアタックした時、他のあなたの、《アビドス》のキャラが2枚以上なら、あなたは自分の山札の上から1枚を、ストック置場に置いてよい。' },
+          { cardNumber: 'BAV/W112-031', cardName: 'ホシノ（武装）', qty: 4, color: '黄', level: 3, effect: '【自】このカードが手札から舞台に置かれた時、あなたは自分のクロックの上から1枚を、控え室に置いてよい。' },
+          { cardNumber: 'BAV/W112-032', cardName: 'シロコ（最終決戦）', qty: 2, color: '青', level: 3, effect: '【自】【ゲート】このカードが手札から舞台に置かれた時、あなたは自分の控え室の、《アビドス》のキャラを1枚選び、手札に戻してよい。' },
+          { cardNumber: 'BAV/W112-P01', cardName: 'アビドスの日常', qty: 4, color: '青', level: 0, effect: '【永】【カウンター】あなたのキャラすべてに、パワーを＋1000。' },
+          { cardNumber: 'BAV/W112-W01', cardName: '砂漠の約束', qty: 4, color: '青', level: null, kind: 'CX', effect: '【永】あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。' },
+          { cardNumber: 'BAV/W112-W02', cardName: '青の記憶', qty: 4, color: '青', level: null, kind: 'CX', effect: '【永】あなたのキャラすべてに、パワーを＋1000し、ソウルを＋1。' },
+          { cardNumber: 'BAV/W112-013', cardName: 'スズミ', qty: 4, color: '緑', level: 1, effect: '【起】[ストックを2枚控え室に置く] あなたは自分の控え室のキャラを1枚選び、手札に戻す。' },
+          { cardNumber: 'BAV/W112-004', cardName: 'シャーレ支援', qty: 2, color: '緑', level: 0, effect: 'あなたは自分の山札の上から1枚を公開し、そのカードを手札に加える。' },
+          { cardNumber: 'BAV/W112-022', cardName: '戦術変更', qty: 2, color: '赤', level: 2, effect: '【永】【チェンジ】経験 あなたのレベル置場にカードが2枚以上なら、このカードのパワーを＋1500。' }
+        ];
+        demoCards.forEach(function (c) {
+          var key = normalizeText(c.cardNumber).replace(/\\/g, '/');
+          sheetState.metaCache[key] = {
+            level: c.level == null ? null : c.level,
+            color: c.color || '',
+            name: c.cardName || '',
+            kind: c.kind || (c.level == null ? 'CX' : '角色'),
+            trigger: '',
+            effect: c.effect || ''
+          };
+        });
+        var deck = {
+          id: 'demo-abydos',
+          name: 'Blue Archive / Abydos',
+          tags: ['競技', 'Blue Archive', 'Abydos'],
+          deckDescription: 'アビドス軸の高効率サーチと盤面制圧を狙う競技向け構築。序盤の安定感と中盤のリソース循環を両立。',
+          cards: demoCards.map(function (c) {
+            return { cardNumber: c.cardNumber, cardName: c.cardName, qty: c.qty };
+          }),
+          createdAt: now - 86400000 * 12,
+          updatedAt: now,
+          source: 'demo',
+          winRate: '62.5%',
+          winSample: 50
+        };
+        allDecks = [deck];
+        writeLocalDecks(allDecks);
+        deckAuthResolved = true;
+        deckCloudUser = { uid: 'demo', displayName: 'Demo' };
+        setStatusMode('ready');
+        renderAll();
+        setTimeout(function () {
+          openDeckSheet('view', deck.id);
+        }, 80);
+      }
+
       function bootstrapDecks() {
         favoriteIds = readFavoriteIds();
+        if (isDemoSheetMode()) {
+          seedDemoSheetDeck();
+          return;
+        }
         setStatusMode('loading');
         if (!(fb && typeof fb.onAuth === 'function')) {
           deckAuthResolved = true;
@@ -7706,6 +8534,20 @@
           runSheetPickSearch(e.target.value);
         }
       });
+      var analyzeTabs = document.getElementById('deckSheetAnalyzeTabs');
+      if (analyzeTabs) {
+        analyzeTabs.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-analyze-tab]');
+          if (!btn || !analyzeTabs.contains(btn)) return;
+          setSheetAnalyzeTab(btn.getAttribute('data-analyze-tab'));
+        });
+      }
+      var sheetFavBtn = document.getElementById('deckSheetFavBtn');
+      if (sheetFavBtn) sheetFavBtn.addEventListener('click', toggleSheetFavorite);
+      var sheetShareBtn = document.getElementById('deckSheetShareBtn');
+      if (sheetShareBtn) sheetShareBtn.addEventListener('click', shareSheetDeck);
+      var sheetDetailBtn = document.getElementById('deckSheetDetailBtn');
+      if (sheetDetailBtn) sheetDetailBtn.addEventListener('click', focusSheetCardDetails);
       document.getElementById('deckSheetSecondary').addEventListener('click', function () {
         if (sheetState.mode === 'edit') {
           setSheetMoreOpen(false);
@@ -7715,8 +8557,12 @@
         setSheetMode('edit');
       });
       document.getElementById('deckSheetPrimary').addEventListener('click', function () {
-        if (sheetState.mode === 'edit') saveSheetEdits();
-        else forceCloseDeckSheet();
+        if (sheetState.mode === 'edit') {
+          saveSheetEdits();
+          return;
+        }
+        showToast('已選擇此牌組');
+        forceCloseDeckSheet();
       });
       document.getElementById('menuBtn').addEventListener('click', function () {
         showToast('牌組功能已整合在本頁');
